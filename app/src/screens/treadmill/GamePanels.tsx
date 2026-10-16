@@ -254,7 +254,11 @@ export function GameMenu({ progress, status, onClose, onSettings, onCharacter, o
 
       {tab === "help" && <div role="tabpanel" id="treadmill-panel-help" aria-labelledby="treadmill-tab-help" className="treadmill-game__panel treadmill-game__help">
         <h3>목표</h3>
-        <p>각 도시는 30초짜리 구간 세 개, 총 90초예요. 10초마다 새 웨이브와 에너지 보급이 와요. 바닥은 계속 뒤로 흐르니, 뒤쪽 끝으로 밀려 떨어지지 않게 버티면 완주예요.</p>
+        <p>각 도시는 30초짜리 구간 세 개, 총 90초예요. 세 구간 완주가 첫 목표예요. 장애물을 몇 개 피했는지, 얼마나 연속으로 피했는지 기록해요. 콤보 배수 점수는 없어요.</p>
+        <h3>보급소를 이용하는 이유</h3>
+        <p>다음 장애물 묶음에 쓸 에너지를 준비하는 곳이에요. 각 구간 10초·20초에 3초 동안 열려요. 초록 구역에서 착지한 채 손을 {TREADMILL_RULES.aidRestSeconds}초 놓으면 한 번만 최대 +{TREADMILL_RULES.aidEnergy}를 받아요. 기본 달리기 5초와 점프 4회에 드는 양이고, 에너지 100을 넘겨 쌓이지 않아요. 계속 달리거나 공중에 있으면 받을 수 없어요.</p>
+        <p>손을 놓는 동안에도 뒤로 밀려요. 미리 앞쪽 공간을 확보하고, 받았으면 다시 달려요. 보급소를 놓쳐도 손을 놓는 기본 회복은 언제든 가능해요. 구간 완주 뒤에는 안전 발판에서 최대 +30을 회복해 다음 구간을 준비해요.</p>
+        <p className="treadmill-game__fine">보급량과 시간은 게임의 선택을 위한 규칙이에요. 실제 달리기의 수분·영양 섭취 기준이 아니에요.</p>
         <h3>조작</h3>
         <ul className="treadmill-game__rules">
           <li><b><Footprints size={18} aria-hidden="true" /></b><span><strong>화면 꾹 · 달리기</strong>장면 어디든 누르면 앞으로 가고 에너지를 써요. 떼면 회복하지만 뒤로 밀려요.</span></li>

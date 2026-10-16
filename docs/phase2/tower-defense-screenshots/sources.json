@@ -1,0 +1,106 @@
+[
+  {
+    "id": "kingdom-rush",
+    "name": "Kingdom Rush  - Tower Defense",
+    "source": "https://store.steampowered.com/app/246420/",
+    "retrievedAt": "2026-10-16T00:56:46.111750+00:00",
+    "images": [
+      {
+        "url": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/246420/ss_7b6442738c9c89a63db11845eeff306410196a1d.1920x1080.jpg?t=1790283781",
+        "file": "kingdom-rush-1.jpg",
+        "sha256": "7aaadd32f5437e479fd510afe179957e0ca66d56e58cb2baf1ff7db5f1371279",
+        "bytes": 914726
+      },
+      {
+        "url": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/246420/ss_15c7c9f1eb4150695f4c6fe0f081718cc13c886d.1920x1080.jpg?t=1790283781",
+        "file": "kingdom-rush-2.jpg",
+        "sha256": "238a7448ea95fc3a9e32e5cab53faa942071f8d929f80d1c2baabb1823e45649",
+        "bytes": 539636
+      },
+      {
+        "url": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/246420/ss_aaaf33cdb9106bd0801a36049516d95c6f2352b0.1920x1080.jpg?t=1790283781",
+        "file": "kingdom-rush-3.jpg",
+        "sha256": "3b078ad3c8f7fef62534b1ff0c377be14292ea330f3fc96dce0ab450f810a097",
+        "bytes": 637604
+      }
+    ]
+  },
+  {
+    "id": "bloons-td6",
+    "name": "Bloons TD 6",
+    "source": "https://store.steampowered.com/app/960090/",
+    "retrievedAt": "2026-10-16T00:56:46.762240+00:00",
+    "images": [
+      {
+        "url": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/960090/ss_a20e85177d96408281e0672927f8e9137c1f423a.1920x1080.jpg?t=1782123772",
+        "file": "bloons-td6-1.jpg",
+        "sha256": "87f0a25aca9e438495d20ade8234a86a887eae99b6605f84611a1bd521e51cfe",
+        "bytes": 838838
+      },
+      {
+        "url": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/960090/ss_c8525f327db944b0c0b9cedeeeca15c5c55797a2.1920x1080.jpg?t=1782123772",
+        "file": "bloons-td6-2.jpg",
+        "sha256": "6d617d21a54d2de1d676e068255a611fc4e310eb3d44438ee6658ac669c76c50",
+        "bytes": 754245
+      },
+      {
+        "url": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/960090/ss_4134980ce3fd32fa19b0cb9bc0ecd25674a92a90.1920x1080.jpg?t=1782123772",
+        "file": "bloons-td6-3.jpg",
+        "sha256": "b6dfd2edc126820c0ebd8a84be2c0201193a8d16ce3e343785e9bf4297e57b50",
+        "bytes": 957634
+      }
+    ]
+  },
+  {
+    "id": "infinitode2",
+    "name": "Infinitode 2 - Infinite Tower Defense",
+    "source": "https://store.steampowered.com/app/937310/",
+    "retrievedAt": "2026-10-16T00:56:47.313544+00:00",
+    "images": [
+      {
+        "url": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/937310/ss_f2e97128f8ecfe3450c40715f0798a41291b3cc0.1920x1080.jpg?t=1722434542",
+        "file": "infinitode2-1.jpg",
+        "sha256": "b08ba8c45f77f460458454bb2b925b81dad4196d65cae4dece6f862ce53d8f5f",
+        "bytes": 417911
+      },
+      {
+        "url": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/937310/ss_9217407180e09299ba28bc31a361c45c2f1e06c8.1920x1080.jpg?t=1722434542",
+        "file": "infinitode2-2.jpg",
+        "sha256": "8ea779b6de2b4b9fd0a8086c56ccfbf2fa8290aceae560300ff18e721625ae8a",
+        "bytes": 575362
+      },
+      {
+        "url": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/937310/ss_fcc29fe41cf287de22984bb4ba91a1744b6b603d.1920x1080.jpg?t=1722434542",
+        "file": "infinitode2-3.jpg",
+        "sha256": "147b5187012148401b4d506736af0c6accfc3d077630a3e49d810e6467c75c2a",
+        "bytes": 437396
+      }
+    ]
+  },
+  {
+    "id": "element-td2",
+    "name": "Element TD 2 - Tower Defense",
+    "source": "https://store.steampowered.com/app/1018830/",
+    "retrievedAt": "2026-10-16T00:56:47.946418+00:00",
+    "images": [
+      {
+        "url": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1018830/ss_7a358a2c007771a902ac69fc9bf39143887cd8dc.1920x1080.jpg?t=1789440078",
+        "file": "element-td2-1.jpg",
+        "sha256": "38fbd759ef05394fbca0e087121530149b1036145bcb64c5049fda89a9f487f5",
+        "bytes": 1073010
+      },
+      {
+        "url": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1018830/ss_62cf35cff9065b7368c779038c416a0f35a54a17.1920x1080.jpg?t=1789440078",
+        "file": "element-td2-2.jpg",
+        "sha256": "15b13ae8a63bd09211c070f0362f92a4c62a7233e83e9e2707f097c386afe9b1",
+        "bytes": 915292
+      },
+      {
+        "url": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1018830/ss_3b0a45b82ae7da1c4bb22678b9149decd3b1bdf7.1920x1080.jpg?t=1789440078",
+        "file": "element-td2-3.jpg",
+        "sha256": "e2235c84ffd516fbaac2c4ec3df9c29f414e8ba87bad0d7073764b50fee14772",
+        "bytes": 1039363
+      }
+    ]
+  }
+]

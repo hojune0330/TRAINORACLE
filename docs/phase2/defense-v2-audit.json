@@ -1,0 +1,1620 @@
+{
+  "sourceHashes": {
+    "src/domain/minigame/solo-defense.ts": "b266ec2d3c3f873f9f05fc7b3a1a5ec4bc489cd5c7fec56c3ad61ac391872f98",
+    "src/domain/minigame/solo-push.ts": "d7657f8adeef504f47e50b9782494742a2f0af385f0fcf1fbf0bb120ddf9afcd",
+    "../game-server/engine.mjs": "1501b4720ecf1df1f34f9b41dbda5e4aa03c8f8820ddaa73b652f1c3602873ee"
+  },
+  "method": "5 legal fixed build plans x 6 scripted input policies; 60Hz; fixed course; no human participants; policies are probes, not optimal solvers",
+  "defense": [
+    {
+      "build": "cannon-cannon-upgrades",
+      "policy": "idle",
+      "killed": 41,
+      "passed": 7,
+      "unresolved": 0,
+      "collected": 0,
+      "pushed": 0,
+      "falls": 21,
+      "unusedBudget": 0,
+      "waves": [
+        {
+          "wave": 1,
+          "killed": 11,
+          "missed": 1,
+          "falls": 7,
+          "supplies": 0,
+          "pushed": 0,
+          "noEnemiesSeconds": 4.6,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 2,
+          "killed": 14,
+          "missed": 2,
+          "falls": 7,
+          "supplies": 0,
+          "pushed": 0,
+          "noEnemiesSeconds": 7.9,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 3,
+          "killed": 16,
+          "missed": 4,
+          "falls": 7,
+          "supplies": 0,
+          "pushed": 0,
+          "noEnemiesSeconds": 3,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        }
+      ]
+    },
+    {
+      "build": "cannon-cannon-upgrades",
+      "policy": "hold",
+      "killed": 41,
+      "passed": 7,
+      "unresolved": 0,
+      "collected": 4,
+      "pushed": 0,
+      "falls": 0,
+      "unusedBudget": 4,
+      "waves": [
+        {
+          "wave": 1,
+          "killed": 11,
+          "missed": 1,
+          "falls": 0,
+          "supplies": 2,
+          "pushed": 0,
+          "noEnemiesSeconds": 4.6,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 2,
+          "killed": 14,
+          "missed": 2,
+          "falls": 0,
+          "supplies": 2,
+          "pushed": 0,
+          "noEnemiesSeconds": 7.9,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 3,
+          "killed": 16,
+          "missed": 4,
+          "falls": 0,
+          "supplies": 0,
+          "pushed": 0,
+          "noEnemiesSeconds": 3,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        }
+      ]
+    },
+    {
+      "build": "cannon-cannon-upgrades",
+      "policy": "pace",
+      "killed": 41,
+      "passed": 7,
+      "unresolved": 0,
+      "collected": 4,
+      "pushed": 0,
+      "falls": 0,
+      "unusedBudget": 4,
+      "waves": [
+        {
+          "wave": 1,
+          "killed": 11,
+          "missed": 1,
+          "falls": 0,
+          "supplies": 2,
+          "pushed": 0,
+          "noEnemiesSeconds": 4.6,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 2,
+          "killed": 14,
+          "missed": 2,
+          "falls": 0,
+          "supplies": 2,
+          "pushed": 0,
+          "noEnemiesSeconds": 7.9,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 3,
+          "killed": 16,
+          "missed": 4,
+          "falls": 0,
+          "supplies": 0,
+          "pushed": 0,
+          "noEnemiesSeconds": 3,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        }
+      ]
+    },
+    {
+      "build": "cannon-cannon-upgrades",
+      "policy": "jump-spam",
+      "killed": 41,
+      "passed": 7,
+      "unresolved": 0,
+      "collected": 3,
+      "pushed": 0,
+      "falls": 3,
+      "unusedBudget": 3,
+      "waves": [
+        {
+          "wave": 1,
+          "killed": 11,
+          "missed": 1,
+          "falls": 1,
+          "supplies": 1,
+          "pushed": 0,
+          "noEnemiesSeconds": 4.6,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 2,
+          "killed": 14,
+          "missed": 2,
+          "falls": 1,
+          "supplies": 2,
+          "pushed": 0,
+          "noEnemiesSeconds": 7.9,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 3,
+          "killed": 16,
+          "missed": 4,
+          "falls": 1,
+          "supplies": 0,
+          "pushed": 0,
+          "noEnemiesSeconds": 3,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        }
+      ]
+    },
+    {
+      "build": "cannon-cannon-upgrades",
+      "policy": "dash-spam",
+      "killed": 48,
+      "passed": 0,
+      "unresolved": 0,
+      "collected": 4,
+      "pushed": 51,
+      "falls": 0,
+      "unusedBudget": 4,
+      "waves": [
+        {
+          "wave": 1,
+          "killed": 12,
+          "missed": 0,
+          "falls": 0,
+          "supplies": 2,
+          "pushed": 18,
+          "noEnemiesSeconds": 9.4,
+          "longestEmptySeconds": 3.1,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 2,
+          "killed": 16,
+          "missed": 0,
+          "falls": 0,
+          "supplies": 2,
+          "pushed": 17,
+          "noEnemiesSeconds": 6.8,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 3,
+          "killed": 20,
+          "missed": 0,
+          "falls": 0,
+          "supplies": 0,
+          "pushed": 16,
+          "noEnemiesSeconds": 5.4,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        }
+      ]
+    },
+    {
+      "build": "cannon-cannon-upgrades",
+      "policy": "reactive",
+      "killed": 42,
+      "passed": 6,
+      "unresolved": 0,
+      "collected": 4,
+      "pushed": 68,
+      "falls": 0,
+      "unusedBudget": 4,
+      "waves": [
+        {
+          "wave": 1,
+          "killed": 12,
+          "missed": 0,
+          "falls": 0,
+          "supplies": 2,
+          "pushed": 18,
+          "noEnemiesSeconds": 8.4,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 2,
+          "killed": 14,
+          "missed": 2,
+          "falls": 0,
+          "supplies": 2,
+          "pushed": 22,
+          "noEnemiesSeconds": 7.5,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 3,
+          "killed": 16,
+          "missed": 4,
+          "falls": 0,
+          "supplies": 0,
+          "pushed": 28,
+          "noEnemiesSeconds": 3,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        }
+      ]
+    },
+    {
+      "build": "cannon-fan-flag",
+      "policy": "idle",
+      "killed": 34,
+      "passed": 14,
+      "unresolved": 0,
+      "collected": 0,
+      "pushed": 0,
+      "falls": 21,
+      "unusedBudget": 1,
+      "waves": [
+        {
+          "wave": 1,
+          "killed": 4,
+          "missed": 8,
+          "falls": 7,
+          "supplies": 0,
+          "pushed": 0,
+          "noEnemiesSeconds": 3,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 2,
+          "killed": 14,
+          "missed": 2,
+          "falls": 7,
+          "supplies": 0,
+          "pushed": 0,
+          "noEnemiesSeconds": 3,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 3,
+          "killed": 16,
+          "missed": 4,
+          "falls": 7,
+          "supplies": 0,
+          "pushed": 0,
+          "noEnemiesSeconds": 3,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        }
+      ]
+    },
+    {
+      "build": "cannon-fan-flag",
+      "policy": "hold",
+      "killed": 34,
+      "passed": 14,
+      "unresolved": 0,
+      "collected": 4,
+      "pushed": 0,
+      "falls": 0,
+      "unusedBudget": 5,
+      "waves": [
+        {
+          "wave": 1,
+          "killed": 4,
+          "missed": 8,
+          "falls": 0,
+          "supplies": 2,
+          "pushed": 0,
+          "noEnemiesSeconds": 3,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 2,
+          "killed": 14,
+          "missed": 2,
+          "falls": 0,
+          "supplies": 2,
+          "pushed": 0,
+          "noEnemiesSeconds": 3,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 3,
+          "killed": 16,
+          "missed": 4,
+          "falls": 0,
+          "supplies": 0,
+          "pushed": 0,
+          "noEnemiesSeconds": 3,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        }
+      ]
+    },
+    {
+      "build": "cannon-fan-flag",
+      "policy": "pace",
+      "killed": 34,
+      "passed": 14,
+      "unresolved": 0,
+      "collected": 4,
+      "pushed": 0,
+      "falls": 0,
+      "unusedBudget": 5,
+      "waves": [
+        {
+          "wave": 1,
+          "killed": 4,
+          "missed": 8,
+          "falls": 0,
+          "supplies": 2,
+          "pushed": 0,
+          "noEnemiesSeconds": 3,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 2,
+          "killed": 14,
+          "missed": 2,
+          "falls": 0,
+          "supplies": 2,
+          "pushed": 0,
+          "noEnemiesSeconds": 3,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 3,
+          "killed": 16,
+          "missed": 4,
+          "falls": 0,
+          "supplies": 0,
+          "pushed": 0,
+          "noEnemiesSeconds": 3,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        }
+      ]
+    },
+    {
+      "build": "cannon-fan-flag",
+      "policy": "jump-spam",
+      "killed": 34,
+      "passed": 14,
+      "unresolved": 0,
+      "collected": 3,
+      "pushed": 0,
+      "falls": 1,
+      "unusedBudget": 4,
+      "waves": [
+        {
+          "wave": 1,
+          "killed": 4,
+          "missed": 8,
+          "falls": 1,
+          "supplies": 1,
+          "pushed": 0,
+          "noEnemiesSeconds": 3,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 2,
+          "killed": 14,
+          "missed": 2,
+          "falls": 0,
+          "supplies": 2,
+          "pushed": 0,
+          "noEnemiesSeconds": 3,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 3,
+          "killed": 16,
+          "missed": 4,
+          "falls": 0,
+          "supplies": 0,
+          "pushed": 0,
+          "noEnemiesSeconds": 3,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        }
+      ]
+    },
+    {
+      "build": "cannon-fan-flag",
+      "policy": "dash-spam",
+      "killed": 47,
+      "passed": 1,
+      "unresolved": 0,
+      "collected": 4,
+      "pushed": 113,
+      "falls": 0,
+      "unusedBudget": 5,
+      "waves": [
+        {
+          "wave": 1,
+          "killed": 12,
+          "missed": 0,
+          "falls": 0,
+          "supplies": 2,
+          "pushed": 34,
+          "noEnemiesSeconds": 3,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 2,
+          "killed": 15,
+          "missed": 1,
+          "falls": 0,
+          "supplies": 2,
+          "pushed": 29,
+          "noEnemiesSeconds": 3,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 3,
+          "killed": 20,
+          "missed": 0,
+          "falls": 0,
+          "supplies": 0,
+          "pushed": 50,
+          "noEnemiesSeconds": 3,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        }
+      ]
+    },
+    {
+      "build": "cannon-fan-flag",
+      "policy": "reactive",
+      "killed": 48,
+      "passed": 0,
+      "unresolved": 0,
+      "collected": 4,
+      "pushed": 108,
+      "falls": 1,
+      "unusedBudget": 5,
+      "waves": [
+        {
+          "wave": 1,
+          "killed": 12,
+          "missed": 0,
+          "falls": 0,
+          "supplies": 2,
+          "pushed": 35,
+          "noEnemiesSeconds": 3,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 2,
+          "killed": 16,
+          "missed": 0,
+          "falls": 0,
+          "supplies": 2,
+          "pushed": 36,
+          "noEnemiesSeconds": 3,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 3,
+          "killed": 20,
+          "missed": 0,
+          "falls": 1,
+          "supplies": 0,
+          "pushed": 37,
+          "noEnemiesSeconds": 3,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        }
+      ]
+    },
+    {
+      "build": "cannon-flag-upgrades",
+      "policy": "idle",
+      "killed": 34,
+      "passed": 14,
+      "unresolved": 0,
+      "collected": 0,
+      "pushed": 0,
+      "falls": 21,
+      "unusedBudget": 0,
+      "waves": [
+        {
+          "wave": 1,
+          "killed": 4,
+          "missed": 8,
+          "falls": 7,
+          "supplies": 0,
+          "pushed": 0,
+          "noEnemiesSeconds": 3,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 2,
+          "killed": 14,
+          "missed": 2,
+          "falls": 7,
+          "supplies": 0,
+          "pushed": 0,
+          "noEnemiesSeconds": 3,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 3,
+          "killed": 16,
+          "missed": 4,
+          "falls": 7,
+          "supplies": 0,
+          "pushed": 0,
+          "noEnemiesSeconds": 3,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        }
+      ]
+    },
+    {
+      "build": "cannon-flag-upgrades",
+      "policy": "hold",
+      "killed": 34,
+      "passed": 14,
+      "unresolved": 0,
+      "collected": 4,
+      "pushed": 0,
+      "falls": 0,
+      "unusedBudget": 4,
+      "waves": [
+        {
+          "wave": 1,
+          "killed": 4,
+          "missed": 8,
+          "falls": 0,
+          "supplies": 2,
+          "pushed": 0,
+          "noEnemiesSeconds": 3,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 2,
+          "killed": 14,
+          "missed": 2,
+          "falls": 0,
+          "supplies": 2,
+          "pushed": 0,
+          "noEnemiesSeconds": 3,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 3,
+          "killed": 16,
+          "missed": 4,
+          "falls": 0,
+          "supplies": 0,
+          "pushed": 0,
+          "noEnemiesSeconds": 3,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        }
+      ]
+    },
+    {
+      "build": "cannon-flag-upgrades",
+      "policy": "pace",
+      "killed": 34,
+      "passed": 14,
+      "unresolved": 0,
+      "collected": 4,
+      "pushed": 0,
+      "falls": 0,
+      "unusedBudget": 4,
+      "waves": [
+        {
+          "wave": 1,
+          "killed": 4,
+          "missed": 8,
+          "falls": 0,
+          "supplies": 2,
+          "pushed": 0,
+          "noEnemiesSeconds": 3,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 2,
+          "killed": 14,
+          "missed": 2,
+          "falls": 0,
+          "supplies": 2,
+          "pushed": 0,
+          "noEnemiesSeconds": 3,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 3,
+          "killed": 16,
+          "missed": 4,
+          "falls": 0,
+          "supplies": 0,
+          "pushed": 0,
+          "noEnemiesSeconds": 3,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        }
+      ]
+    },
+    {
+      "build": "cannon-flag-upgrades",
+      "policy": "jump-spam",
+      "killed": 34,
+      "passed": 14,
+      "unresolved": 0,
+      "collected": 4,
+      "pushed": 0,
+      "falls": 0,
+      "unusedBudget": 4,
+      "waves": [
+        {
+          "wave": 1,
+          "killed": 4,
+          "missed": 8,
+          "falls": 0,
+          "supplies": 2,
+          "pushed": 0,
+          "noEnemiesSeconds": 3,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 2,
+          "killed": 14,
+          "missed": 2,
+          "falls": 0,
+          "supplies": 2,
+          "pushed": 0,
+          "noEnemiesSeconds": 3,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 3,
+          "killed": 16,
+          "missed": 4,
+          "falls": 0,
+          "supplies": 0,
+          "pushed": 0,
+          "noEnemiesSeconds": 3,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        }
+      ]
+    },
+    {
+      "build": "cannon-flag-upgrades",
+      "policy": "dash-spam",
+      "killed": 48,
+      "passed": 0,
+      "unresolved": 0,
+      "collected": 4,
+      "pushed": 132,
+      "falls": 0,
+      "unusedBudget": 4,
+      "waves": [
+        {
+          "wave": 1,
+          "killed": 12,
+          "missed": 0,
+          "falls": 0,
+          "supplies": 2,
+          "pushed": 35,
+          "noEnemiesSeconds": 4.6,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 2,
+          "killed": 16,
+          "missed": 0,
+          "falls": 0,
+          "supplies": 2,
+          "pushed": 43,
+          "noEnemiesSeconds": 4,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 3,
+          "killed": 20,
+          "missed": 0,
+          "falls": 0,
+          "supplies": 0,
+          "pushed": 54,
+          "noEnemiesSeconds": 3.1,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        }
+      ]
+    },
+    {
+      "build": "cannon-flag-upgrades",
+      "policy": "reactive",
+      "killed": 48,
+      "passed": 0,
+      "unresolved": 0,
+      "collected": 4,
+      "pushed": 123,
+      "falls": 0,
+      "unusedBudget": 4,
+      "waves": [
+        {
+          "wave": 1,
+          "killed": 12,
+          "missed": 0,
+          "falls": 0,
+          "supplies": 2,
+          "pushed": 35,
+          "noEnemiesSeconds": 5.9,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 2,
+          "killed": 16,
+          "missed": 0,
+          "falls": 0,
+          "supplies": 2,
+          "pushed": 40,
+          "noEnemiesSeconds": 3,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 3,
+          "killed": 20,
+          "missed": 0,
+          "falls": 0,
+          "supplies": 0,
+          "pushed": 48,
+          "noEnemiesSeconds": 3,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        }
+      ]
+    },
+    {
+      "build": "three-cannons",
+      "policy": "idle",
+      "killed": 41,
+      "passed": 7,
+      "unresolved": 0,
+      "collected": 0,
+      "pushed": 0,
+      "falls": 21,
+      "unusedBudget": 1,
+      "waves": [
+        {
+          "wave": 1,
+          "killed": 11,
+          "missed": 1,
+          "falls": 7,
+          "supplies": 0,
+          "pushed": 0,
+          "noEnemiesSeconds": 4.6,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 2,
+          "killed": 14,
+          "missed": 2,
+          "falls": 7,
+          "supplies": 0,
+          "pushed": 0,
+          "noEnemiesSeconds": 9.1,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 3,
+          "killed": 16,
+          "missed": 4,
+          "falls": 7,
+          "supplies": 0,
+          "pushed": 0,
+          "noEnemiesSeconds": 3,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        }
+      ]
+    },
+    {
+      "build": "three-cannons",
+      "policy": "hold",
+      "killed": 41,
+      "passed": 7,
+      "unresolved": 0,
+      "collected": 4,
+      "pushed": 0,
+      "falls": 0,
+      "unusedBudget": 5,
+      "waves": [
+        {
+          "wave": 1,
+          "killed": 11,
+          "missed": 1,
+          "falls": 0,
+          "supplies": 2,
+          "pushed": 0,
+          "noEnemiesSeconds": 4.6,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 2,
+          "killed": 14,
+          "missed": 2,
+          "falls": 0,
+          "supplies": 2,
+          "pushed": 0,
+          "noEnemiesSeconds": 9.1,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 3,
+          "killed": 16,
+          "missed": 4,
+          "falls": 0,
+          "supplies": 0,
+          "pushed": 0,
+          "noEnemiesSeconds": 3,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        }
+      ]
+    },
+    {
+      "build": "three-cannons",
+      "policy": "pace",
+      "killed": 41,
+      "passed": 7,
+      "unresolved": 0,
+      "collected": 4,
+      "pushed": 0,
+      "falls": 0,
+      "unusedBudget": 5,
+      "waves": [
+        {
+          "wave": 1,
+          "killed": 11,
+          "missed": 1,
+          "falls": 0,
+          "supplies": 2,
+          "pushed": 0,
+          "noEnemiesSeconds": 4.6,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 2,
+          "killed": 14,
+          "missed": 2,
+          "falls": 0,
+          "supplies": 2,
+          "pushed": 0,
+          "noEnemiesSeconds": 9.1,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 3,
+          "killed": 16,
+          "missed": 4,
+          "falls": 0,
+          "supplies": 0,
+          "pushed": 0,
+          "noEnemiesSeconds": 3,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        }
+      ]
+    },
+    {
+      "build": "three-cannons",
+      "policy": "jump-spam",
+      "killed": 41,
+      "passed": 7,
+      "unresolved": 0,
+      "collected": 3,
+      "pushed": 0,
+      "falls": 3,
+      "unusedBudget": 4,
+      "waves": [
+        {
+          "wave": 1,
+          "killed": 11,
+          "missed": 1,
+          "falls": 1,
+          "supplies": 1,
+          "pushed": 0,
+          "noEnemiesSeconds": 4.6,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 2,
+          "killed": 14,
+          "missed": 2,
+          "falls": 1,
+          "supplies": 2,
+          "pushed": 0,
+          "noEnemiesSeconds": 9.1,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 3,
+          "killed": 16,
+          "missed": 4,
+          "falls": 1,
+          "supplies": 0,
+          "pushed": 0,
+          "noEnemiesSeconds": 3,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        }
+      ]
+    },
+    {
+      "build": "three-cannons",
+      "policy": "dash-spam",
+      "killed": 47,
+      "passed": 1,
+      "unresolved": 0,
+      "collected": 4,
+      "pushed": 27,
+      "falls": 0,
+      "unusedBudget": 5,
+      "waves": [
+        {
+          "wave": 1,
+          "killed": 11,
+          "missed": 1,
+          "falls": 0,
+          "supplies": 2,
+          "pushed": 8,
+          "noEnemiesSeconds": 10.4,
+          "longestEmptySeconds": 4,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 2,
+          "killed": 16,
+          "missed": 0,
+          "falls": 0,
+          "supplies": 2,
+          "pushed": 9,
+          "noEnemiesSeconds": 11.7,
+          "longestEmptySeconds": 3.9,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 3,
+          "killed": 20,
+          "missed": 0,
+          "falls": 0,
+          "supplies": 0,
+          "pushed": 10,
+          "noEnemiesSeconds": 7.5,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        }
+      ]
+    },
+    {
+      "build": "three-cannons",
+      "policy": "reactive",
+      "killed": 48,
+      "passed": 0,
+      "unresolved": 0,
+      "collected": 4,
+      "pushed": 35,
+      "falls": 0,
+      "unusedBudget": 5,
+      "waves": [
+        {
+          "wave": 1,
+          "killed": 12,
+          "missed": 0,
+          "falls": 0,
+          "supplies": 2,
+          "pushed": 8,
+          "noEnemiesSeconds": 9.7,
+          "longestEmptySeconds": 3.3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 2,
+          "killed": 16,
+          "missed": 0,
+          "falls": 0,
+          "supplies": 2,
+          "pushed": 13,
+          "noEnemiesSeconds": 13.1,
+          "longestEmptySeconds": 4.3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 3,
+          "killed": 20,
+          "missed": 0,
+          "falls": 0,
+          "supplies": 0,
+          "pushed": 14,
+          "noEnemiesSeconds": 10.6,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        }
+      ]
+    },
+    {
+      "build": "front-cannon-fan",
+      "policy": "idle",
+      "killed": 34,
+      "passed": 14,
+      "unresolved": 0,
+      "collected": 0,
+      "pushed": 0,
+      "falls": 21,
+      "unusedBudget": 1,
+      "waves": [
+        {
+          "wave": 1,
+          "killed": 4,
+          "missed": 8,
+          "falls": 7,
+          "supplies": 0,
+          "pushed": 0,
+          "noEnemiesSeconds": 3,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 2,
+          "killed": 14,
+          "missed": 2,
+          "falls": 7,
+          "supplies": 0,
+          "pushed": 0,
+          "noEnemiesSeconds": 3.8,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 3,
+          "killed": 16,
+          "missed": 4,
+          "falls": 7,
+          "supplies": 0,
+          "pushed": 0,
+          "noEnemiesSeconds": 3,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        }
+      ]
+    },
+    {
+      "build": "front-cannon-fan",
+      "policy": "hold",
+      "killed": 34,
+      "passed": 14,
+      "unresolved": 0,
+      "collected": 4,
+      "pushed": 0,
+      "falls": 0,
+      "unusedBudget": 5,
+      "waves": [
+        {
+          "wave": 1,
+          "killed": 4,
+          "missed": 8,
+          "falls": 0,
+          "supplies": 2,
+          "pushed": 0,
+          "noEnemiesSeconds": 3,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 2,
+          "killed": 14,
+          "missed": 2,
+          "falls": 0,
+          "supplies": 2,
+          "pushed": 0,
+          "noEnemiesSeconds": 3.8,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 3,
+          "killed": 16,
+          "missed": 4,
+          "falls": 0,
+          "supplies": 0,
+          "pushed": 0,
+          "noEnemiesSeconds": 3,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        }
+      ]
+    },
+    {
+      "build": "front-cannon-fan",
+      "policy": "pace",
+      "killed": 34,
+      "passed": 14,
+      "unresolved": 0,
+      "collected": 4,
+      "pushed": 0,
+      "falls": 0,
+      "unusedBudget": 5,
+      "waves": [
+        {
+          "wave": 1,
+          "killed": 4,
+          "missed": 8,
+          "falls": 0,
+          "supplies": 2,
+          "pushed": 0,
+          "noEnemiesSeconds": 3,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 2,
+          "killed": 14,
+          "missed": 2,
+          "falls": 0,
+          "supplies": 2,
+          "pushed": 0,
+          "noEnemiesSeconds": 3.8,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 3,
+          "killed": 16,
+          "missed": 4,
+          "falls": 0,
+          "supplies": 0,
+          "pushed": 0,
+          "noEnemiesSeconds": 3,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        }
+      ]
+    },
+    {
+      "build": "front-cannon-fan",
+      "policy": "jump-spam",
+      "killed": 34,
+      "passed": 14,
+      "unresolved": 0,
+      "collected": 3,
+      "pushed": 0,
+      "falls": 2,
+      "unusedBudget": 4,
+      "waves": [
+        {
+          "wave": 1,
+          "killed": 4,
+          "missed": 8,
+          "falls": 1,
+          "supplies": 1,
+          "pushed": 0,
+          "noEnemiesSeconds": 3,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 2,
+          "killed": 14,
+          "missed": 2,
+          "falls": 0,
+          "supplies": 2,
+          "pushed": 0,
+          "noEnemiesSeconds": 3.8,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 3,
+          "killed": 16,
+          "missed": 4,
+          "falls": 1,
+          "supplies": 0,
+          "pushed": 0,
+          "noEnemiesSeconds": 3,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        }
+      ]
+    },
+    {
+      "build": "front-cannon-fan",
+      "policy": "dash-spam",
+      "killed": 46,
+      "passed": 2,
+      "unresolved": 0,
+      "collected": 4,
+      "pushed": 63,
+      "falls": 0,
+      "unusedBudget": 5,
+      "waves": [
+        {
+          "wave": 1,
+          "killed": 11,
+          "missed": 1,
+          "falls": 0,
+          "supplies": 2,
+          "pushed": 18,
+          "noEnemiesSeconds": 5.6,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 2,
+          "killed": 15,
+          "missed": 1,
+          "falls": 0,
+          "supplies": 2,
+          "pushed": 19,
+          "noEnemiesSeconds": 6.5,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 3,
+          "killed": 20,
+          "missed": 0,
+          "falls": 0,
+          "supplies": 0,
+          "pushed": 26,
+          "noEnemiesSeconds": 3.4,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        }
+      ]
+    },
+    {
+      "build": "front-cannon-fan",
+      "policy": "reactive",
+      "killed": 48,
+      "passed": 0,
+      "unresolved": 0,
+      "collected": 4,
+      "pushed": 62,
+      "falls": 0,
+      "unusedBudget": 5,
+      "waves": [
+        {
+          "wave": 1,
+          "killed": 12,
+          "missed": 0,
+          "falls": 0,
+          "supplies": 2,
+          "pushed": 21,
+          "noEnemiesSeconds": 5.1,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 2,
+          "killed": 16,
+          "missed": 0,
+          "falls": 0,
+          "supplies": 2,
+          "pushed": 18,
+          "noEnemiesSeconds": 8.2,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        },
+        {
+          "wave": 3,
+          "killed": 20,
+          "missed": 0,
+          "falls": 0,
+          "supplies": 0,
+          "pushed": 23,
+          "noEnemiesSeconds": 3,
+          "longestEmptySeconds": 3,
+          "emptyTailSeconds": 0
+        }
+      ]
+    }
+  ],
+  "push": [
+    {
+      "policy": "idle",
+      "seriesPoints": 0,
+      "rounds": [
+        [
+          {
+            "id": "bot",
+            "kos": 3,
+            "falls": 1,
+            "dodges": 18,
+            "rank": 1
+          },
+          {
+            "id": "you",
+            "kos": 0,
+            "falls": 13,
+            "dodges": 0,
+            "rank": 2
+          }
+        ],
+        [
+          {
+            "id": "bot",
+            "kos": 4,
+            "falls": 1,
+            "dodges": 18,
+            "rank": 1
+          },
+          {
+            "id": "you",
+            "kos": 0,
+            "falls": 13,
+            "dodges": 0,
+            "rank": 2
+          }
+        ]
+      ]
+    },
+    {
+      "policy": "hold",
+      "seriesPoints": 0,
+      "rounds": [
+        [
+          {
+            "id": "bot",
+            "kos": 2,
+            "falls": 1,
+            "dodges": 9,
+            "rank": 1
+          },
+          {
+            "id": "you",
+            "kos": 0,
+            "falls": 2,
+            "dodges": 0,
+            "rank": 2
+          }
+        ],
+        [
+          {
+            "id": "bot",
+            "kos": 1,
+            "falls": 1,
+            "dodges": 10,
+            "rank": 1
+          },
+          {
+            "id": "you",
+            "kos": 0,
+            "falls": 2,
+            "dodges": 0,
+            "rank": 2
+          }
+        ]
+      ]
+    },
+    {
+      "policy": "pace",
+      "seriesPoints": 0,
+      "rounds": [
+        [
+          {
+            "id": "bot",
+            "kos": 4,
+            "falls": 1,
+            "dodges": 17,
+            "rank": 1
+          },
+          {
+            "id": "you",
+            "kos": 0,
+            "falls": 6,
+            "dodges": 0,
+            "rank": 2
+          }
+        ],
+        [
+          {
+            "id": "bot",
+            "kos": 2,
+            "falls": 1,
+            "dodges": 17,
+            "rank": 1
+          },
+          {
+            "id": "you",
+            "kos": 0,
+            "falls": 5,
+            "dodges": 0,
+            "rank": 2
+          }
+        ]
+      ]
+    },
+    {
+      "policy": "jump-spam",
+      "seriesPoints": 0,
+      "rounds": [
+        [
+          {
+            "id": "bot",
+            "kos": 2,
+            "falls": 1,
+            "dodges": 17,
+            "rank": 1
+          },
+          {
+            "id": "you",
+            "kos": 0,
+            "falls": 7,
+            "dodges": 8,
+            "rank": 2
+          }
+        ],
+        [
+          {
+            "id": "bot",
+            "kos": 5,
+            "falls": 1,
+            "dodges": 17,
+            "rank": 1
+          },
+          {
+            "id": "you",
+            "kos": 0,
+            "falls": 7,
+            "dodges": 11,
+            "rank": 2
+          }
+        ]
+      ]
+    },
+    {
+      "policy": "dash-spam",
+      "seriesPoints": 0,
+      "rounds": [
+        [
+          {
+            "id": "bot",
+            "kos": 4,
+            "falls": 3,
+            "dodges": 10,
+            "rank": 1
+          },
+          {
+            "id": "you",
+            "kos": 2,
+            "falls": 4,
+            "dodges": 0,
+            "rank": 2
+          }
+        ],
+        [
+          {
+            "id": "bot",
+            "kos": 2,
+            "falls": 3,
+            "dodges": 7,
+            "rank": 1
+          },
+          {
+            "id": "you",
+            "kos": 0,
+            "falls": 4,
+            "dodges": 0,
+            "rank": 2
+          }
+        ]
+      ]
+    },
+    {
+      "policy": "reactive",
+      "seriesPoints": 0,
+      "rounds": [
+        [
+          {
+            "id": "bot",
+            "kos": 2,
+            "falls": 3,
+            "dodges": 8,
+            "rank": 1
+          },
+          {
+            "id": "you",
+            "kos": 1,
+            "falls": 3,
+            "dodges": 7,
+            "rank": 2
+          }
+        ],
+        [
+          {
+            "id": "bot",
+            "kos": 2,
+            "falls": 3,
+            "dodges": 9,
+            "rank": 1
+          },
+          {
+            "id": "you",
+            "kos": 1,
+            "falls": 4,
+            "dodges": 6,
+            "rank": 2
+          }
+        ]
+      ]
+    }
+  ]
+}

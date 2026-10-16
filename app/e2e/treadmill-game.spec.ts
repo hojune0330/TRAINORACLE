@@ -1,5 +1,5 @@
 import { test, expect, type Page } from "@playwright/test"
-import { advanceTreadmill, nearestHazard, newTreadmillRun, treadmillCommand, TREADMILL_STAGES } from "../src/domain/minigame/treadmill"
+import { advanceTreadmill, nearestHazard, newTreadmillRun, treadmillCommand, treadmillAidStop, TREADMILL_STAGES } from "../src/domain/minigame/treadmill"
 import type { TreadmillStage, TreadmillState } from "../src/domain/minigame/treadmill"
 import { tourCity, tourStages } from "../src/domain/minigame/tour"
 
@@ -12,7 +12,9 @@ async function openGame(page: Page, course: "practice" | "seoul" = "practice", b
   })
   await page.goto("/?app=1")
   await page.getByRole("button", { name: "더보기", exact: true }).click()
-  await page.getByRole("button", { name: "미니게임", exact: true }).click()
+  await page.getByRole("button", { name: "게임 라운지", exact: true }).click()
+  await page.getByRole("button", { name: "러닝 투어 게임 소개", exact: true }).click()
+  await page.getByRole("button", { name: "도시 고르기", exact: true }).click()
   await expect(page.getByRole("heading", { name: "러닝 투어", exact: true })).toBeVisible()
   if (course === "practice") await page.getByRole("button", { name: "러닝머신 연습" }).click()
   else await page.getByRole("button", { name: /^서울/ }).click()
@@ -236,8 +238,8 @@ test("home launch banner opens the game, returns home and stays acknowledged aft
   expect(record!.y + record!.height).toBeLessThan(notice!.y)
   expect(await noSideScroll(page)).toBe(true)
   await page.screenshot({ path: info.outputPath("home-launch-banner.png"), fullPage: true })
-  await banner.getByRole("button", { name: "게임하기" }).click()
-  await expect(page.getByRole("heading", { name: "러닝 투어", exact: true })).toBeVisible()
+  await banner.getByRole("button", { name: "게임 라운지 열기" }).click()
+  await expect(page.getByRole("heading", { name: "게임 라운지", exact: true })).toBeVisible()
   await page.getByRole("button", { name: "홈으로 돌아가기" }).click()
   await expect(page.getByRole("button", { name: "오늘 운동 기록 쓰기", exact: true })).toBeVisible()
   await expect(banner).toHaveCount(0)
@@ -245,7 +247,9 @@ test("home launch banner opens the game, returns home and stays acknowledged aft
   await expect(page.getByRole("button", { name: "더보기", exact: true })).toBeVisible()
   await expect(banner).toHaveCount(0)
   await page.getByRole("button", { name: "더보기", exact: true }).click()
-  await page.getByRole("button", { name: "미니게임", exact: true }).click()
+  await page.getByRole("button", { name: "게임 라운지", exact: true }).click()
+  await page.getByRole("button", { name: "러닝 투어 게임 소개", exact: true }).click()
+  await page.getByRole("button", { name: "게임 목록으로", exact: true }).click()
   await page.getByRole("button", { name: "더보기로 돌아가기" }).click()
   await expect(page.getByRole("heading", { name: "더보기", exact: true })).toBeVisible()
 })
@@ -253,7 +257,7 @@ test("home launch banner opens the game, returns home and stays acknowledged aft
 test("closing the launch banner preserves the journal action and stays closed", async ({ page }) => {
   await page.route("**/*", route => new URL(route.request().url()).hostname === "127.0.0.1" ? route.continue() : route.abort())
   await page.goto("/?app=1")
-  await page.getByRole("button", { name: "러닝 투어가 열렸어요 안내 닫기" }).click()
+  await page.getByRole("button", { name: "게임 라운지에서 한 판 어때요? 안내 닫기" }).click()
   await expect(page.getByRole("button", { name: "오늘 운동 기록 쓰기", exact: true })).toBeVisible()
   await page.reload()
   await expect(page.getByRole("button", { name: "더보기", exact: true })).toBeVisible()
@@ -343,14 +347,16 @@ function planRun(stages: readonly TreadmillStage[] = TREADMILL_STAGES): Step[] {
       steps.push({ at: ms, key: "upgrade" })
       state = treadmillCommand(state, { type: "upgrade", upgrade: "economy" })
     }
+    const ahead = nearestHazard(state), stop = treadmillAidStop(state)
+    const restForAid = stop.open && !stop.claimed && state.x > .11 && (state.energy < 95 || state.aid.rest > 0)
+      && state.y === 0 && (!ahead || ahead.x - state.x > (state.aid.rest > 0 ? .08 : .18))
     // Separate start/stop thresholds model a deliberate hold, rather than
     // toggling the real browser key every simulation frame around x=.45.
     // Keep the pure-engine clear assertion and replay every jump/checkpoint.
-    const want = state.running
+    const want = !restForAid && (state.running
       ? state.x < 0.5 && state.energy > 20
-      : (state.x < 0.4 && state.energy > 35) || (state.x < 0.22 && state.energy > 0)
+      : (state.x < 0.4 && state.energy > 35) || (state.x < 0.22 && state.energy > 0))
     if (want !== state.running) { steps.push({ at: ms, key: want ? "run-down" : "run-up" }); state = treadmillCommand(state, { type: "run", held: want }) }
-    const ahead = nearestHazard(state)
     if (ahead && ahead.x - state.x < 0.09 && state.y === 0 && state.energy >= state.jumpCost) {
       steps.push({ at: ms, key: "jump" }); state = treadmillCommand(state, { type: "jump" })
     }
@@ -373,6 +379,8 @@ test("explains the rules before play, falls on inaction and restarts with pointe
     return element.getContext("2d")!.getImageData(4, 4, 1, 1).data[3]
   })).toBe(255)
   await expect(page.getByRole("heading", { name: "90초 러닝 챌린지" })).toBeVisible()
+  await expect(page.getByText("목표: 세 구간 완주")).toBeVisible()
+  await expect(page.getByText("완주 ★ · 부딪힘 1회 이하 ★★ · 무충돌 ★★★")).toBeVisible()
   await expect(page.getByRole("navigation")).toHaveCount(0)
   await page.getByRole("button", { name: "시작", exact: true }).click()
   await page.clock.runFor(1000)
@@ -400,10 +408,14 @@ test("explains the rules before play, falls on inaction and restarts with pointe
   await expect(page.getByLabel("경기 진행 시간")).toHaveText(frozen!)
   await page.getByRole("button", { name: "투어 지도로" }).click()
   await page.getByRole("button", { name: "저장 없이 나가기" }).click()
+  await page.getByRole("button", { name: "게임 소개로", exact: true }).click()
+  await page.getByRole("button", { name: "게임 목록으로", exact: true }).click()
   await page.getByRole("button", { name: "더보기로 돌아가기" }).click()
   await expect(page.getByRole("heading", { name: "더보기", exact: true })).toBeVisible()
   await page.clock.runFor(10000)
-  await page.getByRole("button", { name: "미니게임", exact: true }).click()
+  await page.getByRole("button", { name: "게임 라운지", exact: true }).click()
+  await page.getByRole("button", { name: "러닝 투어 게임 소개", exact: true }).click()
+  await page.getByRole("button", { name: "도시 고르기", exact: true }).click()
   await page.getByRole("button", { name: "러닝머신 연습" }).click()
   await expect(page.getByLabel("게임 에너지", { exact: true })).toHaveText("에너지 100")
   await expect(page.getByRole("button", { name: "시작", exact: true })).toBeVisible()
@@ -453,7 +465,13 @@ test("clears three stages with real keys, shows trade-offs and resets the build"
   await page.clock.runFor(1200)
   await page.keyboard.up("ArrowRight")
   await expect(page.getByRole("heading", { name: "세 구간 완주!" })).toBeVisible()
+  await expect(page.getByText("3/3구간 완주", { exact: true })).toBeVisible()
+  await expect(page.locator(".treadmill-game__achievement")).toContainText(/장애물 \d+개 회피 · 부딪힘 \d+회/)
+  await expect(page.locator(".treadmill-game__achievement")).toContainText("다음 목표:")
+  await expect(page.locator(".treadmill-game__big-score")).toHaveCount(0)
   await page.getByText("이번 판 기록").click()
+  const aidReceipt = page.locator(".treadmill-game__stats div").filter({ hasText: "보급소 이용" })
+  await expect(aidReceipt).toContainText(/[1-6]회/)
   await expect(page.getByText("강화: 일정한 박자 · 일정한 박자")).toBeVisible()
   await page.screenshot({ path: info.outputPath("clear.png"), fullPage: true })
   await page.getByRole("button", { name: "처음부터" }).click()
@@ -608,7 +626,9 @@ test("tours Seoul in 2.5D, saves stars on this device, unlocks the next city and
   await expect(page.getByRole("button", { name: /^대구 \(잠김\)/ })).toBeDisabled()
   await page.reload()
   await page.getByRole("button", { name: "더보기", exact: true }).click()
-  await page.getByRole("button", { name: "미니게임", exact: true }).click()
+  await page.getByRole("button", { name: "게임 라운지", exact: true }).click()
+  await page.getByRole("button", { name: "러닝 투어 게임 소개", exact: true }).click()
+  await page.getByRole("button", { name: "도시 고르기", exact: true }).click()
   await expect(page.getByRole("button", { name: /^대전 · / })).toBeEnabled()
   await expect(page.getByText("이 기기에 저장")).toBeVisible()
   await expect(page.locator(".treadmill-game__city-preview canvas")).toHaveAttribute("data-art", "settled")
@@ -679,7 +699,9 @@ test("navigation saves a paused run, restores it after reload and confirms a fre
   await page.screenshot({ path: info.outputPath("saved-run-map.png"), fullPage: true })
   await page.reload()
   await page.getByRole("button", { name: "더보기", exact: true }).click()
-  await page.getByRole("button", { name: "미니게임", exact: true }).click()
+  await page.getByRole("button", { name: "게임 라운지", exact: true }).click()
+  await page.getByRole("button", { name: "러닝 투어 게임 소개", exact: true }).click()
+  await page.getByRole("button", { name: "도시 고르기", exact: true }).click()
   await page.getByRole("button", { name: "저장한 판 이어하기" }).click()
   await expect(page.locator(".treadmill-game")).toHaveAttribute("data-mode", "paused")
   expect(await energy(page)).toBe(beforeEnergy)
@@ -695,6 +717,9 @@ test("navigation saves a paused run, restores it after reload and confirms a fre
   await page.getByRole("button", { name: "게임 메뉴 (설정·도움말·오픈소스)" }).click()
   await page.getByRole("button", { name: "게임 나가기", exact: true }).click()
   await page.getByRole("button", { name: "저장 없이 나가기" }).click()
+  await expect(page.getByRole("heading", { name: "러닝 투어", exact: true })).toBeVisible()
+  await page.getByRole("button", { name: "게임 목록으로", exact: true }).click()
+  await page.getByRole("button", { name: "더보기로 돌아가기", exact: true }).click()
   await expect(page.getByRole("heading", { name: "더보기", exact: true })).toBeVisible()
 })
 
@@ -757,7 +782,9 @@ test("navigation keeps the chosen upgrade when saving and resuming a later stage
   await expect(page.getByRole("region", { name: "중간 저장한 판" })).toContainText("스프링 밑창")
   await page.reload()
   await page.getByRole("button", { name: "더보기", exact: true }).click()
-  await page.getByRole("button", { name: "미니게임", exact: true }).click()
+  await page.getByRole("button", { name: "게임 라운지", exact: true }).click()
+  await page.getByRole("button", { name: "러닝 투어 게임 소개", exact: true }).click()
+  await page.getByRole("button", { name: "도시 고르기", exact: true }).click()
   await page.getByRole("button", { name: "저장한 판 이어하기" }).click()
   await expect(page.getByRole("list", { name: "코스 2/3 · 진흙" })).toBeVisible()
   await expect(page.getByLabel("점프 에너지", { exact: true })).toHaveText(savedJumpCost!)

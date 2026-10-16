@@ -1,0 +1,8 @@
+.game-mode-art { position: relative; display: grid; place-items: center; width: 100%; height: 120px; overflow: hidden; border-radius: 12px; background: var(--game-sky-low); isolation: isolate; }
+.game-mode-art[data-mode="survival"] { background: var(--game-belt); }
+.game-mode-art[data-mode="defense"] { background: var(--game-hill-near); }
+.game-mode-art__lane { position: absolute; inset: 36% -10% -30%; border: 2px solid var(--game-cloud); background: var(--game-lane-red); transform: perspective(180px) rotateX(38deg) rotateZ(-15deg); z-index: -1; }
+.game-mode-art[data-mode="survival"] .game-mode-art__lane { background: var(--game-belt-dark); border-color: var(--game-neon-blue); }
+.game-mode-art[data-mode="defense"] .game-mode-art__lane { background: var(--game-mud); }
+.game-mode-art > .treadmill-party-icon { position: relative; left: -12px; }
+.game-mode-art__satellite { position: absolute; right: 8px; bottom: 4px; }

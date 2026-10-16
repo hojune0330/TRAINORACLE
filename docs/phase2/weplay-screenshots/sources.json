@@ -1,0 +1,87 @@
+{
+  "retrievedAt": "2026-10-15T23:41:38.498253+00:00",
+  "publisher": "WEJOY Pte. Ltd.",
+  "scope": "Official Google Play promotional screenshots. May contain composed marketing scenes; not a live app session. Raw image files retained locally outside Git. Not runtime game assets.",
+  "images": [
+    {
+      "id": "W01",
+      "source": "https://play.google.com/store/apps/details?id=com.wejoy.weplay.us&hl=en",
+      "url": "https://play-lh.googleusercontent.com/SDybiYXgWT7jTnBRTBgc5qMQTspiAPiiQKC6_r_k4gqVGMJOLsCfmSxiGVVGC8Q7d5Speyr7-bCH5ZGCrxEVeQ=w1052-h592",
+      "file": "weplay-google-01.webp",
+      "sha256": "6b54fa1fc9a5a19c44e7b6fd3dfa74b262feeab47955de05c1c8abab395662ea",
+      "bytes": 46632,
+      "kind": "Publisher-provided store screenshot, not independently captured gameplay",
+      "title": "Games hub"
+    },
+    {
+      "id": "W02",
+      "source": "https://play.google.com/store/apps/details?id=com.wejoy.weplay.us&hl=en",
+      "url": "https://play-lh.googleusercontent.com/4WmzZPwA_8Q47XHbk_8Eehw6cGVeHbuM43hUKYcw8krf18Dd0nUfkOZFLeuMsHvX6cbToOvXCYkbxljHHXIqwQ=w1052-h592",
+      "file": "weplay-google-02.webp",
+      "sha256": "e0c84dc2ba61f3fc4aa64165ecf5c0864892760b40a2c31832524b1589fb6c09",
+      "bytes": 179439,
+      "kind": "Publisher-provided store screenshot, not independently captured gameplay",
+      "title": "Who is the Spy"
+    },
+    {
+      "id": "W03",
+      "source": "https://play.google.com/store/apps/details?id=com.wejoy.weplay.us&hl=en",
+      "url": "https://play-lh.googleusercontent.com/D5LFwMEaVeaJ4APrPrCJi8L1SNEa7O1iUY9Sm0YLQf00lZMZ6q0Ih2HJBNV5b_923X7eyXtYnk7bbuah6LeCTQ=w1052-h592",
+      "file": "weplay-google-03.webp",
+      "sha256": "f8834841b8886582a76308be0b67bea2561876b6dbe4bd1b6bbed32718c0a760",
+      "bytes": 207964,
+      "kind": "Publisher-provided store screenshot, not independently captured gameplay",
+      "title": "Mic Grab"
+    },
+    {
+      "id": "W04",
+      "source": "https://play.google.com/store/apps/details?id=com.wejoy.weplay.us&hl=en",
+      "url": "https://play-lh.googleusercontent.com/Hb0revjgqRxIukV9zud-0kxYNpfVd7PS1IoGoUiO5xhqF0asH6de5DDA3rmsB71PZIW757qGBFrPmDuwNwlteA=w1052-h592",
+      "file": "weplay-google-04.webp",
+      "sha256": "925e20925f4ced59004acfb5114944ec3ab776abacb46a1009f3d0e287abe1d5",
+      "bytes": 191895,
+      "kind": "Publisher-provided store screenshot, not independently captured gameplay",
+      "title": "Scattergories"
+    },
+    {
+      "id": "W05",
+      "source": "https://play.google.com/store/apps/details?id=com.wejoy.weplay.us&hl=en",
+      "url": "https://play-lh.googleusercontent.com/BWdaeBShaYdX_1uliOSyzux74niJwNi2sNORqUXIuIzbW-w_X94c_T7D5rsS2oyqxvrNqI6onOYxT76jUUXI2Q=w1052-h592",
+      "file": "weplay-google-05.webp",
+      "sha256": "61dd27621855732412d73ef3709a255856fc0af0f295f23a7c6a0fdb2f6e9d99",
+      "bytes": 38042,
+      "kind": "Publisher-provided store screenshot, not independently captured gameplay",
+      "title": "Hide-and-Seek"
+    },
+    {
+      "id": "W06",
+      "source": "https://play.google.com/store/apps/details?id=com.wejoy.weplay.us&hl=en",
+      "url": "https://play-lh.googleusercontent.com/GzRMDfw2URBrLh1azLuUOkLxamuPJTy5qNetn1dhbbh6B2ubuVVk1Xc7fmF1dV5MxJgQXcfR_yPvVJ_QZdgg=w1052-h592",
+      "file": "weplay-google-06.webp",
+      "sha256": "f8f955f2bc259cd2997df379a6f249df04234efe949f5dbf939482965642f746",
+      "bytes": 56041,
+      "kind": "Publisher-provided store screenshot, not independently captured gameplay",
+      "title": "Liars Party"
+    },
+    {
+      "id": "W07",
+      "source": "https://play.google.com/store/apps/details?id=com.wejoy.weplay.us&hl=en",
+      "url": "https://play-lh.googleusercontent.com/9aOeDZIgGN75kmcaaNVuL5VkVUm285D-tCWr-_UaUaGAcTOKuWe6xHIjxzjqf8ow9DcFFtzf0pU1R_6NeDRoGpk=w1052-h592",
+      "file": "weplay-google-07.webp",
+      "sha256": "1daf87525797bccffd1b1614089bafb49844654e0f0aff6552f16469b8c1f0e2",
+      "bytes": 39462,
+      "kind": "Publisher-provided store screenshot, not independently captured gameplay",
+      "title": "Survival Challenge"
+    },
+    {
+      "id": "W08",
+      "source": "https://play.google.com/store/apps/details?id=com.wejoy.weplay.us&hl=en",
+      "url": "https://play-lh.googleusercontent.com/IOf5La4zgmrJBdPNHj5LqQgNDXh2mFpdUXfSy5yxK8vhxc5_CA9SC88K3XmQBUC6wza3G8iln710_NjMs8IcflY=w1052-h592",
+      "file": "weplay-google-08.webp",
+      "sha256": "20dbaff3c3fdb2aa8f0ff79a06d9f61d00b35be7adca1801dbf383e2ebf3c76a",
+      "bytes": 195059,
+      "kind": "Publisher-provided store screenshot, not independently captured gameplay",
+      "title": "Party Game"
+    }
+  ]
+}

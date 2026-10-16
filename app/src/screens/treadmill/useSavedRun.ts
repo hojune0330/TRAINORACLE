@@ -37,5 +37,5 @@ export function useSavedRun() {
       refresh(); setError("저장된 판을 확인하지 못했어요. 다른 창에서 변경했거나 기기 저장이 차단됐을 수 있어요."); return false
     }
   }
-  return { slot, error, save, clear, clearError: () => setError(null) }
+  return { slot, error, save, clear, refresh, clearError: () => setError(null) }
 }

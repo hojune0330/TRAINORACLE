@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TrainOracle 게임 이미지 라이브러리</title>
+<link rel="stylesheet" href="tokens.css">
+<style>
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.55}
+main{max-width:1200px;margin:auto;padding:32px 20px 64px}h1{font-size:clamp(25px,5vw,40px);line-height:1.2;margin:8px 0 16px}h2{font-size:18px;margin:0}p{margin:8px 0}small,.meta{font-size:12px;color:var(--ink-3)}
+.intro{max-width:760px}.eyebrow{color:var(--brand);font-weight:700}.summary{font-weight:700;margin:24px 0 12px}.toolbar{position:sticky;top:0;background:var(--bg);padding:12px 0;z-index:2;border-bottom:1px solid var(--line);display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px}
+button,a.download{min-height:44px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:12px;padding:10px 14px;font:inherit;cursor:pointer;text-decoration:none}
+button[aria-pressed="true"]{background:var(--brand);color:var(--surface)}button:focus-visible,a:focus-visible{outline:3px solid var(--brand);outline-offset:3px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:24px}
+article{min-width:0;border-bottom:1px solid var(--line);padding-bottom:20px}.preview{width:100%;aspect-ratio:1;border:0;border-radius:16px;background:repeating-conic-gradient(var(--surface-2) 0% 25%,var(--surface) 0% 50%) 50%/24px 24px;display:grid;place-items:center;padding:16px}
+.preview img{width:100%;height:100%;object-fit:contain;max-height:280px;filter:none}
+body[data-background="dark"] .preview,body[data-background="dark"] .small-view{background:var(--game-belt-dark)}
+article h2{margin:14px 0 4px}.role{font-size:14px;min-height:44px;color:var(--ink-2)}.id{word-break:break-all}
+.sizes{display:flex;gap:16px;align-items:flex-end;margin:12px 0}.size-item{display:grid;justify-items:center;gap:4px}.small-view{background:var(--surface-2);border-radius:8px;display:flex;align-items:center;justify-content:center;width:80px;height:80px}.small-view img{object-fit:contain}
+.actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:13px}.actions a{color:var(--brand)}.stage{font-size:13px;margin:10px 0}
+dialog{border:1px solid var(--line);border-radius:16px;padding:20px;width:min(680px,calc(100% - 24px));max-height:calc(100dvh - 24px);background:var(--surface);color:var(--ink);overflow:auto}
+dialog::backdrop{background:rgb(0 0 0 / .6)}.dialog-head{display:flex;justify-content:space-between;align-items:center;gap:12px}dialog img{width:100%;aspect-ratio:1;object-fit:contain;background:repeating-conic-gradient(var(--surface-2) 0% 25%,var(--surface) 0% 50%) 50%/24px 24px;border-radius:12px}
+footer{margin-top:40px;border-top:1px solid var(--line);padding-top:20px;font-size:14px}footer a{color:var(--brand)}.empty{padding:24px}
+@media(max-width:540px){main{padding:24px 16px 40px}.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:24px 12px}.preview{padding:4px;border-radius:12px}.role{min-height:66px}.sizes{gap:8px}.small-view{width:64px;height:64px}article h2{font-size:16px}.toolbar button{font-size:13px;padding:8px 10px}.actions{gap:8px}.actions a.download{padding:8px 10px}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+</style>
+</head>
+<body data-background="light">
+<main>
+<header class="intro"><div class="eyebrow">TRAINORACLE · IMAGE LIBRARY 01</div><h1>게임에 쓸 이미지, 하나씩.</h1>
+<p>단순한 형태로 만든 디펜스·맵·효과 에셋입니다. 큰 그림을 눌러 원본을 확인하고, 아래에서 실제로 작게 표시했을 때의 모습을 비교하세요.</p>
+<p class="meta">GPT-6.1 Sol 작업자 3명 · 내장 이미지 생성 도구 · 2026.10.16<br>30종 제작 · 게임에 24종 직접 사용, 2종 대체 연결, 4종 준비. 신규 Tripo 변환은 브라우저 연결 복구 대기 중이며 이번 차감은 없습니다.</p></header>
+<p class="summary" id="summary" role="status"></p>
+<nav class="toolbar" aria-label="에셋 종류">
+<button type="button" data-filter="all" aria-pressed="true">전체</button>
+<button type="button" data-filter="defense" aria-pressed="false">디펜스 12</button>
+<button type="button" data-filter="world" aria-pressed="false">맵·장애물 10</button>
+<button type="button" data-filter="fx" aria-pressed="false">효과·보상 8</button>
+<button type="button" data-filter="first" aria-pressed="false">3D 우선 후보</button>
+<button type="button" id="background" aria-pressed="false">어두운 배경</button>
+</nav>
+<section class="grid" id="grid" aria-label="이미지 에셋"></section>
+<footer>
+<p><strong>다음 순서:</strong> 기본 타워 3종과 기지 관문 → 강화형·움직이는 장애물 → 적 모델. 나무·바위 등 기존 모델이 있는 것은 비교 후 필요한 것만 변환합니다.</p>
+<p>효과 5종은 단일 프레임 원본입니다. 게임에서는 짧은 확대·투명도 효과로 표시합니다. 메달·별·보물상자는 결과 표시용이며 새 보상을 지급하지 않습니다.</p>
+<p><a href="trainoracle-image-library-v1.zip" download>30종 원본 ZIP 다운로드</a> · <a href="manifest.json">전체 파일·검수 기록</a> · <a href="production-plan.json">30종 제작 목록</a> · <a href="README.md">제작·Tripo 적용 기준</a></p>
+</footer>
+</main>
+<dialog id="viewer" aria-labelledby="viewer-title">
+<div class="dialog-head"><h2 id="viewer-title"></h2><button id="close-viewer" type="button">닫기</button></div>
+<img id="viewer-image" alt=""><p id="viewer-role"></p><a id="viewer-download" class="download" download>PNG 원본 저장</a>
+</dialog>
+<script>
+const manifest = /* ASSET_MANIFEST */;
+const grid = document.querySelector('#grid'), viewer=document.querySelector('#viewer');
+let selectedFilter='all', returnFocus=null;
+const labels={defense:'디펜스',world:'맵·장애물',fx:'효과·보상'};
+function render(){
+ const items=manifest.assets.filter(a=>selectedFilter==='all'||(selectedFilter==='first'?a.tripoStage==='1단계':a.group===selectedFilter));
+ document.querySelector('#summary').textContent='제작 '+manifest.generatedCount+' / '+manifest.plannedCount+'종 · 현재 '+items.length+'종 표시';
+ grid.replaceChildren();
+ for(const a of items){
+  const article=document.createElement('article');
+  const preview=document.createElement('button');preview.type='button';preview.className='preview';preview.setAttribute('aria-label',a.nameKo+' 원본 보기');
+  if(a.bytes){const img=document.createElement('img');img.src=a.file;img.alt=a.nameKo;img.loading='lazy';preview.append(img);preview.addEventListener('click',()=>openAsset(a,preview))}
+  else{preview.textContent='제작 중';preview.disabled=true}
+  const title=document.createElement('h2');title.textContent=a.nameKo;
+  const role=document.createElement('p');role.className='role';role.textContent=a.role;
+  const sizes=document.createElement('div');sizes.className='sizes';
+  if(a.bytes) for(const size of [64,32]){const wrap=document.createElement('div');wrap.className='size-item';const bg=document.createElement('div');bg.className='small-view';const img=document.createElement('img');img.src=a.file;img.width=size;img.height=size;img.alt=a.nameKo+' '+size+'픽셀';img.loading='lazy';bg.append(img);const label=document.createElement('small');label.textContent=size+'px';wrap.append(bg,label);sizes.append(wrap)}
+  const stage=document.createElement('p');stage.className='stage';stage.textContent='Tripo: '+a.tripoStage;
+  const meta=document.createElement('p');meta.className='meta id';meta.textContent=a.id+(a.bytes?' · '+(a.bytes/1024).toFixed(0)+' KB':'');
+  const actions=document.createElement('div');actions.className='actions';
+  if(a.bytes){const download=document.createElement('a');download.href=a.file;download.download=a.id+'.png';download.textContent='PNG 저장';download.className='download';actions.append(download)}
+  const prompts=document.createElement('a');prompts.href=a.group+'/PROMPTS.md';prompts.textContent='제작 기록';actions.append(prompts);
+  article.append(preview,title,role,sizes,stage,meta,actions);grid.append(article)
+ }
+}
+function openAsset(a,button){
+ returnFocus=button;document.querySelector('#viewer-title').textContent=a.nameKo;
+ document.querySelector('#viewer-image').src=a.file;document.querySelector('#viewer-image').alt=a.nameKo;
+ document.querySelector('#viewer-role').textContent=a.role+' · '+labels[a.group];
+ document.querySelector('#viewer-download').href=a.file;document.querySelector('#viewer-download').download=a.id+'.png';viewer.showModal()
+}
+document.querySelectorAll('[data-filter]').forEach(button=>button.addEventListener('click',()=>{selectedFilter=button.dataset.filter;document.querySelectorAll('[data-filter]').forEach(x=>x.setAttribute('aria-pressed',String(x===button)));render()}));
+document.querySelector('#background').addEventListener('click',function(){const dark=document.body.dataset.background!=='dark';document.body.dataset.background=dark?'dark':'light';this.setAttribute('aria-pressed',String(dark));this.textContent=dark?'밝은 배경':'어두운 배경'});
+document.querySelector('#close-viewer').addEventListener('click',()=>viewer.close());
+viewer.addEventListener('close',()=>returnFocus?.focus());
+viewer.addEventListener('click',e=>{if(e.target===viewer){const r=viewer.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)viewer.close()}});
+render();
+</script>
+</body></html>

@@ -237,8 +237,8 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
   const [athleteRecordsOpen, setAthleteRecordsOpen] = React.useState(false)
   const [homeDetailOrigin, setHomeDetailOrigin] = React.useState<"home" | "rewards">("home")
   const scrollRegionRef = React.useRef<HTMLElement>(null)
-  const [utilityView, setUtilityView] = React.useState<"more" | "guide" | "minji" | "content" | "rewards" | "minigame" | null>(() => arenaInvitation() ? "minigame" : null)
-  const [utilityOrigin, setUtilityOrigin] = React.useState<"home" | "more">("more")
+  const [utilityView, setUtilityView] = React.useState<"more" | "guide" | "minji" | "content" | "rewards" | "minigame" | null>(() => arenaInvitation() || new URLSearchParams(location.search).get("games") === "lounge" ? "minigame" : null)
+  const [utilityOrigin, setUtilityOrigin] = React.useState<"home" | "more">(() => new URLSearchParams(location.search).get("games") === "lounge" ? "home" : "more")
   const [moreView, setMoreView] = React.useState<MoreView>("tools")
   const moreVisibleRef = React.useRef(false)
   moreVisibleRef.current = v.tab === "home" && utilityView === "more" && !v.accountOpen && !v.restoreOpen

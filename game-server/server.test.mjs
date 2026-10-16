@@ -60,6 +60,47 @@ test('unapproved web origin cannot open a game socket', async t => {
   const ws = new WebSocket(`ws://127.0.0.1:${arena.server.address().port}`, { origin: 'https://unrelated.example' });
   await once(ws, 'error'); assert.notEqual(ws.readyState, WebSocket.OPEN);
 });
+
+test('party votes do not silently switch modes; host changes clear readiness and survive rematches', async t => {
+  let clock = 0;
+  const arena = createArenaServer({ tick: false, now: () => clock });
+  await new Promise(r => arena.server.listen(0, '127.0.0.1', r)); t.after(() => arena.close());
+  const url = `ws://127.0.0.1:${arena.server.address().port}`;
+  const a = await client(url); a.send({ type: 'join', name: '토리', partyVersion: 2 }); const aj = await a.wait('joined');
+  const b = await client(url); b.send({ type: 'join', room: aj.room, name: '하나', partyVersion: 2 }); const bj = await b.wait('joined');
+  const room = arena.rooms.get(aj.room);
+  a.send({ type: 'ready', ready: true }); b.send({ type: 'ready', ready: true }); await a.wait('state', s => s.members.every(m => m.ready));
+  b.send({ type: 'vote', mode: 'survival' });
+  const vote = await a.wait('state', s => s.members.some(m => m.vote === 'survival'));
+  assert.equal(vote.mode, 'push'); assert.equal(vote.partyVersion, 2);
+  b.send({ type: 'mode', mode: 'survival' }); await new Promise(r => setTimeout(r, 20)); assert.equal(room.mode, 'push');
+  a.send({ type: 'mode', mode: 'survival' });
+  const selected = await b.wait('state', s => s.mode === 'survival'); assert.ok(selected.members.every(m => !m.ready));
+  a.send({ type: 'start' }); await new Promise(r => setTimeout(r, 20)); assert.equal(room.game, null);
+  b.send({ type: 'reaction', kind: 'hello' }); const hello = await a.wait('state', s => s.members.find(m => m.id === bj.id)?.reaction === 'hello');
+  assert.equal(hello.members.find(m => m.id === bj.id).reaction, 'hello');
+  b.send({ type: 'reaction', kind: 'again' }); await new Promise(r => setTimeout(r, 20)); assert.equal(room.members[1].reaction.kind, 'hello');
+  clock = 1600; b.send({ type: 'reaction', kind: '<script>bad</script>' }); await new Promise(r => setTimeout(r, 20)); assert.equal(room.members[1].reaction.kind, 'hello');
+  a.send({ type: 'ready', ready: true }); b.send({ type: 'ready', ready: true }); await a.wait('state', s => s.mode === 'survival' && s.members.every(m => m.ready));
+  a.send({ type: 'start' }); const start = await b.wait('state', s => s.game?.mode === 'survival'); assert.equal(start.room, aj.room);
+  a.send({ type: 'mode', mode: 'push' }); await new Promise(r => setTimeout(r, 20)); assert.equal(room.mode, 'survival');
+  room.game.time = RULES.duration - .01; arena.advance(1 / 30);
+  const result = await a.wait('state', s => s.game?.phase === 'finished'); assert.equal(result.history[0].mode, 'survival');
+  assert.ok(result.members.every(m => !m.reaction));
+  a.send({ type: 'mode', mode: 'push' }); await b.wait('state', s => s.mode === 'push');
+  a.send({ type: 'ready', ready: true }); b.send({ type: 'ready', ready: true }); await a.wait('state', s => s.mode === 'push' && s.members.every(m => m.ready));
+  a.send({ type: 'start' }); const next = await b.wait('state', s => s.game?.round === 2);
+  assert.equal(next.game.mode, 'push'); assert.equal(next.room, aj.room);
+});
+
+test('older clients retain push support and cannot unknowingly start survival', async t => {
+  const arena = createArenaServer({ tick: false }); await new Promise(r => arena.server.listen(0, '127.0.0.1', r)); t.after(() => arena.close());
+  const url = `ws://127.0.0.1:${arena.server.address().port}`;
+  const a = await client(url); a.send({type:'join',partyVersion:2}); const aj=await a.wait('joined');
+  const old = await client(url); old.send({type:'join',room:aj.room}); await old.wait('joined');
+  a.send({type:'mode',mode:'survival'}); assert.equal((await a.wait('error')).code,'client-update');
+  assert.equal(arena.rooms.get(aj.room).mode,'push');
+});
 test('five seconds without heartbeats interrupts instead of granting a disconnect victory', async t => {
   let clock = 0;
   const arena = createArenaServer({ tick: false, now: () => clock });

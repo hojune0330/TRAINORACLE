@@ -1,11 +1,22 @@
 import { useEffect, useRef, useState } from 'react'
 import { drawPartyProp, loadPartyArt } from './party-art'
 import { PartyIcon } from './PartyIcon'
-import type { PartyProp } from './party-art'
+import type { PartyProp, PartyEffectId } from './party-art'
+import './party-effects.css'
 
 /** One finite cosmetic clip. No game timer, blocking overlay or delayed action. */
 export function PartyEffect({ reduced = false, id = 'upgrade-core', size = 96 }: {
-  readonly reduced?: boolean; readonly id?: PartyProp; readonly size?: number
+  readonly reduced?: boolean; readonly id?: PartyProp | PartyEffectId; readonly size?: number
+}) {
+  if (id.startsWith('fx-')) return <span className="party-effect-frame" data-reduced={reduced || undefined}
+    style={{ width: size, height: size }} aria-hidden="true">
+    <PartyIcon id={id} size={size} />
+  </span>
+  return <LegacyPartyEffect reduced={reduced} id={id as PartyProp} size={size} />
+}
+
+function LegacyPartyEffect({ reduced, id, size }: {
+  readonly reduced: boolean; readonly id: PartyProp; readonly size: number
 }) {
   const ref = useRef<HTMLCanvasElement>(null)
   const [painted, setPainted] = useState(false)

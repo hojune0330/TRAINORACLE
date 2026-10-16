@@ -1,7 +1,10 @@
 import React from 'react'
-import { ArrowLeft, Copy, Users, Trophy, Share2 } from 'lucide-react'
+import { ArrowLeft, Users } from 'lucide-react'
+import { PartyLobby } from './PartyLobby'
+import { PARTY_MODES, modeOf } from './arena-party'
 import { arenaEndpoint, arenaInvitation } from './arena-types'
-import type { ArenaSnapshot } from './arena-types'
+import type { ArenaSnapshot, ArenaMode } from './arena-types'
+import { GameModeArtwork } from './GameModeArtwork'
 import { createGameGestures } from './gestures'
 import { gamePalette } from './sprites'
 import { drawArena } from './arena-render'
@@ -17,21 +20,30 @@ const errors: Record<string, string> = {
   'room-full': '이미 두 명이 있는 방이에요. 원래 참가한 탭에서 다시 열어 주세요.',
   'in-progress': '경기 중인 방이에요. 이번 판이 끝나면 다시 입장해 주세요.',
   capacity: '지금 새 방을 만들 수 없어요. 잠시 뒤 다시 시도해 주세요.',
+  'client-update': '장애물 생존은 두 명 모두 최신 초대 링크로 접속해야 해요. 친구에게 이 방의 링크를 다시 전달해 주세요.',
 }
-export function FriendArena({ onBack }: { readonly onBack: () => void }) {
+export function FriendArena({ onBack, initialMode = 'push' }: { readonly onBack: () => void; readonly initialMode?: ArenaMode }) {
   const [name, setName] = React.useState(''), [attempt, setAttempt] = React.useState(0)
   const [snapshot, setSnapshot] = React.useState<ArenaSnapshot | null>(null), [self, setSelf] = React.useState('')
   const [status, setStatus] = React.useState(''), [connected, setConnected] = React.useState(false)
   const [leave, setLeave] = React.useState(false), [copied, setCopied] = React.useState(false)
   const [error, setError] = React.useState('')
   const room = React.useRef(arenaInvitation()), socket = React.useRef<WebSocket | null>(null)
+  const invited = React.useRef(!!room.current), appliedMode = React.useRef(false)
   const gestures = React.useRef(createGameGestures()), keyRun = React.useRef(false), seq = React.useRef(0)
   const latest = React.useRef(snapshot), idRef = React.useRef(self), canvas = React.useRef<HTMLCanvasElement>(null)
   latest.current = snapshot; idRef.current = self
   const game = snapshot?.game, playing = game?.phase === 'playing' || game?.phase === 'countdown'
-  const me = game?.players.find(p => p.id === self), member = snapshot?.members.find(p => p.id === self)
+  const me = game?.players.find(p => p.id === self)
+  const mode = snapshot ? modeOf(playing ? game?.mode : snapshot.mode) : initialMode
   const send = React.useCallback((value: object) => { if (socket.current?.readyState === WebSocket.OPEN) socket.current.send(JSON.stringify(value)) }, [])
   const input = React.useCallback((action?: 'jump' | 'dash') => send({ type: 'input', seq: ++seq.current, run: gestures.current.held || keyRun.current, action }), [send])
+  React.useEffect(() => {
+    if (!snapshot || !self || !connected || invited.current || appliedMode.current) return
+    appliedMode.current = true
+    // Only the new room owner applies the explicitly selected game. Invitations use the host's mode.
+    if (snapshot.host === self && snapshot.partyVersion === 2 && snapshot.mode !== initialMode) send({ type: 'mode', mode: initialMode })
+  }, [snapshot, self, connected, initialMode, send])
   const resetInput = React.useCallback(() => { gestures.current.reset(); keyRun.current = false; input() }, [input])
   const exit = () => {
     resetInput(); send({ type: 'leave' })
@@ -56,7 +68,7 @@ export function FriendArena({ onBack }: { readonly onBack: () => void }) {
         clearTimeout(timeout)
         let token: string | undefined
         try { token = room.current ? sessionStorage.getItem(`arena:${room.current}`) ?? undefined : undefined } catch { /* optional */ }
-        ws.send(JSON.stringify({ type: 'join', room: room.current, token, name }))
+        ws.send(JSON.stringify({ type: 'join', room: room.current, token, name, partyVersion: 2 }))
       }
       ws.onmessage = event => {
         if (disposed) return
@@ -138,43 +150,28 @@ export function FriendArena({ onBack }: { readonly onBack: () => void }) {
 
   const inviteUrl = snapshot ? `${location.origin}${location.pathname}?app=1#arena=${snapshot.room}` : ''
   const copy = async () => { try { await navigator.clipboard.writeText(inviteUrl); setCopied(true) } catch { setError('아래 초대 링크를 길게 눌러 복사해 주세요.') } }
-  const share = async () => { try { await navigator.share({ title: '90초 밀어내기 · 같이 한 판!', url: inviteUrl }) } catch { /* canceled share keeps the room */ } }
+  const share = async () => { try { await navigator.share({ title: '러닝 파티 · 같이 한 판!', url: inviteUrl }) } catch { /* canceled share keeps the room */ } }
   const point = (e: React.PointerEvent) => ({ x: e.clientX, y: e.clientY, time: performance.now() })
-  const canStart = connected && snapshot?.members.length === 2 && snapshot.members.every(m => m.ready && m.connected)
-  return <section className="treadmill-game friend-arena" data-screen={playing ? 'play' : 'map'} data-phase={game?.phase ?? 'lobby'}>
+  return <section className="treadmill-game friend-arena game-entry-surface" data-room={Boolean(snapshot)} data-screen={playing ? 'play' : 'map'} data-phase={game?.phase ?? 'lobby'}>
     <header className="treadmill-game__header">
       <button type="button" className="treadmill-game__icon" onClick={requestExit} aria-label="친구 경기 나가기"><ArrowLeft size={20} /></button>
-      <div className="treadmill-game__title"><span>친구와 1:1</span><h1>90초 밀어내기</h1></div><Users size={24} aria-hidden="true" />
+      <div className="treadmill-game__title"><span>친구와 1:1 · 개인 대결</span><h1>{invited.current && !snapshot ? '초대받은 게임' : PARTY_MODES[mode].name}</h1></div><Users size={24} aria-hidden="true" />
     </header>
     {error && <p role="alert" className="arena-error">{error}</p>}
     {!connected && attempt > 0 && <p role="status" className="arena-connection">{status} {playing && '경기는 계속돼요. 5초 이상 끊기면 무승부 중단됩니다.'}</p>}
     {!snapshot && <div className="arena-lobby">
-      <h2>{room.current ? '친구가 기다리고 있어요' : '떨어져도 다시 뛰어요'}</h2>
-      <p>90초 동안 더 많이 밀어 떨어뜨리세요.<br />몇 번 떨어져도 2초 뒤 다시 시작해요.</p>
+      {!invited.current && <GameModeArtwork mode={mode} />}
+      <h2>{room.current ? '초대받은 방에 입장해요' : '친구를 초대할 준비가 됐나요?'}</h2>
+      <p>{invited.current ? '입장하면 방장이 고른 게임을 확인할 수 있어요.' : PARTY_MODES[mode].goal}<br />두 명의 개인전 · 한 판 90초 · 떨어져도 다시 시작해요.</p>
       <label>게임에서 쓸 이름<input maxLength={12} value={name} placeholder="러너" onChange={e => setName(e.target.value)} autoComplete="off" /></label>
       <button className="treadmill-game__cta" disabled={!arenaEndpoint() || (attempt > 0 && !error)} onClick={() => setAttempt(n => n + 1)}>{room.current ? '초대받은 방 입장' : '방 만들고 친구 초대'}</button>
       {!arenaEndpoint() && <p role="status">친구 경기 서버를 준비 중이에요. 혼자 연습은 계속 이용할 수 있어요.</p>}
       <p className="arena-note">로그인 없이 2명 · 같은 조건 · 계정 포인트와 무관<br />서버 재시작 시 방과 기록이 종료될 수 있어요.</p>
     </div>}
-    {snapshot && !playing && <div className="arena-lobby">
-      {game?.phase === 'finished' && <><h2><Trophy size={24} /> 경기 종료</h2>
-        <ol className="arena-results" aria-label="최종 순위">{game.standings.map(p => <li key={p.id} data-rank={p.rank}>
-          <strong>{p.rank}위 · {snapshot.members.find(m => m.id === p.id)?.name ?? '러너'}{p.id === self ? ' (나)' : ''}</strong>
-          <span>밀어냄 {p.kos} · 낙하 {p.falls} · 회피 {p.dodges}</span></li>)}</ol>
-        <p>밀어낸 횟수 → 적은 낙하 순. 같으면 공동 순위예요.</p></>}
-      {game?.phase === 'interrupted' && <><h2>경기가 중단됐어요</h2><p>참가자 이탈 또는 서버 지연으로 승패를 정하지 않았어요. 다시 준비하면 같은 방에서 만날 수 있어요.</p></>}
-      {!game && <><h2>친구를 초대하세요</h2><p>두 명이 준비하면 방장이 출발해요.</p></>}
-      <ul className="arena-members">{snapshot.members.map(m => <li key={m.id} data-self={m.id === self}><strong>{m.name}{m.id === self ? ' (나)' : ''}</strong><span>{!m.connected ? '재접속 대기' : m.ready ? '준비 완료' : '준비 중'}</span></li>)}{snapshot.members.length < 2 && <li>친구 입장 기다리는 중…</li>}</ul>
-      <div className="arena-actions"><button className="treadmill-game__ghost" onClick={() => void copy()}><Copy size={16} />{copied ? '복사했어요' : '초대 링크 복사'}</button>{typeof navigator.share === 'function' && <button className="treadmill-game__ghost" onClick={() => void share()}><Share2 size={16} />공유</button>}</div>
-      <input className="arena-invite" aria-label="초대 링크" readOnly value={inviteUrl} onFocus={e => e.currentTarget.select()} />
-      <button className="treadmill-game__cta" disabled={!connected} onClick={() => send({ type: 'ready', ready: !member?.ready })}>{member?.ready ? '준비 취소' : game ? '한 판 더 · 준비' : '준비 완료'}</button>
-      {snapshot.host === self && <button className="treadmill-game__ghost" disabled={!canStart} onClick={() => send({ type: 'start' })}>함께 출발</button>}
-      <p className="arena-note">꾹 눌러 달리기 · 위로 스와이프해서 점프 · 두 번 눌러 밀치기<br />손을 떼지 않고 내렸다 다시 올려도 점프해요.<br />가까이서 대시하면 상대가 뒤로 밀려요. 점프로 피하세요.<br />키보드 → 달리기 · Space/↑ 점프 · D 밀치기</p>
-      {snapshot.history.length > 1 && <details><summary>이 방 최근 {snapshot.history.length}판 비교</summary>{snapshot.history.map(r => <p key={r.round}>{r.round}판 · {r.standings.map(p => `${p.name} ${p.rank}위 (${p.kos}밀어냄/${p.falls}낙하)`).join(' · ')}</p>)}</details>}
-    </div>}
+    {snapshot && !playing && <PartyLobby snapshot={snapshot} self={self} connected={connected} inviteUrl={inviteUrl} copied={copied} send={send} onCopy={() => void copy()} onShare={() => void share()} />}
     {playing && game && <div className="arena-field">
-      <canvas ref={canvas} aria-label="친구 밀어내기 경기장" tabIndex={0}
-        data-time={game.time.toFixed(2)} data-players={JSON.stringify(game.players)} data-self={self}
+      <canvas ref={canvas} aria-label="친구 파티 경기장" tabIndex={0}
+        data-time={game.time.toFixed(2)} data-players={JSON.stringify(game.players)} data-self={self} data-mode={mode}
         onContextMenu={e => e.preventDefault()}
         onPointerDown={e => { if (!connected || leave) return; e.currentTarget.setPointerCapture(e.pointerId); const dash = gestures.current.down(e.pointerId, point(e)); input(dash ? 'dash' : undefined) }}
         onPointerMove={e => { if (gestures.current.move(e.pointerId, point(e))) input('jump') }}
@@ -182,11 +179,11 @@ export function FriendArena({ onBack }: { readonly onBack: () => void }) {
         onPointerCancel={e => { gestures.current.cancel(e.pointerId); input() }}
         onLostPointerCapture={e => { gestures.current.cancel(e.pointerId); input() }} />
       <div className="arena-hud"><strong>{Math.ceil(game.duration - Math.max(0, game.time))}초</strong><span>시간 끝까지 무한 리젠</span>
-        <div className="arena-scoreboard">{game.players.map(p => <div key={p.id} data-self={p.id === self}><b>{snapshot.members.find(m => m.id === p.id)?.name}{p.id === self ? ' (나)' : ''}</b><span>밀어냄 {p.kos} · 낙하 {p.falls}</span></div>)}</div>
+        <div className="arena-scoreboard">{game.players.map(p => <div key={p.id} data-self={p.id === self}><b>{snapshot.members.find(m => m.id === p.id)?.name}{p.id === self ? ' (나)' : ''}</b><span>{mode === 'survival' ? `점프 회피 ${p.dodges}` : `밀어냄 ${p.kos}`} · 낙하 {p.falls}</span></div>)}</div>
         <label>내 에너지 {Math.ceil(me?.energy ?? 100)}<progress max={100} value={me?.energy ?? 100} /></label>
       </div>
       {game.phase === 'countdown' && <div className="arena-countdown" role="status"><strong>{Math.max(1, Math.ceil(-game.time))}</strong><span>같이 출발!</span></div>}
-      <div className="arena-hints">꾹 달리기 · ↗ 점프 · 두 번 밀치기<br />{me && game.time < me.protectedUntil ? '복귀 보호 · 서로 밀칠 수 없어요' : me && me.cooldownUntil > game.time ? `밀치기 ${Math.ceil(me.cooldownUntil - game.time)}초 뒤` : '가까이서 대시 → 상대 밀어내기'}</div>
+      <div className="arena-hints">꾹 달리기 · ↗ 점프 · 두 번 {mode === 'survival' ? '대시' : '밀치기'}<br />{mode === 'survival' ? '낙하를 줄이고 장애물을 점프로 넘으세요' : me && game.time < me.protectedUntil ? '복귀 보호 · 서로 밀칠 수 없어요' : me && me.cooldownUntil > game.time ? `밀치기 ${Math.ceil(me.cooldownUntil - game.time)}초 뒤` : '가까이서 대시 → 상대 밀어내기'}</div>
     </div>}
     {snapshot && !connected && error && <button className="treadmill-game__ghost" onClick={() => setAttempt(n => n + 1)}>다시 연결</button>}
     {leave && <GameLeaveDialog title="친구 경기에서 나갈까요?" onCancel={() => setLeave(false)}><p>경기는 지금도 계속돼요. 나가면 이번 판은 승패 없이 중단돼요. 경기 중간 저장은 제공하지 않아요.</p><button className="treadmill-game__cta" onClick={exit}>경기 나가기</button></GameLeaveDialog>}

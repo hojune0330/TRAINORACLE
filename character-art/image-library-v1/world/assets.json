@@ -1,0 +1,362 @@
+[
+  {
+    "id": "world-tree-broadleaf",
+    "file": "world-tree-broadleaf.png",
+    "nameKo": "둥근 활엽수",
+    "role": "환경 장식 및 경로 경계",
+    "tripoCandidate": true,
+    "status": "generated-visual-and-alpha-inspected",
+    "qaNotes": "큰 잎 덩어리 4개와 짧은 줄기. 미세 잎·껍질 묘사 없음. 1254×1254 RGBA 원본 보존. 알파≥128 실루엣은 캔버스 경계에 닿지 않음. 대부분 물체 픽셀 알파는253–254이며 원본 유지. 64px 갤러리 최종 비교는 통합 담당 검수 대상.",
+    "tool": "image_gen.imagegen (built-in)",
+    "generatedDate": "2026-10-16",
+    "sourceGeneratedFile": "exec-46db861d-7a1c-4656-99fa-3528008ad46d.png",
+    "seed": null,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "0c5f9131b6db1f255e943f3c033768ededcbcc9966fc79c7c7c7e64183e328de",
+    "alpha": {
+      "fullyTransparentPixels": 889559,
+      "semiTransparentPixels": 680984,
+      "fullyOpaquePixels": 1973,
+      "alpha250plusPixels": 666640,
+      "bboxAnyAlpha": [
+        23,
+        47,
+        1198,
+        1228
+      ],
+      "bboxAlpha128": [
+        91,
+        78,
+        1166,
+        1171
+      ],
+      "edgeNonzero": 0,
+      "edgeAlpha128": 0
+    }
+  },
+  {
+    "id": "world-rock-cluster",
+    "file": "world-rock-cluster.png",
+    "nameKo": "바위 무더기",
+    "role": "경로 장애물",
+    "tripoCandidate": true,
+    "status": "generated-visual-and-alpha-inspected",
+    "qaNotes": "서로 맞닿은 바위 3개. 큰 청회색 면으로 구별됨. 1254×1254 RGBA 원본 보존. 알파≥128 실루엣은 캔버스 경계에 닿지 않음. 대부분 물체 픽셀 알파는253–254이며 원본 유지. 64px 갤러리 최종 비교는 통합 담당 검수 대상.",
+    "tool": "image_gen.imagegen (built-in)",
+    "generatedDate": "2026-10-16",
+    "sourceGeneratedFile": "exec-80efd1b7-aec9-476e-8615-6e5e2561b7d1.png",
+    "seed": null,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "54e57986ecdd63e585abcefbd3f5e104dcf0edde7b75ff7f10f06ae76bd2f3d0",
+    "alpha": {
+      "fullyTransparentPixels": 957314,
+      "semiTransparentPixels": 614415,
+      "fullyOpaquePixels": 787,
+      "alpha250plusPixels": 601681,
+      "bboxAnyAlpha": [
+        56,
+        7,
+        1206,
+        1254
+      ],
+      "bboxAlpha128": [
+        194,
+        155,
+        1107,
+        1099
+      ],
+      "edgeNonzero": 68,
+      "edgeAlpha128": 0
+    }
+  },
+  {
+    "id": "world-road-barrier",
+    "file": "world-road-barrier.png",
+    "nameKo": "도로 차단대",
+    "role": "경로 차단 장애물",
+    "tripoCandidate": true,
+    "status": "generated-visual-and-alpha-inspected",
+    "qaNotes": "불투명 차단 판과 두 받침. 흰 사선 2개로 차단대 역할 식별. 1254×1254 RGBA 원본 보존. 알파≥128 실루엣은 캔버스 경계에 닿지 않음. 대부분 물체 픽셀 알파는253–254이며 원본 유지. 64px 갤러리 최종 비교는 통합 담당 검수 대상.",
+    "tool": "image_gen.imagegen (built-in)",
+    "generatedDate": "2026-10-16",
+    "sourceGeneratedFile": "exec-b0a33b4f-dd91-41f6-9527-0f0b9ee7f772.png",
+    "seed": null,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "ddf78800bbefe8321b6305745958a62853adc861323b911fafb67e97c8a7b376",
+    "alpha": {
+      "fullyTransparentPixels": 1043285,
+      "semiTransparentPixels": 527672,
+      "fullyOpaquePixels": 1559,
+      "alpha250plusPixels": 510336,
+      "bboxAnyAlpha": [
+        53,
+        23,
+        1188,
+        1254
+      ],
+      "bboxAlpha128": [
+        80,
+        166,
+        1185,
+        1124
+      ],
+      "edgeNonzero": 11,
+      "edgeAlpha128": 0
+    }
+  },
+  {
+    "id": "world-jump-hurdle",
+    "file": "world-jump-hurdle.png",
+    "nameKo": "점프 허들",
+    "role": "점프 장애물",
+    "tripoCandidate": true,
+    "status": "generated-visual-and-alpha-inspected",
+    "qaNotes": "가로대 아래 공간이 열려 있으며 두 발이 분리되어 보임. 1254×1254 RGBA 원본 보존. 알파≥128 실루엣은 캔버스 경계에 닿지 않음. 대부분 물체 픽셀 알파는253–254이며 원본 유지. 64px 갤러리 최종 비교는 통합 담당 검수 대상.",
+    "tool": "image_gen.imagegen (built-in)",
+    "generatedDate": "2026-10-16",
+    "sourceGeneratedFile": "exec-bb99f872-1dd2-47da-9f71-946b323c8c5f.png",
+    "seed": null,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "2c1ef71f1bf62d1dfb23d9e8ed4c99f855f8220a53167d9e91e0fa6a6dbadabb",
+    "alpha": {
+      "fullyTransparentPixels": 1196167,
+      "semiTransparentPixels": 374863,
+      "fullyOpaquePixels": 1486,
+      "alpha250plusPixels": 349426,
+      "bboxAnyAlpha": [
+        0,
+        25,
+        1206,
+        1254
+      ],
+      "bboxAlpha128": [
+        100,
+        115,
+        1159,
+        1162
+      ],
+      "edgeNonzero": 26,
+      "edgeAlpha128": 0
+    }
+  },
+  {
+    "id": "world-bounce-pad",
+    "file": "world-bounce-pad.png",
+    "nameKo": "바운스 패드",
+    "role": "점프 보조 지형",
+    "tripoCandidate": true,
+    "status": "generated-visual-and-alpha-inspected",
+    "qaNotes": "두꺼운 패드와 중앙 금색 셰브론. 바운스 기능 인지용. 1254×1254 RGBA 원본 보존. 알파≥128 실루엣은 캔버스 경계에 닿지 않음. 대부분 물체 픽셀 알파는253–254이며 원본 유지. 64px 갤러리 최종 비교는 통합 담당 검수 대상.",
+    "tool": "image_gen.imagegen (built-in)",
+    "generatedDate": "2026-10-16",
+    "sourceGeneratedFile": "exec-08d09a4b-5549-4ec9-b521-ddd23f14adc7.png",
+    "seed": null,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "4678c1017e41b3eb8ac7461af03c179ff2c612f7a3b652a190093cc43dc12c99",
+    "alpha": {
+      "fullyTransparentPixels": 856099,
+      "semiTransparentPixels": 715358,
+      "fullyOpaquePixels": 1059,
+      "alpha250plusPixels": 703671,
+      "bboxAnyAlpha": [
+        0,
+        63,
+        1213,
+        1188
+      ],
+      "bboxAlpha128": [
+        44,
+        195,
+        1210,
+        1074
+      ],
+      "edgeNonzero": 11,
+      "edgeAlpha128": 0
+    }
+  },
+  {
+    "id": "world-rotating-sweeper",
+    "file": "world-rotating-sweeper.png",
+    "nameKo": "회전 스위퍼",
+    "role": "회전 회피 장애물",
+    "tripoCandidate": true,
+    "status": "generated-visual-and-alpha-inspected",
+    "qaNotes": "중앙 허브와 반대 방향 막대 2개가 한 유닛으로 연결됨. 좌우 여백이 좁음. 1254×1254 RGBA 원본 보존. 알파≥128 실루엣은 캔버스 경계에 닿지 않음. 대부분 물체 픽셀 알파는253–254이며 원본 유지. 64px 갤러리 최종 비교는 통합 담당 검수 대상.",
+    "tool": "image_gen.imagegen (built-in)",
+    "generatedDate": "2026-10-16",
+    "sourceGeneratedFile": "exec-5158cb9a-5157-43fd-874a-9a4ccc2f99a0.png",
+    "seed": null,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "9056a147a90ba1ab630134d40ce6948e00f628d8a35a4addef25424845a22e70",
+    "alpha": {
+      "fullyTransparentPixels": 1271440,
+      "semiTransparentPixels": 300045,
+      "fullyOpaquePixels": 1031,
+      "alpha250plusPixels": 286180,
+      "bboxAnyAlpha": [
+        14,
+        164,
+        1244,
+        1228
+      ],
+      "bboxAlpha128": [
+        19,
+        288,
+        1241,
+        973
+      ],
+      "edgeNonzero": 0,
+      "edgeAlpha128": 0
+    }
+  },
+  {
+    "id": "world-respawn-beacon",
+    "file": "world-respawn-beacon.png",
+    "nameKo": "리스폰 비콘",
+    "role": "재시작 지점 표식",
+    "tripoCandidate": true,
+    "status": "generated-visual-and-alpha-inspected",
+    "qaNotes": "아치와 받침, 중앙 금색 다이아몬드가 연결됨. 생성 원본의 아주 약한 알파 잔여 있음. 1254×1254 RGBA 원본 보존. 알파≥128 실루엣은 캔버스 경계에 닿지 않음. 대부분 물체 픽셀 알파는253–254이며 원본 유지. 64px 갤러리 최종 비교는 통합 담당 검수 대상.",
+    "tool": "image_gen.imagegen (built-in)",
+    "generatedDate": "2026-10-16",
+    "sourceGeneratedFile": "exec-cee2c74b-f477-48e8-90af-be0ba697d99b.png",
+    "seed": null,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "b37d4f91bb356ae783f5536ae14bf72215d0209a848b72a56931965c95f342cc",
+    "alpha": {
+      "fullyTransparentPixels": 949766,
+      "semiTransparentPixels": 620336,
+      "fullyOpaquePixels": 2414,
+      "alpha250plusPixels": 600717,
+      "bboxAnyAlpha": [
+        31,
+        3,
+        1241,
+        1254
+      ],
+      "bboxAlpha128": [
+        174,
+        120,
+        1097,
+        1152
+      ],
+      "edgeNonzero": 40,
+      "edgeAlpha128": 0
+    }
+  },
+  {
+    "id": "world-short-bridge",
+    "file": "world-short-bridge.png",
+    "nameKo": "짧은 다리",
+    "role": "틈 통과 연결 지형",
+    "tripoCandidate": true,
+    "status": "generated-visual-and-alpha-inspected",
+    "qaNotes": "짧고 굵은 경간·난간·양끝 진입부. 데크는 요청보다 한 구획 더 나뉘어 보임. 1254×1254 RGBA 원본 보존. 알파≥128 실루엣은 캔버스 경계에 닿지 않음. 대부분 물체 픽셀 알파는253–254이며 원본 유지. 64px 갤러리 최종 비교는 통합 담당 검수 대상.",
+    "tool": "image_gen.imagegen (built-in)",
+    "generatedDate": "2026-10-16",
+    "sourceGeneratedFile": "exec-de7a9488-75a7-4368-a3bd-5e9bd6cd436f.png",
+    "seed": null,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "55c3e9a51d7663beb8ee7360308655ed428adc2c0aabaf6ab319a43768aaf24c",
+    "alpha": {
+      "fullyTransparentPixels": 975203,
+      "semiTransparentPixels": 595382,
+      "fullyOpaquePixels": 1931,
+      "alpha250plusPixels": 579789,
+      "bboxAnyAlpha": [
+        0,
+        41,
+        1219,
+        1254
+      ],
+      "bboxAlpha128": [
+        23,
+        136,
+        1215,
+        1095
+      ],
+      "edgeNonzero": 36,
+      "edgeAlpha128": 0
+    }
+  },
+  {
+    "id": "world-mud-patch",
+    "file": "world-mud-patch.png",
+    "nameKo": "진흙 구간",
+    "role": "감속 지형",
+    "tripoCandidate": false,
+    "status": "generated-visual-and-alpha-inspected",
+    "qaNotes": "갈색 슬래브와 큰 진흙 무늬 3개. 자체 지형만 포함. 1254×1254 RGBA 원본 보존. 알파≥128 실루엣은 캔버스 경계에 닿지 않음. 대부분 물체 픽셀 알파는253–254이며 원본 유지. 64px 갤러리 최종 비교는 통합 담당 검수 대상.",
+    "tool": "image_gen.imagegen (built-in)",
+    "generatedDate": "2026-10-16",
+    "sourceGeneratedFile": "exec-9bb06417-0609-4f2a-81c9-7a88401ff939.png",
+    "seed": null,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "430fee325e79bc5532964db7fa664be3afb1a4f11b8d5e45de1eaec43da374ae",
+    "alpha": {
+      "fullyTransparentPixels": 960628,
+      "semiTransparentPixels": 610407,
+      "fullyOpaquePixels": 1481,
+      "alpha250plusPixels": 586948,
+      "bboxAnyAlpha": [
+        25,
+        164,
+        1238,
+        1190
+      ],
+      "bboxAlpha128": [
+        28,
+        290,
+        1230,
+        973
+      ],
+      "edgeNonzero": 0,
+      "edgeAlpha128": 0
+    }
+  },
+  {
+    "id": "world-grass-island",
+    "file": "world-grass-island.png",
+    "nameKo": "잔디 섬",
+    "role": "안전 착지 지형",
+    "tripoCandidate": true,
+    "status": "generated-visual-and-alpha-inspected",
+    "qaNotes": "큰 초록 상판과 흙 측면, 뒤쪽 삼각 풀 3개. 풀 끝은 굵은 입체 덩어리로 표현됨. 1254×1254 RGBA 원본 보존. 알파≥128 실루엣은 캔버스 경계에 닿지 않음. 대부분 물체 픽셀 알파는253–254이며 원본 유지. 64px 갤러리 최종 비교는 통합 담당 검수 대상.",
+    "tool": "image_gen.imagegen (built-in)",
+    "generatedDate": "2026-10-16",
+    "sourceGeneratedFile": "exec-bd1a6b8e-31c7-4266-bf2d-eeaa48483ce0.png",
+    "seed": null,
+    "width": 1254,
+    "height": 1254,
+    "sha256": "4b3d66e911131b532a9ecdcf3c6f4ac198560a504a9d6bce6f83d1ce31b848cd",
+    "alpha": {
+      "fullyTransparentPixels": 876146,
+      "semiTransparentPixels": 695171,
+      "fullyOpaquePixels": 1199,
+      "alpha250plusPixels": 681431,
+      "bboxAnyAlpha": [
+        73,
+        47,
+        1198,
+        1142
+      ],
+      "bboxAlpha128": [
+        76,
+        131,
+        1177,
+        1134
+      ],
+      "edgeNonzero": 0,
+      "edgeAlpha128": 0
+    }
+  }
+]

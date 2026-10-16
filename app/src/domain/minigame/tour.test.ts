@@ -1,14 +1,16 @@
 import { describe, expect, it } from "vitest"
-import { advanceTreadmill, nearestHazard, newTreadmillRun, treadmillCommand, treadmillCourseSeconds, TREADMILL_RULES, TREADMILL_STAGES } from "./treadmill"
+import { advanceTreadmill, nearestHazard, newTreadmillRun, treadmillCommand, treadmillAidStop, treadmillCourseSeconds, TREADMILL_RULES, TREADMILL_STAGES } from "./treadmill"
 import type { TreadmillStage, TreadmillState, TreadmillUpgrade } from "./treadmill"
 import { TOUR_CITIES, TOUR_SEASONS, citiesOf, tourCity, tourStages } from "./tour"
 
 type Strategy = (state: TreadmillState) => TreadmillState
 const player = (target: number, reserve: number, gap: number): Strategy => state => {
   let next = state
-  const want = (next.x < target && next.energy > reserve) || (next.x < 0.22 && next.energy > 0)
+  const ahead = nearestHazard(next), stop = treadmillAidStop(next)
+  const restForAid = stop.open && !stop.claimed && next.x > .11 && (next.energy < 95 || next.aid.rest > 0)
+    && next.y === 0 && (!ahead || ahead.x - next.x > (next.aid.rest > 0 ? .08 : .18))
+  const want = !restForAid && ((next.x < target && next.energy > reserve) || (next.x < 0.22 && next.energy > 0))
   if (want !== next.running) next = treadmillCommand(next, { type: "run", held: want })
-  const ahead = nearestHazard(next)
   if (ahead && ahead.x - next.x < gap) next = treadmillCommand(next, { type: "jump" })
   if (next.x < 0.16) next = treadmillCommand(next, { type: "dash" })
   return next

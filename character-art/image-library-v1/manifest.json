@@ -1,0 +1,1304 @@
+{
+  "schemaVersion": 1,
+  "collection": "image-library-v1",
+  "date": "2026-10-16",
+  "sourceBaseline": "d9cbcceafb14201d82b1137976536107e71e0f01",
+  "producerModel": "gpt-6.1-sol",
+  "imageTool": "built-in image_gen",
+  "plannedCount": 30,
+  "tripoCallsThisBatch": 0,
+  "assets": [
+    {
+      "id": "td-rapid-tower",
+      "group": "defense",
+      "nameKo": "연사탑",
+      "role": "빠른 단일 공격 타워",
+      "file": "defense/td-rapid-tower.png",
+      "tripoStage": "1단계",
+      "status": "image-produced",
+      "runtimeIntegrated": true,
+      "runtimeUsage": "primary-connected",
+      "bytes": 811215,
+      "sha256": "e367b2f52e404cf2953382863ec5330bff27b574c81459c048f9cb634f900b63",
+      "visualReview": "긴 단포신, 틸색 본체. 전체 형태·무기 방향·기본 받침 확인.",
+      "fileAudit": {
+        "id": "td-rapid-tower",
+        "file": "defense/td-rapid-tower.png",
+        "format": "PNG",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "sha256": "e367b2f52e404cf2953382863ec5330bff27b574c81459c048f9cb634f900b63",
+        "bytes": 811215,
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "cornerAlpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "transparentPixels": 927765,
+        "transparentFraction": 0.59,
+        "visibleBoundsAlphaAbove16": [
+          186,
+          148,
+          1128,
+          1127
+        ],
+        "runtimeIntegrated": false
+      }
+    },
+    {
+      "id": "td-cannon-tower",
+      "group": "defense",
+      "nameKo": "포격탑",
+      "role": "장갑 대응·범위 공격 타워",
+      "file": "defense/td-cannon-tower.png",
+      "tripoStage": "1단계",
+      "status": "image-produced",
+      "runtimeIntegrated": true,
+      "runtimeUsage": "primary-connected",
+      "bytes": 876632,
+      "sha256": "06749f095b03670d4d6b3fd47ebe9be9513e17adc41e84fba1864842af522e01",
+      "visualReview": "짧고 넓은 단일 포구, 코럴 본체. 연사형과 구분 확인.",
+      "fileAudit": {
+        "id": "td-cannon-tower",
+        "file": "defense/td-cannon-tower.png",
+        "format": "PNG",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "sha256": "06749f095b03670d4d6b3fd47ebe9be9513e17adc41e84fba1864842af522e01",
+        "bytes": 876632,
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "cornerAlpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "transparentPixels": 848720,
+        "transparentFraction": 0.5397,
+        "visibleBoundsAlphaAbove16": [
+          159,
+          151,
+          1112,
+          1152
+        ],
+        "runtimeIntegrated": false
+      }
+    },
+    {
+      "id": "td-frost-tower",
+      "group": "defense",
+      "nameKo": "냉각탑",
+      "role": "감속 타워",
+      "file": "defense/td-frost-tower.png",
+      "tripoStage": "1단계",
+      "status": "image-produced",
+      "runtimeIntegrated": true,
+      "runtimeUsage": "primary-connected",
+      "bytes": 699129,
+      "sha256": "cbccbf6b4f4d426094eb7f8dce967a77e1d998d915bf0abe0f067fffa062d236",
+      "visualReview": "큰 수정 실루엣 확인. 받침 외곽의 옅은 프린지는 어두운 배경에서 보일 수 있음.",
+      "fileAudit": {
+        "id": "td-frost-tower",
+        "file": "defense/td-frost-tower.png",
+        "format": "PNG",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "sha256": "cbccbf6b4f4d426094eb7f8dce967a77e1d998d915bf0abe0f067fffa062d236",
+        "bytes": 699129,
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "cornerAlpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "transparentPixels": 1033595,
+        "transparentFraction": 0.6573,
+        "visibleBoundsAlphaAbove16": [
+          236,
+          120,
+          1019,
+          1159
+        ],
+        "runtimeIntegrated": false
+      }
+    },
+    {
+      "id": "td-rapid-tower-upgraded",
+      "group": "defense",
+      "nameKo": "강화 연사탑",
+      "role": "연사탑의 시각적 강화 구분",
+      "file": "defense/td-rapid-tower-upgraded.png",
+      "tripoStage": "2단계",
+      "status": "image-produced",
+      "runtimeIntegrated": true,
+      "runtimeUsage": "primary-connected",
+      "bytes": 924034,
+      "sha256": "04f54253f7c15de9ab84823b915e332fec3bb980d726acb0c8eea18b68ac1355",
+      "visualReview": "쌍포와 금색 띠 확인. 기본형의 받침·색·시점 유지.",
+      "fileAudit": {
+        "id": "td-rapid-tower-upgraded",
+        "file": "defense/td-rapid-tower-upgraded.png",
+        "format": "PNG",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "sha256": "04f54253f7c15de9ab84823b915e332fec3bb980d726acb0c8eea18b68ac1355",
+        "bytes": 924034,
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "cornerAlpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "transparentPixels": 844305,
+        "transparentFraction": 0.5369,
+        "visibleBoundsAlphaAbove16": [
+          143,
+          139,
+          1175,
+          1157
+        ],
+        "runtimeIntegrated": false
+      }
+    },
+    {
+      "id": "td-cannon-tower-upgraded",
+      "group": "defense",
+      "nameKo": "강화 포격탑",
+      "role": "포격탑의 시각적 강화 구분",
+      "file": "defense/td-cannon-tower-upgraded.png",
+      "tripoStage": "2단계",
+      "status": "image-produced",
+      "runtimeIntegrated": true,
+      "runtimeUsage": "primary-connected",
+      "bytes": 909257,
+      "sha256": "ba90345d194ff8ed70f2732b92e0e407b8cff565f1aea6a5500e53ad0138cf70",
+      "visualReview": "넓고 짧은 이중 포구와 금색 띠 확인.",
+      "fileAudit": {
+        "id": "td-cannon-tower-upgraded",
+        "file": "defense/td-cannon-tower-upgraded.png",
+        "format": "PNG",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "sha256": "ba90345d194ff8ed70f2732b92e0e407b8cff565f1aea6a5500e53ad0138cf70",
+        "bytes": 909257,
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "cornerAlpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "transparentPixels": 815743,
+        "transparentFraction": 0.5188,
+        "visibleBoundsAlphaAbove16": [
+          152,
+          144,
+          1140,
+          1153
+        ],
+        "runtimeIntegrated": false
+      }
+    },
+    {
+      "id": "td-frost-tower-upgraded",
+      "group": "defense",
+      "nameKo": "강화 냉각탑",
+      "role": "냉각탑의 시각적 강화 구분",
+      "file": "defense/td-frost-tower-upgraded.png",
+      "tripoStage": "2단계",
+      "status": "image-produced",
+      "runtimeIntegrated": true,
+      "runtimeUsage": "primary-connected",
+      "bytes": 727360,
+      "sha256": "e20beb5fc6e5d902f773229be3d599517b55aa70b35186b628383fa39c7604b4",
+      "visualReview": "큰 수정 세 갈래와 금색 고리로 강화 구분. 세로 점유율이 약87%로 목표75%보다 큼.",
+      "fileAudit": {
+        "id": "td-frost-tower-upgraded",
+        "file": "defense/td-frost-tower-upgraded.png",
+        "format": "PNG",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "sha256": "e20beb5fc6e5d902f773229be3d599517b55aa70b35186b628383fa39c7604b4",
+        "bytes": 727360,
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "cornerAlpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "transparentPixels": 1002571,
+        "transparentFraction": 0.6376,
+        "visibleBoundsAlphaAbove16": [
+          236,
+          99,
+          1021,
+          1186
+        ],
+        "runtimeIntegrated": false
+      }
+    },
+    {
+      "id": "td-enemy-scout",
+      "group": "defense",
+      "nameKo": "정찰 적",
+      "role": "보통 적의 이동 표식",
+      "file": "defense/td-enemy-scout.png",
+      "tripoStage": "3단계",
+      "status": "image-produced",
+      "runtimeIntegrated": true,
+      "runtimeUsage": "primary-connected",
+      "bytes": 548632,
+      "sha256": "31537750ea6cbf0df49bc7deddf6e969fbdd849161bb05fec19cd079cff5624b",
+      "visualReview": "둥근 틸색 몸, 네 다리 구조(원근상 3개 주로 보임), 아이보리 얼굴, 우하향 확인.",
+      "fileAudit": {
+        "id": "td-enemy-scout",
+        "file": "defense/td-enemy-scout.png",
+        "format": "PNG",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "sha256": "31537750ea6cbf0df49bc7deddf6e969fbdd849161bb05fec19cd079cff5624b",
+        "bytes": 548632,
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "cornerAlpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "transparentPixels": 1144053,
+        "transparentFraction": 0.7275,
+        "visibleBoundsAlphaAbove16": [
+          203,
+          206,
+          1069,
+          1029
+        ],
+        "runtimeIntegrated": false
+      }
+    },
+    {
+      "id": "td-enemy-swift",
+      "group": "defense",
+      "nameKo": "질주 적",
+      "role": "빠른 적의 이동 표식",
+      "file": "defense/td-enemy-swift.png",
+      "tripoStage": "3단계",
+      "status": "image-produced",
+      "runtimeIntegrated": true,
+      "runtimeUsage": "primary-connected",
+      "bytes": 532285,
+      "sha256": "0e8152e1cded5e86d366547161c2eed38fb246149381e33f44026698ee14c2b8",
+      "visualReview": "길고 낮은 금색 몸, 뒤로 젖힌 두 귀, 네 다리, 우하향 확인.",
+      "fileAudit": {
+        "id": "td-enemy-swift",
+        "file": "defense/td-enemy-swift.png",
+        "format": "PNG",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "sha256": "0e8152e1cded5e86d366547161c2eed38fb246149381e33f44026698ee14c2b8",
+        "bytes": 532285,
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "cornerAlpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "transparentPixels": 1220086,
+        "transparentFraction": 0.7759,
+        "visibleBoundsAlphaAbove16": [
+          218,
+          193,
+          1121,
+          1028
+        ],
+        "runtimeIntegrated": false
+      }
+    },
+    {
+      "id": "td-enemy-armored",
+      "group": "defense",
+      "nameKo": "장갑 적",
+      "role": "장갑 적의 방어 특성 표식",
+      "file": "defense/td-enemy-armored.png",
+      "tripoStage": "3단계",
+      "status": "image-produced",
+      "runtimeIntegrated": true,
+      "runtimeUsage": "primary-connected",
+      "bytes": 889483,
+      "sha256": "bfe84c40c7c1121ee1a60bc6e0c5b6059ba7a82a4e12df78280357f74200a295",
+      "visualReview": "넓은 코럴 장갑 등판과 굵은 네 다리, 우하향 확인. 좌우 투명 여백이 좁아 목표75% 점유와 차이.",
+      "fileAudit": {
+        "id": "td-enemy-armored",
+        "file": "defense/td-enemy-armored.png",
+        "format": "PNG",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "sha256": "bfe84c40c7c1121ee1a60bc6e0c5b6059ba7a82a4e12df78280357f74200a295",
+        "bytes": 889483,
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "cornerAlpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "transparentPixels": 850944,
+        "transparentFraction": 0.5411,
+        "visibleBoundsAlphaAbove16": [
+          37,
+          160,
+          1232,
+          1097
+        ],
+        "runtimeIntegrated": false
+      }
+    },
+    {
+      "id": "td-enemy-boss",
+      "group": "defense",
+      "nameKo": "대장 적",
+      "role": "마지막 웨이브의 대형 적",
+      "file": "defense/td-enemy-boss.png",
+      "tripoStage": "3단계",
+      "status": "image-produced",
+      "runtimeIntegrated": true,
+      "runtimeUsage": "primary-connected",
+      "bytes": 796763,
+      "sha256": "ec7934acb6b0f91d4b59dd94931603c033ab959c415533dd50d09a20e2966f8a",
+      "visualReview": "남색 큰 몸·금색 왕관·굵은 다리·우하향 확인. 일반 적과 실루엣 차이.",
+      "fileAudit": {
+        "id": "td-enemy-boss",
+        "file": "defense/td-enemy-boss.png",
+        "format": "PNG",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "sha256": "ec7934acb6b0f91d4b59dd94931603c033ab959c415533dd50d09a20e2966f8a",
+        "bytes": 796763,
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "cornerAlpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "transparentPixels": 1002938,
+        "transparentFraction": 0.6378,
+        "visibleBoundsAlphaAbove16": [
+          163,
+          147,
+          1118,
+          1133
+        ],
+        "runtimeIntegrated": false
+      }
+    },
+    {
+      "id": "td-base-gate",
+      "group": "defense",
+      "nameKo": "기지 관문",
+      "role": "방어 목표·경로 출구",
+      "file": "defense/td-base-gate.png",
+      "tripoStage": "1단계",
+      "status": "image-produced",
+      "runtimeIntegrated": true,
+      "runtimeUsage": "primary-connected",
+      "bytes": 622498,
+      "sha256": "6c30284436435ec9e071c8816d7e1c2c988e74c4385b869b76ab14fb0a0bee5d",
+      "visualReview": "작은 아이보리 성문·틸 띠·닫힌 문 확인. 정면 방향은 요청 우하향보다 좌하향에 가까움. 상단 옅은 프린지 가능.",
+      "fileAudit": {
+        "id": "td-base-gate",
+        "file": "defense/td-base-gate.png",
+        "format": "PNG",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "sha256": "6c30284436435ec9e071c8816d7e1c2c988e74c4385b869b76ab14fb0a0bee5d",
+        "bytes": 622498,
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "cornerAlpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "transparentPixels": 1072846,
+        "transparentFraction": 0.6822,
+        "visibleBoundsAlphaAbove16": [
+          232,
+          201,
+          1078,
+          1140
+        ],
+        "runtimeIntegrated": false
+      }
+    },
+    {
+      "id": "td-build-pad",
+      "group": "defense",
+      "nameKo": "건설 받침",
+      "role": "타워 설치 지점",
+      "file": "defense/td-build-pad.png",
+      "tripoStage": "기존 도형 유지 가능",
+      "status": "image-produced",
+      "runtimeIntegrated": true,
+      "runtimeUsage": "primary-connected",
+      "bytes": 724025,
+      "sha256": "85e9ba3d7ff81776787797cc6d1d402f2ab1b1e87b36a116e0c2d5ffa735f7bf",
+      "visualReview": "비어 있는 틸색 상판·아이보리 팔각 받침 확인. 외곽 일부 옅은 프린지 가능.",
+      "fileAudit": {
+        "id": "td-build-pad",
+        "file": "defense/td-build-pad.png",
+        "format": "PNG",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "sha256": "85e9ba3d7ff81776787797cc6d1d402f2ab1b1e87b36a116e0c2d5ffa735f7bf",
+        "bytes": 724025,
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "cornerAlpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "transparentPixels": 962176,
+        "transparentFraction": 0.6119,
+        "visibleBoundsAlphaAbove16": [
+          111,
+          275,
+          1143,
+          1030
+        ],
+        "runtimeIntegrated": false
+      }
+    },
+    {
+      "id": "world-tree-broadleaf",
+      "group": "world",
+      "nameKo": "둥근 나무",
+      "role": "전장·공원 주변 배경",
+      "file": "world/world-tree-broadleaf.png",
+      "tripoStage": "기존 모델 비교 후 결정",
+      "status": "image-produced",
+      "runtimeIntegrated": true,
+      "runtimeUsage": "primary-connected",
+      "bytes": 838510,
+      "sha256": "0c5f9131b6db1f255e943f3c033768ededcbcc9966fc79c7c7c7e64183e328de",
+      "visualReview": "큰 잎 덩어리 4개와 짧은 줄기. 미세 잎·껍질 묘사 없음. 1254×1254 RGBA 원본 보존. 알파≥128 실루엣은 캔버스 경계에 닿지 않음. 대부분 물체 픽셀 알파는253–254이며 원본 유지. 64px 갤러리 최종 비교는 통합 담당 검수 대상.",
+      "fileAudit": {
+        "id": "world-tree-broadleaf",
+        "file": "world/world-tree-broadleaf.png",
+        "format": "PNG",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "sha256": "0c5f9131b6db1f255e943f3c033768ededcbcc9966fc79c7c7c7e64183e328de",
+        "bytes": 838510,
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "cornerAlpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "transparentPixels": 889559,
+        "transparentFraction": 0.5657,
+        "visibleBoundsAlphaAbove16": [
+          90,
+          77,
+          1166,
+          1172
+        ],
+        "runtimeIntegrated": false
+      }
+    },
+    {
+      "id": "world-rock-cluster",
+      "group": "world",
+      "nameKo": "바위 묶음",
+      "role": "길 가장자리 배경·장애물",
+      "file": "world/world-rock-cluster.png",
+      "tripoStage": "기존 모델 비교 후 결정",
+      "status": "image-produced",
+      "runtimeIntegrated": true,
+      "runtimeUsage": "fallback-connected",
+      "bytes": 766388,
+      "sha256": "54e57986ecdd63e585abcefbd3f5e104dcf0edde7b75ff7f10f06ae76bd2f3d0",
+      "visualReview": "서로 맞닿은 바위 3개. 큰 청회색 면으로 구별됨. 1254×1254 RGBA 원본 보존. 알파≥128 실루엣은 캔버스 경계에 닿지 않음. 대부분 물체 픽셀 알파는253–254이며 원본 유지. 64px 갤러리 최종 비교는 통합 담당 검수 대상.",
+      "fileAudit": {
+        "id": "world-rock-cluster",
+        "file": "world/world-rock-cluster.png",
+        "format": "PNG",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "sha256": "54e57986ecdd63e585abcefbd3f5e104dcf0edde7b75ff7f10f06ae76bd2f3d0",
+        "bytes": 766388,
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "cornerAlpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "transparentPixels": 957314,
+        "transparentFraction": 0.6088,
+        "visibleBoundsAlphaAbove16": [
+          194,
+          154,
+          1108,
+          1100
+        ],
+        "runtimeIntegrated": false
+      }
+    },
+    {
+      "id": "world-road-barrier",
+      "group": "world",
+      "nameKo": "도로 차단봉",
+      "role": "러닝 장애물·경계",
+      "file": "world/world-road-barrier.png",
+      "tripoStage": "기존 모델 비교 후 결정",
+      "status": "image-produced",
+      "runtimeIntegrated": false,
+      "runtimeUsage": "prepared-not-used",
+      "bytes": 670568,
+      "sha256": "ddf78800bbefe8321b6305745958a62853adc861323b911fafb67e97c8a7b376",
+      "visualReview": "불투명 차단 판과 두 받침. 흰 사선 2개로 차단대 역할 식별. 1254×1254 RGBA 원본 보존. 알파≥128 실루엣은 캔버스 경계에 닿지 않음. 대부분 물체 픽셀 알파는253–254이며 원본 유지. 64px 갤러리 최종 비교는 통합 담당 검수 대상.",
+      "fileAudit": {
+        "id": "world-road-barrier",
+        "file": "world/world-road-barrier.png",
+        "format": "PNG",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "sha256": "ddf78800bbefe8321b6305745958a62853adc861323b911fafb67e97c8a7b376",
+        "bytes": 670568,
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "cornerAlpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "transparentPixels": 1043285,
+        "transparentFraction": 0.6634,
+        "visibleBoundsAlphaAbove16": [
+          80,
+          165,
+          1186,
+          1125
+        ],
+        "runtimeIntegrated": false
+      }
+    },
+    {
+      "id": "world-jump-hurdle",
+      "group": "world",
+      "nameKo": "점프 허들",
+      "role": "넘을 수 있는 낮은 장애물",
+      "file": "world/world-jump-hurdle.png",
+      "tripoStage": "기존 모델 비교 후 결정",
+      "status": "image-produced",
+      "runtimeIntegrated": true,
+      "runtimeUsage": "fallback-connected",
+      "bytes": 517162,
+      "sha256": "2c1ef71f1bf62d1dfb23d9e8ed4c99f855f8220a53167d9e91e0fa6a6dbadabb",
+      "visualReview": "가로대 아래 공간이 열려 있으며 두 발이 분리되어 보임. 1254×1254 RGBA 원본 보존. 알파≥128 실루엣은 캔버스 경계에 닿지 않음. 대부분 물체 픽셀 알파는253–254이며 원본 유지. 64px 갤러리 최종 비교는 통합 담당 검수 대상.",
+      "fileAudit": {
+        "id": "world-jump-hurdle",
+        "file": "world/world-jump-hurdle.png",
+        "format": "PNG",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "sha256": "2c1ef71f1bf62d1dfb23d9e8ed4c99f855f8220a53167d9e91e0fa6a6dbadabb",
+        "bytes": 517162,
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "cornerAlpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "transparentPixels": 1196167,
+        "transparentFraction": 0.7607,
+        "visibleBoundsAlphaAbove16": [
+          99,
+          114,
+          1160,
+          1163
+        ],
+        "runtimeIntegrated": false
+      }
+    },
+    {
+      "id": "world-bounce-pad",
+      "group": "world",
+      "nameKo": "점프 발판",
+      "role": "점프 장치·맵 표식",
+      "file": "world/world-bounce-pad.png",
+      "tripoStage": "2단계",
+      "status": "image-produced",
+      "runtimeIntegrated": false,
+      "runtimeUsage": "prepared-not-used",
+      "bytes": 903739,
+      "sha256": "4678c1017e41b3eb8ac7461af03c179ff2c612f7a3b652a190093cc43dc12c99",
+      "visualReview": "두꺼운 패드와 중앙 금색 셰브론. 바운스 기능 인지용. 1254×1254 RGBA 원본 보존. 알파≥128 실루엣은 캔버스 경계에 닿지 않음. 대부분 물체 픽셀 알파는253–254이며 원본 유지. 64px 갤러리 최종 비교는 통합 담당 검수 대상.",
+      "fileAudit": {
+        "id": "world-bounce-pad",
+        "file": "world/world-bounce-pad.png",
+        "format": "PNG",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "sha256": "4678c1017e41b3eb8ac7461af03c179ff2c612f7a3b652a190093cc43dc12c99",
+        "bytes": 903739,
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "cornerAlpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "transparentPixels": 856099,
+        "transparentFraction": 0.5444,
+        "visibleBoundsAlphaAbove16": [
+          43,
+          194,
+          1211,
+          1075
+        ],
+        "runtimeIntegrated": false
+      }
+    },
+    {
+      "id": "world-rotating-sweeper",
+      "group": "world",
+      "nameKo": "회전 장애물",
+      "role": "파티 경기의 움직이는 장애물",
+      "file": "world/world-rotating-sweeper.png",
+      "tripoStage": "2단계",
+      "status": "image-produced",
+      "runtimeIntegrated": false,
+      "runtimeUsage": "prepared-not-used",
+      "bytes": 456990,
+      "sha256": "9056a147a90ba1ab630134d40ce6948e00f628d8a35a4addef25424845a22e70",
+      "visualReview": "중앙 허브와 반대 방향 막대 2개가 한 유닛으로 연결됨. 좌우 여백이 좁음. 1254×1254 RGBA 원본 보존. 알파≥128 실루엣은 캔버스 경계에 닿지 않음. 대부분 물체 픽셀 알파는253–254이며 원본 유지. 64px 갤러리 최종 비교는 통합 담당 검수 대상.",
+      "fileAudit": {
+        "id": "world-rotating-sweeper",
+        "file": "world/world-rotating-sweeper.png",
+        "format": "PNG",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "sha256": "9056a147a90ba1ab630134d40ce6948e00f628d8a35a4addef25424845a22e70",
+        "bytes": 456990,
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "cornerAlpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "transparentPixels": 1271440,
+        "transparentFraction": 0.8085,
+        "visibleBoundsAlphaAbove16": [
+          18,
+          287,
+          1242,
+          974
+        ],
+        "runtimeIntegrated": false
+      }
+    },
+    {
+      "id": "world-respawn-beacon",
+      "group": "world",
+      "nameKo": "리젠 표식",
+      "role": "친구 경기 복귀 지점",
+      "file": "world/world-respawn-beacon.png",
+      "tripoStage": "기존 모델 비교 후 결정",
+      "status": "image-produced",
+      "runtimeIntegrated": false,
+      "runtimeUsage": "prepared-not-used",
+      "bytes": 759108,
+      "sha256": "b37d4f91bb356ae783f5536ae14bf72215d0209a848b72a56931965c95f342cc",
+      "visualReview": "아치와 받침, 중앙 금색 다이아몬드가 연결됨. 생성 원본의 아주 약한 알파 잔여 있음. 1254×1254 RGBA 원본 보존. 알파≥128 실루엣은 캔버스 경계에 닿지 않음. 대부분 물체 픽셀 알파는253–254이며 원본 유지. 64px 갤러리 최종 비교는 통합 담당 검수 대상.",
+      "fileAudit": {
+        "id": "world-respawn-beacon",
+        "file": "world/world-respawn-beacon.png",
+        "format": "PNG",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "sha256": "b37d4f91bb356ae783f5536ae14bf72215d0209a848b72a56931965c95f342cc",
+        "bytes": 759108,
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "cornerAlpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "transparentPixels": 949766,
+        "transparentFraction": 0.604,
+        "visibleBoundsAlphaAbove16": [
+          174,
+          119,
+          1098,
+          1153
+        ],
+        "runtimeIntegrated": false
+      }
+    },
+    {
+      "id": "world-short-bridge",
+      "group": "world",
+      "nameKo": "짧은 다리",
+      "role": "맵 구간 연결물",
+      "file": "world/world-short-bridge.png",
+      "tripoStage": "2단계",
+      "status": "image-produced",
+      "runtimeIntegrated": true,
+      "runtimeUsage": "primary-connected",
+      "bytes": 835234,
+      "sha256": "55c3e9a51d7663beb8ee7360308655ed428adc2c0aabaf6ab319a43768aaf24c",
+      "visualReview": "짧고 굵은 경간·난간·양끝 진입부. 데크는 요청보다 한 구획 더 나뉘어 보임. 1254×1254 RGBA 원본 보존. 알파≥128 실루엣은 캔버스 경계에 닿지 않음. 대부분 물체 픽셀 알파는253–254이며 원본 유지. 64px 갤러리 최종 비교는 통합 담당 검수 대상.",
+      "fileAudit": {
+        "id": "world-short-bridge",
+        "file": "world/world-short-bridge.png",
+        "format": "PNG",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "sha256": "55c3e9a51d7663beb8ee7360308655ed428adc2c0aabaf6ab319a43768aaf24c",
+        "bytes": 835234,
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "cornerAlpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "transparentPixels": 975203,
+        "transparentFraction": 0.6202,
+        "visibleBoundsAlphaAbove16": [
+          22,
+          135,
+          1215,
+          1096
+        ],
+        "runtimeIntegrated": false
+      }
+    },
+    {
+      "id": "world-mud-patch",
+      "group": "world",
+      "nameKo": "진흙 지형",
+      "role": "느려지는 지형 표식",
+      "file": "world/world-mud-patch.png",
+      "tripoStage": "2D 유지",
+      "status": "image-produced",
+      "runtimeIntegrated": true,
+      "runtimeUsage": "primary-connected",
+      "bytes": 682692,
+      "sha256": "430fee325e79bc5532964db7fa664be3afb1a4f11b8d5e45de1eaec43da374ae",
+      "visualReview": "갈색 슬래브와 큰 진흙 무늬 3개. 자체 지형만 포함. 1254×1254 RGBA 원본 보존. 알파≥128 실루엣은 캔버스 경계에 닿지 않음. 대부분 물체 픽셀 알파는253–254이며 원본 유지. 64px 갤러리 최종 비교는 통합 담당 검수 대상.",
+      "fileAudit": {
+        "id": "world-mud-patch",
+        "file": "world/world-mud-patch.png",
+        "format": "PNG",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "sha256": "430fee325e79bc5532964db7fa664be3afb1a4f11b8d5e45de1eaec43da374ae",
+        "bytes": 682692,
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "cornerAlpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "transparentPixels": 960628,
+        "transparentFraction": 0.6109,
+        "visibleBoundsAlphaAbove16": [
+          27,
+          289,
+          1231,
+          973
+        ],
+        "runtimeIntegrated": false
+      }
+    },
+    {
+      "id": "world-grass-island",
+      "group": "world",
+      "nameKo": "잔디 섬",
+      "role": "맵·스테이지 선택 오브젝트",
+      "file": "world/world-grass-island.png",
+      "tripoStage": "기존 모델 비교 후 결정",
+      "status": "image-produced",
+      "runtimeIntegrated": true,
+      "runtimeUsage": "primary-connected",
+      "bytes": 830279,
+      "sha256": "4b3d66e911131b532a9ecdcf3c6f4ac198560a504a9d6bce6f83d1ce31b848cd",
+      "visualReview": "큰 초록 상판과 흙 측면, 뒤쪽 삼각 풀 3개. 풀 끝은 굵은 입체 덩어리로 표현됨. 1254×1254 RGBA 원본 보존. 알파≥128 실루엣은 캔버스 경계에 닿지 않음. 대부분 물체 픽셀 알파는253–254이며 원본 유지. 64px 갤러리 최종 비교는 통합 담당 검수 대상.",
+      "fileAudit": {
+        "id": "world-grass-island",
+        "file": "world/world-grass-island.png",
+        "format": "PNG",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "sha256": "4b3d66e911131b532a9ecdcf3c6f4ac198560a504a9d6bce6f83d1ce31b848cd",
+        "bytes": 830279,
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "cornerAlpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "transparentPixels": 876146,
+        "transparentFraction": 0.5572,
+        "visibleBoundsAlphaAbove16": [
+          75,
+          130,
+          1178,
+          1135
+        ],
+        "runtimeIntegrated": false
+      }
+    },
+    {
+      "id": "fx-hit-burst",
+      "group": "fx",
+      "nameKo": "타격 섬광",
+      "role": "명중 순간 효과",
+      "file": "fx/fx-hit-burst.png",
+      "tripoStage": "2D 유지",
+      "status": "image-produced",
+      "runtimeIntegrated": true,
+      "runtimeUsage": "primary-connected",
+      "bytes": 719025,
+      "sha256": "d9a0a635304b4e6a39bb052462d309886ec4bcffe24a03ff65e45fa45c743d34",
+      "visualReview": "전면 8방향 금색·아이보리 타격. 단일 프레임 애니메이션 소스이며 애니메이션은 미제작. 개별 view_image 육안검수, 32bpp ARGB 확인. 64px 실제 갤러리 및 모바일 검수는 통합 담당 범위.",
+      "fileAudit": {
+        "id": "fx-hit-burst",
+        "file": "fx/fx-hit-burst.png",
+        "format": "PNG",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "sha256": "d9a0a635304b4e6a39bb052462d309886ec4bcffe24a03ff65e45fa45c743d34",
+        "bytes": 719025,
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "cornerAlpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "transparentPixels": 1055922,
+        "transparentFraction": 0.6715,
+        "visibleBoundsAlphaAbove16": [
+          55,
+          45,
+          1198,
+          1148
+        ],
+        "runtimeIntegrated": false
+      }
+    },
+    {
+      "id": "fx-cannon-blast",
+      "group": "fx",
+      "nameKo": "포격 폭발",
+      "role": "범위 공격 순간 효과",
+      "file": "fx/fx-cannon-blast.png",
+      "tripoStage": "2D 유지",
+      "status": "image-produced",
+      "runtimeIntegrated": true,
+      "runtimeUsage": "primary-connected",
+      "bytes": 901563,
+      "sha256": "7670a2746c4b6e7b11a47487b6df4bc4cd56bacaeaac556d7c7f8d61b36853bc",
+      "visualReview": "둥근 5개 돌출부와 금색 중심의 단일 포격 효과. 단일 프레임 애니메이션 소스. 개별 view_image 육안검수, 32bpp ARGB 확인. 64px 실제 갤러리 및 모바일 검수는 통합 담당 범위.",
+      "fileAudit": {
+        "id": "fx-cannon-blast",
+        "file": "fx/fx-cannon-blast.png",
+        "format": "PNG",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "sha256": "7670a2746c4b6e7b11a47487b6df4bc4cd56bacaeaac556d7c7f8d61b36853bc",
+        "bytes": 901563,
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "cornerAlpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "transparentPixels": 782173,
+        "transparentFraction": 0.4974,
+        "visibleBoundsAlphaAbove16": [
+          74,
+          95,
+          1180,
+          1095
+        ],
+        "runtimeIntegrated": false
+      }
+    },
+    {
+      "id": "fx-frost-burst",
+      "group": "fx",
+      "nameKo": "냉각 파편",
+      "role": "감속 적용 순간 효과",
+      "file": "fx/fx-frost-burst.png",
+      "tripoStage": "2D 유지",
+      "status": "image-produced",
+      "runtimeIntegrated": true,
+      "runtimeUsage": "primary-connected",
+      "bytes": 353351,
+      "sha256": "55603be54260f90b0b9c7d009de04ac1d6033c09c6f10b6e0cdbda23cfca96eb",
+      "visualReview": "4개 큰 얼음 조각과 중심 섬광. 조각 사이 투명 간격 확인. 단일 프레임 애니메이션 소스. 개별 view_image 육안검수, 32bpp ARGB 확인. 64px 실제 갤러리 및 모바일 검수는 통합 담당 범위.",
+      "fileAudit": {
+        "id": "fx-frost-burst",
+        "file": "fx/fx-frost-burst.png",
+        "format": "PNG",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "sha256": "55603be54260f90b0b9c7d009de04ac1d6033c09c6f10b6e0cdbda23cfca96eb",
+        "bytes": 353351,
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "cornerAlpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "transparentPixels": 1371779,
+        "transparentFraction": 0.8723,
+        "visibleBoundsAlphaAbove16": [
+          108,
+          118,
+          1147,
+          1132
+        ],
+        "runtimeIntegrated": false
+      }
+    },
+    {
+      "id": "fx-dash-trail",
+      "group": "fx",
+      "nameKo": "대시 잔상",
+      "role": "러닝 가속 순간 효과",
+      "file": "fx/fx-dash-trail.png",
+      "tripoStage": "2D 유지",
+      "status": "image-produced",
+      "runtimeIntegrated": true,
+      "runtimeUsage": "primary-connected",
+      "bytes": 504249,
+      "sha256": "eacc9e35bcf002595c22d2e44203cd2e521acab742d9d7cd45b24f11c428001d",
+      "visualReview": "오른쪽 끝으로 가늘어지는 3개 가로 줄. 가로형 원본. 좌하단 모서리 alpha=1, 나머지 모서리 0. 단일 프레임 애니메이션 소스. 개별 view_image 육안검수, 32bpp ARGB 확인. 64px 실제 갤러리 및 모바일 검수는 통합 담당 범위.",
+      "fileAudit": {
+        "id": "fx-dash-trail",
+        "file": "fx/fx-dash-trail.png",
+        "format": "PNG",
+        "width": 1896,
+        "height": 830,
+        "mode": "RGBA",
+        "sha256": "eacc9e35bcf002595c22d2e44203cd2e521acab742d9d7cd45b24f11c428001d",
+        "bytes": 504249,
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "cornerAlpha": [
+          0,
+          0,
+          1,
+          0
+        ],
+        "transparentPixels": 1159585,
+        "transparentFraction": 0.7369,
+        "visibleBoundsAlphaAbove16": [
+          58,
+          195,
+          1850,
+          642
+        ],
+        "runtimeIntegrated": false
+      }
+    },
+    {
+      "id": "fx-upgrade-burst",
+      "group": "fx",
+      "nameKo": "강화 섬광",
+      "role": "강화 적용 순간 효과",
+      "file": "fx/fx-upgrade-burst.png",
+      "tripoStage": "2D 유지",
+      "status": "image-produced",
+      "runtimeIntegrated": true,
+      "runtimeUsage": "primary-connected",
+      "bytes": 562465,
+      "sha256": "3c593c8de836b8dcfc59461380a1cabda66c7d9ad7e786991877d9d9d8e9cbdf",
+      "visualReview": "상승 꺾임 3개와 하단 금색 별빛. 단일 프레임 애니메이션 소스. 원본 비율 유지. 개별 view_image 육안검수, 32bpp ARGB 확인. 64px 실제 갤러리 및 모바일 검수는 통합 담당 범위.",
+      "fileAudit": {
+        "id": "fx-upgrade-burst",
+        "file": "fx/fx-upgrade-burst.png",
+        "format": "PNG",
+        "width": 1247,
+        "height": 1261,
+        "mode": "RGBA",
+        "sha256": "3c593c8de836b8dcfc59461380a1cabda66c7d9ad7e786991877d9d9d8e9cbdf",
+        "bytes": 562465,
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "cornerAlpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "transparentPixels": 1201148,
+        "transparentFraction": 0.7639,
+        "visibleBoundsAlphaAbove16": [
+          302,
+          60,
+          943,
+          1216
+        ],
+        "runtimeIntegrated": false
+      }
+    },
+    {
+      "id": "reward-victory-medal",
+      "group": "fx",
+      "nameKo": "승리 메달",
+      "role": "경기 결과 이미지",
+      "file": "fx/reward-victory-medal.png",
+      "tripoStage": "2D 유지",
+      "status": "image-produced",
+      "runtimeIntegrated": true,
+      "runtimeUsage": "primary-connected",
+      "bytes": 1045980,
+      "sha256": "7867ffc7484b86486599a748fbaff20cb145f7f3ed3a6f721ef2d1c83ee818e2",
+      "visualReview": "정면 금색 별 메달과 산호색 리본. 통화 기호 없음. 큰 크기에서 원반 위에 미세한 금색 점과 외곽 프린지가 보임; 원본 보존. 개별 view_image 육안검수, 32bpp ARGB 확인. 64px 실제 갤러리 및 모바일 검수는 통합 담당 범위.",
+      "fileAudit": {
+        "id": "reward-victory-medal",
+        "file": "fx/reward-victory-medal.png",
+        "format": "PNG",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "sha256": "7867ffc7484b86486599a748fbaff20cb145f7f3ed3a6f721ef2d1c83ee818e2",
+        "bytes": 1045980,
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "cornerAlpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "transparentPixels": 696622,
+        "transparentFraction": 0.443,
+        "visibleBoundsAlphaAbove16": [
+          142,
+          55,
+          1111,
+          1202
+        ],
+        "runtimeIntegrated": false
+      }
+    },
+    {
+      "id": "reward-star",
+      "group": "fx",
+      "nameKo": "완주 별",
+      "role": "완주 결과 이미지",
+      "file": "fx/reward-star.png",
+      "tripoStage": "2D 유지",
+      "status": "image-produced",
+      "runtimeIntegrated": true,
+      "runtimeUsage": "primary-connected",
+      "bytes": 694865,
+      "sha256": "7e0e5717a3d27cdf07b664eb4503f812f1c8eafc44832a64b97f27cd78d17b7e",
+      "visualReview": "두께가 있는 단순 5각 별. 독립 보상 아이콘. 표정·문자 없음. 개별 view_image 육안검수, 32bpp ARGB 확인. 64px 실제 갤러리 및 모바일 검수는 통합 담당 범위.",
+      "fileAudit": {
+        "id": "reward-star",
+        "file": "fx/reward-star.png",
+        "format": "PNG",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "sha256": "7e0e5717a3d27cdf07b664eb4503f812f1c8eafc44832a64b97f27cd78d17b7e",
+        "bytes": 694865,
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "cornerAlpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "transparentPixels": 972787,
+        "transparentFraction": 0.6186,
+        "visibleBoundsAlphaAbove16": [
+          106,
+          132,
+          1148,
+          1080
+        ],
+        "runtimeIntegrated": false
+      }
+    },
+    {
+      "id": "reward-treasure-chest",
+      "group": "fx",
+      "nameKo": "보상 상자",
+      "role": "게임 보상 안내 이미지",
+      "file": "fx/reward-treasure-chest.png",
+      "tripoStage": "후순위",
+      "status": "image-produced",
+      "runtimeIntegrated": true,
+      "runtimeUsage": "primary-connected",
+      "bytes": 1043171,
+      "sha256": "3f12bacc41822e617086f48bf2a9af4992714c4ef6c3996f27a77c85a0e67d3b",
+      "visualReview": "닫힌 산호색 상자, 금색 띠, 아이보리 잠금판. 원본 입체 참조만 준비. Tripo 미실행; 후속 선택 후보. 개별 view_image 육안검수, 32bpp ARGB 확인. 64px 실제 갤러리 및 모바일 검수는 통합 담당 범위.",
+      "fileAudit": {
+        "id": "reward-treasure-chest",
+        "file": "fx/reward-treasure-chest.png",
+        "format": "PNG",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "sha256": "3f12bacc41822e617086f48bf2a9af4992714c4ef6c3996f27a77c85a0e67d3b",
+        "bytes": 1043171,
+        "alphaExtrema": [
+          0,
+          255
+        ],
+        "cornerAlpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "transparentPixels": 697260,
+        "transparentFraction": 0.4434,
+        "visibleBoundsAlphaAbove16": [
+          64,
+          131,
+          1207,
+          1124
+        ],
+        "runtimeIntegrated": false
+      }
+    }
+  ],
+  "builtAt": "2026-10-16T05:28:48.876Z",
+  "generatedCount": 30
+}

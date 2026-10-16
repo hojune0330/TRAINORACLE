@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { createElement } from 'react'
+import { cleanup, fireEvent, render } from '@testing-library/react'
 
-afterEach(() => { vi.unstubAllGlobals(); vi.useRealTimers(); vi.resetModules() })
+afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.useRealTimers(); vi.resetModules() })
 describe('optional party art', () => {
   it('finishes its finite clip and suppresses motion when requested', async () => {
     const { partyEffectFrame } = await import('./party-art')
@@ -33,5 +35,49 @@ describe('optional party art', () => {
     expect(drawImage.mock.calls[0]?.slice(1,5)).toEqual([512,0,256,256])
     drawPartyProp(ctx, 'supply-capsule', 40, 60, 48, .16, true)
     expect(drawImage.mock.calls[1]).toHaveLength(5)
+  })
+  it('draws the new single-frame effect without atlas cropping and expires it', async () => {
+    vi.stubGlobal('Image', class {
+      naturalWidth = 512; naturalHeight = 224; onload?: () => void
+      set src(_value: string) { queueMicrotask(() => this.onload?.()) }
+    })
+    const { loadPartyArt, drawPartyEffect } = await import('./party-art')
+    await loadPartyArt()
+    const drawImage = vi.fn(), save = vi.fn(), restore = vi.fn()
+    const ctx = { drawImage, save, restore, globalAlpha: 1 } as unknown as CanvasRenderingContext2D
+    expect(drawPartyEffect(ctx, 'fx-dash-trail', 100, 80, 100, .2)).toBe(true)
+    const call = drawImage.mock.calls[0]!
+    expect(call).toHaveLength(5)
+    expect(call.slice(1)).toEqual([50, 58.125, 100, 43.75])
+    expect(save).toHaveBeenCalledOnce()
+    expect(restore).toHaveBeenCalledOnce()
+    for (const age of [-1, .36, .6, NaN]) expect(drawPartyEffect(ctx, 'fx-dash-trail', 100, 80, 100, age)).toBe(false)
+    expect(drawImage).toHaveBeenCalledOnce()
+  })
+  it('keeps reduced effects static at their full size and returns false when missing', async () => {
+    vi.stubGlobal('Image', class {
+      naturalWidth = 256; naturalHeight = 256; onload?: () => void
+      set src(_value: string) { queueMicrotask(() => this.onload?.()) }
+    })
+    const { loadPartyArt, drawPartyEffect } = await import('./party-art')
+    const drawImage = vi.fn(), ctx = { drawImage, save: vi.fn(), restore: vi.fn(), globalAlpha: 1 } as unknown as CanvasRenderingContext2D
+    expect(drawPartyEffect(ctx, 'fx-hit-burst', 40, 50, 60, .1, true)).toBe(false)
+    await loadPartyArt()
+    drawPartyEffect(ctx, 'fx-hit-burst', 40, 50, 60, .01, true)
+    drawPartyEffect(ctx, 'fx-hit-burst', 40, 50, 60, .4, true)
+    expect(drawImage.mock.calls[0]?.slice(1)).toEqual([10, 20, 60, 60])
+    expect(drawImage.mock.calls[1]?.slice(1)).toEqual([10, 20, 60, 60])
+    expect(drawPartyEffect(ctx, 'fx-hit-burst', 40, 50, 60, .48, true)).toBe(false)
+  })
+  it('falls back from a failed reward to the old image and then its supplied fallback', async () => {
+    const { PartyIcon } = await import('./PartyIcon')
+    const { container, rerender } = render(createElement(PartyIcon, { id: 'reward-victory-medal', fallback: '이미지 없음' }))
+    expect(container.querySelector('img')?.getAttribute('src')).toContain('image-library-v1/fx/reward-victory-medal.webp')
+    fireEvent.error(container.querySelector('img')!)
+    expect(container.querySelector('img')?.getAttribute('src')).toContain('run-party-v3/upgrade-core.webp')
+    fireEvent.error(container.querySelector('img')!)
+    expect(container.textContent).toBe('이미지 없음')
+    rerender(createElement(PartyIcon, { id: 'reward-star' }))
+    expect(container.querySelector('img')?.getAttribute('src')).toContain('image-library-v1/fx/reward-star.webp')
   })
 })

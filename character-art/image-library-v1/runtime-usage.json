@@ -1,0 +1,221 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-16",
+  "sourceImages": 30,
+  "primaryConnected": 24,
+  "fallbackConnected": 2,
+  "preparedOnly": 4,
+  "scope": "Presentation only. Physics, prices, rewards, storage and multiplayer protocol unchanged.",
+  "assets": [
+    {
+      "id": "td-rapid-tower",
+      "status": "primary-connected",
+      "consumer": "TowerDefense.tsx / TowerDefenseBoard.tsx",
+      "role": "빠른 단일 공격 타워",
+      "runtimeFile": "app/public/game/image-library-v1/defense/td-rapid-tower.webp"
+    },
+    {
+      "id": "td-cannon-tower",
+      "status": "primary-connected",
+      "consumer": "TowerDefense.tsx / TowerDefenseBoard.tsx",
+      "role": "장갑 대응·범위 공격 타워",
+      "runtimeFile": "app/public/game/image-library-v1/defense/td-cannon-tower.webp"
+    },
+    {
+      "id": "td-frost-tower",
+      "status": "primary-connected",
+      "consumer": "TowerDefense.tsx / TowerDefenseBoard.tsx",
+      "role": "감속 타워",
+      "runtimeFile": "app/public/game/image-library-v1/defense/td-frost-tower.webp"
+    },
+    {
+      "id": "td-rapid-tower-upgraded",
+      "status": "primary-connected",
+      "consumer": "TowerDefense.tsx / TowerDefenseBoard.tsx",
+      "role": "연사탑의 시각적 강화 구분",
+      "runtimeFile": "app/public/game/image-library-v1/defense/td-rapid-tower-upgraded.webp"
+    },
+    {
+      "id": "td-cannon-tower-upgraded",
+      "status": "primary-connected",
+      "consumer": "TowerDefense.tsx / TowerDefenseBoard.tsx",
+      "role": "포격탑의 시각적 강화 구분",
+      "runtimeFile": "app/public/game/image-library-v1/defense/td-cannon-tower-upgraded.webp"
+    },
+    {
+      "id": "td-frost-tower-upgraded",
+      "status": "primary-connected",
+      "consumer": "TowerDefense.tsx / TowerDefenseBoard.tsx",
+      "role": "냉각탑의 시각적 강화 구분",
+      "runtimeFile": "app/public/game/image-library-v1/defense/td-frost-tower-upgraded.webp"
+    },
+    {
+      "id": "td-enemy-scout",
+      "status": "primary-connected",
+      "consumer": "TowerDefense.tsx / TowerDefenseBoard.tsx",
+      "role": "보통 적의 이동 표식",
+      "runtimeFile": "app/public/game/image-library-v1/defense/td-enemy-scout.webp"
+    },
+    {
+      "id": "td-enemy-swift",
+      "status": "primary-connected",
+      "consumer": "TowerDefense.tsx / TowerDefenseBoard.tsx",
+      "role": "빠른 적의 이동 표식",
+      "runtimeFile": "app/public/game/image-library-v1/defense/td-enemy-swift.webp"
+    },
+    {
+      "id": "td-enemy-armored",
+      "status": "primary-connected",
+      "consumer": "TowerDefense.tsx / TowerDefenseBoard.tsx",
+      "role": "장갑 적의 방어 특성 표식",
+      "runtimeFile": "app/public/game/image-library-v1/defense/td-enemy-armored.webp"
+    },
+    {
+      "id": "td-enemy-boss",
+      "status": "primary-connected",
+      "consumer": "TowerDefense.tsx / TowerDefenseBoard.tsx",
+      "role": "마지막 웨이브의 대형 적",
+      "runtimeFile": "app/public/game/image-library-v1/defense/td-enemy-boss.webp"
+    },
+    {
+      "id": "td-base-gate",
+      "status": "primary-connected",
+      "consumer": "TowerDefense.tsx / TowerDefenseBoard.tsx",
+      "role": "방어 목표·경로 출구",
+      "runtimeFile": "app/public/game/image-library-v1/defense/td-base-gate.webp"
+    },
+    {
+      "id": "td-build-pad",
+      "status": "primary-connected",
+      "consumer": "TowerDefense.tsx / TowerDefenseBoard.tsx",
+      "role": "타워 설치 지점",
+      "runtimeFile": "app/public/game/image-library-v1/defense/td-build-pad.webp"
+    },
+    {
+      "id": "world-tree-broadleaf",
+      "status": "primary-connected",
+      "consumer": "scene-art.ts / city-art.ts",
+      "role": "Non-Seoul scenery tree; Seoul tree fallback",
+      "runtimeFile": "app/public/game/image-library-v1/world/world-tree-broadleaf.webp"
+    },
+    {
+      "id": "world-rock-cluster",
+      "status": "fallback-connected",
+      "consumer": "scene-art.ts / city-art.ts",
+      "role": "Fallback only when existing Tripo rock fails to load",
+      "runtimeFile": "app/public/game/image-library-v1/world/world-rock-cluster.webp"
+    },
+    {
+      "id": "world-road-barrier",
+      "status": "prepared-not-used",
+      "consumer": "scene-art.ts / city-art.ts",
+      "role": "Runtime file prepared; existing Tripo counterpart retained",
+      "runtimeFile": "app/public/game/image-library-v1/world/world-road-barrier.webp"
+    },
+    {
+      "id": "world-jump-hurdle",
+      "status": "fallback-connected",
+      "consumer": "scene-art.ts / city-art.ts",
+      "role": "Fallback only when existing Tripo hurdle fails to load",
+      "runtimeFile": "app/public/game/image-library-v1/world/world-jump-hurdle.webp"
+    },
+    {
+      "id": "world-bounce-pad",
+      "status": "prepared-not-used",
+      "consumer": "scene-art.ts / city-art.ts",
+      "role": "Runtime file prepared; existing Tripo counterpart retained",
+      "runtimeFile": "app/public/game/image-library-v1/world/world-bounce-pad.webp"
+    },
+    {
+      "id": "world-rotating-sweeper",
+      "status": "prepared-not-used",
+      "consumer": "scene-art.ts / city-art.ts",
+      "role": "Runtime file prepared; existing Tripo counterpart retained",
+      "runtimeFile": "app/public/game/image-library-v1/world/world-rotating-sweeper.webp"
+    },
+    {
+      "id": "world-respawn-beacon",
+      "status": "prepared-not-used",
+      "consumer": "scene-art.ts / city-art.ts",
+      "role": "Runtime file prepared; existing Tripo counterpart retained",
+      "runtimeFile": "app/public/game/image-library-v1/world/world-respawn-beacon.webp"
+    },
+    {
+      "id": "world-short-bridge",
+      "status": "primary-connected",
+      "consumer": "scene-art.ts / city-art.ts",
+      "role": "Mud-region background bridge, outside the play lane",
+      "runtimeFile": "app/public/game/image-library-v1/world/world-short-bridge.webp"
+    },
+    {
+      "id": "world-mud-patch",
+      "status": "primary-connected",
+      "consumer": "scene-art.ts / city-art.ts",
+      "role": "Seoul mud ground decoration",
+      "runtimeFile": "app/public/game/image-library-v1/world/world-mud-patch.webp"
+    },
+    {
+      "id": "world-grass-island",
+      "status": "primary-connected",
+      "consumer": "scene-art.ts / city-art.ts",
+      "role": "Non-Seoul daytime field background, outside the play lane",
+      "runtimeFile": "app/public/game/image-library-v1/world/world-grass-island.webp"
+    },
+    {
+      "id": "fx-hit-burst",
+      "status": "primary-connected",
+      "consumer": "party-art.ts / TowerDefenseBoard.tsx / SoloParty.tsx / UpgradeChoice.tsx",
+      "role": "Tower hit, runner collision, friend push collision",
+      "runtimeFile": "app/public/game/image-library-v1/fx/fx-hit-burst.webp"
+    },
+    {
+      "id": "fx-cannon-blast",
+      "status": "primary-connected",
+      "consumer": "party-art.ts / TowerDefenseBoard.tsx / SoloParty.tsx / UpgradeChoice.tsx",
+      "role": "Cannon hit in classic tower defense",
+      "runtimeFile": "app/public/game/image-library-v1/fx/fx-cannon-blast.webp"
+    },
+    {
+      "id": "fx-frost-burst",
+      "status": "primary-connected",
+      "consumer": "party-art.ts / TowerDefenseBoard.tsx / SoloParty.tsx / UpgradeChoice.tsx",
+      "role": "Frost hit in classic tower defense",
+      "runtimeFile": "app/public/game/image-library-v1/fx/fx-frost-burst.webp"
+    },
+    {
+      "id": "fx-dash-trail",
+      "status": "primary-connected",
+      "consumer": "party-art.ts / TowerDefenseBoard.tsx / SoloParty.tsx / UpgradeChoice.tsx",
+      "role": "Runner and friend push dash",
+      "runtimeFile": "app/public/game/image-library-v1/fx/fx-dash-trail.webp"
+    },
+    {
+      "id": "fx-upgrade-burst",
+      "status": "primary-connected",
+      "consumer": "party-art.ts / TowerDefenseBoard.tsx / SoloParty.tsx / UpgradeChoice.tsx",
+      "role": "Tower construction/upgrade and runner upgrade selection",
+      "runtimeFile": "app/public/game/image-library-v1/fx/fx-upgrade-burst.webp"
+    },
+    {
+      "id": "reward-victory-medal",
+      "status": "primary-connected",
+      "consumer": "party-art.ts / TowerDefenseBoard.tsx / SoloParty.tsx / UpgradeChoice.tsx",
+      "role": "Confirmed defense/solo win result",
+      "runtimeFile": "app/public/game/image-library-v1/fx/reward-victory-medal.webp"
+    },
+    {
+      "id": "reward-star",
+      "status": "primary-connected",
+      "consumer": "party-art.ts / TowerDefenseBoard.tsx / SoloParty.tsx / UpgradeChoice.tsx",
+      "role": "Solo series completion with draw/loss; decorative completion marker, not a star rating",
+      "runtimeFile": "app/public/game/image-library-v1/fx/reward-star.webp"
+    },
+    {
+      "id": "reward-treasure-chest",
+      "status": "primary-connected",
+      "consumer": "party-art.ts / TowerDefenseBoard.tsx / SoloParty.tsx / UpgradeChoice.tsx",
+      "role": "Legacy solo defense completion; decorative result marker, no inventory reward granted",
+      "runtimeFile": "app/public/game/image-library-v1/fx/reward-treasure-chest.webp"
+    }
+  ]
+}
