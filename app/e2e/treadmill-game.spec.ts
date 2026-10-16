@@ -132,14 +132,18 @@ test("camera follows with slack, accelerates on dash, freezes on pause and keeps
 test("camera keeps the moving city and hazard lane clear at thirteen seconds", async ({ page }, info) => {
   await openGame(page, "seoul")
   await page.getByRole("button", { name: "시작", exact: true }).click()
+  // Sample inside the 13th displayed second, not exactly on a RAF/floor boundary.
+  // Round absolute replay deadlines so many fractional gaps cannot accumulate drift.
+  const sampleAt = 16_100
   let now = 0
-  for (const step of planRun(tourStages(tourCity("seoul")!)).filter(step => step.at <= 16_000)) {
-    await page.clock.runFor(Math.round(step.at - now)); now = step.at
+  for (const step of planRun(tourStages(tourCity("seoul")!)).filter(step => step.at <= sampleAt)) {
+    const deadline = Math.round(step.at)
+    await page.clock.runFor(deadline - now); now = deadline
     if (step.key === "run-down") await page.keyboard.down("ArrowRight")
     if (step.key === "run-up") await page.keyboard.up("ArrowRight")
     if (step.key === "jump") await page.keyboard.press("Space")
   }
-  await page.clock.runFor(Math.round(16_000 - now))
+  await page.clock.runFor(sampleAt - now)
   await expect(page.getByLabel("경기 진행 시간")).toHaveText("13 / 90초")
   const canvas = page.locator("canvas.treadmill-game__canvas"), bounds = (await canvas.boundingBox())!
   const foot = bounds.y + bounds.height * Number(await canvas.getAttribute("data-runner-y"))

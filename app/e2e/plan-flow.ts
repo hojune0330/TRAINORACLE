@@ -28,7 +28,11 @@ export async function openPlanRefinement(page: Page, label: string): Promise<voi
 
 export async function refinePlan(page: Page, label: string, answer: string | RegExp): Promise<void> {
   await openPlanRefinement(page, label)
-  await page.getByRole("button", { name: answer, exact: typeof answer === "string" }).click()
+  // This helper tests the selected plan, not rapid repeated pointer activation.
+  // Without motion, the next question can occupy the last answer's coordinates
+  // inside the intentional 400ms double-tap guard. Use deliberate keyboard input.
+  await page.getByRole("button", { name: answer, exact: typeof answer === "string" }).focus()
+  await page.keyboard.press("Enter")
   await expect(page.locator('[data-testid="plan-refine"], [role="group"][aria-label="계획 확인·변경"]')).toBeAttached()
 }
 

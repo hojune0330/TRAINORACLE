@@ -46,7 +46,7 @@ for (const persona of personas) {
       await expect(sections()).toBeVisible()
 
       await click(sections().getByRole("button", { name: "읽을거리·관심", exact: true }))
-      await expect(page.getByRole("article", { name: "먼저 읽을 글" })).toBeVisible()
+      await expect(page.getByRole("heading", { name: "주제 골라 읽기" })).toBeVisible()
       await noHorizontalOverflow(page)
       await click(page.getByRole("button", { name: "오라클로 돌아가기", exact: true }))
       await expect(sections()).toBeVisible()
@@ -70,7 +70,7 @@ for (const persona of personas) {
       await click(page.getByRole("group", { name: "오라클 항목" })
         .getByRole("button", { name: "읽을거리·관심", exact: true }))
       await expect(page.getByRole("radiogroup", { name: "읽을거리 주제" })).toBeVisible()
-      await click(page.getByRole("button", { name: "경기 기록", exact: true }))
+      await click(page.getByRole("radiogroup", { name: "읽을거리 주제" }).getByRole("radio", { name: "경기 기록", exact: true }))
       await expect(page.getByRole("button", { name: "최근 경기와 최고기록", exact: true })).toBeVisible()
       await click(page.getByRole("button", { name: "오라클로 돌아가기", exact: true }))
       await click(nav.getByRole("button", { name: "일지", exact: true }))

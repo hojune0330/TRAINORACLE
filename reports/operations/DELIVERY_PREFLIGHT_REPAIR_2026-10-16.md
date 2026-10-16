@@ -37,6 +37,16 @@ and the afternoon must still open its own diary. No text is hidden to satisfy ol
 one-viewport assumptions. The dedicated TCX import/account ACK/plan reload/original
 comparison case passes after matching the detailed prescription already displayed.
 
-A complete local desktop browser inventory is being run without early failure
-termination to expose downstream mismatches before further release attempts. Its
-unfinished result is not a pass; consult the final checkpoint for completion.
+A complete local desktop inventory finished: 285 passed, 29 existing conditional
+skips and 5 failures. The four old Oracle reading-entry assertions were corrected
+and passed together; the remaining game sample landed on a RAF/integer-second
+boundary. Absolute rounded replay deadlines and sampling inside second 13 keep the
+exact time assertion and all geometry assertions; this passed in all four projects.
+
+Run 38839967916 also revealed rapid same-position refinement clicks under reduced
+motion hitting the intentional double-tap guard. The shared refinement helper now
+uses deliberate keyboard activation, preserving product pointer protection.
+Calendar/method/two-tab replay scenarios passed all 8 narrow-touch/reduced cases;
+the pointer-protection unit tests passed 3/3. Current detailed-card/optional-motion
+scenarios passed 6/6 in narrow-touch and reduced projects. These focused reruns are
+not represented as a single clean full-inventory run or hosted release pass.
