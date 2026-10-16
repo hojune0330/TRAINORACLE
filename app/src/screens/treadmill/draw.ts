@@ -1,4 +1,4 @@
-import { nearestHazard, treadmillElapsed, TREADMILL_HAZARDS, TREADMILL_RULES } from "../../domain/minigame/treadmill"
+import { nearestHazard, treadmillElapsed, treadmillAidStop, TREADMILL_HAZARDS, TREADMILL_RULES } from "../../domain/minigame/treadmill"
 import type { TreadmillState } from "../../domain/minigame/treadmill"
 import { drawHazard, drawRunner, gamePalette, outlinedText, roundRect } from "./sprites"
 import type { GamePalette, RunnerCharacter, RunnerPose } from "./sprites"
@@ -7,7 +7,7 @@ import type { CityFrame } from "./city-art"
 import type { TourCity } from "../../domain/minigame/tour"
 import { createRunnerCamera } from "./camera"
 import { presentedHazards } from "./hazard-view"
-import { drawPartyProp } from "./party-art"
+import { drawPartyEffect, drawPartyProp } from "./party-art"
 import { drawMotionBurst } from './motion-bursts'
 import { drawRearEdge } from "./rear-edge"
 import type { MotionBurst } from './motion-bursts'
@@ -46,6 +46,7 @@ export function createTreadmillRenderer() {
   let dustTimer = 0
   let seed = 1
   let supplyAt = -10
+  let hitAt = -10
   let goAt = -10
   let burst: { kind: MotionBurst; at: number } | null = null
   const random = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646 }
@@ -69,22 +70,22 @@ export function createTreadmillRenderer() {
     else if (state.stats.jumps > before.stats.jumps) burst = {kind:'jump',at:clock}
     else if (state.stats.cleared > before.stats.cleared) burst = {kind:'clear',at:clock}
     else if (before.y > 0 && state.y === 0) burst = {kind:'land',at:clock}
-    if (state.mode === "running" && before.mode !== "running" && state.countdown > 0 && treadmillElapsed(state) === 0) { particles = []; popups = []; supplyAt = -10 }
+    if (state.mode === "running" && before.mode !== "running" && state.countdown > 0 && treadmillElapsed(state) === 0) { particles = []; popups = []; supplyAt = -10; hitAt = -10 }
     if ((state.mode === "over" || state.mode === "clear") && before.mode !== state.mode) endedAt = clock
     // A new stage starts clean, so the "구간 통과!" popup never sits under the countdown.
     if (state.stage !== before.stage) popups = []
-    if (state.stage === before.stage && state.mode === "running" && Math.floor(state.seconds / TREADMILL_RULES.waveSeconds) > Math.floor(before.seconds / TREADMILL_RULES.waveSeconds)) {
+    if (state.stage === before.stage && state.mode === "running" && state.aid.received > before.aid.received) {
       supplyAt = clock
-      popups.push({ x: runnerX, y: footY - 95, text: `보급! 에너지 +${Math.round(Math.max(0, state.energy - before.energy))}`, life: 1.4, color: "good", size: 21 })
+      popups.push({ x: runnerX, y: footY - 95, text: `보급소 휴식 +${Math.round(state.aid.lastAmount)}`, life: 1.4, color: "good", size: 18 })
     }
     if (state.stats.hits > before.stats.hits) {
+      hitAt = clock
       if (!reduced) shake = 0.35
       popups.push({ x: runnerX + 6, y: footY - 76, text: state.failure === "spike" ? "앗!" : "쿵!", life: 0.8, color: "gold", size: 26 })
       if (!reduced) emit(8, { x: runnerX + 10, y: footY - 34, size: 5, color: "gold", kind: "star" }, { vx: [-60, 140], vy: [-200, -40], life: [0.4, 0.8] })
     }
-    if (state.stats.score > before.stats.score && state.stats.cleared > before.stats.cleared) {
-      const gained = state.stats.score - before.stats.score
-      popups.push({ x: runnerX, y: footY - 88, text: state.stats.combo > 1 ? `+${gained} ×${state.stats.combo}` : `+${gained}`, life: 0.9, color: state.stats.combo > 2 ? "gold" : "cloud", size: state.stats.combo > 2 ? 20 : 17 })
+    if (state.stats.cleared > before.stats.cleared && state.stats.combo > 0 && state.stats.combo % 5 === 0) {
+      popups.push({ x: runnerX, y: footY - 88, text: `${state.stats.combo}개 연속 회피!`, life: 0.9, color: "gold", size: 18 })
     }
     if (state.stats.jumps > before.stats.jumps && !reduced) emit(6, { x: runnerX, y: footY, size: 4, color: "cloud", kind: "dot" }, { vx: [-70, 30], vy: [-50, -5], life: [0.25, 0.45] })
     if (before.y > 0 && state.y === 0 && state.mode === "running" && !reduced) emit(7, { x: runnerX, y: footY, size: 4, color: "cloud", kind: "dot" }, { vx: [-90, 90], vy: [-60, -10], life: [0.25, 0.5] })
@@ -190,13 +191,24 @@ export function createTreadmillRenderer() {
     }
 
     // Event art is below hazards and bodies in paint order; never blocks input.
+    const aidStop = treadmillAidStop(state)
+    if (aidStop.open && !aidStop.claimed) {
+      const left = Math.max(0, toPx(rules.aidFront)), right = Math.min(width, toPx(rules.frontEdge))
+      context.save(); context.globalAlpha = .3; context.fillStyle = palette.good
+      context.fillRect(left, floor + 5, Math.max(0, right - left), 8); context.restore()
+      drawPartyProp(context, "supply-capsule", Math.min(width - 32, Math.max(32, left + 26)), floor + 36, 36)
+    }
     if (clock - supplyAt < .64 && state.mode === "running") {
       drawPartyProp(context, "supply-capsule", Math.max(55, runnerX - 72), floor - 88,
         reduced || low ? 56 : 108, clock - supplyAt, reduced || low)
       if (context.canvas.dataset) context.canvas.dataset.partySupply = "visible"
     } else if (context.canvas.dataset) delete context.canvas.dataset.partySupply
 
-    if (burst) drawMotionBurst(context, palette, burst.kind, runnerX, floor, clock-burst.at, reduced || low)
+    if (burst) {
+      const bakedDash = burst.kind === 'dash' && drawPartyEffect(context, 'fx-dash-trail',
+        runnerX - 48, floor - state.y - 30, 100, clock - burst.at, reduced || low)
+      if (!bakedDash) drawMotionBurst(context, palette, burst.kind, runnerX, floor, clock-burst.at, reduced || low)
+    }
     const hazards = presentedHazards(state)
     const visibleHazards: { id: number; x: number; scheduled: boolean }[] = []
     for (const hazard of hazards) {
@@ -260,6 +272,7 @@ export function createTreadmillRenderer() {
     drawRunner(context, palette, { pose: pose(state), phase: reduced ? 0 : phase, upgrades: state.upgrades, squash, character,
       jumpStage: state.velocityY > 80 ? 0 : state.velocityY < -80 ? 2 : 1 })
     context.restore()
+    drawPartyEffect(context, 'fx-hit-burst', runnerX, floor - state.y - 36, 66, clock - hitAt, reduced || low)
     if (state.invulnerable > 0 && reduced) {
       context.strokeStyle = palette.gold; context.lineWidth = 3
       roundRect(context, runnerX - 18, floor - state.y - 66, 36, 68, 8); context.stroke()

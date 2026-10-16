@@ -1,0 +1,50 @@
+.solo-party__menu, .solo-party__panel { display: grid; gap: 16px; margin: 12px; padding: 20px; border-radius: 16px; border: 3px solid var(--game-outline); background: var(--game-panel); color: var(--game-ink); }
+.solo-party__panel > h2, .solo-party__panel > p, .solo-party__menu > p { margin: 0; line-height: 1.5; }
+.solo-party__panel > h2 { font-size: 22px; }
+.solo-party__panel > .treadmill-party-icon { justify-self: center; }
+.solo-party__mode { display: flex; align-items: center; gap: 12px; text-align: left; border: 2px solid var(--game-outline); border-bottom-width: 5px; border-radius: 12px; padding: 16px 12px; color: var(--game-ink); background: var(--game-panel); }
+.solo-party__mode > span { display: grid; gap: 6px; min-width: 0; }
+.solo-party__mode strong { font-size: 19px; }
+.solo-party__mode small, .solo-party__note { color: var(--game-ink-soft); font-size: 13px; line-height: 1.6; }
+.solo-party__games { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+.solo-party__games .solo-party__mode { flex-direction: column; align-items: stretch; min-width: 0; padding: 8px; }
+.solo-party__games .solo-party__mode:first-child { grid-column: 1 / -1; display: grid; grid-template-columns: 112px minmax(0,1fr); align-items: center; }
+.solo-party__games .solo-party__mode > span:not(.game-mode-art) { display: grid; gap: 6px; }
+.solo-party__games .solo-party__mode strong { font-size: 18px; }
+.solo-party__games .solo-party__mode span > span { font-size: 14px; }
+.solo-party__games .game-mode-art .treadmill-party-icon { width: 100px !important; height: 100px !important; }
+.solo-party__games .game-mode-art__satellite .treadmill-party-icon { width: 52px !important; height: 52px !important; }
+@media (min-width:700px) { .solo-party__games { grid-template-columns: repeat(3,minmax(0,1fr)); } .solo-party__games .solo-party__mode:first-child { grid-column: auto; display: flex; } }
+.solo-party__budget { padding: 12px; background: var(--game-gold); border-radius: 12px; }
+.solo-party__slots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.solo-party__slots button { min-height: 70px; padding: 8px 4px; border: 2px solid var(--game-outline); border-radius: 12px; background: var(--game-panel); color: var(--game-ink); font-size: 13px; line-height: 1.5; }
+.solo-party__slots [aria-pressed="true"] { background: var(--game-gold); border-bottom-width: 5px; font-weight: 800; }
+.solo-party__builds { display: grid; gap: 8px; }
+.solo-party__builds button { display: grid; gap: 4px; text-align: left; min-height: 80px; border: 2px solid var(--game-outline); border-radius: 12px; padding: 12px; color: var(--game-ink); background: var(--game-panel); }
+.solo-party__builds button:disabled { opacity: .55; }
+.solo-party__builds button:has(.solo-party__art) { grid-template-columns: 64px minmax(0, 1fr); }
+.solo-party__builds .solo-party__art { grid-row: 1 / 4; align-self: center; }
+.solo-party__art { object-fit: contain; flex-shrink: 0; }
+.solo-party__panel > .solo-party__art { justify-self: center; }
+.solo-party__enemy-guide { display: flex; justify-content: space-around; gap: 8px; }
+.solo-party__enemy-guide > span { display: grid; justify-items: center; gap: 4px; text-align: center; font-size: 12px; line-height: 1.5; }
+.solo-party__builds strong { font-size: 16px; }
+.solo-party__builds small { font-size: 13px; }
+.solo-party__notice { margin: 12px; padding: 12px; border-radius: 12px; background: var(--game-panel); color: var(--game-ink); line-height: 1.5; }
+.solo-party__hud { gap: 6px; }
+.solo-party__hud > strong { font-size: 20px; }
+.solo-party__hud > span, .solo-party__stats { background: var(--game-panel); border-radius: 12px; padding: 6px; font-size: 13px; }
+.solo-party__result { font-size: 26px; }
+.solo-party__recap > details > summary { font-size: 16px; font-weight: 700; }
+.solo-party__recap ol, .solo-party__history ol { list-style: none; padding: 0; margin: 0; }
+.solo-party__recap li, .solo-party__history li { display: grid; gap: 8px; padding: 12px 0; border-bottom: 1px solid var(--game-ink-soft); font-size: 14px; line-height: 1.5; }
+.solo-party__recap summary, .solo-party__history > summary { min-height: 44px; display: list-item; align-content: center; cursor: pointer; }
+.solo-party__recap details p { margin: 0; color: var(--game-ink-soft); }
+.solo-party__comparison { font-weight: 700; line-height: 1.6; }
+.treadmill-game button.arena-entry { flex: none; margin: 6px 12px; }
+.solo-party button { min-height: 44px; cursor: pointer; word-break: keep-all; overflow-wrap: anywhere; }
+.solo-party button:disabled { cursor: not-allowed; }
+.solo-party button:focus-visible { outline: 3px solid var(--game-gold-dark); outline-offset: 3px; }
+.solo-party button:active:not(:disabled) { transform: translateY(2px); }
+@media (max-width: 380px) { .solo-party__menu, .solo-party__panel { padding: 14px; margin: 8px; } .solo-party__mode { align-items: start; } .solo-party__mode .treadmill-party-icon { width: 48px !important; height: 48px !important; } }
+@media (prefers-reduced-motion: reduce) { .solo-party button:active:not(:disabled) { transform: none; } }

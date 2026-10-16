@@ -11,9 +11,9 @@ export type ProductAnnouncement = {
 
 export const MINIGAME_ANNOUNCEMENT: ProductAnnouncement = {
   id: "running-tour", version: 1, enabled: true,
-  title: "러닝 투어가 열렸어요",
-  description: "멈추면 밀려나는 트랙, 한 판 달려볼까요?",
-  actionLabel: "게임하기",
+  title: "게임 라운지에서 한 판 어때요?",
+  description: "달리기부터 디펜스까지, 혼자 또는 친구와 즐겨요.",
+  actionLabel: "게임 라운지 열기",
   illustration: "running-game-announcement",
 }
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 import {
   applyUpgrade, advanceTreadmill, nearestHazard, newTreadmillRun, treadmillCommand, treadmillStars, treadmillTip, treadmillWarning, upcomingHazards,
-  TREADMILL_SCORE, treadmillCourseSeconds,
+  treadmillCourseSeconds, treadmillAidStop, treadmillAchievement,
   TREADMILL_RULES, TREADMILL_STAGES,
 } from "./treadmill"
 import type { TreadmillHazard, TreadmillHazardKind, TreadmillState, TreadmillUpgrade } from "./treadmill"
@@ -21,9 +21,11 @@ type Strategy = (state: TreadmillState) => TreadmillState
 /** A simple player: keep a target position, hold a reserve, jump when the next hazard is in range. */
 const player = (target: number, reserve: number, gap: number): Strategy => state => {
   let next = state
-  const want = (next.x < target && next.energy > reserve) || (next.x < 0.22 && next.energy > 0)
+  const ahead = nearestHazard(next), stop = treadmillAidStop(next)
+  const restForAid = stop.open && !stop.claimed && next.x > .11 && (next.energy < 95 || next.aid.rest > 0)
+    && next.y === 0 && (!ahead || ahead.x - next.x > (next.aid.rest > 0 ? .08 : .18))
+  const want = !restForAid && ((next.x < target && next.energy > reserve) || (next.x < 0.22 && next.energy > 0))
   if (want !== next.running) next = treadmillCommand(next, { type: "run", held: want })
-  const ahead = nearestHazard(next)
   if (ahead && ahead.x - next.x < gap) next = treadmillCommand(next, { type: "jump" })
   if (next.x < 0.16) next = treadmillCommand(next, { type: "dash" })
   return next
@@ -62,14 +64,45 @@ describe("treadmill survival rules", () => {
       }
     }
   })
-  it("supplies energy once at an internal wave boundary, never while paused", () => {
+  it("does not give automatic energy for time, running or pausing at an aid stop", () => {
     const before = clean({ seconds: 9.99, energy: 20, running: true })
     const supplied = advanceTreadmill(before, 0.02)
     expect(supplied.mode).toBe("running")
-    expect(supplied.energy).toBeGreaterThan(50)
+    expect(supplied.energy).toBeLessThan(20)
+    expect(supplied.aid.received).toBe(0)
     expect(advanceTreadmill(supplied, 0.02).energy).toBeLessThan(supplied.energy)
     const paused = treadmillCommand(before, { type: "pause" })
     expect(advanceTreadmill(paused, 2)).toEqual(paused)
+  })
+  it("earns aid only after a continuous ground rest in the safe zone, once per stop", () => {
+    expect(TREADMILL_RULES.aidEnergy).toBe(5 * TREADMILL_RULES.runDrain + 4 * TREADMILL_RULES.jumpCost)
+    const state = clean({ seconds: 10, x: .55, energy: 20 })
+    const tooShort = advance(state, .25)
+    expect(tooShort.aid.received).toBe(0)
+    const supplied = advance(tooShort, .1)
+    expect(supplied.aid.received).toBe(1)
+    expect(supplied.aid.lastAmount).toBe(TREADMILL_RULES.aidEnergy)
+    expect(supplied.energy).toBeCloseTo(Math.min(100, 20 + .35 * 20 + TREADMILL_RULES.aidEnergy), 5)
+    expect(advance(supplied, 1).aid.received).toBe(1)
+    expect(advance({ ...supplied, seconds: 20, x: .55, energy: 20 }, .65).aid.received).toBe(2)
+    expect(advance({ ...state, seconds: 13 }, .65).aid.received).toBe(0)
+    expect(advance({ ...state, x: .09 }, .65).aid.received).toBe(0)
+    expect(advance(treadmillCommand(state, { type: "jump" }), .65).aid.received).toBe(0)
+    const interrupted = advance({ ...tooShort, running: true }, .05)
+    expect(advance({ ...interrupted, running: false }, .1).aid.received).toBe(0)
+    const capped = advance({ ...state, energy: 60 }, .65)
+    expect(capped.energy).toBeLessThanOrEqual(100)
+    expect(capped.aid.lastAmount).toBeLessThanOrEqual(TREADMILL_RULES.aidEnergy)
+    expect(treadmillAidStop(supplied).claimed).toBe(true)
+    expect(treadmillAidStop(treadmillCommand(state, { type: "pause" })).open).toBe(false)
+  })
+  it("does not count protected contact as an avoided obstacle", () => {
+    const state = clean({ invulnerable: .9, hazards: [hazard(.53)], stats: { ...clean().stats, combo: 3, bestCombo: 3 } })
+    const after = advance(state, .6)
+    expect(after.stats.hits).toBe(0)
+    expect(after.stats.cleared).toBe(0)
+    expect(after.stats.combo).toBe(0)
+    expect(after.stats.bestCombo).toBe(3)
   })
   it("falls without action and stops simulating after failure", () => {
     const state = advance(start(), 8)
@@ -172,17 +205,23 @@ describe("treadmill survival rules", () => {
     const resumed = treadmillCommand(treadmillCommand(start(), { type: "pause" }), { type: "resume" })
     expect(resumed.countdown).toBe(TREADMILL_RULES.countdownResume)
   })
-  it("scores clears with a growing combo that a hit resets, and rates a finish with stars", () => {
+  it("counts avoided hazards and completed stages without inflating a score", () => {
     const one = advance(clean({ y: 60, velocityY: 300, hazards: [hazard(0.53)] }), 0.4)
-    expect(one.stats.score).toBe(TREADMILL_SCORE.clear)
+    expect(one.stats.score).toBe(0)
+    expect(one.stats.cleared).toBe(1)
     expect(one.stats.combo).toBe(1)
     const two = advance({ ...one, y: 60, velocityY: 300, hazards: [{ ...hazard(one.x + 0.03), id: 2 }] }, 0.4)
-    expect(two.stats.score).toBe(TREADMILL_SCORE.clear * 2 + TREADMILL_SCORE.comboStep)
+    expect(two.stats.score).toBe(0)
+    expect(two.stats.cleared).toBe(2)
     const hit = advanceTreadmill({ ...two, y: 0, velocityY: 0, invulnerable: 0, hazards: [{ ...hazard(two.x + 0.01), id: 3 }] }, 0.02)
     expect(hit.stats.combo).toBe(0)
     expect(hit.stats.bestCombo).toBe(2)
     const finish = (hits: number) => advanceTreadmill({ ...clean({ stage: 2, seconds: TREADMILL_RULES.stageSeconds - 0.01 }), stats: { ...clean().stats, hits } }, 0.05)
-    expect(finish(0).stats.score).toBe(TREADMILL_SCORE.stage)
+    expect(finish(0).stats.score).toBe(0)
+    expect(treadmillAchievement(finish(0)).completedStages).toBe(3)
+    expect(treadmillAchievement({ ...clean(), stage: 1, mode: "over" }).completedStages).toBe(1)
+    expect(treadmillAchievement(finish(2)).nextGoal).toBe("부딪힘 1회 이하로 완주하기")
+    expect(treadmillAchievement(finish(1)).nextGoal).toBe("부딪힘 없이 완주하기")
     expect([0, 1, 4].map(hits => treadmillStars(finish(hits)))).toEqual([3, 2, 1])
     expect(treadmillStars(advance(start(), 8))).toBe(0)
   })

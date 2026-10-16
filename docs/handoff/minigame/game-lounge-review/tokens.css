@@ -1,0 +1,101 @@
+/* Copied from repository colors_and_type.css for this review gallery. */
+:root {
+  --bg:         #FAFAF7;  /* primary surface (warm off-white) */
+  --surface:    #FFFFFF;  /* card / elevated */
+  --surface-2:  #F4F3EE;  /* recessed (subtle warm gray) */
+  --ink:        #0E1412;  /* primary text (deep charcoal, teal-tinted) */
+  --ink-2:      #2B3330;  /* secondary text */
+  --ink-3:      #5F6965;  /* tertiary / meta */
+  --line:       #D9D6CE;  /* default border */
+  --brand:      #0D5F5A;
+  --game-sky-top: #7FC8F8;     /* track sky */
+  --game-sky-low: #D6F0FF;
+  --game-hill-far: #A8DDB5;
+  --game-hill-near: #6CC48A;
+  --game-mud-sky-top: #F6C28B; /* mud: warm sunset */
+  --game-mud-sky-low: #FFE8C7;
+  --game-mud-hill-far: #D9A273;
+  --game-mud-hill-near: #B97A4E;
+  --game-mud: #8A5A36;
+  --game-mud-light: #A9744A;
+  --game-spike-sky-top: #4B3A78; /* spikes: dusk */
+  --game-spike-sky-low: #B08AD6;
+  --game-spike-hill-far: #6E5A9E;
+  --game-spike-hill-near: #3E2F63;
+  --game-belt: #2E3440;        /* treadmill machine */
+  --game-belt-dark: #1C2028;
+  --game-belt-lane: #FF7A45;
+  --game-rail: #C7CED8;
+  --game-outline: #1D1B2C;     /* thick cartoon outline */
+  --game-skin: #FFD3A6;
+  --game-shirt: #25C2A0;       /* runner, matches brand hue family */
+  --game-shirt-dark: #17927A;
+  --game-shorts: #3D5AFE;
+  --game-shoe: #FFFFFF;
+  --game-cloud: #FFFFFF;
+  --game-danger: #FF4D5E;
+  --game-danger-dark: #C21E35;
+  --game-gold: #FFC83D;
+  --game-gold-dark: #E49B0F;
+  --game-good: #4CD964;
+  --game-panel: #FFFFFF;
+  --game-panel-edge: #DDE3EE;
+  --game-ink: #1D1B2C;
+  --game-ink-soft: #5A6178;
+  --game-fx-track-a: #46A8F5;
+  --game-fx-track-b: #C9F0FF;
+  --game-fx-track-mesh-1: #5BB8FF;
+  --game-fx-track-mesh-2: #8ED8FF;
+  --game-fx-track-mesh-3: #D8F6FF;
+  --game-fx-track-ray: #FFF6C8;
+  --game-fx-mud-a: #FF8A5C;
+  --game-fx-mud-b: #FFE3B3;
+  --game-fx-mud-flow-1: #FF9C6B;
+  --game-fx-mud-flow-2: #FFB97A;
+  --game-fx-mud-flow-3: #FF8F9E;
+  --game-fx-mud-flow-4: #FFE0AE;
+  --game-fx-mud-ray: #FFF0C0;
+  --game-fx-spike-a: #1B1440;
+  --game-fx-spike-b: #6A4BA8;
+  --game-fx-aurora-1: #8A4DFF;
+  --game-fx-aurora-2: #41F2C6;
+  --game-fx-aurora-3: #5AB8FF;
+  --game-fx-star: #FFFFFF;
+  --game-fx-burst: #FFE58A;
+  --game-fx-burst-bg: #FFB43D;
+  --game-fx-fail-a: #FF8FA0;
+  --game-fx-fail-b: #5A2A6E;
+  --game-hair: #3A2A3F;
+  --game-hana-shirt: #FF6FA8;
+  --game-hana-shirt-dark: #D84E86;
+  --game-bear: #B07A4F;
+  --game-bear-light: #E8C49A;
+  --game-cat: #F2A14A;
+  --game-cat-light: #FFE2B8;
+  --game-robot: #9AA8BC;
+  --game-robot-light: #E3EAF4;
+  --game-robot-eye: #41F2C6;
+  --game-penguin: #2B3350;
+  --game-penguin-belly: #F4F7FF;
+  --game-beak: #FFA62B;
+  --game-city-far: #8FA8C8;
+  --game-city-near: #5C6F92;
+  --game-city-night: #2A2F52;
+  --game-window: #FFE58A;
+  --game-neon-pink: #FF5FA2;
+  --game-neon-blue: #4FD8FF;
+  --game-sea: #3FA7E0;
+  --game-sea-light: #9FDDF7;
+  --game-sand: #F2D59B;
+  --game-petal: #FFC2D6;
+  --game-rain: #CFE6FF;
+  --game-snow: #FFFFFF;
+  --game-heat: #FFB36B;
+  --game-lane-red: #D9604A;
+  --game-lane-red-dark: #A8432F;
+  --game-grass-stripe: #7FD39A;
+  --game-skin-shade: #F0B48A;
+  --game-hair-hana: #7A3E2E;
+  --game-hair-silver: #C9D3E6;
+  --game-hair-shine: #8FA0C8;
+}

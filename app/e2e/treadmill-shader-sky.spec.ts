@@ -23,7 +23,9 @@ test("mounts the WebGPU sky with telemetry off, respects low effects, and makes 
     settings: { sound: false, vibration: false, effects: "high", view: "auto", motion: "system", controls: "normal", runSide: "left", jumpGuide: true },
   })))
   await page.getByRole("button", { name: "더보기", exact: true }).click()
-  await page.getByRole("button", { name: "미니게임", exact: true }).click()
+  await page.getByRole("button", { name: "게임 라운지", exact: true }).click()
+  await page.getByRole("button", { name: "러닝 투어 게임 소개", exact: true }).click()
+  await page.getByRole("button", { name: "도시 고르기", exact: true }).click()
   await expect(page.locator(".treadmill-game")).toHaveAttribute("data-sky", "canvas")
   await page.getByRole("button", { name: /^부산/ }).click()
   await expect(page.locator(".treadmill-game")).toHaveAttribute("data-sky", "shader", { timeout: 15_000 })

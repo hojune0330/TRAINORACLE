@@ -1,0 +1,18 @@
+.treadmill-game .party-effect-frame {
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+.treadmill-game .party-effect-frame > img {
+  animation: party-effect-arrive 480ms ease-out both;
+}
+@keyframes party-effect-arrive {
+  0% { opacity: 0; transform: scale(.7); }
+  45% { opacity: 1; transform: scale(1.08); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.treadmill-game .party-effect-frame[data-reduced] > img { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .treadmill-game .party-effect-frame > img { animation: none; }
+}

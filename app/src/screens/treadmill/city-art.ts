@@ -1,5 +1,5 @@
 /**
- * 2.5D city world for the tour ("러닝 투어"). Pure canvas paths, --game-* tokens only.
+ * 2.5D city world for the tour ("러닝 투어"). Token-based canvas with offline scenery.
  *
  * Camera: a side-scrolling view tilted down onto the ground. Depth d >= 1 maps to
  * y = horizon + (floor - horizon) / d, so lanes bunch up toward the horizon and props
@@ -10,7 +10,7 @@ import type { TreadmillSurface } from "../../domain/minigame/treadmill"
 import type { TourCity, TourLandmark, TourWeather } from "../../domain/minigame/tour"
 import { roundRect } from "./sprites"
 import type { GamePalette } from "./sprites"
-import { drawSceneProp } from "./scene-art"
+import { drawSceneProp, drawWorldProp } from "./scene-art"
 
 export type CityScene = { city: TourCity; surface: TreadmillSurface; weather: TourWeather }
 export type CityFrame = {
@@ -250,6 +250,8 @@ export function drawCityGround(context: CanvasRenderingContext2D, palette: GameP
     for (let row = 0; row < 3; row++) {
       const y = top + (floor - top) * (0.2 + row * 0.31)
       for (let x = -80 - wrap(travel * 1.6 + row * 43, 150); x < width + 80; x += 150) {
+        context.globalAlpha = 0.65
+        if (drawWorldProp(context, 'mud-patch', x, y + 8, 68 + row * 12, 20 + row * 3)) continue
         context.fillStyle = palette.mud; context.globalAlpha = 0.7
         context.beginPath(); context.ellipse(x, y, 34 + row * 6, 5 + row * 2, -0.08, 0, Math.PI * 2); context.fill()
         context.fillStyle = palette.rain; context.globalAlpha = 0.28
@@ -293,6 +295,11 @@ function prop(context: CanvasRenderingContext2D, palette: GamePalette, scene: Ci
     if (drawSceneProp(context, id, 0, 0, id === "rock" ? 36 : id === "gate" ? 72 : 58,
       id === "rock" ? 22 : id === "gate" ? 60 : 76)) return
   }
+  // New terrain belongs to the distant field, never the playable lane or collider list.
+  if (scene.city.id !== 'seoul' && scene.weather !== 'sea' && !night(scene)) {
+    if (scene.surface === 'mud' && i % 6 === 1 && drawWorldProp(context, 'short-bridge', 0, 0, 76, 45)) return
+    if (i % 6 === 0 && drawWorldProp(context, 'grass-island', 0, 0, 64, 34)) return
+  }
   context.lineWidth = 2; context.strokeStyle = palette.outline; context.lineJoin = "round"
   const n = night(scene)
   const kind = scene.weather === "sea" ? (i % 3 === 0 ? "palm" : i % 3 === 1 ? "umbrella" : "lamp")
@@ -300,6 +307,7 @@ function prop(context: CanvasRenderingContext2D, palette: GamePalette, scene: Ci
       : scene.surface === "track" ? (i % 4 === 0 ? "stand" : i % 4 === 1 ? "flag" : "tree")
         : i % 2 ? "tree" : "lamp"
   if (kind === "tree") {
+    if (drawWorldProp(context, 'tree-broadleaf', 0, 0, 48, 58)) return
     roundRect(context, -3, -20, 6, 20, 2); context.fillStyle = palette.mud; context.fill(); context.stroke()
     const leaf = scene.weather === "petals" ? palette.petal : dusk(scene) ? palette.mudHillFar : palette.hillNear
     context.beginPath(); context.arc(0, -30, 14, 0, Math.PI * 2); context.fillStyle = leaf; context.fill(); context.stroke()

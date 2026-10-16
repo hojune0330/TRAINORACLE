@@ -1,8 +1,8 @@
 // Game-only prototype balance. No training/health/account data enters this engine.
 export const RULES = Object.freeze({ duration: 90, countdown: 3, respawn: 2, protection: 2, creditWindow: 3 });
 const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
-export function newRound(ids, round = 1, rules = RULES) {
-  return { round, phase: 'countdown', time: -rules.countdown, duration: rules.duration, rules,
+export function newRound(ids, round = 1, rules = RULES, mode = 'push') {
+  return { round, mode: mode === 'survival' ? 'survival' : 'push', phase: 'countdown', time: -rules.countdown, duration: rules.duration, rules,
     hazards: [], nextHazard: 3, hazardId: 0, standings: [],
     players: ids.map((id, i) => ({ id, slot: i, x: (i + round) % 2 ? .46 : .62, y: 0, vy: 0, vx: 0,
       energy: 100, running: false, inputAge: 1, kos: 0, falls: 0, dodges: 0, state: 'alive', respawnAt: 0,
@@ -27,9 +27,12 @@ function fall(state, p) {
 export function finish(state, interrupted = false) {
   state.phase = interrupted ? 'interrupted' : 'finished';
   state.players.forEach(p => { p.running = false; p.dashUntil = 0; });
-  const sorted = [...state.players].sort((a, b) => b.kos - a.kos || a.falls - b.falls);
+  const compare = state.mode === 'survival'
+    ? (a, b) => a.falls - b.falls || b.dodges - a.dodges
+    : (a, b) => b.kos - a.kos || a.falls - b.falls;
+  const sorted = [...state.players].sort(compare);
   state.standings = interrupted ? [] : sorted.map((p, i) => ({ id: p.id, kos: p.kos, falls: p.falls, dodges: p.dodges,
-    rank: sorted.findIndex(other => other.kos === p.kos && other.falls === p.falls) + 1 }));
+    rank: sorted.findIndex(other => compare(other, p) === 0) + 1 }));
 }
 /** Caller supplies fixed <= 1/30s steps. Both attacks resolve against the same pre-hit state. */
 export function step(state, dt) {
@@ -61,6 +64,7 @@ export function step(state, dt) {
   }
   const hits = [];
   for (const a of state.players) {
+    if (state.mode === 'survival') break;
     if (a.state !== 'alive' || t >= a.dashUntil || a.attacked || t < a.protectedUntil || a.y > 36) continue;
     const b = state.players.find(b => b.id !== a.id && b.state === 'alive' && t >= b.protectedUntil && t >= b.hitUntil && b.y < 36 && Math.abs(a.x - b.x) <= .115);
     if (b) hits.push([a, b]);
@@ -70,7 +74,8 @@ export function step(state, dt) {
   }
   if (t >= state.nextHazard) {
     state.hazards.push({ id: ++state.hazardId, x: 1.18, kind: state.hazardId % 2 ? 'hurdle' : 'rock', checked: [] });
-    state.nextHazard += 3.8;
+    // Predictable single/pair/rest rhythm. Jump clearance stays unchanged.
+    state.nextHazard += state.mode === 'survival' ? [2.8, 1.4, 3.2, 1.4][(state.hazardId - 1) % 4] : 3.8;
   }
   for (const h of state.hazards) {
     h.x -= .24 * dt;

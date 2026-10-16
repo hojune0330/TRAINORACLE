@@ -26,6 +26,20 @@ function recordingContext() {
 const palette = Object.fromEntries(Object.keys(GAME_TOKENS).map(key => [key, "red"])) as GamePalette
 
 describe("treadmill renderer with tour cities", () => {
+  it("shows a supply receipt only for earned aid, and celebrates factual avoidance milestones", () => {
+    const render = createTreadmillRenderer(), context = recordingContext()
+    const state = { ...newTreadmillRun(), mode: "running" as const, seconds: 9.99 }
+    render(context, state, 360, 600, palette, false, 1000)
+    const stop = { ...state, seconds: 10.1 }
+    render(context, stop, 360, 600, palette, false, 1100)
+    expect(context.texts.join("|")).not.toMatch(/보급소 휴식|\+75/)
+    const received = { ...stop, aid: { claimed: 1, rest: 0, received: 1, lastAmount: 61 },
+      stats: { ...stop.stats, cleared: 5, combo: 5 } }
+    render(context, received, 360, 600, palette, false, 1200)
+    expect(context.texts).toContain("보급소 휴식 +61")
+    expect(context.texts).toContain("5개 연속 회피!")
+    expect(context.texts.join("|")).not.toMatch(/\+100|\+350|×/)
+  })
   it("actually paints a scheduled obstacle ahead of a front-running player before activation", () => {
     const state = { ...newTreadmillRun(), mode: "running" as const, countdown: 0, running: true, x: 0.88, seconds: 1.5 }
     const context = recordingContext()

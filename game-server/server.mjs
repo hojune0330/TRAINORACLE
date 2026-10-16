@@ -12,15 +12,16 @@ export function createArenaServer({ origins = ['http://127.0.0.1:4225'], rules =
   const server = http.createServer((req, res) => {
     res.setHeader('Cache-Control', 'no-store');
     if (req.url !== '/health') { res.writeHead(404); res.end(); return; }
-    res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify({ ok: true, version: 1, rooms: rooms.size }));
+    res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify({ ok: true, version: 2, rooms: rooms.size }));
   });
   const wss = new WebSocketServer({ noServer: true, maxPayload: 2048, perMessageDeflate: false });
   server.on('upgrade', (req, socket, head) => {
     if (req.url !== '/' || !origins.includes(req.headers.origin) || wss.clients.size >= 250) { socket.destroy(); return; }
     wss.handleUpgrade(req, socket, head, ws => wss.emit('connection', ws, req));
   });
-  const snapshot = room => ({ type: 'state', room: room.id, host: room.host,
-    members: room.members.map(m => ({ id: m.id, name: m.name, ready: m.ready, connected: !!m.ws })),
+  const snapshot = room => ({ type: 'state', room: room.id, host: room.host, partyVersion: 2, mode: room.mode,
+    members: room.members.map(m => ({ id: m.id, name: m.name, ready: m.ready, connected: !!m.ws,
+      partyVersion: m.partyVersion, vote: m.vote, reaction: m.reaction?.until > now() ? m.reaction.kind : undefined })),
     game: publicRound(room.game), history: room.game && ['playing', 'countdown'].includes(room.game.phase) ? [] : room.history });
   const broadcast = room => { const data = snapshot(room); for (const m of room.members) if (m.ws) send(m.ws, data); };
   const stop = room => { if (room.game && ['countdown', 'playing'].includes(room.game.phase)) finish(room.game, true); };
@@ -44,7 +45,7 @@ export function createArenaServer({ origins = ['http://127.0.0.1:4225'], rules =
         else for (let remaining = dt; remaining > .000001; remaining -= 1 / 30) step(room.game, Math.min(remaining, 1 / 30));
         if (room.game.phase === 'finished' && room.recorded !== room.game.round) {
           room.recorded = room.game.round;
-          room.history.unshift({ round: room.game.round, standings: room.game.standings.map(p => ({ ...p, name: room.members.find(m => m.id === p.id)?.name ?? '러너' })) });
+          room.history.unshift({ round: room.game.round, mode: room.game.mode, standings: room.game.standings.map(p => ({ ...p, name: room.members.find(m => m.id === p.id)?.name ?? '러너' })) });
           room.history = room.history.slice(0, 5);
         }
       }
@@ -70,23 +71,25 @@ export function createArenaServer({ origins = ['http://127.0.0.1:4225'], rules =
         if (msg.room && !/^[A-Za-z0-9_-]{24}$/.test(msg.room)) return error('room-missing');
         room = msg.room ? rooms.get(msg.room) : null;
         if (msg.room && !room) return error('room-missing');
+        if (room?.mode === 'survival' && msg.partyVersion !== 2) return error('client-update');
         if (!room) {
           const ip = req.socket.remoteAddress ?? 'unknown';
           const quota = quotas.get(ip) ?? { since: now(), count: 0 };
           if (quota.count >= 6 || rooms.size >= 100) return error('capacity');
           quota.count++; quotas.set(ip, quota);
-          room = { id: randomBytes(18).toString('base64url'), members: [], host: null, game: null, history: [], created: now(), round: 0, sinceBroadcast: 0 };
+          room = { id: randomBytes(18).toString('base64url'), mode: 'push', members: [], host: null, game: null, history: [], created: now(), round: 0, sinceBroadcast: 0 };
           rooms.set(room.id, room);
         }
         const existing = room.members.find(m => equal(m.token, msg.token));
         if (existing) {
           const previous = existing.ws; existing.ws = ws; existing.lastSeen = now(); member = existing;
+          existing.partyVersion = msg.partyVersion === 2 ? 2 : 1;
           previous?.close(4009, 'Reconnected elsewhere');
         } else {
           if (room.members.length >= 2) return error('room-full');
           if (room.game && ['playing', 'countdown'].includes(room.game.phase)) return error('in-progress');
           const name = typeof msg.name === 'string' ? msg.name.replace(/[\p{C}]/gu, '').trim().slice(0, 12) : '';
-          member = { id: secret(), token: secret(), name: name || `러너 ${room.members.length + 1}`, ready: false, ws, gone: 0, lastSeen: now() };
+          member = { id: secret(), token: secret(), name: name || `러너 ${room.members.length + 1}`, ready: false, ws, gone: 0, lastSeen: now(), partyVersion: msg.partyVersion === 2 ? 2 : 1, vote: null, reaction: null, lastReaction: -Infinity };
           room.members.push(member); room.host ??= member.id;
         }
         clearTimeout(authTimeout);
@@ -102,10 +105,22 @@ export function createArenaServer({ origins = ['http://127.0.0.1:4225'], rules =
       if (msg.type === 'ready' && (!room.game || ['finished', 'interrupted'].includes(room.game.phase))) {
         member.ready = msg.ready === true; broadcast(room); return;
       }
+      const inLobby = !room.game || ['finished', 'interrupted'].includes(room.game.phase);
+      if (msg.type === 'vote' && inLobby && ['push', 'survival'].includes(msg.mode)) {
+        member.vote = msg.mode; broadcast(room); return;
+      }
+      if (msg.type === 'mode' && inLobby && room.host === member.id && ['push', 'survival'].includes(msg.mode)) {
+        if (msg.mode === 'survival' && room.members.some(m => m.partyVersion !== 2)) return error('client-update');
+        if (room.mode !== msg.mode) { room.mode = msg.mode; room.members.forEach(m => { m.ready = false; }); }
+        broadcast(room); return;
+      }
+      if (msg.type === 'reaction' && inLobby && ['hello', 'nice', 'again', 'thanks'].includes(msg.kind) && now() - member.lastReaction >= 1500) {
+        member.lastReaction = now(); member.reaction = { kind: msg.kind, until: now() + 4000 }; broadcast(room); return;
+      }
       if (msg.type === 'start' && room.host === member.id && room.members.length === 2 && room.members.every(m => m.ready && m.ws)
         && (!room.game || ['finished', 'interrupted'].includes(room.game.phase))) {
-        room.game = newRound(room.members.map(m => m.id), ++room.round, rules);
-        room.members.forEach(m => { m.ready = false; }); broadcast(room); return;
+        room.game = newRound(room.members.map(m => m.id), ++room.round, rules, room.mode);
+        room.members.forEach(m => { m.ready = false; m.vote = null; m.reaction = null; }); broadcast(room); return;
       }
       if (msg.type === 'input' && Number.isSafeInteger(msg.seq) && msg.seq > lastSeq && room.game) {
         lastSeq = msg.seq; command(room.game, member.id, { run: msg.run === true, action: msg.action });

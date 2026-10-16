@@ -47,7 +47,7 @@ export function UpgradeChoice({ state, nextStage, onPick, reduced = false }: {
     <section className="treadmill-game__card treadmill-game__pick upgrade-choice" aria-labelledby="treadmill-upgrade-title">
       <span className="treadmill-game__ribbon" data-tone="gold">{state.stage + 1}구간 통과!</span>
       {explaining ? <div className="upgrade-choice__intro" role="status">
-        <PartyEffect reduced={reduced} />
+        <PartyEffect id="fx-upgrade-burst" reduced={reduced} />
         <h2 id="treadmill-upgrade-title">이번 판의 능력을 바꿔요</h2>
         <div className="upgrade-choice__effects" aria-label="강화 효과 미리보기">
           {TREADMILL_UPGRADES.map(item => {
@@ -77,7 +77,7 @@ export function UpgradeChoice({ state, nextStage, onPick, reduced = false }: {
             </button>
           })}
         </div>
-        <p className="upgrade-choice__footer">고르면 장착 후 출발 · 에너지 최대 +{TREADMILL_RULES.checkpointRefill}</p>
+        <p className="upgrade-choice__footer">구간 완주 → 안전 발판 회복 최대 +{TREADMILL_RULES.checkpointRefill}<br />강화를 고르면 다음 구간으로 출발</p>
         <button type="button" className="treadmill-game__text-button" onClick={() => setExplaining(true)}>효과 다시 보기</button>
       </>}
     </section>

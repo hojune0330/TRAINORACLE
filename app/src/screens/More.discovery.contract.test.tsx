@@ -53,7 +53,7 @@ it("shows learning and decoration destinations directly in More", () => {
     ["오라클 읽을거리", "onOpenOracleLibrary"],
     ["훈련법 읽기", "onOpenContent"],
     ["일지 꾸미기", "onOpenRewards"],
-    ["미니게임", "onOpenMinigame"],
+    ["게임 라운지", "onOpenMinigame"],
     ["일지 예시 보기", "onOpenMinji"],
     ["훈련 용어집·도움말", "onOpenGuide"],
   ] as const
@@ -67,11 +67,11 @@ it("shows learning and decoration destinations directly in More", () => {
     expect(actions[key]).toHaveBeenCalledOnce()
   }
   expect(within(screen.getByRole("region", { name: "배우기" })).getByRole("button", { name: "일지 예시 보기" })).toBeVisible()
-  expect(within(screen.getByRole("region", { name: "배우기" })).queryByRole("button", { name: "미니게임" })).toBeNull()
+  expect(within(screen.getByRole("region", { name: "배우기" })).queryByRole("button", { name: "게임 라운지" })).toBeNull()
   expect(within(screen.getByRole("region", { name: "꾸미기·게임" })).getByRole("button", { name: "일지 꾸미기" })).toBeVisible()
-  expect(within(screen.getByRole("region", { name: "꾸미기·게임" })).getByRole("button", { name: "미니게임" })).toBeVisible()
+  expect(within(screen.getByRole("region", { name: "꾸미기·게임" })).getByRole("button", { name: "게임 라운지" })).toBeVisible()
   expect(screen.getByText("저장 없이 내 기록·친구 기록 비교")).toBeVisible()
-  expect(screen.getByText("러닝 투어 · 서울에서 런던까지")).toBeVisible()
+  expect(screen.getByText("러닝·대결·디펜스 · 혼자 또는 친구와")).toBeVisible()
   fireEvent.click(screen.getByRole("button", { name: "백업·복원·휴지통" }))
   expect(screen.getByRole("button", { name: "내려받은 백업 되돌리기" })).toBeVisible()
 })

@@ -1,0 +1,768 @@
+{
+  "schemaVersion": 1,
+  "collection": "image-library-v1",
+  "assetCount": 30,
+  "packing": {
+    "operation": "resize-and-WebP-encode-only",
+    "longEdge": 256,
+    "dashTrailLongEdge": 512,
+    "quality": 88,
+    "alphaQuality": 100,
+    "sourceFilesUnchanged": true,
+    "runtimeUsableIsIntegrationClaim": false
+  },
+  "sourceBytes": 22146652,
+  "runtimeBytes": 352766,
+  "assets": [
+    {
+      "id": "td-base-gate",
+      "group": "defense",
+      "source": "character-art/image-library-v1/defense/td-base-gate.png",
+      "sourceSha256": "6c30284436435ec9e071c8816d7e1c2c988e74c4385b869b76ab14fb0a0bee5d",
+      "sourceBytes": 622498,
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "file": "defense/td-base-gate.webp",
+      "sha256": "95f1ddeefd92540448241a4ff5385d3f0bdad377c3b44305c41d94a7ae3c4c6a",
+      "bytes": 9760,
+      "width": 256,
+      "height": 256,
+      "visibleRectAlpha128": [
+        48,
+        41,
+        220,
+        233
+      ],
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "runtimeUsable": true
+    },
+    {
+      "id": "td-build-pad",
+      "group": "defense",
+      "source": "character-art/image-library-v1/defense/td-build-pad.png",
+      "sourceSha256": "85e9ba3d7ff81776787797cc6d1d402f2ab1b1e87b36a116e0c2d5ffa735f7bf",
+      "sourceBytes": 724025,
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "file": "defense/td-build-pad.webp",
+      "sha256": "4199602e7a6f44bd47aeb950efcd32519d97c91ebd3a540ea35b614bbbfe4729",
+      "bytes": 9000,
+      "width": 256,
+      "height": 256,
+      "visibleRectAlpha128": [
+        23,
+        56,
+        233,
+        210
+      ],
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "runtimeUsable": true
+    },
+    {
+      "id": "td-cannon-tower-upgraded",
+      "group": "defense",
+      "source": "character-art/image-library-v1/defense/td-cannon-tower-upgraded.png",
+      "sourceSha256": "ba90345d194ff8ed70f2732b92e0e407b8cff565f1aea6a5500e53ad0138cf70",
+      "sourceBytes": 909257,
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "file": "defense/td-cannon-tower-upgraded.webp",
+      "sha256": "093ca59c712b9456f410e19a96d60c9822e0499051e5a10c303221abea2a5d02",
+      "bytes": 13748,
+      "width": 256,
+      "height": 256,
+      "visibleRectAlpha128": [
+        31,
+        30,
+        233,
+        235
+      ],
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "runtimeUsable": true
+    },
+    {
+      "id": "td-cannon-tower",
+      "group": "defense",
+      "source": "character-art/image-library-v1/defense/td-cannon-tower.png",
+      "sourceSha256": "06749f095b03670d4d6b3fd47ebe9be9513e17adc41e84fba1864842af522e01",
+      "sourceBytes": 876632,
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "file": "defense/td-cannon-tower.webp",
+      "sha256": "b274d1eb5a5997c52f298338be719cbc401d62a7c9e26ee531b2ef2f32fc3a0a",
+      "bytes": 13260,
+      "width": 256,
+      "height": 256,
+      "visibleRectAlpha128": [
+        33,
+        31,
+        227,
+        235
+      ],
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "runtimeUsable": true
+    },
+    {
+      "id": "td-enemy-armored",
+      "group": "defense",
+      "source": "character-art/image-library-v1/defense/td-enemy-armored.png",
+      "sourceSha256": "bfe84c40c7c1121ee1a60bc6e0c5b6059ba7a82a4e12df78280357f74200a295",
+      "sourceBytes": 889483,
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "file": "defense/td-enemy-armored.webp",
+      "sha256": "97f3870eb8ddc9e3ba4a1c7602a4ed36a8506a7f51e92ce7e2c6cb42060aa213",
+      "bytes": 13864,
+      "width": 256,
+      "height": 256,
+      "visibleRectAlpha128": [
+        8,
+        33,
+        251,
+        224
+      ],
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "runtimeUsable": true
+    },
+    {
+      "id": "td-enemy-boss",
+      "group": "defense",
+      "source": "character-art/image-library-v1/defense/td-enemy-boss.png",
+      "sourceSha256": "ec7934acb6b0f91d4b59dd94931603c033ab959c415533dd50d09a20e2966f8a",
+      "sourceBytes": 796763,
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "file": "defense/td-enemy-boss.webp",
+      "sha256": "734b3fe10fd5688a11adf403d68b0c9de304790bc85207a4ba3aa51fc4c7387f",
+      "bytes": 14572,
+      "width": 256,
+      "height": 256,
+      "visibleRectAlpha128": [
+        34,
+        30,
+        228,
+        231
+      ],
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "runtimeUsable": true
+    },
+    {
+      "id": "td-enemy-scout",
+      "group": "defense",
+      "source": "character-art/image-library-v1/defense/td-enemy-scout.png",
+      "sourceSha256": "31537750ea6cbf0df49bc7deddf6e969fbdd849161bb05fec19cd079cff5624b",
+      "sourceBytes": 548632,
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "file": "defense/td-enemy-scout.webp",
+      "sha256": "7eacd941de31f5ea77ed4536b6ba8998e226cb2b76f5c5bb1e199e9309c560e9",
+      "bytes": 8766,
+      "width": 256,
+      "height": 256,
+      "visibleRectAlpha128": [
+        42,
+        42,
+        218,
+        210
+      ],
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "runtimeUsable": true
+    },
+    {
+      "id": "td-enemy-swift",
+      "group": "defense",
+      "source": "character-art/image-library-v1/defense/td-enemy-swift.png",
+      "sourceSha256": "0e8152e1cded5e86d366547161c2eed38fb246149381e33f44026698ee14c2b8",
+      "sourceBytes": 532285,
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "file": "defense/td-enemy-swift.webp",
+      "sha256": "6658623fc2815cf594e2f22ee7339c823a4ae8b0ebe1ce4d1e6310db5ce3a5e0",
+      "bytes": 11214,
+      "width": 256,
+      "height": 256,
+      "visibleRectAlpha128": [
+        45,
+        39,
+        229,
+        210
+      ],
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "runtimeUsable": true
+    },
+    {
+      "id": "td-frost-tower-upgraded",
+      "group": "defense",
+      "source": "character-art/image-library-v1/defense/td-frost-tower-upgraded.png",
+      "sourceSha256": "e20beb5fc6e5d902f773229be3d599517b55aa70b35186b628383fa39c7604b4",
+      "sourceBytes": 727360,
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "file": "defense/td-frost-tower-upgraded.webp",
+      "sha256": "14c0c053983358cab251ed7def72531960d1f777ae453c34b547a28c8928dcb6",
+      "bytes": 12230,
+      "width": 256,
+      "height": 256,
+      "visibleRectAlpha128": [
+        48,
+        21,
+        208,
+        242
+      ],
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "runtimeUsable": true
+    },
+    {
+      "id": "td-frost-tower",
+      "group": "defense",
+      "source": "character-art/image-library-v1/defense/td-frost-tower.png",
+      "sourceSha256": "cbccbf6b4f4d426094eb7f8dce967a77e1d998d915bf0abe0f067fffa062d236",
+      "sourceBytes": 699129,
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "file": "defense/td-frost-tower.webp",
+      "sha256": "2cc8aa449084710968a51dcd4bedb42702a369e9b35068d108c2d48f54ff31cc",
+      "bytes": 11006,
+      "width": 256,
+      "height": 256,
+      "visibleRectAlpha128": [
+        48,
+        25,
+        208,
+        236
+      ],
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "runtimeUsable": true
+    },
+    {
+      "id": "td-rapid-tower-upgraded",
+      "group": "defense",
+      "source": "character-art/image-library-v1/defense/td-rapid-tower-upgraded.png",
+      "sourceSha256": "04f54253f7c15de9ab84823b915e332fec3bb980d726acb0c8eea18b68ac1355",
+      "sourceBytes": 924034,
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "file": "defense/td-rapid-tower-upgraded.webp",
+      "sha256": "074203e25d995c452412505e1635245db305e932ae22e61694d65184a4698e77",
+      "bytes": 14218,
+      "width": 256,
+      "height": 256,
+      "visibleRectAlpha128": [
+        29,
+        29,
+        240,
+        236
+      ],
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "runtimeUsable": true
+    },
+    {
+      "id": "td-rapid-tower",
+      "group": "defense",
+      "source": "character-art/image-library-v1/defense/td-rapid-tower.png",
+      "sourceSha256": "e367b2f52e404cf2953382863ec5330bff27b574c81459c048f9cb634f900b63",
+      "sourceBytes": 811215,
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "file": "defense/td-rapid-tower.webp",
+      "sha256": "cfe625131f3dbe401b49a8c2b0f81bb2a947c19c3b3d1d10decb0dc69bf4e4e9",
+      "bytes": 12088,
+      "width": 256,
+      "height": 256,
+      "visibleRectAlpha128": [
+        38,
+        30,
+        230,
+        230
+      ],
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "runtimeUsable": true
+    },
+    {
+      "id": "world-bounce-pad",
+      "group": "world",
+      "source": "character-art/image-library-v1/world/world-bounce-pad.png",
+      "sourceSha256": "4678c1017e41b3eb8ac7461af03c179ff2c612f7a3b652a190093cc43dc12c99",
+      "sourceBytes": 903739,
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "file": "world/world-bounce-pad.webp",
+      "sha256": "2aad6bb48b5c36f9653908d9edcb6919cd5b4d49a4e553373b8dc60f54e2b96f",
+      "bytes": 12008,
+      "width": 256,
+      "height": 256,
+      "visibleRectAlpha128": [
+        9,
+        40,
+        247,
+        219
+      ],
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "runtimeUsable": true
+    },
+    {
+      "id": "world-grass-island",
+      "group": "world",
+      "source": "character-art/image-library-v1/world/world-grass-island.png",
+      "sourceSha256": "4b3d66e911131b532a9ecdcf3c6f4ac198560a504a9d6bce6f83d1ce31b848cd",
+      "sourceBytes": 830279,
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "file": "world/world-grass-island.webp",
+      "sha256": "703e2d6973304933dfc5e7626f929c396c0c02bea78f16d44c7293a76adf0b17",
+      "bytes": 10510,
+      "width": 256,
+      "height": 256,
+      "visibleRectAlpha128": [
+        16,
+        27,
+        240,
+        231
+      ],
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "runtimeUsable": true
+    },
+    {
+      "id": "world-jump-hurdle",
+      "group": "world",
+      "source": "character-art/image-library-v1/world/world-jump-hurdle.png",
+      "sourceSha256": "2c1ef71f1bf62d1dfb23d9e8ed4c99f855f8220a53167d9e91e0fa6a6dbadabb",
+      "sourceBytes": 517162,
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "file": "world/world-jump-hurdle.webp",
+      "sha256": "dd7f218a7eb0c2f2b14445498856a334ae89ded61b459004641d6a19bc1e0bfb",
+      "bytes": 9276,
+      "width": 256,
+      "height": 256,
+      "visibleRectAlpha128": [
+        20,
+        23,
+        237,
+        237
+      ],
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "runtimeUsable": true
+    },
+    {
+      "id": "world-mud-patch",
+      "group": "world",
+      "source": "character-art/image-library-v1/world/world-mud-patch.png",
+      "sourceSha256": "430fee325e79bc5532964db7fa664be3afb1a4f11b8d5e45de1eaec43da374ae",
+      "sourceBytes": 682692,
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "file": "world/world-mud-patch.webp",
+      "sha256": "59fe2898938d9fb80c318ac2bb1cc0d77448362c58123dfa3b255554412c9597",
+      "bytes": 8196,
+      "width": 256,
+      "height": 256,
+      "visibleRectAlpha128": [
+        6,
+        59,
+        251,
+        199
+      ],
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "runtimeUsable": true
+    },
+    {
+      "id": "world-respawn-beacon",
+      "group": "world",
+      "source": "character-art/image-library-v1/world/world-respawn-beacon.png",
+      "sourceSha256": "b37d4f91bb356ae783f5536ae14bf72215d0209a848b72a56931965c95f342cc",
+      "sourceBytes": 759108,
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "file": "world/world-respawn-beacon.webp",
+      "sha256": "f75dd08b365b27f88195eec3b9409cfedb319e1c6e49f76780de6c921cfd922b",
+      "bytes": 11956,
+      "width": 256,
+      "height": 256,
+      "visibleRectAlpha128": [
+        36,
+        24,
+        224,
+        235
+      ],
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "runtimeUsable": true
+    },
+    {
+      "id": "world-road-barrier",
+      "group": "world",
+      "source": "character-art/image-library-v1/world/world-road-barrier.png",
+      "sourceSha256": "ddf78800bbefe8321b6305745958a62853adc861323b911fafb67e97c8a7b376",
+      "sourceBytes": 670568,
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "file": "world/world-road-barrier.webp",
+      "sha256": "033da58ede0bc8c03a7ff1056a141eee4d785d0185e4da36abdb602712f7f744",
+      "bytes": 9804,
+      "width": 256,
+      "height": 256,
+      "visibleRectAlpha128": [
+        16,
+        34,
+        242,
+        229
+      ],
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "runtimeUsable": true
+    },
+    {
+      "id": "world-rock-cluster",
+      "group": "world",
+      "source": "character-art/image-library-v1/world/world-rock-cluster.png",
+      "sourceSha256": "54e57986ecdd63e585abcefbd3f5e104dcf0edde7b75ff7f10f06ae76bd2f3d0",
+      "sourceBytes": 766388,
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "file": "world/world-rock-cluster.webp",
+      "sha256": "9512b73f18178b6dcd505e754c64bd4c6e6881f6268ebd5ed5b9aa703c10a384",
+      "bytes": 9628,
+      "width": 256,
+      "height": 256,
+      "visibleRectAlpha128": [
+        40,
+        32,
+        226,
+        224
+      ],
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "runtimeUsable": true
+    },
+    {
+      "id": "world-rotating-sweeper",
+      "group": "world",
+      "source": "character-art/image-library-v1/world/world-rotating-sweeper.png",
+      "sourceSha256": "9056a147a90ba1ab630134d40ce6948e00f628d8a35a4addef25424845a22e70",
+      "sourceBytes": 456990,
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "file": "world/world-rotating-sweeper.webp",
+      "sha256": "9b177ea24e00dcdf6e879bb2bb5bc526e600a45c4ce96c9f9418ee82b6e955b4",
+      "bytes": 8208,
+      "width": 256,
+      "height": 256,
+      "visibleRectAlpha128": [
+        4,
+        59,
+        253,
+        199
+      ],
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "runtimeUsable": true
+    },
+    {
+      "id": "world-short-bridge",
+      "group": "world",
+      "source": "character-art/image-library-v1/world/world-short-bridge.png",
+      "sourceSha256": "55c3e9a51d7663beb8ee7360308655ed428adc2c0aabaf6ab319a43768aaf24c",
+      "sourceBytes": 835234,
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "file": "world/world-short-bridge.webp",
+      "sha256": "5b9e24785fa1da4aef694a6aee5e2c8dec5f8396c9201d5aa50c8f919f0bef6d",
+      "bytes": 13016,
+      "width": 256,
+      "height": 256,
+      "visibleRectAlpha128": [
+        5,
+        28,
+        248,
+        223
+      ],
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "runtimeUsable": true
+    },
+    {
+      "id": "world-tree-broadleaf",
+      "group": "world",
+      "source": "character-art/image-library-v1/world/world-tree-broadleaf.png",
+      "sourceSha256": "0c5f9131b6db1f255e943f3c033768ededcbcc9966fc79c7c7c7e64183e328de",
+      "sourceBytes": 838510,
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "file": "world/world-tree-broadleaf.webp",
+      "sha256": "07077f2aba349d7a80b780a72ec0cd92886026be3f4b4fe30735290f8387b882",
+      "bytes": 12140,
+      "width": 256,
+      "height": 256,
+      "visibleRectAlpha128": [
+        18,
+        16,
+        238,
+        239
+      ],
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "runtimeUsable": true
+    },
+    {
+      "id": "fx-cannon-blast",
+      "group": "fx",
+      "source": "character-art/image-library-v1/fx/fx-cannon-blast.png",
+      "sourceSha256": "7670a2746c4b6e7b11a47487b6df4bc4cd56bacaeaac556d7c7f8d61b36853bc",
+      "sourceBytes": 901563,
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "file": "fx/fx-cannon-blast.webp",
+      "sha256": "f51699f076f856ee6e13f677184d6276be49de26c47757e22a790d0bd3bc7b0c",
+      "bytes": 12286,
+      "width": 256,
+      "height": 256,
+      "visibleRectAlpha128": [
+        15,
+        20,
+        241,
+        223
+      ],
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "runtimeUsable": true
+    },
+    {
+      "id": "fx-dash-trail",
+      "group": "fx",
+      "source": "character-art/image-library-v1/fx/fx-dash-trail.png",
+      "sourceSha256": "eacc9e35bcf002595c22d2e44203cd2e521acab742d9d7cd45b24f11c428001d",
+      "sourceBytes": 504249,
+      "sourceWidth": 1896,
+      "sourceHeight": 830,
+      "file": "fx/fx-dash-trail.webp",
+      "sha256": "d820f4292ad10d0eb923f6415edcfecf76ab84586255d0d6325f859c32c39e39",
+      "bytes": 16480,
+      "width": 512,
+      "height": 224,
+      "visibleRectAlpha128": [
+        16,
+        53,
+        498,
+        173
+      ],
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "runtimeUsable": true
+    },
+    {
+      "id": "fx-frost-burst",
+      "group": "fx",
+      "source": "character-art/image-library-v1/fx/fx-frost-burst.png",
+      "sourceSha256": "55603be54260f90b0b9c7d009de04ac1d6033c09c6f10b6e0cdbda23cfca96eb",
+      "sourceBytes": 353351,
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "file": "fx/fx-frost-burst.webp",
+      "sha256": "ea689c76501d9bd03f6844259e0b0df64e02ee96f5cccb05ea4c0ed2e0f1ef42",
+      "bytes": 9824,
+      "width": 256,
+      "height": 256,
+      "visibleRectAlpha128": [
+        22,
+        24,
+        234,
+        231
+      ],
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "runtimeUsable": true
+    },
+    {
+      "id": "fx-hit-burst",
+      "group": "fx",
+      "source": "character-art/image-library-v1/fx/fx-hit-burst.png",
+      "sourceSha256": "d9a0a635304b4e6a39bb052462d309886ec4bcffe24a03ff65e45fa45c743d34",
+      "sourceBytes": 719025,
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "file": "fx/fx-hit-burst.webp",
+      "sha256": "1d6d12e0cffc6814c5b27329177e3213d212d6bae45b664bbf13fe0d66ff417c",
+      "bytes": 13476,
+      "width": 256,
+      "height": 256,
+      "visibleRectAlpha128": [
+        12,
+        9,
+        244,
+        234
+      ],
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "runtimeUsable": true
+    },
+    {
+      "id": "fx-upgrade-burst",
+      "group": "fx",
+      "source": "character-art/image-library-v1/fx/fx-upgrade-burst.png",
+      "sourceSha256": "3c593c8de836b8dcfc59461380a1cabda66c7d9ad7e786991877d9d9d8e9cbdf",
+      "sourceBytes": 562465,
+      "sourceWidth": 1247,
+      "sourceHeight": 1261,
+      "file": "fx/fx-upgrade-burst.webp",
+      "sha256": "37976d96fc3dcf9e9a70340d610c028e7c4cded096d5067c1e1761f94910c35a",
+      "bytes": 13798,
+      "width": 253,
+      "height": 256,
+      "visibleRectAlpha128": [
+        61,
+        12,
+        191,
+        247
+      ],
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "runtimeUsable": true
+    },
+    {
+      "id": "reward-star",
+      "group": "fx",
+      "source": "character-art/image-library-v1/fx/reward-star.png",
+      "sourceSha256": "7e0e5717a3d27cdf07b664eb4503f812f1c8eafc44832a64b97f27cd78d17b7e",
+      "sourceBytes": 694865,
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "file": "fx/reward-star.webp",
+      "sha256": "9290bb3a918b152a19bcbe4dfcf3b31204d86aa2dd5b010ec7dcc24106128428",
+      "bytes": 9382,
+      "width": 256,
+      "height": 256,
+      "visibleRectAlpha128": [
+        22,
+        27,
+        234,
+        220
+      ],
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "runtimeUsable": true
+    },
+    {
+      "id": "reward-treasure-chest",
+      "group": "fx",
+      "source": "character-art/image-library-v1/fx/reward-treasure-chest.png",
+      "sourceSha256": "3f12bacc41822e617086f48bf2a9af4992714c4ef6c3996f27a77c85a0e67d3b",
+      "sourceBytes": 1043171,
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "file": "fx/reward-treasure-chest.webp",
+      "sha256": "c000a158c6bdac769c3d0a1af0e59cdcaf2b163bb40279797aa56491cd0cd162",
+      "bytes": 14116,
+      "width": 256,
+      "height": 256,
+      "visibleRectAlpha128": [
+        13,
+        27,
+        246,
+        229
+      ],
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "runtimeUsable": true
+    },
+    {
+      "id": "reward-victory-medal",
+      "group": "fx",
+      "source": "character-art/image-library-v1/fx/reward-victory-medal.png",
+      "sourceSha256": "7867ffc7484b86486599a748fbaff20cb145f7f3ed3a6f721ef2d1c83ee818e2",
+      "sourceBytes": 1045980,
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "file": "fx/reward-victory-medal.webp",
+      "sha256": "4050ad6c5191013dbfa14c82fdd71cf8916bbe81c1967cb8b5ec752f0503cdb2",
+      "bytes": 14936,
+      "width": 256,
+      "height": 256,
+      "visibleRectAlpha128": [
+        29,
+        11,
+        227,
+        245
+      ],
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "runtimeUsable": true
+    }
+  ]
+}
