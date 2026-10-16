@@ -58,3 +58,10 @@
 .td-dialog::backdrop { background: var(--game-outline); opacity: .65; }
 .td-dialog > * { margin-bottom: 16px; }
 .td-dialog button { display: block; width: 100%; min-height: 44px; }
+.td-selection-ring { fill: none; stroke: var(--game-gold); stroke-width: 10px; paint-order: stroke; pointer-events: none; }
+.td-current-tower { display: flex; align-items: center; gap: 12px; }
+.td-current-tower p { flex: 1; }
+.td-result-art { justify-self: center; }
+.td-build-effect { pointer-events: none; animation: td-build-feedback 550ms ease-out both; }
+@keyframes td-build-feedback { 0% { opacity: .8; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .td-build-effect { animation: none; opacity: .65; } }

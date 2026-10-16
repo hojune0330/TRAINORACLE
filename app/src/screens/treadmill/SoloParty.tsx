@@ -247,7 +247,10 @@ export function SoloParty({ onBack, onFriends }: { readonly onBack: () => void; 
       <div className="arena-hints">꾹 달리기 · ↗ 점프 · 두 번 {view.mode === 'survival' ? '대시 · 서로 밀리지 않아요' : '밀치기'}</div>
     </div>}
     {view?.phase === 'finished' && <div className="solo-party__panel">
-      {view.mode === 'defense' ? <DefenseIcon id="finish-gate" size={96} /> : <PartyIcon id="upgrade-core" size={80} />}<h2>{view.mode !== 'defense' ? '두 라운드 완주!' : '세 웨이브 완주!'}</h2>
+      {view.mode === 'defense'
+        ? <PartyIcon id="reward-treasure-chest" size={96} fallback={<DefenseIcon id="finish-gate" size={96} />} />
+        : <PartyIcon id={pushSeriesPoints(view.results, 'you') > pushSeriesPoints(view.results, 'bot') ? 'reward-victory-medal' : 'reward-star'} size={80} />}
+      <h2>{view.mode !== 'defense' ? '두 라운드 완주!' : '세 웨이브 완주!'}</h2>
       {view.mode !== 'defense' ? <>
         <strong className="solo-party__result">시리즈 승점 {pushSeriesPoints(view.results, 'you')} : {pushSeriesPoints(view.results, 'bot')}</strong>
         <p>{pushSeriesPoints(view.results, 'you') > pushSeriesPoints(view.results, 'bot') ? '연습 상대에게 승리했어요.' : pushSeriesPoints(view.results, 'you') === pushSeriesPoints(view.results, 'bot') ? '공동 순위예요. 다음에는 낙하를 줄여보세요.' : view.mode === 'survival' ? '다음 목표: 앞의 장애물을 보고 점프하고, 낙하를 줄이세요.' : '다음 목표: 상대가 가까워질 때 밀치고, 공격은 점프로 피하세요.'}</p>

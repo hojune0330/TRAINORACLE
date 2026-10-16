@@ -6,7 +6,7 @@ manifest=json.loads((root/"manifest.json").read_text(encoding="utf-8"))
 if manifest["generatedCount"] != 30:
     raise SystemExit("All 30 assets must be produced before packaging.")
 files=[a["file"] for a in manifest["assets"]]
-files += ["README.md","manifest.json","file-audit.json","production-plan.json","tripo-queue.json","VALIDATION.md"]
+files += ["README.md","manifest.json","file-audit.json","production-plan.json","tripo-queue.json","VALIDATION.md","INTEGRATION.md","runtime-usage.json"]
 for group in ["defense","world","fx"]:
     files += [group+"/PROMPTS.md", group+"/assets.json"]
 for file in files:

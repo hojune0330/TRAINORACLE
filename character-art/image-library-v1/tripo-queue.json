@@ -1,10 +1,16 @@
 {
   "schemaVersion": 1,
-  "status": "images-first-no-submission",
+  "status": "authorized-browser-connection-blocked-before-submission",
   "autoSubmit": false,
   "tripoCalls": 0,
   "tripoCreditsSpent": 0,
-  "balanceCheckedThisBatch": false,
+  "balanceCheckedThisBatch": true,
+  "studioBalanceObserved": 2225,
+  "generationQuoteObserved": 55,
+  "quoteIsFinalConfirmedCost": false,
+  "observedModel": "Studio H3.1 geometry and texture",
+  "newModelsDownloaded": 0,
+  "blockingReason": "Browser control transport closed before privacy/cost confirmation or image upload. Reconnect and reset calls also failed; no generation was submitted.",
   "preferredAccountRoute": "Existing Studio Pro; API billing is separate and must not be assumed funded",
   "generationOrder": [
     "td-rapid-tower",

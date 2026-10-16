@@ -4,13 +4,16 @@ import {newTowerDefense,buildTower,upgradeTower,sellTower,startTowerWave,stepTow
 import type {TowerKind,Branch,TowerDefense as State} from '../../domain/minigame/tower-defense'
 import {loadTD,saveTD,readTDRecords,recordTD} from '../../domain/minigame/tower-defense-storage'
 import {useTaskFlowBack} from '../../hooks/useTaskFlowBack'
-import {TowerDefenseBoard,tdTile} from './TowerDefenseBoard'
+import {TowerDefenseBoard} from './TowerDefenseBoard'
+import {TDArtwork,tdTowerArtwork,tdEnemyArtwork} from './TowerDefenseArtwork'
 import './tower-defense.css'
 
 export function TowerDefense({onBack}:{onBack:()=>void}){
  const current=React.useRef<State|null>(null),id=React.useRef(''),recorded=React.useRef(false)
  const [view,setView]=React.useState<State|null>(null),[selected,setSelected]=React.useState(0),[paused,setPaused]=React.useState(false),[speed,setSpeed]=React.useState(1)
  const [saved,setSaved]=React.useState<ReturnType<typeof loadTD>>(null),[notice,setNotice]=React.useState(''),[best,setBest]=React.useState(0)
+ const [buildEffect,setBuildEffect]=React.useState<{pad:number;at:number}|null>(null)
+ React.useEffect(()=>{if(!buildEffect)return;const timer=window.setTimeout(()=>setBuildEffect(null),550);return()=>window.clearTimeout(timer)},[buildEffect])
  const dialog=React.useRef<HTMLDialogElement>(null)
  const sync=React.useCallback(()=>setView(current.current?structuredClone(current.current):null),[])
  React.useEffect(()=>{try{setSaved(loadTD(localStorage));setBest(Math.max(0,...readTDRecords(localStorage).filter(r=>r.won).map(r=>r.lives)))}catch{setNotice('이전 저장을 읽지 못했어요. 기존 데이터는 보존해요.')}},[])
@@ -29,15 +32,15 @@ export function TowerDefense({onBack}:{onBack:()=>void}){
   };raf=requestAnimationFrame(frame);return()=>cancelAnimationFrame(raf)
  },[view?.phase,paused,speed,sync])
  React.useEffect(()=>{if(!finished||!view||recorded.current)return;recorded.current=true;try{recordTD(localStorage,view,id.current);setNotice('결과를 이 기기에 저장했어요.')}catch{setNotice('결과를 저장하지 못했어요. 아래 기록을 확인해 주세요.')}},[finished,view])
- const start=(s:State=newTowerDefense(),runId:string=crypto.randomUUID())=>{current.current=structuredClone(s);id.current=runId;recorded.current=false;setSelected(0);setSpeed(1);setNotice('');setPaused(false);sync()}
- const act=(fn:(s:State)=>boolean,message:string)=>{if(!current.current||paused)return;if(fn(current.current))setNotice(message);sync()}
+ const start=(s:State=newTowerDefense(),runId:string=crypto.randomUUID())=>{current.current=structuredClone(s);id.current=runId;recorded.current=false;setSelected(0);setSpeed(1);setNotice('');setBuildEffect(null);setPaused(false);sync()}
+ const act=(fn:(s:State)=>boolean,message:string)=>{if(!current.current||paused)return;const before=current.current.towers.find(t=>t.pad===selected)?.level??0;if(fn(current.current)){setNotice(message);if((current.current.towers.find(t=>t.pad===selected)?.level??0)>before)setBuildEffect({pad:selected,at:performance.now()})}sync()}
  const save=()=>{if(!current.current)return;try{saveTD(localStorage,current.current,id.current);onBack()}catch{setNotice('저장하지 못했어요. 기존 저장은 보존하며 현재 판을 계속할 수 있어요.')}}
  const tower=view?.towers.find(t=>t.pad===selected),stats=tower?towerStats(tower):null
  const next=TD_WAVES[view?.phase==='wave'?(view.wave-1):(view?.wave??0)]
  return <section className="treadmill-game tower-defense" data-phase={view?.phase??'intro'} data-wave={view?.wave??0} data-gold={view?.gold??0} data-lives={view?.lives??20} data-time={view?.time.toFixed(2)??0}>
   <header className="treadmill-game__header"><button className="treadmill-game__icon" aria-label="디펜스 나가기" onClick={back}><ArrowLeft size={20}/></button><div className="treadmill-game__title"><span>숲길 방어전 · 혼자 도전</span><h1>타워 디펜스</h1></div>{view&&!finished&&<button className="treadmill-game__icon" aria-label="디펜스 일시정지" onClick={()=>setPaused(true)}><Pause size={20}/></button>}</header>
   {!view?<div className="td-panel td-intro">
-   <div className="td-intro-art" aria-hidden="true">{[249,250,203].map(n=><img key={n} src={tdTile(n)} alt=""/>)}</div>
+   <div className="td-intro-art" aria-hidden="true">{(Object.keys(TD_TOWERS) as TowerKind[]).map(kind=><TDArtwork key={kind} id={tdTowerArtwork(kind)} size={80} fallbackTile={TD_TOWERS[kind].tile}/>)}</div>
    <h2>길목을 지키고, 6웨이브를 막으세요</h2><p>기지 체력 20 · 시작 골드 180. 적이 출구에 도착하면 기지 체력을 잃어요. 체력이 0이면 패배합니다.</p>
    <ol><li>번호가 있는 건설 지점을 누르고 타워를 선택하세요.</li><li>웨이브를 시작하면 타워가 자동으로 공격해요.</li><li>처치 골드와 웨이브 보상 40으로 새 타워를 짓거나 강화하세요.</li></ol>
    <p>연사탑은 빠른 적, 포격탑은 장갑과 무리, 냉각탑은 감속을 맡아요. 같은 타워도 길을 오래 바라보는 자리에 놓으면 더 많이 공격해요.</p>
@@ -45,16 +48,16 @@ export function TowerDefense({onBack}:{onBack:()=>void}){
    {saved&&<button className="treadmill-game__cta" onClick={()=>start(saved.state,saved.id)}>{saved.state.wave+1}웨이브 준비 이어하기</button>}
    <button className={saved?'treadmill-game__ghost':'treadmill-game__cta'} onClick={()=>start()}>새 방어전 시작</button>
    {saved&&<small>새 판은 별도로 시작해요. 저장하고 나가기를 누르면 이전 이어하기가 새 판으로 바뀝니다.</small>}
-   <small>에셋: <a href="https://kenney.nl/assets/tower-defense-top-down" target="_blank" rel="noreferrer">Kenney · CC0</a> · <a href={`${import.meta.env.BASE_URL}game/kenney-td/License.txt`} target="_blank" rel="noreferrer">라이선스</a></small>
+   <small>바탕·대체 에셋: <a href="https://kenney.nl/assets/tower-defense-top-down" target="_blank" rel="noreferrer">Kenney · CC0</a> · <a href={`${import.meta.env.BASE_URL}game/kenney-td/License.txt`} target="_blank" rel="noreferrer">라이선스</a></small>
   </div>:<>
    <div className="td-hud"><strong>기지 {view.lives}/20</strong><strong>골드 {view.gold}</strong><span>{view.wave}/6 웨이브</span><button aria-label={`전투 속도 ${speed}배`} onClick={()=>setSpeed(speed===1?2:1)} disabled={finished}>{speed}×</button></div>
-   <TowerDefenseBoard state={view} selected={selected} onSelect={setSelected}/>
-   {finished?<div className="td-panel td-result"><h2>{view.phase==='won'?'6웨이브 방어 성공!':'기지가 함락됐어요'}</h2><strong>{view.phase==='won'?`완주 등급 ${view.lives===20?'★★★':view.lives>=15?'★★':'★'}`:`${view.wave}웨이브에서 종료`}</strong><p>남은 체력 {view.lives}/20 · 막은 적 {view.kills} · 놓친 적 {view.leaks}</p><p>{view.phase==='won'?'체력 20이면 별 3개, 15 이상이면 2개, 완주하면 1개예요.':'연사만으로는 장갑병을 막기 어려워요. 포격과 감속을 굽은 길에 겹쳐 보세요.'}</p><button className="treadmill-game__cta" onClick={()=>start()}>새 배치로 다시 도전</button><button className="treadmill-game__ghost" onClick={onBack}>종목 선택으로</button></div>:<>
-    <div className="td-wave td-panel"><strong>{view.phase==='wave'?`${view.wave}웨이브 진행 · ${view.spawned}/${next!.units.length} 등장 · 전장 ${view.enemies.length}`:`${view.wave+1}웨이브 준비 · ${next!.name}`}</strong><p>{next!.hint}</p><div className="td-enemy-list">{(Object.keys(TD_ENEMIES) as (keyof typeof TD_ENEMIES)[]).map(k=>{const count=next!.units.filter(u=>u===k).length;return count>0&&<span key={k}><img src={tdTile(TD_ENEMIES[k].tile)} alt=""/>{TD_ENEMIES[k].name} {count}</span>})}</div>{view.phase==='prepare'&&<><button className="treadmill-game__cta" onClick={()=>act(startTowerWave,`${view.wave+1}웨이브 시작`)}>{view.wave+1}웨이브 시작</button><small>{view.wave>0?'웨이브 보상 +40 지급 완료 · ':''}{view.towers.length===0?'타워를 먼저 건설하는 것이 좋아요.':'건설·강화가 끝나면 시작하세요.'}</small></>}</div>
+   <TowerDefenseBoard state={view} selected={selected} onSelect={setSelected} buildEffect={buildEffect}/>
+   {finished?<div className="td-panel td-result"><TDArtwork id={view.phase==='won'?'reward-victory-medal':'td-base-gate'} size={100} className="td-result-art"/><h2>{view.phase==='won'?'6웨이브 방어 성공!':'기지가 함락됐어요'}</h2><strong>{view.phase==='won'?`완주 등급 ${view.lives===20?'★★★':view.lives>=15?'★★':'★'}`:`${view.wave}웨이브에서 종료`}</strong><p>남은 체력 {view.lives}/20 · 막은 적 {view.kills} · 놓친 적 {view.leaks}</p><p>{view.phase==='won'?'체력 20이면 별 3개, 15 이상이면 2개, 완주하면 1개예요.':'연사만으로는 장갑병을 막기 어려워요. 포격과 감속을 굽은 길에 겹쳐 보세요.'}</p><button className="treadmill-game__cta" onClick={()=>start()}>새 배치로 다시 도전</button><button className="treadmill-game__ghost" onClick={onBack}>종목 선택으로</button></div>:<>
+    <div className="td-wave td-panel"><strong>{view.phase==='wave'?`${view.wave}웨이브 진행 · ${view.spawned}/${next!.units.length} 등장 · 전장 ${view.enemies.length}`:`${view.wave+1}웨이브 준비 · ${next!.name}`}</strong><p>{next!.hint}</p><div className="td-enemy-list">{(Object.keys(TD_ENEMIES) as (keyof typeof TD_ENEMIES)[]).map(k=>{const count=next!.units.filter(u=>u===k).length;return count>0&&<span key={k}><TDArtwork id={tdEnemyArtwork(k)} size={40} fallbackTile={TD_ENEMIES[k].tile}/>{TD_ENEMIES[k].name} {count}</span>})}</div>{view.phase==='prepare'&&<><button className="treadmill-game__cta" onClick={()=>act(startTowerWave,`${view.wave+1}웨이브 시작`)}>{view.wave+1}웨이브 시작</button><small>{view.wave>0?'웨이브 보상 +40 지급 완료 · ':''}{view.towers.length===0?'타워를 먼저 건설하는 것이 좋아요.':'건설·강화가 끝나면 시작하세요.'}</small></>}</div>
     <div className="td-panel td-build"><h2>{selected+1}번 지점 {tower?`${TD_TOWERS[tower.kind].name} Lv.${tower.level}`:'· 타워 건설'}</h2>
-     {!tower?<div className="td-shop">{(Object.keys(TD_TOWERS) as TowerKind[]).map(kind=>{const t=TD_TOWERS[kind];return <button key={kind} disabled={view.gold<t.cost} onClick={()=>act(s=>buildTower(s,selected,kind),`${selected+1}번 ${t.name} 건설 완료`)}><img src={tdTile(t.tile)} alt=""/><span><strong>{t.name} · {t.cost}골드</strong><small>{t.role}</small><small>피해 {t.damage} · 사거리 {t.range}</small></span></button>})}</div>:<>
-      <p>피해 {stats!.damage.toFixed(1)} · 간격 {stats!.interval.toFixed(2)}초 · 사거리 {stats!.range.toFixed(2)}<br/>처치 {tower.kills} · {tower.branch==='power'?'화력 특화':tower.branch==='reach'?'사거리 특화':'강화 방향을 고르세요'}</p>
-      {tower.level<3?<div className="td-upgrades">{(tower.level===1?['power','reach']:[tower.branch!]).map(b=>{const after=towerStats({...tower,level:(tower.level+1) as 2|3,branch:b as Branch});return <button key={b} disabled={view.gold<upgradeCost(tower)} onClick={()=>act(s=>upgradeTower(s,selected,b as Branch),'타워 강화 완료')}><strong>{tower.level===1?(b==='power'?'화력 특화':'사거리 특화'):'최종 강화'} · {upgradeCost(tower)}골드</strong><small>피해 {stats!.damage.toFixed(1)} → {after.damage.toFixed(1)}</small><small>사거리 {stats!.range.toFixed(2)} → {after.range.toFixed(2)}</small></button>})}</div>:<strong>최대 레벨</strong>}
+     {!tower?<div className="td-shop">{(Object.keys(TD_TOWERS) as TowerKind[]).map(kind=>{const t=TD_TOWERS[kind];return <button key={kind} disabled={view.gold<t.cost} onClick={()=>act(s=>buildTower(s,selected,kind),`${selected+1}번 ${t.name} 건설 완료`)}><TDArtwork id={tdTowerArtwork(kind)} size={64} fallbackTile={t.tile}/><span><strong>{t.name} · {t.cost}골드</strong><small>{t.role}</small><small>피해 {t.damage} · 사거리 {t.range}</small></span></button>})}</div>:<>
+      <div className="td-current-tower"><TDArtwork id={tdTowerArtwork(tower.kind,tower.level)} size={76} fallbackTile={TD_TOWERS[tower.kind].tile}/><p>피해 {stats!.damage.toFixed(1)} · 간격 {stats!.interval.toFixed(2)}초 · 사거리 {stats!.range.toFixed(2)}<br/>처치 {tower.kills} · {tower.branch==='power'?'화력 특화':tower.branch==='reach'?'사거리 특화':'강화 방향을 고르세요'}</p></div>
+      {tower.level<3?<div className="td-upgrades">{(tower.level===1?['power','reach']:[tower.branch!]).map(b=>{const after=towerStats({...tower,level:(tower.level+1) as 2|3,branch:b as Branch});return <button key={b} disabled={view.gold<upgradeCost(tower)} onClick={()=>act(s=>upgradeTower(s,selected,b as Branch),'타워 강화 완료')}><TDArtwork id={tdTowerArtwork(tower.kind,tower.level+1)} size={56} fallbackTile={TD_TOWERS[tower.kind].tile}/><strong>{tower.level===1?(b==='power'?'화력 특화':'사거리 특화'):'최종 강화'} · {upgradeCost(tower)}골드</strong><small>피해 {stats!.damage.toFixed(1)} → {after.damage.toFixed(1)}</small><small>사거리 {stats!.range.toFixed(2)} → {after.range.toFixed(2)}</small></button>})}</div>:<strong>최대 레벨</strong>}
       <button className="treadmill-game__ghost" onClick={()=>act(s=>sellTower(s,selected),'타워를 판매했어요.')}>판매 · {sellValue(tower)}골드 회수 (70%)</button>
      </>}
     </div>

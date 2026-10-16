@@ -3,7 +3,7 @@ import { TOUR_CITIES } from '../../domain/minigame/tour'
 import { drawHazard, drawRunner, outlinedText } from './sprites'
 import type { GamePalette } from './sprites'
 import type { ArenaSnapshot } from './arena-types'
-import { drawPartyProp } from './party-art'
+import { drawPartyEffect, drawPartyProp } from './party-art'
 import { drawSurvivalCourse } from './survival-render'
 
 export function drawArena(ctx: CanvasRenderingContext2D, palette: GamePalette, snapshot: ArenaSnapshot,
@@ -58,12 +58,17 @@ export function drawArena(ctx: CanvasRenderingContext2D, palette: GamePalette, s
     }
     ctx.fillStyle = p.id === selfId ? palette.gold : palette.neonBlue
     ctx.beginPath(); ctx.ellipse(p.x * width, base, 24 * scale, 7 * scale, 0, 0, Math.PI * 2); ctx.fill()
+    // Existing server windows are .25s for dash and .65s for a hit; presentation only.
+    if (p.dashUntil > 0) drawPartyEffect(ctx, 'fx-dash-trail', p.x * width - 42 * scale,
+      base - p.y * scale - 30 * scale, 96 * scale, time - (p.dashUntil - .25), reduced)
     ctx.save(); ctx.translate(p.x * width, base - p.y * scale); ctx.scale(scale, scale)
     const protectedNow = time < p.protectedUntil
     if (protectedNow) { ctx.globalAlpha = .8; ctx.strokeStyle = palette.neonBlue; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(0, -40, 32, 46, 0, 0, Math.PI * 2); ctx.stroke() }
     drawRunner(ctx, palette, { character: p.slot === 0 ? 'tori' : 'hana', upgrades: [], phase: visualTime * 13,
       pose: time < p.hitUntil ? 'hit' : p.y > 0 ? 'jump' : time < p.dashUntil ? 'dash' : p.running ? 'run' : 'idle' })
     ctx.restore()
+    if (p.hitUntil > 0) drawPartyEffect(ctx, 'fx-hit-burst', p.x * width,
+      base - p.y * scale - 36 * scale, 64 * scale, time - (p.hitUntil - .65), reduced)
     outlinedText(ctx, `${p.id === selfId ? '나 · ' : ''}${name}${protectedNow ? ' · 보호' : ''}`, p.x * width, base - p.y * scale - 90 * scale, 13, palette.cloud, palette.outline, font, 800, width * .48)
   }
 }

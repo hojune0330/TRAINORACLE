@@ -47,7 +47,7 @@ export function UpgradeChoice({ state, nextStage, onPick, reduced = false }: {
     <section className="treadmill-game__card treadmill-game__pick upgrade-choice" aria-labelledby="treadmill-upgrade-title">
       <span className="treadmill-game__ribbon" data-tone="gold">{state.stage + 1}구간 통과!</span>
       {explaining ? <div className="upgrade-choice__intro" role="status">
-        <PartyEffect reduced={reduced} />
+        <PartyEffect id="fx-upgrade-burst" reduced={reduced} />
         <h2 id="treadmill-upgrade-title">이번 판의 능력을 바꿔요</h2>
         <div className="upgrade-choice__effects" aria-label="강화 효과 미리보기">
           {TREADMILL_UPGRADES.map(item => {

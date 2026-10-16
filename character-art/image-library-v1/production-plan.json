@@ -16,7 +16,8 @@
       "file": "defense/td-rapid-tower.png",
       "tripoStage": "1단계",
       "status": "image-produced",
-      "runtimeIntegrated": false
+      "runtimeIntegrated": true,
+      "runtimeUsage": "primary-connected"
     },
     {
       "id": "td-cannon-tower",
@@ -26,7 +27,8 @@
       "file": "defense/td-cannon-tower.png",
       "tripoStage": "1단계",
       "status": "image-produced",
-      "runtimeIntegrated": false
+      "runtimeIntegrated": true,
+      "runtimeUsage": "primary-connected"
     },
     {
       "id": "td-frost-tower",
@@ -36,7 +38,8 @@
       "file": "defense/td-frost-tower.png",
       "tripoStage": "1단계",
       "status": "image-produced",
-      "runtimeIntegrated": false
+      "runtimeIntegrated": true,
+      "runtimeUsage": "primary-connected"
     },
     {
       "id": "td-rapid-tower-upgraded",
@@ -46,7 +49,8 @@
       "file": "defense/td-rapid-tower-upgraded.png",
       "tripoStage": "2단계",
       "status": "image-produced",
-      "runtimeIntegrated": false
+      "runtimeIntegrated": true,
+      "runtimeUsage": "primary-connected"
     },
     {
       "id": "td-cannon-tower-upgraded",
@@ -56,7 +60,8 @@
       "file": "defense/td-cannon-tower-upgraded.png",
       "tripoStage": "2단계",
       "status": "image-produced",
-      "runtimeIntegrated": false
+      "runtimeIntegrated": true,
+      "runtimeUsage": "primary-connected"
     },
     {
       "id": "td-frost-tower-upgraded",
@@ -66,7 +71,8 @@
       "file": "defense/td-frost-tower-upgraded.png",
       "tripoStage": "2단계",
       "status": "image-produced",
-      "runtimeIntegrated": false
+      "runtimeIntegrated": true,
+      "runtimeUsage": "primary-connected"
     },
     {
       "id": "td-enemy-scout",
@@ -76,7 +82,8 @@
       "file": "defense/td-enemy-scout.png",
       "tripoStage": "3단계",
       "status": "image-produced",
-      "runtimeIntegrated": false
+      "runtimeIntegrated": true,
+      "runtimeUsage": "primary-connected"
     },
     {
       "id": "td-enemy-swift",
@@ -86,7 +93,8 @@
       "file": "defense/td-enemy-swift.png",
       "tripoStage": "3단계",
       "status": "image-produced",
-      "runtimeIntegrated": false
+      "runtimeIntegrated": true,
+      "runtimeUsage": "primary-connected"
     },
     {
       "id": "td-enemy-armored",
@@ -96,7 +104,8 @@
       "file": "defense/td-enemy-armored.png",
       "tripoStage": "3단계",
       "status": "image-produced",
-      "runtimeIntegrated": false
+      "runtimeIntegrated": true,
+      "runtimeUsage": "primary-connected"
     },
     {
       "id": "td-enemy-boss",
@@ -106,7 +115,8 @@
       "file": "defense/td-enemy-boss.png",
       "tripoStage": "3단계",
       "status": "image-produced",
-      "runtimeIntegrated": false
+      "runtimeIntegrated": true,
+      "runtimeUsage": "primary-connected"
     },
     {
       "id": "td-base-gate",
@@ -116,7 +126,8 @@
       "file": "defense/td-base-gate.png",
       "tripoStage": "1단계",
       "status": "image-produced",
-      "runtimeIntegrated": false
+      "runtimeIntegrated": true,
+      "runtimeUsage": "primary-connected"
     },
     {
       "id": "td-build-pad",
@@ -126,7 +137,8 @@
       "file": "defense/td-build-pad.png",
       "tripoStage": "기존 도형 유지 가능",
       "status": "image-produced",
-      "runtimeIntegrated": false
+      "runtimeIntegrated": true,
+      "runtimeUsage": "primary-connected"
     },
     {
       "id": "world-tree-broadleaf",
@@ -136,7 +148,8 @@
       "file": "world/world-tree-broadleaf.png",
       "tripoStage": "기존 모델 비교 후 결정",
       "status": "image-produced",
-      "runtimeIntegrated": false
+      "runtimeIntegrated": true,
+      "runtimeUsage": "primary-connected"
     },
     {
       "id": "world-rock-cluster",
@@ -146,7 +159,8 @@
       "file": "world/world-rock-cluster.png",
       "tripoStage": "기존 모델 비교 후 결정",
       "status": "image-produced",
-      "runtimeIntegrated": false
+      "runtimeIntegrated": true,
+      "runtimeUsage": "fallback-connected"
     },
     {
       "id": "world-road-barrier",
@@ -156,7 +170,8 @@
       "file": "world/world-road-barrier.png",
       "tripoStage": "기존 모델 비교 후 결정",
       "status": "image-produced",
-      "runtimeIntegrated": false
+      "runtimeIntegrated": false,
+      "runtimeUsage": "prepared-not-used"
     },
     {
       "id": "world-jump-hurdle",
@@ -166,7 +181,8 @@
       "file": "world/world-jump-hurdle.png",
       "tripoStage": "기존 모델 비교 후 결정",
       "status": "image-produced",
-      "runtimeIntegrated": false
+      "runtimeIntegrated": true,
+      "runtimeUsage": "fallback-connected"
     },
     {
       "id": "world-bounce-pad",
@@ -176,7 +192,8 @@
       "file": "world/world-bounce-pad.png",
       "tripoStage": "2단계",
       "status": "image-produced",
-      "runtimeIntegrated": false
+      "runtimeIntegrated": false,
+      "runtimeUsage": "prepared-not-used"
     },
     {
       "id": "world-rotating-sweeper",
@@ -186,7 +203,8 @@
       "file": "world/world-rotating-sweeper.png",
       "tripoStage": "2단계",
       "status": "image-produced",
-      "runtimeIntegrated": false
+      "runtimeIntegrated": false,
+      "runtimeUsage": "prepared-not-used"
     },
     {
       "id": "world-respawn-beacon",
@@ -196,7 +214,8 @@
       "file": "world/world-respawn-beacon.png",
       "tripoStage": "기존 모델 비교 후 결정",
       "status": "image-produced",
-      "runtimeIntegrated": false
+      "runtimeIntegrated": false,
+      "runtimeUsage": "prepared-not-used"
     },
     {
       "id": "world-short-bridge",
@@ -206,7 +225,8 @@
       "file": "world/world-short-bridge.png",
       "tripoStage": "2단계",
       "status": "image-produced",
-      "runtimeIntegrated": false
+      "runtimeIntegrated": true,
+      "runtimeUsage": "primary-connected"
     },
     {
       "id": "world-mud-patch",
@@ -216,7 +236,8 @@
       "file": "world/world-mud-patch.png",
       "tripoStage": "2D 유지",
       "status": "image-produced",
-      "runtimeIntegrated": false
+      "runtimeIntegrated": true,
+      "runtimeUsage": "primary-connected"
     },
     {
       "id": "world-grass-island",
@@ -226,7 +247,8 @@
       "file": "world/world-grass-island.png",
       "tripoStage": "기존 모델 비교 후 결정",
       "status": "image-produced",
-      "runtimeIntegrated": false
+      "runtimeIntegrated": true,
+      "runtimeUsage": "primary-connected"
     },
     {
       "id": "fx-hit-burst",
@@ -236,7 +258,8 @@
       "file": "fx/fx-hit-burst.png",
       "tripoStage": "2D 유지",
       "status": "image-produced",
-      "runtimeIntegrated": false
+      "runtimeIntegrated": true,
+      "runtimeUsage": "primary-connected"
     },
     {
       "id": "fx-cannon-blast",
@@ -246,7 +269,8 @@
       "file": "fx/fx-cannon-blast.png",
       "tripoStage": "2D 유지",
       "status": "image-produced",
-      "runtimeIntegrated": false
+      "runtimeIntegrated": true,
+      "runtimeUsage": "primary-connected"
     },
     {
       "id": "fx-frost-burst",
@@ -256,7 +280,8 @@
       "file": "fx/fx-frost-burst.png",
       "tripoStage": "2D 유지",
       "status": "image-produced",
-      "runtimeIntegrated": false
+      "runtimeIntegrated": true,
+      "runtimeUsage": "primary-connected"
     },
     {
       "id": "fx-dash-trail",
@@ -266,7 +291,8 @@
       "file": "fx/fx-dash-trail.png",
       "tripoStage": "2D 유지",
       "status": "image-produced",
-      "runtimeIntegrated": false
+      "runtimeIntegrated": true,
+      "runtimeUsage": "primary-connected"
     },
     {
       "id": "fx-upgrade-burst",
@@ -276,7 +302,8 @@
       "file": "fx/fx-upgrade-burst.png",
       "tripoStage": "2D 유지",
       "status": "image-produced",
-      "runtimeIntegrated": false
+      "runtimeIntegrated": true,
+      "runtimeUsage": "primary-connected"
     },
     {
       "id": "reward-victory-medal",
@@ -286,7 +313,8 @@
       "file": "fx/reward-victory-medal.png",
       "tripoStage": "2D 유지",
       "status": "image-produced",
-      "runtimeIntegrated": false
+      "runtimeIntegrated": true,
+      "runtimeUsage": "primary-connected"
     },
     {
       "id": "reward-star",
@@ -296,7 +324,8 @@
       "file": "fx/reward-star.png",
       "tripoStage": "2D 유지",
       "status": "image-produced",
-      "runtimeIntegrated": false
+      "runtimeIntegrated": true,
+      "runtimeUsage": "primary-connected"
     },
     {
       "id": "reward-treasure-chest",
@@ -306,7 +335,8 @@
       "file": "fx/reward-treasure-chest.png",
       "tripoStage": "후순위",
       "status": "image-produced",
-      "runtimeIntegrated": false
+      "runtimeIntegrated": true,
+      "runtimeUsage": "primary-connected"
     }
   ]
 }
