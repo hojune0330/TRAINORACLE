@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="런던 스탬프"><title>런던 스탬프</title>
+  <g transform="rotate(0 64 64)">
+    <circle cx="64" cy="64" r="58" fill="#FFFFFF" stroke="#5C6F92" stroke-width="4"/>
+    <circle cx="64" cy="64" r="50" fill="none" stroke="#5C6F92" stroke-width="1.6" stroke-dasharray="3 4"/>
+    <defs><path id="arc-london" d="M24 64a40 40 0 0 1 80 0"/></defs>
+    <text font-family="Pretendard Variable, Pretendard, sans-serif" font-size="13" font-weight="800" letter-spacing="3" fill="#5C6F92"><textPath href="#arc-london" startOffset="50%" text-anchor="middle">LONDON</textPath></text>
+    <path d="M56 84V40h16v44M56 40l8-12 8 12M44 84h40" fill="none" stroke="#5C6F92" stroke-width="3.2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="64" cy="52" r="5" fill="none" stroke="#5C6F92" stroke-width="3.2" stroke-linejoin="round" stroke-linecap="round"/>
+    <text x="64" y="100" text-anchor="middle" font-family="Pretendard Variable, Pretendard, sans-serif" font-size="13" font-weight="900" fill="#5C6F92">런던</text>
+  </g></svg>
