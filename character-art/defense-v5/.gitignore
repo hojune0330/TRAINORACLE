@@ -1,0 +1,4 @@
+renders/
+review/*.log
+review/probe*
+*.blend1

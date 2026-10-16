@@ -4,7 +4,7 @@ import { LICENSES } from "./GamePanels"
 
 type LockPackage = { version: string; license?: string; dependencies?: Record<string, string> }
 const lock = JSON.parse(readFileSync("package-lock.json", "utf8")) as { packages: Record<string, LockPackage> }
-const PACKAGE: Record<string, string> = { shaders: "shaders", TypeGPU: "typegpu", tinyest: "tinyest", "typed-binary": "typed-binary", "tsover-runtime": "tsover-runtime", Lucide: "lucide-react" }
+const PACKAGE: Record<string, string> = { Phaser: "phaser", EventEmitter3: "eventemitter3", shaders: "shaders", TypeGPU: "typegpu", tinyest: "tinyest", "typed-binary": "typed-binary", "tsover-runtime": "tsover-runtime", Lucide: "lucide-react" }
 
 /** Every package the lazy shader chunk pulls in, read from the lockfile, so a new transitive dependency fails here. */
 function runtimeTree(root: string): string[] {
@@ -29,9 +29,9 @@ describe("in-game open-source notice", () => {
       expect(item.license, name).toBe(installed!.license)
     }
   })
-  it("covers the whole shaders runtime tree, including transitive packages", () => {
+  it("covers the shader and defense runtime trees, including transitive packages", () => {
     const listed = new Set(LICENSES.map(item => PACKAGE[item.name]).filter(Boolean))
-    for (const name of runtimeTree("shaders")) expect(listed.has(name), `${name} is bundled but not in the notice`).toBe(true)
+    for (const name of [...runtimeTree("shaders"), ...runtimeTree("phaser")]) expect(listed.has(name), `${name} is bundled but not in the notice`).toBe(true)
   })
   it("links a full license text that ships with the app", () => {
     for (const item of LICENSES) {

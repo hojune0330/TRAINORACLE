@@ -1,0 +1,83 @@
+{
+  "blender": "4.5.14 LTS",
+  "frameSize": 128,
+  "origin": [
+    0.5,
+    0.68
+  ],
+  "directions": [
+    "E",
+    "SE",
+    "S",
+    "SW",
+    "W",
+    "NW",
+    "N",
+    "NE"
+  ],
+  "assets": [
+    {
+      "id": "rapid",
+      "source": "character-art/defense-v4/working/cannon.glb",
+      "sha256": "de3d64f5134aa1da9e54742a75ad6f27d21492362876ffd17dc605e593419af1",
+      "triangles": 804,
+      "renderedDirections": 8,
+      "actionRows": 3,
+      "reactionRows": 0
+    },
+    {
+      "id": "cannon",
+      "source": "character-art/defense-v4/working/cannon.glb",
+      "sha256": "de3d64f5134aa1da9e54742a75ad6f27d21492362876ffd17dc605e593419af1",
+      "triangles": 1499,
+      "renderedDirections": 8,
+      "actionRows": 3,
+      "reactionRows": 0
+    },
+    {
+      "id": "frost",
+      "source": "character-art/defense-v4/working/fan.glb",
+      "sha256": "811fcaebe1358ea8cf75cd6971711c27e322c483441133a5c5dce8e398287f86",
+      "triangles": 2381,
+      "renderedDirections": 8,
+      "actionRows": 3,
+      "reactionRows": 0
+    },
+    {
+      "id": "scout",
+      "source": "character-art/defense-v4/working/normal.glb",
+      "sha256": "0af133e61462bf660cbce54392e6518d9988bd67179607a4fa6931102fe63380",
+      "triangles": 2594,
+      "renderedDirections": 8,
+      "actionRows": 6,
+      "reactionRows": 6
+    },
+    {
+      "id": "swift",
+      "source": "character-art/run-party-v1/working/dust-fast.glb",
+      "sha256": "9e5b40e07267be0fbe85f04bedb8d3070b4045fec685a47729f7addba1c220f0",
+      "triangles": 2704,
+      "renderedDirections": 8,
+      "actionRows": 6,
+      "reactionRows": 6
+    },
+    {
+      "id": "armored",
+      "source": "character-art/run-party-v1/working/dust-armored.glb",
+      "sha256": "45e1054b1718b70a7e64098dce50cf25a548988089cd1a96aa8a8ec7c38ee406",
+      "triangles": 2836,
+      "renderedDirections": 8,
+      "actionRows": 6,
+      "reactionRows": 6
+    },
+    {
+      "id": "boss",
+      "source": "character-art/defense-v4/working/normal.glb",
+      "sha256": "0af133e61462bf660cbce54392e6518d9988bd67179607a4fa6931102fe63380",
+      "triangles": 3290,
+      "renderedDirections": 8,
+      "actionRows": 6,
+      "reactionRows": 6
+    }
+  ]
+}

@@ -65,3 +65,70 @@
 .td-build-effect { pointer-events: none; animation: td-build-feedback 550ms ease-out both; }
 @keyframes td-build-feedback { 0% { opacity: .8; } 100% { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .td-build-effect { animation: none; opacity: .65; } }
+
+/* The battlefield and its workbench are one stable workspace. No sticky panel
+   is allowed to cover enemies or the build controls on a small viewport. */
+.td-workspace { container-type: inline-size; position: fixed; inset: 0; z-index: 30; overflow-y: auto; overscroll-behavior: contain; width: 100%; background: var(--game-belt-dark); padding-top: env(safe-area-inset-top,0px); }
+.treadmill-game.tower-defense { max-width: 1100px; gap: 0; padding-bottom: max(24px,env(safe-area-inset-bottom)); }
+.tower-defense > .treadmill-game__header { display: flex; position: relative; top: auto; gap: 8px; padding: 12px; }
+.tower-defense .treadmill-game__title { flex: 1; text-align: left; }
+.tower-defense .treadmill-game__title h1 { font-size: 22px; }
+.tower-defense .td-hud { position: relative; top: auto; order: 1; border-width: 1px; margin: 0 12px 8px; padding: 4px 8px; }
+.td-hud strong { display: flex; align-items: center; gap: 4px; font-variant-numeric: tabular-nums; }
+.tower-defense .td-round-strip { order: 2; display: flex; align-items: center; gap: 12px; justify-content: space-between; margin: 0 12px 10px; min-height: 56px; color: var(--game-panel); }
+.td-round-strip > div { display: grid; gap: 4px; min-width: 0; }
+.td-round-strip strong { font-size: 15px; line-height: 1.4; }
+.td-round-strip span { font-size: 12px; line-height: 1.5; }
+.tower-defense .td-round-strip .treadmill-game__cta { width: auto; flex-shrink: 0; padding: 8px 12px; margin: 0; font-size: 14px; min-height: 48px; border-bottom-width: 3px; }
+.tower-defense .td-board { order: 3; position: relative; top: auto; margin: 0 12px; border-width: 1px; border-color: var(--game-hill-near); border-radius: 16px; }
+.td-battlefield { aspect-ratio: 12 / 13; background: var(--game-hill-near); isolation: isolate; }
+.td-canvas { position: absolute; inset: 0; pointer-events: none; }
+.td-canvas canvas { display: block; width: 100%!important; height: 100%!important; margin: 0!important; }
+.td-loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--game-ink); background: var(--game-hill-near); }
+.td-battlefield .td-pad { z-index: 2; border-radius: 50%; width: 44px; height: 44px; }
+.treadmill-game button.td-pad:active:not(:disabled) { transform: translate(-50%,-50%) !important; }
+.td-battlefield .td-pad span { left: -1px; top: 26px; width: 19px; height: 19px; line-height: 18px; opacity: .94; }
+.td-battlefield .td-pad:focus-visible { outline: 3px solid var(--game-gold); outline-offset: 0; }
+.td-field-caption { position: absolute; bottom: 12px; right: 14px; font-size: 12px; color: var(--game-ink); pointer-events: none; }
+.td-field-caption b { margin-left: 4px; font-variant-numeric: tabular-nums; }
+.td-range-caption { position: absolute; bottom: 10px; left: 10px; padding: 4px 7px; background: var(--game-panel); color: var(--game-ink); font-size: 11px; border-radius: 6px; pointer-events: none; }
+.td-render-note { color: var(--game-panel); padding: 8px 12px; }
+.tower-defense .td-build { order: 4; margin: 10px 12px 0; padding: 12px; border-width: 1px; gap: 10px; }
+.tower-defense .td-build h2 { font-size: 15px; }
+.td-shop { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 6px; }
+.td-shop button { display: flex; flex-direction: column; text-align: center; gap: 4px; padding: 8px 4px; border-width: 1px; border-bottom-width: 3px; }
+.td-shop button > span:last-child { gap: 5px; }
+.td-shop strong { font-size: 13px; line-height: 1.4; }
+.td-shop small { font-size: 11px; line-height: 1.5; word-break: keep-all; }
+.td-shop .td-artwork { height: 54px!important; width: 54px!important; }
+.td-shop button:active:not(:disabled),.td-upgrades button:active:not(:disabled) { transform: translateY(2px); border-bottom-width: 1px; }
+.td-upgrades button { padding: 8px; border-width: 1px; border-bottom-width: 3px; }
+.td-upgrades .td-artwork { display: none!important; }
+.td-upgrades strong { font-size: 13px; line-height: 1.5; }
+.td-current-tower { gap: 8px; }
+.td-current-tower .td-artwork { width: 56px!important; height: 56px!important; }
+.td-current-tower p { font-size: 12px; }
+.tower-defense .td-wave { order: 5; border-width: 0; background: var(--game-panel-edge); margin: 10px 12px 0; padding: 10px 12px; gap: 4px; }
+.td-intel-toggle { display: flex; align-items: center; justify-content: space-between; border: 0; padding: 0; color: var(--game-ink); background: transparent; text-align: left; gap: 12px; }
+.td-intel-toggle strong { font-size: 13px; }
+.td-intel-toggle > span { font-size: 12px; flex-shrink: 0; }
+.td-enemy-list { gap: 4px 10px; }
+.tower-defense .td-notice { order: 6; min-height: 42px; margin: 8px 12px!important; padding: 8px 10px; background: transparent; color: var(--game-panel); font-size: 12px; }
+.tower-defense .td-result { order: 4; }
+.tower-defense .td-intro { order: 1; }
+.tower-defense .td-build > .treadmill-game__ghost { padding: 6px 8px; font-size: 12px; margin: 0; }
+@container (min-width: 800px) {
+ .treadmill-game.tower-defense { display: grid; grid-template-columns: minmax(0,1fr) 306px; align-content: start; max-width: min(1100px,calc((100dvh - 224px)*.923 + 342px)); }
+ .tower-defense > .treadmill-game__header,.tower-defense .td-hud,.tower-defense .td-round-strip { grid-column: 1 / -1; }
+ .tower-defense .td-board { grid-column: 1; grid-row: 4 / 8; align-self: start; margin-right: 0; }
+ .tower-defense .td-build { grid-column: 2; grid-row: 4; margin-top: 0; }
+ .tower-defense .td-wave { grid-column: 2; grid-row: 5; }
+ .tower-defense .td-notice { grid-column: 2; grid-row: 6; }
+ .tower-defense .td-intro,.tower-defense .td-result { grid-column: 1 / -1; }
+ .tower-defense[data-phase="won"] .td-board,.tower-defense[data-phase="lost"] .td-board { grid-row: 4; grid-column: 1; }
+ .tower-defense[data-phase="won"] .td-result,.tower-defense[data-phase="lost"] .td-result { grid-row: 4; grid-column: 2; margin-top: 0; }
+ .td-shop { grid-template-columns: 1fr; }
+ .td-shop button { flex-direction: row; text-align: left; gap: 10px; padding: 8px; }
+}
+@media (prefers-reduced-motion: reduce) { .td-shop button:active,.td-upgrades button:active { transform: none; } }
+[data-reduced-motion="true"] .td-shop button:active,[data-reduced-motion="true"] .td-upgrades button:active { transform: none; }

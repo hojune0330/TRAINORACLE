@@ -1,0 +1,46 @@
+{
+  "date": "2026-10-16",
+  "timezone": "Asia/Seoul",
+  "pipeline": "Existing paid Tripo Studio GLB -> Blender 4.5.14 -> WebP atlas",
+  "newTripoTasks": [],
+  "incrementalTripoCredits": 0,
+  "newPayment": 0,
+  "apiCheck": {
+    "tool": "tripo-cli doctor",
+    "connected": true,
+    "balance": 0,
+    "frozen": 0
+  },
+  "studioCurrentBalance": null,
+  "studioBalanceNote": "Not re-queried; no new Studio generation needed for this authored animation batch.",
+  "sources": [
+    {
+      "assets": ["rapid", "cannon"],
+      "source": "character-art/defense-v4/working/cannon.glb",
+      "originalTaskId": "51063ad6-7231-4dfd-ac21-86ddb2fcd5fa",
+      "changes": "Split base/rotating head. Cannon recoil. Rapid twin-barrel upper assembly. Eight directions."
+    },
+    {
+      "assets": ["frost"],
+      "source": "character-art/defense-v4/working/fan.glb",
+      "originalTaskId": "37628cb7-1d11-4c85-bc2b-c0b6b0c69c87",
+      "changes": "Split base/head. Added rounded pressure tank for side-view readability. Eight directions and recoil."
+    },
+    {
+      "assets": ["scout", "boss"],
+      "source": "character-art/defense-v4/working/normal.glb",
+      "originalTaskId": "f2af54b1-b942-4e19-9814-28cc84f9830b",
+      "changes": "Six authored stride deformations, two impact poses, four death poses, eight directions. Boss shell and crest."
+    },
+    {
+      "assets": ["swift", "armored"],
+      "sources": ["character-art/run-party-v1/working/dust-fast.glb", "character-art/run-party-v1/working/dust-armored.glb"],
+      "originalRecord": "character-art/run-party-v1/PRODUCTION_RECEIPT.md",
+      "changes": "Six authored stride deformations, two impact poses, four death poses, eight directions. Armored silhouette shell."
+    }
+  ],
+  "rightsRecord": "character-art/tori/tripo/2026-10-12/USAGE_AND_RIGHTS.md",
+  "sourceCodeLicenseDoesNotApplyToArt": true,
+  "sourceHashes": "bake-report.json",
+  "runtimeHashes": "../../app/public/game/defense-v5/manifest.json"
+}

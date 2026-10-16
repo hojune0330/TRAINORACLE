@@ -314,6 +314,8 @@ export function GameMenu({ progress, status, onClose, onSettings, onCharacter, o
 
 /** In-game notice for what the minigame ships. Versions follow app/package-lock.json (checked by a test). */
 export const LICENSES = [
+  { name: "Phaser", version: "3.90.0", license: "MIT", copyright: "© 2024 Richard Davey, Phaser Studio Inc.", use: "디펜스 전장·애니메이션·음향 (게임 입장 시 내려받음)", file: "game/defense-v5/PHASER-LICENSE.txt" },
+  { name: "EventEmitter3", version: "5.0.4", license: "MIT", copyright: "© 2014 Arnout Kazemier", use: "Phaser가 쓰는 이벤트 도구", file: "game/defense-v5/EVENTEMITTER3-LICENSE.txt" },
   { name: "shaders", version: "4.0.2", license: "MIT", copyright: "© 2026 Shader Effects Inc.", use: "WebGPU 하늘·완주 연출 (지원 기기에서만 내려받음)", file: "licenses/shaders-MIT.txt" },
   { name: "TypeGPU", version: "0.12.3", license: "MIT", copyright: "© 2025 Software Mansion", use: "shaders가 쓰는 WebGPU 도구", file: "licenses/typegpu-MIT.txt" },
   { name: "tinyest", version: "0.3.4", license: "MIT", copyright: "© 2025 Software Mansion", use: "TypeGPU가 쓰는 코드 변환 도구", file: "licenses/tinyest-MIT.txt" },

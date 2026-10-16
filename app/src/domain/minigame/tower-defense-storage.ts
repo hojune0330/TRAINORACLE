@@ -1,9 +1,11 @@
 import {z} from 'zod'
-import {newTowerDefense,TD_PADS,TD_TOWERS,upgradeCost} from './tower-defense'
+import {newTowerDefense,normalizeTowerDefenseCombat,TD_PADS,TD_TOWERS,upgradeCost} from './tower-defense'
 import type {TowerDefense,Tower} from './tower-defense'
 export const TD_SAVE='trainoracle.tower-defense.checkpoint.v1',TD_RECORDS='trainoracle.tower-defense.records.v1'
-const tower=z.object({pad:z.number().int().min(0).max(TD_PADS.length-1),kind:z.enum(['rapid','cannon','frost']),level:z.union([z.literal(1),z.literal(2),z.literal(3)]),branch:z.enum(['power','reach']).nullable(),spent:z.number().int(),kills:z.number().int().min(0).max(200)})
-const checkpoint=z.object({version:z.literal(1),id:z.string().min(1).max(100),wave:z.number().int().min(0).max(5),gold:z.number().int().min(0).max(20000),lives:z.number().int().min(1).max(20),kills:z.number().int().min(0).max(200),leaks:z.number().int().min(0).max(200),time:z.number().min(0).max(100000),towers:z.array(tower).max(TD_PADS.length)})
+const counter=z.number().min(0).max(10000000)
+const combatStats=z.object({shotsFired:counter.int(),shotsHit:counter.int(),damageDealt:counter})
+const tower=z.object({pad:z.number().int().min(0).max(TD_PADS.length-1),kind:z.enum(['rapid','cannon','frost']),level:z.union([z.literal(1),z.literal(2),z.literal(3)]),branch:z.enum(['power','reach']).nullable(),spent:z.number().int(),kills:z.number().int().min(0).max(200),damageDealt:counter.optional(),shotsFired:counter.int().optional()})
+const checkpoint=z.object({version:z.literal(1),id:z.string().min(1).max(100),wave:z.number().int().min(0).max(5),gold:z.number().int().min(0).max(20000),lives:z.number().int().min(1).max(20),kills:z.number().int().min(0).max(200),leaks:z.number().int().min(0).max(200),time:z.number().min(0).max(100000),towers:z.array(tower).max(TD_PADS.length),stats:combatStats.optional()})
 const record=z.object({id:z.string().min(1).max(100),won:z.boolean(),wave:z.number().int().min(0).max(6),lives:z.number().int().min(0).max(20),kills:z.number().int().min(0).max(200),leaks:z.number().int().min(0).max(200),at:z.string().max(60)})
 export type TDRecord=z.infer<typeof record>
 export function loadTD(storage:Pick<Storage,'getItem'>):{id:string;state:TowerDefense}|null{
@@ -12,7 +14,7 @@ export function loadTD(storage:Pick<Storage,'getItem'>):{id:string;state:TowerDe
  for(const t of data.towers){if(seen.has(t.pad)||(t.level===1)!==(t.branch===null))throw Error('저장된 타워 구성을 읽을 수 없어요.');seen.add(t.pad)
   let spent=TD_TOWERS[t.kind].cost;for(let level=1;level<t.level;level++)spent+=upgradeCost({...t,level} as Tower)
   if(spent!==t.spent)throw Error('저장된 건설 비용을 읽을 수 없어요.')}
- return {id:data.id,state:{...newTowerDefense(),...data,phase:'prepare',towers:data.towers.map(t=>({...t,cooldown:0,angle:0}))}}
+ return {id:data.id,state:normalizeTowerDefenseCombat({...newTowerDefense(),...data,phase:'prepare',towers:data.towers.map(t=>({...t,cooldown:0,angle:0}))})}
 }
 export function saveTD(storage:Pick<Storage,'getItem'|'setItem'>,state:TowerDefense,id:string){
  if(state.phase!=='prepare')throw Error('웨이브 준비 중에 저장할 수 있어요.')

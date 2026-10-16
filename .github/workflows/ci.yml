@@ -300,6 +300,10 @@ jobs:
         working-directory: app
         run: npm run test:e2e:calendar-decoration
 
+      - name: Verify full tower defense rounds and touch controls
+        working-directory: app
+        run: npm run test:e2e:tower-defense
+
       - name: Verify encrypted account journal buffer and record recovery
         working-directory: app
         run: |

@@ -6,19 +6,18 @@ afterEach(cleanup)
 describe('tower defense artwork recovery',()=>{
  it('keeps the previous HTML artwork when the new image fails',()=>{
   const {container}=render(<TDArtwork id="td-rapid-tower" size={64} fallbackTile={249}/>)
-  const primary=container.querySelector('img[src*="image-library-v1"]')!
+  const primary=container.querySelector('img[src*="defense-v5"]')!
   expect(container.querySelector('img[src*="kenney-td"]')).not.toBeNull()
   fireEvent.error(primary)
-  expect(container.querySelector('img[src*="image-library-v1"]')).toBeNull()
+  expect(container.querySelector('img[src*="defense-v5"]')).toBeNull()
   expect(container.querySelector('img[src*="kenney-td"]')).not.toBeNull()
  })
- it('replaces a loaded tower and restores fallback while its upgraded image loads',()=>{
+ it('keeps the matching battlefield model loaded when only the tower level changes',()=>{
   const {container,rerender}=render(<TDArtwork id="td-rapid-tower" size={64} fallbackTile={249}/>)
-  fireEvent.load(container.querySelector('img[src*="image-library-v1"]')!)
+  fireEvent.load(container.querySelector('img[src*="defense-v5"]')!)
   expect(container.querySelector('img[src*="kenney-td"]')).toBeNull()
   rerender(<TDArtwork id="td-rapid-tower-upgraded" size={64} fallbackTile={249}/>)
-  expect(container.querySelector('img[src*="kenney-td"]')).not.toBeNull()
-  fireEvent.load(container.querySelector('img[src*="image-library-v1"]')!)
+  expect(container.querySelector('img[src*="defense-v5"]')?.getAttribute('src')).toContain('rapid-preview.webp')
   expect(container.querySelector('img[src*="kenney-td"]')).toBeNull()
  })
  it('retains SVG geometry on failure and replaces it only after successful load',()=>{

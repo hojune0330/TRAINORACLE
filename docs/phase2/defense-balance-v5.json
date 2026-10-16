@@ -1,0 +1,913 @@
+{
+  "formatVersion": 1,
+  "generatedAt": "2026-10-16T14:48:44.489Z",
+  "runtime": "v24.19.0",
+  "source": {
+    "path": "app/src/domain/minigame/tower-defense.ts",
+    "sha256": "6ccc32c23c882970fba847b9680d36043baf57303dcd85ac10f239502fb81605"
+  },
+  "simulation": {
+    "rulesVersion": 1,
+    "dtSeconds": 0.016666666666666666,
+    "maxStepsPerWave": 12000,
+    "startingGold": 180,
+    "startingLives": 20,
+    "timeBasis": "Simulation seconds advanced by the real fixed-step domain, not elapsed wall time or a player completion-time claim.",
+    "padNumbering": "All reported pad numbers are the 1-based numbers shown in the game."
+  },
+  "interpretation": "These deterministic policies demonstrate viable outcomes, tradeoffs and economy under the current rules. They do not establish optimal play, player retention or fun. This probe is not a CI gate.",
+  "policies": [
+    {
+      "id": "mixed",
+      "description": "Scripted mixed build: construct or upgrade before each wave in the listed order.",
+      "plan": [
+        {
+          "beforeWave": 1,
+          "actions": [
+            {
+              "action": "build",
+              "pad": 2,
+              "kind": "rapid"
+            },
+            {
+              "action": "build",
+              "pad": 3,
+              "kind": "cannon"
+            }
+          ]
+        },
+        {
+          "beforeWave": 2,
+          "actions": [
+            {
+              "action": "build",
+              "pad": 1,
+              "kind": "frost"
+            }
+          ]
+        },
+        {
+          "beforeWave": 3,
+          "actions": [
+            {
+              "action": "upgrade",
+              "pad": 3,
+              "branch": "power"
+            }
+          ]
+        },
+        {
+          "beforeWave": 4,
+          "actions": [
+            {
+              "action": "upgrade",
+              "pad": 2,
+              "branch": "power"
+            },
+            {
+              "action": "upgrade",
+              "pad": 3,
+              "branch": "power"
+            }
+          ]
+        },
+        {
+          "beforeWave": 5,
+          "actions": [
+            {
+              "action": "build",
+              "pad": 4,
+              "kind": "cannon"
+            },
+            {
+              "action": "upgrade",
+              "pad": 4,
+              "branch": "power"
+            }
+          ]
+        },
+        {
+          "beforeWave": 6,
+          "actions": [
+            {
+              "action": "upgrade",
+              "pad": 4,
+              "branch": "power"
+            },
+            {
+              "action": "upgrade",
+              "pad": 2,
+              "branch": "power"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rapid-only",
+      "kind": "rapid",
+      "description": "Before every wave, attempt construction at each priority pad once. Then visit existing towers in construction order and repeatedly attempt the power branch upgrade until unaffordable or max level.",
+      "buildPriority": [
+        2,
+        3,
+        4,
+        5,
+        8,
+        1,
+        6,
+        7
+      ],
+      "upgradeBranch": "power"
+    },
+    {
+      "id": "cannon-only",
+      "kind": "cannon",
+      "description": "Before every wave, attempt construction at each priority pad once. Then visit existing towers in construction order and repeatedly attempt the power branch upgrade until unaffordable or max level.",
+      "buildPriority": [
+        2,
+        3,
+        4,
+        5,
+        8,
+        1,
+        6,
+        7
+      ],
+      "upgradeBranch": "power"
+    },
+    {
+      "id": "frost-only",
+      "kind": "frost",
+      "description": "Before every wave, attempt construction at each priority pad once. Then visit existing towers in construction order and repeatedly attempt the power branch upgrade until unaffordable or max level.",
+      "buildPriority": [
+        2,
+        3,
+        4,
+        5,
+        8,
+        1,
+        6,
+        7
+      ],
+      "upgradeBranch": "power"
+    }
+  ],
+  "results": [
+    {
+      "policy": "mixed",
+      "result": "won",
+      "finalWave": 6,
+      "lives": 20,
+      "kills": 100,
+      "leaks": 0,
+      "gold": 474,
+      "totalSpent": 1016,
+      "elapsedSeconds": 148.65000000001044,
+      "shotsFired": 444,
+      "shotsHit": 412,
+      "damageDealt": 8165.830000000031,
+      "waves": [
+        {
+          "wave": 1,
+          "name": "정찰 부대",
+          "actions": [
+            {
+              "action": "build",
+              "pad": 2,
+              "kind": "rapid",
+              "level": 1,
+              "branch": null,
+              "cost": 70,
+              "goldAfter": 110
+            },
+            {
+              "action": "build",
+              "pad": 3,
+              "kind": "cannon",
+              "level": 1,
+              "branch": null,
+              "cost": 110,
+              "goldAfter": 0
+            }
+          ],
+          "phase": "prepare",
+          "lives": 20,
+          "kills": 8,
+          "leaks": 0,
+          "gold": 104,
+          "totalSpent": 180,
+          "elapsedSeconds": 18.96666666666687,
+          "waveSeconds": 18.96666666666687,
+          "steps": 1138,
+          "shotsFired": 33,
+          "shotsHit": 32,
+          "damageDealt": 320
+        },
+        {
+          "wave": 2,
+          "name": "빠른 침투",
+          "actions": [
+            {
+              "action": "build",
+              "pad": 1,
+              "kind": "frost",
+              "level": 1,
+              "branch": null,
+              "cost": 85,
+              "goldAfter": 19
+            }
+          ],
+          "phase": "prepare",
+          "lives": 20,
+          "kills": 20,
+          "leaks": 0,
+          "gold": 163,
+          "totalSpent": 265,
+          "elapsedSeconds": 38.86666666666574,
+          "waveSeconds": 19.90000000000015,
+          "steps": 1194,
+          "shotsFired": 93,
+          "shotsHit": 87,
+          "damageDealt": 781.7599999999998
+        },
+        {
+          "wave": 3,
+          "name": "장갑 행렬",
+          "actions": [
+            {
+              "action": "upgrade",
+              "pad": 3,
+              "kind": "cannon",
+              "level": 2,
+              "branch": "power",
+              "cost": 94,
+              "goldAfter": 69
+            }
+          ],
+          "phase": "prepare",
+          "lives": 20,
+          "kills": 30,
+          "leaks": 0,
+          "gold": 259,
+          "totalSpent": 359,
+          "elapsedSeconds": 67.68333333333078,
+          "waveSeconds": 28.81666666666631,
+          "steps": 1729,
+          "shotsFired": 172,
+          "shotsHit": 164,
+          "damageDealt": 2062.76
+        },
+        {
+          "wave": 4,
+          "name": "밀집 돌파",
+          "actions": [
+            {
+              "action": "upgrade",
+              "pad": 2,
+              "kind": "rapid",
+              "level": 2,
+              "branch": "power",
+              "cost": 60,
+              "goldAfter": 199
+            },
+            {
+              "action": "upgrade",
+              "pad": 3,
+              "kind": "cannon",
+              "level": 3,
+              "branch": "power",
+              "cost": 149,
+              "goldAfter": 50
+            }
+          ],
+          "phase": "prepare",
+          "lives": 20,
+          "kills": 58,
+          "leaks": 0,
+          "gold": 320,
+          "totalSpent": 568,
+          "elapsedSeconds": 85.74999999999642,
+          "waveSeconds": 18.066666666666922,
+          "steps": 1084,
+          "shotsFired": 225,
+          "shotsHit": 211,
+          "damageDealt": 3488.519999999996
+        },
+        {
+          "wave": 5,
+          "name": "혼성 부대",
+          "actions": [
+            {
+              "action": "build",
+              "pad": 4,
+              "kind": "cannon",
+              "level": 1,
+              "branch": null,
+              "cost": 110,
+              "goldAfter": 210
+            },
+            {
+              "action": "upgrade",
+              "pad": 4,
+              "kind": "cannon",
+              "level": 2,
+              "branch": "power",
+              "cost": 94,
+              "goldAfter": 116
+            }
+          ],
+          "phase": "prepare",
+          "lives": 20,
+          "kills": 80,
+          "leaks": 0,
+          "gold": 395,
+          "totalSpent": 772,
+          "elapsedSeconds": 117.78333333332793,
+          "waveSeconds": 32.0333333333328,
+          "steps": 1922,
+          "shotsFired": 334,
+          "shotsHit": 311,
+          "damageDealt": 5423.880000000009
+        },
+        {
+          "wave": 6,
+          "name": "최종 공성",
+          "actions": [
+            {
+              "action": "upgrade",
+              "pad": 4,
+              "kind": "cannon",
+              "level": 3,
+              "branch": "power",
+              "cost": 149,
+              "goldAfter": 246
+            },
+            {
+              "action": "upgrade",
+              "pad": 2,
+              "kind": "rapid",
+              "level": 3,
+              "branch": "power",
+              "cost": 95,
+              "goldAfter": 151
+            }
+          ],
+          "phase": "won",
+          "lives": 20,
+          "kills": 100,
+          "leaks": 0,
+          "gold": 474,
+          "totalSpent": 1016,
+          "elapsedSeconds": 148.65000000001044,
+          "waveSeconds": 30.866666666666195,
+          "steps": 1852,
+          "shotsFired": 444,
+          "shotsHit": 412,
+          "damageDealt": 8165.830000000031
+        }
+      ]
+    },
+    {
+      "policy": "rapid-only",
+      "result": "won",
+      "finalWave": 6,
+      "lives": 16,
+      "kills": 98,
+      "leaks": 2,
+      "gold": 375,
+      "totalSpent": 1085,
+      "elapsedSeconds": 202.11666666671965,
+      "shotsFired": 1041,
+      "shotsHit": 1001,
+      "damageDealt": 8107.03000000001,
+      "waves": [
+        {
+          "wave": 1,
+          "name": "정찰 부대",
+          "actions": [
+            {
+              "action": "build",
+              "pad": 2,
+              "kind": "rapid",
+              "level": 1,
+              "branch": null,
+              "cost": 70,
+              "goldAfter": 110
+            },
+            {
+              "action": "build",
+              "pad": 3,
+              "kind": "rapid",
+              "level": 1,
+              "branch": null,
+              "cost": 70,
+              "goldAfter": 40
+            }
+          ],
+          "phase": "prepare",
+          "lives": 20,
+          "kills": 8,
+          "leaks": 0,
+          "gold": 144,
+          "totalSpent": 140,
+          "elapsedSeconds": 19.300000000000185,
+          "waveSeconds": 19.300000000000185,
+          "steps": 1158,
+          "shotsFired": 32,
+          "shotsHit": 32,
+          "damageDealt": 320
+        },
+        {
+          "wave": 2,
+          "name": "빠른 침투",
+          "actions": [
+            {
+              "action": "build",
+              "pad": 4,
+              "kind": "rapid",
+              "level": 1,
+              "branch": null,
+              "cost": 70,
+              "goldAfter": 74
+            },
+            {
+              "action": "build",
+              "pad": 5,
+              "kind": "rapid",
+              "level": 1,
+              "branch": null,
+              "cost": 70,
+              "goldAfter": 4
+            }
+          ],
+          "phase": "prepare",
+          "lives": 20,
+          "kills": 20,
+          "leaks": 0,
+          "gold": 148,
+          "totalSpent": 280,
+          "elapsedSeconds": 39.98333333333235,
+          "waveSeconds": 20.68333333333344,
+          "steps": 1241,
+          "shotsFired": 72,
+          "shotsHit": 72,
+          "damageDealt": 781.7599999999998
+        },
+        {
+          "wave": 3,
+          "name": "장갑 행렬",
+          "actions": [
+            {
+              "action": "build",
+              "pad": 8,
+              "kind": "rapid",
+              "level": 1,
+              "branch": null,
+              "cost": 70,
+              "goldAfter": 78
+            },
+            {
+              "action": "build",
+              "pad": 1,
+              "kind": "rapid",
+              "level": 1,
+              "branch": null,
+              "cost": 70,
+              "goldAfter": 8
+            }
+          ],
+          "phase": "prepare",
+          "lives": 16,
+          "kills": 28,
+          "leaks": 2,
+          "gold": 168,
+          "totalSpent": 420,
+          "elapsedSeconds": 101.46666666666219,
+          "waveSeconds": 61.483333333331124,
+          "steps": 3689,
+          "shotsFired": 369,
+          "shotsHit": 367,
+          "damageDealt": 2003.960000000012
+        },
+        {
+          "wave": 4,
+          "name": "밀집 돌파",
+          "actions": [
+            {
+              "action": "build",
+              "pad": 6,
+              "kind": "rapid",
+              "level": 1,
+              "branch": null,
+              "cost": 70,
+              "goldAfter": 98
+            },
+            {
+              "action": "build",
+              "pad": 7,
+              "kind": "rapid",
+              "level": 1,
+              "branch": null,
+              "cost": 70,
+              "goldAfter": 28
+            }
+          ],
+          "phase": "prepare",
+          "lives": 16,
+          "kills": 56,
+          "leaks": 2,
+          "gold": 298,
+          "totalSpent": 560,
+          "elapsedSeconds": 126.19999999999412,
+          "waveSeconds": 24.73333333333321,
+          "steps": 1484,
+          "shotsFired": 514,
+          "shotsHit": 501,
+          "damageDealt": 3429.7200000000075
+        },
+        {
+          "wave": 5,
+          "name": "혼성 부대",
+          "actions": [
+            {
+              "action": "upgrade",
+              "pad": 2,
+              "kind": "rapid",
+              "level": 2,
+              "branch": "power",
+              "cost": 60,
+              "goldAfter": 238
+            },
+            {
+              "action": "upgrade",
+              "pad": 2,
+              "kind": "rapid",
+              "level": 3,
+              "branch": "power",
+              "cost": 95,
+              "goldAfter": 143
+            },
+            {
+              "action": "upgrade",
+              "pad": 3,
+              "kind": "rapid",
+              "level": 2,
+              "branch": "power",
+              "cost": 60,
+              "goldAfter": 83
+            },
+            {
+              "action": "upgrade",
+              "pad": 4,
+              "kind": "rapid",
+              "level": 2,
+              "branch": "power",
+              "cost": 60,
+              "goldAfter": 23
+            }
+          ],
+          "phase": "prepare",
+          "lives": 16,
+          "kills": 78,
+          "leaks": 2,
+          "gold": 302,
+          "totalSpent": 835,
+          "elapsedSeconds": 161.23333333335378,
+          "waveSeconds": 35.03333333333263,
+          "steps": 2102,
+          "shotsFired": 743,
+          "shotsHit": 717,
+          "damageDealt": 5365.080000000001
+        },
+        {
+          "wave": 6,
+          "name": "최종 공성",
+          "actions": [
+            {
+              "action": "upgrade",
+              "pad": 3,
+              "kind": "rapid",
+              "level": 3,
+              "branch": "power",
+              "cost": 95,
+              "goldAfter": 207
+            },
+            {
+              "action": "upgrade",
+              "pad": 4,
+              "kind": "rapid",
+              "level": 3,
+              "branch": "power",
+              "cost": 95,
+              "goldAfter": 112
+            },
+            {
+              "action": "upgrade",
+              "pad": 5,
+              "kind": "rapid",
+              "level": 2,
+              "branch": "power",
+              "cost": 60,
+              "goldAfter": 52
+            }
+          ],
+          "phase": "won",
+          "lives": 16,
+          "kills": 98,
+          "leaks": 2,
+          "gold": 375,
+          "totalSpent": 1085,
+          "elapsedSeconds": 202.11666666671965,
+          "waveSeconds": 40.883333333332295,
+          "steps": 2453,
+          "shotsFired": 1041,
+          "shotsHit": 1001,
+          "damageDealt": 8107.03000000001
+        }
+      ]
+    },
+    {
+      "policy": "cannon-only",
+      "result": "won",
+      "finalWave": 6,
+      "lives": 20,
+      "kills": 100,
+      "leaks": 0,
+      "gold": 367,
+      "totalSpent": 1123,
+      "elapsedSeconds": 134.4833333333325,
+      "shotsFired": 136,
+      "shotsHit": 126,
+      "damageDealt": 8165.830000000002,
+      "waves": [
+        {
+          "wave": 1,
+          "name": "정찰 부대",
+          "actions": [
+            {
+              "action": "build",
+              "pad": 2,
+              "kind": "cannon",
+              "level": 1,
+              "branch": null,
+              "cost": 110,
+              "goldAfter": 70
+            }
+          ],
+          "phase": "prepare",
+          "lives": 20,
+          "kills": 8,
+          "leaks": 0,
+          "gold": 174,
+          "totalSpent": 110,
+          "elapsedSeconds": 16.733333333333665,
+          "waveSeconds": 16.733333333333665,
+          "steps": 1004,
+          "shotsFired": 9,
+          "shotsHit": 9,
+          "damageDealt": 320
+        },
+        {
+          "wave": 2,
+          "name": "빠른 침투",
+          "actions": [
+            {
+              "action": "build",
+              "pad": 3,
+              "kind": "cannon",
+              "level": 1,
+              "branch": null,
+              "cost": 110,
+              "goldAfter": 64
+            }
+          ],
+          "phase": "prepare",
+          "lives": 20,
+          "kills": 20,
+          "leaks": 0,
+          "gold": 208,
+          "totalSpent": 220,
+          "elapsedSeconds": 36.98333333333252,
+          "waveSeconds": 20.25000000000013,
+          "steps": 1215,
+          "shotsFired": 31,
+          "shotsHit": 29,
+          "damageDealt": 781.7599999999998
+        },
+        {
+          "wave": 3,
+          "name": "장갑 행렬",
+          "actions": [
+            {
+              "action": "build",
+              "pad": 4,
+              "kind": "cannon",
+              "level": 1,
+              "branch": null,
+              "cost": 110,
+              "goldAfter": 98
+            },
+            {
+              "action": "upgrade",
+              "pad": 2,
+              "kind": "cannon",
+              "level": 2,
+              "branch": "power",
+              "cost": 94,
+              "goldAfter": 4
+            }
+          ],
+          "phase": "prepare",
+          "lives": 20,
+          "kills": 30,
+          "leaks": 0,
+          "gold": 194,
+          "totalSpent": 424,
+          "elapsedSeconds": 59.39999999999791,
+          "waveSeconds": 22.416666666666675,
+          "steps": 1345,
+          "shotsFired": 46,
+          "shotsHit": 44,
+          "damageDealt": 2062.7599999999993
+        },
+        {
+          "wave": 4,
+          "name": "밀집 돌파",
+          "actions": [
+            {
+              "action": "build",
+              "pad": 5,
+              "kind": "cannon",
+              "level": 1,
+              "branch": null,
+              "cost": 110,
+              "goldAfter": 84
+            }
+          ],
+          "phase": "prepare",
+          "lives": 20,
+          "kills": 58,
+          "leaks": 0,
+          "gold": 354,
+          "totalSpent": 534,
+          "elapsedSeconds": 77.76666666666354,
+          "waveSeconds": 18.366666666666905,
+          "steps": 1102,
+          "shotsFired": 57,
+          "shotsHit": 54,
+          "damageDealt": 3488.519999999995
+        },
+        {
+          "wave": 5,
+          "name": "혼성 부대",
+          "actions": [
+            {
+              "action": "build",
+              "pad": 8,
+              "kind": "cannon",
+              "level": 1,
+              "branch": null,
+              "cost": 110,
+              "goldAfter": 244
+            },
+            {
+              "action": "build",
+              "pad": 1,
+              "kind": "cannon",
+              "level": 1,
+              "branch": null,
+              "cost": 110,
+              "goldAfter": 134
+            },
+            {
+              "action": "build",
+              "pad": 6,
+              "kind": "cannon",
+              "level": 1,
+              "branch": null,
+              "cost": 110,
+              "goldAfter": 24
+            }
+          ],
+          "phase": "prepare",
+          "lives": 20,
+          "kills": 80,
+          "leaks": 0,
+          "gold": 303,
+          "totalSpent": 864,
+          "elapsedSeconds": 106.24999999999525,
+          "waveSeconds": 28.483333333332997,
+          "steps": 1709,
+          "shotsFired": 92,
+          "shotsHit": 88,
+          "damageDealt": 5423.879999999995
+        },
+        {
+          "wave": 6,
+          "name": "최종 공성",
+          "actions": [
+            {
+              "action": "build",
+              "pad": 7,
+              "kind": "cannon",
+              "level": 1,
+              "branch": null,
+              "cost": 110,
+              "goldAfter": 193
+            },
+            {
+              "action": "upgrade",
+              "pad": 2,
+              "kind": "cannon",
+              "level": 3,
+              "branch": "power",
+              "cost": 149,
+              "goldAfter": 44
+            }
+          ],
+          "phase": "won",
+          "lives": 20,
+          "kills": 100,
+          "leaks": 0,
+          "gold": 367,
+          "totalSpent": 1123,
+          "elapsedSeconds": 134.4833333333325,
+          "waveSeconds": 28.23333333333301,
+          "steps": 1694,
+          "shotsFired": 136,
+          "shotsHit": 126,
+          "damageDealt": 8165.830000000002
+        }
+      ]
+    },
+    {
+      "policy": "frost-only",
+      "result": "lost",
+      "finalWave": 2,
+      "lives": 0,
+      "kills": 0,
+      "leaks": 20,
+      "gold": 50,
+      "totalSpent": 170,
+      "elapsedSeconds": 98.99999999999567,
+      "shotsFired": 90,
+      "shotsHit": 90,
+      "damageDealt": 270,
+      "waves": [
+        {
+          "wave": 1,
+          "name": "정찰 부대",
+          "actions": [
+            {
+              "action": "build",
+              "pad": 2,
+              "kind": "frost",
+              "level": 1,
+              "branch": null,
+              "cost": 85,
+              "goldAfter": 95
+            },
+            {
+              "action": "build",
+              "pad": 3,
+              "kind": "frost",
+              "level": 1,
+              "branch": null,
+              "cost": 85,
+              "goldAfter": 10
+            }
+          ],
+          "phase": "prepare",
+          "lives": 12,
+          "kills": 0,
+          "leaks": 8,
+          "gold": 50,
+          "totalSpent": 170,
+          "elapsedSeconds": 49.14999999999849,
+          "waveSeconds": 49.14999999999849,
+          "steps": 2949,
+          "shotsFired": 40,
+          "shotsHit": 40,
+          "damageDealt": 120
+        },
+        {
+          "wave": 2,
+          "name": "빠른 침투",
+          "actions": [],
+          "phase": "lost",
+          "lives": 0,
+          "kills": 0,
+          "leaks": 20,
+          "gold": 50,
+          "totalSpent": 170,
+          "elapsedSeconds": 98.99999999999567,
+          "waveSeconds": 49.84999999999845,
+          "steps": 2991,
+          "shotsFired": 90,
+          "shotsHit": 90,
+          "damageDealt": 270
+        }
+      ]
+    }
+  ]
+}

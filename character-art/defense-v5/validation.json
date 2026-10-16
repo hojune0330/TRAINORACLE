@@ -1,0 +1,99 @@
+{
+  "blender": "4.5.14 LTS",
+  "savedScenes": [
+    {
+      "id": "rapid",
+      "savedActionMoves": true,
+      "maximumVertexDisplacement": 0.11000001430511475,
+      "groundOrigin": [
+        0.5,
+        0.6799998687358364
+      ],
+      "packedTextures": 1,
+      "shapeKeys": 0,
+      "sceneMeshTriangles": 2221
+    },
+    {
+      "id": "cannon",
+      "savedActionMoves": true,
+      "maximumVertexDisplacement": 0.11000001430511475,
+      "groundOrigin": [
+        0.5,
+        0.6799998687358364
+      ],
+      "packedTextures": 1,
+      "shapeKeys": 0,
+      "sceneMeshTriangles": 2916
+    },
+    {
+      "id": "frost",
+      "savedActionMoves": true,
+      "maximumVertexDisplacement": 0.11000001430511475,
+      "groundOrigin": [
+        0.5,
+        0.6799998687358364
+      ],
+      "packedTextures": 1,
+      "shapeKeys": 0,
+      "sceneMeshTriangles": 3394
+    },
+    {
+      "id": "scout",
+      "savedActionMoves": true,
+      "maximumVertexDisplacement": 0.0783854362127727,
+      "groundOrigin": [
+        0.5,
+        0.6799998687358364
+      ],
+      "packedTextures": 1,
+      "shapeKeys": 7,
+      "sceneMeshTriangles": 2594
+    },
+    {
+      "id": "swift",
+      "savedActionMoves": true,
+      "maximumVertexDisplacement": 0.09931841094318275,
+      "groundOrigin": [
+        0.5,
+        0.6799998687358364
+      ],
+      "packedTextures": 1,
+      "shapeKeys": 14,
+      "sceneMeshTriangles": 2704
+    },
+    {
+      "id": "armored",
+      "savedActionMoves": true,
+      "maximumVertexDisplacement": 0.08691718359390753,
+      "groundOrigin": [
+        0.5,
+        0.6799998687358364
+      ],
+      "packedTextures": 1,
+      "shapeKeys": 35,
+      "sceneMeshTriangles": 2836
+    },
+    {
+      "id": "boss",
+      "savedActionMoves": true,
+      "maximumVertexDisplacement": 0.0783854362127727,
+      "groundOrigin": [
+        0.5,
+        0.6799998687358364
+      ],
+      "packedTextures": 1,
+      "shapeKeys": 42,
+      "sceneMeshTriangles": 3290
+    }
+  ],
+  "sourceFilesModified": false,
+  "atlasValidation": {
+    "atlases": 11,
+    "previews": 7,
+    "cells": 528,
+    "uniqueFrames": 456,
+    "emptyCells": 0,
+    "clippedCells": 0,
+    "payloadBytes": 730028
+  }
+}
