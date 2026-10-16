@@ -32,7 +32,7 @@ test("quality and dedicated checks keep the original complete command coverage",
     "npm run test:account-record-validator", "npm run test:account-state-validator",
     "npm run typecheck", "npm run typecheck:e2e", "npm run build"]) assert(quality.includes(command), command)
   assert.deepEqual(commands(jobs["app-browser-dedicated"]).filter(command => command.startsWith("npm run test:")), [
-    "npm run test:e2e:calendar-decoration", "npm run test:e2e:account-draft-buffer",
+    "npm run test:e2e:calendar-decoration", "npm run test:e2e:tower-defense", "npm run test:e2e:account-draft-buffer",
     "npm run test:e2e:account-draft-panel", "npm run test:e2e:account-record-service",
     "npm run test:e2e:account-conflict", "npm run test:e2e:account-decoration",
     "npm run test:e2e:account-calendar-decoration", "npm run test:e2e:account-plan-service",
