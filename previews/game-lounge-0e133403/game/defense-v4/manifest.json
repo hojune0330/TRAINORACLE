@@ -1,0 +1,149 @@
+{
+  "assets": [
+    {
+      "id": "cannon",
+      "file": "cannon.webp",
+      "size": [
+        256,
+        256
+      ],
+      "baseline": 240,
+      "bytes": 9580,
+      "sha256": "8febd5cb4bcd78525a5d63e329d404bcd6cf00fcd306d95242b1cca10720e0d2",
+      "source": "character-art/defense-v4/renders/cannon.png",
+      "alphaBounds": [
+        68,
+        126,
+        403,
+        431
+      ]
+    },
+    {
+      "id": "fan",
+      "file": "fan.webp",
+      "size": [
+        256,
+        256
+      ],
+      "baseline": 240,
+      "bytes": 9406,
+      "sha256": "b5e1c3cf6907b0bc0c60e1a1327af55db96ac17a453a27222751f7cd66f51f67",
+      "source": "character-art/defense-v4/renders/fan.png",
+      "alphaBounds": [
+        170,
+        81,
+        371,
+        444
+      ]
+    },
+    {
+      "id": "flag",
+      "file": "flag.webp",
+      "size": [
+        256,
+        256
+      ],
+      "baseline": 240,
+      "bytes": 8538,
+      "sha256": "28c240d99162f1c0ea682850a9eda3b4668da903dd9adbc06dcd2bfcfd804561",
+      "source": "character-art/defense-v4/renders/flag.png",
+      "alphaBounds": [
+        127,
+        128,
+        376,
+        455
+      ]
+    },
+    {
+      "id": "normal",
+      "file": "normal.webp",
+      "size": [
+        256,
+        256
+      ],
+      "baseline": 240,
+      "bytes": 7906,
+      "sha256": "9ce07e02165c806fe32bd011a239b7258ea2e0332b19fc7f4be65ca7317b0539",
+      "source": "character-art/defense-v4/renders/normal.png",
+      "alphaBounds": [
+        114,
+        107,
+        395,
+        421
+      ]
+    },
+    {
+      "id": "rush",
+      "file": "rush.webp",
+      "size": [
+        256,
+        256
+      ],
+      "baseline": 240,
+      "bytes": 7222,
+      "sha256": "600679dbc364c96252f1a6af3401243bc42743c11d19b309c4cc3510627c1d6b",
+      "source": "character-art/run-party-v1/renders/dust-fast.png",
+      "alphaBounds": [
+        154,
+        73,
+        397,
+        453
+      ]
+    },
+    {
+      "id": "armor",
+      "file": "armor.webp",
+      "size": [
+        256,
+        256
+      ],
+      "baseline": 240,
+      "bytes": 8618,
+      "sha256": "9a8530362b7b5c547fce122ab906f74258aa1b17ef7780ab1bb766b7a04ee04f",
+      "source": "character-art/run-party-v1/renders/dust-armored.png",
+      "alphaBounds": [
+        88,
+        103,
+        447,
+        431
+      ]
+    },
+    {
+      "id": "base",
+      "file": "base.webp",
+      "size": [
+        256,
+        256
+      ],
+      "baseline": 240,
+      "bytes": 11240,
+      "sha256": "2e15ab1f4c9445057e5d2b18935e691ae44749ea5632c1aeb08981d6a94d3cf3",
+      "source": "character-art/defense-v4/renders/base.png",
+      "alphaBounds": [
+        85,
+        106,
+        407,
+        425
+      ]
+    },
+    {
+      "id": "finish-gate",
+      "file": "finish-gate.webp",
+      "size": [
+        256,
+        256
+      ],
+      "baseline": 240,
+      "bytes": 8136,
+      "sha256": "26a0e5b489e61bc779d2112022aa9433ebc16ff8ba8a9cacd2c252555b79809e",
+      "source": "character-art/defense-v4/renders/finish-gate.png",
+      "alphaBounds": [
+        130,
+        91,
+        368,
+        448
+      ]
+    }
+  ],
+  "payloadBytes": 70646
+}
