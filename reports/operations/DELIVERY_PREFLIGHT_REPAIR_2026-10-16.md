@@ -50,3 +50,17 @@ Calendar/method/two-tab replay scenarios passed all 8 narrow-touch/reduced cases
 the pointer-protection unit tests passed 3/3. Current detailed-card/optional-motion
 scenarios passed 6/6 in narrow-touch and reduced projects. These focused reruns are
 not represented as a single clean full-inventory run or hosted release pass.
+
+## Full-run residual fixture audit
+
+Run 38841482482 passed quality/build, contracts, dedicated browser scenarios and
+both complete desktop/reduced-motion browser lanes. Normal unit inventory passed
+8,756 cases (33 existing skips); the isolated heavy group exposed one additional
+old button-role assertion in PlanBeta. Its corrected file passes 33 cases locally
+(2 existing skips). Mobile and narrow touch each exposed one outdated evening
+touch audit: sleep is now a text input, mood is separate from body input, and body
+selection uses grouped dialogs rather than cycling old SVG controls. The updated
+audit visits all 10 fixed parts, measures every side/level control, preserves
+ordering and selections, checks Space/Enter and focus restoration, then reaches
+memo and the unobstructed save action. Both touch projects pass this full scenario.
+The failed hosted run remains a failure; these corrections require new hosted gates.

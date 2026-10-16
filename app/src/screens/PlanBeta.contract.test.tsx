@@ -847,7 +847,7 @@ describe("plan beta user flow", () => {
     })
 
     const user = userEvent.setup()
-    await user.click(await screen.findByRole("button", { name: "하루씩" }))
+    await user.click(await screen.findByRole("radio", { name: "하루씩" }))
     await user.click(screen.getByRole("button", { name: "7월 24일 금요일 선택" }))
     const list = screen.getByRole("list", { name: "날짜별 계획 미리보기" })
     await user.click(within(list).getByRole("button", { name: "7월 24일 금요일 전체 처방 보기" }))
