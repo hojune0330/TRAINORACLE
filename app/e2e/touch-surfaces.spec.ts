@@ -16,11 +16,11 @@ function requireTouchProject(projectName: string) {
 test("audits empty home and chooser touch actions", async ({ page }, testInfo) => {
   requireTouchProject(testInfo.project.name)
   await page.goto("/")
-  await page.getByRole("button", { name: "일지 예시·훈련법·꾸미기" }).click()
+  await expect(page.getByRole("navigation", { name: "훈련 도움말과 일지 꾸미기" })).toBeVisible()
   const services = page.getByRole("navigation", { name: "훈련 도움말과 일지 꾸미기" })
   await auditTouchTargets(page, [
     { name: "empty-home.first-entry", locator: page.getByRole("button", { name: "오늘 운동 기록 쓰기" }), heightOnly: true },
-    { name: "empty-home.create-plan", locator: page.getByRole("button", { name: "훈련 계획 만들기" }), heightOnly: true },
+    { name: "empty-home.create-plan", locator: page.getByRole("button", { name: "훈련 계획 받기" }), heightOnly: true },
     { name: "empty-home.learn", locator: services.getByRole("button", { name: "훈련법 읽기" }), heightOnly: true },
     { name: "empty-home.decorate", locator: services.getByRole("button", { name: "일지 꾸미기" }), heightOnly: true },
     { name: "empty-home.more", locator: page.getByRole("button", { name: "더보기" }) },
@@ -34,7 +34,8 @@ test("audits empty home and chooser touch actions", async ({ page }, testInfo) =
     { name: "quick.outcome", locator: page.getByRole("button", { name: /^(운동을 마쳤어요|하던 운동을 일부만 했어요|가볍게 움직였어요|오늘은 쉬었어요|하려던 운동을 건너뛰었어요)$/u }), count: 5, heightOnly: true },
   ])
   await expectNoHorizontalOverflow(page)
-  // the chooser is reached via the "기록하기" tab bar button
+  // Leave the blank recording task before using the main tabs.
+  await page.getByRole("button", { name: "← 뒤로", exact: true }).click()
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "기록하기" }).click()
   await auditTouchTargets(page, [
     { name: "chooser.back", locator: page.getByRole("button", { name: "← 뒤로" }) },

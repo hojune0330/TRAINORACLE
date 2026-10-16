@@ -45,6 +45,11 @@
 
 .treadmill-game__hud { position: absolute; inset: var(--space-2) var(--space-2) auto; display: grid; gap: var(--space-2); pointer-events: none; }
 .treadmill-game__hud-row { display: flex; align-items: center; gap: var(--space-2); }
+@media (min-width: 600px) and (max-height: 500px) {
+  /* Landscape keeps both status rows above the runner's jump arc. */
+  .treadmill-game[data-screen="play"] .treadmill-game__hud { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .treadmill-game[data-screen="play"] .treadmill-game__hud-notice { grid-column: 1 / -1; }
+}
 .treadmill-game__stages { flex: 1; min-width: 0; list-style: none; margin: 0; padding: var(--space-1) var(--space-2); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-1); border-radius: 999px; background: var(--game-panel); border: 2px solid var(--game-outline); }
 .treadmill-game__stages li { display: grid; gap: 2px; font-size: 11px; font-weight: 700; color: var(--game-ink-soft); text-align: center; }
 .treadmill-game__stages li[data-state="current"] { color: var(--game-ink); }

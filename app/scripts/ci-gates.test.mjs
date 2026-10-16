@@ -8,7 +8,7 @@ import { projects } from "../e2e/run-full-suite.mjs"
 
 const workflow = YAML.parse(readFileSync(new URL("../../.github/workflows/ci.yml", import.meta.url), "utf8"))
 const jobs = workflow.jobs
-const needs = job => Array.isArray(job.needs) ? job.needs : [job.needs]
+const needs = job => (Array.isArray(job.needs) ? job.needs : [job.needs]).filter(name => name !== 'delivery-scope' && name !== 'delivery-complete')
 const commands = job => job.steps.filter(step => step.run).flatMap(step => step.run.trim().split("\n").map(line => line.trim()))
 
 test("CI distributes the complete fixed timezone and browser project inventories", () => {
@@ -46,6 +46,21 @@ test("quality and dedicated checks keep the original complete command coverage",
   }
 })
 
+test("the real arena remains mandatory in every fixture project with a loopback server", () => {
+  const config = readFileSync(new URL('../playwright.config.ts', import.meta.url), 'utf8')
+  const fixtureConfig = readFileSync(new URL('../playwright.browser-fixtures.config.ts', import.meta.url), 'utf8')
+  const setup = readFileSync(new URL('../e2e/browser-fixtures.setup.mjs', import.meta.url), 'utf8')
+  const worker = readFileSync(new URL('../e2e/arena-fixture-worker.mjs', import.meta.url), 'utf8')
+  assert.match(config, /browserFixtureTests = .*friend-arena\.spec\.ts/)
+  assert.match(fixtureConfig, /testMatch: browserFixtureTests/)
+  assert.match(fixtureConfig, /\.\.\.generic/)
+  assert(commands(jobs['app-browser-generic']).includes('npm ci --ignore-scripts'))
+  assert.match(setup, /envFile: false/)
+  assert.match(setup, /ws:\/\/127\.0\.0\.1:/)
+  assert.match(setup, /await arena\.terminate\(\)/)
+  assert.match(worker, /arena\.server\.listen\(0, "127\.0\.0\.1"/)
+})
+
 function bashCommand() {
   if (process.platform !== "win32") return "bash"
   const git = spawnSync("git", ["--exec-path"], { encoding: "utf8", windowsHide: true, shell: false })
@@ -55,11 +70,11 @@ function bashCommand() {
 
 test("actual aggregate shell guards reject every incomplete or unsuccessful result", () => {
   for (const [name, expectedNeeds] of [
-    ["app-quality", ["app-unit"]], ["app-browser", ["app-browser-generic", "app-browser-dedicated"]],
+    ["app-browser", ["app-browser-generic", "app-browser-dedicated"]],
   ]) {
     const job = jobs[name]
     assert.deepEqual(needs(job), expectedNeeds)
-    assert.equal(job.if, "${{ always() }}")
+    assert.equal(job.if, "${{ always() && needs.delivery-scope.outputs.full != 'false' }}")
     const guard = job.steps.find(step => step.shell === "bash" && step.env)
     const keys = Object.keys(guard.env)
     assert.equal(keys.length, expectedNeeds.length)
@@ -82,4 +97,42 @@ test("actual aggregate shell guards reject every incomplete or unsuccessful resu
       assert.equal(execute(missing).status, 1, `${name}:${key}:absent`)
     }
   }
+})
+
+test("independent quality runs early but unit failures still block publication", async () => {
+  assert.deepEqual(needs(jobs['app-quality']), [])
+  assert.equal(jobs['app-quality'].needs, 'delivery-scope')
+  assert.equal(jobs['app-quality'].if, "needs.delivery-scope.outputs.full == 'true'")
+  assert(jobs['deploy-pages'].needs.includes('delivery-complete'))
+  const { assertDeliveryResults } = await import('../../.tools/ci-delivery-scope.cjs')
+  const results = Object.fromEntries(jobs['delivery-complete'].needs.map(name => [name, { result: 'success' }]))
+  results['delivery-scope'].outputs = { full: 'true' }
+  assert.equal(assertDeliveryResults(results), 'FULL_CHECKS_PASSED')
+  for (const result of ['failure', 'cancelled', 'skipped', '', 'in_progress']) {
+    assert.throws(() => assertDeliveryResults({ ...results, 'app-unit': { result } }))
+  }
+})
+
+test("CI preserves publication and avoids duplicate branch runs and browser builds", () => {
+  assert.deepEqual(workflow.on.push.branches, ['main'])
+  assert.equal(workflow.concurrency['cancel-in-progress'], "${{ github.event_name == 'pull_request' }}")
+  assert.equal(jobs['deploy-pages'].concurrency['cancel-in-progress'], false)
+  assert(jobs['deploy-pages'].needs.includes('delivery-complete'))
+  assert(jobs['deploy-pages'].needs.includes('delivery-scope'))
+  assert(jobs['deploy-pages'].if.includes("!contains(github.event.head_commit.message, '[manual-pages]')"))
+  for (const [name, job] of Object.entries(jobs)) {
+    if (name !== 'deploy-pages') assert(!String(job.if).includes('manual-pages'), name)
+  }
+  for (const [name, job] of Object.entries(jobs)) assert(job['timeout-minutes'] > 0 && job['timeout-minutes'] <= 45, name)
+  const publish = commands(jobs['deploy-pages']).join('\n')
+  assert(publish.includes('build-oracle-pages-release.mjs --account-held'))
+  assert(publish.includes('publish-oracle-pages-release.mjs'))
+  assert(!publish.includes('rm -rf'))
+  assert(!commands(jobs['app-browser-generic']).includes('npm run build'))
+  const uploaded = jobs['app-quality'].steps.find(step => step.uses?.startsWith('actions/upload-artifact@'))
+  const downloaded = jobs['app-browser-generic'].steps.find(step => step.uses?.startsWith('actions/download-artifact@'))
+  assert.equal(downloaded.with.name, uploaded.with.name)
+  assert.equal(downloaded.with.path, 'app/dist')
+  const expected = Object.keys(jobs).filter(name => !['delivery-complete', 'deploy-pages'].includes(name))
+  assert.deepEqual([...jobs['delivery-complete'].needs].sort(), expected.sort())
 })

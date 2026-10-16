@@ -119,15 +119,13 @@ test("opens a day from the monthly calendar with provenance-safe summaries and r
   const archive = page.getByTestId("journal-archive")
   await expect(archive.getByRole("heading", { name: "지난 일지" })).toBeVisible()
   await expect(archive.getByText(secret, { exact: false })).toHaveCount(0)
-  await archive.getByText("월별 기록 모아보기").click()
-  await expect(archive.getByText("출처를 확인할 수 없어 제외된 기록 1건")).toBeVisible()
-  const month = archive.getByRole("button", { name: /2026년 7월.*훈련 후 3건.*6 km.*30분.*제외된 기록 1건/u })
-  await expect(month).toBeVisible()
-  await expect(month).not.toContainText("10 km")
-  await expect(month).not.toContainText("50분")
+  // The calendar is now the default; it lists records without presenting imported
+  // objective values as an eligible training total.
+  await expect(archive).toContainText("이 달 4일 · 5개 기록")
+  await expect(archive).not.toContainText("10 km")
+  await expect(archive).not.toContainText("50분")
   expect((await archive.ariaSnapshot()).includes(secret)).toBe(false)
 
-  await month.click()
   const calendar = archive.getByRole("grid", { name: "2026년 7월 달력" })
   await expect(calendar).toBeVisible()
   await expect(calendar.getByRole("button", { name: /2026년 7월 9일.*훈련 후 1건/u })).toBeVisible()
@@ -146,7 +144,7 @@ test("opens a day from the monthly calendar with provenance-safe summaries and r
   await expect(reader.getByText("2 / 4")).toBeVisible()
   await page.getByRole("button", { name: "일지 목록으로 돌아가기" }).click()
 
-  await expect(archive.getByRole("heading", { name: "2026년 7월", exact: true })).toBeVisible()
+  await expect(archive.getByRole("heading", { name: "2026년 7월 · 년월과 날짜 이동", exact: true })).toBeVisible()
   await expect(archive.getByRole("grid", { name: "2026년 7월 달력" })).toBeVisible()
   await expect(archive.getByRole("button", { name: /2026년 7월 10일/u })).toBeVisible()
   await expect(archive.getByText(secret, { exact: false })).toHaveCount(0)

@@ -51,8 +51,20 @@ export function PlanDayReader({ date, sessions, initialSlot, initialSection, can
     const body = content.current
     if (!body) return
     const sections = Array.from(body.querySelectorAll<HTMLElement>("[data-session-slot]"))
-    const threshold = body.getBoundingClientRect().top + 48
-    const current = sections.filter(section => section.getBoundingClientRect().top <= threshold).at(-1) ?? sections[0]
+    // Track the section occupying the reader's upper half, not a fixed 48px
+    // strip that can still contain the end of AM while the athlete uses PM.
+    const threshold = body.getBoundingClientRect().top + body.clientHeight / 2
+    const focused = document.activeElement?.closest<HTMLElement>("[data-session-slot]")
+    const focusBounds = focused?.getBoundingClientRect()
+    const bodyBounds = body.getBoundingClientRect()
+    const visibleFocus = focused && body.contains(focused) && focusBounds
+      && focusBounds.bottom > bodyBounds.top && focusBounds.top < bodyBounds.top + body.clientHeight
+      ? focused : null
+    // A short final session cannot always reach the top of the reader. At the
+    // bottom, keep that visible final session selected instead of reverting to AM.
+    const atBottom = body.scrollHeight > body.clientHeight && body.scrollTop + body.clientHeight >= body.scrollHeight - 1
+    const current = visibleFocus ?? (atBottom ? sections.at(-1)
+      : sections.filter(section => section.getBoundingClientRect().top <= threshold).at(-1) ?? sections[0])
     const slot = current?.dataset.sessionSlot
     if (slot === "AM" || slot === "PM") setActiveSlot(slot)
   }
@@ -89,7 +101,7 @@ export function PlanDayReader({ date, sessions, initialSlot, initialSection, can
       {sessions.map(session => <button className="app-choice-control" type="button" key={session.slot} aria-current={activeSlot === session.slot ? "location" : undefined}
         onClick={() => jumpToSlot(session.slot)}>{sessionSlotLabel(session.slot)}</button>)}
     </nav>}
-    <div className="plan-day-reader__body" ref={content} onScroll={syncSlot}>
+    <div className="plan-day-reader__body" ref={content} onScroll={syncSlot} onFocusCapture={syncSlot}>
       <div key={date} className="plan-day-reader__content plan-schedule-preview__sessions calendar-reader-transition">{typeof children === "function" ? children(leave) : children}</div>
     </div>
   </dialog>, document.body)

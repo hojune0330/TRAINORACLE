@@ -156,7 +156,7 @@ test("keeps evening controls and every body-part selector touchable", async ({ p
 
   await auditTouchTargets(page, [
     { name: "evening.back", locator: page.getByRole("button", { name: "← 뒤로" }) },
-    { name: "evening.sleep-range", locator: page.getByRole("slider", { name: "수면 시간" }), heightOnly: true },
+    { name: "evening.sleep-hours", locator: page.getByRole("textbox", { name: "수면 시간" }), heightOnly: true },
     { name: "evening.sleep-quality", locator: page.getByRole("button", { name: /^수면 질 [1-5]/u }), count: 5 },
   ])
   const sleepFirst = page.getByRole("button", { name: /^수면 질 1/u })
@@ -174,51 +174,61 @@ test("keeps evening controls and every body-part selector touchable", async ({ p
   ])
   await expectNoHorizontalOverflow(page)
   await page.getByRole("button", { name: "입력 확인으로", exact: true }).click()
-  await page.getByRole("button", { name: /^몸 상태 · 기분 (입력|수정)$/u }).click()
+  await page.getByRole("button", { name: /^기분 (입력|수정)$/u }).click()
   await auditTouchTargets(page, [
-    { name: "evening.mood", locator: page.getByRole("button", { name: /^감정 [1-5]/u }), count: 5 },
-    { name: "evening.body-part", locator: page.getByRole("button", { name: /통증/u }), count: 10, heightOnly: true },
+    { name: "evening.mood", locator: page.getByRole("button", { name: /^기분 [1-5]/u }), count: 5 },
   ])
-  const moodFirst = page.getByRole("button", { name: /^감정 1/u })
-  const moodLast = page.getByRole("button", { name: /^감정 5/u })
+  const moodFirst = page.getByRole("button", { name: /^기분 1/u })
+  const moodLast = page.getByRole("button", { name: /^기분 5/u })
   await moodFirst.click()
   await moodLast.click()
   await expect(moodFirst).toHaveAttribute("aria-pressed", "false")
   await expect(moodLast).toHaveAttribute("aria-pressed", "true")
-  const bodyButtons = page.getByRole("button", { name: /통증/u })
-  const orderedLabels = await bodyButtons.evaluateAll((buttons) => buttons.map((button) => button.getAttribute("aria-label") ?? ""))
-  expect(orderedLabels.map((label) => label.split(",")[0])).toEqual(bodyPartNames)
-  // 몸 그림은 닫힌 상태로 시작한다 (작업지시서 UX1 §2-3).
-  // 그림은 aria-hidden 이고 onClick 도 없어서 고르는 데 쓰이지 않는데
-  // 컨디션·메모 화면 길이의 절반(476px)을 먹었다. 접어도 기능 손실은 없다.
-  // 닫혀 있어도 <svg> 는 DOM 에 남으므로 [data-body-part] 는 계속 읽힌다.
-  await expect(page.locator(".body-pain-selector")).toHaveAttribute("data-diagram-open", "false")
-  expect(await page.locator('[data-body-part="rKnee"]').getAttribute("r")).toBe("6")
-  for (const { id, name } of bodyParts) {
-    const selectedBefore = await bodyButtons.evaluateAll((buttons) => buttons.filter((button) => button.getAttribute("aria-pressed") === "true").length)
-    const button = page.getByRole("button", { name: new RegExp(`^${name}.*통증`, "u") })
-    await button.click()
-    await expect(button).toHaveAttribute("aria-pressed", "true")
-    await expect(bodyButtons).toHaveCount(10)
-    expect(await bodyButtons.evaluateAll((buttons) => buttons.filter((item) => item.getAttribute("aria-pressed") === "true").length)).toBe(selectedBefore + 1)
-    expect(await page.locator(`[data-body-part="${id}"]`).getAttribute("r")).toBe("9")
-  }
-  expect(await page.locator('[data-body-part="rKnee"]').getAttribute("r")).toBe("9")
-  // 통증을 고르면 그림이 저절로 펼쳐진다 — 어디를 골랐는지 한눈에 보여주는 게
-  // 그림이 하는 일이다. 반대로 코드가 다시 닫는 일은 없다.
-  await expect(page.locator(".body-pain-selector")).toHaveAttribute("data-diagram-open", "true")
-  const rightKnee = page.getByRole("button", { name: /^오른 무릎.*통증/u })
-  await rightKnee.focus()
-  const scrollBeforeSpace = await page.evaluate(() => window.scrollY)
-  await page.keyboard.press("Space")
-  await expect(rightKnee).toHaveAccessibleName(/통증 2단계/u)
-  expect(await page.evaluate(() => window.scrollY)).toBe(scrollBeforeSpace)
-  await page.keyboard.press("Enter")
-  await expect(rightKnee).toHaveAccessibleName(/통증 3단계/u)
-  await expect(rightKnee).toBeFocused()
-  await expect(page.locator("svg [role='button']")).toHaveCount(0)
   await expectNoHorizontalOverflow(page)
   await page.getByRole("button", { name: "입력 확인으로", exact: true }).click()
+  await page.getByRole("button", { name: /^몸 상태 (입력|수정)$/u }).click()
+  const picker = page.getByRole("group", { name: "몸 부위 선택", exact: true })
+  await auditTouchTargets(page, [
+    { name: "evening.body-groups", locator: picker.getByRole("button"), count: 7, heightOnly: true },
+  ])
+  const selected = page.getByRole("group", { name: "선택한 부위", exact: true })
+  let selectedCount = 0
+  for (const { id, name } of bodyParts) {
+    if (selectedCount > 0) await page.getByRole("button", { name: "다른 부위 추가", exact: true }).click()
+    const label = name.replace("햄스트링", "허벅지 뒤")
+    const groupName = label.replace(/^(오른|왼) /u, "")
+    await picker.getByRole("button", { name: groupName, exact: true }).click()
+    const dialog = page.getByRole("dialog")
+    if (/^(오른|왼) /u.test(label)) {
+      const sides = dialog.getByRole("group", { name: `${groupName} 좌우 선택` })
+      await auditTouchTargets(page, [{ name: `evening.${id}.sides`, locator: sides.getByRole("button"), count: 2, heightOnly: true }])
+      await sides.getByRole("button", { name: label, exact: true }).click()
+    }
+    const levels = dialog.getByRole("group", { name: "통증 정도", exact: true })
+    await auditTouchTargets(page, [{ name: `evening.${id}.levels`, locator: levels.getByRole("button"), count: 5 }])
+    const first = levels.getByRole("button", { name: `${name} 통증 1단계`, exact: true })
+    await first.focus()
+    const scrollBeforeSpace = await page.evaluate(() => window.scrollY)
+    await page.keyboard.press("Space")
+    expect(await page.evaluate(() => window.scrollY)).toBe(scrollBeforeSpace)
+    await expect(dialog.getByRole("button", { name: `${name}, 통증 1/5`, exact: true })).toBeVisible()
+    await dialog.getByRole("button", { name: "입력 완료", exact: true }).click()
+    await expect(dialog).toHaveCount(0)
+    selectedCount += 1
+    await expect(selected.getByRole("button")).toHaveCount(selectedCount)
+  }
+  const orderedLabels = await selected.getByRole("button").evaluateAll(buttons => buttons.map(button => button.getAttribute("aria-label") ?? ""))
+  expect(orderedLabels.map(label => label.split(",")[0])).toEqual(bodyPartNames)
+  await selected.getByRole("button", { name: "오른 무릎, 통증 1/5", exact: true }).click()
+  const kneeDialog = page.getByRole("dialog")
+  await kneeDialog.getByRole("button", { name: "오른 무릎 통증 3단계", exact: true }).focus()
+  await page.keyboard.press("Enter")
+  await expect(kneeDialog.getByRole("button", { name: "오른 무릎, 통증 3/5", exact: true })).toBeVisible()
+  await kneeDialog.getByRole("button", { name: "입력 완료", exact: true }).click()
+  await expect(selected.getByRole("button", { name: "오른 무릎, 통증 3/5", exact: true })).toBeFocused()
+  await expect(page.locator("svg [role='button']")).toHaveCount(0)
+  await expectNoHorizontalOverflow(page)
+  await page.getByRole("button", { name: "입력 확인", exact: true }).click()
   await page.getByRole("button", { name: /^메모 (입력|수정)$/u }).click()
   await auditTouchTargets(page, [
     { name: "evening.private-label", locator: privateMemo.locator("xpath=.."), heightOnly: true },

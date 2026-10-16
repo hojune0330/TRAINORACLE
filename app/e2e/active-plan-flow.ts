@@ -35,10 +35,10 @@ export async function openActiveSessionDetails(
 export async function openActivePlanCards(page: Page): Promise<void> {
   await closeActiveDayReader(page)
   await expect(page.locator(".active-plan")).toBeVisible()
-  const list = page.getByRole("group", { name: "계획 일정 보기", exact: true })
-    .getByRole("button", { name: "하루씩", exact: true })
-  if (await list.getAttribute("aria-pressed") !== "true") await list.click()
-  await expect(list).toHaveAttribute("aria-pressed", "true")
+  const list = page.getByRole("radiogroup", { name: "계획 일정 보기", exact: true })
+    .getByRole("radio", { name: "하루씩", exact: true })
+  if (await list.getAttribute("aria-checked") !== "true") await list.click()
+  await expect(list).toHaveAttribute("aria-checked", "true")
   await expect(page.getByRole("list", { name: "날짜별 계획 미리보기", exact: true })).toBeVisible()
 }
 
@@ -68,7 +68,7 @@ export async function openActiveDayReader(page: Page, dayIndex = 0): Promise<Loc
 export async function closeActiveDayReader(page: Page): Promise<void> {
   const reader = page.locator(".plan-day-reader[open]")
   if (await reader.count()) {
-    await reader.getByRole("button", { name: "달력으로 돌아가기", exact: true }).click()
+    await reader.getByRole("button", { name: /^(?:달력|하루씩)으로 돌아가기$/u, exact: true }).click()
     await expect(reader).toHaveCount(0)
   }
 }

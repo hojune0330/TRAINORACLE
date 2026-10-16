@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test"
+import { openActiveDayReader, openSessionRecords } from "./active-plan-flow"
 import type { PlanBetaStateV3 } from "../src/domain/plan-beta-schema"
 import type { AthleteRecord } from "../src/domain/athlete-records"
 import type * as Harness from "./fixtures/multi-event-pace-lifecycle"
@@ -60,6 +61,12 @@ function timeText(seconds: number) {
   const rounded = Math.round(seconds * 10) / 10
   return rounded >= 60 ? `${Math.floor(rounded / 60)}분 ${Number((rounded % 60).toFixed(1))}초` : `${rounded}초`
 }
+function readerTargetText(event: number, seconds: number) {
+  // The 10km catalog has its plain-language reader; half/full marathon still
+  // retain the legacy seconds notation. Short-event recommendations use 초.
+  return event === 10000 ? timeText(seconds)
+    : `${Math.round(seconds * 10) / 10}${event > 10000 ? "s" : "초"}`
+}
 function timeFields(seconds: number) {
   return { minutes: String(Math.floor(seconds / 60)), seconds: String(Number((seconds % 60).toFixed(4))) }
 }
@@ -87,7 +94,11 @@ async function assertNumeric(page: Page, persona: Persona, seconds: number, sour
   return rows
 }
 async function openRecords(page: Page, active: boolean) {
-  if (active) await page.getByRole("button", { name: "기준 기록·페이스 바꾸기", exact: true }).click()
+  if (active) {
+    const disclosure = page.getByRole("button", { name: "페이스·훈련 구성", exact: true })
+    if (await disclosure.getAttribute("aria-expanded") !== "true") await disclosure.click()
+    await page.getByRole("button", { name: "기준 기록·페이스 바꾸기", exact: true }).click()
+  }
   else {
     await page.getByRole("button", { name: "내 경기 기록", exact: true }).click()
   }
@@ -207,9 +218,11 @@ async function assertBoundSuccessor(page: Page, persona: Persona, source: Athlet
     const main = rows.find(row => `${row.day}:${row.slot}` === address)!
     const date = new Date(startDate)
     date.setUTCDate(date.getUTCDate() + main.day - 1)
-    await page.getByRole("button", { name: new RegExp(`${date.getUTCFullYear()}년 ${date.getUTCMonth() + 1}월 ${date.getUTCDate()}일`) }).click()
-    await expect(page.getByRole("dialog")).toContainText(`${Math.round(main.minimum * 10) / 10}s`)
-    await page.getByRole("button", { name: "달력으로 돌아가기", exact: true }).click()
+    const overview = page.getByLabel(`${predecessor.intake.requestedFrameLength}일 훈련 일정`).first()
+    await overview.getByRole("radio", { name: "달력", exact: true }).click()
+    await overview.getByRole("button", { name: new RegExp(`${date.getUTCMonth() + 1}월 ${date.getUTCDate()}일`) }).click()
+    await expect(page.getByRole("dialog")).toContainText(readerTargetText(persona.event, main.minimum))
+    await page.getByRole("button", { name: /^(?:달력|하루씩)으로 돌아가기$/u, exact: true }).click()
   }
   return evidence
 }
@@ -252,6 +265,9 @@ for (const persona of personas) test(`${persona.id} ${persona.name}`, async ({ p
         : persona.event === 5000 ? "5km" : `${persona.event}m`
       await page.getByRole("button", { name: eventLabel, exact: true }).click()
       await page.getByRole("button", { name: persona.goal ? "목표만 있어요" : "내 기록", exact: true }).click()
+      if (persona.goal && persona.event === 10000) {
+        await page.getByRole("button", { name: "다른 목표 직접 입력", exact: true }).click()
+      }
       const fields = timeFields(persona.seconds)
       await page.getByLabel("분", { exact: true }).fill(fields.minutes)
       await page.getByLabel("초", { exact: true }).fill(fields.seconds)
@@ -281,11 +297,9 @@ for (const persona of personas) test(`${persona.id} ${persona.name}`, async ({ p
       await expect.poll(() => stored(page, PLAN)).not.toBeNull()
       const saved = await plan(page)
       const rows = await assertNumeric(page, persona, persona.seconds, source)
-      const mainDate = new Date(`${saved.intake.startDate}T03:00:00Z`)
-      mainDate.setUTCDate(mainDate.getUTCDate() + rows[0]!.day - 1)
-      await page.getByRole("button", { name: new RegExp(`${mainDate.getUTCFullYear()}년 ${mainDate.getUTCMonth() + 1}월 ${mainDate.getUTCDate()}일`) }).click()
-      await expect(page.getByRole("dialog")).toContainText(`${Math.round(rows[0]!.minimum * 10) / 10}s`)
-      await page.getByRole("button", { name: "달력으로 돌아가기", exact: true }).click()
+      await openActiveDayReader(page, rows[0]!.day - 1)
+      await expect(page.getByRole("dialog")).toContainText(readerTargetText(persona.event, rows[0]!.minimum))
+      await page.getByRole("button", { name: /^(?:달력|하루씩)으로 돌아가기$/u, exact: true }).click()
       const views = await page.evaluate(async ({ path, event }) =>
         (await import(/* @vite-ignore */ path) as typeof Harness).records(event), { path: helperPath, event: persona.event })
       if (persona.condition === "recent" || persona.condition === "unknown" || persona.condition === "rolling") {
@@ -450,9 +464,9 @@ for (const persona of personas) test(`${persona.id} ${persona.name}`, async ({ p
       date.setUTCDate(date.getUTCDate() + main.day - 1)
       await page.clock.setFixedTime(date)
       await page.reload(); await tab(page)
-      await page.getByRole("button", { name: new RegExp(`${date.getUTCFullYear()}년 ${date.getUTCMonth() + 1}월 ${date.getUTCDate()}일`) }).click()
-      await page.getByText("일지·진행 기록", { exact: true }).click()
-      await page.getByRole("button", { name: "이 훈련 일지 쓰기", exact: true }).click()
+      const dayReader = await openActiveDayReader(page, main.day - 1)
+      await openSessionRecords(dayReader.locator(`[data-session-slot="${main.slot}"]`))
+      await dayReader.locator(`[data-session-slot="${main.slot}"]`).getByRole("button", { name: "이 훈련 일지 쓰기", exact: true }).click()
       await page.getByRole("button", { name: persona.partial ? "일부만 했거나 내용을 바꿨어요" : "계획대로 마쳤어요", exact: true }).click()
       await page.getByRole("button", { name: persona.slot === "PM" || main.slot === "PM" ? "오후" : "오전", exact: true }).click()
       await page.getByRole("button", { name: /^힘든 정도 7\/10,/ }).click()
@@ -468,10 +482,12 @@ for (const persona of personas) test(`${persona.id} ${persona.name}`, async ({ p
         plannedSessionLink: { sessionDay: main.day, sessionSlot: main.slot } })
       expect((await plan(page)).progress).toEqual([])
       await page.getByRole("button", { name: "완료", exact: true }).click()
-      const returnToCalendar = page.getByRole("button", { name: "달력으로 돌아가기", exact: true })
+      const returnToCalendar = page.getByRole("button", { name: /^(?:달력|하루씩)으로 돌아가기$/u, exact: true })
       if (await returnToCalendar.isVisible()) await returnToCalendar.click()
       await tab(page)
-      await page.getByRole("button", { name: "연결된 일지 기록 보기", exact: true }).click()
+      const savedReader = await openActiveDayReader(page, main.day - 1)
+      await openSessionRecords(savedReader.locator(`[data-session-slot="${main.slot}"]`))
+      await savedReader.locator(`[data-session-slot="${main.slot}"]`).getByRole("button", { name: "연결된 일지 기록 보기", exact: true }).click()
       await expect(page.getByRole("tabpanel")).toContainText("7/10 · 직접 입력")
       await page.screenshot({ path: info.outputPath("saved-journal.png"), fullPage: true, animations: "disabled" })
       return entries
@@ -482,6 +498,8 @@ for (const persona of personas) test(`${persona.id} ${persona.name}`, async ({ p
       nextDate.setUTCDate(nextDate.getUTCDate() + 10)
       await page.clock.setFixedTime(nextDate)
       await page.reload(); await tab(page)
+      const nextPlan = page.getByRole("button", { name: "다음 계획 시작하기", exact: true })
+      if (await nextPlan.getAttribute("aria-expanded") !== "true") await nextPlan.click()
       await page.getByRole("button", { name: "다음 계획안 만들기", exact: true }).click()
       await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/ }).click()
       const previewKeys = [PLAN, HISTORY, JOURNAL, RECORDS]

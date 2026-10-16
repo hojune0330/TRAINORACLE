@@ -38,7 +38,7 @@ test("imports a watch TCX file into the local journal and marks its source", asy
   await integrationStatus.locator("summary").click()
   await expect(integrationStatus).toContainText("시작 날짜는 아직 정해지지 않았어요")
 
-  await page.getByLabel(/내보낸 활동 파일/u).setInputFiles({
+  await page.getByLabel("가져올 운동 파일 선택", { exact: true }).setInputFiles({
     name: "garmin-activity.tcx",
     mimeType: "application/xml",
     buffer: Buffer.from(tcxFor(today), "utf-8"),
@@ -50,7 +50,7 @@ test("imports a watch TCX file into the local journal and marks its source", asy
   await expect(page.getByText(/주간 통계·추이·훈련계획에는 들어가지 않아요/u)).toBeVisible()
 
   await page.getByRole("button", { name: /고른 1건 일지에 저장/u }).click()
-  await expect(page.getByTestId("import-saved")).toContainText("1건을 일지에 저장했어요")
+  await expect(page.getByTestId("import-saved")).toContainText("새 일지 1건 저장 · 기존 일지 0건 보완")
 
   // 출처가 파일 가져오기로, RPE는 미입력으로 남는다.
   const entry = await page.evaluate((key) => {
@@ -74,7 +74,7 @@ test("imports a watch TCX file into the local journal and marks its source", asy
 test("counts an imported journal without treating its numbers as analysis evidence", async ({ page }) => {
   const today = new Date().toISOString().slice(0, 10)
   await openImport(page)
-  await page.getByLabel(/내보낸 활동 파일/u).setInputFiles({
+  await page.getByLabel("가져올 운동 파일 선택", { exact: true }).setInputFiles({
     name: "garmin-activity.tcx",
     mimeType: "application/xml",
     buffer: Buffer.from(tcxFor(today), "utf-8"),
@@ -87,9 +87,7 @@ test("counts an imported journal without treating its numbers as analysis eviden
   // 월 목록과 달력을 거쳐 실제 날짜의 일지를 연다.
   const [year, month, day] = today.split("-").map(Number)
   const monthLabel = `${year}년 ${month}월`
-  await page.getByText("월별 기록 모아보기", { exact: true }).click()
-  await page.getByRole("region", { name: "월별 기록" }).getByRole("button", { name: new RegExp(`^${monthLabel} `, "u") }).click()
-  await expect(page.getByText("이 달 1일 · 1개 기록", { exact: true })).toBeVisible()
+  await expect(page.getByRole("grid", { name: `${monthLabel} 달력` })).toBeVisible()
   await page.getByRole("grid", { name: `${monthLabel} 달력` }).getByRole("button", {
     name: new RegExp(`^${monthLabel} ${day}일 .*훈련 후 1건`, "u"),
   }).click()
@@ -112,12 +110,12 @@ test("shows a duplicate warning unchecked instead of merging silently", async ({
     buffer: Buffer.from(tcxFor(today), "utf-8"),
   }
 
-  await page.getByLabel(/내보낸 활동 파일/u).setInputFiles(file)
+  await page.getByLabel("가져올 운동 파일 선택", { exact: true }).setInputFiles(file)
   await page.getByRole("button", { name: /고른 1건 일지에 저장/u }).click()
   await expect(page.getByTestId("import-saved")).toBeVisible()
 
   await page.getByRole("button", { name: "파일 더 가져오기" }).click()
-  await page.getByLabel(/내보낸 활동 파일/u).setInputFiles(file)
+  await page.getByLabel("가져올 운동 파일 선택", { exact: true }).setInputFiles(file)
 
   await expect(page.getByTestId("import-duplicate-flag")).toBeVisible()
   await expect(page.getByRole("checkbox", { name: /가져오기$/u })).not.toBeChecked()
@@ -161,7 +159,7 @@ test("reconciles a detailed continuation and keeps subjective editing available"
   expect(original).toMatchObject({ captureDepth: "DETAILED", objectiveDataState: "WAITING", activitySlot: "PM" })
 
   await openImport(page)
-  await page.getByLabel(/내보낸 활동 파일/u).setInputFiles({
+  await page.getByLabel("가져올 운동 파일 선택", { exact: true }).setInputFiles({
     name: "synthetic-afternoon.tcx", mimeType: "application/xml", buffer: Buffer.from(tcxFor(original.date), "utf-8"),
   })
   await expect(page.getByRole("checkbox", { name: /가져오기$/u })).not.toBeChecked()
@@ -197,7 +195,7 @@ test("reconciles a detailed continuation and keeps subjective editing available"
 test("surfaces an unreadable file instead of failing silently", async ({ page }) => {
   await openImport(page)
 
-  await page.getByLabel(/내보낸 활동 파일/u).setInputFiles({
+  await page.getByLabel("가져올 운동 파일 선택", { exact: true }).setInputFiles({
     name: "not-an-activity.tcx",
     mimeType: "application/xml",
     buffer: Buffer.from("plain text, definitely not tcx", "utf-8"),

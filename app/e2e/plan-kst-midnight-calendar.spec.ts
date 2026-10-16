@@ -39,7 +39,7 @@ test("a plan waiting across KST midnight requires today's date and keeps its cal
   expect(firstSession).toBeDefined()
   if (!firstSession) return
 
-  await page.getByRole("group", { name: "계획 일정 보기", exact: true }).getByRole("button", { name: "달력", exact: true }).click()
+  await page.getByRole("radiogroup", { name: "계획 일정 보기", exact: true }).getByRole("radio", { name: "달력", exact: true }).click()
   const calendar = page.getByRole("grid", { name: "2026년 10월 달력" })
   const day = calendar.locator('button[data-date="2026-10-08"]')
   await expect(day).toHaveAttribute("aria-label", /2026년 10월 8일/u)
@@ -67,7 +67,7 @@ test("a plan waiting across KST midnight requires today's date and keeps its cal
   })
 
   const returnedReader = page.getByRole("dialog", { name: /2026년 10월 8일/u })
-  if (await returnedReader.isVisible()) await returnedReader.getByRole("button", { name: "달력으로 돌아가기" }).click()
+  if (await returnedReader.isVisible()) await returnedReader.getByRole("button", { name: /^(?:달력|하루씩)으로 돌아가기$/u }).click()
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "일지", exact: true }).click()
   const journalDay = page.getByRole("grid", { name: "2026년 10월 달력" }).locator('button[data-date="2026-10-08"]')
   await expect(journalDay).toHaveAttribute("aria-label", /훈련 후 1건/u)

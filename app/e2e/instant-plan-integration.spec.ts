@@ -8,7 +8,7 @@ test.beforeEach(async ({ page }) => {
     return hostname === "127.0.0.1" || hostname === "localhost" ? route.continue() : route.abort()
   })
   await page.goto("/?app=1&uitest=1")
-  await page.getByRole("button", { name: "훈련 계획 만들기", exact: true }).click()
+  await page.getByRole("button", { name: "훈련 계획 받기", exact: true }).click()
 })
 
 for (const width of [320, 375]) {
@@ -20,6 +20,7 @@ for (const width of [320, 375]) {
     await page.getByRole("button", { name: /^매일/u }).click()
     await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
     const recommendation = page.getByRole("region", { name: "1500m · 9일 훈련", exact: true })
+    await recommendation.getByRole("radiogroup", { name: "계획 일정 보기" }).getByRole("radio", { name: "달력", exact: true }).click()
     await expect(recommendation.getByRole("grid")).toBeVisible()
     const rangeDates = () => recommendation.locator('[data-in-range="true"] button[data-date]')
       .evaluateAll(nodes => nodes.map(node => node.getAttribute("data-date")!))
@@ -38,7 +39,10 @@ for (const width of [320, 375]) {
     await page.screenshot({ path: info.outputPath(`recommendation-${width}.png`), fullPage: true })
     await openPlanOptions(page)
     await expect(page.getByRole("region", { name: "다른 계획 비교" })).toBeVisible()
-    await expect(page.getByRole("heading", { name: "운동 시간을 비교하고 골라요" })).toBeInViewport()
+    const comparisonHeading = page.getByRole("heading", { name: "운동 시간을 비교하고 골라요" })
+    await expect(comparisonHeading).toBeVisible()
+    await comparisonHeading.scrollIntoViewIfNeeded()
+    await expect(comparisonHeading).toBeInViewport()
     await expect(page.getByRole("button", { name: "계획안 A 일정 펼치기" })).toHaveAttribute("aria-expanded", "false")
     await expect(page.getByRole("button", { name: "계획안 B 일정 펼치기" })).toHaveAttribute("aria-expanded", "false")
     const candidateA = page.locator(".plan-candidate").first()
@@ -143,17 +147,21 @@ test("a storage failure keeps the explanation and retry together in view", async
   await expect(page.getByRole("heading", { name: "오늘 훈련", exact: true })).toBeVisible()
 })
 
-test("two daily sessions stay together and the selected afternoon links to its own diary", async ({ page }) => {
+test("both daily sessions remain reachable and the selected afternoon links to its own diary", async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 667 })
   await completeQuickPlan(page, { days: /^매일/u })
   await refinePlan(page, "하루 두 번", /하루 두 번 운동할게요/u)
   await page.getByRole("button", { name: "이 일정으로 시작" }).click()
-  const sessions = page.getByRole("group", { name: "오늘 세션 선택" })
-  await expect(sessions.getByRole("button")).toHaveCount(2)
-  await expect(sessions).toBeInViewport({ ratio: 1 })
-  await sessions.getByRole("button", { name: /오후/u }).click()
-  await expect(sessions.getByRole("button", { name: /오후/u })).toHaveAttribute("aria-pressed", "true")
-  await expect(page.getByRole("button", { name: /오전 훈련 기록 남기기/u })).toHaveCount(0)
+  const sessions = page.locator(".instant-plan--entry-cards")
+  await expect(sessions.getByRole("button", { name: /훈련 내용 보기/ })).toHaveCount(2)
+  // The approved detailed session summary grows with its workout instructions.
+  // Both slots must stay in this section and remain reachable without clipping.
+  for (const button of await sessions.getByRole("button", { name: /훈련 내용 보기/ }).all()) {
+    await button.scrollIntoViewIfNeeded()
+    await expect(button).toBeInViewport({ ratio: 1 })
+  }
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  await expect(page.getByRole("button", { name: /오전 훈련 기록 남기기/u })).toBeVisible()
   await page.getByRole("button", { name: /오후 훈련 기록 남기기/u }).click()
   await expect(page.getByText("계획 1일차 · 오후", { exact: false })).toBeVisible()
 })

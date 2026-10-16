@@ -97,7 +97,10 @@ test(`returning from a ${detailed ? "detailed" : completion === "native-back" ? 
   await afternoonSession.getByRole("button", { name: "이 훈련 일지 쓰기" }).click()
   await expect(page.getByText("계획 5일차 · 오후")).toBeVisible()
   await page.getByRole("button", { name: "계획대로 마쳤어요" }).click()
-  await page.getByRole("button", { name: "오후" }).click()
+  // Deliberate keyboard activation must not resemble a same-position double tap
+  // across auto-advancing questions on short mobile viewports.
+  await page.getByRole("button", { name: "오후", exact: true }).focus()
+  await page.keyboard.press("Enter")
   await page.getByRole("button", { name: /힘든 정도 6\/10,/u }).click()
   await page.getByRole("button", { name: "없어요" }).click()
   await expect(page.getByRole("heading", { name: "이 내용으로 남길까요?" })).toBeVisible()
@@ -159,7 +162,7 @@ test(`returning from a ${detailed ? "detailed" : completion === "native-back" ? 
 test("the first workout precedes the calendar and editing isolates its close action and tools", async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 375, height: 667 })
   await page.goto("/?app=1&uitest=1")
-  await page.getByRole("button", { name: "훈련 계획 만들기", exact: true }).click()
+  await page.getByRole("button", { name: "훈련 계획 받기", exact: true }).click()
   await completeQuickPlan(page)
   const first = page.getByRole("region", { name: "첫 훈련 구성" })
   const calendar = page.getByRole("region", { name: "이번 일정" })

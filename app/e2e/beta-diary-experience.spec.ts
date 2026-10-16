@@ -51,16 +51,20 @@ test(`uses the diary flow with ${hasEarnedHistory ? "previously earned" : "no ba
 
   await page.goto("/?app=1&uitest=1")
 
-  await page.getByRole("button", { name: "기분·몸 상태", exact: true }).click()
-  await page.getByRole("button", { name: "기분 좋음" }).click()
-  await page.getByRole("button", { name: "몸 상태 가벼움" }).click()
-  await page.getByRole("button", { name: "날씨 흐림" }).click()
-  await expect(page.getByRole("button", { name: "기분 좋음" })).toHaveAttribute("aria-pressed", "true")
-  await expect(page.getByText("위치정보를 사용하지 않아요.")).toBeVisible()
+  // Home now opens the condition journal; legacy DailyContextTags remain
+  // covered by their component contract, not a nonexistent home control.
+  await page.getByRole("button", { name: "컨디션·메모", exact: true }).click()
+  await page.getByRole("button", { name: "기분", exact: true }).click()
+  const goodMood = page.getByRole("button", { name: "기분 4 좋음", exact: true })
+  await goodMood.click()
+  await expect(goodMood).toHaveAttribute("aria-pressed", "true")
+  await page.getByRole("button", { name: "기분 입력 안 함", exact: true }).click()
+  await expect(goodMood).toHaveAttribute("aria-pressed", "false")
+  await page.getByRole("button", { name: "← 뒤로", exact: true }).click()
+  await page.getByRole("button", { name: "← 뒤로", exact: true }).click()
 
   // Historical entries stay visible; only a stored award history supplies past points.
   const balance = `베타 포인트 · 사용 가능 ${hasEarnedHistory ? 32 : 0}P`
-  await page.getByRole("button", { name: "일지 예시·훈련법·꾸미기" }).click()
   await page.getByRole("button", { name: "일지 꾸미기" }).click()
   const editor = page.getByRole("dialog", { name: "일지 꾸미기", exact: true })
   await expect(editor).toBeVisible()
@@ -71,7 +75,7 @@ test(`uses the diary flow with ${hasEarnedHistory ? "previously earned" : "no ba
   await expect(page.getByRole("heading", { name: "내 기록", exact: true })).toBeVisible()
 
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "일지", exact: true }).click()
-  await page.getByRole("button", { name: "기록 묶음" }).click()
+  await page.getByRole("radio", { name: "기록 묶음" }).click()
   await expect(page.getByRole("heading", { name: "기록 묶음" })).toBeVisible()
   await page.getByText("주기 시작일과 표시 기준", { exact: true }).click()
   await expect(page.getByText(/계획을 자동으로 바꾸지 않아요/u)).toBeVisible()
@@ -82,7 +86,7 @@ test(`uses the diary flow with ${hasEarnedHistory ? "previously earned" : "no ba
 
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "홈" }).click()
   await page.getByRole("button", { name: "더보기" }).click()
-  await expect(page.getByRole("heading", { name: "훈련 배우기", exact: true })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "배우기", exact: true })).toBeVisible()
   await page.getByRole("button", { name: "훈련 용어집·도움말" }).click()
   await page.getByRole("button", { name: "앱 이용 안내", exact: true }).click()
   await expect(page.getByRole("heading", { name: "궁금한 점을 쉽게 풀어드려요" })).toBeVisible()

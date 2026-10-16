@@ -36,7 +36,10 @@ test("keeps decoration and oracle motion brief, directional, and optional", asyn
   const oracle = page.getByRole("region", { name: "내 훈련 요약" })
   await expect(oracle).toBeVisible()
 
-  const oracleAnimations = await oracle.locator(".personal-oracle__insight").evaluateAll((elements) => (
+  // Available metrics now use static MetricSummary cards; the summary and
+  // evidence disclosure retain the same optional entrance motion.
+  await expect(oracle.getByLabel("최근 분석 지표", { exact: true })).toBeVisible()
+  const oracleAnimations = await oracle.locator(".personal-oracle__summary, .personal-oracle__details").evaluateAll((elements) => (
     elements.map((element) => ({
       name: getComputedStyle(element).animationName,
       duration: getComputedStyle(element).animationDuration,
@@ -52,7 +55,6 @@ test("keeps decoration and oracle motion brief, directional, and optional", asyn
 
   /* 홈의 통합 꾸미기 진입은 오늘 일지 편집기를 바로 열고 일지를 기본 대상으로 둔다. */
   await mainTabs.getByRole("button", { name: "홈" }).click()
-  await page.getByRole("button", { name: "일지 예시·훈련법·꾸미기", exact: true }).click()
   await page.getByRole("button", { name: "일지 꾸미기", exact: true }).click()
   const editor = page.getByRole("dialog", { name: "일지 꾸미기", exact: true })
   await expect(editor).toBeVisible()
@@ -64,7 +66,7 @@ test("keeps decoration and oracle motion brief, directional, and optional", asyn
 
   await page.getByRole("button", { name: "이모지 스티커 도구" }).click()
   const drawerContentAnimation = await page
-    .locator('.journal-decoration-toolbar[data-open="true"] > .journal-decoration-toolbar__drawer-header')
+    .locator('.journal-decoration-toolbar[data-open="true"] > .journal-decoration-reward-scroll')
     .evaluate((element) => getComputedStyle(element).animationName)
   expect(drawerContentAnimation).toBe(
     testInfo.project.name === "reduced-motion" ? "none" : "decoration-tools-content-enter",

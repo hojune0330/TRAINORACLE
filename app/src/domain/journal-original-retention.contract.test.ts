@@ -46,6 +46,19 @@ afterEach(() => {
 })
 
 describe("permanent journal deletion includes preserved migration originals", () => {
+  it("keeps every duplicate live record readable without cleanup writes, even with an old tombstone", async () => {
+    const entries = [post("duplicate", "first-original"), post("duplicate", "second-original")]
+    seed(entries)
+    localStorage.setItem(KEYS.tombstones, JSON.stringify([{ id: "duplicate", deletedAt: "2026-08-01T00:00:00Z" }]))
+    await initializeCanonicalJournalStorage(localStorage, sessionStorage)
+    const before = stored()
+    expect(retryPermanentJournalOriginalCleanup(localStorage)).toBe(true)
+    expect(stored()).toEqual(before)
+    expect(loadEntries()).toHaveLength(2)
+    expect(deleteEntry("duplicate").ok).toBe(false)
+    expect(stored()).toEqual(before)
+  })
+
   it("removes one guest id from every archived original and legacy source while keeping another journal intact", async () => {
     seed([post("erase-a"), post("keep-b")])
     await initializeCanonicalJournalStorage(localStorage, sessionStorage)

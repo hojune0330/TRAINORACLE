@@ -12,11 +12,11 @@ test.beforeEach(async ({ page, baseURL }) => {
 })
 
 test("starts a journal directly from the empty archive", async ({ page }) => {
-  await page.getByRole("button", { name: "일지", exact: true }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "일지", exact: true }).click()
 
-  await expect(page.getByRole("heading", { name: "첫 일지를 남겨보세요" })).toBeVisible()
-  await expect(page.getByText("예시 · 내 기록에 저장되지 않아요", { exact: true })).toBeVisible()
-  await page.getByRole("button", { name: "내 첫 기록 남기기", exact: true }).click()
+  await expect(page.getByRole("grid")).toBeVisible()
+  await page.getByRole("grid").locator('button[aria-current="date"]').click()
+  await page.getByRole("button", { name: "이날 일지 쓰기", exact: true }).click()
 
   await expect(page.getByRole("heading", { name: "무엇을 기록할까요?" })).toBeVisible()
 })
@@ -25,9 +25,8 @@ test("starts a journal directly from the empty analysis screen", async ({ page }
   await page.getByRole("button", { name: "오라클", exact: true }).click()
 
   await expect(page.getByRole("heading", { name: "오라클", exact: true })).toBeVisible()
-  await expect(page.getByRole("heading", { name: "첫 운동부터 남겨볼까요?" })).toBeVisible()
-  await expect(page.getByText("남긴 운동으로 훈련량과 변화를 살펴봐요.", { exact: true })).toBeVisible()
-  await page.getByRole("button", { name: "첫 기록 남기기" }).click()
+  await expect(page.getByRole("region", { name: "내 기록으로 시작하기" })).toBeVisible()
+  await page.getByRole("button", { name: "운동 기록 쓰기" }).click()
 
   await expect(page.getByRole("heading", { name: "무엇을 기록할까요?" })).toBeVisible()
 })
@@ -35,9 +34,9 @@ test("starts a journal directly from the empty analysis screen", async ({ page }
 test("keeps the empty cycle action inside a mobile viewport", async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 667 })
   await page.getByRole("button", { name: "일지", exact: true }).click()
-  await page.getByRole("button", { name: "기록 묶음" }).click()
+  await page.getByRole("radio", { name: "기록 묶음" }).click()
 
   await expect(page.getByRole("heading", { name: "이 주기에 기록이 없어요" })).toBeVisible()
-  await expect(page.getByRole("button", { name: "오늘 운동 기록 쓰기" })).toBeVisible()
+  await expect(page.getByRole("button", { name: "오늘 기록하기" })).toBeVisible()
   await expect(page.locator("html")).toHaveJSProperty("scrollWidth", 375)
 })

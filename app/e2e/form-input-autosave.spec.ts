@@ -5,9 +5,10 @@ async function showEveningReview(page: Page) {
   await page.locator(".task-flow").waitFor({ state: "visible" })
   const review = page.locator('.task-flow[data-task-step^="review:"]')
   if (await review.isVisible()) return
-  const previous = page.getByRole("button", { name: "이전 질문", exact: true })
-  if (await previous.count()) await previous.click()
-  else await page.getByRole("button", { name: "지금 입력 확인", exact: true }).click()
+  if (await page.locator('.task-flow[data-task-step^="choose:"]').isVisible()) {
+    await page.getByRole("button", { name: "메모 쓰기", exact: true }).click()
+  }
+  await page.getByRole("button", { name: /^(입력 확인|입력 확인으로)$/u }).click()
   await expect(review).toBeVisible()
 }
 
@@ -15,9 +16,17 @@ async function showEveningInput(page: Page, group: "memo" | "metrics") {
   await page.locator(".task-flow").waitFor({ state: "visible" })
   const editor = page.locator(`.task-flow[data-task-step^="${group}:"]`)
   if (await editor.isVisible()) return
-  await showEveningReview(page)
+  if (!await page.locator('.task-flow[data-task-step^="choose:"], .task-flow[data-task-step^="review:"]').isVisible()) {
+    // Return without validating or normalizing an intentionally partial draft.
+    await page.getByRole("button", { name: "← 뒤로", exact: true }).click()
+  }
+  if (await page.locator('.task-flow[data-task-step^="choose:"]').isVisible()) {
+    await page.getByRole("button", { name: group === "memo" ? "메모 쓰기" : "체중·심박", exact: true }).click()
+    await expect(editor).toBeVisible()
+    return
+  }
   await page.getByRole("button", {
-    name: group === "memo" ? /^메모 (입력|수정)$/u : /^체중 · 안정시 심박 (입력|수정)$/u,
+    name: group === "memo" ? /^메모( 입력| 수정)?$/u : /^체중 · 안정시 심박( 입력| 수정)?$/u,
   }).click()
   await expect(editor).toBeVisible()
 }
@@ -85,7 +94,7 @@ test("native encrypted form input survives reload, protects account switch, and 
   await showEveningInput(page, "metrics")
   await expect(page.getByRole("textbox", { name: "체중 (kg)" })).toHaveValue("62.")
   await page.evaluate(() => window.formInputHarness.switchOwner("22222222-2222-4222-8222-222222222222"))
-  await expect(page.locator('.task-flow[data-task-step^="sleep:"]')).toBeVisible()
+  await expect(page.locator('.task-flow[data-task-step^="choose:"]')).toBeVisible()
   await showEveningInput(page, "memo")
   await expect(page.getByRole("textbox", { name: "오늘의 메모" })).toHaveValue("")
   await page.evaluate(() => window.formInputHarness.switchOwner("11111111-1111-4111-8111-111111111111"))
@@ -150,7 +159,7 @@ test("two tabs durably preserve losing CAS input and require explicit recovery a
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   await page.screenshot({ path: testInfo.outputPath("recovery-mobile.png"), fullPage: true })
   await page.evaluate(() => window.formInputHarness.switchOwner("22222222-2222-4222-8222-222222222222"))
-  await expect(page.locator('.task-flow[data-task-step^="sleep:"]')).toBeVisible()
+  await expect(page.locator('.task-flow[data-task-step^="choose:"]')).toBeVisible()
   await showEveningInput(page, "memo")
   await expect(page.getByRole("textbox", { name: "오늘의 메모" })).toHaveValue("")
   await expect(page.getByRole("button", { name: "이 복구본으로 계속", exact: true })).toHaveCount(0)
@@ -174,6 +183,8 @@ for (const choice of ["LOCAL", "REMOTE", "DELETE"] as const) test(`server confli
   await context.route("**/domain/account/account-journal-api.ts", route => route.fulfill({
     contentType: "application/javascript", body: `
       export function accountJournalPreviewEnabled() { return true }
+      export function accountBodyPartMetadataSupported() { return false }
+      export async function checkAccountJournalBodyPartSupport() { return false }
       export async function requestAccountDocument() { return {ok:false,code:'UNAVAILABLE'} }
       let remote = null, revision = 0;
       export async function requestAccountJournal(owner, request, current) {
@@ -200,6 +211,7 @@ for (const choice of ["LOCAL", "REMOTE", "DELETE"] as const) test(`server confli
   if (choice === "REMOTE") {
     await expect(page.getByRole("button", { name: "계정 입력 사용", exact: true })).toBeVisible()
     await expect(page.getByRole("heading", { name: "계정 입력 · 수정 버전 1", exact: true })).toBeVisible()
+    await page.getByRole("radio", { name: "훈련 메모", exact: true }).check()
     await showEveningReview(page)
     await expect(page.getByRole("button", { name: "저장", exact: true })).toBeDisabled()
     await expect(page.locator(".entry-sticky-bar")).toHaveCount(0)
@@ -299,7 +311,10 @@ test("detailed recovery preview uses readable energy, body and objective labels 
   await other.getByRole("spinbutton", { name: "운동 시간 (초)" }).fill("42")
   await showPostInput(other, "body")
   await other.getByRole("button", { name: "불편한 곳 있음", exact: true }).click()
-  await other.getByRole("button", { name: /오른 무릎/ }).click()
+  await other.getByRole("button", { name: "무릎", exact: true }).click()
+  await other.getByRole("button", { name: "오른 무릎", exact: true }).click()
+  await other.getByRole("button", { name: "오른 무릎 통증 1단계", exact: true }).click()
+  await other.getByRole("button", { name: "입력 완료", exact: true }).click()
   await showPostInput(other, "memo")
   await other.getByRole("textbox", { name: "훈련 메모 내용" }).fill("SYNTHETIC_RECOVERY")
   const preview = other.getByRole("region", { name: "입력 초안 충돌 및 복구" })
@@ -337,6 +352,8 @@ for (const response of ["ACK_LOST", "EDITED_PENDING", "PLANNED_SESSION_ALREADY_R
     await context.route("**/domain/account/account-journal-api.ts", route => route.fulfill({
       contentType: "application/javascript", body: `
         export function accountJournalPreviewEnabled() { return true }
+        export function accountBodyPartMetadataSupported() { return false }
+        export async function checkAccountJournalBodyPartSupport() { return false }
         export async function requestAccountDocument(owner, request, current) {
           const response = await fetch('/__finalized_transport__', {method:'POST',body:JSON.stringify(request)});
           const result = await response.json(); return current() ? result : {ok:false,code:'AUTH_REQUIRED'};

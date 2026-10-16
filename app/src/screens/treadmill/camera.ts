@@ -19,11 +19,10 @@ export function createRunnerCamera() {
     if (reset) { offset = target; lift = 0; travel = 0; speed = 0; restX = state.x; restOffset = offset }
     if (!propelling && wasPropelling) { restX = state.x; restOffset = offset }
     // Follow only a quarter of backward drift: releasing must visibly lose ground.
-    if (!propelling) target = Math.max(0, restOffset - Math.max(0, restX - state.x) * .25)
+    if (!propelling) target = Math.min(Math.max(0, restOffset - Math.max(0, restX - state.x) * .25), Math.max(0, state.x - .15))
     if (reduced) { offset = 0; lift = 0; travel = 0; speed = 0 }
     else if (active) {
       offset += (target - offset) * (1 - Math.exp(-dt * 5))
-      if (!propelling) offset = Math.min(offset, Math.max(0, state.x - .15))
       lift += (state.y * (height < 320 ? 0.5 : 0.22) - lift) * (1 - Math.exp(-dt * 8))
       speed += (desiredSpeed - speed) * (1 - Math.exp(-dt * 8))
       travel += dt * speed
@@ -31,7 +30,11 @@ export function createRunnerCamera() {
     elapsed = time; stage = state.stage; wasPropelling = propelling
     const beltWidth = reduced ? width * 0.86 : span
     const left = reduced ? width * 0.1 : -offset * span
-    const floor = Math.min(height - 48, height * 0.79) + lift
+    // A fixed reduced-motion camera cannot follow a landscape jump downward.
+    // Reserve static headroom instead; do not change physics or add camera motion.
+    const floor = reduced && height < 320
+      ? Math.min(height - 8, height * 0.96)
+      : Math.min(height - 48, height * 0.79) + lift
     return { left, beltWidth, floor, travel, speed, offset, toPx: (x: number) => left + x * beltWidth }
   }
 }

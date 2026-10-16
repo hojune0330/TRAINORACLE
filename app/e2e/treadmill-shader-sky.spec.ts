@@ -36,6 +36,7 @@ test("mounts the WebGPU sky with telemetry off, respects low effects, and makes 
   await page.keyboard.press("Escape")
   await expect(page.locator(".treadmill-game")).toHaveAttribute("data-sky", "canvas")
   await page.getByRole("button", { name: "투어 지도로" }).click()
+  await page.getByRole("dialog", { name: "지도로 나갈까요?", exact: true }).getByRole("button", { name: "저장하고 나가기", exact: true }).click()
   await page.getByRole("button", { name: "더보기로 돌아가기" }).click()
   await expect(page.getByRole("heading", { name: "더보기", exact: true })).toBeVisible()
   expect(external).toEqual([])

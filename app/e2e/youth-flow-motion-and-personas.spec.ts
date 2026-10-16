@@ -8,11 +8,11 @@ async function resetLocalState(page: import("@playwright/test").Page): Promise<v
 }
 
 async function expectActiveQuestionAtReadingPosition(page: import("@playwright/test").Page): Promise<void> {
-  await expect.poll(() => page.locator(".plan-eyebrow").evaluate((element) => {
+  await expect.poll(() => page.locator(".plan-intake h1").evaluate((element) => {
     const scrollRegion = element.closest<HTMLElement>(".app-scroll-region")
     if (scrollRegion === null) return false
 
-    const eyebrowRect = element.getBoundingClientRect()
+    const titleRect = element.getBoundingClientRect()
     const regionRect = scrollRegion.getBoundingClientRect()
     const intake = element.closest(".plan-intake")
     const title = intake?.querySelector("h1")
@@ -20,10 +20,10 @@ async function expectActiveQuestionAtReadingPosition(page: import("@playwright/t
     if (title === null || title === undefined || firstChoice === null || firstChoice === undefined) return false
     const choiceRect = firstChoice.getBoundingClientRect()
 
-    return eyebrowRect.top >= regionRect.top
-      && eyebrowRect.bottom <= regionRect.bottom
+    return titleRect.top >= regionRect.top
+      && titleRect.bottom <= regionRect.bottom
       && (scrollRegion.scrollHeight <= scrollRegion.clientHeight + 1
-        || eyebrowRect.top - regionRect.top <= 64)
+        || titleRect.top - regionRect.top <= 64)
       && document.activeElement === title
       && choiceRect.top >= regionRect.top
       && choiceRect.bottom <= regionRect.bottom

@@ -101,8 +101,7 @@ test("shows provenance-safe trends without leaking private memo signals", async 
   const analysis = page.getByRole("button", { name: "훈련량·변화 보기", exact: true })
   await expect(analysis).toContainText("이번 주 8km · 직접 입력 1건")
   await analysis.click()
-  const detailMenu = page.locator(".trends-hub__detail-menu")
-  await detailMenu.locator(":scope > summary").click()
+  const detailMenu = page.getByRole("group", { name: "훈련 분석 자세히 보기" })
   await detailMenu.getByRole("button", { name: "훈련량", exact: true }).click()
 
   const distance = page.getByRole("region", { name: "누적 거리와 변화" })
@@ -116,7 +115,6 @@ test("shows provenance-safe trends without leaking private memo signals", async 
   await expect(distance.getByRole("listitem", { name: new RegExp(`${new Date().getDate()}일, 8킬로미터`, "u") })).toBeVisible()
 
   const monthly = page.getByRole("region", { name: "최근 4개월 추이" })
-  await detailMenu.locator(":scope > summary").click()
   await detailMenu.getByRole("button", { name: "월별 변화", exact: true }).click()
   await monthly.locator("summary", { hasText: "월별 수치와 집계 범위 보기" }).click()
   await expect(monthly.getByText(/중앙 페이스 5:00/u)).toBeVisible()

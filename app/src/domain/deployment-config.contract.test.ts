@@ -7,6 +7,8 @@ const workflow = readFileSync(
   "utf8",
 )
 const exampleEnvironment = readFileSync(join(process.cwd(), ".env.example"), "utf8")
+const preservingBuilder = readFileSync(join(process.cwd(), "..", ".tools", "build-oracle-pages-release.mjs"), "utf8")
+const publicConfiguration = readFileSync(join(process.cwd(), "..", ".tools", "oracle-public-release-config.mjs"), "utf8")
 
 const requiredFeatureVariables = [
   "ACCOUNT_PUBLIC_ENABLED",
@@ -35,32 +37,33 @@ const requiredKillVariables = [
 ] as const
 
 describe("hosted beta feature controls", () => {
-  it("allows a fresh deployment after an operator changes feature switches", () => {
+  it("allows an operator to request a fresh guarded deployment", () => {
     expect(workflow).toMatch(/on:\s*[\s\S]*?workflow_dispatch:/u)
     expect(workflow).toContain(
       "if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'",
     )
   })
 
-  it("passes every release switch into the hosted build", () => {
-    for (const suffix of [...requiredFeatureVariables, ...requiredKillVariables]) {
-      expect(workflow).toContain(`VITE_${suffix}: \${{ vars.TRAINORACLE_${suffix} }}`)
-    }
+  it("preserves published switches while keeping the shared-origin account held", () => {
+    expect(workflow).toContain("node .tools/build-oracle-pages-release.mjs --account-held")
+    expect(preservingBuilder).toContain("origin/gh-pages:index.html")
+    expect(preservingBuilder).toContain("PUBLIC_CONFIGURATION_AMBIGUOUS")
+    expect(preservingBuilder).toContain("if (accountHeld) configuration = holdSharedOriginAccount(configuration)")
+    expect(publicConfiguration).toContain("VITE_ACCOUNT_PUBLIC_ENABLED: 'false', VITE_KILL_ACCOUNT: 'true'")
+    expect(preservingBuilder).toContain("if (!accountHeld) throw Error('CANONICAL_ACCOUNT_HOLD_REQUIRED')")
   })
 
-  it("checks hosted release settings after secrets are available and before building Pages", () => {
-    const hostedBuild = workflow.slice(
-      workflow.indexOf("- name: Build hosted app"),
-      workflow.indexOf("- name: Publish verified build to gh-pages"),
-    )
-
-    const install = hostedBuild.indexOf("npm ci")
-    const releaseCheck = hostedBuild.indexOf("node scripts/validate-hosted-release-env.mjs")
-    const build = hostedBuild.indexOf("npm run build")
-
-    expect(install).toBeGreaterThan(-1)
-    expect(releaseCheck).toBeGreaterThan(install)
-    expect(build).toBeGreaterThan(releaseCheck)
+  it("validates the published configuration before building and ignores ambient secret files", () => {
+    const clearAmbient = preservingBuilder.indexOf("if (name.startsWith('VITE_')) delete process.env[name]")
+    const inject = preservingBuilder.indexOf("Object.assign(process.env, configuration)")
+    const releaseCheck = preservingBuilder.indexOf("validateHostedReleaseEnvironment(configuration)")
+    const reject = preservingBuilder.indexOf("if (issues.length) throw Error")
+    const build = preservingBuilder.indexOf("await build({ root: app, envFile: false")
+    expect(clearAmbient).toBeGreaterThan(-1)
+    expect(inject).toBeGreaterThan(clearAmbient)
+    expect(releaseCheck).toBeGreaterThan(inject)
+    expect(reject).toBeGreaterThan(releaseCheck)
+    expect(build).toBeGreaterThan(reject)
   })
 
   it("documents every switch without putting credentials in source control", () => {

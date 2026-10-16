@@ -31,7 +31,7 @@ test("More exposes named destinations and app reduced motion reaches common cont
   await learn.scrollIntoViewIfNeeded()
   await expect(learn).toBeVisible()
   expect((await learn.boundingBox())!.height).toBeGreaterThanOrEqual(44)
-  const decorate = page.getByRole("button", { name: "일지 꾸미기·포인트", exact: true })
+  const decorate = page.getByRole("button", { name: "일지 꾸미기", exact: true })
   await decorate.scrollIntoViewIfNeeded()
   await expect(decorate).toBeVisible()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)

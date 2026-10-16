@@ -61,7 +61,7 @@ test("large text and narrow screens keep the current choices operable", async ({
 
 test("plan native Back returns one question and preserves unsent record input", async ({ page }, info) => {
   await page.setViewportSize({ width: 1440, height: 900 })
-  await page.getByRole("button", { name: "훈련 계획 만들기", exact: true }).click()
+  await page.getByRole("button", { name: "훈련 계획 받기", exact: true }).click()
   expect((await page.locator(".app-shell").boundingBox())!.width).toBeGreaterThan(520)
   await page.getByRole("button", { name: "1500m", exact: true }).click()
   await page.getByRole("button", { name: "내 기록", exact: true }).click()
@@ -87,7 +87,7 @@ for (const kind of ["post-session", "evening", "race"] as const) {
     await page.getByRole("button", { name: "기록하기", exact: true }).click()
     await page.getByTestId(`entry-choice-${kind}`).click()
     await expect(page.getByRole("navigation", { name: "주 탭" })).toHaveCount(0)
-    await page.getByRole("button", { name: "지금 입력 확인", exact: true }).click()
+    if (kind !== "evening") await page.getByRole("button", { name: "지금 입력 확인", exact: true }).click()
     if (kind === "post-session") {
       await page.getByRole("button", { name: "실제로 한 운동 수정", exact: true }).click()
       await page.getByLabel("세션 제목", { exact: true }).fill("합성 운동 기록")
@@ -95,7 +95,7 @@ for (const kind of ["post-session", "evening", "race"] as const) {
       await expect(page.getByRole("heading", { name: "입력 확인", exact: true })).toBeFocused()
       await expect(page.getByText("합성 운동 기록", { exact: false })).toBeVisible()
     } else if (kind === "evening") {
-      await page.getByRole("button", { name: /^체중 · 안정시 심박 입력$/ }).click()
+      await page.getByRole("button", { name: "체중·심박", exact: true }).click()
       await page.getByLabel("체중 (kg)", { exact: true }).fill("60.5")
       await page.getByRole("button", { name: "입력 확인으로", exact: true }).click()
       await expect(page.getByRole("heading", { name: "입력 확인", exact: true })).toBeFocused()

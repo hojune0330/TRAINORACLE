@@ -11,7 +11,13 @@ test("compact questions, named disclosures and preview-first flows remain usable
   const evidence = path.resolve("../reports/review/evidence/ux-clarity-20261007")
   const capture = async (name: string) => {
     await page.evaluate(() => document.fonts.ready)
-    await page.locator("img").evaluateAll(images => Promise.all(images.map(image => (image as HTMLImageElement).decode())))
+    // Full-page evidence includes offscreen lazy companions. Request their bytes
+    // before decoding; decode() alone does not start a deferred lazy request.
+    await page.locator("img").evaluateAll(images => Promise.all(images.map(image => {
+      if (!(image instanceof HTMLImageElement)) throw new Error("Expected an HTML image for capture")
+      image.loading = "eager"
+      return image.decode()
+    })))
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true)
     await page.screenshot({ path: path.join(evidence, `${testInfo.project.name}-${name}.png`), fullPage: true })
   }
@@ -23,10 +29,10 @@ test("compact questions, named disclosures and preview-first flows remain usable
   await page.getByRole("button", {name: "오후", exact: true}).click()
   await expect(page.getByRole("button", {name: "오전", exact: true})).toHaveCount(0)
   await capture("quick-effort")
-  await page.getByRole("button", {name: /^힘든 정도 6\/10/}).click()
+  await page.getByRole("button", {name: /^힘든 정도 6\/10,/}).click()
   await capture("quick-body")
   await page.getByRole("button", {name: /뒤로/}).first().click()
-  await expect(page.getByRole("button", {name: /^힘든 정도 6\/10/})).toHaveAttribute("aria-pressed", "true")
+  await expect(page.getByRole("button", {name: /^힘든 정도 6\/10,/})).toHaveAttribute("aria-pressed", "true")
   // Never save: this is a presentation and navigation check in an isolated context.
   await page.evaluate(() => { localStorage.clear(); sessionStorage.clear() })
   page.on("dialog", dialog => dialog.accept())
@@ -51,7 +57,10 @@ test("200 percent text and keyboard disclosure retain content and controls", asy
     await expect(page.locator("#ux-qa")).not.toBeEmpty()
     await page.evaluate(async () => {
       await document.fonts.ready
-      await Promise.all(Array.from(document.images, image => image.decode()))
+      await Promise.all(Array.from(document.images, image => {
+        image.loading = "eager"
+        return image.decode()
+      }))
       const sizes = Array.from(document.querySelectorAll<HTMLElement>("#ux-qa, #ux-qa *"), element => {
         const style = getComputedStyle(element)
         return {element, font: parseFloat(style.fontSize), line: parseFloat(style.lineHeight)}

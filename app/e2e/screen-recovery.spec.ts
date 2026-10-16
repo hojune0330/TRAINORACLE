@@ -1,8 +1,7 @@
 import { expect, test } from "@playwright/test"
 
 async function openHomeLearning(page: import("@playwright/test").Page) {
-  const disclosure = page.getByRole("button", { name: "일지 예시·훈련법·꾸미기", exact: true })
-  if (await disclosure.getAttribute("aria-expanded") !== "true") await disclosure.click()
+  await expect(page.getByRole("navigation", { name: "훈련 도움말과 일지 꾸미기" })).toBeVisible()
 }
 
 test.describe("screen asset recovery", () => {

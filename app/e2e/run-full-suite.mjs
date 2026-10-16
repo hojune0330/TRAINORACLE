@@ -94,6 +94,9 @@ async function runBrowserSuite({
           activeProject = spawnChild(process.execPath, [
             playwrightPath, "test", `--config=${lane.config}`, `--project=${project}`,
             "--no-deps", "--workers=1",
+            // Stop a broken CI run after three final failures, with nonzero
+            // status. This never narrows a passing run or changes retries.
+            ...(environment.CI ? ["--max-failures=3"] : []),
             `--output=${path.join(outputRoot, lane.name, project)}`,
           ], {
             cwd: appDirectory,

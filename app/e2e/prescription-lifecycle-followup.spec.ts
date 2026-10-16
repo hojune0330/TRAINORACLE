@@ -5,7 +5,7 @@ import { closeActiveDayReader, openActiveDayReader, openSessionRecords } from ".
 
 async function openPlan(page: Page) {
   const dayReader = page.locator("dialog.plan-day-reader")
-  if (await dayReader.isVisible()) await dayReader.getByRole("button", { name: "달력으로 돌아가기" }).click()
+  if (await dayReader.isVisible()) await dayReader.getByRole("button", { name: /^(?:달력|하루씩)으로 돌아가기$/u }).click()
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련", exact: true }).click()
 }
 async function storedPlan(page: Page) {
@@ -66,7 +66,8 @@ for (const outcome of ["PARTIAL", "COMPLETED"] as const) test(`edited MAIN -> ${
   await openSessionRecords(journalSession)
   await journalSession.getByRole("button", { name: "이 훈련 일지 쓰기", exact: true }).click()
   await page.getByRole("button", { name: outcome === "PARTIAL" ? "일부만 했거나 내용을 바꿨어요" : "계획대로 마쳤어요", exact: true }).click()
-  await page.getByRole("button", { name: "오전", exact: true }).click()
+  await page.getByRole("button", { name: "오전", exact: true }).focus()
+  await page.keyboard.press("Enter")
   await page.getByRole("button", { name: /^힘든 정도 7\/10,/ }).click()
   await page.getByRole("button", { name: "없어요", exact: true }).click()
   if (outcome === "PARTIAL") await page.getByRole("button", { name: "횟수를 줄였어요" }).click()
@@ -132,7 +133,8 @@ test("first numeric pace plan routes its primary action to explicit record confi
   await page.getByRole("button", { name: "이 기록으로 개인 페이스 적용", exact: true }).click()
   await page.getByRole("button", { name: "이 일정으로 시작", exact: true }).click()
   await expect(page.getByRole("heading", { name: "9일 훈련 계획", exact: true })).toBeVisible()
-  await expect(page.getByRole("button", { name: /페이스 안내 내 기록으로 페이스 계산 · 훈련 1회/u })).toBeVisible()
+  await page.getByRole("button", { name: "페이스·훈련 구성", exact: true }).click()
+  await expect(page.getByText("내 기록으로 페이스 계산 · 훈련 1회", { exact: true })).toBeVisible()
   const main = (await storedPlan(page)).activePlan.sessions.find((s: { prescription: { kind: string } }) => s.prescription.kind === "PACE_TARGET")
   expect(main.prescription.targetRepSeconds).toBe(30.375)
 })

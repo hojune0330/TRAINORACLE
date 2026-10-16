@@ -1,6 +1,9 @@
 import { test, expect } from '@playwright/test'
 
 test('two isolated browsers invite, push, repeatedly respawn, rank and rematch in the same room', async ({ browser, page }, info) => {
+  // Match the existing dedicated arena budget: a real 90-second server round
+  // cannot fit the generic 60-second limit. All four fixture projects run it.
+  test.setTimeout(135_000)
   const errors: string[] = []; page.on('pageerror', e => errors.push(e.message))
   await page.goto('./?app=1')
   await page.getByRole('button', { name: '더보기', exact: true }).click()
