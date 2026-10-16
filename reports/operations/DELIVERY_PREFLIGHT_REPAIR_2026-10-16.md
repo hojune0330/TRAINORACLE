@@ -21,3 +21,22 @@
 - The `[manual-pages]` main-commit marker suppresses only automatic publication. All release gates remain mandatory; manual publication must follow their successful settled-source results.
 
 No merge to main, publication, or authenticated user transaction is asserted by this note.
+
+## Integrated-source contract reconciliation
+
+Hosted run 38837999756 exposed further tests still asserting pre-6384e91 UI:
+radio roles and return labels in unit fixtures, the old recommended-reading article,
+the old chooser heading level, hidden next-workout prescription, and the old compact
+plan metric string. Both timezones reported the same 16 failures in 10 files; the
+remaining 8,740 unit cases passed. The corrected 10 files pass all 102 focused cases.
+
+Browser assertions now target the real workout-opening control and current static
+metric cards plus optional summary/evidence motion. Detailed same-day instructions
+are permitted to grow vertically; both session controls must be reachable, unclipped,
+and the afternoon must still open its own diary. No text is hidden to satisfy old
+one-viewport assumptions. The dedicated TCX import/account ACK/plan reload/original
+comparison case passes after matching the detailed prescription already displayed.
+
+A complete local desktop browser inventory is being run without early failure
+termination to expose downstream mismatches before further release attempts. Its
+unfinished result is not a pass; consult the final checkpoint for completion.

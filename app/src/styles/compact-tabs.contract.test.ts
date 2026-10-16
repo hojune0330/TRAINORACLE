@@ -37,12 +37,14 @@ describe("compact tab density", () => {
       expect(source, path).toContain("app-compact-tabs")
       expect(source, path).toContain("app-compact-tab")
     }
-    // The approved journal view uses the common choice controls instead of tabs.
+    // Journal destination buttons remain choices; the view mode is a shared radio switcher.
     const journal = readFileSync("src/screens/JournalArchive.tsx", "utf8")
     expect(journal).toContain("app-choice-group")
     expect(journal).toContain("app-choice-control")
-    expect(journal).toContain('aria-pressed={activeMode === "CALENDAR"}')
-    expect(journal).toContain('aria-pressed={activeMode === "CYCLE"}')
+    expect(journal).toContain('<ViewSwitcher label="일지 보기 방식"')
+    expect(journal).toContain('value={activeMode}')
+    expect(journal).toContain('value: "CALENDAR"')
+    expect(journal).toContain('value: "CYCLE"')
   })
 
   it("does not apply the compact rule to answer controls", () => {

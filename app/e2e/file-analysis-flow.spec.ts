@@ -442,9 +442,8 @@ test("TCX account acknowledgement -> report -> pace plan saved/reopened -> confi
     // Compact workout notation rounds to one decimal; the canonical stored
     // prescription and comparison arithmetic above/below retain 222.25 seconds.
     const displayedPrescription = /5 × 1km · 222\.3초\/1km · 5K 경기 평균 페이스/u
-    const compactPrescription = /5 × 1km · 1km당 3분 42\.3초/u
     expect(await next.locator(".plan-session-metric").allTextContents()).toEqual(expect.arrayContaining([
-      expect.stringMatching(compactPrescription),
+      expect.stringMatching(displayedPrescription),
     ]))
     const active = await openActiveSessionDetails(next, displayedPrescription)
     await expect(active.getByText(displayedPrescription).first()).toBeVisible()

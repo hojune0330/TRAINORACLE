@@ -36,7 +36,10 @@ test("keeps decoration and oracle motion brief, directional, and optional", asyn
   const oracle = page.getByRole("region", { name: "내 훈련 요약" })
   await expect(oracle).toBeVisible()
 
-  const oracleAnimations = await oracle.locator(".personal-oracle__insight").evaluateAll((elements) => (
+  // Available metrics now use static MetricSummary cards; the summary and
+  // evidence disclosure retain the same optional entrance motion.
+  await expect(oracle.getByLabel("최근 분석 지표", { exact: true })).toBeVisible()
+  const oracleAnimations = await oracle.locator(".personal-oracle__summary, .personal-oracle__details").evaluateAll((elements) => (
     elements.map((element) => ({
       name: getComputedStyle(element).animationName,
       duration: getComputedStyle(element).animationDuration,

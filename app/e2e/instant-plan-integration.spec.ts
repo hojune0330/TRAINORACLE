@@ -147,14 +147,20 @@ test("a storage failure keeps the explanation and retry together in view", async
   await expect(page.getByRole("heading", { name: "오늘 훈련", exact: true })).toBeVisible()
 })
 
-test("two daily sessions stay together and the selected afternoon links to its own diary", async ({ page }) => {
+test("both daily sessions remain reachable and the selected afternoon links to its own diary", async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 667 })
   await completeQuickPlan(page, { days: /^매일/u })
   await refinePlan(page, "하루 두 번", /하루 두 번 운동할게요/u)
   await page.getByRole("button", { name: "이 일정으로 시작" }).click()
   const sessions = page.locator(".instant-plan--entry-cards")
   await expect(sessions.getByRole("button", { name: /훈련 내용 보기/ })).toHaveCount(2)
-  await expect(sessions).toBeInViewport({ ratio: 1 })
+  // The approved detailed session summary grows with its workout instructions.
+  // Both slots must stay in this section and remain reachable without clipping.
+  for (const button of await sessions.getByRole("button", { name: /훈련 내용 보기/ }).all()) {
+    await button.scrollIntoViewIfNeeded()
+    await expect(button).toBeInViewport({ ratio: 1 })
+  }
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   await expect(page.getByRole("button", { name: /오전 훈련 기록 남기기/u })).toBeVisible()
   await page.getByRole("button", { name: /오후 훈련 기록 남기기/u }).click()
   await expect(page.getByText("계획 1일차 · 오후", { exact: false })).toBeVisible()
