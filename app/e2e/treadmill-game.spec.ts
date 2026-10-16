@@ -55,6 +55,7 @@ test("hazards enter at the screen edge and stay continuous when a scheduled obst
   const stages = tourStages(tourCity("seoul")!)
   let model = { ...treadmillCommand(newTreadmillRun(stages), { type: "start", stages }), countdown: 0, running: true }
   const field = page.locator("canvas.treadmill-game__canvas")
+  const reduced = await page.evaluate(() => matchMedia("(prefers-reduced-motion: reduce)").matches)
   type Seen = { id: number; x: number; scheduled: boolean }
   let previous: Seen[] = [], sawPreview = false, activated = false
   const seenIds = new Set<number>()
@@ -73,7 +74,9 @@ test("hazards enter at the screen edge and stay continuous when a scheduled obst
       const before = previous.find(item => item.id === hazard.id)
       if (before) expect(Math.abs(hazard.x - before.x), JSON.stringify({ tick, before, hazard })).toBeLessThan(0.09)
       if (before?.scheduled && !hazard.scheduled) activated = true
-      if (hazard.scheduled && hazard.x < 0.95 && !sawPreview) {
+      // Reduced motion uses a fixed projection: the preview is near the edge,
+      // rather than the moving camera's deeper look-ahead region.
+      if (hazard.scheduled && hazard.x < (reduced ? 1.06 : 0.95) && !sawPreview) {
         sawPreview = true
         await page.screenshot({ path: info.outputPath("approaching-obstacle.png"), fullPage: true })
       }
@@ -94,7 +97,9 @@ test("camera follows with slack, accelerates on dash, freezes on pause and keeps
   const value = async (name: string) => Number(await field.getAttribute(`data-${name}`))
   const start = await value("camera-offset"), startX = await value("runner-x")
   await page.keyboard.down("ArrowRight"); await page.clock.runFor(500)
-  expect(await value("camera-offset")).not.toBeCloseTo(start, 3)
+  const reduced = await page.evaluate(() => matchMedia("(prefers-reduced-motion: reduce)").matches)
+  if (reduced) expect(await value("camera-offset")).toBe(0)
+  else expect(await value("camera-offset")).not.toBeCloseTo(start, 3)
   expect(await value("runner-x")).not.toBeCloseTo(startX, 3)
   const travel = await value("scene-travel")
   await page.clock.runFor(200)
@@ -102,7 +107,10 @@ test("camera follows with slack, accelerates on dash, freezes on pause and keeps
   await page.keyboard.press("d"); await page.clock.runFor(100)
   const dashTravel = await value("scene-travel")
   await page.clock.runFor(200)
-  expect(await value("scene-travel") - dashTravel).toBeGreaterThan(normalDistance * 1.3)
+  if (reduced) {
+    expect(normalDistance).toBe(0)
+    expect(await value("scene-travel")).toBe(0)
+  } else expect(await value("scene-travel") - dashTravel).toBeGreaterThan(normalDistance * 1.3)
   await page.keyboard.press("Space"); await page.clock.runFor(200)
   const bounds = (await field.boundingBox())!
   const hud = (await page.locator(".treadmill-game__hud").boundingBox())!
