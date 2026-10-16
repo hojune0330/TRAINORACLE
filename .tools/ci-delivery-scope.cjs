@@ -32,13 +32,25 @@ function assertDeliveryResults(needs) {
     const expected = scope.outputs.full === 'true' || name === 'identity-git-boundary' ? 'success' : 'skipped';
     if (job.result !== expected) throw Error('CHECK_INCOMPLETE:' + name);
   }
+  if (scope.outputs.reused === 'true') {
+    if (scope.outputs.full !== 'false' || !/^[1-9][0-9]*$/.test(scope.outputs.reuse_run || '')
+      || !SHA.test(scope.outputs.reuse_tree || '')) throw Error('REUSE_EVIDENCE_MISSING');
+    return 'VERIFIED_PR_TREE_REUSED:' + scope.outputs.reuse_run;
+  }
   return scope.outputs.full === 'true' ? 'FULL_CHECKS_PASSED' : 'OPERATOR_NOTES_ONLY_NO_RUNTIME_CHECKS';
 }
 module.exports = { classifyPaths, detectScope, assertDeliveryResults };
 if (require.main === module) {
   let result;
-  try { result = detectScope(process.env.GITHUB_EVENT_NAME, JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH, 'utf8'))); }
+  try {
+    const event = JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH, 'utf8'));
+    result = detectScope(process.env.GITHUB_EVENT_NAME, event);
+    if (result.full) result = require('./ci-reuse-pr.cjs').liveReuse(process.env.GITHUB_EVENT_NAME, event) || result;
+  }
   catch { result = { full: true, reason: 'event_unavailable' }; }
   console.log(JSON.stringify(result));
-  if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `full=${result.full}\nreason=${result.reason}\n`);
+  if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT,
+    `full=${result.full}\nreason=${result.reason}\nreused=${result.reused === true}\nreuse_run=${result.reuse_run || ''}\nreuse_tree=${result.reuse_tree || ''}\n`);
+  if (result.reused && process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY,
+    `### Reused passing PR checks\n- Run: ${result.reuse_run}\n- Identical tree: ${result.reuse_tree}\n- Full suites were not rerun on this merge.\n`);
 }

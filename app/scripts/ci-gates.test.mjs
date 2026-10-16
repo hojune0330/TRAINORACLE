@@ -39,7 +39,9 @@ test("quality and dedicated checks keep the original complete command coverage",
     "npm run test:e2e:form-input-autosave", "npm run test:e2e:file-analysis",
   ])
   assert.deepEqual(needs(jobs["app-browser-dedicated"]), ["app-quality"])
-  assert.deepEqual(needs(jobs["deploy-pages"]), ["contract-tests", "app-quality", "app-browser"])
+  assert.deepEqual(needs(jobs["deploy-pages"]), [])
+  assert(jobs['deploy-pages'].if.includes("needs.delivery-complete.result == 'success'"))
+  assert(jobs['deploy-pages'].if.includes("needs.delivery-scope.outputs.reused == 'true'"))
   assert.equal(workflow.permissions.contents, "read")
   for (const name of ["app-unit", "app-quality", "app-browser-generic", "app-browser-dedicated", "app-browser"]) {
     assert.equal(jobs[name].permissions, undefined)

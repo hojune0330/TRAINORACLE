@@ -20,8 +20,14 @@ jobs:
   delivery-scope:
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
     outputs:
       full: ${{ steps.scope.outputs.full }}
+      reused: ${{ steps.scope.outputs.reused }}
+      reuse_run: ${{ steps.scope.outputs.reuse_run }}
+      reuse_tree: ${{ steps.scope.outputs.reuse_tree }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -30,8 +36,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - run: node --test .tools/ci-delivery-scope.test.cjs
+      - run: node --test .tools/ci-delivery-scope.test.cjs .tools/ci-reuse-pr.test.cjs
       - id: scope
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: node .tools/ci-delivery-scope.cjs
 
   contract-tests:
@@ -358,14 +366,11 @@ jobs:
         run: node -e "console.log(require('./.tools/ci-delivery-scope.cjs').assertDeliveryResults(JSON.parse(process.env.DELIVERY_NEEDS)))"
 
   deploy-pages:
-    # An explicitly manual release still runs every gate; only automatic publication is suppressed.
-    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main' && needs.delivery-scope.outputs.full == 'true' && !contains(github.event.head_commit.message, '[manual-pages]')
+    # A merge may reuse the identical PR tree's successful full checks.
+    if: always() && needs.delivery-complete.result == 'success' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main' && (needs.delivery-scope.outputs.full == 'true' || needs.delivery-scope.outputs.reused == 'true') && !contains(github.event.head_commit.message, '[manual-pages]')
     needs:
       - delivery-scope
       - delivery-complete
-      - contract-tests
-      - app-quality
-      - app-browser
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
