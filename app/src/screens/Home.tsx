@@ -161,7 +161,6 @@ export function Home({
           && planRead.kind !== "invalid" && planRead.kind !== "storage_error" && safetyNotice === undefined
           && (!accountPlansEnabled() || accountPlanSnapshot?.status === "READY" || accountPlanSnapshot?.status === "EMPTY")}
         journalReadiness={journalSnapshot.status}
-        analysisAvailable={toDateDistance.week.totalKm !== null}
         safetyNotice={safetyNotice}
         announcement={onOpenMinigame && <ProductAnnouncement notice={MINIGAME_ANNOUNCEMENT} onOpen={onOpenMinigame} />}
         oraclePreview={oraclePreview}

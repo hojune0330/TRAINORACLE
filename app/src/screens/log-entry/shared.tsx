@@ -3,6 +3,7 @@ import { TermHelp } from "../../components/TermHelp"
 import type { TermId } from "../../domain/glossary"
 import type { JournalEntry } from "../../domain/journal-store"
 import type { PlannedSessionLink } from "../../domain/planned-session-link"
+import "./journal-answer-controls.css"
 
 export type JournalEntryType = "post-session" | "evening" | "race"
 export type LogEntryType = "quick-session" | JournalEntryType
@@ -18,8 +19,8 @@ export interface EntryFormProps {
 }
 
 const SECTION_LABEL_STYLE = {
-  fontFamily: "var(--mono)", fontSize: 9.5, color: "var(--ink-3)",
-  letterSpacing: "0.14em", textTransform: "uppercase", fontWeight: 600,
+  fontFamily: "var(--sans)", fontSize: "var(--fs-body-sm)", color: "var(--ink-2)",
+  lineHeight: 1.5, letterSpacing: 0, fontWeight: 600,
 } as const
 
 let formSecSeq = 0
@@ -219,12 +220,12 @@ export function FormSec({
           <span style={SECTION_LABEL_STYLE}>{lb}</span>
           {!open && summary !== undefined && summary !== "" && (
             <span style={{
-              fontFamily: "var(--mono)", fontSize: 11, fontWeight: 600, color: "var(--ink)",
+              fontFamily: "var(--mono)", fontSize: "var(--fs-body-sm)", fontWeight: 600, color: "var(--ink)",
               letterSpacing: "0.04em",
             }}>{summary}</span>
           )}
           <span aria-hidden="true" style={{
-            marginLeft: "auto", fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)",
+            marginLeft: "auto", fontFamily: "var(--sans)", fontSize: "var(--fs-body-sm)", color: "var(--ink-3)",
             letterSpacing: "0.06em",
           }}>{open ? "접기" : expandHint}</span>
         </button>
@@ -245,16 +246,16 @@ export function TopBar({ onBack, onExit, children }: {
   return (
     <div className="entry-topbar" style={{
       padding: "12px 16px", borderBottom: "1px solid var(--line)",
-      display: "grid", gridTemplateColumns: "64px minmax(0, 1fr) 64px", alignItems: "center", flexShrink: 0,
+      display: "grid", gridTemplateColumns: "max-content minmax(0, 1fr) max-content", gap: "var(--space-2)", alignItems: "center", flexShrink: 0,
     }}>
       <button type="button" onClick={onBack} style={{
         background: "transparent", border: 0, cursor: "pointer",
         minWidth: 64, minHeight: 44, padding: "4px 8px",
         fontFamily: "var(--sans)", fontSize: 14, color: "var(--ink-2)",
-        letterSpacing: "0.06em",
+        letterSpacing: "0.06em", whiteSpace: "nowrap", wordBreak: "keep-all",
       }}>← 뒤로</button>
-      <h1 className="entry-topbar__title app-chrome-title">{children}</h1>
-      {onExit ? <button type="button" onClick={onExit} style={{ minWidth: 64, minHeight: 44, border: 0, background: "transparent", color: "var(--ink-2)", font: "inherit", cursor: "pointer" }}>나가기</button>
+      <h1 className="entry-topbar__title app-chrome-title" style={{ wordBreak: "keep-all", overflowWrap: "anywhere" }}>{children}</h1>
+      {onExit ? <button type="button" onClick={onExit} style={{ minWidth: 64, minHeight: 44, border: 0, background: "transparent", color: "var(--ink-2)", font: "inherit", cursor: "pointer", whiteSpace: "nowrap", wordBreak: "keep-all" }}>나가기</button>
         : <div aria-hidden="true" style={{ width: 64 }} />}
     </div>
   )

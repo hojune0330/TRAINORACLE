@@ -12,6 +12,9 @@
 //  - 지운 일지는 백업 파일로도 되살아나지 않는다.
 //  - fail-visible: 읽지 못한 항목 수와 제외된 개수를 숨기지 않는다.
 import React from "react"
+import * as RadioGroup from "@radix-ui/react-radio-group"
+import { ArrowLeft, Check } from "lucide-react"
+import { AppHeading } from "../components/AppHeading"
 import { SectionLb } from "../components/JournalPrimitives"
 import {
   buildRestorePlan, readBackupBlob, restoreBackupFile, withoutPrivateBodyPartMetadata,
@@ -29,15 +32,18 @@ import { nextActionFeedback } from "../components/next-action"
 import { ContextualIllustration } from "../components/ContextualIllustration"
 
 const mono: React.CSSProperties = { fontFamily: "var(--mono)" }
+const restoreSurface: React.CSSProperties = {
+  border: "1px solid var(--line)", borderRadius: "var(--r-task-surface)", background: "var(--surface)",
+}
 const backupFileLimitMb = BACKUP_JSON_IMPORT_LIMITS.blobBytes / (1024 * 1024)
 const backupEntryLimitLabel = BACKUP_JSON_IMPORT_LIMITS.entries % 10_000 === 0
   ? `${BACKUP_JSON_IMPORT_LIMITS.entries / 10_000}만`
   : BACKUP_JSON_IMPORT_LIMITS.entries.toLocaleString("ko-KR")
 
 const primaryBtn: React.CSSProperties = {
-  width: "100%", minHeight: 48, fontSize: 15, fontWeight: 600,
-  fontFamily: "var(--sans)", border: "1px solid var(--ink)",
-  background: "var(--ink)", color: "var(--bg)", cursor: "pointer",
+  width: "100%", minHeight: 48, fontSize: "var(--fs-body)", fontWeight: 600,
+  fontFamily: "var(--sans)", border: "1px solid var(--brand)", borderRadius: "var(--r-action)",
+  background: "var(--brand)", color: "var(--surface)", cursor: "pointer",
 }
 const secondaryBtn: React.CSSProperties = {
   ...primaryBtn, background: "transparent", color: "var(--ink)",
@@ -161,15 +167,12 @@ export function RestoreBackup({ onBack, onOpenHome }: {
           <button
             type="button" onClick={goBack} disabled={busy} data-testid="restore-back" aria-label="뒤로"
             style={{ ...secondaryBtn, width: 44, minWidth: 44, minHeight: 44, fontSize: 18 }}
-          >←</button>
+          ><ArrowLeft size={20} aria-hidden="true" /></button>
         )}
         <div style={{ minWidth: 0, flex: "1 1 auto" }}>
-          <div style={{ ...mono, fontSize: 9.5, color: "var(--ink-3)", letterSpacing: "0.14em", textTransform: "uppercase" }}>
-            RESTORE · 백업 되돌리기
-          </div>
-          <h1 style={{ fontFamily: "var(--sans)", fontSize: 20, fontWeight: 500, margin: "4px 0 0" }}>
+          <AppHeading as="h1" variant="screen" accent style={{ margin: 0 }}>
             내려받은 백업 되돌리기
-          </h1>
+          </AppHeading>
         </div>
         {stage.step === "pick" && !busy && failure === null && <ContextualIllustration image="backup-journal-file" />}
       </div>
@@ -217,7 +220,7 @@ export function RestoreBackup({ onBack, onOpenHome }: {
           <RestoreFailedStage outcome={stage.outcome} onRestart={restart} onOpenHome={onOpenHome} />
         )}
         {stage.step === "account-result" && <div data-testid="restore-account-result" role="status">
-          <h2>계정 백업 복원 결과</h2>
+          <AppHeading as="h2" variant="section">계정 백업 복원 결과</AppHeading>
           <p>{stage.outcome.commit === "COMPLETE" ? "선택한 항목 복원 완료" : stage.outcome.commit === "PARTIAL" ? "일부 복원 (PARTIAL)" : stage.outcome.commit === "PENDING" ? "계정 저장 확인 대기" : "복원을 완료하지 못했어요"}</p>
           <p>계정에 저장됨 {stage.outcome.account}건 · 연결 대기 {stage.outcome.pending}건 · 충돌 확인 {stage.outcome.conflicts}건 · 실패 {stage.outcome.failed}건</p>
           <p>기존 기록 유지 {stage.outcome.keptExisting}건 · 삭제 표식으로 제외 {stage.outcome.blockedByDeletion}건</p>
@@ -262,19 +265,19 @@ function PickStage({ busy, failure, onFile }: {
 }) {
   return (
     <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 14 }}>
-      <p style={{ fontFamily: "var(--sans)", fontSize: 13, lineHeight: 1.65, color: "var(--ink-2)", margin: 0 }}>
+      <p style={{ fontFamily: "var(--sans)", fontSize: "var(--fs-body)", lineHeight: 1.65, color: "var(--ink-2)", margin: 0 }}>
         전에 <b>내려받아 둔 백업 파일(JSON)</b>을 고르면 {accountJournalRecordsEnabled() ? "현재 로그인한 계정으로" : "이 기기로"}
         되돌려요. 브라우저 데이터를 지웠거나 기기를 바꿨을 때 쓰세요.
       </p>
 
       <div
         data-testid="restore-privacy-notice"
-            style={{ border: "1px solid var(--line)", background: "var(--surface)", padding: "10px 13px" }}
+        style={{ ...restoreSurface, padding: "10px 13px" }}
       >
-        <div style={{ ...mono, fontSize: 9.5, fontWeight: 600, color: "var(--ink-3)", letterSpacing: "0.12em" }}>
+        <div style={{ ...mono, fontSize: "var(--fs-body-sm)", fontWeight: 600, color: "var(--ink-2)", lineHeight: 1.5 }}>
           지금 일지를 지운 뒤 넣는 게 아니에요
         </div>
-        <div style={{ ...mono, fontSize: 10, color: "var(--ink-2)", lineHeight: 1.65, marginTop: 5 }}>
+        <div style={{ ...mono, fontSize: "var(--fs-body-sm)", color: "var(--ink-2)", lineHeight: 1.65, marginTop: "var(--space-1)" }}>
           이미 있는 일지는 <b>그대로 두고</b> 백업에 있는 것만 더해요. 같은 일지가
           양쪽에 있으면 기본적으로 <b>지금 것을 지켜요</b>. {accountJournalRecordsEnabled()
             ? "원본 파일은 이 기기에서만 읽어요. 복원을 눌러 확인한 기록과 메모만 현재 로그인한 계정의 암호화 보관 경로로 전송해요. 비밀 글은 공유·분석에서 제외해요."
@@ -282,7 +285,7 @@ function PickStage({ busy, failure, onFile }: {
         </div>
       </div>
 
-      <label htmlFor="restore-file" style={{ ...mono, fontSize: 11, color: "var(--ink-3)" }}>
+      <label htmlFor="restore-file" style={{ ...mono, fontSize: "var(--fs-body-sm)", color: "var(--ink-3)" }}>
         백업 파일 (.json · {backupFileLimitMb}MB 이하)
       </label>
       <input
@@ -295,16 +298,16 @@ function PickStage({ busy, failure, onFile }: {
           if (file !== undefined) void onFile(file)
         }}
         style={{
-          ...mono, fontSize: 12, width: "100%", boxSizing: "border-box",
+          ...mono, fontSize: "var(--fs-body-sm)", width: "100%", boxSizing: "border-box",
           padding: "12px", minHeight: 48,
           border: "1px dashed var(--line)", background: "var(--surface)", color: "var(--ink)",
         }}
       />
-      {busy && <p role="status" style={{ ...mono, fontSize: 12, color: "var(--ink-3)", margin: 0 }}>읽는 중…</p>}
+      {busy && <p role="status" style={{ ...mono, fontSize: "var(--fs-body-sm)", color: "var(--ink-3)", margin: 0 }}>읽는 중…</p>}
 
       {failure !== null && (
-        <div role="alert" data-testid="restore-failure" style={{ border: "1px solid var(--pain-5)", background: "var(--surface)", padding: "10px 13px" }}>
-          <div style={{ ...mono, fontSize: 10.5, color: "var(--ink)", lineHeight: 1.6 }}>
+        <div role="alert" data-testid="restore-failure" style={{ ...restoreSurface, borderColor: "var(--pain-5)", padding: "10px 13px" }}>
+          <div style={{ ...mono, fontSize: "var(--fs-body-sm)", color: "var(--ink)", lineHeight: 1.6 }}>
             {failure === "account-unavailable" ? "계정 기록을 조회하지 못했어요. 연결과 로그인을 확인한 뒤 다시 시도해 주세요." : failure === "empty"
               ? "백업 파일은 맞는데 되돌릴 수 있는 항목을 찾지 못했어요. 빈 백업일 수 있어요."
               : failure === "FILE_TOO_LARGE" ? `파일이 너무 커서 안전하게 읽지 않았어요. ${backupFileLimitMb}MB 이하의 백업 파일을 골라 주세요.`
@@ -343,15 +346,15 @@ function ReviewStage({ read, plan, mode, onModeChange, decorationMode, onDecorat
 
   return (
     <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 14 }}>
-      <div data-testid="restore-summary" style={{ border: "1px solid var(--ink)", padding: "12px 14px" }}>
-        <div style={{ ...mono, fontSize: 10, color: "var(--ink-3)", letterSpacing: "0.1em" }}>
+      <div data-testid="restore-summary" style={{ ...restoreSurface, padding: "12px 14px" }}>
+        <div style={{ ...mono, fontSize: "var(--fs-body-sm)", color: "var(--ink-3)", lineHeight: 1.5 }}>
           {read.kind === "full" ? "메모 포함 백업" : "메모 제외 백업"}
           {read.exportedAt !== null && ` · ${read.exportedAt.slice(0, 10)} 내려받음`}
         </div>
         <div style={{ fontFamily: "var(--sans)", fontSize: 15, fontWeight: 500, marginTop: 5 }}>
           일지 {plan.items.length}건을 읽었어요
         </div>
-        <ul style={{ ...mono, fontSize: 10.5, color: "var(--ink-2)", lineHeight: 1.8, margin: "8px 0 0", paddingLeft: 16 }}>
+        <ul style={{ ...mono, fontSize: "var(--fs-body-sm)", color: "var(--ink-2)", lineHeight: 1.8, margin: "8px 0 0", paddingLeft: 16 }}>
           <li>새로 들어올 것 <b>{plan.fresh}건</b></li>
           <li>이미 있는 것과 겹치는 것 <b>{plan.conflicts}건</b></li>
           {plan.blockedByDeletion > 0 && (
@@ -363,22 +366,24 @@ function ReviewStage({ read, plan, mode, onModeChange, decorationMode, onDecorat
       </div>
 
       {read.entries.some(entry => entry.bodyPartMetadata !== undefined) && (
-        <div role="radiogroup" aria-label="기타 부위 복원 범위" style={{ display: "grid", gap: 8 }}>
-          <ModeChoice checked={!includeBodyPartMetadata} disabled={busy}
-            onSelect={() => { void onBodyPartMetadataChange(false) }}
+        <RadioGroup.Root aria-label="기타 부위 복원 범위" style={{ display: "grid", gap: 8 }} disabled={busy}
+          value={includeBodyPartMetadata ? "include-private-text" : "numeric-only"}
+          onValueChange={value => {
+            if (!busy && (value === "numeric-only" || value === "include-private-text")) void onBodyPartMetadataChange(value === "include-private-text")
+          }}>
+          <ModeChoice value="numeric-only" checked={!includeBodyPartMetadata}
             title="몸 상태 수치만 되돌리기"
             detail="기타 이름·메모는 제외해요. 겹친 일지의 기타 몸 기록은 현재 것을 유지해요." />
-          <ModeChoice checked={includeBodyPartMetadata} disabled={busy}
-            onSelect={() => { void onBodyPartMetadataChange(true) }}
+          <ModeChoice value="include-private-text" checked={includeBodyPartMetadata}
             title="기타 이름·메모도 되돌리기"
             detail="백업의 비공개 기타 이름과 직접 쓴 내용을 함께 복원해요." />
-        </div>
+        </RadioGroup.Root>
       )}
 
       {read.decorationStatus === "included" && (
         <div
           data-testid="restore-decoration-summary"
-          style={{ ...mono, fontSize: 10.5, color: "var(--ink-2)", lineHeight: 1.7, border: "1px solid var(--line)", padding: "10px 12px" }}
+          style={{ ...mono, ...restoreSurface, fontSize: "var(--fs-body-sm)", color: "var(--ink-2)", lineHeight: 1.7, padding: "10px 12px" }}
         >
           <b>꾸미기</b> · 꾸미기 항목 {read.decorationItemCount}개 · 날짜 배치 {read.decorationPlacementCount}개
           <br />{accountJournalRecordsEnabled()
@@ -389,7 +394,7 @@ function ReviewStage({ read, plan, mode, onModeChange, decorationMode, onDecorat
       )}
 
       {read.calendarDecorationStatus === "included" && read.calendarDecorations && (
-        <div data-testid="restore-calendar-summary" style={{ ...mono, fontSize: 10.5, color: "var(--ink-2)", lineHeight: 1.7, border: "1px solid var(--line)", padding: "10px 12px" }}>
+        <div data-testid="restore-calendar-summary" style={{ ...mono, ...restoreSurface, fontSize: "var(--fs-body-sm)", color: "var(--ink-2)", lineHeight: 1.7, padding: "10px 12px" }}>
           <b>달력 꾸미기</b> · 종이 테마 {read.calendarDecorations.paperThemeId === null ? "없음" : "설정됨"} · 그림 배치 {read.calendarDecorations.items.length}개
           <br />기존 달력 꾸미기는 기본적으로 유지해요. 교체를 고르면 백업의 달력 전체 설정으로 바꿔요.
           {account && !accountCalendarReady && <p role="alert">계정 달력 꾸미기를 조회하지 못했어요. 달력 교체는 잠겨 있으며 다른 항목은 따로 복원할 수 있어요.</p>}
@@ -397,72 +402,78 @@ function ReviewStage({ read, plan, mode, onModeChange, decorationMode, onDecorat
       )}
 
       {read.calendarDecorationStatus === "invalid" && (
-        <div role="alert" data-testid="restore-calendar-invalid" style={{ ...mono, fontSize: 10.5, color: "var(--pain-5)", lineHeight: 1.65, border: "1px solid var(--pain-5)", padding: "10px 12px" }}>
+        <div role="alert" data-testid="restore-calendar-invalid" style={{ ...mono, ...restoreSurface, fontSize: "var(--fs-body-sm)", color: "var(--pain-5)", lineHeight: 1.65, borderColor: "var(--pain-5)", padding: "10px 12px" }}>
           달력 꾸미기는 형식이 맞지 않거나 지원하지 않아 복원할 수 없어요. 다른 항목은 별도로 검토할 수 있어요.
         </div>
       )}
 
       {read.calendarDecorationStatus === "included" && (
-        <div data-testid="restore-calendar-choice" role="radiogroup" aria-label="달력 꾸미기 처리" style={{ ...mono, display: "grid", gap: 8 }}>
+        <RadioGroup.Root data-testid="restore-calendar-choice" aria-label="달력 꾸미기 처리" style={{ ...mono, display: "grid", gap: 8 }}
+          value={calendarMode} disabled={busy} onValueChange={value => {
+            if (!busy && (value === "keep-existing" || value === "replace") && (value !== "replace" || !account || accountCalendarReady)) onCalendarModeChange(value)
+          }}>
           <strong>달력 꾸미기는 어떻게 할까요?</strong>
           <ModeChoice
+            value="keep-existing"
             checked={calendarMode === "keep-existing"}
-            onSelect={() => { if (!busy) onCalendarModeChange("keep-existing") }}
             title={account ? "현재 계정 달력을 지켜요" : "이 기기 달력을 지켜요"}
             detail="권장 · 지금 달력의 종이 테마와 그림 배치를 그대로 둬요."
           />
           <ModeChoice
+            value="replace"
             disabled={busy || (account && !accountCalendarReady)}
             checked={calendarMode === "replace"}
-            onSelect={() => { if (!busy) onCalendarModeChange("replace") }}
             title="백업의 달력 꾸미기로 바꿔요"
             detail={account
               ? "현재 계정의 달력 전체 설정을 백업 내용으로 교체해요. 항목 소유권과 계정 상태를 다시 확인해요."
               : "이 기기의 달력 종이 테마와 그림 배치를 백업 내용으로 교체해요. 보유하지 않은 항목은 복원되지 않아요."}
           />
-        </div>
+        </RadioGroup.Root>
       )}
 
       {read.decorationStatus === "invalid" && (
         <div
           role="alert"
           data-testid="restore-decoration-invalid"
-          style={{ ...mono, fontSize: 10.5, color: "var(--pain-5)", lineHeight: 1.65, border: "1px solid var(--pain-5)", padding: "10px 12px" }}
+          style={{ ...mono, ...restoreSurface, fontSize: "var(--fs-body-sm)", color: "var(--pain-5)", lineHeight: 1.65, borderColor: "var(--pain-5)", padding: "10px 12px" }}
         >
           꾸미기는 형식이 맞지 않거나 지원하지 않는 항목이 있어 복원할 수 없어요. 백업 원본은 변경하지 않아요. 읽힌 일지는 따로 확인한 뒤 되돌릴 수 있어요.
         </div>
       )}
 
       {read.decorationStatus === "included" && (
-        <div data-testid="restore-decoration-choice" style={{ ...mono, display: "grid", gap: 8 }}>
+        <RadioGroup.Root data-testid="restore-decoration-choice" aria-label="꾸미기 처리" style={{ ...mono, display: "grid", gap: 8 }}
+          value={decorationMode} disabled={busy} onValueChange={value => {
+            if (!busy && (value === "keep-existing" || value === "replace") && (value !== "replace" || !account || accountDecorationReady)) onDecorationModeChange(value)
+          }}>
           <strong>꾸미기는 어떻게 할까요?</strong>
           <ModeChoice
+            value="keep-existing"
             checked={decorationMode === "keep-existing"}
-            onSelect={() => { if (!busy) onDecorationModeChange("keep-existing") }}
             title={accountJournalRecordsEnabled() ? "현재 계정 꾸미기를 지켜요" : "이 기기 꾸미기를 지켜요"}
             detail={accountJournalRecordsEnabled() ? "권장 · 현재 계정의 꾸미기는 그대로 둬요." : "권장 · 이 기기에 있는 스티커와 테마는 그대로 둬요."}
           />
           <ModeChoice
+            value="replace"
             disabled={busy || (accountJournalRecordsEnabled() && !accountDecorationReady)}
             checked={decorationMode === "replace"}
-            onSelect={() => { if (!busy) onDecorationModeChange("replace") }}
             title="백업의 꾸미기로 바꿔요"
             detail={accountJournalRecordsEnabled()
               ? "현재 로그인한 계정의 꾸미기를 백업 내용으로 교체하는 데 동의해요. 소유권과 저장 조건은 서버에서 다시 확인해요."
               : "포인트, 가진 꾸미기, 즐겨찾기, 날짜별 배치를 백업 파일 내용으로 바꿔요."}
           />
-        </div>
+        </RadioGroup.Root>
       )}
 
       {read.skipped > 0 && (
-        <div data-testid="restore-skipped" style={{ ...mono, fontSize: 10.5, color: "var(--ink-3)", lineHeight: 1.6, border: "1px solid var(--line)", padding: "9px 12px" }}>
+        <div data-testid="restore-skipped" style={{ ...mono, ...restoreSurface, fontSize: "var(--fs-body-sm)", color: "var(--ink-3)", lineHeight: 1.6, padding: "9px 12px" }}>
           형식이 맞지 않아 읽지 못한 항목 {read.skipped}건은 빠졌어요.
           없는 값을 채워 넣지 않으려고 일부러 건너뛰어요.
         </div>
       )}
 
       {read.kind === "safe" && (
-        <div style={{ ...mono, fontSize: 10, color: "var(--ink-4)", lineHeight: 1.65 }}>
+        <div style={{ ...mono, fontSize: "var(--fs-body-sm)", color: "var(--ink-3)", lineHeight: 1.65 }}>
           {accountJournalRecordsEnabled()
             ? "이 백업에는 메모 원문이 없어요. 새 일지의 메모는 비어 있고, 겹치는 계정 일지의 기존 메모는 유지해요."
             : "이 백업에는 메모 원문이 들어 있지 않아요 — 되돌린 일지의 메모는 비어 있어요. 없는 내용을 만들어 채우지 않아요."}
@@ -472,22 +483,23 @@ function ReviewStage({ read, plan, mode, onModeChange, decorationMode, onDecorat
       {plan.conflicts > 0 && (
         <>
           <SectionLb>겹치는 일지는 어떻게 할까요?</SectionLb>
-          <div role="radiogroup" aria-label="겹치는 일지 처리" style={{ display: "grid", gap: 8 }}>
+          <RadioGroup.Root aria-label="겹치는 일지 처리" style={{ display: "grid", gap: 8 }} value={mode} disabled={busy}
+            onValueChange={value => { if (!busy && (value === "keep-existing" || value === "overwrite-conflicts")) onModeChange(value) }}>
             <ModeChoice
+              value="keep-existing"
               checked={mode === "keep-existing"}
-              onSelect={() => { if (!busy) onModeChange("keep-existing") }}
               title="지금 것을 지켜요"
               detail="이 기기에 있는 일지를 그대로 두고, 겹치지 않는 것만 더해요 (권장)"
             />
             <ModeChoice
+              value="overwrite-conflicts"
               checked={mode === "overwrite-conflicts"}
-              onSelect={() => { if (!busy) onModeChange("overwrite-conflicts") }}
               title="백업 파일 내용으로 바꿔요"
               detail={accountJournalRecordsEnabled()
                 ? "서버 최신 상태를 다시 확인하고 바꿔요. 검토 후 바뀐 기록은 충돌로 남기며 자동으로 덮어쓰지 않아요."
                 : "겹치는 일지를 백업에 있는 내용으로 덮어써요 — 지금 내용은 사라져요"}
             />
-          </div>
+          </RadioGroup.Root>
         </>
       )}
 
@@ -508,29 +520,31 @@ function ReviewStage({ read, plan, mode, onModeChange, decorationMode, onDecorat
   )
 }
 
-function ModeChoice({ checked, onSelect, title, detail, disabled = false }: {
+function ModeChoice({ value, checked, title, detail, disabled = false }: {
+  readonly value: string
   readonly disabled?: boolean
   readonly checked: boolean
-  readonly onSelect: () => void
   readonly title: string
   readonly detail: string
 }) {
   return (
-    <button
-      type="button" role="radio" aria-checked={checked} onClick={onSelect} disabled={disabled}
+    <RadioGroup.Item
+      type="button" value={value} disabled={disabled}
+      className="app-choice-control app-choice-control--answer"
       style={{
-        textAlign: "left", cursor: "pointer", minHeight: 44, padding: "10px 12px",
-        background: checked ? "var(--surface)" : "transparent",
-        border: `1px solid ${checked ? "var(--ink)" : "var(--line)"}`,
+        display: "grid", gridTemplateColumns: "minmax(0, 1fr) 20px", columnGap: "var(--space-3)",
+        textAlign: "left", background: checked ? "var(--surface-2)" : "var(--surface)",
+        borderColor: checked ? "var(--ink)" : "var(--line)",
       }}
     >
-      <span style={{ display: "block", fontFamily: "var(--sans)", fontSize: 13.5, fontWeight: 500 }}>
-        {checked ? "● " : "○ "}{title}
+      <span style={{ fontWeight: checked ? 700 : 500 }}>
+        {title}
       </span>
-      <span style={{ display: "block", ...mono, fontSize: 10, color: "var(--ink-3)", lineHeight: 1.6, marginTop: 3 }}>
+      <Check size={20} aria-hidden="true" style={{ visibility: checked ? "visible" : "hidden", alignSelf: "center" }} />
+      <span style={{ gridColumn: 1, fontSize: "var(--fs-body-sm)", color: "var(--ink-3)", lineHeight: 1.6, marginTop: "var(--space-1)" }}>
         {detail}
       </span>
-    </button>
+    </RadioGroup.Item>
   )
 }
 
@@ -542,14 +556,14 @@ function DoneStage({ outcome, onOpenHome, onRestart, busy }: {
 }) {
   return (
     <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 14 }}>
-      <div data-testid="restore-done" style={{ border: "1px solid var(--ink)", background: "var(--surface)", padding: "14px 16px" }}>
-        <div style={{ ...mono, fontSize: 10, color: "var(--ink-3)", letterSpacing: "0.1em" }}>되돌리기 완료</div>
+      <div data-testid="restore-done" style={{ ...restoreSurface, padding: "14px 16px" }}>
+        <div style={{ ...mono, fontSize: "var(--fs-body-sm)", color: "var(--ink-3)", lineHeight: 1.5 }}>되돌리기 완료</div>
         <div style={{ fontFamily: "var(--sans)", fontSize: 16, fontWeight: 500, marginTop: 5 }}>
           {outcome.restored > 0 ? `${outcome.restored}건을 일지에 되돌렸어요`
             : outcome.calendarDecorationRestore === "RESTORED" ? "달력 꾸미기를 되돌렸어요"
               : outcome.decorationRestore === "RESTORED" ? "꾸미기를 되돌렸어요" : "선택한 항목을 확인했어요"}
         </div>
-        <ul style={{ ...mono, fontSize: 10.5, color: "var(--ink-2)", lineHeight: 1.8, margin: "8px 0 0", paddingLeft: 16 }}>
+        <ul style={{ ...mono, fontSize: "var(--fs-body-sm)", color: "var(--ink-2)", lineHeight: 1.8, margin: "8px 0 0", paddingLeft: 16 }}>
           {outcome.keptExisting > 0 && <li>겹쳐서 지금 것을 지킨 일지 {outcome.keptExisting}건</li>}
           {outcome.blockedByDeletion > 0 && <li>전에 지운 일지 {outcome.blockedByDeletion}건은 되돌리지 않았어요</li>}
           {outcome.failed > 0 && (
@@ -602,8 +616,8 @@ function RestoreFailedStage({ outcome, onRestart, onOpenHome }: {
 
   return (
     <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 14 }}>
-      <div role="alert" data-testid="restore-commit-failure" className="restore-failure-notice" style={{ border: "1px solid var(--pain-5)", background: "var(--surface)", padding: "14px 16px" }}>
-        <div style={{ ...mono, fontSize: 10, color: "var(--pain-5)", letterSpacing: "0.1em" }}>되돌리기 실패</div>
+      <div role="alert" data-testid="restore-commit-failure" className="restore-failure-notice" style={{ ...restoreSurface, borderColor: "var(--pain-5)", padding: "14px 16px" }}>
+        <div style={{ ...mono, fontSize: "var(--fs-body-sm)", color: "var(--pain-5)", lineHeight: 1.5 }}>되돌리기 실패</div>
         <div style={{ fontFamily: "var(--sans)", fontSize: 15, fontWeight: 500, marginTop: 5 }}>{message}</div>
         {outcome.calendarDecorationRestore === "ROLLED_BACK" && <p>달력 꾸미기는 이전 상태로 되돌렸어요.</p>}
         {outcome.calendarDecorationRestore === "SAVE_FAILED" && <p>달력 꾸미기 저장을 확인하지 못했어요.</p>}

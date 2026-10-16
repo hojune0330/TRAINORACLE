@@ -125,7 +125,8 @@ describe("home hub destinations and information", () => {
     render(<TrainingHome model={model} onOpenNextTraining={openNext} onOpenPlan={openPlan} />)
     const next = screen.getByRole("button", { name: /^다음 훈련 ·/ })
     expect(next).toHaveAccessibleName(/템포 훈련.*LT.*7월 14일.*오후/)
-    expect(next).not.toHaveTextContent("전체 25–40분")
+    // Only utility destinations become shorter; actual training instructions stay visible.
+    expect(next).toHaveTextContent("전체 25–40분 · 힘든 정도 5–6/10")
     expect(next).toHaveTextContent("오후 훈련도 있어요")
     expect(model.nextTraining.session.prescription).toEqual(TRAINING.nextTraining.session.prescription)
     fireEvent.click(next)

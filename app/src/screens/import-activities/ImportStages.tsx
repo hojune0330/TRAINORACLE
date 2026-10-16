@@ -113,7 +113,7 @@ export function PickStage({ busy, failure, fileInputRef, onFile, onCancel }: {
       <p className="import-preparation__formats">TCX · GPX · 지원 CSV·JSON / 한 번에 파일 1개, 최대 10MB</p>
       {busy && (
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
-          <p role="status" style={{ ...mono, fontSize: 12, color: "var(--ink-3)", margin: 0 }}>읽는 중…</p>
+          <p role="status" style={{ ...mono, fontSize: "var(--fs-body-sm)", color: "var(--ink-3)", margin: 0 }}>읽는 중…</p>
           <button type="button" onClick={onCancel} style={{ ...secondaryBtn, width: "auto", minHeight: 44 }}>
             가져오기 취소
           </button>
@@ -122,7 +122,7 @@ export function PickStage({ busy, failure, fileInputRef, onFile, onCancel }: {
 
       {failure !== null && (
         <div role="alert" data-testid="import-failure" style={{ border: "1px solid var(--pain-5)", background: "var(--surface)", padding: "10px 13px" }}>
-          <div style={{ ...mono, fontSize: 10.5, color: "var(--ink)", lineHeight: 1.6 }}>
+          <div style={{ ...mono, fontSize: "var(--fs-body)", color: "var(--ink)", lineHeight: 1.6 }}>
             {failure === "unsupported-format" ? "아직 지원하지 않는 파일 형식이에요. 건강앱의 전체 ZIP·XML 백업이나 FIT 대신 운동 기록의 TCX·GPX 또는 지원하는 CSV·JSON을 골라 주세요." : failure === "account-unavailable" ? "계정 기록을 조회하지 못했어요. 연결과 로그인을 확인한 뒤 다시 시도해 주세요." : failure === "empty"
               ? "파일은 읽었지만 일지로 옮길 활동을 찾지 못했어요. 날짜·거리·시간이 비어 있는 파일일 수 있어요."
               : failure === "too-many-records" ? "한 파일에서 읽을 수 있는 운동은 1,000개까지예요. 기간을 나눠 내보내 주세요."
@@ -167,11 +167,11 @@ export function ReviewStage({ drafts, result, selected, intents, onIntent, onTog
   const missingIntent = drafts.some((draft, index) => selected.has(index) && needsChoice(draft, intents.get(index)))
   return (
     <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 14 }}>
-      <p style={{ fontFamily: "var(--sans)", fontSize: 13, lineHeight: 1.65, color: "var(--ink-2)", margin: 0 }}>
+      <p style={{ fontFamily: "var(--sans)", fontSize: "var(--fs-body-sm)", lineHeight: 1.65, color: "var(--ink-2)", margin: 0 }}>
         운동 <b>{drafts.length}건</b>을 읽었어요. 저장할 것만 골라 주세요.
       </p>
       {result.skipped > 0 && (
-        <div data-testid="import-skipped" style={{ ...mono, fontSize: 10.5, color: "var(--ink-3)", lineHeight: 1.6, border: "1px solid var(--line)", padding: "9px 12px" }}>
+        <div data-testid="import-skipped" style={{ ...mono, fontSize: "var(--fs-body-sm)", color: "var(--ink-3)", lineHeight: 1.6, border: "1px solid var(--line)", padding: "9px 12px" }}>
           날짜나 기록을 읽지 못한 활동 {result.skipped}건은 목록에서 빠졌어요. 없는 값을 채워 넣지 않으려고 일부러 건너뛰어요.
         </div>
       )}
@@ -211,16 +211,16 @@ export function ReviewStage({ drafts, result, selected, intents, onIntent, onTog
               </label>
               <div style={{ minWidth: 0 }}>
                 <span style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
-                  <span style={{ ...mono, fontSize: 10, color: "var(--ink-3)", letterSpacing: "0.1em" }}>{compactDate(activity.date)}</span>
+                  <span style={{ ...mono, fontSize: "var(--fs-body-sm)", color: "var(--ink-3)", letterSpacing: "0.1em" }}>{compactDate(activity.date)}</span>
                   {draft.duplicateOf !== null && (
                     <span data-testid="import-duplicate-flag" style={{
-                      ...mono, fontSize: 9, color: "var(--ink)", letterSpacing: "0.06em",
+                      ...mono, fontSize: "var(--fs-body-sm)", color: "var(--ink)", lineHeight: 1.5, letterSpacing: "0.06em",
                       border: "1px solid var(--warn, var(--line))", padding: "1px 5px",
                     }}>이미 있는 것 같아요</span>
                   )}
                 </span>
-                <span style={{ display: "block", fontFamily: "var(--sans)", fontSize: 14, fontWeight: 500, marginTop: 3 }}>{activity.name}</span>
-                <span style={{ display: "block", ...mono, fontSize: 10.5, color: "var(--ink-3)", marginTop: 2 }}>
+                <span style={{ display: "block", fontFamily: "var(--sans)", fontSize: "var(--fs-body)", fontWeight: 500, marginTop: 3 }}>{activity.name}</span>
+                <span style={{ display: "block", ...mono, fontSize: "var(--fs-body-sm)", color: "var(--ink-3)", lineHeight: 1.6, marginTop: 2 }}>
                   {[
                     activity.distanceKm === "" ? null : `${Number(activity.distanceKm).toLocaleString("ko-KR", { maximumFractionDigits: 3 })}km`,
                     activity.durationMin === "" ? null : `${Number(activity.durationMin).toLocaleString("ko-KR", { maximumFractionDigits: 2 })}분`,
@@ -243,7 +243,9 @@ export function ReviewStage({ drafts, result, selected, intents, onIntent, onTog
                       : target === undefined ? undefined
                         : { kind: "ADD_TO_EXISTING", entryId: target.id, expectedSavedAt: target.savedAt })
                   }}
-                  style={{ width: "100%", minWidth: 0, minHeight: 44, marginTop: 8, fontFamily: "var(--sans)", fontSize: 13 }}
+                  style={{ width: "100%", minWidth: 0, minHeight: 44, boxSizing: "border-box", marginTop: "var(--space-2)",
+                    border: "1px solid var(--line)", borderRadius: "var(--r-action)", background: "var(--surface)", color: "var(--ink)",
+                    padding: "var(--space-2) var(--space-3)", fontFamily: "var(--sans)", fontSize: "var(--fs-body-sm)" }}
                 >
                   <option value="">저장 방식 선택</option>
                   <option value="separate">새 일지로 저장</option>
@@ -257,11 +259,11 @@ export function ReviewStage({ drafts, result, selected, intents, onIntent, onTog
                     기존 일지 보완 · {candidate.activitySlot === "AM" ? "오전" : candidate.activitySlot === "PM" ? "오후" : "시간 미지정"} · {candidate.title}
                   </option>)}
                 </select>}
-                {analysisEnabled && draft.batchDuplicateOf !== undefined && <p style={{ fontSize: 12, color: "var(--ink-3)" }}>
+                {analysisEnabled && draft.batchDuplicateOf !== undefined && <p style={{ fontSize: "var(--fs-body-sm)", color: "var(--ink-3)", lineHeight: 1.6 }}>
                   이 파일의 운동 {draft.batchDuplicateOf + 1}과 기록 값이 같고 원본 ID가 없어요. 서로 다른 운동인지 확인해 주세요.
                 </p>}
                 {analysisEnabled && draft.identityCandidates?.some(candidate => candidate.kind === "CORRECTION")
-                  && <p style={{ fontSize: 12, color: "var(--ink-3)" }}>기존 원본 기록과 값이 달라요. 같은 운동이면 기존 일지에서 정정해 주세요.</p>}
+                  && <p style={{ fontSize: "var(--fs-body-sm)", color: "var(--ink-3)", lineHeight: 1.6 }}>기존 원본 기록과 값이 달라요. 같은 운동이면 기존 일지에서 정정해 주세요.</p>}
                 {analysisEnabled && onActivityChange && <FileObservationReview activity={activity} disabled={busy}
                   onChange={next => onActivityChange(index, next)} />}
               </div>
@@ -269,7 +271,7 @@ export function ReviewStage({ drafts, result, selected, intents, onIntent, onTog
           )
         })}
       </div>
-      <p style={{ fontFamily: "var(--sans)", fontSize: 12, color: "var(--ink-2)", lineHeight: 1.6, margin: 0 }}>
+      <p style={{ fontFamily: "var(--sans)", fontSize: "var(--fs-body-sm)", color: "var(--ink-2)", lineHeight: 1.6, margin: 0 }}>
         {analysisEnabled ? "가져오기만으로 최고기록·훈련 목표·강도는 바뀌지 않아요." : "새 일지는 읽기 전용이에요. 가져온 숫자는 주간 통계·추이·훈련계획에는 들어가지 않아요."}
       </p>
       <InfoDisclosure title="수정·분석 범위">
@@ -339,26 +341,26 @@ export function SavedStage({ outcome, onOpenLog, onOpenAnalysis, onOpenSummary, 
       : "가져오기 완료"
   return (
     <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 14 }}>
-      <div data-testid="import-saved" style={{ border: "1px solid var(--ink)", background: "var(--surface)", padding: "14px 16px" }}>
-        <div style={{ ...mono, fontSize: 10, color: "var(--ink-3)", letterSpacing: "0.1em" }}>{resultLabel}</div>
+      <div data-testid="import-saved" style={{ border: "1px solid var(--line)", borderRadius: "var(--r-task-surface)", background: "var(--surface)", padding: "14px 16px" }}>
+        <div style={{ ...mono, fontSize: "var(--fs-body-sm)", color: "var(--ink-3)", lineHeight: 1.5, letterSpacing: "0.1em" }}>{resultLabel}</div>
         <div style={{ fontFamily: "var(--sans)", fontSize: 16, fontWeight: 500, marginTop: 5 }}>
           {onlyExcluded ? `${outcome.excluded}건 가져오기에서 제외` : <>새 일지 {outcome.saved}건 저장 · 기존 일지 {outcome.merged ?? 0}건 보완</>}
         </div>
-        {onlyExcluded && <div style={{ ...mono, fontSize: 10, color: "var(--ink-3)", marginTop: 4 }}>
+        {onlyExcluded && <div style={{ ...mono, fontSize: "var(--fs-body-sm)", color: "var(--ink-3)", lineHeight: 1.6, marginTop: 4 }}>
           새로 저장한 일지는 없어요. 기존 일지는 그대로예요.
         </div>}
         {!onlyExcluded && (outcome.excluded ?? 0) > 0 && <p>이번 가져오기에서 {outcome.excluded}건 제외했어요</p>}
         {(outcome.conflicts ?? 0) > 0 && (
-          <div style={{ ...mono, fontSize: 10.5, color: "var(--ink-2)", lineHeight: 1.6, marginTop: 6 }}>
+          <div style={{ ...mono, fontSize: "var(--fs-body-sm)", color: "var(--ink-2)", lineHeight: 1.6, marginTop: 6 }}>
             {outcome.conflicts}건은 기존 일지가 변경됐거나 보완할 수 없는 상태라 합치지 않았어요. 기존 기록은 그대로예요.
           </div>
         )}
         {outcome.failed > 0 && (
-          <div style={{ ...mono, fontSize: 10.5, color: "var(--pain-5)", lineHeight: 1.6, marginTop: 6 }}>
+          <div style={{ ...mono, fontSize: "var(--fs-body-sm)", color: "var(--pain-5)", lineHeight: 1.6, marginTop: 6 }}>
             {outcome.failed}건은 저장하지 못했어요 — 기기 저장 공간이 가득 찼을 수 있어요. 공간을 비운 뒤 다시 시도해 주세요.
           </div>
         )}
-        {!onlyExcluded && <div style={{ ...mono, fontSize: 10, color: "var(--ink-4)", lineHeight: 1.65, marginTop: 8 }}>
+        {!onlyExcluded && <div style={{ ...mono, fontSize: "var(--fs-body-sm)", color: "var(--ink-3)", lineHeight: 1.65, marginTop: 8 }}>
           가져온 값에는 <b>가져옴</b> 표시가 붙어요. 기존 일지에 직접 입력한 RPE<TermHelp term="rpe" />는 분석에 쓸 수 있고, 가져온 값과 메모 원문은 분석에 포함되지 않아요.
         </div>}
       </div>

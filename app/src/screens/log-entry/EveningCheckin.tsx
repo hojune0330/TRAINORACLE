@@ -377,7 +377,7 @@ function EveningCheckinEditor({ onBack, onExit, onDone, targetDate, initialEntry
                   cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
                 }}>
                   <MoodStrip level={index + 1} />
-                  <span style={{ fontFamily: "var(--mono)", fontSize: "var(--fs-caption)", color: mood === index + 1 ? "var(--ink)" : "var(--ink-3)", letterSpacing: "0.02em" }}>{label}</span>
+                  <span style={{ fontFamily: "var(--sans)", fontSize: "var(--fs-body-sm)", color: "inherit" }}>{label}</span>
                 </button>
               ))}
             </div>

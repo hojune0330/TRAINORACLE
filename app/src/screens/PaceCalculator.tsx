@@ -8,6 +8,7 @@ import { createSegmentRecordReference } from "../domain/catalog-pace-reference"
 import { isEligiblePaceRecordCurrent } from "../domain/account/eligible-account-pace-records"
 import { useEligibleAccountPaceRecords } from "../hooks/useEligibleAccountPaceRecords"
 import { TaskGuide } from "../components/TaskGuide"
+import { CategoryShortcuts } from "../components/CategoryShortcuts"
 import { directPaceSeconds, equalDistanceSplits, nearbyPaceTable, paceClock, paceEventLabel, parsePaceClock,
   primaryPaceDistances, SPLIT_PAGE_SIZE, type PaceToolRequest, type PaceToolStage } from "../domain/pace-tools"
 import "./pace-calculator.css"
@@ -146,10 +147,13 @@ export function PaceCalculator({ request = {}, stage, onStageChange, onBack }: {
             }}>이 기준으로 훈련 확인 <ArrowRight size={18} /></button>
             {!selected && <p>훈련에 연결하려면 저장한 경기 기록을 골라 주세요.</p>}
           </section>}
-          <div className="pace-tool__tools">{([ ["splits", ListOrdered, "구간 시간"], ["table", Table2, "페이스 표"], ["track", Flag, "트랙 안내"], ["evidence", HelpCircle, "계산 근거"] ] as const).map(([destination, Icon, label]) =>
-            <button key={destination} type="button" onClick={() => onStageChange(destination)}><Icon size={20} />
-              <span className="pace-tool__tool-copy"><span>{label}</span>{destination === "track" && <small>레인 계산은 아직 준비 중이에요</small>}</span>
-              <ArrowRight size={16} /></button>)}</div>
+          <CategoryShortcuts label="페이스 계산 도구" className="pace-tool__tools"
+            items={([ ["splits", ListOrdered, "구간 시간"], ["table", Table2, "페이스 표"], ["track", Flag, "트랙 안내"], ["evidence", HelpCircle, "계산 근거"] ] as const).map(([destination, icon, label]) => ({
+              id: destination, category: "training", icon, label,
+              accessibleLabel: destination === "track" ? "트랙 안내 · 레인 계산은 아직 준비 중이에요" : label,
+              onClick: () => onStageChange(destination),
+            }))} />
+          <p className="pace-tool__caption">트랙 안내: 레인 계산은 아직 준비 중이에요.</p>
         </>}
         {stage === "splits" && <>
           <div className="pace-tool__split-controls"><label>구간 거리(m)<input type="text" inputMode="decimal" value={unit} onChange={e => setUnit(e.target.value)} /></label>
@@ -160,7 +164,7 @@ export function PaceCalculator({ request = {}, stage, onStageChange, onBack }: {
               {rows.slice(visiblePage * SPLIT_PAGE_SIZE, (visiblePage + 1) * SPLIT_PAGE_SIZE).map((row, offset) => {
                 const index = visiblePage * SPLIT_PAGE_SIZE + offset
                 return <tr key={row.cumulativeMetres}><th scope="row">{row.cumulativeMetres}m</th><td>{paceClock(row.seconds)}
-                  <button type="button" className="pace-tool__lock" title={row.fixed ? "구간 시간 고정 해제" : "이 구간 시간 고정"} aria-label={`${index + 1}구간 ${row.fixed ? "고정 해제" : "시간 고정"}`} onClick={() => {
+                  <button type="button" className="pace-tool__lock" aria-pressed={row.fixed} title={row.fixed ? "구간 시간 고정 해제" : "이 구간 시간 고정"} aria-label={`${index + 1}구간 ${row.fixed ? "고정 해제" : "시간 고정"}`} onClick={() => {
                     const values = { ...fixedValues }
                     if (row.fixed) delete values[index]
                     else values[index] = String(row.seconds)

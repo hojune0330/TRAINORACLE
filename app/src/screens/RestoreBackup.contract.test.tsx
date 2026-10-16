@@ -7,7 +7,7 @@
 //  4. 지운 일지는 백업 파일로도 되살아나지 않으며 그 사실이 화면에 보인다.
 //  5. 읽지 못한 항목 수를 숨기지 않는다(fail-visible).
 //  6. 안전 백업(메모 제외)은 메모가 비어 있다는 사실을 알리고, 없는 내용을 만들지 않는다.
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { RestoreBackup } from "./RestoreBackup"
@@ -60,6 +60,48 @@ function backupFile(
 async function pick(user: ReturnType<typeof userEvent.setup>, file: File) {
   await user.upload(screen.getByLabelText(/백업 파일/u), file)
 }
+
+describe("restore choice keyboard interaction", () => {
+  beforeEach(async () => {
+    window.localStorage.clear()
+    window.sessionStorage.clear()
+    await initializeCanonicalJournalFixture()
+  })
+
+  it("uses arrow keys and one tab stop in all four groups without applying a restore", async () => {
+    const user = userEvent.setup()
+    const original = postSession("keyboard-restore", "2026-07-21", { title: "이 기기 제목" })
+    saveEntry(original)
+    const beforeEntries = loadEntries()
+    const beforeDecorations = loadDecorationState()
+    const beforeCalendar = loadCalendarDecorationState()
+    render(<RestoreBackup />)
+    await pick(user, backupFile([{
+      ...original, title: "백업 제목", bodyPartMetadata: {
+        schemaVersion: 1, observations: [{ id: "other_11111111-1111-4111-8111-111111111111",
+          labelSnapshot: "SYNTHETIC_PRIVATE_LABEL", severity: 2 }],
+      },
+    }], FULL_FORMAT_V6, undefined, beforeDecorations, { version: 1, paperThemeId: null, items: [] }))
+
+    for (const label of ["기타 부위 복원 범위", "달력 꾸미기 처리", "꾸미기 처리", "겹치는 일지 처리"]) {
+      const choices = within(screen.getByRole("radiogroup", { name: label })).getAllByRole("radio")
+      expect(choices).toHaveLength(2)
+      choices[0]!.focus()
+      for (const [key, index] of [["ArrowRight", 1], ["ArrowLeft", 0], ["ArrowDown", 1], ["ArrowUp", 0]] as const) {
+        await user.keyboard(`{${key}>}`)
+        await waitFor(() => expect(choices[index]).toHaveAttribute("aria-checked", "true"))
+        await user.keyboard(`{/${key}}`)
+        expect(choices[index]).toHaveFocus()
+        expect(choices[index]).toHaveAttribute("tabindex", "0")
+        expect(choices[1 - index]).toHaveAttribute("tabindex", "-1")
+      }
+    }
+    expect(screen.queryByTestId("restore-done")).toBeNull()
+    expect(loadEntries()).toEqual(beforeEntries)
+    expect(loadDecorationState()).toEqual(beforeDecorations)
+    expect(loadCalendarDecorationState()).toEqual(beforeCalendar)
+  })
+})
 
 describe("restore private custom body text", () => {
   beforeEach(async () => {

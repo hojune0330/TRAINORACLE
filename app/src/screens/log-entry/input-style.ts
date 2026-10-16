@@ -8,9 +8,9 @@ export function inputStyle(): CSSProperties {
     border: "1px solid var(--line)",
     background: "var(--surface)",
     fontFamily: "var(--sans)",
-    fontSize: 14,
+    fontSize: "var(--fs-body)",
     color: "var(--ink)",
     boxSizing: "border-box",
-    borderRadius: 0,
+    borderRadius: "var(--r-action)",
   }
 }

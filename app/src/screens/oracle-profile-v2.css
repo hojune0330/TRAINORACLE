@@ -1,4 +1,4 @@
-.oracle-v2 { color: var(--ink); background: var(--paper); font-family: inherit; letter-spacing: 0; }
+.oracle-v2 { color: var(--ink); background: var(--bg); font-family: inherit; letter-spacing: 0; }
 .oracle-v2 *, .oracle-v2 *::before, .oracle-v2 *::after { box-sizing: border-box; }
 .oracle-v2 button { min-height: 44px; min-width: 44px; font: inherit; color: inherit; border: 1px solid var(--line); background: var(--surface, var(--paper)); border-radius: var(--r-action, 12px); display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 8px 12px; cursor: pointer; transition: background-color 160ms ease-out, border-color 160ms ease-out; }
 .oracle-v2 button:disabled { opacity: .5; cursor: default; }
@@ -13,11 +13,11 @@
 .oracle-v2 p { line-height: 1.65; overflow-wrap: anywhere; }
 .oracle-v2__chrome { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--line); }
 .oracle-v2__chrome > span:not(.app-chrome-title) { font-size: var(--fs-caption); overflow-wrap: anywhere; }
-.oracle-v2__body { max-width: 640px; margin-inline: auto; padding: 16px; }
+.oracle-v2__body { max-width: 640px; margin-inline: auto; padding: var(--space-4) var(--space-5) var(--space-6); }
 .oracle-v2 .oracle-v2__tabs.view-switcher { display: flex; flex-wrap: nowrap; gap: 2px; margin-bottom: var(--space-3); padding: 2px; }
 .oracle-v2 .oracle-v2__tabs.view-switcher > button.view-switcher__item { flex: 1 1 0; min-width: 0; gap: var(--space-1); padding: var(--space-2); font-size: var(--fs-caption); }
 .oracle-v2 .oracle-v2__groups.view-switcher { margin-block: var(--space-3); }
-.oracle-v2 .oracle-v2__groups.view-switcher > button.view-switcher__item { flex: 1 1 6rem; }
+.oracle-v2 .oracle-v2__groups.view-switcher > button.view-switcher__item { flex: 1 1 6rem; gap: var(--space-1); padding: var(--space-2) var(--space-1); }
 .oracle-v2__secondary-actions { display: grid; gap: var(--space-1); margin-block: var(--space-3); }
 .oracle-v2__entry-links { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-block: var(--space-4); }
 .oracle-v2__intro-scope { margin-block: 0 var(--space-4); color: var(--ink-2); }
@@ -57,9 +57,13 @@
 .oracle-v2 dd small { display: block; font-size: 12px; }
 .oracle-v2__axis-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 16px 0; }
 .oracle-v2__topics, .oracle-v2__choices { display: grid; gap: 8px; }
-.oracle-v2__topics { margin-block: var(--space-3); }
+.oracle-v2__topics { margin-block: var(--space-3); gap: 0; padding: var(--space-1); border: var(--bw-line) solid var(--hair); border-radius: var(--r-task-surface); background: var(--surface); }
 .oracle-v2__topics button, .oracle-v2__choices button, .oracle-v2__saved { width: 100%; text-align: left; justify-content: space-between; overflow-wrap: anywhere; }
-.oracle-v2__topics button { border-width: 0 0 1px; border-radius: 0; padding-block: 16px; }
+.oracle-v2 button.category-card.category-card--row { justify-content: flex-start; gap: var(--space-3); padding: var(--space-3); border: var(--bw-line) solid transparent; border-radius: var(--r-action); background: transparent; color: var(--ink); }
+.oracle-v2__topics button.category-card.category-card--row + button.category-card { border-top-color: var(--hair); }
+.oracle-v2 button.category-card .category-card__copy { text-align: left; }
+.oracle-v2 button.category-card:active { background: var(--category-wash); }
+.oracle-v2__secondary-actions { padding: var(--space-1); border: var(--bw-line) solid var(--hair); border-radius: var(--r-task-surface); background: var(--surface); }
 .oracle-v2__saved { margin-bottom: 8px; }
 .oracle-v2__dialog { position: fixed; inset: 0; width: min(100%, 640px); height: 100dvh; max-width: 100%; max-height: 100dvh; margin: auto; padding: 0; border: 1px solid var(--line); overflow: hidden; }
 .oracle-v2__dialog[open] { display: flex; flex-direction: column; }
@@ -121,7 +125,7 @@
   .oracle-v2 button { transition: none; }
   .oracle-v2 button:not(:disabled):not([aria-disabled="true"]):active { transform: none; }
 }
-@media (max-width: 340px) { .oracle-v2__body, .oracle-v2__reader-body { padding-inline: 12px; } }
+@media (max-width: 340px) { .oracle-v2__reader-body { padding-inline: var(--space-4); } }
 @media (min-width: 56rem) {
   .app-shell--results .oracle-v2__body--results { max-width: min(100%, var(--app-shell-max-width, 64rem)); }
   .app-shell--results .oracle-v2__self--results > .preference-radar {

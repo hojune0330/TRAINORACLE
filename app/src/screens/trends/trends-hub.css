@@ -9,69 +9,12 @@
 .trends-hub .personal-oracle .metric-summary__value { font-size: var(--fs-h3); line-height: 1.35; }
 .trends-hub .personal-oracle__actions { display: grid; gap: var(--space-1); margin-block: var(--space-2); }
 
-.trends-hub__sections {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-2);
-  padding: var(--space-2) var(--space-5) var(--space-3);
-}
-.trends-hub .trends-hub__sections button.app-choice-control.category-choice {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 16px;
-  grid-template-rows: 28px auto;
-  align-items: center;
-  justify-items: center;
-  gap: var(--space-1) 2px;
-  min-height: 60px;
-  padding: var(--space-2) 6px;
-  text-align: center;
-}
-.trends-hub__sections .category-icon { grid-column: 1 / -1; grid-row: 1; width: 24px; height: 24px; flex-basis: 24px; }
-.trends-hub__sections button.category-choice > span:not(.category-icon) {
-  grid-column: 1;
-  grid-row: 2;
-  min-width: 0;
-  font-size: var(--fs-caption);
-  line-height: 1.35;
-  text-align: center;
-}
-.trends-hub__sections .category-choice__check { grid-column: 2; grid-row: 2; justify-self: end; margin: 0; }
 .trends-hub__drilldowns button.category-choice { display: flex; align-items: center; gap: var(--space-2); min-height: var(--app-touch-min); padding: var(--space-2) var(--space-2); }
 .trends-hub__drilldowns button.category-choice > span:not(.category-icon) { min-width: 0; font-size: var(--fs-caption); line-height: 1.4; }
 .trends-hub :is(.trends-hub__start, .trends-hub__example, .trends-hub__recovery) > button.category-card {
   padding: var(--space-4); border: var(--bw-line) solid var(--hair); border-radius: var(--r-task-surface); background: var(--surface); color: var(--ink);
 }
 .trends-hub__start > button + button { margin-top: var(--space-3); }
-.trends-hub__header {
-  display: grid;
-  grid-template-columns: minmax(64px, 1fr) auto minmax(64px, 1fr);
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-3) var(--space-4);
-  border-bottom: var(--bw-line) solid var(--line);
-  background: var(--bg);
-}
-.trends-hub__back,
-.trends-hub__pace {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  min-width: 64px;
-  min-height: var(--app-touch-min);
-  max-width: 100%;
-  padding: var(--space-1);
-  border: 0;
-  background: transparent;
-  color: var(--ink-2);
-  font: 500 var(--fs-caption) / 1.5 var(--sans);
-  cursor: pointer;
-}
-.trends-hub__back { justify-self: start; }
-.trends-hub__back span { white-space: nowrap; }
-.trends-hub__pace { justify-self: end; }
-.trends-hub__header svg { flex-shrink: 0; }
-.trends-hub__back:focus-visible,
-.trends-hub__pace:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
 .trends-record-reading__journal h2 { margin: 16px 0; font-size: 20px; line-height: 1.5; }
 
 .trends-hub__drilldowns {
@@ -81,7 +24,6 @@
   padding: 8px 20px 12px;
 }
 
-.trends-hub__sections button,
 .trends-hub__drilldowns button,
 .trends-hub__notice button,
 .trends-hub__empty button {
@@ -94,14 +36,6 @@
   font-family: var(--sans);
   font-size: var(--fs-body, 14.5px);
   cursor: pointer;
-}
-
-.trends-hub__sections button {
-  min-width: 0;
-  font-weight: 600;
-  line-height: 1.5;
-  word-break: keep-all;
-  overflow-wrap: anywhere;
 }
 
 .trends-hub__drilldowns button {
@@ -130,7 +64,6 @@
   overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0;
 }
 
-.trends-hub__sections button:focus-visible,
 .trends-hub__drilldowns button:focus-visible,
 .trends-hub__notice button:focus-visible,
 .trends-hub__empty button:focus-visible {
@@ -173,6 +106,7 @@
 .trends-hub__start p, .trends-hub__example p { color: var(--ink-2); font: 400 var(--fs-caption) / 1.6 var(--sans); }
 .trends-hub__start button, .trends-hub__example button, .trends-hub__recovery > button { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); width: 100%; min-height: var(--app-touch-min); padding: var(--space-3); border: 0; border-radius: var(--r-md); background: transparent; color: var(--ink); font: 600 var(--fs-body) / 1.5 var(--sans); text-align: left; overflow-wrap: anywhere; cursor: pointer; }
 .trends-hub__start button { background: var(--brand); color: var(--paper); }
+.trends-hub__start > button:not(.category-card) { border-radius: var(--r-action); }
 .trends-hub__start button.trends-hub__start-secondary { margin-top: var(--space-2); border: 1px solid var(--line); background: transparent; color: var(--ink); }
 .trends-hub__example button { padding-inline: 0; }
 .trends-hub__start button svg, .trends-hub__example button svg { flex-shrink: 0; }

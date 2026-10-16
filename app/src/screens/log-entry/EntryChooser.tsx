@@ -1,5 +1,5 @@
 import React from "react"
-import { CheckCircle2, Flag, HeartPulse, PencilLine } from "lucide-react"
+import { CheckCircle2, Flag, HeartPulse, PencilLine, Watch } from "lucide-react"
 import { CategoryCard } from "../../components/CategoryCard"
 import "./EntryChooser.css"
 import { compactDate, dowOf } from "../../domain/dates"
@@ -70,19 +70,8 @@ export function EntryChooser({ onBack, onPick, onOpenImport, targetDate }: Entry
 
       {onOpenImport && (
         <div className="app-choice-group" style={{ padding: "20px 20px 0" }}>
-          <button
-            className="app-choice-control"
-            type="button"
-            onClick={onOpenImport}
-            data-testid="open-import"
-            style={{
-              width: "100%", minHeight: 48, textAlign: "left", lineHeight: 1.5,
-            }}
-          >
-            <span style={{ fontFamily: "var(--sans)", fontSize: 13.5, fontWeight: 500, color: "var(--ink)" }}>
-              운동 파일 불러오기
-            </span>
-          </button>
+          <CategoryCard category="record" icon={Watch} variant="row" title="운동 파일 불러오기"
+            onClick={onOpenImport} data-testid="open-import" />
         </div>
       )}
 

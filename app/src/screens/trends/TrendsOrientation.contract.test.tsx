@@ -6,12 +6,12 @@ import { Trends } from "../Trends"
 beforeEach(async () => { localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture() })
 afterEach(() => { cleanup(); vi.unstubAllEnvs() })
 
-it("puts a meaningful task title before navigation without inventing a result for the first visit", () => {
+it("keeps the section navigation ahead of state-specific content without inventing a first-visit result", () => {
   const write = vi.fn()
   const { container } = render(<Trends onWriteLog={write} />)
   const title = screen.getByRole("heading", { name: "내 훈련 살펴보기", level: 2 })
-  const navigation = screen.getByRole("group", { name: "오라클 항목" })
-  expect(title.compareDocumentPosition(navigation) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
+  const navigation = screen.getByRole("navigation", { name: "오라클 항목" })
+  expect(navigation.compareDocumentPosition(title) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
   expect(container.querySelectorAll(".trends-hub__guide img")).toHaveLength(1)
   expect(container.querySelector(".trends-hub__guide img")).toHaveAttribute("alt", "")
   expect(container.querySelector(".trends-hub__guide img")).toHaveAttribute("src", expect.stringContaining("analysis-lens-v2.webp"))
@@ -22,12 +22,12 @@ it("puts a meaningful task title before navigation without inventing a result fo
 
 it("keeps a fixed check slot on Oracle destinations and analysis choices", () => {
   render(<Trends />)
-  const destinations = screen.getByRole("group", { name: "오라클 항목" })
+  const destinations = screen.getByRole("navigation", { name: "오라클 항목" })
   expect(within(destinations).getAllByRole("button")).toHaveLength(3)
   for (const button of within(destinations).getAllByRole("button")) {
-    expect(button.querySelector(":scope > .category-choice__check")).toBeInTheDocument()
+    expect(button.querySelector(":scope > .oracle-section-nav__check")).toBeInTheDocument()
   }
-  const reading = within(destinations).getByRole("button", { name: "읽을거리·관심" })
+  const reading = within(destinations).getByRole("button", { name: "읽을거리" })
   expect(reading).toHaveTextContent("읽을거리")
 
   const analyses = screen.getByRole("group", { name: "훈련 분석 자세히 보기" })
@@ -86,7 +86,7 @@ it("gives legacy in-page destinations their own title instead of leaving an anal
   fireEvent.click(screen.getByRole("button", { name: "러닝 취향" }))
   expect(screen.getByRole("heading", { name: "최고기록 살펴보기", level: 2 })).toBeVisible()
   expect(screen.queryByRole("heading", { name: "내 훈련 살펴보기" })).toBeNull()
-  fireEvent.click(screen.getByRole("button", { name: "읽을거리·관심" }))
+  fireEvent.click(screen.getByRole("button", { name: "읽을거리" }))
   expect(screen.getByRole("heading", { name: "훈련 이야기 읽기", level: 2 })).toBeVisible()
   expect(screen.queryByRole("heading", { name: "최고기록 살펴보기" })).toBeNull()
 })

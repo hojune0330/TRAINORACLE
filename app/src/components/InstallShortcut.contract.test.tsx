@@ -127,7 +127,9 @@ describe("InstallShortcut context boundary", () => {
     render(<InstallShortcutProvider><InstallShortcutSuggestion eligible compact /></InstallShortcutProvider>)
     expect(screen.getByTestId("install-shortcut-suggestion")).toHaveClass("install-shortcut-suggestion--compact")
     expect(screen.queryByTestId("install-shortcut-dialog")).not.toBeInTheDocument()
-    await user.click(screen.getByRole("button", { name: /^(홈 화면에 추가|앱 바로가기 만들기)$/u }))
+    const action = screen.getByRole("button", { name: /^앱 추가 · (홈 화면에 추가|앱 바로가기 만들기)$/u })
+    expect(action).toHaveTextContent(/^앱 추가$/u)
+    await user.click(action)
     expect(screen.getByTestId("install-shortcut-dialog")).toBeVisible()
   })
 

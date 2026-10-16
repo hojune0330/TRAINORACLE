@@ -37,6 +37,7 @@ import { JournalBodyInput } from "./JournalBodyInput"
 import { journalPainPartsForSafety, type BodyPartMetadataV1 } from "../../domain/body-part-metadata"
 import { derivePlanExecutionRelation } from "../../domain/plan-execution-relation"
 import { TaskFlowStep } from "../../components/TaskFlowStep"
+import { JournalNumberScale } from "./JournalNumberScale"
 import { useJournalFormNavigation } from "./useJournalFormNavigation"
 import "./post-session-measurements.css"
 
@@ -456,8 +457,8 @@ function PostSessionFormEditor({ onBack, onExit, onDone, targetDate, initialEntr
           {answeredReviewItems.map((item) => (
             <div key={item.key} style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) auto", alignItems: "center", gap: 8, borderBottom: "1px solid var(--line)", paddingBlock: 8 }}>
               <div style={{ minWidth: 0 }}>
-                <dt style={{ fontSize: 11, color: "var(--ink-3)" }}>{item.label}</dt>
-                <dd style={{ margin: "2px 0 0", fontSize: 14, color: "var(--ink)", overflowWrap: "anywhere" }}>{item.value}</dd>
+                <dt style={{ fontSize: "var(--fs-body-sm)", color: "var(--ink-3)" }}>{item.label}</dt>
+                <dd style={{ margin: "2px 0 0", fontSize: "var(--fs-body)", color: "var(--ink)", overflowWrap: "anywhere" }}>{item.value}</dd>
               </div>
               <button type="button" className="quick-log__secondary" aria-label={`${item.label} 수정`}
                 onClick={() => editReviewItem(item.key)}>수정</button>
@@ -547,7 +548,7 @@ function PostSessionFormEditor({ onBack, onExit, onDone, targetDate, initialEntr
         </div>
         {importedObjective && <p role="note">파일에서 가져온 거리·시간·페이스는 읽기 전용이에요.</p>}
         {/* WORK_ORDER_UX2 §3-2 (D-06): 페이스 입력 형식 가이드 — 파서 철거가 아니라 안내 */}
-        <p style={{ margin: "6px 0 0", fontFamily: "var(--sans)", fontSize: 11, color: "var(--ink-3)", lineHeight: 1.5 }}>
+        <p style={{ margin: "var(--space-2) 0 0", fontFamily: "var(--sans)", fontSize: "var(--fs-body-sm)", color: "var(--ink-3)", lineHeight: 1.5 }}>
           예: 5'30&quot; 또는 5:30 (분:초)
         </p>
       </FormSec>}
@@ -569,26 +570,16 @@ function PostSessionFormEditor({ onBack, onExit, onDone, targetDate, initialEntr
         collapseWhenLeft={touchOrder.leftBehind("rpe")}
         onTouch={() => touchOrder.touch("rpe")}
       >
-        <div className="journal-ten-scale" style={{ display: "grid", gap: 0, border: "1px solid var(--ink)" }}>
-          {Array.from({ length: 10 }, (_, index) => index + 1).map((value) => (
-            <button key={value} aria-pressed={rpe === value} onClick={() => setRpe(value)} style={{
-              minHeight: 44, padding: "12px 0", border: 0, cursor: "pointer",
-              background: rpe === value ? "var(--ink)" : "transparent",
-              color: rpe === value ? "var(--bg)" : "var(--ink)",
-              fontFamily: "var(--mono)", fontSize: 12, fontWeight: 500,
-              borderRight: value < 10 ? "1px solid var(--line)" : 0,
-            }}>{value}</button>
-          ))}
-        </div>
-        <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4, fontFamily: "var(--mono)", fontSize: 9, color: "var(--ink-4)", letterSpacing: "0.06em" }}>
+        <JournalNumberScale selected={rpe} onSelect={setRpe} />
+        <div style={{ display: "flex", justifyContent: "space-between", marginTop: "var(--space-1)", fontFamily: "var(--sans)", fontSize: "var(--fs-body-sm)", color: "var(--ink-3)" }}>
           <span>매우 쉬움</span><span>최대</span>
         </div>
       </FormSec>}
 
       {task === "body" && recordsPerformance && <FormSec compact lb="운동 후 몸 상태">
-        <div className="journal-progressive-edit" role="group" aria-label="운동 후 불편함 확인">
-          <button type="button" aria-pressed={painCheckStatus === "NO_SIGNAL_REPORTED"} onClick={() => { setPainCheckStatus("NO_SIGNAL_REPORTED"); setPainParts({}); setBodyPartMetadata(current => current ? { schemaVersion: 1, observations: [] } : undefined) }}>불편한 곳 없음</button>
-          <button type="button" aria-pressed={painCheckStatus === "SIGNAL_REPORTED"} onClick={() => setPainCheckStatus("SIGNAL_REPORTED")}>불편한 곳 있음</button>
+        <div className="journal-progressive-edit app-choice-group" role="group" aria-label="운동 후 불편함 확인">
+          <button className="app-choice-control" type="button" aria-pressed={painCheckStatus === "NO_SIGNAL_REPORTED"} onClick={() => { setPainCheckStatus("NO_SIGNAL_REPORTED"); setPainParts({}); setBodyPartMetadata(current => current ? { schemaVersion: 1, observations: [] } : undefined) }}>불편한 곳 없음</button>
+          <button className="app-choice-control" type="button" aria-pressed={painCheckStatus === "SIGNAL_REPORTED"} onClick={() => setPainCheckStatus("SIGNAL_REPORTED")}>불편한 곳 있음</button>
         </div>
         {painCheckStatus === "SIGNAL_REPORTED" && (
           <>

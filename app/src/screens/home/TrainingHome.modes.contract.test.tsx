@@ -94,6 +94,30 @@ describe("training home presentation", () => {
     expect(learn).toHaveBeenCalledOnce(); expect(decorate).toHaveBeenCalledOnce()
     expect(guide).toHaveBeenCalledOnce()
   })
+  it("groups four short home shortcuts in destination order before the separate install action", () => {
+    const trends = vi.fn(), guide = vi.fn(), learn = vi.fn(), decorate = vi.fn()
+    render(<TrainingHome model={TRAINING} onOpenTrends={trends} onOpenGuide={guide}
+      onOpenContent={learn} onOpenRewards={decorate} installSuggestion={<button>앱 추가</button>} />)
+    const navigation = screen.getByRole("navigation", { name: "홈 바로가기" })
+    const buttons = within(navigation).getAllByRole("button")
+    expect(buttons.map(button => button.textContent)).toEqual(["훈련량", "일지 예시", "훈련법", "꾸미기"])
+    expect(buttons.map(button => button.getAttribute("data-category"))).toEqual(["oracle", "journal", "training", "journal"])
+    expect(navigation.compareDocumentPosition(screen.getByRole("button", { name: "앱 추가" })) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
+    const callbacks = [trends, guide, learn, decorate]
+    for (const [index, button] of buttons.entries()) {
+      expect(button.querySelector(".category-icon")).toHaveAttribute("aria-hidden", "true")
+      fireEvent.click(button)
+      callbacks.forEach((callback, callbackIndex) => expect(callback).toHaveBeenCalledTimes(callbackIndex <= index ? 1 : 0))
+    }
+    expect(buttons[1]).toHaveAccessibleName("일지 예시 보기")
+  })
+  it("does not render empty shortcut groups or unavailable destinations", () => {
+    const { rerender } = render(<TrainingHome model={BASE} />)
+    expect(screen.queryByRole("navigation", { name: "홈 바로가기" })).toBeNull()
+    rerender(<TrainingHome model={BASE} onOpenGuide={vi.fn()} />)
+    expect(within(screen.getByRole("navigation", { name: "홈 바로가기" })).getAllByRole("button")).toHaveLength(1)
+    expect(screen.queryByRole("button", { name: "훈련법 읽기" })).toBeNull()
+  })
   it("offers one example action without automatically showing fictional results", () => {
     const open = vi.fn()
     render(<TrainingHome model={BASE} oraclePreview={<HomeOraclePreview
@@ -171,11 +195,11 @@ describe("training home presentation", () => {
   })
   it("omits empty journal and analysis rows for plan-only users but keeps real history when today is unrecorded", () => {
     const write = vi.fn(), plan = vi.fn(), archive = vi.fn(), trends = vi.fn()
-    const actions = { onWriteLog: write, onOpenPlan: plan, onOpenArchive: archive, onOpenTrends: trends, analysisAvailable: true }
+    const actions = { onWriteLog: write, onOpenPlan: plan, onOpenArchive: archive, onOpenTrends: trends }
     const { rerender } = render(<TrainingHome model={TRAINING} {...actions} />)
     expect(screen.queryByRole("heading", { name: "최근 하루 기록" })).toBeNull()
     expect(screen.queryByRole("button", { name: "최근 기록" })).toBeNull()
-    expect(screen.getByRole("region", { name: "훈련 기록 분석" })).toBeVisible()
+    expect(screen.getByRole("navigation", { name: "홈 바로가기" })).toBeVisible()
     expect(screen.getByRole("button", { name: "훈련량·변화 보기" })).toBeVisible()
     expect(screen.queryByText(TRAINING.journalSummary)).toBeNull()
     expect(screen.queryByText(TRAINING.analysisSummary)).toBeNull()
@@ -186,8 +210,9 @@ describe("training home presentation", () => {
 
     rerender(<TrainingHome model={{ ...TRAINING, showMinjiPrompt: false, journalSummary: "2일 · 3개의 기록", analysisSummary: "이번 주 2회 · 12km" }} {...actions} />)
     expect(screen.getByText("2일 · 3개의 기록")).toBeVisible()
-    expect(screen.getByRole("region", { name: "훈련 기록 분석" })).toBeVisible()
-    expect(screen.getByText("이번 주 2회 · 12km")).toBeVisible()
+    expect(screen.getByRole("navigation", { name: "홈 바로가기" })).toBeVisible()
+    expect(screen.queryByText("이번 주 2회 · 12km")).toBeNull()
+    expect(screen.getByRole("button", { name: "훈련량·변화 보기" })).toHaveTextContent(/^훈련량$/u)
     fireEvent.click(screen.getByRole("button", { name: "최근 기록" }))
     fireEvent.click(screen.getByRole("button", { name: "훈련량·변화 보기" }))
     expect(archive).toHaveBeenCalledOnce()
@@ -218,7 +243,7 @@ describe("training home presentation", () => {
     ["거리는 아직 없음", "분석에 쓸 직접 입력 기록이 없어요"],
   ])("keeps the analysis destination but hides an unsupported summary for %s", (_caseName, analysisSummary) => {
     render(<TrainingHome model={{ ...TRAINING, showMinjiPrompt: false, analysisSummary }}
-      onOpenTrends={vi.fn()} analysisAvailable={false} />)
+      onOpenTrends={vi.fn()} />)
     expect(screen.getByRole("button", { name: "훈련량·변화 보기" })).toBeVisible()
     expect(screen.queryByText(analysisSummary)).toBeNull()
   })

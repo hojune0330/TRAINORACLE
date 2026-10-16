@@ -1,5 +1,5 @@
 import React from "react"
-import { ArrowLeft, Calculator, CalendarDays, ChartNoAxesCombined, CircleHelp, CircleUserRound, Compass, DatabaseBackup, Flag, Gamepad2, Info, LibraryBig, MessageSquareText, Newspaper, NotebookText, ScrollText, ShieldCheck, Sticker, Trash2, UserRound, Watch } from "lucide-react"
+import { ArrowLeft, BookOpen, Calculator, CalendarDays, ChartNoAxesCombined, CircleHelp, CircleUserRound, Compass, DatabaseBackup, Flag, Gamepad2, Heart, Info, LibraryBig, MessageSquareText, NotebookPen, ScrollText, ShieldCheck, Sticker, Trash2, Watch } from "lucide-react"
 import { AppHeading } from "../components/AppHeading"
 import { MenuAction } from "../components/MenuAction"
 import { DataSafetyNotice } from "../components/DataSafetyNotice"
@@ -106,17 +106,17 @@ export function More({
           {onOpenImport && <MenuAction category="record" icon={Watch} label="워치 파일 가져오기" onClick={onOpenImport} />}
         </MenuGroup>}
         {(onOpenRunningProfile || onOpenRecordReading || onOpenOracleLibrary) && <MenuGroup title="오라클">
-          {onOpenRunningProfile && <MenuAction category="oracle" icon={UserRound} label="러닝 취향" detail="취향 점수 · 친구와 비교" onClick={onOpenRunningProfile} />}
+          {onOpenRunningProfile && <MenuAction category="oracle" icon={Heart} label="러닝 취향" detail="취향 점수 · 친구와 비교" onClick={onOpenRunningProfile} />}
           {onOpenRecordReading && <MenuAction category="oracle" icon={ChartNoAxesCombined} label="최고기록으로 풀이하기" detail="저장 없이 내 기록·친구 기록 비교" onClick={onOpenRecordReading} />}
-          {onOpenOracleLibrary && <MenuAction category="oracle" icon={LibraryBig} label="오라클 읽을거리" onClick={onOpenOracleLibrary} />}
+          {onOpenOracleLibrary && <MenuAction category="oracle" icon={BookOpen} label="오라클 읽을거리" onClick={onOpenOracleLibrary} />}
         </MenuGroup>}
         <MenuGroup title="배우기">
-          <MenuAction category="journal" icon={NotebookText} label="일지 예시 보기" onClick={onOpenMinji} />
+          <MenuAction category="journal" icon={BookOpen} label="일지 예시 보기" onClick={onOpenMinji} />
           <MenuAction category="training" icon={CircleHelp} label="훈련 용어집·도움말" onClick={onOpenGuide} />
-          {onOpenContent && <MenuAction category="training" icon={Newspaper} label="훈련법 읽기" onClick={onOpenContent} />}
+          {onOpenContent && <MenuAction category="training" icon={BookOpen} label="훈련법 읽기" onClick={onOpenContent} />}
         </MenuGroup>
         {(onOpenRewards || onOpenMinigame) && <MenuGroup title="꾸미기·게임">
-          {onOpenRewards && <MenuAction category="journal" icon={Sticker} label="일지 꾸미기" onClick={onOpenRewards} />}
+          {onOpenRewards && <MenuAction category="journal" icon={NotebookPen} label="일지 꾸미기" onClick={onOpenRewards} />}
           {onOpenMinigame && <MenuAction icon={Gamepad2} label="미니게임" detail="러닝 투어 · 서울에서 런던까지" illustration="running-game-announcement" onClick={onOpenMinigame} />}
         </MenuGroup>}
         <MenuGroup title="관리">
@@ -136,12 +136,12 @@ export function More({
         </section>}
         {activeView === "learning" && <>
         <MenuGroup title="예시와 읽을거리">
-          <MenuAction category="journal" icon={NotebookText} label="일지 예시 보기" onClick={onOpenMinji} />
+          <MenuAction category="journal" icon={BookOpen} label="일지 예시 보기" onClick={onOpenMinji} />
           <MenuAction category="training" icon={CircleHelp} label="훈련 용어집·도움말" onClick={onOpenGuide} />
-          {onOpenContent && <MenuAction category="training" icon={Newspaper} label="훈련법 읽기" onClick={onOpenContent} />}
+          {onOpenContent && <MenuAction category="training" icon={BookOpen} label="훈련법 읽기" onClick={onOpenContent} />}
         </MenuGroup>
         {(onOpenRewards || onOpenMinigame) && <MenuGroup title="꾸미기·게임">
-          {onOpenRewards && <MenuAction category="journal" icon={Sticker} label="일지 꾸미기" onClick={onOpenRewards} />}
+          {onOpenRewards && <MenuAction category="journal" icon={NotebookPen} label="일지 꾸미기" onClick={onOpenRewards} />}
           {onOpenMinigame && <MenuAction icon={Gamepad2} label="미니게임" detail="러닝 투어 · 서울에서 런던까지" illustration="running-game-announcement" onClick={onOpenMinigame} />}
         </MenuGroup>}
         </>}

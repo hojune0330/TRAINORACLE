@@ -232,7 +232,7 @@ it.each(profileTopics.flatMap(topic => (["LOADING", "FAILED"] as const).map(stat
 
 it.each([1, 3, 5] as const)("labels the self-report index denominator as a 100-point scale, not 100 observations (answer=%s)", response => {
   mount(ready(scored({ INTENSITY_1: response, INTENSITY_2: response, INTENSITY_3: response })))
-  fireEvent.click(screen.getByRole("radio", { name: "읽을거리" }))
+  fireEvent.click(screen.getByRole("button", { name: "읽을거리" }))
   expect(screen.getByRole("radiogroup", { name: "읽을거리 주제" })).toBeVisible()
   fireEvent.click(screen.getByRole("button", { name: "좋아하는 달리기 강도" }))
   const reader = screen.getByRole("dialog", { name: "읽을거리" })
@@ -257,7 +257,7 @@ it("labels M05 race speed as an index with baseline 100, not a self-response sco
       sourceRef: "athlete-record:race-recent", savedAt: "2026-10-03T00:00:00.000Z" },
   ]
   mount(ready(scored()))
-  fireEvent.click(screen.getByRole("radio", { name: "읽을거리" }))
+  fireEvent.click(screen.getByRole("button", { name: "읽을거리" }))
   expect(screen.getByRole("radiogroup", { name: "읽을거리 주제" })).toBeVisible()
   fireEvent.click(screen.getByRole("radio", { name: "경기 기록" }))
   fireEvent.click(screen.getByRole("button", { name: "최근 경기와 최고기록" }))
@@ -298,7 +298,7 @@ it.each([OWNER_B, null])("hides prior account readings and open editors immediat
   act(() => fixture.publish(ready(scored())))
   expect(screen.queryByRole("button", { name: "2026-10-01 · 당시 응답" })).toBeNull()
   if (nextOwner) act(() => waiting.publish(ready()))
-  fireEvent.click(screen.getByRole("radio", { name: "내 결과" }))
+  fireEvent.click(screen.getByRole("button", { name: "러닝 취향" }))
   expect(resultScore(fixture.container)).toBeNull()
   expect(screen.queryByRole("button", { name: "작성하던 답 이어가기" })).toBeNull()
   fireEvent.click(contextButton())
@@ -449,7 +449,7 @@ it("clears results, readings and context on deletion and restarts only through t
   fireEvent.click(screen.getByRole("button", { name: "빈 프로필로 새로 시작" }))
   await waitFor(() => expect(fixture.service.restartProfile).toHaveBeenCalledWith(tombstoneToken, "START_NEW_ORACLE_V2"))
   expect(fixture.service.snapshot().confirmedDocument).toEqual(emptyOracleV2Document())
-  fireEvent.click(screen.getByRole("radio", { name: "내 결과" }))
+  fireEvent.click(screen.getByRole("button", { name: "러닝 취향" }))
   expect(screen.getByRole("button", { name: "내 훈련 방식 알아보기 · 질문 3개" })).toBeEnabled()
   expect(resultScore(fixture.container)).toBeNull()
   fireEvent.click(contextButton())

@@ -3,6 +3,7 @@ import { AppHeading } from "../components/AppHeading"
 import { ArrowLeft, ArrowRight, BookOpen, Bookmark, Check, ChevronRight, Pencil, RotateCcw, Settings, Trash2, Users, X } from "lucide-react"
 import { InfoDisclosure } from "../components/InfoDisclosure"
 import { CategoryCard } from "../components/CategoryCard"
+import { OracleSectionNavigation } from "../components/OracleSectionNavigation"
 import { ProfileCompanion } from "../components/ProfileCompanion"
 import { PreferenceRadar } from "../components/PreferenceRadar"
 import { PreferenceCharacter } from "../components/PreferenceCharacter"
@@ -38,6 +39,7 @@ export type OracleProfileExperienceProps = {
   account: boolean
   status: "LOADING" | "READY" | "PENDING" | "CONFLICT" | "FAILED" | "DELETED"
   message?: string
+  accountActions?: React.ReactNode
   readTopic: (id: string, answers: OracleResponses) => OracleReadingDisplay
   renderTopicControls?: (id: string) => React.ReactNode
   onDraft: (answers: OracleResponses) => void
@@ -46,6 +48,7 @@ export type OracleProfileExperienceProps = {
   onDelete: () => Promise<boolean>
   onRetry: () => void
   onBack: () => void
+  onOpenTraining?: () => void
   onNavigate: (destination: OracleDestination) => void
   onContext?: () => void
   responsesDisabled?: boolean
@@ -222,7 +225,7 @@ export function OracleProfileExperience(props: OracleProfileExperienceProps) {
   const topic = topicId ? oracleContentTopic(topicId) : null
   const activeView = view === "saved" && props.readings.length === 0 ? (visibleScores.length > 0 ? "result" : "library") : view
   const viewTabs: readonly { readonly value: "result" | "library" | "saved"; readonly label: string }[] = [
-    { value: "result", label: "내 결과" }, { value: "library", label: "읽을거리" },
+    { value: "result", label: "내 결과" },
     ...(props.readings.length > 0 ? [{ value: "saved" as const, label: "보관함" }] : []),
   ]
   const learningDestination = topic && ["GLOSSARY", "EVIDENCE", "QUIZ", "EXAMPLE"].includes(topic.destination) ? topic.destination as OracleLearningDestination : null
@@ -235,9 +238,15 @@ export function OracleProfileExperience(props: OracleProfileExperienceProps) {
   }
   const sourceMessage = props.message || (props.account ? props.draftState === "EDITING" && props.status === "PENDING" ? "작성 중 · 이 기기에 임시 보관했어요. 응답을 마치면 계정에 저장해요." : ({ LOADING: "계정에서 불러오는 중", READY: "계정에 저장됨", PENDING: "계정으로 보내는 중", CONFLICT: "다른 곳에서 바뀐 응답을 확인해 주세요", FAILED: "계정 저장을 확인하지 못했어요", DELETED: "삭제된 프로필이에요" }[props.status]) : "게스트 · 임시 응답은 새로고침하면 사라져요.")
   return <section className="oracle-v2" data-reduced-motion={reduced ? "true" : undefined}>
-    <header className="oracle-v2__chrome"><button type="button" aria-label={props.backLabel ?? "오라클로 돌아가기"} title={props.backLabel ?? "오라클로 돌아가기"} onClick={props.onBack}><ArrowLeft size={18} /></button><strong className="app-chrome-title">{activeView === "library" ? "오라클 읽을거리" : activeView === "saved" ? "러닝 취향" : "러닝 취향"}</strong><span>오라클</span></header>
+    <OracleSectionNavigation current={activeView === "library" ? "library" : "profile"}
+      onBack={props.onBack} backLabel={props.backLabel ?? "오라클로 돌아가기"}
+      onSelect={section => {
+        if (section === "training") (props.onOpenTraining ?? props.onBack)()
+        else setView(section === "library" ? "library" : "result")
+      }} />
     <div className={`oracle-v2__body${activeView === "result" && visibleScores.length > 0 ? " oracle-v2__body--results" : ""}`}>
-      {(visibleScores.length > 0 || activeView !== "result") && <ViewSwitcher label="러닝 취향 보기" category="oracle"
+      {props.accountActions}
+      {props.readings.length > 0 && activeView !== "library" && <ViewSwitcher label="러닝 취향 보기" category="oracle"
         value={activeView} onValueChange={setView} options={viewTabs} className="oracle-v2__tabs" />}
       <p className="oracle-v2__status" role="status">{sourceMessage}</p>
       {props.onContext && props.responsesDisabled && <button type="button" disabled={busy || accountBlocked} onClick={props.onContext}>작성하던 추가 맥락 이어가기<ChevronRight size={16} /></button>}
@@ -260,7 +269,7 @@ export function OracleProfileExperience(props: OracleProfileExperienceProps) {
         {visibleScores.length === 0 ? <>
           <p className="oracle-v2__intro-scope">선택 사항 · 질문 3개로 계획 취향을 살펴봐요. 체력·실력 평가는 아니에요.</p>
           <div className="oracle-v2__entry-choices app-choice-group" role="group" aria-label="러닝 취향 시작 방법">
-            <button type="button" className="oracle-v2__primary app-choice-control" aria-label="내 훈련 방식 알아보기 · 질문 3개" disabled={blocked} onClick={() => openQuestions("STRUCTURE")}><span>질문 3개 답하기</span><ArrowRight size={18} aria-hidden="true" /></button>
+            <button type="button" className="oracle-v2__primary" aria-label="내 훈련 방식 알아보기 · 질문 3개" disabled={blocked} onClick={() => openQuestions("STRUCTURE")}><span>질문 3개 답하기</span><ArrowRight size={18} aria-hidden="true" /></button>
           </div>
         </> : <>
           {illustrationAllowed && !questionOpen && (profile.representative.id === "NEUTRAL" ? <ProfileCompanion mode="result" /> : <PreferenceCharacter key={profile.representative.id} axis={profile.representative.id} label={profile.representative.label} />)}
@@ -278,8 +287,6 @@ export function OracleProfileExperience(props: OracleProfileExperienceProps) {
         </>}
         </section>
         <div className="oracle-v2__secondary-actions" role="group" aria-label="러닝 취향 다른 메뉴">
-          {visibleScores.length === 0 && <CategoryCard category="oracle" icon={BookOpen} variant="row" title="읽을거리" onClick={() => setView("library")} />}
-          {visibleScores.length === 0 && props.readings.length > 0 && <CategoryCard category="journal" icon={Bookmark} variant="row" title="보관함" onClick={() => setView("saved")} />}
           <CategoryCard category="oracle" icon={Users} variant="row" title="친구와 취향 비교" onClick={() => props.onNavigate("FRIENDS")} />
           <CategoryCard category="oracle" icon={Settings} variant="row" title="프로필 설정·추가 정보" onClick={() => setSettingsOpen(true)} />
         </div>
@@ -288,9 +295,9 @@ export function OracleProfileExperience(props: OracleProfileExperienceProps) {
         <AppHeading variant="screen" accent>주제 골라 읽기</AppHeading>
         <ViewSwitcher label="읽을거리 주제" category="oracle" value={group} onValueChange={setGroup}
           options={groups.map(({ id, label }) => ({ value: id, label }))} className="oracle-v2__groups" />
-        <div className="oracle-v2__topics">{ORACLE_CONTENT_CATALOG.filter(item => item.group === group).map(item => <button type="button" key={item.id} onClick={() => setTopicId(item.id)}><span>{item.title}</span><ChevronRight size={16} /></button>)}</div>
+        <div className="oracle-v2__topics">{ORACLE_CONTENT_CATALOG.filter(item => item.group === group).map(item => <CategoryCard key={item.id} category="oracle" icon={BookOpen} variant="row" title={item.title} onClick={() => setTopicId(item.id)} />)}</div>
       </>}
-      {activeView === "saved" && <><AppHeading variant="screen" accent>보관한 풀이</AppHeading>{props.readings.map(item => <button className="oracle-v2__saved" type="button" key={item.source.revision} onClick={() => setSavedReading(item)}><span>{item.source.answeredAt.slice(0, 10)} · 당시 응답</span><ChevronRight size={16} /></button>)}</>}
+      {activeView === "saved" && <><AppHeading variant="screen" accent>보관한 풀이</AppHeading><div className="oracle-v2__topics">{props.readings.map(item => <CategoryCard category="oracle" icon={Bookmark} variant="row" title={`${item.source.answeredAt.slice(0, 10)} · 당시 응답`} key={item.source.revision} onClick={() => setSavedReading(item)} />)}</div></>}
     </div>
     {settingsOpen && <Reader title="프로필 설정" onClose={() => setSettingsOpen(false)}>{(_close, leave) => <>
         <aside className="oracle-v2__manager" aria-label="더 읽어보기">

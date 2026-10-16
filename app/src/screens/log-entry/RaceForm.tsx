@@ -250,8 +250,8 @@ function RaceFormEditor({ onBack, onExit, onDone, targetDate, initialEntry }: En
           <dl style={{ display: "grid", gap: 8, margin: 0 }}>
             {reviewItems.filter(item => item.answered).map((item) => (
               <div key={item.label} style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 2, borderBottom: "1px solid var(--line)", paddingBlock: 8 }}>
-                <dt style={{ fontSize: 11, color: "var(--ink-3)" }}>{item.label}</dt>
-                <dd style={{ margin: 0, fontSize: 14, color: "var(--ink)", overflowWrap: "anywhere" }}>{item.value}</dd>
+                <dt style={{ fontSize: "var(--fs-body-sm)", color: "var(--ink-3)" }}>{item.label}</dt>
+                <dd style={{ margin: 0, fontSize: "var(--fs-body)", color: "var(--ink)", overflowWrap: "anywhere" }}>{item.value}</dd>
               </div>
             ))}
           </dl>
@@ -281,7 +281,7 @@ function RaceFormEditor({ onBack, onExit, onDone, targetDate, initialEntry }: En
             <>
               <FormSec lb="기록">
                 <input aria-label="경기 기록" type="text" value={record} onChange={(event) => setRecord(event.target.value)} placeholder="16:42.18" style={{ ...inputStyle(), fontFamily: "var(--mono)", fontSize: 24, textAlign: "center", fontWeight: 500 }} />
-                <div style={{ marginTop: 8, fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-4)" }}>
+                <div style={{ marginTop: "var(--space-2)", fontFamily: "var(--sans)", fontSize: "var(--fs-body-sm)", color: "var(--ink-3)", lineHeight: 1.5 }}>
                   분:초 형식으로 적어요 · PB<TermHelp term="pb" /> 비교는 기록이 쌓이면 보여줘요
                 </div>
               </FormSec>
@@ -321,11 +321,11 @@ function RaceHeader({
     <div style={{ padding: "14px 20px 0" }}>
       <div style={{ border: "2px solid var(--ink-blue)", padding: "12px 14px", background: "var(--paper)", display: "grid", gridTemplateColumns: "1fr auto", gap: 12, alignItems: "baseline" }}>
         <div>
-          <div style={{ fontFamily: "var(--mono)", fontSize: 10.5, fontWeight: 600, color: "var(--ink-blue)" }}>RACE DAY</div>
+          <div style={{ fontFamily: "var(--mono)", fontSize: "var(--fs-body-sm)", fontWeight: 600, color: "var(--ink-blue)" }}>RACE DAY</div>
           <div style={{ fontFamily: "var(--sans)", fontSize: 16, fontWeight: 500, marginTop: 4, color: "var(--ink)" }}>
             {isToday ? "오늘의 경기" : "이 날짜의 경기"}
           </div>
-          <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)", marginTop: 2 }}>{compactDate(date)} {dowOf(date)} · {nowClock()}</div>
+          <div style={{ fontFamily: "var(--mono)", fontSize: "var(--fs-body-sm)", color: "var(--ink-3)", lineHeight: 1.5, marginTop: "var(--space-1)" }}>{compactDate(date)} {dowOf(date)} · {nowClock()}</div>
         </div>
         <Stamp kind="brand">D-0</Stamp>
       </div>

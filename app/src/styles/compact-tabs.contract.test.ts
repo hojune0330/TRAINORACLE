@@ -1,5 +1,10 @@
 import { readFileSync } from "node:fs"
-import { describe, expect, it } from "vitest"
+import { createElement } from "react"
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
+import { afterEach, describe, expect, it, vi } from "vitest"
+import { ViewSwitcher } from "../components/ViewSwitcher"
+
+afterEach(cleanup)
 
 const compactTabsCss = readFileSync("src/styles/compact-tabs.css", "utf8")
 const tokens = readFileSync("../colors_and_type.css", "utf8")
@@ -31,18 +36,34 @@ describe("compact tab density", () => {
     expect(compactTabsCss).not.toContain(".decoration-shop--open")
   })
 
-  it("uses the shared density rule on every audited tab surface", () => {
+  it("uses the audited tab surfaces and keeps the journal view switcher controlled", () => {
     for (const path of compactTabSurfaces) {
       const source = readFileSync(path, "utf8")
       expect(source, path).toContain("app-compact-tabs")
       expect(source, path).toContain("app-compact-tab")
     }
-    // The approved journal view uses the common choice controls instead of tabs.
+    // Journal sections remain pressed buttons; its view mode uses controlled radios.
     const journal = readFileSync("src/screens/JournalArchive.tsx", "utf8")
     expect(journal).toContain("app-choice-group")
     expect(journal).toContain("app-choice-control")
-    expect(journal).toContain('aria-pressed={activeMode === "CALENDAR"}')
-    expect(journal).toContain('aria-pressed={activeMode === "CYCLE"}')
+    expect(journal).toMatch(/<ViewSwitcher\s+label="일지 보기 방식"\s+category="journal"\s+value=\{activeMode\}\s+onValueChange=\{changeMode\}/u)
+    expect(journal).toContain('{ value: "CALENDAR", label: "월간 달력", icon: CalendarDays }')
+    expect(journal).toContain('{ value: "CYCLE", label: "기록 묶음", icon: Layers }')
+
+    const changeMode = vi.fn()
+    render(createElement(ViewSwitcher<"CALENDAR" | "CYCLE">, {
+      label: "일지 보기 방식", category: "journal", value: "CYCLE", onValueChange: changeMode,
+      options: [{ value: "CALENDAR", label: "월간 달력" }, { value: "CYCLE", label: "기록 묶음" }],
+    }))
+    const modes = screen.getByRole("radiogroup", { name: "일지 보기 방식" })
+    const calendar = within(modes).getByRole("radio", { name: "월간 달력" })
+    const cycle = within(modes).getByRole("radio", { name: "기록 묶음" })
+    expect(calendar).toHaveAttribute("aria-checked", "false")
+    expect(cycle).toHaveAttribute("aria-checked", "true")
+    fireEvent.click(calendar)
+    expect(changeMode).toHaveBeenCalledExactlyOnceWith("CALENDAR")
+    expect(cycle).toHaveAttribute("aria-checked", "true")
+    expect(within(modes).queryByRole("tab")).toBeNull()
   })
 
   it("does not apply the compact rule to answer controls", () => {

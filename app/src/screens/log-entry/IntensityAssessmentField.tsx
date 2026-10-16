@@ -5,6 +5,7 @@ import type { ObjectiveLoadComponent, SessionIntensityAssessment } from "../../d
 import { IntensitySummaryPanel } from "./IntensitySummaryPanel"
 import { ObjectiveComponentEditor } from "./ObjectiveComponentEditor"
 import { FormSec } from "./shared"
+import { JournalNumberScale } from "./JournalNumberScale"
 
 export type IntensityAssessmentController = {
   readonly plannedRpe: number
@@ -67,24 +68,8 @@ export function IntensityAssessmentField({
         help="rpe"
         onTouch={touchOf("planned-rpe")}
       >
-        <div className="journal-ten-scale" style={{ display: "grid", gap: 0, border: "1px solid var(--ink)" }}>
-          {Array.from({ length: 10 }, (_, index) => index + 1).map((value) => (
-            <button
-              key={value}
-              type="button"
-              aria-label={`예상 강도 ${value}`}
-              aria-pressed={controller.plannedRpe === value}
-              onClick={() => controller.setPlannedRpe(controller.plannedRpe === value ? 0 : value)}
-              style={{
-                minHeight: 44, padding: "12px 0", border: 0, cursor: "pointer",
-                background: controller.plannedRpe === value ? "var(--ink)" : "transparent",
-                color: controller.plannedRpe === value ? "var(--bg)" : "var(--ink)",
-                fontFamily: "var(--mono)", fontSize: 12, fontWeight: 500,
-                borderRight: value < 10 ? "1px solid var(--line)" : 0,
-              }}
-            >{value}</button>
-          ))}
-        </div>
+        <JournalNumberScale label="예상 강도" selected={controller.plannedRpe}
+          onSelect={value => controller.setPlannedRpe(controller.plannedRpe === value ? 0 : value)} />
       </FormSec>
       {/*
         객관 기록은 아무것도 안 넣어도 393px 다 — 훈련 후 일지 길이의 29%.

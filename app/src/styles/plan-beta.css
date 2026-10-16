@@ -3244,22 +3244,24 @@
 .active-plan__actions button {
   min-width: 0;
   min-height: var(--app-touch-min);
-  padding: var(--space-1);
+  padding: var(--space-2);
   border: var(--bw-line) solid var(--hair);
+  border-radius: var(--r-action);
   background: transparent;
-  color: var(--ink-3);
+  color: var(--ink-2);
   cursor: pointer;
   display: grid;
   place-items: center;
   gap: var(--space-1);
   font-family: var(--sans);
   font-size: var(--fs-body-sm);
+  font-weight: 600;
 }
 
 .active-plan__actions button[aria-pressed="true"] {
-  border-color: var(--ink);
-  background: var(--surface-2);
-  color: var(--ink);
+  border-color: var(--category-training);
+  background: var(--category-training-wash);
+  color: var(--category-training);
 }
 
 .active-plan__actions .active-plan__journal-progress-action {
@@ -4034,7 +4036,7 @@
 
 .plan-result-header h1 {
   margin: 0;
-  font-size: var(--fs-app-section-title);
+  font-size: var(--fs-app-title);
   overflow-wrap: anywhere;
 }
 

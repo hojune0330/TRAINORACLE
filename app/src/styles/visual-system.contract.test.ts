@@ -208,14 +208,14 @@ describe("shared visual system", () => {
   })
 
   it("centers the analysis chrome between equal flexible tracks while keeping both tools touch-safe", () => {
-    const trends = readFileSync("src/screens/Trends.tsx", "utf8")
-    const css = readFileSync("src/screens/trends/trends-hub.css", "utf8")
+    const trends = readFileSync("src/components/OracleSectionNavigation.tsx", "utf8")
+    const css = readFileSync("src/styles/oracle-section-navigation.css", "utf8")
 
-    expect(trends).toContain('className="trends-hub__header"')
-    expect(trends).toContain('className="app-chrome-title">오라클</h1>')
+    expect(trends).toContain('className="oracle-section-header"')
+    expect(trends).toContain('className="app-chrome-title">오라클</Title>')
     expect(css).toContain("grid-template-columns: minmax(64px, 1fr) auto minmax(64px, 1fr)")
     expect(css).toContain("min-height: var(--app-touch-min)")
-    expect(css).toContain(".trends-hub__back span { white-space: nowrap; }")
-    expect(css).toContain(".trends-hub__pace { justify-self: end; }")
+    expect(css).toContain(".oracle-section-header__back span { white-space: nowrap; }")
+    expect(css).toContain(".oracle-section-header .oracle-section-header__pace { justify-self: end; }")
   })
 })

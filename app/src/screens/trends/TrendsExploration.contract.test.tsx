@@ -97,13 +97,13 @@ describe("Trends exploration hub", () => {
     render(<Trends onOpenOracle={onOpenOracle} />)
 
     expect(screen.getByRole("heading", { name: "오라클", level: 1 })).toBeVisible()
-    expect(screen.getByRole("group", { name: "오라클 항목" })).toBeVisible()
-    expect(screen.getAllByRole("button", { name: /^(내 훈련|러닝 취향|읽을거리·관심)$/u })).toHaveLength(3)
+    expect(screen.getByRole("navigation", { name: "오라클 항목" })).toBeVisible()
+    expect(screen.getAllByRole("button", { name: /^(내 훈련|러닝 취향|읽을거리)$/u })).toHaveLength(3)
     expect(screen.getByText("예시 · 내 기록 분석이 아니에요")).toBeVisible()
 
     expect(screen.queryAllByRole("button", { name: / · 결과 보기$/u })).toHaveLength(0)
     expect(screen.getByRole("button", { name: "예시 결과 보기" })).toHaveAccessibleDescription("예시 · 내 기록 분석이 아니에요")
-    await user.click(screen.getByRole("button", { name: "읽을거리·관심" }))
+    await user.click(screen.getByRole("button", { name: "읽을거리" }))
     expect(screen.getByText("내 관심 주제·기록할 요일")).toBeVisible()
     const topicButtons = screen.getAllByRole("button", { name: /결과 보기/u })
     expect(topicButtons).toHaveLength(ORACLE_TOPICS.length)
@@ -169,10 +169,10 @@ describe("Trends exploration hub", () => {
     expect(onOpenRunningProfile).toHaveBeenCalledOnce()
     expect(screen.queryByRole("button", { name: "러닝 취향 보기" })).toBeNull()
 
-    await user.click(screen.getByRole("button", { name: "읽을거리·관심" }))
+    await user.click(screen.getByRole("button", { name: "읽을거리" }))
     expect(onOpenOracleLibrary).toHaveBeenCalledOnce()
     expect(onOracleSectionChange).not.toHaveBeenCalled()
-    expect(screen.getByRole("button", { name: "내 훈련" })).toHaveAttribute("aria-pressed", "true")
+    expect(screen.getByRole("button", { name: "내 훈련" })).toHaveAttribute("aria-current", "page")
   })
 
   it("keeps the V1 reading section useful without claiming the V2 library is available", async () => {
@@ -180,7 +180,7 @@ describe("Trends exploration hub", () => {
     const onOpenTrainingContent = vi.fn()
     render(<Trends onOpenTrainingContent={onOpenTrainingContent} />)
 
-    await user.click(screen.getByRole("button", { name: "읽을거리·관심" }))
+    await user.click(screen.getByRole("button", { name: "읽을거리" }))
     expect(screen.queryByText("읽을거리 56편 · 8개 주제 묶음")).not.toBeInTheDocument()
     expect(onOpenTrainingContent).toHaveBeenCalledOnce()
   })
@@ -189,11 +189,11 @@ describe("Trends exploration hub", () => {
     const user = userEvent.setup()
     const legacy = vi.fn(), v2 = vi.fn()
     const { rerender } = render(<Trends onOpenTrainingContent={legacy} onOpenOracleLibrary={v2} />)
-    await user.click(screen.getByRole("button", { name: "읽을거리·관심" }))
+    await user.click(screen.getByRole("button", { name: "읽을거리" }))
     expect(legacy).toHaveBeenCalledOnce()
     expect(v2).not.toHaveBeenCalled()
     rerender(<Trends oracleV2Enabled onOpenTrainingContent={legacy} onOpenOracleLibrary={v2} />)
-    await user.click(screen.getByRole("button", { name: "읽을거리·관심" }))
+    await user.click(screen.getByRole("button", { name: "읽을거리" }))
     expect(v2).toHaveBeenCalledOnce()
   })
 
@@ -202,7 +202,7 @@ describe("Trends exploration hub", () => {
     const onContextChange = vi.fn()
     render(<Trends initialOracleSection="training" initialContext={{ section: "monthly", metric: "MOOD", savedDate: "2026-10-05" }} onContextChange={onContextChange} />)
 
-    expect(screen.getByRole("button", { name: "내 훈련" })).toHaveAttribute("aria-pressed", "true")
+    expect(screen.getByRole("button", { name: "내 훈련" })).toHaveAttribute("aria-current", "page")
     await chooseDetail(user, "월별 변화")
     expect(onContextChange).toHaveBeenLastCalledWith({ section: "monthly", metric: "MOOD", savedDate: "2026-10-05" })
     expect(screen.getByText("2026-10-05에 저장한 기분을 월별 기록과 함께 볼 수 있어요.")).toBeVisible()

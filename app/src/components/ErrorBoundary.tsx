@@ -201,7 +201,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
 
         {this.state.detail !== "" && (
           <details style={{ ...mono, fontSize: 10.5, color: "var(--ink-4, #8A8578)" }}>
-            <summary style={{ cursor: "pointer", minHeight: 32 }}>기술 정보</summary>
+            <summary style={{ cursor: "pointer", minHeight: 44 }}>기술 정보</summary>
             <pre style={{ whiteSpace: "pre-wrap", wordBreak: "break-word", margin: "8px 0 0" }}>
               {this.state.detail}
             </pre>

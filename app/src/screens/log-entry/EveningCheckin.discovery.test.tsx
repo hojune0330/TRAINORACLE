@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { EveningCheckin } from "./EveningCheckin"
 import { EntryChooser } from "./EntryChooser"
 import { loadEntries, saveEntry } from "../../domain/journal-store"
@@ -92,6 +92,9 @@ it("keeps each selected answer in a concise review instead of rendering the full
   fireEvent.click(screen.getByRole("button", { name: "기분" }))
   expect(screen.getByRole("heading", { level: 2, name: "오늘 기분" })).toBeVisible()
   fireEvent.click(screen.getByRole("button", { name: "기분 4 좋음" }))
+  const selectedMood = screen.getByRole("button", { name: "기분 4 좋음" })
+  expect(selectedMood).toHaveAttribute("aria-pressed", "true")
+  expect(within(selectedMood).getByText("좋음").style.color).toBe("inherit")
   fireEvent.click(screen.getByRole("button", { name: "입력 확인으로" }))
 
   expect(screen.getByRole("heading", { level: 2, name: "입력 확인" })).toBeVisible()

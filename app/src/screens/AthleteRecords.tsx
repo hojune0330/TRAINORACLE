@@ -1,5 +1,7 @@
 import React from "react"
-import { ArrowLeft, ArrowRight, CalendarDays, Save } from "lucide-react"
+import { ArrowLeft, ArrowRight, Calculator, CalendarDays, Save } from "lucide-react"
+import { AppHeading } from "../components/AppHeading"
+import { CategoryCard } from "../components/CategoryCard"
 import { InfoDisclosure } from "../components/InfoDisclosure"
 import { useActiveContentScroll } from "../hooks/useActiveContentScroll"
 import { useAppOverlayNavigation } from "../components/AppOverlayNavigation"
@@ -300,18 +302,17 @@ export function AthleteRecords({ onBack, onSaved, backLabel = "계획으로", in
   return (
     <section className="athlete-records" aria-labelledby="athlete-records-title">
       <header className="athlete-records-header">
-        <button className="plan-back" type="button" onClick={() => runDraftSafeNavigation(onBack, preserveMountedDraftsOnBack)}>
+        <button className="athlete-record-back" type="button" onClick={() => runDraftSafeNavigation(onBack, preserveMountedDraftsOnBack)}>
           <ArrowLeft aria-hidden="true" size={17} />
           {backLabel}
         </button>
-        <div className="plan-eyebrow">내 경기 기록</div>
-        <h1 id="athlete-records-title" ref={headingRef} tabIndex={-1}>{stepHeading}</h1>
+        <AppHeading as="h1" variant="screen" accent id="athlete-records-title" ref={headingRef} tabIndex={-1}>{stepHeading}</AppHeading>
       </header>
 
       {updateRecord && <PacePlanUpdateNotice record={updateRecord} explicitPaceBasis={explicitPaceBasis} onDone={() => { setUpdateRecord(null); setExplicitPaceBasis(false); onBack() }} />}
       {storageMessage && <p role="status">{storageMessage}</p>}
-      {lastSavedRecord && !unsafeDraft.current && !updateRecord && navigation?.openPaceCalculator && <button type="button" className="athlete-record-next"
-        onClick={() => navigation.openPaceCalculator?.({ record: lastSavedRecord })}>이 기록으로 페이스 보기<ArrowRight size={18} aria-hidden="true" /></button>}
+      {lastSavedRecord && !unsafeDraft.current && !updateRecord && navigation?.openPaceCalculator && <CategoryCard category="training" icon={Calculator} variant="row" className="athlete-record-next"
+        title="이 기록으로 페이스 보기" onClick={() => navigation.openPaceCalculator?.({ record: lastSavedRecord })} />}
       {pendingRecord && <button type="button" disabled={saving} onClick={() => void retryPending()}>계정 저장 다시 확인</button>}
 
       {updateRecord === null && <>
@@ -411,7 +412,7 @@ export function AthleteRecords({ onBack, onSaved, backLabel = "계획으로", in
         aria-label="저장한 경기 기록"
       >
         <div className="athlete-record-list-heading">
-          <h2>저장한 기록</h2>
+          <AppHeading as="h2" variant="section">저장한 기록</AppHeading>
           <span>{records.length}개</span>
         </div>
         {records.length === 0 ? (

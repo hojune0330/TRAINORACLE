@@ -20,7 +20,7 @@
   width: var(--app-touch-min);
   height: var(--app-touch-min);
   border: var(--bw-line) solid var(--line);
-  border-radius: var(--r-md);
+  border-radius: var(--r-action);
   background: transparent;
   color: var(--ink);
   display: grid;

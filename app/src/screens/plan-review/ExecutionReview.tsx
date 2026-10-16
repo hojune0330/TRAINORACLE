@@ -118,8 +118,8 @@ export function ExecutionReviewReader({ review, article, originalMethod, onOpenJ
   }, returnFocusTo)
   const journalFirst = review && ["SAFETY_REVIEW", "SOURCE_UNAVAILABLE", "CONFLICT"].includes(review.status)
   return createPortal(<dialog ref={dialog} className="plan-day-reader execution-review-reader" aria-labelledby={`${tabId}-title`} onCancel={event => { event.preventDefault(); close() }}>
-    <header className="plan-day-reader__header"><button type="button" onClick={close} aria-label="훈련 코칭으로 돌아가기"><ArrowLeft size={20} aria-hidden="true" /></button>
-      <div><span>{review ? `${review.date} · ${review.slot}${review.recordLabel ? ` · ${review.recordLabel}` : ""}` : "훈련 코칭 · 일반 안내"}</span><h2 id={`${tabId}-title`}>{review?.title ?? article?.title}</h2></div>
+    <header className="plan-day-reader__header"><button type="button" onClick={close} aria-label={review ? "훈련 코칭으로 돌아가기" : "훈련법 목록으로 돌아가기"}><ArrowLeft size={20} aria-hidden="true" /></button>
+      <div><span>{review ? `${review.date} · ${review.slot}${review.recordLabel ? ` · ${review.recordLabel}` : ""}` : "훈련법 · 일반 안내"}</span><h2 id={`${tabId}-title`}>{review?.title ?? article?.title}</h2></div>
     </header>
     {review && <div className="execution-review__navigation">
       <div className="execution-review__tabs app-choice-group" role="tablist" aria-label="훈련 비교 내용">{VIEWS.map((item, index) => <button className="app-choice-control" type="button" role="tab" key={item}

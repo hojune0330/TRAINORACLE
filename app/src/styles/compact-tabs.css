@@ -54,6 +54,7 @@
 
 .app-compact-tab:is([aria-pressed="true"], [aria-selected="true"], [aria-current="page"]) {
   color: var(--bg) !important;
+  font-weight: 700;
 }
 
 .app-compact-tab:is([aria-pressed="true"], [aria-selected="true"], [aria-current="page"])::before {
@@ -66,7 +67,9 @@
   outline-offset: 2px;
 }
 
-.app-compact-tab:not(:disabled):hover::before { border-color: var(--ink-2); }
+@media (hover: hover) and (pointer: fine) {
+  .app-compact-tab:not(:disabled):hover::before { border-color: var(--ink-2); }
+}
 .app-compact-tab:disabled { cursor: default; opacity: .55; }
 
 .journal-archive__mode-tabs,

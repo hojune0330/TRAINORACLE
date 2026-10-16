@@ -15,24 +15,28 @@ import type { RetainedMultiAdjustedEvidenceV3 } from "../../domain/selected-mult
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); localStorage.clear() })
 
-it("shows a useful general article immediately when reviews are empty and returns without writing a record", async () => {
+it("opens a general article from its whole card and returns focus without writing a record", async () => {
   vi.spyOn(store, "loadEntriesForPlanSafety").mockReturnValue({ status: "complete", entries: [] })
   const before = { ...localStorage }
   render(<HomeCoachingSummary revision={0} />)
   const heading = screen.getByRole("heading", { name: "훈련법 읽기" })
   expect(heading).toBeVisible()
   expect(screen.getByText("일반 훈련 정보")).toBeVisible()
-  expect(screen.getByText("무엇이 달라졌는지부터 나눠 봐요.")).toBeVisible()
+  expect(screen.queryByText("무엇이 달라졌는지부터 나눠 봐요.")).toBeNull()
   expect(screen.queryByText(/같은 거리를 뛰어도 연속 달리기와 회복을 넣은 반복 달리기는 구성이 달라요/)).toBeNull()
   expect(screen.queryByText(/계획에서 운동을 기록하면/)).toBeNull()
-  expect(screen.getByRole("button", { name: /계획과 다르게 운동했다면/ })).toBeVisible()
-  fireEvent.click(screen.getByRole("button", { name: /계획과 다르게 운동했다면/ }))
+  const article = screen.getByRole("button", { name: /계획과 다르게 운동했다면/ })
+  expect(article).toHaveTextContent("일반 훈련 정보")
+  expect(article).toBeVisible()
+  expect(screen.queryByRole("button", { name: "계속 읽기" })).toBeNull()
+  fireEvent.click(article)
   expect(screen.getByRole("dialog")).toBeVisible()
+  expect(screen.getByText("훈련법 · 일반 안내")).toBeVisible()
   expect(screen.getByText(/같은 거리를 뛰어도 연속 달리기와 회복을 넣은 반복 달리기는 구성이 달라요/)).toBeVisible()
   expect(screen.getByText(/개인의 훈련이나 몸 상태를 분석한 결과는 아니에요/)).toBeVisible()
-  fireEvent.click(screen.getByRole("button", { name: "훈련 코칭으로 돌아가기" }))
+  fireEvent.click(screen.getByRole("button", { name: "훈련법 목록으로 돌아가기" }))
   await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull())
-  expect(heading).toHaveFocus()
+  expect(article).toHaveFocus()
   expect({ ...localStorage }).toEqual(before)
 })
 

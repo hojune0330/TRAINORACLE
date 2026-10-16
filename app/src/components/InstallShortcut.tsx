@@ -445,10 +445,11 @@ export function InstallShortcutSuggestion({
         type="button"
         className="install-shortcut-suggestion__open"
         id={compact ? titleId : undefined}
+        aria-label={compact ? `앱 추가 · ${label}` : undefined}
         title={compact ? "추가 방법 보기" : undefined}
         onClick={(event) => controller.openDialog(event.currentTarget, returnFocusTo)}
       >
-        {compact ? <><Smartphone size={18} aria-hidden="true" /><span>{label}</span></> : "추가 방법 보기"}
+        {compact ? <><Smartphone size={18} aria-hidden="true" /><span>앱 추가</span></> : "추가 방법 보기"}
       </button>
     </section>
   )

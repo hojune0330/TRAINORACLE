@@ -1,5 +1,5 @@
 import type { ReactNode } from "react"
-import { ChevronRight } from "lucide-react"
+import { Check, ChevronRight } from "lucide-react"
 
 export function PlanChoice({
   title,
@@ -34,7 +34,7 @@ export function PlanChoice({
         <strong>{title}{recommended && <em className="plan-choice__badge">추천</em>}</strong>
         <small>{detail}</small>
       </span>
-      <ChevronRight aria-hidden="true" size={18} />
+      {selected ? <Check aria-hidden="true" size={18} /> : <ChevronRight aria-hidden="true" size={18} />}
     </button>
   )
   if (help === undefined) return button

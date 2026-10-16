@@ -3,25 +3,22 @@
 .pace-tool h2 { font-size: 18px; margin: 16px 0 12px; }
 .pace-tool button, .pace-tool input, .pace-tool select { font: inherit; min-height: 44px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: var(--r-action); }
 .pace-tool button { padding: 10px 12px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
-.pace-tool button:hover:not(:disabled) { background: var(--surface-2); }
 .pace-tool button:disabled { opacity: .5; cursor: default; }
 .pace-tool :focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; }
 .pace-tool__header { display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--ink-3); }
 .pace-tool__header button { width: 44px; padding: 0; flex-shrink: 0; }
 .pace-tool__header > span { flex: 1; min-width: 0; }
-.pace-tool__choices, .pace-tool__tools { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-.pace-tool__choices button, .pace-tool__tools button { justify-content: space-between; text-align: left; }
+.pace-tool__choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.pace-tool__choices button { justify-content: space-between; text-align: left; }
 .pace-tool__choices button { min-height: 52px; border-radius: var(--r-task-surface); }
-.pace-tool__tools { margin-top: 24px; }
-.pace-tool__tools button { min-height: 60px; }
-.pace-tool__tool-copy { display: grid; flex: 1; min-width: 0; gap: 2px; }
-.pace-tool__tool-copy > span { overflow-wrap: anywhere; }
-.pace-tool__tool-copy small { color: var(--ink-3); font-size: 12px; line-height: 1.35; }
+.pace-tool__tools { margin-top: var(--space-6); }
+.pace-tool button.category-shortcut { flex-direction: column; min-height: 88px; padding: var(--space-2) var(--space-1); border: 0; background: transparent; }
+.pace-tool button.category-shortcut:active { background: var(--category-wash); }
 .pace-tool__clock { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 24px; }
 .pace-tool__clock label { display: flex; flex-direction: column; gap: 8px; color: var(--ink-3); }
 .pace-tool__clock input { min-width: 0; width: 100%; box-sizing: border-box; padding: 12px 8px; font-size: 24px; font-variant-numeric: tabular-nums; }
 .pace-tool .pace-tool__primary { background: var(--brand); color: var(--surface); border-color: var(--brand); width: 100%; margin: 12px 0; }
-.pace-tool .pace-tool__primary:hover:not(:disabled) { background: var(--brand-ink); }
+.pace-tool__lock[aria-pressed="true"] { background: var(--brand); border-color: var(--brand); color: var(--surface); }
 .pace-tool__source { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding-bottom: 20px; border-bottom: 1px solid var(--line); }
 .pace-tool__source strong, .pace-tool__source > span { width: 100%; }
 .pace-tool__source strong { font-size: 18px; }
@@ -50,4 +47,9 @@
 .pace-tool__footer svg, .pace-tool__tools svg { flex-shrink: 0; }
 .pace-tool > p, .pace-tool__selection p { font-size: 14px; line-height: 1.7; overflow-wrap: anywhere; }
 @media (max-width: 360px) { .pace-tool { padding: 12px 16px 24px; } .pace-tool__results dd { font-size: 20px; } }
+@media (hover: hover) and (pointer: fine) {
+  .pace-tool button:hover:not(:disabled):not(.category-shortcut):not([aria-pressed="true"]) { background: var(--surface-2); }
+  .pace-tool .pace-tool__primary:hover:not(:disabled) { background: var(--brand-ink); }
+  .pace-tool button.category-shortcut:hover { background: var(--category-wash); }
+}
 @media (prefers-reduced-motion: no-preference) { .pace-tool__results { animation: pace-result-appear 160ms ease-out; } @keyframes pace-result-appear { from { opacity: .5; transform: translateY(4px); } to { opacity: 1; transform: none; } } }

@@ -1,6 +1,7 @@
 import { MoodStrip } from "../../components/JournalPrimitives"
 import { inputStyle } from "./input-style"
 import { FormSec } from "./shared"
+import { JournalNumberScale } from "./JournalNumberScale"
 
 const MOOD_LABELS = ["흐림", "무덤덤", "보통", "좋음", "최고"] as const
 
@@ -65,7 +66,7 @@ export function RacePreChecks({
           <span style={unitStyle}>초/km</span>
         </div>
         {paceError !== null && (
-          <div role="alert" style={{ marginTop: 7, fontFamily: "var(--mono)", fontSize: 10, color: "var(--pain-5)" }}>
+          <div role="alert" style={{ marginTop: "var(--space-2)", fontFamily: "var(--sans)", fontSize: "var(--fs-body-sm)", lineHeight: 1.5, color: "var(--pain-5)" }}>
             {paceError}
           </div>
         )}
@@ -86,50 +87,26 @@ export function RacePostMood({ selected, onSelect }: {
 }
 
 function NumberToggleScale({ label, length, selected, onSelect }: ToggleScaleProps) {
-  return (
-    <div role="group" aria-label={label} className={length === 10 ? "journal-ten-scale" : undefined} style={{ display: "grid", gridTemplateColumns: length === 10 ? undefined : `repeat(${length}, 1fr)`, border: "1px solid var(--ink)" }}>
-      {Array.from({ length }, (_, index) => index + 1).map((value) => (
-        <button
-          key={value}
-          type="button"
-          aria-label={`${label} ${value}`}
-          aria-pressed={selected === value}
-          onClick={() => onSelect(selected === value ? null : value)}
-          style={{
-            minWidth: 0, minHeight: 44, padding: "12px 0", border: 0,
-            background: selected === value ? "var(--ink-blue)" : "transparent",
-            color: selected === value ? "#fff" : "var(--ink)",
-            borderRight: value < length ? "1px solid var(--line)" : 0,
-            fontFamily: "var(--mono)", fontSize: 12, cursor: "pointer",
-          }}
-        >{value}</button>
-      ))}
-    </div>
-  )
+  return <JournalNumberScale label={label} length={length} selected={selected}
+    onSelect={value => onSelect(selected === value ? null : value)} />
 }
 
 function MoodToggleScale({ label, selected, onSelect }: Omit<ToggleScaleProps, "length">) {
   return (
-    <div role="group" aria-label={label} style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 4 }}>
+    <div role="group" aria-label={label} className="journal-mood-scale app-choice-group">
       {MOOD_LABELS.map((moodLabel, index) => {
         const value = index + 1
         return (
           <button
             key={moodLabel}
             type="button"
+            className="app-choice-control journal-mood-scale__option"
             aria-label={`${label} ${value}`}
             aria-pressed={selected === value}
             onClick={() => onSelect(selected === value ? null : value)}
-            style={{
-              minWidth: 0, minHeight: 44, padding: "14px 2px 10px",
-              background: selected === value ? "var(--surface)" : "transparent",
-              border: selected === value ? "1px solid var(--ink)" : "1px solid var(--line)",
-              display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
-              cursor: "pointer", borderRadius: 0,
-            }}
           >
             <MoodStrip level={value} />
-            <span style={{ fontFamily: "var(--mono)", fontSize: 9, color: "var(--ink-3)" }}>{moodLabel}</span>
+            <span>{moodLabel}</span>
           </button>
         )
       })}
@@ -139,7 +116,7 @@ function MoodToggleScale({ label, selected, onSelect }: Omit<ToggleScaleProps, "
 
 const unitStyle = {
   fontFamily: "var(--mono)",
-  fontSize: 10,
+  fontSize: "var(--fs-body-sm)",
   color: "var(--ink-3)",
   whiteSpace: "nowrap",
 } as const

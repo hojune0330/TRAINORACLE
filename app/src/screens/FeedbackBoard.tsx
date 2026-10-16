@@ -1,5 +1,6 @@
 import React from "react"
 import { ArrowLeft, ChevronRight, MessageSquarePlus, RefreshCcw, Send } from "lucide-react"
+import { AppHeading } from "../components/AppHeading"
 import { feedbackConfig } from "../domain/feedback/feedback-config"
 import { feedbackGateway } from "../domain/feedback/feedback-service"
 import type { FeedbackCategory, FeedbackGateway, FeedbackThread } from "../domain/feedback/feedback-types"
@@ -53,7 +54,7 @@ export function FeedbackBoard({
         )}
         <div>
           <span>TRAINORACLE</span>
-          <h1>문의 게시판</h1>
+          <AppHeading as="h1" variant="screen">문의 게시판</AppHeading>
         </div>
       </header>
 

@@ -1,5 +1,7 @@
 import React from "react"
-import { Activity, ArrowLeft, ArrowRight, BookOpen, Calculator, ChartColumn, Check, Heart, Layers, CalendarDays, FileChartColumn, TrendingUp } from "lucide-react"
+import { ArrowRight, ChartColumn, Check, Layers, CalendarDays, FileChartColumn, TrendingUp } from "lucide-react"
+import { OracleSectionNavigation, type OracleHubSection } from "../components/OracleSectionNavigation"
+export type { OracleHubSection } from "../components/OracleSectionNavigation"
 import { CategoryCard, CategoryDisclosure, CategoryIcon } from "../components/CategoryCard"
 import { useAppOverlayNavigation } from "../components/AppOverlayNavigation"
 import { projectStructuredJournalObservations } from "../domain/journal-observation"
@@ -40,12 +42,6 @@ const ANALYSIS_SECTIONS = [
   { id: "monthly", label: "월별 변화", description: "거리·페이스·기분·통증", icon: CalendarDays },
   { id: "files", label: "파일 분석", description: "운동 파일의 구간 기록", icon: FileChartColumn },
 ] as const
-const ORACLE_SECTIONS = [
-  { id: "training", label: "내 훈련", icon: Activity },
-  { id: "profile", label: "러닝 취향", icon: Heart },
-  { id: "library", label: "읽을거리", icon: BookOpen },
-] as const
-export type OracleHubSection = (typeof ORACLE_SECTIONS)[number]["id"]
 
 export function Trends({ onBack, onWriteLog, onOpenImport, onOpenRecords, onWriteRecovery, onOpenPlan, onOpenOracle, onOpenRecordReading, onOpenRunningProfile, onOpenOracleLibrary, onOpenTrainingContent, onOpenCoachingDay, oracleV2Enabled = false, journalReadComplete, initialContext, initialOracleSection, onOracleSectionChange, onContextChange }: {
   readonly onBack?: (() => void) | undefined
@@ -147,21 +143,14 @@ export function Trends({ onBack, onWriteLog, onOpenImport, onOpenRecords, onWrit
 
   return (
     <div className="trends-hub">
-      <TrendsHeader onBack={onBack} onPace={navigation?.openPaceCalculator ? () => navigation.openPaceCalculator?.() : undefined} />
+      <OracleSectionNavigation current={section} onBack={onBack} heading onSelect={target => {
+        const destination = destinationFor(target)
+        if (destination) { destination(); return }
+        setSection(target); onOracleSectionChange?.(target)
+      }} />
       <div className="trends-motion-stage">
         {showGuide && <TaskGuide className="trends-hub__guide" title={guideTitle}
           illustration={section === "training" && readComplete && detail === "summary" && !hasSummary ? "analysis-lens" : undefined} />}
-        <div className="trends-hub__sections app-choice-group" role="group" aria-label="오라클 항목">
-          {ORACLE_SECTIONS.map(item => (
-            <button className="app-choice-control category-choice" data-category="oracle" key={item.id} type="button" aria-pressed={section === item.id}
-              aria-label={item.id === "library" ? "읽을거리·관심" : undefined}
-              onClick={() => {
-                const destination = destinationFor(item.id)
-                if (destination) { destination(); return }
-                setSection(item.id); onOracleSectionChange?.(item.id)
-              }}><CategoryIcon category="oracle" icon={item.icon} compact /><span>{item.label}</span><Check size={16} className="category-choice__check" aria-hidden="true" /></button>
-          ))}
-        </div>
         {section === "training" && !readComplete && <p className="trends-hub__saved-context" role="status">기록을 아직 모두 확인하지 못했어요. 저장한 일지 수와 분석 결과는 확인이 끝난 뒤 표시해요.</p>}
         {section === "training" && detail === "summary" && readComplete && <ImportedRecordPreview entries={entries} today={today} onOpenDay={onOpenCoachingDay} />}
         {section === "training" && detail === "summary" && (isEmpty || !hasSummary) && (savedRace || raceRecords.message) && <div className="trends-hub__explore">
@@ -316,19 +305,6 @@ function AnalysisExclusionNotice({ summary }: {
         </div>
       )}
       </InfoDisclosure>
-    </div>
-  )
-}
-
-function TrendsHeader({ onBack, onPace }: { readonly onBack?: (() => void) | undefined; readonly onPace?: (() => void) | undefined }) {
-  return (
-    <div className="trends-hub__header">
-      <button type="button" className="trends-hub__back" onClick={onBack}>
-        <ArrowLeft aria-hidden="true" size={16} />
-        <span>뒤로</span>
-      </button>
-      <h1 className="app-chrome-title">오라클</h1>
-      {onPace ? <button type="button" className="trends-hub__pace" onClick={onPace}><Calculator size={16} aria-hidden="true" />페이스 계산</button> : <div aria-hidden="true" />}
     </div>
   )
 }

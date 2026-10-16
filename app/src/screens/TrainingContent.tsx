@@ -1,5 +1,5 @@
 import React from "react"
-import { ArrowLeft, Bookmark, BookmarkCheck, ChevronRight, ExternalLink, Scale } from "lucide-react"
+import { ArrowLeft, BookOpen, Bookmark, BookmarkCheck, CircleHelp, ExternalLink, Scale } from "lucide-react"
 import {
   TRAINING_CONTENT_CATALOG,
   trainingContentById,
@@ -14,6 +14,7 @@ import type { TrainingMethodCompatibilityStatus } from "../domain/training-metho
 import { InfoDisclosure } from "../components/InfoDisclosure"
 import { ContextualIllustration } from "../components/ContextualIllustration"
 import { AppHeading } from "../components/AppHeading"
+import { CategoryCard } from "../components/CategoryCard"
 import { TrainingLexicon } from "./TrainingLexicon"
 import { useTaskFlowBack } from "../hooks/useTaskFlowBack"
 import { localJournalScopeGeneration } from "../domain/account/local-journal-ownership"
@@ -166,19 +167,15 @@ export function TrainingContent({ onBack }: { readonly onBack: () => void }) {
           <ContextualIllustration image="running-shoe" size="small" />
         </div>
       </div>
-      <button className="training-content-basics-link app-choice-control" type="button" onClick={event => openReader(null, event.currentTarget)}>훈련 용어부터 보기<ChevronRight aria-hidden="true" size={18} /></button>
+      <CategoryCard category="training" icon={CircleHelp} variant="row" className="training-content-basics-link"
+        title="훈련 용어부터 보기" onClick={event => openReader(null, event.currentTarget)} />
       <AppHeading as="h2" variant="section">선수들의 훈련 사례</AppHeading>
-      <div className="training-content-list app-choice-group" aria-label="훈련법 콘텐츠 목록">
-        {TRAINING_CONTENT_CATALOG.map((article, index) => (
-          <button className="app-choice-control" type="button" key={article.id} onClick={event => openReader(article.id, event.currentTarget)}>
-            <span className="training-content-list__number">0{index + 1}</span>
-            <span className="training-content-list__copy">
-              <small>{article.category} · {SOURCE_STATE_LABEL[article.sourceState]}</small>
-              <strong>{article.title}</strong>
-              <em>{article.summary}</em>
-            </span>
-            {saved.includes(article.id) ? <BookmarkCheck aria-label="저장됨" size={17} /> : <ChevronRight aria-hidden="true" size={17} />}
-          </button>
+      <div className="training-content-list" aria-label="훈련법 콘텐츠 목록">
+        {TRAINING_CONTENT_CATALOG.map(article => (
+          <CategoryCard key={article.id} category="training" icon={BookOpen} variant="row"
+            label={`${article.category} · ${SOURCE_STATE_LABEL[article.sourceState]}`}
+            title={<>{article.title}{saved.includes(article.id) && <BookmarkCheck aria-label="저장됨" size={17} />}</>}
+            onClick={event => openReader(article.id, event.currentTarget)} />
         ))}
       </div>
       <div className="training-content-reward-note"><InfoDisclosure title="훈련 자료와 읽기 포인트 안내"><p>선수 사례와 훈련 개념을 소개하는 자료예요. 글을 읽거나 저장해도 내 계획을 자동으로 바꾸지 않아요.</p><p>읽기 포인트는 아직 준비 중이에요.</p></InfoDisclosure></div>

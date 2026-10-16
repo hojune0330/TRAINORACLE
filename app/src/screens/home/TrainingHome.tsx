@@ -1,6 +1,7 @@
 import { BookOpen, CalendarDays, CheckCircle2, ChevronRight, Ellipsis, NotebookPen, PencilLine } from "lucide-react"
 import { useId, useRef, type ReactNode } from "react"
 import { CategoryCard, type AppCategory } from "../../components/CategoryCard"
+import { CategoryShortcuts, type CategoryShortcutItem } from "../../components/CategoryShortcuts"
 import type { HomeSession, TrainingHomeViewModel } from "../../domain/home-view-model"
 import { AppHeading } from "../../components/AppHeading"
 import type { OracleTopicId } from "../../domain/oracle-exploration"
@@ -39,7 +40,6 @@ type TrainingHomeProps = {
   readonly recentJournal?: ReactNode
   readonly installSuggestion?: ReactNode
   readonly journalReadiness?: CalendarReadiness
-  readonly analysisAvailable?: boolean
   readonly introductionAllowed?: boolean
   readonly introductionReady?: boolean
 }
@@ -48,7 +48,7 @@ export function TrainingHome({
   model, onWriteLog, onOpenArchive, onOpenToday, onOpenGuide, onOpenPlan, onOpenTrends,
   onOpenOracle, onOpenMore, onOpenContent, onOpenRewards, onOpenNextTraining,
   safetyNotice, announcement, oraclePreview, recordStart, accountEntry, recentJournal, installSuggestion,
-  journalReadiness = "READY", analysisAvailable = false, introductionAllowed = true, introductionReady = true,
+  journalReadiness = "READY", introductionAllowed = true, introductionReady = true,
 }: TrainingHomeProps) {
   const next = model.nextTraining
   const nextAction = onOpenNextTraining ?? onOpenPlan
@@ -59,6 +59,11 @@ export function TrainingHome({
   const title = useRef<HTMLHeadingElement>(null)
   const analysisEntry = oraclePreview ? oraclePreview
     : onOpenOracle && <section className="home-hub__oracle"><CategoryCard category="oracle" title="오라클 결과 보기" onClick={() => onOpenOracle("level")} /></section>
+  const shortcuts: CategoryShortcutItem[] = []
+  if (onOpenTrends) shortcuts.push({ id: "trends", category: "oracle", label: "훈련량", accessibleLabel: "훈련량·변화 보기", onClick: onOpenTrends })
+  if (onOpenGuide) shortcuts.push({ id: "example", category: "journal", label: "일지 예시", accessibleLabel: "일지 예시 보기", onClick: onOpenGuide })
+  if (onOpenContent) shortcuts.push({ id: "training-guide", category: "training", icon: BookOpen, label: "훈련법", accessibleLabel: "훈련법 읽기", onClick: onOpenContent })
+  if (onOpenRewards) shortcuts.push({ id: "decoration", category: "journal", icon: NotebookPen, label: "꾸미기", accessibleLabel: "일지 꾸미기", onClick: onOpenRewards })
 
   return (
     <div className="home-hub">
@@ -104,19 +109,12 @@ export function TrainingHome({
       {!welcome && analysisEntry}
       {recordStart && journalReadiness === "READY" && recordStart}
 
-      {onOpenTrends && <section className="home-hub__summary" aria-label="훈련 기록 분석">
-        <SummaryRow category="oracle" label="훈련량·변화 보기" detail={journalReadiness === "READY" && analysisAvailable && hasJournalHistory ? model.analysisSummary : undefined} onClick={onOpenTrends} />
-      </section>}
+      <CategoryShortcuts className="home-hub__shortcuts" label="홈 바로가기" items={shortcuts} />
 
       {installSuggestion}
 
       {announcement && <div className="home-hub__announcement">{announcement}</div>}
 
-      {(onOpenGuide || onOpenContent || onOpenRewards) && <nav className="home-hub__explore" aria-label="훈련 도움말과 일지 꾸미기">
-        {onOpenGuide && <CategoryCard variant="row" category="journal" title="일지 예시 보기" onClick={onOpenGuide} />}
-        {onOpenContent && <CategoryCard variant="row" category="training" icon={BookOpen} title="훈련법 읽기" onClick={onOpenContent} />}
-        {onOpenRewards && <CategoryCard variant="row" category="journal" icon={NotebookPen} title="일지 꾸미기" onClick={onOpenRewards} />}
-      </nav>}
     </div>
   )
 }

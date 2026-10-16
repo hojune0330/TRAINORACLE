@@ -1315,6 +1315,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
 
   const preservedRecording = v.tab === "log" ? recordingOrigin.current : null
   const baseScreenKey = preservedRecording?.screenKey ?? screenKey
+  const oracleSectionOpen = overlay?.kind === "running-profile" && oracleV2Enabled()
   return (
     <MultiPlanEvidenceContext.Provider value={multiPlanRuntime?.readMultiAdjustedEvidenceV3}>
     <AppOverlayNavigationProvider
@@ -1326,7 +1327,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
       systemStatus={systemStatus}
       scrollRegionRef={scrollRegionRef}
       savedToast={savedToast}
-      tab={v.tab === "log" && recordingOrigin.current ? tabForChrome(recordingOrigin.current.view) : tabForChrome(v)}
+      tab={oracleSectionOpen ? "trends" : v.tab === "log" && recordingOrigin.current ? tabForChrome(recordingOrigin.current.view) : tabForChrome(v)}
       onDismissToast={() => setSavedToast(null)}
       onRetryReward={retrySavedReward}
       onOpenTrends={goTrendsFromReceipt}
@@ -1345,7 +1346,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
       }}
       onTab={goTab}
       onStartRecording={() => startRecording()}
-      hideTabBar={(overlay !== null ? overlay.kind !== "oracle" : v.tab === "log" && v.entryType !== "choose")
+      hideTabBar={(overlay !== null ? overlay.kind !== "oracle" && !oracleSectionOpen : v.tab === "log" && v.entryType !== "choose")
         || (v.tab === "home" && utilityView === "minigame")}
       wideTask={overlay === null && (v.tab === "log" || v.tab === "plan")}
       wideResults={overlay === null ? v.tab === "trends" || (v.tab === "home" && utilityView === "more" && !v.accountOpen && !v.restoreOpen)
@@ -1409,6 +1410,10 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
           <div className="app-flow-stage" data-overlay="running-profile">
             {oracleV2Enabled() ?
               <DeferredMobileScreens.OracleProfileV2 key={`oracle-v2-${accountScopeRevision}-${oracleEntryRevision}`} today={todayISO()} onBack={closeOverlay}
+                onOpenTraining={() => runDraftSafeNavigation(() => {
+                  if (v.tab === "trends" && utilityView === null) closeOverlay()
+                  else goTab("trends", analysisContext)
+                })}
                 initialView={overlay.initialView}
                 backLabel={utilityView === "more" ? "더보기로 돌아가기" : v.tab === "trends" ? "오라클로 돌아가기" : v.tab === "plan" ? "훈련으로 돌아가기" : v.tab === "journal" ? "일지로 돌아가기" : "홈으로 돌아가기"}
                 guestSession={activeLocalAccount() === null ? guestOracleSession : undefined}

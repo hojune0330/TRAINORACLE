@@ -33,6 +33,7 @@
 .plan-day-reader__slots { padding-block: var(--space-2); gap: var(--space-2); }
 .plan-day-reader__slots button { border: 1px solid var(--line); border-radius: var(--r-action); color: var(--ink-2); }
 .plan-day-reader__slots button[aria-current="location"] { border-color: var(--category-training); color: var(--category-training); background: var(--category-training-wash); text-decoration: underline; text-underline-offset: 4px; }
+.plan-day-reader__slots button.app-choice-control.app-choice-control.app-choice-control[aria-current="location"] { border-color: var(--category-training); color: var(--category-training); background: var(--category-training-wash); }
 .plan-day-reader[data-reduced-motion][open] { animation: none; }
 .plan-day-reader__notice { padding: 8px 16px; max-height: 30dvh; overflow-y: auto; border-bottom: 1px solid var(--line); color: var(--ink); }
 .plan-day-reader__notice p { margin: 4px 0; font-size: 0.875rem; line-height: 1.5; }
@@ -51,6 +52,7 @@
 .plan-day-reader .active-plan__actions button { min-height: 44px; white-space: normal; font-size: 0.875rem; }
 .plan-day-reader .active-plan__journal-action { font-size: 1rem; }
 .plan-day-reader .active-plan__status { font-size: 0.875rem; }
+.plan-day-reader .plan-text-action { padding-inline: var(--space-2); border: 1px solid var(--line); border-radius: var(--r-action); color: var(--ink-2); font: 600 var(--fs-body-sm) / 1.5 var(--sans); text-decoration: none; }
 .plan-session-expand { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; gap: 6px; padding: 6px; border: 0; background: transparent; color: var(--brand); cursor: pointer; font: inherit; }
 .plan-day-reader :is(button, a, summary):focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
 @media (max-width: 374px) {

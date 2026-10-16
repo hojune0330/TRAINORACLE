@@ -14,6 +14,7 @@ import { hasPendingBrowserBackLayer } from "./navigation/browserNavigation"
 beforeAll(async () => { await Promise.all([
   import("./screens/PlanBeta"), import("./screens/More"),
   import("./screens/ImportActivities"), import("./screens/AthleteRecords"),
+  import("./screens/Trends"), import("./screens/OracleProfileV2"),
 ]) }, 60000)
 
 beforeEach(async () => {
@@ -114,8 +115,8 @@ describe("AppShell origin-preserving navigation", { timeout: 15000 }, () => {
     render(<AppShell />)
     await user.click(screen.getByRole("button", { name: "더보기" }))
     await user.click(await screen.findByRole("button", { name: "오라클 읽을거리" }))
-    expect(await screen.findByRole("article", { name: "먼저 읽을 글" }, { timeout: 10000 })).toBeVisible()
-    expect(await screen.findByRole("group", { name: "읽을거리 주제" }, { timeout: 10000 })).toBeVisible()
+    expect(await screen.findByRole("heading", { name: "주제 골라 읽기" }, { timeout: 10000 })).toBeVisible()
+    expect(await screen.findByRole("radiogroup", { name: "읽을거리 주제" }, { timeout: 10000 })).toBeVisible()
     await user.click(screen.getByRole("button", { name: "더보기로 돌아가기" }))
     expect(await screen.findByRole("heading", { name: "더보기" })).toBeVisible()
   })
@@ -124,12 +125,54 @@ describe("AppShell origin-preserving navigation", { timeout: 15000 }, () => {
     const user = userEvent.setup()
     render(<AppShell />)
     await user.click(screen.getByRole("button", { name: "오라클" }))
-    await user.click(await screen.findByRole("button", { name: "읽을거리·관심" }, { timeout: 10000 }))
+    await user.click(await screen.findByRole("button", { name: "읽을거리" }, { timeout: 10000 }))
     expect(await screen.findByRole("heading", { name: "어떤 훈련이 궁금한가요?" })).toBeVisible()
     await user.click(screen.getByRole("button", { name: "이전 화면" }))
-    expect(await screen.findByRole("button", { name: "내 훈련" })).toHaveAttribute("aria-pressed", "true")
-    expect(screen.getByRole("button", { name: "읽을거리·관심" })).toBeVisible()
+    expect(await screen.findByRole("button", { name: "내 훈련" })).toHaveAttribute("aria-current", "page")
+    expect(screen.getByRole("button", { name: "읽을거리" })).toBeVisible()
     expect(screen.getByRole("button", { name: "오라클" })).toHaveAttribute("aria-current", "page")
+  })
+  it("returns the shared Oracle menu to the same analysis and honors an unfinished-draft guard", async () => {
+    vi.stubEnv("VITE_FEATURE_ORACLE_V2", "true")
+    const user = userEvent.setup()
+    render(<AppShell />)
+    await user.click(screen.getByRole("button", { name: "오라클" }))
+    await user.click(await screen.findByRole("button", { name: "훈련량" }))
+    const region = document.querySelector<HTMLElement>(".app-scroll-region")!
+    region.scrollTop = 180
+    await user.click(screen.getByRole("button", { name: "러닝 취향" }))
+    expect(await screen.findByRole("heading", { name: "나는 어떤 달리기를 좋아할까요?" })).toBeVisible()
+    expect(screen.getByRole("button", { name: "러닝 취향" })).toHaveAttribute("aria-current", "page")
+    expect(screen.getByRole("button", { name: "오라클" })).toHaveAttribute("aria-current", "page")
+    const blocked = vi.fn()
+    const unregister = registerUnsavedDraftGuard({ isUnsafe: () => true, onBlocked: blocked })
+    try {
+      await user.click(screen.getByRole("button", { name: "내 훈련" }))
+      expect(blocked).toHaveBeenCalledOnce()
+      expect(screen.getByRole("button", { name: "러닝 취향" })).toHaveAttribute("aria-current", "page")
+      await user.click(screen.getByRole("button", { name: "홈" }))
+      expect(blocked).toHaveBeenCalledTimes(2)
+      expect(screen.getByRole("button", { name: "러닝 취향" })).toHaveAttribute("aria-current", "page")
+    } finally { unregister() }
+    await user.click(screen.getByRole("button", { name: "읽을거리" }))
+    expect(screen.getByRole("button", { name: "읽을거리" })).toHaveAttribute("aria-current", "page")
+    await user.click(screen.getByRole("button", { name: "내 훈련" }))
+    await waitFor(() => expect(screen.getByRole("button", { name: "내 훈련" })).toHaveAttribute("aria-current", "page"))
+    expect(screen.getByRole("button", { name: "훈련량" })).toHaveAttribute("aria-pressed", "true")
+    await waitFor(() => expect(region.scrollTop).toBe(180))
+  })
+  it("can reach My Training from a directly opened Oracle library without returning to More", async () => {
+    vi.stubEnv("VITE_FEATURE_ORACLE_V2", "true")
+    const user = userEvent.setup()
+    render(<AppShell />)
+    await user.click(screen.getByRole("button", { name: "더보기" }))
+    await user.click(await screen.findByRole("button", { name: "오라클 읽을거리" }))
+    expect(await screen.findByRole("heading", { name: "주제 골라 읽기" })).toBeVisible()
+    expect(screen.getByRole("button", { name: "오라클" })).toHaveAttribute("aria-current", "page")
+    await user.click(screen.getByRole("button", { name: "내 훈련" }))
+    expect(await screen.findByRole("button", { name: "내 훈련" })).toHaveAttribute("aria-current", "page")
+    expect(screen.getByRole("button", { name: "오라클" })).toHaveAttribute("aria-current", "page")
+    expect(screen.queryByRole("heading", { name: "더보기" })).toBeNull()
   })
   it("keeps the selected training step mounted while recording and returns without a reset", async () => {
     const user = userEvent.setup()
@@ -156,7 +199,7 @@ describe("AppShell origin-preserving navigation", { timeout: 15000 }, () => {
     expect(await screen.findByRole("heading", { name: "무엇을 기록할까요?" })).toBeVisible()
     act(() => window.history.back())
     await waitFor(() => expect(screen.getByRole("button", { name: "훈련량" })).toHaveAttribute("aria-pressed", "true"))
-    expect(screen.getByRole("button", { name: "내 훈련" })).toHaveAttribute("aria-pressed", "true")
+    expect(screen.getByRole("button", { name: "내 훈련" })).toHaveAttribute("aria-current", "page")
     expect(screen.getByRole("button", { name: "오라클" })).toHaveAttribute("aria-current", "page")
     expect(screen.queryByRole("heading", { name: "무엇을 기록할까요?" })).toBeNull()
     await waitFor(() => expect(screen.getByRole("button", { name: "기록하기" })).toHaveFocus())

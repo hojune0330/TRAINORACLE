@@ -28,7 +28,9 @@ export function FormInputSaveBar(props: React.ComponentProps<typeof StickyBar>) 
   return <div style={{ padding: 16, borderTop: "1px solid var(--line)" }}>
     <button type="button" disabled={review.required} onClick={props.onSave}
       style={{ minHeight: 44, width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-        border: 0, background: "var(--ink)", color: "var(--bg)", opacity: review.required ? 0.5 : 1 }}>
+        border: 0, borderRadius: "var(--r-action)", background: "var(--brand)", color: "var(--surface)",
+        padding: "var(--space-3) var(--space-4)", fontSize: "var(--fs-body)", fontWeight: 600,
+        opacity: review.required ? 0.5 : 1 }}>
       <Save size={16} aria-hidden="true" />{props.label ?? "저장"}
     </button>
   </div>

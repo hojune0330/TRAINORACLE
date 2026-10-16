@@ -90,7 +90,7 @@ describe("athlete record entry surface", () => {
     expect(saveAthleteRecord(legacySeasonBest, new Date("2026-10-02T00:00:00.000Z")).ok).toBe(true)
     render(<AthleteRecords onBack={() => undefined} />)
 
-    expect(screen.getByText("내 경기 기록", { selector: ".plan-eyebrow" })).toBeVisible()
+    expect(screen.getByRole("heading", { level: 1, name: "내 경기 기록" })).toBeVisible()
     await user.selectOptions(screen.getByRole("combobox", { name: "기록 역할" }), "PERSONAL_BEST")
     await user.selectOptions(screen.getByRole("combobox", { name: "종목 거리" }), "5000")
     await user.click(screen.getByRole("button", { name: "시간 입력" }))

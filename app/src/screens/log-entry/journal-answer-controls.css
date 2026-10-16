@@ -1,0 +1,53 @@
+/* Inputs only: never changes the saved journal paper or decoration coordinates. */
+.task-flow__body { word-break: keep-all; }
+.journal-answer-scale,
+.journal-mood-scale {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(44px, 1fr));
+  gap: var(--space-2);
+  min-width: 0;
+}
+.journal-answer-scale > button.app-choice-control.journal-answer-scale__option,
+.journal-mood-scale > button.app-choice-control.journal-mood-scale__option {
+  min-width: 44px;
+  padding: var(--space-2) var(--space-1);
+  font-size: var(--fs-body);
+  line-height: 1.5;
+}
+.journal-answer-scale > button.app-choice-control.journal-answer-scale__option {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.journal-mood-scale > button.app-choice-control.journal-mood-scale__option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+}
+.journal-mood-scale__option > span:last-child {
+  font-size: var(--fs-body-sm);
+  color: inherit;
+}
+.task-flow .quick-log__primary {
+  border-color: var(--brand);
+  background: var(--brand);
+  color: var(--surface);
+  font-weight: 600;
+}
+.task-flow__actions > :is(.quick-log__primary, .quick-log__secondary) {
+  min-height: 48px;
+  margin-top: 0;
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--fs-body);
+  line-height: 1.5;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+.task-flow__actions > .task-flow__actions {
+  flex: 1 1 100%;
+  min-width: 0;
+}
+@media (min-width: 900px) {
+  .app-shell--task .journal-answer-scale { grid-template-columns: repeat(10, minmax(44px, 1fr)); }
+}

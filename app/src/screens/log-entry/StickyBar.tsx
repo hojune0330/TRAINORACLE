@@ -1,4 +1,5 @@
 import React from "react"
+import { ArrowRight } from "lucide-react"
 
 export function StickyBar({
   onSave,
@@ -19,7 +20,7 @@ export function StickyBar({
         <div data-testid="save-error" role="alert" style={{
           marginBottom: 10, padding: "10px 12px",
           border: "1px solid var(--pain-5)", background: "var(--surface)",
-          fontFamily: "var(--mono)", fontSize: 10.5, lineHeight: 1.55,
+          fontFamily: "var(--sans)", fontSize: "var(--fs-body-sm)", lineHeight: 1.55,
           color: "var(--ink)", letterSpacing: "0.03em",
         }}>
           저장을 완료하지 못했어요. 현재 안내만으로는 원인을 확인할 수 없어요.<br />
@@ -28,11 +29,11 @@ export function StickyBar({
       )}
       <div style={{ display: "flex", gap: 8 }}>
         <button type="button" onClick={onSave} style={{
-          flex: 2, padding: "14px", background: "var(--ink)", color: "var(--bg)",
-          border: 0, fontFamily: "var(--sans)", fontSize: 14, fontWeight: 500,
-          cursor: "pointer", borderRadius: 0,
+          flex: 2, minWidth: 0, minHeight: "var(--app-touch-min)", padding: "var(--space-4)", background: "var(--brand)", color: "var(--surface)",
+          border: 0, fontFamily: "var(--sans)", fontSize: "var(--fs-body)", fontWeight: 600,
+          cursor: "pointer", borderRadius: "var(--r-action)", wordBreak: "keep-all", overflowWrap: "anywhere",
           display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-        }}>{label}<span style={{ fontFamily: "var(--mono)", fontSize: 10, opacity: 0.65, letterSpacing: "0.14em" }}>→</span></button>
+        }}>{label}<ArrowRight size={18} aria-hidden="true" style={{ flexShrink: 0 }} /></button>
       </div>
     </div>
   )
