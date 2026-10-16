@@ -215,7 +215,8 @@ describe("past journal revisit forms", () => {
 
   it("keeps a focused native screen heading while its four entry actions stay separate", () => {
     const { container } = render(<LogEntry entryType="choose" targetDate={DATE} />)
-    const heading = screen.getByRole("heading", { name: "무엇을 기록할까요?", level: 1 })
+    expect(screen.getByRole("heading", { name: "새 일지", level: 1 })).toBeVisible()
+    const heading = screen.getByRole("heading", { name: "무엇을 기록할까요?", level: 2 })
 
     expect(heading).toHaveClass("app-heading", "app-heading--screen", "app-heading--accent")
     expect(heading).toHaveAttribute("tabindex", "-1")

@@ -67,7 +67,7 @@ try {
   await reader.getByText('기존 훈련 표기', { exact: true }).click()
   assert.match(await reader.innerText(), /3 × 7min/u, 'Original concise notation must remain available')
   await page.screenshot({ path: fileURLToPath(new URL('program-original-notation-375.png', output)), fullPage: true })
-  await reader.getByRole('button', { name: '달력으로 돌아가기', exact: true }).click()
+  await reader.getByRole('button', { name: /^(?:달력|하루씩)으로 돌아가기$/u, exact: true }).click()
   await reader.waitFor({ state: 'hidden' })
   assert.equal(await workoutDate.evaluate(element => document.activeElement === element), true)
   const durationCheck = page.getByRole('checkbox', { name: /^최대 .* 훈련시간을 확인했어요$/ })

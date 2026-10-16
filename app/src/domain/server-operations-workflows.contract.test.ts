@@ -9,16 +9,23 @@ function readRepositoryFile(relativePath: string): string {
 
 function assertDeployReceipt(workflow: string): void {
   const requiredClauses = [
-    "PREVIOUS_PAGES_SHA",
+    "previousPagesSha: manifest.previousPagesSha",
     "trainoracle-deploy-receipt.json",
     "sourceSha",
     "previousPagesSha",
     "workflowRunId",
-    "Publish verified build to gh-pages",
+    "Publish verified package to gh-pages",
+    "node .tools/publish-oracle-pages-release.mjs",
+    "PRESERVING_GUARDED_CI",
   ]
   for (const clause of requiredClauses) {
     if (!workflow.includes(clause)) throw new Error(`missing deploy receipt clause: ${clause}`)
   }
+}
+
+function deployReceiptContract(): string {
+  return [".github/workflows/ci.yml", ".tools/publish-oracle-pages-release.mjs", ".tools/pages-release-safety.mjs"]
+    .map(readRepositoryFile).join("\n")
 }
 
 function assertRetentionWorkflow(workflow: string): void {
@@ -67,7 +74,14 @@ function assertRollbackWorkflow(workflow: string): void {
 
 describe("server operations workflows", () => {
   it("publishes a deployment receipt with the previous Pages revision", () => {
-    assertDeployReceipt(readRepositoryFile(".github/workflows/ci.yml"))
+    assertDeployReceipt(deployReceiptContract())
+  })
+
+  it("rejects a deployment receipt that loses the previous Pages revision", () => {
+    const original = deployReceiptContract()
+    const mutated = original.replaceAll("previousPagesSha: manifest.previousPagesSha", "previousPagesSha: manifest.sourceSha")
+    expect(mutated).not.toBe(original)
+    expect(() => assertDeployReceipt(mutated)).toThrow("missing deploy receipt clause")
   })
 
   it("runs retention cleanup only through the server operations gate", () => {
@@ -79,7 +93,6 @@ describe("server operations workflows", () => {
   })
 
   it.each([
-    ["deploy previous SHA", ".github/workflows/ci.yml", "PREVIOUS_PAGES_SHA", "CURRENT_PAGES_SHA", assertDeployReceipt],
     ["retention service key", ".github/workflows/retention-cleanup.yml", "SUPABASE_SERVICE_ROLE_KEY", "VITE_SUPABASE_ANON_KEY", assertRetentionWorkflow],
     ["retention integer counts", ".github/workflows/retention-cleanup.yml", "floor == .", "true", assertRetentionWorkflow],
     ["rollback ancestry", ".github/workflows/rollback-pages.yml", "git merge-base --is-ancestor", "git cat-file -e", assertRollbackWorkflow],

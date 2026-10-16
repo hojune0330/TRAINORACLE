@@ -51,15 +51,16 @@ test("shared choices keep selection, keyboard operation and enlarged labels acro
   await page.goto("/?app=1&uitest=1")
   const navigation = page.getByRole("navigation", { name: "주 탭" })
   await navigation.getByRole("button", { name: "일지", exact: true }).click()
-  const cycle = page.getByRole("button", { name: "기록 묶음", exact: true })
+  const cycle = page.getByRole("radio", { name: "기록 묶음", exact: true })
   await cycle.focus()
-  await page.keyboard.press("Enter")
-  await expect(cycle).toHaveAttribute("aria-pressed", "true")
-  await page.getByRole("button", { name: "월간 달력", exact: true }).click()
-  await expect(cycle).toHaveAttribute("aria-pressed", "false")
+  // Radio options activate with Space; Enter is intentionally suppressed by Radix.
+  await page.keyboard.press("Space")
+  await expect(cycle).toHaveAttribute("aria-checked", "true")
+  await page.getByRole("radio", { name: "월간 달력", exact: true }).click()
+  await expect(cycle).toHaveAttribute("aria-checked", "false")
 
   await navigation.getByRole("button", { name: "오라클", exact: true }).click()
-  const choices = page.getByRole("group", { name: "오라클 항목" }).getByRole("button")
+  const choices = page.getByRole("navigation", { name: "오라클 항목" }).getByRole("button")
   for (const choice of await choices.all()) {
     await expect(choice).toHaveCSS("border-radius", "12px")
     expect((await choice.boundingBox())!.height).toBeGreaterThanOrEqual(44)
@@ -69,7 +70,7 @@ test("shared choices keep selection, keyboard operation and enlarged labels acro
   await expect(choices.first()).toBeVisible()
   await page.screenshot({ path: info.outputPath("rounded-oracle-default.png"), fullPage: true })
   // A larger user font must grow the face, not clip a fixed-height label.
-  await page.addStyleTag({ content: '.app-choice-control, .app-compact-tab { font-size: 28px !important; }' })
+  await page.addStyleTag({ content: '.app-choice-control, .app-compact-tab, .oracle-section-nav__item { font-size: 28px !important; }' })
   await expectNoHorizontalOverflow(page)
   for (const choice of await choices.all()) {
     expect(await choice.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true)
@@ -78,6 +79,10 @@ test("shared choices keep selection, keyboard operation and enlarged labels acro
   await navigation.getByRole("button", { name: "홈", exact: true }).click()
   await page.getByRole("button", { name: "더보기", exact: true }).click()
   const learning = page.getByRole("button", { name: "훈련법 읽기", exact: true })
+  await learning.focus()
+  await page.keyboard.press("Tab")
+  await page.keyboard.press("Shift+Tab")
+  await expect(learning).toBeFocused()
   await expect(learning).toHaveCSS("border-radius", "12px")
   await expect(learning).not.toHaveAttribute("aria-pressed")
   await expectNoHorizontalOverflow(page)

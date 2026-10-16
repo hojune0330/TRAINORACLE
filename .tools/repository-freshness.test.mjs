@@ -40,6 +40,19 @@ test("fails when Pages deploys a different main commit", () => {
   assert.equal(result.ok, false)
 })
 
+test('operator-note-only ancestry is reported without falsifying the deployed SHA', () => {
+  const deployment = { sourceSha: 'b'.repeat(40) }
+  const deploymentDelta = { base: deployment.sourceSha, head: current.main.sha, complete: true, paths: ['docs/delivery/README.md'] }
+  const result = evaluateFreshness({ ...current, deployment, deploymentDelta })
+  assert.equal(result.ok, true)
+  assert.equal(result.deploymentSourceSha, deployment.sourceSha)
+  assert.equal(result.deploymentAlignment, 'OPERATOR_NOTES_ONLY_RUNTIME_UNCHANGED')
+  for (const delta of [null, { ...deploymentDelta, complete: false }, { ...deploymentDelta, head: 'c'.repeat(40) },
+    { ...deploymentDelta, paths: ['app/src/main.tsx'] }, { ...deploymentDelta, paths: [] }]) {
+    assert.equal(evaluateFreshness({ ...current, deployment, deploymentDelta: delta }).ok, false)
+  }
+})
+
 test("fails when the newest pull request was closed without merging", () => {
   const result = evaluateFreshness({
     ...current,

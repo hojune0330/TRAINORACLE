@@ -34,7 +34,7 @@ try {
   await page.getByRole('group', { name: '9월 29일 화요일 오전 세션', exact: true }).getByRole('button', { name: '이 훈련 일지 쓰기', exact: true }).click()
   assert.match(await page.locator('#result').textContent(), /2일차 AM/)
   await page.getByRole('button', { name: '9월 29일 화요일 전체 처방 보기', exact: true }).click()
-  await page.getByRole('button', { name: '달력으로 돌아가기', exact: true }).click()
+  await page.getByRole('button', { name: /^(?:달력|하루씩)으로 돌아가기$/u, exact: true }).click()
   assert.equal(await page.getByRole('button', { name: '9월 29일 화요일 선택', exact: true }).getAttribute('aria-pressed'), 'true')
   await list.focus()
   await page.keyboard.press('ArrowRight')

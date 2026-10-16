@@ -1,9 +1,11 @@
 import type { WorkoutMemoPresentation } from "../domain/workout-memo-presentation"
 import { memoDisplayLines, memoExecutionOrder, memoExplanationSources, memoLineEmphasis } from "../domain/workout-memo-presentation"
 import type { MemoPaper } from "../domain/workout-memo-export"
+import { companionStampUrl, type CompanionStamp } from "../domain/training-companions"
+import "../styles/training-companions.css"
 
 /** Read-only paper surface; commands and future decoration editing belong outside it. */
-export function WorkoutMemoSheet({ memo, paper }: { readonly memo: WorkoutMemoPresentation; readonly paper: MemoPaper }) {
+export function WorkoutMemoSheet({ memo, paper, stamp = null }: { readonly memo: WorkoutMemoPresentation; readonly paper: MemoPaper; readonly stamp?: CompanionStamp | null }) {
   return <article className="workout-memo-paper" data-paper={paper} data-layout={memo.layout} data-view={memo.view} data-wording={memo.wording} aria-label="훈련 메모 미리보기">
     <header><strong>{memo.dateLabel}</strong><span>{memo.slotLabel}</span></header>
     <p className="workout-memo-paper__state">{memo.stateLabel}</p>
@@ -22,6 +24,6 @@ export function WorkoutMemoSheet({ memo, paper }: { readonly memo: WorkoutMemoPr
         ? <a href={source.url} target="_blank" rel="noopener noreferrer">{source.title} (새 탭)</a> : source.title}</li>)}</ul>
         <p>설명 버전 {memo.explanation.version}</p></section>
     </section>}
-    <footer>TRAINORACLE</footer>
+    <footer className={stamp ? "workout-memo-paper__signature" : undefined}><span>TRAINORACLE</span>{stamp && <img src={companionStampUrl(stamp)} width={80} height={80} alt="선택한 동물 스티커" />}</footer>
   </article>
 }

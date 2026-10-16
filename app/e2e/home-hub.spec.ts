@@ -56,20 +56,18 @@ test("keeps optional destinations discoverable and returns to home without clipp
   await page.goto("/?app=1&uitest=1")
   await page.evaluate(() => document.fonts.ready)
   await expect(page.getByRole("button", { name: "오늘 운동 기록 쓰기", exact: true })).toBeInViewport({ ratio: 1 })
-  for (const name of ["오늘 운동 기록 쓰기", "훈련 계획 만들기"]) {
+  for (const name of ["오늘 운동 기록 쓰기", "훈련 계획 받기"]) {
     const button = page.getByRole("button", { name, exact: true })
     await button.scrollIntoViewIfNeeded()
     await expect(button).toBeInViewport({ ratio: 1 })
   }
   console.log("HOME_HUB_EMPTY", await page.locator(".app-scroll-region").evaluate(el => JSON.stringify({ height: el.scrollHeight, viewport: el.clientHeight })))
   await page.screenshot({ path: testInfo.outputPath("home-welcome-375x667.png"), animations: "disabled" })
-  const learningDisclosure = page.getByRole("button", { name: "일지 예시·훈련법·꾸미기", exact: true })
-  await learningDisclosure.click()
+  await expect(page.getByRole("navigation", { name: "홈 바로가기" })).toBeVisible()
   await page.getByRole("button", { name: "훈련법 읽기", exact: true }).click()
   await expect(page.getByRole("heading", { name: "어떤 훈련이 궁금한가요?" })).toBeVisible()
   await page.getByRole("button", { name: "이전 화면", exact: true }).click()
-  await expect(page.getByRole("heading", { name: "오늘 운동을 기록해요" })).toBeVisible()
-  if (await learningDisclosure.getAttribute("aria-expanded") !== "true") await learningDisclosure.click()
+  await expect(page.getByRole("heading", { name: "운동 분석과 훈련 계획" })).toBeVisible()
   await page.getByRole("button", { name: "일지 꾸미기", exact: true }).click()
   const editor = page.getByRole("dialog", { name: "일지 꾸미기", exact: true })
   await expect(editor).toBeVisible()
@@ -79,7 +77,7 @@ test("keeps optional destinations discoverable and returns to home without clipp
   await editor.getByText("포인트와 활동 보상", { exact: true }).click()
   await expect(editor.getByRole("region", { name: "기록 습관" })).toBeVisible()
   await editor.getByRole("button", { name: "꾸미기 편집기 닫기", exact: true }).click()
-  await expect(page.getByRole("heading", { name: "오늘 운동을 기록해요" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "운동 분석과 훈련 계획" })).toBeVisible()
   await page.setViewportSize({ width: 320, height: 568 })
   await page.evaluate(() => {
     const nodes = [...document.querySelectorAll<HTMLElement>(".home-hub, .home-hub *")].filter(el => !(el instanceof SVGElement))

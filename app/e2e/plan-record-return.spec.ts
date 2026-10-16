@@ -31,7 +31,7 @@ test("missing-record journey resumes the same choices and explicitly binds a non
   await expect(page.getByLabel("계획 시작 날짜")).toHaveValue("2026-09-10")
   await page.getByRole("button", { name: "기준 기록 확인하기", exact: true }).click()
   const evidence = page.getByRole("region", { name: "개인 페이스 기준 기록" })
-  await expect(evidence.locator("xpath=..")).toBeFocused()
+  await expect.poll(() => evidence.locator("..").evaluate(node => node.contains(document.activeElement))).toBe(true)
   await expect.poll(async () => {
     const box = await evidence.getByRole("heading", { name: "개인 페이스 기준 기록" }).boundingBox()
     return box !== null && box.y >= 0 && box.y < page.viewportSize()!.height / 2

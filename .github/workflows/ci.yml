@@ -9,11 +9,36 @@ on:
   push:
     branches:
       - main
-      - "codex/**"
+
+# One run per PR revision; only main pushes publish. Do not cancel an in-flight
+# main publication, whose guarded push must finish atomically.
+concurrency:
+  group: trainoracle-ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  contract-tests:
+  delivery-scope:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      full: ${{ steps.scope.outputs.full }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: node --test .tools/ci-delivery-scope.test.cjs
+      - id: scope
+        run: node .tools/ci-delivery-scope.cjs
+
+  contract-tests:
+    if: needs.delivery-scope.outputs.full == 'true'
+    needs: delivery-scope
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -33,6 +58,7 @@ jobs:
 
       - name: Validate reasoning-tier work harness
         run: |
+          node --test .tools/pages-release-safety.test.mjs .tools/manual-release-lock.test.mjs .tools/oracle-public-release-config.test.mjs .tools/repository-freshness.test.mjs
           node --test specs/test-packages/reasoning-tier-harness.test.mjs
           node specs/test-packages/reasoning-tier-harness.mjs validate
           node specs/test-packages/validate-formal-approval-foundation.mjs
@@ -101,7 +127,10 @@ jobs:
         run: npm test
 
   app-unit:
+    if: needs.delivery-scope.outputs.full == 'true'
+    needs: delivery-scope
     runs-on: ubuntu-latest
+    timeout-minutes: 35
     strategy:
       fail-fast: false
       matrix:
@@ -135,20 +164,13 @@ jobs:
         run: npm run "$UNIT_TEST_SCRIPT"
 
   app-quality:
-    needs: app-unit
-    if: ${{ always() }}
+    # Independent build/type checks need not wait for both long unit lanes.
+    # delivery-complete still requires every unit and browser result to pass.
+    needs: delivery-scope
+    if: needs.delivery-scope.outputs.full == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - name: Require both unit timezones to pass
-        shell: bash
-        env:
-          APP_UNIT_RESULT: ${{ needs.app-unit.result }}
-        run: |
-          if [[ "$APP_UNIT_RESULT" != "success" ]]; then
-            echo "::error::Both unit timezones must pass; app-unit result is '$APP_UNIT_RESULT'."
-            exit 1
-          fi
-
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
@@ -187,9 +209,19 @@ jobs:
         working-directory: app
         run: npm run build
 
+      - name: Preserve the tested generic browser bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-bundle-${{ github.run_id }}-${{ github.run_attempt }}
+          path: app/dist
+          if-no-files-found: error
+          retention-days: 1
+
   app-browser-generic:
-    needs: app-quality
+    if: needs.delivery-scope.outputs.full == 'true'
+    needs: [delivery-scope, app-quality]
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
@@ -217,15 +249,34 @@ jobs:
         working-directory: app
         run: npx playwright install --with-deps chromium
 
-      - name: Build and run both browser lanes for the project
+      - name: Restore the tested generic browser bundle
+        uses: actions/download-artifact@v4
+        with:
+          name: browser-bundle-${{ github.run_id }}-${{ github.run_attempt }}
+          path: app/dist
+
+      - name: Install loopback arena fixture dependencies
+        working-directory: game-server
+        run: npm ci --ignore-scripts
+
+      - name: Run both browser lanes for the project
         working-directory: app
-        run: |
-          npm run build
-          node e2e/run-project-suite.mjs '${{ matrix.project }}'
+        run: node e2e/run-project-suite.mjs '${{ matrix.project }}'
+
+      - name: Retain synthetic browser failure evidence
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-failure-${{ matrix.project }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: app/test-results/full-browser
+          if-no-files-found: ignore
+          retention-days: 3
 
   app-browser-dedicated:
-    needs: app-quality
+    if: needs.delivery-scope.outputs.full == 'true'
+    needs: [delivery-scope, app-quality]
     runs-on: ubuntu-latest
+    timeout-minutes: 35
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -262,12 +313,23 @@ jobs:
           npm run test:e2e:form-input-autosave
           npm run test:e2e:file-analysis
 
+      - name: Retain synthetic dedicated failure evidence
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dedicated-failure-${{ github.run_id }}-${{ github.run_attempt }}
+          path: app/test-results
+          if-no-files-found: ignore
+          retention-days: 3
+
   app-browser:
     needs:
+      - delivery-scope
       - app-browser-generic
       - app-browser-dedicated
-    if: ${{ always() }}
+    if: ${{ always() && needs.delivery-scope.outputs.full != 'false' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Require all browser projects and dedicated scenarios to pass
         shell: bash
@@ -280,18 +342,38 @@ jobs:
             exit 1
           fi
 
+  delivery-complete:
+    if: ${{ always() }}
+    needs: [delivery-scope, contract-tests, app-unit, app-quality, app-browser-generic, app-browser-dedicated, app-browser]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '24'
+      - name: Verify the selected checks completed
+        env:
+          DELIVERY_NEEDS: ${{ toJSON(needs) }}
+        run: node -e "console.log(require('./.tools/ci-delivery-scope.cjs').assertDeliveryResults(JSON.parse(process.env.DELIVERY_NEEDS)))"
+
   deploy-pages:
-    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
+    # An explicitly manual release still runs every gate; only automatic publication is suppressed.
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main' && needs.delivery-scope.outputs.full == 'true' && !contains(github.event.head_commit.message, '[manual-pages]')
     needs:
+      - delivery-scope
+      - delivery-complete
       - contract-tests
       - app-quality
       - app-browser
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     permissions:
       contents: write
+      pages: write
     concurrency:
       group: trainoracle-pages
-      cancel-in-progress: true
+      cancel-in-progress: false
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -311,6 +393,15 @@ jobs:
           echo "current=false" >> "$GITHUB_OUTPUT"
           echo "::notice::Skipping stale deployment source $GITHUB_SHA; current main is $CURRENT_MAIN_SHA."
 
+      - name: Fetch current Pages snapshot
+        id: pages-snapshot
+        if: steps.deployment-source.outputs.current == 'true'
+        shell: bash
+        run: |
+          git fetch origin gh-pages
+          PAGES_SHA="$(git rev-parse origin/gh-pages)"
+          echo "sha=$PAGES_SHA" >> "$GITHUB_OUTPUT"
+
       - name: Setup Node
         if: steps.deployment-source.outputs.current == 'true'
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
@@ -319,102 +410,92 @@ jobs:
           cache: npm
           cache-dependency-path: app/package-lock.json
 
-      - name: Build hosted app
+      - name: Install app dependencies
         if: steps.deployment-source.outputs.current == 'true'
         working-directory: app
-        env:
-          VITE_ACCOUNT_PUBLIC_ENABLED: ${{ vars.TRAINORACLE_ACCOUNT_PUBLIC_ENABLED }}
-          VITE_KAKAO_AUTH_ENABLED: ${{ vars.TRAINORACLE_KAKAO_AUTH_ENABLED }}
-          VITE_PHONE_AUTH_ENABLED: ${{ vars.TRAINORACLE_PHONE_AUTH_ENABLED }}
-          VITE_PHONE_AUTH_OPERATIONS_APPROVED: ${{ vars.TRAINORACLE_PHONE_AUTH_OPERATIONS_APPROVED }}
-          VITE_FEATURE_SYNC: ${{ vars.TRAINORACLE_FEATURE_SYNC }}
-          VITE_FEATURE_ACCOUNT_JOURNAL: ${{ vars.TRAINORACLE_FEATURE_ACCOUNT_JOURNAL }}
-          VITE_FEATURE_FILE_ANALYSIS_TCX: ${{ vars.TRAINORACLE_FEATURE_FILE_ANALYSIS_TCX }}
-          VITE_KILL_FILE_ANALYSIS_TCX: ${{ vars.TRAINORACLE_KILL_FILE_ANALYSIS_TCX }}
-          VITE_FEATURE_FILE_ANALYSIS_CSV: ${{ vars.TRAINORACLE_FEATURE_FILE_ANALYSIS_CSV }}
-          VITE_KILL_FILE_ANALYSIS_CSV: ${{ vars.TRAINORACLE_KILL_FILE_ANALYSIS_CSV }}
-          VITE_FEATURE_FILE_ANALYSIS_JSON: ${{ vars.TRAINORACLE_FEATURE_FILE_ANALYSIS_JSON }}
-          VITE_KILL_FILE_ANALYSIS_JSON: ${{ vars.TRAINORACLE_KILL_FILE_ANALYSIS_JSON }}
-          VITE_FEATURE_FILE_ANALYSIS_GPX: ${{ vars.TRAINORACLE_FEATURE_FILE_ANALYSIS_GPX }}
-          VITE_KILL_FILE_ANALYSIS_GPX: ${{ vars.TRAINORACLE_KILL_FILE_ANALYSIS_GPX }}
-          VITE_FEATURE_SHARING: ${{ vars.TRAINORACLE_FEATURE_SHARING }}
-          VITE_FEATURE_PLAN_PROPOSALS: ${{ vars.TRAINORACLE_FEATURE_PLAN_PROPOSALS }}
-          VITE_FEATURE_PLAN_BACKUP: ${{ vars.TRAINORACLE_FEATURE_PLAN_BACKUP }}
-          VITE_FEATURE_PUBLIC_PROFILE: ${{ vars.TRAINORACLE_FEATURE_PUBLIC_PROFILE }}
-          VITE_FEATURE_EXPERIMENTAL_FATIGUE: ${{ vars.TRAINORACLE_FEATURE_EXPERIMENTAL_FATIGUE }}
-          VITE_FEATURE_DECORATION_SHOP: ${{ vars.TRAINORACLE_FEATURE_DECORATION_SHOP }}
-          VITE_FEATURE_PRODUCT_ANALYTICS: ${{ vars.TRAINORACLE_FEATURE_PRODUCT_ANALYTICS }}
-          VITE_FEATURE_FEEDBACK_BOARD: ${{ vars.TRAINORACLE_FEATURE_FEEDBACK_BOARD }}
-          VITE_KILL_ACCOUNT: ${{ vars.TRAINORACLE_KILL_ACCOUNT }}
-          VITE_KILL_KAKAO_AUTH: ${{ vars.TRAINORACLE_KILL_KAKAO_AUTH }}
-          VITE_KILL_PHONE_AUTH: ${{ vars.TRAINORACLE_KILL_PHONE_AUTH }}
-          VITE_KILL_SYNC: ${{ vars.TRAINORACLE_KILL_SYNC }}
-          VITE_KILL_ACCOUNT_JOURNAL: ${{ vars.TRAINORACLE_KILL_ACCOUNT_JOURNAL }}
-          VITE_KILL_SHARING: ${{ vars.TRAINORACLE_KILL_SHARING }}
-          VITE_KILL_PLAN_PROPOSALS: ${{ vars.TRAINORACLE_KILL_PLAN_PROPOSALS }}
-          VITE_KILL_PLAN_BACKUP: ${{ vars.TRAINORACLE_KILL_PLAN_BACKUP }}
-          VITE_KILL_PUBLIC_PROFILE: ${{ vars.TRAINORACLE_KILL_PUBLIC_PROFILE }}
-          VITE_KILL_EXPERIMENTAL_FATIGUE: ${{ vars.TRAINORACLE_KILL_EXPERIMENTAL_FATIGUE }}
-          VITE_KILL_DECORATION_SHOP: ${{ vars.TRAINORACLE_KILL_DECORATION_SHOP }}
-          VITE_KILL_PRODUCT_ANALYTICS: ${{ vars.TRAINORACLE_KILL_PRODUCT_ANALYTICS }}
-          VITE_KILL_FEEDBACK_BOARD: ${{ vars.TRAINORACLE_KILL_FEEDBACK_BOARD }}
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-          VITE_PRIVACY_POLICY_URL: ${{ vars.TRAINORACLE_PRIVACY_POLICY_URL }}
-          VITE_PRIVACY_POLICY_VERSION: ${{ vars.TRAINORACLE_PRIVACY_POLICY_VERSION }}
-          VITE_TERMS_OF_SERVICE_URL: ${{ vars.TRAINORACLE_TERMS_OF_SERVICE_URL }}
-          VITE_TERMS_OF_SERVICE_VERSION: ${{ vars.TRAINORACLE_TERMS_OF_SERVICE_VERSION }}
-        run: |
-          npm ci
-          node scripts/validate-hosted-release-env.mjs
-          npm run build
+        run: npm ci
 
-      - name: Publish verified build to gh-pages
+      - name: Build account-held release package
         if: steps.deployment-source.outputs.current == 'true'
         shell: bash
         run: |
-          git fetch origin gh-pages
-          PREVIOUS_PAGES_SHA="$(git rev-parse origin/gh-pages)"
-          export PREVIOUS_PAGES_SHA
-          export SOURCE_SHA="${{ github.sha }}"
-          export WORKFLOW_RUN_ID="${{ github.run_id }}"
-          export WORKFLOW_ATTEMPT="${{ github.run_attempt }}"
-          node --input-type=module <<'NODE'
-          import { writeFileSync } from "node:fs"
+          node .tools/build-oracle-pages-release.mjs --account-held --out="$RUNNER_TEMP/trainoracle-pages-bundle"
 
-          const receipt = {
-            kind: "TRAINORACLE_PAGES_DEPLOYMENT",
-            sourceSha: process.env.SOURCE_SHA,
-            previousPagesSha: process.env.PREVIOUS_PAGES_SHA,
-            workflowRunId: process.env.WORKFLOW_RUN_ID,
-            workflowAttempt: process.env.WORKFLOW_ATTEMPT,
-            deployedAt: new Date().toISOString(),
-          }
-          writeFileSync("app/dist/trainoracle-deploy-receipt.json", `${JSON.stringify(receipt, null, 2)}\n`)
-          NODE
-          git worktree add "$RUNNER_TEMP/trainoracle-pages" origin/gh-pages
-          find "$RUNNER_TEMP/trainoracle-pages" -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
-          cp -R app/dist/. "$RUNNER_TEMP/trainoracle-pages/"
-          touch "$RUNNER_TEMP/trainoracle-pages/.nojekyll"
-          cd "$RUNNER_TEMP/trainoracle-pages"
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          if git diff --cached --quiet; then
-            echo "Hosted build is already current."
-            exit 0
-          fi
-          git commit -m "deploy: verified app from main ${GITHUB_SHA::7}"
-          git fetch origin main
-          CURRENT_MAIN_SHA_BEFORE_PUSH="$(git rev-parse origin/main)"
-          if [[ "$GITHUB_SHA" != "$CURRENT_MAIN_SHA_BEFORE_PUSH" ]]; then
-            echo "::notice::Skipping stale deployment immediately before publish: $GITHUB_SHA; current main is $CURRENT_MAIN_SHA_BEFORE_PUSH."
-            exit 0
-          fi
-          git push origin HEAD:gh-pages
+      - name: Publish verified package to gh-pages
+        id: publish-pages
+        if: steps.deployment-source.outputs.current == 'true'
+        shell: bash
+        run: |
+          PAGES_WORKTREE="$RUNNER_TEMP/trainoracle-pages"
+          git worktree add "$PAGES_WORKTREE" "${{ steps.pages-snapshot.outputs.sha }}"
+          git -C "$PAGES_WORKTREE" config user.name "github-actions[bot]"
+          git -C "$PAGES_WORKTREE" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          RESULT="$(node .tools/publish-oracle-pages-release.mjs --bundle="$RUNNER_TEMP/trainoracle-pages-bundle" --pages-worktree="$PAGES_WORKTREE" --publish)"
+          echo "$RESULT"
+          DEPLOYED_PAGES_SHA="$(git -C "$PAGES_WORKTREE" rev-parse HEAD)"
           {
             echo "### deployment receipt"
-            echo "- source: \`${GITHUB_SHA}\`"
-            echo "- previous Pages: \`${PREVIOUS_PAGES_SHA}\`"
-            echo "- deployed Pages: \`$(git rev-parse HEAD)\`"
+            echo "- source: \`$GITHUB_SHA\`"
+            echo "- previous Pages: \`${{ steps.pages-snapshot.outputs.sha }}\`"
+            echo "- deployed Pages: \`$DEPLOYED_PAGES_SHA\`"
           } >> "$GITHUB_STEP_SUMMARY"
+          echo "pages_sha=$DEPLOYED_PAGES_SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Request and verify GitHub Pages build
+        if: steps.deployment-source.outputs.current == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_SOURCE_SHA: ${{ github.sha }}
+          EXPECTED_PAGES_SHA: ${{ steps.publish-pages.outputs.pages_sha }}
+        run: |
+          set -euo pipefail
+
+          git fetch --quiet origin main gh-pages
+          REMOTE_MAIN_SHA="$(git rev-parse origin/main)"
+          REMOTE_PAGES_SHA="$(git rev-parse origin/gh-pages)"
+          if [[ "$REMOTE_MAIN_SHA" != "$EXPECTED_SOURCE_SHA" || "$REMOTE_PAGES_SHA" != "$EXPECTED_PAGES_SHA" ]]; then
+            echo "::error::Refusing Pages build request because remote refs moved (main=$REMOTE_MAIN_SHA, gh-pages=$REMOTE_PAGES_SHA)."
+            exit 1
+          fi
+
+          gh api --method POST "repos/$GITHUB_REPOSITORY/pages/builds" --silent
+
+          for attempt in {1..30}; do
+            git fetch --quiet origin main gh-pages
+            REMOTE_MAIN_SHA="$(git rev-parse origin/main)"
+            REMOTE_PAGES_SHA="$(git rev-parse origin/gh-pages)"
+            if [[ "$REMOTE_MAIN_SHA" != "$EXPECTED_SOURCE_SHA" || "$REMOTE_PAGES_SHA" != "$EXPECTED_PAGES_SHA" ]]; then
+              echo "::error::Remote refs moved while waiting for the Pages build (main=$REMOTE_MAIN_SHA, gh-pages=$REMOTE_PAGES_SHA)."
+              exit 1
+            fi
+
+            BUILD="$(gh api "repos/$GITHUB_REPOSITORY/pages/builds/latest")"
+            BUILD_SHA="$(jq -r '.commit // empty' <<<"$BUILD")"
+            BUILD_STATUS="$(jq -r '.status // empty' <<<"$BUILD")"
+            if [[ "$BUILD_SHA" == "$EXPECTED_PAGES_SHA" ]]; then
+              case "$BUILD_STATUS" in
+                built)
+                  echo "Pages build completed for $EXPECTED_PAGES_SHA."
+                  {
+                    echo "- Pages build: \`$EXPECTED_PAGES_SHA\` ($BUILD_STATUS)"
+                  } >> "$GITHUB_STEP_SUMMARY"
+                  exit 0
+                  ;;
+                error|errored|stale)
+                  echo "::error::GitHub Pages build for $EXPECTED_PAGES_SHA finished with status '$BUILD_STATUS'."
+                  exit 1
+                  ;;
+                queued|building)
+                  ;;
+                *)
+                  echo "::error::Unexpected GitHub Pages build status '$BUILD_STATUS' for $EXPECTED_PAGES_SHA."
+                  exit 1
+                  ;;
+              esac
+            fi
+            sleep 10
+          done
+
+          echo "::error::Timed out waiting for GitHub Pages build of $EXPECTED_PAGES_SHA to reach status 'built'."
+          exit 1

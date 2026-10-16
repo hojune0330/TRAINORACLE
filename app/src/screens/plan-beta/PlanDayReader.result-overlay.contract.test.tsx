@@ -11,6 +11,38 @@ beforeEach(() => {
 })
 afterEach(async () => { cleanup(); await Promise.resolve(); vi.restoreAllMocks() })
 
+it("keeps a short final PM session selected at the scroll boundary and follows manual return to AM", () => {
+  render(<PlanDayReader date="2026-07-28" sessions={[{ slot: "AM" }, { slot: "PM" }]} initialSlot="PM"
+    canPrevious={false} canNext={false} onPrevious={vi.fn()} onNext={vi.fn()} onClose={vi.fn()}>
+    <section data-session-slot="AM">오전 훈련</section><section data-session-slot="PM"><button>오후 기록 펼치기</button></section>
+  </PlanDayReader>)
+  const body = document.querySelector<HTMLElement>(".plan-day-reader__body")!
+  const morning = body.querySelector<HTMLElement>('[data-session-slot="AM"]')!
+  const afternoon = body.querySelector<HTMLElement>('[data-session-slot="PM"]')!
+  Object.defineProperties(body, { clientHeight: { value: 500 }, scrollHeight: { value: 650 } })
+  vi.spyOn(body, "getBoundingClientRect").mockReturnValue({ top: 100 } as DOMRect)
+  vi.spyOn(morning, "getBoundingClientRect").mockReturnValue({ top: 0 } as DOMRect)
+  const afternoonBounds = vi.spyOn(afternoon, "getBoundingClientRect").mockReturnValue({ top: 400 } as DOMRect)
+  body.scrollTop = 150
+  fireEvent.scroll(body)
+  expect(screen.getByRole("button", { name: "오후" })).toHaveAttribute("aria-current", "location")
+  afternoonBounds.mockReturnValue({ top: 300 } as DOMRect)
+  body.scrollTop = 100
+  fireEvent.scroll(body)
+  expect(screen.getByRole("button", { name: "오후" })).toHaveAttribute("aria-current", "location")
+  afternoonBounds.mockReturnValue({ top: 600 } as DOMRect)
+  body.scrollTop = 0
+  fireEvent.scroll(body)
+  expect(screen.getByRole("button", { name: "오전" })).toHaveAttribute("aria-current", "location")
+  afternoonBounds.mockReturnValue({ top: 400, bottom: 800 } as DOMRect)
+  act(() => { screen.getByRole("button", { name: "오후 기록 펼치기" }).focus() })
+  expect(screen.getByRole("button", { name: "오후" })).toHaveAttribute("aria-current", "location")
+  // Manual scrolling past the focused section must release its selection.
+  afternoonBounds.mockReturnValue({ top: 650, bottom: 1000 } as DOMRect)
+  fireEvent.scroll(body)
+  expect(screen.getByRole("button", { name: "오전" })).toHaveAttribute("aria-current", "location")
+})
+
 it("keeps a portaled plan reader closed behind the save result and resumes its records after the result Back", () => {
   const onClose = vi.fn(), show = vi.spyOn(HTMLDialogElement.prototype, "showModal")
   function Fixture() {

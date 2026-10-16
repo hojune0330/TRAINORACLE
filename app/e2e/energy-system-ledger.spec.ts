@@ -49,11 +49,10 @@ test("keeps explicit energy records separate from legacy defaults across home an
 
   await page.goto("/?app=1")
   const analysisEntry = page.getByRole("button", { name: "훈련량·변화 보기", exact: true })
-  await expect(page.getByRole("region", { name: "최근 하루 기록" })).toContainText("오늘 기록 2개")
+  await expect(page.getByRole("region", { name: "최근 하루 기록" })).toContainText("오늘 · 기록 2개")
   await expect(analysisEntry).toContainText("이번 주 8km · 직접 입력 1건")
   await analysisEntry.click()
-  const detailMenu = page.locator(".trends-hub__detail-menu")
-  await detailMenu.locator(":scope > summary").click()
+  const detailMenu = page.getByRole("group", { name: "훈련 분석 자세히 보기" })
   await detailMenu.getByRole("button", { name: "훈련 구성", exact: true }).click()
 
   const analysis = page.getByRole("region", { name: "훈련 종류별 합계", exact: true })

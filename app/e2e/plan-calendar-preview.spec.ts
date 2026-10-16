@@ -24,8 +24,11 @@ test("shows a dated AM and PM plan before selection and after reload", async ({ 
   await page.getByLabel("계획 시작 날짜").fill("2026-08-17")
 
   // When
-  await expect(page.getByRole("group", { name: /훈련 2개/u })).toHaveCount(3)
+  // Scope to one candidate's day list; mobile also exposes its date summary.
+  const candidateDays = page.getByRole("list", { name: "날짜별 계획 미리보기", exact: true }).first()
+  await expect(candidateDays.getByRole("group", { name: /훈련 2개/u })).toHaveCount(3)
   const overview = page.getByLabel("9일 훈련 일정").first()
+  await overview.getByRole("radio", { name: "달력", exact: true }).click()
   await expect(overview.getByRole("button", {
     name: /8월 25일 화요일/u,
   })).toContainText("기본")
@@ -35,12 +38,16 @@ test("shows a dated AM and PM plan before selection and after reload", async ({ 
   await expect(overview.getByRole("button", {
     name: /8월 25일 화요일/u,
   })).toContainText("회복")
-  const candidateDay = page.getByRole("group", {
+  await overview.getByRole("radio", { name: "하루씩", exact: true }).click()
+  const candidateDay = candidateDays.getByRole("group", {
     name: "8월 25일 화요일 · 훈련 2개",
   }).first()
   await expect(candidateDay).toContainText("오전")
   await expect(candidateDay).toContainText("오후")
-  await expect(candidateDay.getByRole("button", { name: "회복 운동 REC 훈련 설명 보기", exact: true })).toBeVisible()
+  await candidateDay.getByRole("button", { name: "8월 25일 화요일 전체 처방 보기", exact: true }).click()
+  const candidateReader = page.getByRole("dialog", { name: /^2026년 8월 25일/u })
+  await expect(candidateReader.getByRole("button", { name: "회복 운동 REC 훈련 설명 보기", exact: true })).toBeVisible()
+  await candidateReader.getByRole("button", { name: /^(?:달력|하루씩)으로 돌아가기$/u, exact: true }).click()
   await page.getByRole("button", { name: /선택하기|이 일정으로 시작/u }).first().click()
   await expect(page.getByRole("heading", { name: "9일 훈련 계획" })).toBeVisible()
   await page.reload()
@@ -49,13 +56,14 @@ test("shows a dated AM and PM plan before selection and after reload", async ({ 
   // Then
   await openActivePlanCards(page)
   await expect(page.locator(".active-plan .plan-schedule-preview > li")).toHaveCount(9)
-  const listedDay = page.getByRole("group", {
+  const activeDays = page.getByRole("list", { name: "날짜별 계획 미리보기", exact: true })
+  const listedDay = activeDays.getByRole("group", {
     name: "8월 25일 화요일 · 훈련 2개",
   })
   await expect(listedDay).toContainText("오전")
   await expect(listedDay).toContainText("오후")
-  await expect(page.getByLabel("9일 훈련 일정")).toContainText("회복")
-  await expect(page.getByRole("group", { name: /훈련 2개/u })).toHaveCount(3)
+  await expect(listedDay).toContainText("걷기 중심 런워크")
+  await expect(activeDays.getByRole("group", { name: /훈련 2개/u })).toHaveCount(3)
   await expect.poll(() => page.evaluate(() => window.localStorage.getItem("trainoracle.plan-beta.v1"))).toContain("2026-08-17")
   const activeDay = await openActiveDayReader(page, 8)
   await expect(activeDay.locator('[data-session-slot="AM"]')).toBeVisible()

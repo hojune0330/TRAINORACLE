@@ -36,19 +36,19 @@ test("offers a rest-day path without pressuring the athlete to log more", async 
   await page.getByRole("button", { name: "수면", exact: true }).click()
   await expect(page.getByRole("heading", { name: "어젯밤 수면" })).toBeVisible()
 
-  // 입력 중에는 주 탭이 숨겨지고, 폼의 뒤로가기로 종류 선택에 돌아온다.
+  // The first Back returns to the form's question hub; the second leaves it.
   await expect(page.getByRole("navigation", { name: "주 탭" })).toHaveCount(0)
+  await page.getByRole("button", { name: "← 뒤로", exact: true }).click()
+  await expect(page.getByRole("heading", { name: "무엇을 남길까요?" })).toBeVisible()
   await page.getByRole("button", { name: "← 뒤로", exact: true }).click()
   await expect(page.getByRole("button", { name: /컨디션·메모.*수면·몸 상태·기분·메모/u })).toBeVisible()
 
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "오라클" }).click()
   const distance = page.getByRole("region", { name: "누적 거리와 변화" })
-  const detailMenu = page.locator(".trends-hub__detail-menu")
-  await detailMenu.locator(":scope > summary").click()
+  const detailMenu = page.getByRole("group", { name: "훈련 분석 자세히 보기" })
   await detailMenu.getByRole("button", { name: "훈련량", exact: true }).click()
-  await expect(distance.getByText("운동 거리를 남기면 주·월별 합계와 변화를 볼 수 있어요.", { exact: true })).toBeVisible()
+  await expect(distance.getByText("최근 합계는 없어요. 아래 기간을 넓혀 지난 기록을 확인할 수 있어요.", { exact: true })).toBeVisible()
   await expect(distance.getByText(/집계 기준에 맞지 않아 제외한 기록 1건/u).first()).toBeVisible()
-  await detailMenu.locator(":scope > summary").click()
   await detailMenu.getByRole("button", { name: "훈련 요약", exact: true }).click()
   const oracle = page.getByRole("region", { name: "내 훈련 요약" })
   await expect(oracle).toContainText("최근 8주 훈련 일지 1건을 남겼어요.")

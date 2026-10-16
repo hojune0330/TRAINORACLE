@@ -16,9 +16,11 @@ async function openGame(page: Page, course: "practice" | "seoul" = "practice", b
   await expect(page.getByRole("heading", { name: "러닝 투어", exact: true })).toBeVisible()
   if (course === "practice") await page.getByRole("button", { name: "러닝머신 연습" }).click()
   else await page.getByRole("button", { name: /^서울/ }).click()
-  await page.clock.install()
+  const clockStart = Date.now()
+  await page.clock.install({ time: clockStart })
   // Keep simulated time fixed between input calls, including slow mobile screenshots.
-  await page.clock.pauseAt(await page.evaluate(() => Date.now()) + 100)
+  // Pause before play. A 100ms cross-process deadline races on a loaded runner.
+  await page.clock.pauseAt(clockStart + 60_000)
 }
 const energy = async (page: Page) => Number((await page.getByLabel("게임 에너지", { exact: true }).textContent())!.replace(/\D/g, ""))
 const noSideScroll = (page: Page) => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)
@@ -53,6 +55,7 @@ test("hazards enter at the screen edge and stay continuous when a scheduled obst
   const stages = tourStages(tourCity("seoul")!)
   let model = { ...treadmillCommand(newTreadmillRun(stages), { type: "start", stages }), countdown: 0, running: true }
   const field = page.locator("canvas.treadmill-game__canvas")
+  const reduced = await page.evaluate(() => matchMedia("(prefers-reduced-motion: reduce)").matches)
   type Seen = { id: number; x: number; scheduled: boolean }
   let previous: Seen[] = [], sawPreview = false, activated = false
   const seenIds = new Set<number>()
@@ -69,9 +72,11 @@ test("hazards enter at the screen edge and stay continuous when a scheduled obst
     for (const hazard of visible) {
       if (!seenIds.has(hazard.id)) { expect(hazard.x, "first sight must be at the right edge, not mid-lane").toBeGreaterThan(0.94); seenIds.add(hazard.id) }
       const before = previous.find(item => item.id === hazard.id)
-      if (before) expect(Math.abs(hazard.x - before.x)).toBeLessThan(0.09)
+      if (before) expect(Math.abs(hazard.x - before.x), JSON.stringify({ tick, before, hazard })).toBeLessThan(0.09)
       if (before?.scheduled && !hazard.scheduled) activated = true
-      if (hazard.scheduled && hazard.x < 0.95 && !sawPreview) {
+      // Reduced motion uses a fixed projection: the preview is near the edge,
+      // rather than the moving camera's deeper look-ahead region.
+      if (hazard.scheduled && hazard.x < (reduced ? 1.06 : 0.95) && !sawPreview) {
         sawPreview = true
         await page.screenshot({ path: info.outputPath("approaching-obstacle.png"), fullPage: true })
       }
@@ -92,7 +97,9 @@ test("camera follows with slack, accelerates on dash, freezes on pause and keeps
   const value = async (name: string) => Number(await field.getAttribute(`data-${name}`))
   const start = await value("camera-offset"), startX = await value("runner-x")
   await page.keyboard.down("ArrowRight"); await page.clock.runFor(500)
-  expect(await value("camera-offset")).not.toBeCloseTo(start, 3)
+  const reduced = await page.evaluate(() => matchMedia("(prefers-reduced-motion: reduce)").matches)
+  if (reduced) expect(await value("camera-offset")).toBe(0)
+  else expect(await value("camera-offset")).not.toBeCloseTo(start, 3)
   expect(await value("runner-x")).not.toBeCloseTo(startX, 3)
   const travel = await value("scene-travel")
   await page.clock.runFor(200)
@@ -100,7 +107,10 @@ test("camera follows with slack, accelerates on dash, freezes on pause and keeps
   await page.keyboard.press("d"); await page.clock.runFor(100)
   const dashTravel = await value("scene-travel")
   await page.clock.runFor(200)
-  expect(await value("scene-travel") - dashTravel).toBeGreaterThan(normalDistance * 1.3)
+  if (reduced) {
+    expect(normalDistance).toBe(0)
+    expect(await value("scene-travel")).toBe(0)
+  } else expect(await value("scene-travel") - dashTravel).toBeGreaterThan(normalDistance * 1.3)
   await page.keyboard.press("Space"); await page.clock.runFor(200)
   const bounds = (await field.boundingBox())!
   const hud = (await page.locator(".treadmill-game__hud").boundingBox())!
@@ -122,14 +132,18 @@ test("camera follows with slack, accelerates on dash, freezes on pause and keeps
 test("camera keeps the moving city and hazard lane clear at thirteen seconds", async ({ page }, info) => {
   await openGame(page, "seoul")
   await page.getByRole("button", { name: "시작", exact: true }).click()
+  // Sample inside the 13th displayed second, not exactly on a RAF/floor boundary.
+  // Round absolute replay deadlines so many fractional gaps cannot accumulate drift.
+  const sampleAt = 16_100
   let now = 0
-  for (const step of planRun(tourStages(tourCity("seoul")!)).filter(step => step.at <= 16_000)) {
-    await page.clock.runFor(Math.round(step.at - now)); now = step.at
+  for (const step of planRun(tourStages(tourCity("seoul")!)).filter(step => step.at <= sampleAt)) {
+    const deadline = Math.round(step.at)
+    await page.clock.runFor(deadline - now); now = deadline
     if (step.key === "run-down") await page.keyboard.down("ArrowRight")
     if (step.key === "run-up") await page.keyboard.up("ArrowRight")
     if (step.key === "jump") await page.keyboard.press("Space")
   }
-  await page.clock.runFor(Math.round(16_000 - now))
+  await page.clock.runFor(sampleAt - now)
   await expect(page.getByLabel("경기 진행 시간")).toHaveText("13 / 90초")
   const canvas = page.locator("canvas.treadmill-game__canvas"), bounds = (await canvas.boundingBox())!
   const foot = bounds.y + bounds.height * Number(await canvas.getAttribute("data-runner-y"))
@@ -329,7 +343,12 @@ function planRun(stages: readonly TreadmillStage[] = TREADMILL_STAGES): Step[] {
       steps.push({ at: ms, key: "upgrade" })
       state = treadmillCommand(state, { type: "upgrade", upgrade: "economy" })
     }
-    const want = (state.x < 0.45 && state.energy > 25) || (state.x < 0.22 && state.energy > 0)
+    // Separate start/stop thresholds model a deliberate hold, rather than
+    // toggling the real browser key every simulation frame around x=.45.
+    // Keep the pure-engine clear assertion and replay every jump/checkpoint.
+    const want = state.running
+      ? state.x < 0.5 && state.energy > 20
+      : (state.x < 0.4 && state.energy > 35) || (state.x < 0.22 && state.energy > 0)
     if (want !== state.running) { steps.push({ at: ms, key: want ? "run-down" : "run-up" }); state = treadmillCommand(state, { type: "run", held: want }) }
     const ahead = nearestHazard(state)
     if (ahead && ahead.x - state.x < 0.09 && state.y === 0 && state.energy >= state.jumpCost) {
@@ -402,6 +421,9 @@ test("clears three stages with real keys, shows trade-offs and resets the build"
     else if (step.key === "run-up") await page.keyboard.up("ArrowRight")
     else if (step.key === "jump") await page.keyboard.press("Space")
     else {
+      // Release the physical key while choosing an upgrade. The game clears
+      // held input at this boundary; a still-held browser key would repeat.
+      await page.keyboard.up("ArrowRight")
       if (checkpoints === 0) {
         await expect(page.getByRole("heading", { name: "이번 판의 능력을 바꿔요" })).toBeVisible()
         await expect(page.locator("[data-upgrade]")).toHaveCount(0)
@@ -472,6 +494,7 @@ async function replay(page: Page, plan: Step[], afterResume?: (index: number) =>
     else if (step.key === "run-up") await page.keyboard.up("ArrowRight")
     else if (step.key === "jump") await page.keyboard.press("Space")
     else {
+      await page.keyboard.up("ArrowRight")
       await page.clock.runFor(2500)
       await expect(page.getByRole("heading", { name: "어떤 능력을 키울까요?" })).toBeVisible()
       await page.getByRole("button", { name: /일정한 박자/ }).click()
@@ -490,12 +513,14 @@ test("a later-stage failure offers 'retry this stage' with the same build, cappe
   let now = 0
   for (const step of plan) {
     if (step.at > now) { await page.clock.runFor(Math.round(step.at - now)); now = step.at }
-    if (step.key === "upgrade") { await page.clock.runFor(2500); await page.getByRole("button", { name: /스프링 밑창/ }).click(); break }
+    if (step.key === "upgrade") { await page.keyboard.up("ArrowRight"); await page.clock.runFor(2500); await page.getByRole("button", { name: /스프링 밑창/ }).click(); break }
     if (step.key === "run-down") await page.keyboard.down("ArrowRight")
     else if (step.key === "run-up") await page.keyboard.up("ArrowRight")
     else if (step.key === "jump") await page.keyboard.press("Space")
   }
   await page.keyboard.up("ArrowRight")
+  await expect(page.getByLabel("점프 에너지", { exact: true })).toHaveText("↗ 점프 ⚡3")
+  const upgradedJumpCost = await page.getByLabel("점프 에너지", { exact: true }).textContent()
   await page.clock.runFor(12000)
   await expect(page.getByRole("heading", { name: "진흙에서 뒤로 떨어졌어요" })).toBeVisible()
   const retry = page.getByRole("button", { name: /2구간부터 다시/ })
@@ -507,7 +532,7 @@ test("a later-stage failure offers 'retry this stage' with the same build, cappe
   await expect(page.getByRole("list", { name: "코스 2/3 · 진흙" })).toBeVisible()
   await expect(page.getByLabel("경기 진행 시간")).toHaveText("30 / 90초")
   // Same build: the spring upgrade keeps the jump cheap.
-  await expect(page.getByLabel("점프 에너지", { exact: true })).toContainText("4")
+  await expect(page.getByLabel("점프 에너지", { exact: true })).toHaveText(upgradedJumpCost!)
 })
 
 test("medals: a fixed medal per run whatever the result, spent only on a cosmetic trail in the shop", async ({ page }, info) => {
@@ -725,6 +750,8 @@ test("navigation keeps the chosen upgrade when saving and resuming a later stage
   await page.keyboard.up("ArrowRight")
   await page.clock.runFor(2500)
   await page.getByRole("button", { name: /스프링 밑창/ }).click()
+  await expect(page.getByLabel("점프 에너지", { exact: true })).toHaveText("↗ 점프 ⚡3")
+  const savedJumpCost = await page.getByLabel("점프 에너지", { exact: true }).textContent()
   await page.getByRole("button", { name: "일시정지", exact: true }).click()
   await page.getByRole("button", { name: "저장하고 지도로 나가기" }).click()
   await expect(page.getByRole("region", { name: "중간 저장한 판" })).toContainText("스프링 밑창")
@@ -733,7 +760,7 @@ test("navigation keeps the chosen upgrade when saving and resuming a later stage
   await page.getByRole("button", { name: "미니게임", exact: true }).click()
   await page.getByRole("button", { name: "저장한 판 이어하기" }).click()
   await expect(page.getByRole("list", { name: "코스 2/3 · 진흙" })).toBeVisible()
-  await expect(page.getByLabel("점프 에너지", { exact: true })).toContainText("4")
+  await expect(page.getByLabel("점프 에너지", { exact: true })).toHaveText(savedJumpCost!)
   await page.getByRole("button", { name: "계속", exact: true }).click()
   await expect(page.locator(".treadmill-game")).toHaveAttribute("data-mode", "running")
 })

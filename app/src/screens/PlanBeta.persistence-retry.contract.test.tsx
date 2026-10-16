@@ -14,7 +14,7 @@ import { hasPendingBrowserBackLayer } from "../navigation/browserNavigation"
 let locksDescriptor: PropertyDescriptor | undefined
 
 async function openFirstProgress(user: ReturnType<typeof userEvent.setup>) {
-  await user.click(await screen.findByRole("button", { name: "하루씩" }))
+  await user.click(await screen.findByRole("radio", { name: "하루씩" }))
   const list = screen.getByRole("region", { name: "날짜별 훈련 목록" })
   await user.click(within(list).getByRole("button", { name: "7월 24일 금요일 전체 처방 보기" }))
   const reader = within(await screen.findByRole("dialog", { name: "2026년 7월 24일 금요일" }))

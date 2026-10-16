@@ -16,6 +16,7 @@
     "useDefineForClassFields": true,
     "skipLibCheck": true,
     "noEmit": true,
+    "allowImportingTsExtensions": true,
     "paths": {
       "@impl/*": ["../impl/src/*"]
     }

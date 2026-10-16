@@ -125,7 +125,7 @@ test("WELCOME은 빈 꾸미기·성취 점수판을 숨기고 유용한 기록 �
   expect(height).toBeLessThanOrEqual(HOME_LIMIT[project])
   expect(height).toBeLessThan(HOME_BEFORE[project])
 
-  await page.getByRole("button", { name: "일지 예시·훈련법·꾸미기" }).click()
+  await expect(page.getByRole("navigation", { name: "홈 바로가기" })).toBeVisible()
   await page.getByRole("button", { name: "일지 꾸미기" }).click()
   const editor = page.getByRole("dialog", { name: "일지 꾸미기", exact: true })
   await expect(editor).toBeVisible()
@@ -163,8 +163,9 @@ test("WELCOME keeps its height and readable actions with a reserved scrollbar gu
   expect(await page.evaluate(() => innerWidth)).toBe(320)
   const region = page.locator(SCROLL_REGION)
   expect(await region.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true)
-  const first = page.getByRole("button", { name: "오늘 운동 기록 쓰기", exact: true })
-  const second = page.getByRole("button", { name: "훈련 계획 만들기", exact: true })
+  // Current approved welcome order: plan, analysis, then record.
+  const first = page.getByRole("button", { name: "훈련 계획 받기", exact: true })
+  const second = page.locator('.home-hub__today nav button').nth(1)
   await expect(first).toBeVisible()
   await expect(second).toBeVisible()
   const firstBox = await first.boundingBox()
@@ -187,7 +188,8 @@ test("WELCOME keeps its height and readable actions with a reserved scrollbar gu
   const actions = page.locator(".home-hub button:visible, .home-hub summary:visible")
   const labels = await actions.allTextContents()
   expect(labels.length).toBeGreaterThanOrEqual(5)
-  expect(labels.every(label => label.trim().length > 0)).toBe(true)
+  // Icon-only close controls have a real accessible name, not visible text.
+  for (const action of await actions.all()) await expect(action).toHaveAccessibleName(/\S/u)
   const firstSize = await first.evaluate(el => parseFloat(getComputedStyle(el).fontSize))
   await page.evaluate(() => {
     const nodes = [...document.querySelectorAll<HTMLElement>(".home-hub, .home-hub *")].filter(el => el instanceof HTMLElement)
@@ -261,7 +263,7 @@ test("기록이 하나 생기면 꾸미기 진입 뒤 포인트 보관함을 확
   })
   await page.goto("/?app=1")
 
-  await page.getByRole("button", { name: "일지 예시·훈련법·꾸미기" }).click()
+  await expect(page.getByRole("navigation", { name: "홈 바로가기" })).toBeVisible()
   await page.getByRole("button", { name: "일지 꾸미기" }).click()
   const editor = page.getByRole("dialog", { name: "일지 꾸미기", exact: true })
   await expect(editor).toBeVisible()
@@ -362,34 +364,36 @@ test("접어도 값은 사라지지 않는다 — 객관 기록을 펼쳤다 접
   await expect(page.getByRole("spinbutton", { name: "반복 횟수" })).toHaveValue("6")
 })
 
-test("몸 그림을 접어도 부위 버튼 10개는 늘 눌린다", async ({ page }, testInfo) => {
+test("몸 상태는 부위 그룹과 좌우 선택으로 열고 닫아도 입력이 남는다", async ({ page }, testInfo) => {
   limitsFor(testInfo.project.name)
-  await openEveningStage(page, "몸 상태·기분")
-  const selector = page.locator(".body-pain-selector")
-  const bodyButtons = page.getByRole("button", { name: /통증/u })
-
-  // 그림이 닫힌 상태에서도 선택은 버튼에서 그대로 된다.
-  await expect(selector).toHaveAttribute("data-diagram-open", "false")
-  await expect(bodyButtons).toHaveCount(10)
-  await page.getByRole("button", { name: /^오른 무릎.*통증/u }).click()
-  await expect(page.getByRole("button", { name: /^오른 무릎.*통증 1단계/u })).toBeVisible()
-  // 고르면 그림이 저절로 펼쳐진다.
-  await expect(selector).toHaveAttribute("data-diagram-open", "true")
+  await openEveningStage(page, "몸 상태")
+  const picker = page.getByRole("group", { name: "몸 부위 선택" })
+  for (const name of ["무릎", "종아리", "허벅지 뒤", "발", "정강이", "허리"]) {
+    await expect(picker.getByRole("button", { name, exact: true })).toBeVisible()
+  }
+  await picker.getByRole("button", { name: "무릎", exact: true }).click()
+  await page.getByRole("button", { name: "오른 무릎", exact: true }).click()
+  await page.getByRole("button", { name: "오른 무릎 통증 1단계", exact: true }).click()
+  await page.getByRole("button", { name: "입력 완료", exact: true }).click()
+  await expect(page.getByRole("dialog")).toHaveCount(0)
+  await expect(page.getByRole("button", { name: "오른 무릎, 통증 1/5", exact: true })).toBeVisible()
 })
 
-test("사람이 접은 구획을 코드가 다시 펼치지 않는다", async ({ page }, testInfo) => {
+test("사람이 닫은 몸 상태 창은 다시 열리지 않고 선택과 복귀를 보존한다", async ({ page }, testInfo) => {
   limitsFor(testInfo.project.name)
-  await openEveningStage(page, "몸 상태·기분")
-  const selector = page.locator(".body-pain-selector")
-
-  // 통증을 고르면 자동으로 펼쳐진다. 거기서 사람이 접는다.
-  await page.getByRole("button", { name: /^오른 무릎.*통증/u }).click()
-  await expect(selector).toHaveAttribute("data-diagram-open", "true")
-  await page.getByRole("button", { name: /몸 그림 접기/u }).click()
-  await expect(selector).toHaveAttribute("data-diagram-open", "false")
-
-  // 통증을 더 골라도 접힌 채로 둔다. 사람이 접은 것을 코드가 되돌리면
-  // 조작을 빼앗긴 느낌이 된다 (작업지시서 §4-3 (나)).
-  await page.getByRole("button", { name: /^왼 무릎.*통증/u }).click()
-  await expect(selector).toHaveAttribute("data-diagram-open", "false")
+  await openEveningStage(page, "몸 상태")
+  const opener = page.getByRole("group", { name: "몸 부위 선택" }).getByRole("button", { name: "무릎", exact: true })
+  await opener.click()
+  await page.getByRole("button", { name: "오른 무릎", exact: true }).click()
+  await page.getByRole("button", { name: "오른 무릎 통증 1단계", exact: true }).click()
+  await page.getByRole("button", { name: "입력 완료", exact: true }).click()
+  const selected = page.getByRole("button", { name: "오른 무릎, 통증 1/5", exact: true })
+  await selected.click()
+  await expect(page.getByRole("button", { name: "오른 무릎 통증 1단계", exact: true })).toHaveAttribute("aria-pressed", "true")
+  await page.getByRole("button", { name: "몸 상태 입력 닫기", exact: true }).click()
+  await expect(page.getByRole("dialog")).toHaveCount(0)
+  await expect(selected).toBeFocused()
+  await page.getByRole("button", { name: "입력 확인", exact: true }).click()
+  await expect(page.getByRole("dialog")).toHaveCount(0)
+  await expect(page.getByRole("button", { name: "몸 상태 수정", exact: true })).toBeVisible()
 })

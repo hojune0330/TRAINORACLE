@@ -24,69 +24,8 @@ test("switches method in place and saves only the reconfirmed prescription", asy
     experience: /빠른 훈련과 쉬운 훈련을 나눠 꾸준히 해왔어요/u, focus: /유산소 반복 훈련/u,
     time: /저녁에 운동해요/u, twice: true })
   await openPlanRefinement(page, "안내 방식")
-  const support = page.locator(".plan-support-coverage")
-  const supportToggle = support.locator("summary")
-  await expect(support).not.toHaveAttribute("open")
-  await supportToggle.focus()
-  await supportToggle.press("Enter")
-  await expect(support).toHaveAttribute("open")
-  await expect(support.getByRole("row")).toHaveCount(8)
-  for (const event of ["10km", "하프마라톤", "마라톤"]) {
-    const row = support.getByRole("row").filter({ has: page.getByRole("rowheader", { name: event, exact: true }) })
-    await expect(row.getByText("훈련 구성 109개 · 목적·시간·환경 확인 후 적용", { exact: true })).toBeVisible()
-    await expect(row.getByText(`기록 기반 페이스 계산 구성 45개 · 기준 종목: 5km · ${event}`, { exact: true })).toBeVisible()
-  }
-  await expect(support.getByText(/지금 모두 적용할 수 있다는 뜻은 아니에요/u)).toBeVisible()
-  await expect(support.getByText(/목표는 현재 능력이 아니에요/u)).toBeVisible()
-  await expect(support.getByText("5 × 1km @ 5K RP · r150s Jog", { exact: true })).toBeVisible()
-  expect((await supportToggle.boundingBox())!.height).toBeGreaterThanOrEqual(44)
-  await supportToggle.scrollIntoViewIfNeeded()
-  await page.screenshot({ path: testInfo.outputPath("support-coverage.png") })
-  const middleSupportRow = support.getByRole("row", { name: /3000m/u })
-  await middleSupportRow.scrollIntoViewIfNeeded()
-  await expect(middleSupportRow).toBeInViewport({ ratio: 1 })
-  await page.screenshot({ path: testInfo.outputPath("support-table-row.png") })
-  const supportFont = await support.getByRole("table").evaluate(node => parseFloat(getComputedStyle(node).fontSize))
-  await page.evaluate(size => document.documentElement.style.setProperty("--fs-body", `${size * 2}px`), supportFont)
-  expect(await support.getByRole("table").evaluate(node => parseFloat(getComputedStyle(node).fontSize))).toBeGreaterThanOrEqual(supportFont * 1.9)
-  await expect.poll(() => support.evaluate(node => node.scrollWidth <= node.clientWidth + 1)).toBe(true)
-  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true)
-  await supportToggle.scrollIntoViewIfNeeded()
-  await page.screenshot({ path: testInfo.outputPath("support-coverage-200pct.png") })
-  // At 200%, the current catalog metadata may make one row taller than the
-  // viewport. Verify every text part is readable by vertical scrolling, without
-  // omitting text or shrinking it to force the whole row onto one screen.
-  const rowParts = middleSupportRow.locator("th, p, strong, span")
-  await expect(rowParts).toHaveCount(6)
-  const withoutWhitespace = (value: string) => value.replace(/\s/gu, "")
-  expect(withoutWhitespace((await rowParts.allTextContents()).join("")))
-    .toBe(withoutWhitespace((await middleSupportRow.textContent()) ?? ""))
-  for (const part of await rowParts.all()) {
-    if (await part.evaluate(node => node.tagName === "TH")) {
-      // A table header's box stretches to the entire row. Measure its actual
-      // rendered text, not the empty cell area below it.
-      await expect(part).toBeVisible()
-      await expect(part).toHaveText("3000m")
-      await part.evaluate(node => node.scrollIntoView({ block: "start" }))
-      await expect.poll(() => part.evaluate(node => {
-        if (!node.textContent?.trim()) return 0
-        const range = document.createRange()
-        range.selectNodeContents(node)
-        const rects = [...range.getClientRects()].filter(rect => rect.width > 0 && rect.height > 0)
-        if (rects.length === 0) return 0
-        return Math.min(...rects.map(rect =>
-          Math.max(0, Math.min(rect.right, innerWidth) - Math.max(rect.left, 0)) / rect.width
-          * Math.max(0, Math.min(rect.bottom, innerHeight) - Math.max(rect.top, 0)) / rect.height))
-      })).toBe(1)
-    } else {
-      await part.evaluate(node => node.scrollIntoView({ block: "center", inline: "nearest" }))
-      await expect(part).toBeInViewport({ ratio: 1 })
-    }
-  }
-  await page.screenshot({ path: testInfo.outputPath("support-table-row-200pct.png") })
-  await page.evaluate(() => document.documentElement.style.removeProperty("--fs-body"))
-  await supportToggle.press("Space")
-  await expect(support).not.toHaveAttribute("open")
+  // The retired support-catalog component has its own contract tests; this
+  // browser journey covers the live method picker and saved prescription.
   await page.getByRole("button", { name: /시간·힘든 정도로 받기/u }).click()
   const purposeEntries = page.getByRole("group", { name: "계획 확인·변경" })
   const showPurpose = async (name: "훈련 조절" | "일정·운동 시간" | "추천 근거") => {
@@ -120,7 +59,7 @@ test("switches method in place and saves only the reconfirmed prescription", asy
   await openMethodChoices()
   await method.getByRole("radio", { name: /5 × 1km @ 5K RP/u }).click()
   await expect(method.getByRole("radio", { name: /5 × 1km @ 5K RP/u })).toBeChecked()
-  const save = page.getByRole("button", { name: /이 일정으로 시작/u })
+  const save = page.getByRole("button", { name: "계획 A로 시작", exact: true })
   await showPurpose("일정·운동 시간")
   await expect(save).toBeDisabled()
   await showPurpose("훈련 조절")

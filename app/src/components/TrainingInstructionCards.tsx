@@ -1,4 +1,5 @@
 import { ContextualIllustration } from "./ContextualIllustration"
+import { CompanionMotion } from "./CompanionMotion"
 import { EXECUTION_STOP_CUE } from "../screens/plan-beta/labels"
 import "../styles/training-instruction-cards.css"
 
@@ -36,9 +37,10 @@ export function TrainingInstructionCards({ steps }: { readonly steps: readonly I
         return <div className={`training-instructions__card${total ? " training-instructions__card--total" : ""}`} key={`${index}-${step.role}`}>
           <dt>{step.title}</dt>
           <dd>
-            {total ? <>
+            {total ? <><div className="training-instructions__total-value">
               <strong className={separatedTotal ? "training-instructions__duration" : "training-instructions__detail"}>{separatedTotal ? detail.slice(totalPrefix.length) : detail}</strong>
               {separatedTotal && <span className="training-instructions__included">{totalPrefix.trimEnd()}</span>}
+              </div><CompanionMotion interactive />
             </> : parts.length > 1 ? <ol className="training-instructions__sequence" aria-label={`${step.title} 순서`}>
               {parts.map((part, partIndex) => {
                 const candidate = part.indexOf(" · ")

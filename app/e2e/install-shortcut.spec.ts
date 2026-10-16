@@ -90,7 +90,7 @@ test("closing after installation restores focus when the suggestion disappears",
   await page.getByRole("button", { name: "이대로 저장", exact: true }).click()
   await page.getByRole("button", { name: "완료", exact: true }).click()
   await expect(page.getByTestId("install-shortcut-suggestion")).toBeVisible()
-  await page.getByTestId("install-shortcut-suggestion").getByRole("button", { name: /^(홈 화면에 추가|앱 바로가기 만들기)$/u }).click()
+  await page.getByTestId("install-shortcut-suggestion").getByRole("button", { name: /^앱 추가 · (홈 화면에 추가|앱 바로가기 만들기)$/u }).click()
   await expect(page.getByTestId("install-shortcut-dialog")).toBeVisible()
   await page.evaluate(() => window.dispatchEvent(new Event("appinstalled")))
   await expect(page.getByTestId("install-shortcut-suggestion")).toHaveCount(0)

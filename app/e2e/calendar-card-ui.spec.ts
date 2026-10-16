@@ -22,7 +22,7 @@ test("calendar overview stays compact, readable and reversible without losing tr
   await page.setViewportSize({ width: 375, height: 800 })
   await selected.click()
   await expect(page.getByRole("dialog")).toBeVisible()
-  await page.getByRole("button", { name: "달력으로 돌아가기", exact: true }).click()
+  await page.getByRole("button", { name: /^(?:달력|하루씩)으로 돌아가기$/u, exact: true }).click()
   await expect(selected).toBeFocused()
   const trigger = page.getByRole("button", { name: /년월과 날짜 이동/ })
   await trigger.click()
@@ -57,7 +57,7 @@ test("calendar overview stays compact, readable and reversible without losing tr
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   await page.screenshot({ path: info.outputPath("large-text-320.png"), fullPage: true })
   await page.getByRole("button", { name: "처방 달력 확인" }).click()
-  await page.getByRole("button", { name: "달력", exact: true }).click()
+  await page.getByRole("radio", { name: "달력", exact: true }).click()
   for (const width of [320, 375, 1280]) {
     await page.setViewportSize({ width, height: 800 })
     const main = page.locator('button[data-date="2026-08-24"] [data-tone="main"] .calendar-training-mark__label')

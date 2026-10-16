@@ -1,0 +1,82 @@
+[
+  {
+    "file": "collections/training-companions-v1/bear-run.webp",
+    "bytes": 11768,
+    "sha256": "e5b4301c0120b154323beb461b2e7fa578c5ea3ccbf6b5c4e792ed1ac31867d5"
+  },
+  {
+    "file": "collections/training-companions-v1/bear-walk.webp",
+    "bytes": 10682,
+    "sha256": "4ad6473f2c2d0623097b03db94a1294ddcea1defcaba842ec9bc6fc14358c217"
+  },
+  {
+    "file": "collections/training-companions-v1/bear-warm-up.webp",
+    "bytes": 11034,
+    "sha256": "d9075530f59357f87afa08fb54cfce21dd71cec9ca5a2e1d0da1eeb4ab51c020"
+  },
+  {
+    "file": "collections/training-companions-v1/cat-run.webp",
+    "bytes": 11802,
+    "sha256": "677fcf3cb5785008e9a48add8a449d8a3bc9cf19fd621cbeea80b97c8a1aa737"
+  },
+  {
+    "file": "collections/training-companions-v1/cat-walk.webp",
+    "bytes": 11108,
+    "sha256": "f0c66e70846edd9f2b3aa1f1092b491ec35c4a0cf1e0385e34cd4095af93d70b"
+  },
+  {
+    "file": "collections/training-companions-v1/cat-warm-up.webp",
+    "bytes": 11398,
+    "sha256": "4b6b0cea9aec97a9926db38ef56aa04452bf48b1613f9cc48461471ca05c4ffa"
+  },
+  {
+    "file": "collections/training-companions-v1/otter-run.webp",
+    "bytes": 12806,
+    "sha256": "c208cb45712ad44dbd75a9cf61495cb7b6b9e175665dda9d4b6ab8d08d83be2e"
+  },
+  {
+    "file": "collections/training-companions-v1/otter-walk.webp",
+    "bytes": 10546,
+    "sha256": "f8e8d5811fdac201db4084bd055be138791eda73b52bd50bb93de5ea2d24ca2c"
+  },
+  {
+    "file": "collections/training-companions-v1/otter-warm-up.webp",
+    "bytes": 10806,
+    "sha256": "4a79658b5e28cd743b388212385d0da2c2c8f9a7a4117d7635a29417638099cf"
+  },
+  {
+    "file": "companions/v1/otter-idle-atlas.webp",
+    "bytes": 63430,
+    "sha256": "720a2a9d40ce603f29a2ae0d548d70404577922f95478e676579c49a5d5912f5"
+  },
+  {
+    "file": "companions/v1/otter-idle.webp",
+    "bytes": 12830,
+    "sha256": "5e764074558b5972f09f92540ec83bcb31c83cf2bde3c737bbffc4955bd39a57"
+  },
+  {
+    "file": "companions/v1/otter-nod-atlas.webp",
+    "bytes": 57110,
+    "sha256": "d7b9e9ccc0611d3bc931f1b5655ae9c98f2a14fb1bcc516ac844f2e31ea0cc11"
+  },
+  {
+    "file": "companions/v1/otter-nod.webp",
+    "bytes": 12644,
+    "sha256": "af2536e7948f19b209c88855096f08594352f20ac55f5efdf086ab6715f15599"
+  },
+  {
+    "file": "companions/v1/otter-run-atlas.webp",
+    "bytes": 86846,
+    "sha256": "b5f4eeaf0d34297e8278df85d0ea2f8f6f9e129deb598eafe184dcefc7c8736d"
+  },
+  {
+    "file": "companions/v1/otter-walk-atlas.webp",
+    "bytes": 82904,
+    "sha256": "371b707b23ba448cda03c7d86b0695533efbec9ea9451d9c8fece77e4c8ecc09"
+  },
+  {
+    "file": "companions/v1/otter-warm_up-atlas.webp",
+    "bytes": 61724,
+    "sha256": "1a811c2e4fee4d0eac5b5db77e656cfbd8589342f445a647ec6383f2f5df424b"
+  }
+]

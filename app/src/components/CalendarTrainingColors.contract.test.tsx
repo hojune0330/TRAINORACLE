@@ -24,7 +24,7 @@ describe("calendar colors are shared by every real plan and journal adapter", ()
   it("keeps role names and both slots on prescription calendars before opening details", () => {
     const withRest: readonly PlanSession[] = [...sessions, { day: 2, slot: "PM", role: "REST", plannedEnergyIntent: "RECOVERY_INTENT", prescription: { kind: "REST" } }]
     const view = render(<PlanSchedulePreview startDate="2026-09-30" sessions={withRest} presentation="prescription-calendar" detailsExpanded={false} />)
-    fireEvent.click(screen.getByRole("button", { name: /^달력$/ }))
+    fireEvent.click(screen.getByRole("radio", { name: /^달력$/ }))
     const day = view.container.querySelector("button[data-date='2026-09-30']")!
     expect(day.querySelector('[data-tone="main"] .calendar-training-mark__label')?.textContent).toMatch(/^주요/)
     expect(day.querySelector('[data-tone="recovery"] .calendar-training-mark__label')?.textContent).toMatch(/^회복/)

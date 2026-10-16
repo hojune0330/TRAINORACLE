@@ -220,7 +220,7 @@ async function openImport(page: Page, file = { format: "tcx", mimeType: "applica
   })).toBe(owner)
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "기록하기" }).click()
   await page.getByTestId("open-import").click()
-  await page.getByLabel(/내보낸 활동 파일/u).setInputFiles({ name: `synthetic.${file.format}`, mimeType: file.mimeType, buffer: Buffer.from(file.content) })
+  await page.getByLabel("가져올 운동 파일 선택", { exact: true }).setInputFiles({ name: `synthetic.${file.format}`, mimeType: file.mimeType, buffer: Buffer.from(file.content) })
   await expect(page.getByTestId("import-draft-row")).toHaveCount(1)
   const review = page.locator("summary").filter({ hasText: "시간과 날짜 확인" })
   await review.focus()
@@ -286,8 +286,7 @@ async function saveImport(page: Page) {
 async function openFileAnalysis(page: Page) {
   const panel = page.getByTestId("file-analysis-panel")
   if (await panel.isVisible()) return panel
-  const menu = page.locator(".trends-hub__detail-menu")
-  if (await menu.getAttribute("open") === null) await menu.locator(":scope > summary").click()
+  const menu = page.getByRole("group", { name: "훈련 분석 자세히 보기" })
   await menu.getByRole("button", { name: "파일 분석", exact: true }).click()
   await expect(panel).toBeVisible()
   return panel
@@ -443,9 +442,8 @@ test("TCX account acknowledgement -> report -> pace plan saved/reopened -> confi
     // Compact workout notation rounds to one decimal; the canonical stored
     // prescription and comparison arithmetic above/below retain 222.25 seconds.
     const displayedPrescription = /5 × 1km · 222\.3초\/1km · 5K 경기 평균 페이스/u
-    const compactPrescription = /5 × 1km · 1km당 3분 42\.3초/u
     expect(await next.locator(".plan-session-metric").allTextContents()).toEqual(expect.arrayContaining([
-      expect.stringMatching(compactPrescription),
+      expect.stringMatching(displayedPrescription),
     ]))
     const active = await openActiveSessionDetails(next, displayedPrescription)
     await expect(active.getByText(displayedPrescription).first()).toBeVisible()

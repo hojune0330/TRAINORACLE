@@ -1,3 +1,4 @@
+import { CompanionMotion } from "../../components/CompanionMotion"
 import {
   ArrowLeft,
   BookOpen,
@@ -281,6 +282,7 @@ type JournalDecorationToolbarProps = {
   readonly placementCount: number
   readonly clipboardAvailable: boolean
   readonly notice: string
+  readonly rewardKey?: number
   readonly previewItemId: string | null
   /** 오늘(ISO) — 컬렉션 시즌·은퇴·라이선스 만료 판정에 쓴다. */
   readonly today: string
@@ -443,8 +445,8 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
           </span>
           <span>
             <strong>{item.name}</strong>
-            <small>{missingPoints > 0 ? `${missingPoints}P 더 필요해요.` : `${item.cost}P를 사용해 받을까요?`}</small>
-            <small>사용 가능 {props.availablePoints}P</small>
+            <small>{item.cost === 0 ? "포인트 없이 받을 수 있어요." : missingPoints > 0 ? `${missingPoints}P 더 필요해요.` : `${item.cost}P를 사용해 받을까요?`}</small>
+            {item.cost > 0 && <small>사용 가능 {props.availablePoints}P</small>}
           </span>
         </div>
         <div className="journal-decoration-reward-card__actions">
@@ -457,7 +459,7 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
               setPendingPurchaseId(null)
             }}
           >
-            {item.cost}P로 받기
+            {item.cost === 0 ? "무료로 받기" : `${item.cost}P로 받기`}
           </RewardActionButton>
           <RewardActionButton tone="quiet" type="button" onClick={() => setPendingPurchaseId(null)}>취소</RewardActionButton>
         </div>
@@ -559,8 +561,8 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
                   <Gift className="journal-decoration-reward-card__icon" aria-hidden="true" size={24} />
                   <span>
                     <strong>{`${collection.title} ${remaining.length}종`}</strong>
-                    <small>{missingPoints > 0 ? `${missingPoints}P 더 필요해요.` : `${cost}P를 사용해 모두 받을까요?`}</small>
-                    <small>사용 가능 {props.availablePoints}P</small>
+                    <small>{cost === 0 ? "포인트 없이 모두 받을 수 있어요." : missingPoints > 0 ? `${missingPoints}P 더 필요해요.` : `${cost}P를 사용해 모두 받을까요?`}</small>
+                    {cost > 0 && <small>사용 가능 {props.availablePoints}P</small>}
                   </span>
                 </div>
                 <div className="journal-decoration-reward-card__actions">
@@ -573,7 +575,7 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
                       setPendingBundleId(null)
                     }}
                   >
-                    {`${cost}P로 모두 받기`}
+                    {cost === 0 ? "무료로 모두 받기" : `${cost}P로 모두 받기`}
                   </RewardActionButton>
                   <RewardActionButton tone="quiet" type="button" onClick={() => setPendingBundleId(null)}>취소</RewardActionButton>
                 </div>
@@ -659,7 +661,9 @@ export function JournalDecorationToolbar(props: JournalDecorationToolbarProps) {
         </div>
       </header>}
 
-      {props.notice !== "" && <p className="journal-decoration-editor__notice" role="status" aria-live="polite">{props.notice}</p>}
+      {props.notice !== "" && <p className={`journal-decoration-editor__notice${props.rewardKey ? " journal-decoration-editor__notice--reward" : ""}`} role="status" aria-live="polite">
+        {props.rewardKey && <CompanionMotion key={props.rewardKey} motion="nod" autoPlay />}<span>{props.notice}</span>
+      </p>}
 
       {!props.calendarMode && <nav className="journal-decoration-editor__dock app-choice-group" aria-label="일지 꾸미기 도구" data-decoration-interaction="true">
         <button className="app-choice-control" type="button" aria-label="모든 꾸미기 도구" aria-pressed={props.drawerOpen && toolFilter === "ALL"} onClick={() => chooseTool("ALL")}><LayoutGrid aria-hidden="true" size={19} /><span>전체</span></button>

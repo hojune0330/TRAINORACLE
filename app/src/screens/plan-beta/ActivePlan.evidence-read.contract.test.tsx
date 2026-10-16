@@ -41,7 +41,7 @@ async function openFirstSessionEvidence() {
 async function closeEvidenceReaders({ user, reader }: Awaited<ReturnType<typeof openFirstSessionEvidence>>) {
   await user.click(screen.getByRole("button", { name: "훈련 일정으로 돌아가기" }))
   await waitFor(() => expect(screen.queryByRole("tab", { name: "주기·기록" })).not.toBeInTheDocument())
-  await user.click(within(reader).getByRole("button", { name: "하루씩으로 돌아가기" }))
+  await user.click(within(reader).getByRole("button", { name: /^(?:달력|하루씩)으로 돌아가기$/u }))
   await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument())
 }
 

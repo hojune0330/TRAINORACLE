@@ -113,7 +113,8 @@ test('dry run does not copy, commit or publish; actual publish preserves preview
   assert.equal(publishRelease(f).status, 'READY_NOT_PUBLISHED');
   assert.deepEqual(remoteReleaseSnapshot(f.repo), before);
   assert.match(readFileSync(join(f.pagesRepo, 'index.html'), 'utf8'), /old.js/u);
-  const result = publishRelease({ ...f, publish: true });
+  assert.throws(() => publishRelease({ ...f, workflow: { runId: 'unknown', attempt: '1' } }), /WORKFLOW_RECEIPT_INVALID/);
+  const result = publishRelease({ ...f, publish: true, workflow: { runId: '12345', attempt: '2' } });
   assert.equal(result.status, 'PUSH_ACCEPTED_LIVE_NOT_VERIFIED');
   assert.equal(remoteReleaseSnapshot(f.repo).previousPagesSha, result.pagesSha);
   assert.equal(readFileSync(join(f.pagesRepo, 'previews/existing/index.html'), 'utf8'), 'retained preview');
@@ -124,6 +125,10 @@ test('dry run does not copy, commit or publish; actual publish preserves preview
   assert.equal(gitAt(f.pagesRepo, 'rev-parse', 'HEAD:index.html'),
     gitAt(f.pagesRepo, 'hash-object', '--no-filters', join(f.bundle, 'index.html')));
   assert.equal(JSON.parse(readFileSync(join(f.pagesRepo, DEPLOY_RECEIPT))).sourceSha, f.manifest.sourceSha);
+  const receipt = JSON.parse(readFileSync(join(f.pagesRepo, DEPLOY_RECEIPT)));
+  assert.equal(receipt.method, 'PRESERVING_GUARDED_CI');
+  assert.equal(receipt.workflowRunId, '12345');
+  assert.equal(receipt.workflowAttempt, '2');
 });
 
 test('publication rehashes same-size tracked HTML instead of trusting its cached stat', t => {

@@ -80,6 +80,7 @@ type TextSheetState =
 type DecorationNotice = {
   readonly text: string
   readonly persistent: boolean
+  readonly rewardKey?: number
 }
 
 type SurfaceProps = {
@@ -340,7 +341,9 @@ function JournalDecorationSurfaceSession({
     ]),
   ].filter((id): id is string => typeof id === "string"))
 
-  const showNotice = (text: string, persistent = false): void => setNotice({ text, persistent })
+  const rewardSequence = React.useRef(0)
+  const showNotice = (text: string, persistent = false, rewardConfirmed = false): void =>
+    setNotice({ text, persistent, rewardKey: rewardConfirmed ? ++rewardSequence.current : undefined })
 
   const clearPreview = (): void => {
     setPreview(null)
@@ -529,7 +532,7 @@ function JournalDecorationSurfaceSession({
     if (result.kind === "PURCHASED") {
       setCanonical(result.state)
       setStorageVersion(JSON.stringify(result.state))
-      showNotice(`받았어요. ${result.remainingPoints}P가 남았어요.`)
+      showNotice(item.cost === 0 ? "무료로 받았어요. 이제 일지에 붙여 보세요." : `받았어요. ${result.remainingPoints}P가 남았어요.`, false, true)
     } else if (result.kind === "INSUFFICIENT_POINTS") {
       showNotice(`포인트가 ${item.cost - result.remainingPoints}P 더 필요해요. 오늘 방문 확인은 1P, 훈련·회복 기록을 남긴 날은 4P가 쌓여요.`, true)
     } else if (result.kind === "SAVE_FAILED") {
@@ -567,7 +570,7 @@ function JournalDecorationSurfaceSession({
     if (result.kind === "PURCHASED") {
       setCanonical(result.state)
       setStorageVersion(JSON.stringify(result.state))
-      showNotice(`${collection.title} ${result.itemIds.length}종을 받았어요. ${result.remainingPoints}P가 남았어요.`)
+      showNotice(result.cost === 0 ? `${collection.title} ${result.itemIds.length}종을 무료로 받았어요.` : `${collection.title} ${result.itemIds.length}종을 받았어요. ${result.remainingPoints}P가 남았어요.`, false, true)
     } else if (result.kind === "INSUFFICIENT_POINTS") {
       showNotice(`포인트가 ${result.cost - result.remainingPoints}P 더 필요해요.`, true)
     } else if (result.kind === "SAVE_FAILED") {
@@ -862,6 +865,7 @@ function JournalDecorationSurfaceSession({
         placementCount={target === "CALENDAR" ? calendarMaterials?.items.length ?? 0 : pageItems.length}
         clipboardAvailable={clipboardAvailable}
         notice={notice?.text ?? ""}
+        rewardKey={notice?.rewardKey}
         previewItemId={previewItemId}
         onOpen={openEditor}
         onDrawerOpen={() => setDrawerOpen(true)}

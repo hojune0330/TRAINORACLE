@@ -74,6 +74,20 @@ test("fixture server receives only runtime environment and isolated loopback por
   })
 })
 
+test('CI bounds repeated failures without narrowing a successful run', async () => {
+  const ci = fixture()
+  await runFullSuite(ci)
+  assert(children(ci).every(call => call.args.includes('--max-failures=3')))
+  const local = fixture(); delete local.environment.CI
+  await runFullSuite(local)
+  assert(children(local).every(call => !call.args.some(arg => arg.startsWith('--max-failures'))))
+  const failed = fixture({ failAt: 1 })
+  const result = await runFullSuite(failed)
+  assert.notEqual(result.code, 0)
+  assert.equal(succeeded(failed), false)
+  assert.equal(result.completedProjects, 0)
+})
+
 test("each invocation preserves prior evidence with unique per-run lane/project output", async () => {
   const first = fixture(), second = fixture()
   await runFullSuite(first); await runFullSuite(second)
