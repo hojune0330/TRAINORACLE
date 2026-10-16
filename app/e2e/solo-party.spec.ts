@@ -1,7 +1,7 @@
 import { test, expect, type Page } from '@playwright/test'
 import type { SoloDefense } from '../src/domain/minigame/solo-defense'
 import { newSoloDefense } from '../src/domain/minigame/solo-defense'
-import type { SoloPush } from '../src/domain/minigame/solo-push'
+import { advanceSoloPush, newSoloPush, pushSeriesPoints, startSoloPush, type SoloPush } from '../src/domain/minigame/solo-push'
 import { SOLO_CHECKPOINT_KEY, SOLO_RECORDS_KEY, saveSoloCheckpoint } from '../src/domain/minigame/solo-party-storage'
 
 async function seedLegacyDefense(page: Page) {
@@ -14,17 +14,19 @@ test('solo survival finishes two rounds and saves jump achievements separately',
   await openParty(page)
   await page.getByRole('button', {name:'장애물 생존 게임 소개',exact:true}).click()
   await expect(page.getByText(/이 종목에서는 서로 밀리지 않아요/)).toBeVisible()
-  await freeze(page)
+  await freezeFullSeries(page)
   for (const round of [1,2]) {
     await page.getByRole('button', {name:round===1?'컴퓨터와 시작하기':'2라운드 시작',exact:true}).click()
     await page.clock.runFor(6000)
     expect((await state(page) as SoloPush).game.mode).toBe('survival')
+    await expectPushProgress(page, 'survival', round as 1 | 2, 6000)
     await page.clock.runFor(88000)
   }
   await expect(page.getByRole('heading',{name:'두 라운드 완주!'})).toBeVisible()
   await expect(page.getByText('완주 기록을 이 기기에 저장했어요.')).toBeVisible()
   const records=await page.evaluate(()=>JSON.parse(localStorage.getItem('trainoracle.solo-party.survival-records.v1')!))
   expect(records).toHaveLength(1); expect(records[0].mode).toBe('survival')
+  expect(records[0]).toMatchObject(await expectSeriesScore(page, 'survival'))
   expect(await page.evaluate(key=>localStorage.getItem(key),SOLO_RECORDS_KEY)).toBeNull()
   await page.getByRole('button',{name:'같은 종목 새로 시작'}).click()
   await expect(page.getByRole('heading',{name:'연속 장애물을 넘고, 낙하를 줄이세요'})).toBeVisible()
@@ -40,8 +42,51 @@ async function freeze(page: Page) {
   await page.clock.install()
   await page.clock.pauseAt(await page.evaluate(() => Date.now()) + 100)
 }
+async function freezeFullSeries(page: Page) {
+  await freeze(page)
+  // runFor yields to a real timer after every RAF. A 100ms render cadence keeps
+  // both full 90s rounds and SoloParty's accumulated 1/60s physics steps, without
+  // paying for ~12,000 canvas renders/timer yields. Do not fastForward whole rounds:
+  // SoloParty caps each frame's elapsed time at 100ms, so that would skip simulation.
+  // Short input/visual tests below retain the default RAF cadence.
+  await page.evaluate(() => {
+    window.requestAnimationFrame = callback => window.setTimeout(() => callback(performance.now()), 100)
+    window.cancelAnimationFrame = handle => window.clearTimeout(handle)
+  })
+}
 const field = (page: Page) => page.locator('.solo-party canvas')
 const state = async (page: Page) => JSON.parse((await field(page).getAttribute('data-state'))!) as SoloDefense | SoloPush
+
+async function expectPushProgress(page: Page, mode: SoloPush['mode'], round: 1 | 2, elapsedMs: number) {
+  // A reference uses every fixed physics step, never the test's render cadence.
+  // It supplies expectations only; the browser still runs the real UI/engine.
+  const expected = newSoloPush(mode)
+  if (round === 2) expected.phase = 'between'
+  startSoloPush(expected)
+  for (let n = 0; n < elapsedMs * 60 / 1000; n++) advanceSoloPush(expected, 1 / 60, false)
+  const actual = await state(page) as SoloPush
+  expect(actual.round).toBe(round)
+  expect(actual.game.duration).toBe(90)
+  expect(actual.game).toEqual(expected.game)
+}
+
+async function expectSeriesScore(page: Page, mode: SoloPush['mode']) {
+  const expected = newSoloPush(mode)
+  for (let round = 1; round <= 2; round++) {
+    startSoloPush(expected)
+    for (let n = 0; n < 94 * 60; n++) advanceSoloPush(expected, 1 / 60, false)
+  }
+  expect(expected.phase).toBe('finished')
+  expect(expected.results).toHaveLength(2)
+  for (const [i, round] of expected.results.entries()) {
+    const me = round.find(p => p.id === 'you')!
+    await expect(page.getByText(`${i + 1}라운드 · ${me.rank}위 · ${mode === 'survival' ? `점프 회피 ${me.dodges}` : `밀어냄 ${me.kos}`} · 낙하 ${me.falls}`, {exact: true})).toBeVisible()
+  }
+  const wins = pushSeriesPoints(expected.results, 'you')
+  await expect(page.getByText(`시리즈 승점 ${wins} : ${pushSeriesPoints(expected.results, 'bot')}`, {exact: true})).toBeVisible()
+  const self = expected.results.flat().filter(p => p.id === 'you')
+  return {mode, success: self.reduce((sum, p) => sum + (mode === 'survival' ? p.dodges : p.kos), 0), falls: self.reduce((sum, p) => sum + p.falls, 0), wins}
+}
 
 test('legacy saved defense builds, handles continuous touch and pause, resumes a saved wave and records a full series', async ({ page }, info) => {
   const errors: string[] = [], sockets: string[] = []
@@ -118,18 +163,21 @@ test('solo push completes two rounds, ranks real actions, starts fresh and leave
   const errors: string[] = []; page.on('pageerror', e => errors.push(e.message))
   await openParty(page)
   await page.getByRole('button', { name: '밀어내기 게임 소개',exact:true }).click()
-  await freeze(page)
+  await freezeFullSeries(page)
   await page.getByRole('button', { name: '컴퓨터와 시작하기' }).click()
   await page.clock.runFor(19000)
   expect((await state(page) as SoloPush).game.players[0]!.falls).toBeGreaterThan(1)
+  await expectPushProgress(page, 'push', 1, 19000)
   await page.clock.runFor(74500)
   await expect(page.getByRole('heading', { name: '1라운드 완료 · 다음은 커브' })).toBeVisible()
   await page.getByRole('button', { name: '2라운드 시작' }).click()
   await page.clock.runFor(6000)
+  await expectPushProgress(page, 'push', 2, 6000)
   await page.screenshot({ path: info.outputPath('push-curve-phone.png') })
   await page.clock.runFor(87500)
   await expect(page.getByRole('heading', { name: '두 라운드 완주!' })).toBeVisible()
   await expect(page.getByText('완주 기록을 이 기기에 저장했어요.')).toBeVisible()
+  const expectedRecord = await expectSeriesScore(page, 'push')
   await page.getByRole('button', { name: '같은 종목 새로 시작' }).click()
   await page.getByRole('button', { name: '1라운드 시작' }).click()
   await page.clock.runFor(3500)
@@ -138,6 +186,7 @@ test('solo push completes two rounds, ranks real actions, starts fresh and leave
   await page.getByRole('button', { name: '이번 경기 나가기' }).click()
   const records = await page.evaluate(key => JSON.parse(localStorage.getItem(key)!), SOLO_RECORDS_KEY)
   expect(records).toHaveLength(1)
+  expect(records[0]).toMatchObject(expectedRecord)
   expect(errors).toEqual([])
 })
 
