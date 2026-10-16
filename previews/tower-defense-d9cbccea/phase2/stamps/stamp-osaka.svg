@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="오사카 스탬프"><title>오사카 스탬프</title>
+  <g transform="rotate(-4 64 64)">
+    <circle cx="64" cy="64" r="58" fill="#FFFFFF" stroke="#4CD964" stroke-width="4"/>
+    <circle cx="64" cy="64" r="50" fill="none" stroke="#4CD964" stroke-width="1.6" stroke-dasharray="3 4"/>
+    <defs><path id="arc-osaka" d="M24 64a40 40 0 0 1 80 0"/></defs>
+    <text font-family="Pretendard Variable, Pretendard, sans-serif" font-size="13" font-weight="800" letter-spacing="3" fill="#4CD964"><textPath href="#arc-osaka" startOffset="50%" text-anchor="middle">OSAKA</textPath></text>
+    <path d="M46 84h36M50 84V70h28v14M44 70h40l-6-8H50zM54 62V52h20v10M50 52h28l-5-7H55zM60 45v-7h8v7" fill="none" stroke="#4CD964" stroke-width="3.2" stroke-linejoin="round" stroke-linecap="round"/>
+    <text x="64" y="100" text-anchor="middle" font-family="Pretendard Variable, Pretendard, sans-serif" font-size="13" font-weight="900" fill="#4CD964">오사카</text>
+  </g></svg>

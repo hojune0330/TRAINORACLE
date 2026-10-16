@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "assets": [
+    {
+      "id": "tree",
+      "source": "tripo-studio-h3.1",
+      "file": "tree.fbx",
+      "width": 218,
+      "height": 256,
+      "bytes": 10404,
+      "sha256": "e930c2653ba15b0489d34b467f0e9431282150a4455482cfdefb56c3c36c04fe"
+    },
+    {
+      "id": "rock",
+      "source": "tripo-studio-h3.1",
+      "file": "rock.fbx",
+      "width": 241,
+      "height": 256,
+      "bytes": 7990,
+      "sha256": "f62971a01446373427a7f55c2051029ee65859440ec17a28c6b76ca890b37edf"
+    },
+    {
+      "id": "hurdle",
+      "source": "tripo-studio-h3.1",
+      "file": "hurdle.fbx",
+      "width": 256,
+      "height": 165,
+      "bytes": 9278,
+      "sha256": "934b1c4f8346a4ec725b527d03d3c0fac31df3fe3e6c5334bcd93402d2a2677b"
+    },
+    {
+      "id": "gate",
+      "source": "tripo-studio-h3.1",
+      "file": "gate.fbx",
+      "width": 256,
+      "height": 176,
+      "bytes": 9776,
+      "sha256": "e6d1519e4c935320a6315588efb3bce45f894689b674a12bb4482da7b0f2c064"
+    },
+    {
+      "id": "shoe",
+      "source": "tripo-studio-h3.1",
+      "file": "shoe.fbx",
+      "width": 256,
+      "height": 142,
+      "bytes": 8866,
+      "sha256": "119e0bb3e0da6669bb8c6f41b22b0f88254c6fc2e432445625079d03d5f36cfc"
+    },
+    {
+      "id": "tower",
+      "source": "tripo-studio-h3.1",
+      "file": "tower.fbx",
+      "width": 156,
+      "height": 256,
+      "bytes": 7906,
+      "sha256": "ab1277d5bdeb5210bb3d0b05e480d1096c814a91f55b0ae2406ebe8b85a6459a"
+    }
+  ]
+}
