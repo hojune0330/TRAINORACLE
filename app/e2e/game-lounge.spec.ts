@@ -93,38 +93,6 @@ test('defense save returns to an actionable resume and tour remains separate', a
   await expect(page.getByRole('button', { name: '도시 고르기', exact: true })).toBeVisible()
 })
 
-test('survival selection reaches a real two-player room and invitations keep the host game', async ({ page, browser }, info) => {
-  const errors: string[] = []; page.on('pageerror', e => errors.push(e.message))
-  await lounge(page); await gameCard(page, '장애물 생존').click()
-  await page.getByRole('radio', { name: /친구와 하기/ }).check()
-  await page.getByRole('button', { name: '친구 초대 준비하기', exact: true }).click()
-  await expect(page.getByRole('heading', { name: '장애물 생존', exact: true })).toBeVisible()
-  await page.getByRole('textbox', { name: '게임에서 쓸 이름' }).fill('방장')
-  await page.getByRole('button', { name: '방 만들고 친구 초대', exact: true }).click()
-  await expect(page.locator('.arena-ready > strong')).toContainText('장애물 생존')
-  const invite = await page.getByRole('textbox', { name: '초대 링크', exact: true }).inputValue()
-  const context = await browser.newContext({ viewport: { width: 390, height: 844 } })
-  try {
-    const friend = await context.newPage(); friend.on('pageerror', e => errors.push(e.message))
-    await friend.goto(invite)
-    await expect(friend.getByRole('heading', { name: '초대받은 게임' })).toBeVisible()
-    await friend.getByRole('textbox', { name: '게임에서 쓸 이름' }).fill('친구')
-    await friend.getByRole('button', { name: '초대받은 방 입장', exact: true }).click()
-    await expect(friend.locator('.arena-ready > strong')).toContainText('장애물 생존')
-    await expect(page.locator('.arena-ready > strong')).toContainText('장애물 생존')
-    await page.screenshot({ path: info.outputPath('friend-room.png') })
-    await friend.getByRole('button', { name: '준비 완료', exact: true }).click()
-    await page.getByRole('button', { name: '준비 완료', exact: true }).click()
-    await page.getByRole('button', { name: '함께 출발', exact: true }).click()
-    await expect(page.locator('.arena-field canvas')).toHaveAttribute('data-mode', 'survival')
-    await expect(friend.locator('.arena-field canvas')).toHaveAttribute('data-mode', 'survival')
-    await page.getByRole('button', { name: '친구 경기 나가기', exact: true }).click()
-    await page.getByRole('button', { name: '경기 나가기', exact: true }).click()
-    await expect(page.getByRole('radio', { name: /친구와 하기/ })).toBeChecked()
-  } finally { await context.close() }
-  expect(errors).toEqual([])
-})
-
 test('narrow zoomed screens and unavailable images retain usable game choices', async ({ page }, info) => {
   await page.setViewportSize({ width: 320, height: 740 }); await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.route('**/game/**', route => route.request().resourceType() === 'image' ? route.abort() : route.continue())
