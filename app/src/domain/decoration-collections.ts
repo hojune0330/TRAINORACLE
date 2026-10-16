@@ -1,3 +1,5 @@
+import { TRAINING_COMPANIONS_V1 } from "./training-companion-collection.ts"
+
 /*
  * 꾸미기 컬렉션 레지스트리.
  *
@@ -39,6 +41,16 @@ export type DecorationLicense = {
 }
 
 export const LICENSES = [
+  {
+    id: "TRAINORACLE_COMPANIONS_TRIPO",
+    holder: "TrainOracle",
+    kind: "IN_HOUSE",
+    terms: "TrainOracle 원본 캐릭터 · Tripo 생성 모델 이용약관 적용",
+    attributionRequired: false,
+    sourceUrl: "https://www.tripo3d.ai/terms",
+    revision: "training-companions-v3-20261015",
+    modification: "원본 생성 이미지를 Tripo H3.1로 모델링·리깅한 뒤 Blender에서 투명 이미지로 렌더링",
+  },
   {
     id: "TRAINORACLE_IN_HOUSE",
     holder: "TrainOracle",
@@ -108,7 +120,7 @@ export function acquisitionLabel(acquisition: DecorationAcquisition): string {
   switch (acquisition.kind) {
     case "STARTER": return "기본 제공"
     case "POINTS":
-    case "BUNDLE": return `${acquisition.cost}P로 받기`
+    case "BUNDLE": return acquisition.cost === 0 ? "무료로 받기" : `${acquisition.cost}P로 받기`
     case "REWARD": return rewardRuleById(acquisition.ruleId)?.description ?? "활동 보상"
     case "SEASON": return `${acquisition.to.slice(5).replace("-", "/")}까지 무료`
   }
@@ -251,7 +263,7 @@ export const OPEN_CUTE_V1 = {
  * 새 컬렉션(시즌/굿즈/라이선스 캐릭터)은 여기에 한 항목만 추가하면 카탈로그 id·툴바·법적 고지·장부가 따라온다.
  * `as const`로 두어 아이템 id가 리터럴 유니언으로 남고, 카탈로그의 `DecorationId`·zod enum에 자동 편입된다.
  */
-export const DECORATION_COLLECTIONS = [OPEN_CUTE_V1] as const satisfies readonly DecorationCollection[]
+export const DECORATION_COLLECTIONS = [OPEN_CUTE_V1, TRAINING_COMPANIONS_V1] as const satisfies readonly DecorationCollection[]
 
 export type DecorationCollectionId = (typeof DECORATION_COLLECTIONS)[number]["id"]
 export type CollectionItemId = (typeof DECORATION_COLLECTIONS)[number]["items"][number]["id"]

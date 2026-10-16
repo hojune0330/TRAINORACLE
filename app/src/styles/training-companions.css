@@ -1,0 +1,22 @@
+.companion-motion { display: inline-flex; align-items: center; flex: 0 0 auto; vertical-align: middle; }
+.companion-motion__frame { display: block; position: relative; overflow: hidden; flex-shrink: 0; }
+.companion-motion__poster { display: block; width: 100%; height: 100%; object-fit: contain; }
+.companion-motion__atlas { position: absolute; inset: 0 auto auto 0; width: 1600%; max-width: none; height: 100%; pointer-events: none; }
+.companion-motion--button { display: inline-flex; flex-direction: column; align-items: center; padding: 0; min-width: 64px; min-height: 44px; border: 0; background: transparent; color: var(--ink-2); border-radius: var(--r-action); cursor: pointer; font: inherit; }
+.companion-motion__toggle { display: inline-grid; place-items: center; width: 44px; height: 44px; flex: 0 0 44px; padding: 0; border: 0; border-radius: var(--r-action); background: transparent; color: var(--ink-2); cursor: pointer; }
+.companion-motion--button:focus-visible, .companion-motion__toggle:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.companion-motion__label { font-size: var(--fs-caption); line-height: 1.4; }
+.training-instructions .training-instructions__card--total dd { flex-wrap: nowrap; align-items: center; justify-content: space-between; }
+.training-instructions__total-value { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
+.journal-decoration-editor__notice--reward { display: flex; align-items: center; gap: var(--space-2); }
+.companion-stamp-picker { border: 0; margin: 0; padding: 0; min-width: 0; }
+.companion-stamp-picker legend { margin-bottom: var(--space-2); padding: 0; font-size: var(--fs-body-sm); font-weight: var(--fw-app-heading); }
+.companion-stamp-picker__animals { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: var(--space-2); }
+.companion-stamp-picker .companion-stamp-picker__animals button.app-choice-control { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); min-width: 0; padding: var(--space-2) var(--space-1); font-size: var(--fs-caption); }
+.companion-stamp-picker__animals img, .companion-stamp-picker__empty { width: 48px; height: 48px; object-fit: contain; }
+.companion-stamp-picker__empty { display: grid; place-items: center; }
+.companion-stamp-picker__poses { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: var(--space-2); margin-top: var(--space-2); }
+.companion-stamp-picker .companion-stamp-picker__poses button.app-choice-control { min-width: 0; padding-inline: var(--space-2); font-size: var(--fs-body-sm); }
+@media (max-width: 360px) { .companion-stamp-picker__animals { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+.workout-memo-paper footer.workout-memo-paper__signature { display: flex; align-items: end; justify-content: space-between; gap: var(--space-3); min-height: 80px; }
+.workout-memo-paper__signature img { width: 80px; height: 80px; object-fit: contain; flex: 0 0 80px; }

@@ -1,4 +1,5 @@
 import type { WorkoutMemo } from "./workout-memo"
+import { companionStampUrl, type CompanionStamp } from "./training-companions"
 import { memoDisplayLines, memoExecutionOrder, memoExplanationSources, memoLineEmphasis, presentWorkoutMemo, type WorkoutMemoLayout, type WorkoutMemoView } from "./workout-memo-presentation"
 
 export type MemoPaper = "yellow" | "pink" | "white"
@@ -22,9 +23,10 @@ export function wrapMemoText(text: string, width: number, measure: (text: string
 }
 
 /** Deterministic local raster export of the same text model, not a screenshot or AI image. */
-export async function renderWorkoutMemoPng(source: WorkoutMemo, paper: MemoPaper, selection: WorkoutMemoView | WorkoutMemoLayout = "standard"): Promise<Blob> {
+export async function renderWorkoutMemoPng(source: WorkoutMemo, paper: MemoPaper, selection: WorkoutMemoView | WorkoutMemoLayout = "standard", stamp: CompanionStamp | null = null): Promise<Blob> {
   const memo = presentWorkoutMemo(source, selection)
   await document.fonts?.ready
+  const sticker = stamp ? await loadCompanionStamp(stamp) : null
   const styles = getComputedStyle(document.documentElement)
   const token = (name: string) => {
     const value = styles.getPropertyValue(name).trim()
@@ -58,7 +60,7 @@ export async function renderWorkoutMemoPng(source: WorkoutMemo, paper: MemoPaper
     return { ...block, lines: wrapMemoText(block.text, inner, text => ctx.measureText(text).width), lineHeight: Math.ceil(block.size * 1.4) }
   })
   const gap = memo.layout === "compact" ? 12 : 20
-  const height = margin * 2 + blocks.reduce((sum, block) => sum + block.lines.length * block.lineHeight + gap, 0)
+  const height = margin * 2 + blocks.reduce((sum, block) => sum + block.lines.length * block.lineHeight + gap, 0) + (sticker ? 216 : 0)
   // Very large mixed prescriptions remain available as text; never crop a recovery step.
   if (height > 16000) throw new Error("MEMO_IMAGE_TOO_LONG")
   canvas.width = width; canvas.height = height
@@ -66,11 +68,24 @@ export async function renderWorkoutMemoPng(source: WorkoutMemo, paper: MemoPaper
   ctx.fillStyle = foreground; ctx.textBaseline = "top"
   let y = margin
   for (const block of blocks) {
+    if (sticker && block.text === "TRAINORACLE") y = height - margin - block.lineHeight
     ctx.font = `${block.weight} ${block.size}px ${font}`
     for (const line of block.lines) { ctx.fillText(line, margin, y); y += block.lineHeight }
     y += gap
   }
+  // Reserve a separate footer: a sticker never covers a number, recovery step or warning.
+  if (sticker) ctx.drawImage(sticker, width - margin - 216, height - margin - 216, 216, 216)
   return new Promise((resolve, reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error("MEMO_IMAGE_FAILED")), "image/png"))
+}
+
+function loadCompanionStamp(stamp: CompanionStamp): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const image = new Image()
+    const timer = window.setTimeout(() => { image.onload = null; image.onerror = null; reject(new Error("MEMO_STICKER_UNAVAILABLE")) }, 8000)
+    image.onload = () => { window.clearTimeout(timer); resolve(image) }
+    image.onerror = () => { window.clearTimeout(timer); reject(new Error("MEMO_STICKER_UNAVAILABLE")) }
+    image.src = companionStampUrl(stamp)
+  })
 }
 
 export function memoFileName(memo: WorkoutMemo): string {

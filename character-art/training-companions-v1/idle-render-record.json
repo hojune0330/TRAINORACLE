@@ -1,0 +1,16 @@
+{
+  "source": "trainoracle-otter-exercise-set-v3.glb",
+  "sha256": "2453ce7a08ee77d177646ec75ef4b972514c40e729110a4114362b56dc449662",
+  "durationSeconds": 5.6,
+  "frameCount": 16,
+  "headTurnDegrees": 3.5,
+  "chestExpansion": 0.017,
+  "maxFootDrift": 0.0,
+  "loopPoseError": 0.0,
+  "camera": [
+    1.7380489110946655,
+    -8.690244674682617,
+    1.4909366369247437
+  ],
+  "orthographicScale": 2.482927122116089
+}
