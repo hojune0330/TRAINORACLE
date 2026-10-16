@@ -22,11 +22,13 @@ it("shows a useful general article immediately when reviews are empty and return
   const heading = screen.getByRole("heading", { name: "훈련법 읽기" })
   expect(heading).toBeVisible()
   expect(screen.getByText("일반 훈련 정보")).toBeVisible()
-  expect(screen.getByText(/같은 거리를 뛰어도 연속 달리기와 회복을 넣은 반복 달리기는 구성이 달라요/)).toBeVisible()
+  expect(screen.getByText("무엇이 달라졌는지부터 나눠 봐요.")).toBeVisible()
+  expect(screen.queryByText(/같은 거리를 뛰어도 연속 달리기와 회복을 넣은 반복 달리기는 구성이 달라요/)).toBeNull()
   expect(screen.queryByText(/계획에서 운동을 기록하면/)).toBeNull()
   expect(screen.getByRole("button", { name: /계획과 다르게 운동했다면/ })).toBeVisible()
   fireEvent.click(screen.getByRole("button", { name: /계획과 다르게 운동했다면/ }))
   expect(screen.getByRole("dialog")).toBeVisible()
+  expect(screen.getByText(/같은 거리를 뛰어도 연속 달리기와 회복을 넣은 반복 달리기는 구성이 달라요/)).toBeVisible()
   expect(screen.getByText(/개인의 훈련이나 몸 상태를 분석한 결과는 아니에요/)).toBeVisible()
   fireEvent.click(screen.getByRole("button", { name: "훈련 코칭으로 돌아가기" }))
   await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull())
@@ -53,15 +55,16 @@ it("does not interrupt general reading on unrelated journal revisions", () => {
   expect(screen.getByRole("dialog")).toBeVisible()
 })
 
-it("shows the welcome plan and analysis before recording without a second entry wrapper", () => {
+it("shows plan and analysis before optional recording on welcome without a second entry wrapper", () => {
   const model: TrainingHomeViewModel = { homeMode: "WELCOME", todayMessage: "", todayRecordCount: 0, journalSummary: "", flowSummary: "", planSummary: "저장된 계획 없음", analysisSummary: "", showMinjiPrompt: true, nextTraining: null, briefing: "" }
   render(<TrainingHome model={model} onOpenOracle={vi.fn()} oraclePreview={<h2>오라클 미리보기</h2>} />)
+  const plan = screen.getByRole("button", { name: "훈련 계획 받기" })
   const write = screen.getByRole("button", { name: "오늘 운동 기록 쓰기" })
   const preview = screen.getByRole("heading", { name: "오라클 미리보기" })
+  expect(plan).toBeVisible()
   expect(write).toBeVisible()
   expect(preview.closest("details")).toBeNull()
   expect(preview).toBeVisible()
-  const plan = screen.getByRole("button", { name: "훈련 계획 받기" })
   expect(plan.compareDocumentPosition(preview) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   expect(preview.compareDocumentPosition(write) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   expect(screen.queryByRole("heading", { name: "훈련 코칭" })).toBeNull()

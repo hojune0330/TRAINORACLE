@@ -15,25 +15,28 @@ export function AdjustedJournalOriginalPlan({ session, explanation, context = "j
   readonly date?: string
 }) {
   const prescription = session.prescription
+  const execution = prescription.kind === "ADJUSTED_METHOD" ? <>
+    <PrescriptionStructure sequence={prescription.snapshot.projection.sequence} />
+    {prescription.snapshot.projection.segmentTargets.length > 0 && <div>
+      <h4>당시 기록으로 계산한 참고 시간</h4>
+      <ul>{prescription.snapshot.projection.segmentTargets.map(target => <li key={target.segmentId}>
+        {target.distanceM !== null && target.targetRepSeconds !== null
+          ? `${target.distanceM}m당 약 ${formatTrainingSeconds(target.targetRepSeconds)}`
+          : target.fixedWorkSeconds !== null
+            ? `${formatTrainingSeconds(target.fixedWorkSeconds)} 동안 · 1km당 약 ${formatTrainingSeconds(target.secondsPerKm)} 기준`
+            : "거리·시간을 정하지 않은 구간이에요."}
+      </li>)}</ul>
+      <p>현재 몸 상태에 맞는 속도를 새로 판정한 값은 아니에요.</p>
+    </div>}
+  </> : null
   return <section aria-label="당시 계획한 훈련">
     <p>{context === "journal" ? "이 일지에 연결된 당시 계획이에요. 실제 운동 기록과는 별도로 표시해요."
       : context === "preview" ? "선택한 변경안이에요. 아래 저장 버튼을 눌러야 계획에 적용돼요."
       : "저장할 때 선택한 훈련 구성이에요. 실제 수행 기록과는 별도로 표시해요."}</p>
     {prescription.kind === "ADJUSTED_METHOD" ? <>
-      <WorkoutNotation sequence={prescription.snapshot.projection.sequence} intent={session.plannedEnergyIntent} targets={prescription.snapshot.projection.segmentTargets} />
+      {context === "plan" ? execution : <WorkoutNotation sequence={prescription.snapshot.projection.sequence} intent={session.plannedEnergyIntent} targets={prescription.snapshot.projection.segmentTargets} />}
       <details><summary>자세히 보기 · 방법과 근거</summary>
-      <PrescriptionStructure sequence={prescription.snapshot.projection.sequence} />
-      {prescription.snapshot.projection.segmentTargets.length > 0 && <div>
-        <h4>당시 기록으로 계산한 참고 시간</h4>
-        <ul>{prescription.snapshot.projection.segmentTargets.map(target => <li key={target.segmentId}>
-          {target.distanceM !== null && target.targetRepSeconds !== null
-            ? `${target.distanceM}m당 약 ${formatTrainingSeconds(target.targetRepSeconds)}`
-            : target.fixedWorkSeconds !== null
-              ? `${formatTrainingSeconds(target.fixedWorkSeconds)} 동안 · 1km당 약 ${formatTrainingSeconds(target.secondsPerKm)} 기준`
-              : "거리·시간을 정하지 않은 구간이에요."}
-        </li>)}</ul>
-        <p>현재 몸 상태에 맞는 속도를 새로 판정한 값은 아니에요.</p>
-      </div>}
+      {context !== "plan" && execution}
       <section aria-label="이렇게 구성한 이유"><h4>이렇게 구성한 이유</h4>
         <dl>{([
           ["훈련 목적", explanation.purpose], ["에너지 공급", explanation.energySupply],

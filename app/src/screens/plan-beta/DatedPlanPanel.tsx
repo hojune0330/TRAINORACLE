@@ -66,8 +66,8 @@ export function DatedPlanPanel({ start, sessions, day, onDayChange, children, no
       renderDay={date => <>{sessionsAt(date).map(session => <CalendarTrainingMark key={session.slot}
         tone={plannedCalendarTone(session)} slot={session.slot === "AM" ? "오전" : "오후"}
         label={CALENDAR_TRAINING_LABELS[plannedCalendarTone(session)]} />)}<CalendarJournalBadge entries={journalByDate.get(date) ?? []} date={date} /></>} />
-    <button className="plan-session-expand" type="button" onClick={() => setOpen(true)}>
-      <Maximize2 size={18} aria-hidden="true" />{calendarDayLabel(selected)} · 크게 보기
+    <button className="plan-session-expand" type="button" onClick={() => setOpen(true)} aria-label={`${calendarDayLabel(selected)} 훈련 내용 크게 보기`}>
+      <Maximize2 size={18} aria-hidden="true" />{calendarDayLabel(selected)} · 훈련 내용 보기
     </button>
     {open && <PlanDayReader date={selected} sessions={selectedSessions} canPrevious canNext
       onPrevious={() => select(isoShift(selected, -1))} onNext={() => select(isoShift(selected, 1))}

@@ -68,8 +68,8 @@
 }
 
 .instant-plan__step-heading:focus-visible {
-  outline: 2px solid var(--brand);
-  outline-offset: 3px;
+  /* A programmatically announced question is not an interactive choice. */
+  outline: none;
 }
 
 .instant-plan__step-choices {

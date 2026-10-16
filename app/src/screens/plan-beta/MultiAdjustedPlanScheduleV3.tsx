@@ -16,6 +16,8 @@ import { todayISO } from "../../domain/journal-store"
 import "./AdjustedPlanSchedule.css"
 import { MultiPlanCloudControlsV3 } from "./MultiPlanCloudControlsV3"
 import { DatedPlanPanel } from "./DatedPlanPanel"
+import { CalendarRoleIcon } from "../../components/CalendarTrainingMark"
+import { CALENDAR_TRAINING_LABELS, plannedCalendarTone } from "../../domain/calendar-training-presentation"
 
 type Loaded = Extract<ReturnType<typeof readStoredMultiAdjustedPlanV6>, { kind: "loaded" }>
 export function MultiAdjustedPlanScheduleV3({ loaded, readEvidence, onStoredChange, onWritePlannedSessionLog, returnToSession, onImportPlan, onPrepareNext }: {
@@ -48,7 +50,9 @@ export function MultiAdjustedPlanScheduleV3({ loaded, readEvidence, onStoredChan
       const time = session.slot === "AM" ? "오전" : "오후"
       const recorded = loaded.state.progress.find(r => r.sessionDay === day && r.sessionSlot === session.slot)
       const explanation = loaded.explanations.find(e => e.address.day === day && e.address.slot === session.slot)?.explanation
-      return <section key={session.slot} tabIndex={-1} data-session-slot={session.slot} aria-label={`${time} 훈련`}><h3>{time} · {sessionLabel(session)}</h3>
+      return <section key={session.slot} tabIndex={-1} data-session-slot={session.slot} aria-label={`${time} 훈련`}>
+        <p className="adjusted-plan-role"><CalendarRoleIcon tone={plannedCalendarTone(session)} />{time} · {CALENDAR_TRAINING_LABELS[plannedCalendarTone(session)]}</p>
+        <h3>{sessionLabel(session)}</h3>
         <AdjustedPrescriptionV3 session={session} date={date} memoState="PLAN" explanation={explanation} showName={false} />
         <p role="status">{recorded ? PROGRESS_LABELS[recorded.state] : "아직 진행 기록이 없어요."}</p>
         <div role="group" aria-label={`${time} 진행 기록`}>{([
@@ -64,7 +68,7 @@ export function MultiAdjustedPlanScheduleV3({ loaded, readEvidence, onStoredChan
             } catch { setError("저장하지 못했어요. 현재 계획을 다시 확인해 주세요.") }
             finally { setSaving(false) }
           }}><Icon size={16} aria-hidden="true" />{PROGRESS_LABELS[state]}</button>)}</div>
-        {onWritePlannedSessionLog && <button type="button" disabled={saving} onClick={async () => {
+        {onWritePlannedSessionLog && <button className="adjusted-plan-write" type="button" disabled={saving} onClick={async () => {
           const draft = createPlannedSessionLogDraft(plan, session, new Date().toISOString())
           if (!draft) { setError("훈련 연결 정보를 확인하지 못했어요."); return }
           setSaving(true); setError(null)

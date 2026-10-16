@@ -41,4 +41,8 @@
 .more-screen__trash > p { color: var(--ink-2); line-height: 1.6; margin: 0 0 16px; }
 .more-screen__trash > summary:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; }
 .journal-rewards-screen { padding-bottom: 24px; }
+@media (min-width: 900px) {
+  .more-screen__list--tools { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); align-items:start; gap:var(--space-6); }
+  .more-screen__list--tools .more-screen__group { margin-block:var(--space-4); }
+}
 .journal-rewards-screen .decoration-shop { margin-top: 20px; }

@@ -67,14 +67,18 @@ button.category-card:active,
 /* Category choices retain explicit aria selection and readable labels. */
 button.app-choice-control.app-choice-control.category-choice { display: flex; align-items: center; gap: var(--space-2); text-align: left; }
 /* Reserve the same mark slot in both states: selecting never moves the label. */
-button.category-choice::after { content: ""; flex: 0 0 6px; height: 10px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg); margin-inline-start: auto; opacity: 0; }
-button.category-choice:is([aria-pressed="true"], [aria-selected="true"])::after { opacity: 1; }
+button.category-choice > .category-choice__check { flex: 0 0 16px; width: 16px; height: 16px; margin-inline-start: auto; visibility: hidden; }
+button.category-choice:is([aria-pressed="true"], [aria-selected="true"]) > .category-choice__check { visibility: visible; }
 button.category-card:disabled { background: var(--surface-2); color: var(--ink-3); cursor: not-allowed; }
 button.category-card:disabled .category-card__title { color: var(--ink-3); }
 button.app-choice-control.app-choice-control.category-choice.category-choice:is([aria-pressed="true"], [aria-selected="true"]) {
   background: var(--category-wash); color: var(--category-ink); border-color: var(--category-ink);
 }
 .app-tab-bar .app-tab-bar__button[data-category] > svg { color: var(--category-ink); }
+button.category-card.category-card--row { min-height: 56px; padding: var(--space-3); border-color: transparent; border-radius: var(--r-action); background: transparent; }
+button.category-card.category-card--row .category-icon { flex-basis: 32px; width: 32px; height: 32px; }
+button.category-card.category-card--row .category-card__title { font-size: var(--fs-body); font-weight: 600; }
+button.category-card.category-card--row:active { background: var(--category-wash); }
 .app-tab-bar .app-tab-bar__button[data-category][data-active="true"] { color: var(--category-ink); }
 .app-tab-bar .app-tab-bar__button[data-category][data-active="true"]::before { background: var(--category-wash); }
 @media (hover: hover) and (pointer: fine) {

@@ -20,6 +20,22 @@ it("puts a meaningful task title before navigation without inventing a result fo
   expect(write).toHaveBeenCalledOnce()
 })
 
+it("keeps a fixed check slot on Oracle destinations and analysis choices", () => {
+  render(<Trends />)
+  const destinations = screen.getByRole("group", { name: "오라클 항목" })
+  expect(within(destinations).getAllByRole("button")).toHaveLength(3)
+  for (const button of within(destinations).getAllByRole("button")) {
+    expect(button.querySelector(":scope > .category-choice__check")).toBeInTheDocument()
+  }
+  const reading = within(destinations).getByRole("button", { name: "읽을거리·관심" })
+  expect(reading).toHaveTextContent("읽을거리")
+
+  const analyses = screen.getByRole("group", { name: "훈련 분석 자세히 보기" })
+  for (const button of within(analyses).getAllByRole("button")) {
+    expect(button.querySelector(":scope > .category-choice__check")).toBeInTheDocument()
+  }
+})
+
 it("offers direct analysis choices and lets the selected result own its title without losing return context", () => {
   const change = vi.fn()
   const { container } = render(<Trends initialContext={{ section: "summary", savedDate: "2026-10-05", metric: "DISTANCE_KM" }} onContextChange={change} />)

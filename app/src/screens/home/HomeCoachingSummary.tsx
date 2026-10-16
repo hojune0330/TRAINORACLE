@@ -62,7 +62,7 @@ export function HomeCoachingSummary({ revision, onOpenDay, onOpenPlan }: {
       : readingFirst ? <article className="home-coaching__reading">
         <p className="home-coaching__reading-kind">일반 훈련 정보</p>
         <h3>{featuredArticle.title}</h3>
-        <p>{featuredArticle.paragraphs[0]}</p>
+        <p>{featuredArticle.summary}</p>
         <button type="button" className="home-hub__text-action" aria-label={`${featuredArticle.title} 계속 읽기`} onClick={() => setSelected(`article:${featuredArticle.id}`)}>계속 읽기<ChevronRight size={18} aria-hidden="true" /></button>
       </article>
         : <>{reviews.slice(0, visibleCount).map((item, index) => <div key={`${item.id}:${index}`} className="home-coaching__item">

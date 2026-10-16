@@ -1,6 +1,7 @@
 import React from "react"
-import { ArrowLeft, CalendarDays, Layers, RefreshCw } from "lucide-react"
+import { ArrowLeft, CalendarDays, Check, Layers, PencilLine, RefreshCw } from "lucide-react"
 import { CategoryIcon } from "../components/CategoryCard"
+import { ViewSwitcher } from "../components/ViewSwitcher"
 import {
   projectJournalArchive,
 } from "../domain/journal-archive"
@@ -158,13 +159,14 @@ export function JournalArchive({
     : selectedMonth !== null
       ? monthLabel(displayedMonth)
       : "지난 일지"
+  const showWriteEntry = Boolean(onWriteLog && activeSection === "JOURNAL" && activeMode === "CALENDAR" && !exampleVisible)
 
   return (
     <div ref={calendarRoot} className="journal-archive" data-testid="journal-archive"
       onWheel={activeMode === "CALENDAR" ? nav.markManual : undefined}
       onTouchMove={activeMode === "CALENDAR" ? nav.markManual : undefined}
       onKeyDown={event => { if (activeMode === "CALENDAR" && ["PageUp", "PageDown", "Home", "End", " "].includes(event.key)) nav.markManual() }}>
-      <header className="journal-archive__header">
+      <header className={`journal-archive__header${showWriteEntry ? " journal-archive__header--with-write" : ""}`}>
         <button
           type="button"
           onClick={goBack}
@@ -179,13 +181,17 @@ export function JournalArchive({
             {activeSection === "BODY" ? "몸 기록" : heading}
           </AppHeading>
         </div>
+        {showWriteEntry && <button type="button" className="journal-archive__header-write"
+          aria-label="새 일지 작성" title="새 일지 작성" onClick={onWriteLog}>
+          <PencilLine size={18} aria-hidden="true" />
+        </button>}
       </header>
 
-      <div className="journal-archive__mode-tabs app-choice-group" role="group" aria-label="일지와 몸 기록">
-        <button type="button" className="app-choice-control category-choice" data-category="journal" aria-pressed={activeSection === "JOURNAL"}
-          onClick={() => changeSection("JOURNAL")}><CategoryIcon category="journal" compact /><span>일지</span></button>
-        <button type="button" className="app-choice-control category-choice" data-category="body" aria-pressed={activeSection === "BODY"}
-          onClick={() => changeSection("BODY")}><CategoryIcon category="body" compact /><span>몸 기록</span></button>
+      <div className="journal-archive__content-tabs app-choice-group" role="group" aria-label="일지와 몸 기록">
+        <button type="button" className="journal-archive__content-choice app-choice-control category-choice" data-category="journal" aria-pressed={activeSection === "JOURNAL"}
+          onClick={() => changeSection("JOURNAL")}><CategoryIcon category="journal" compact /><span>일지</span><Check size={16} className="category-choice__check" aria-hidden="true" /></button>
+        <button type="button" className="journal-archive__content-choice app-choice-control category-choice" data-category="body" aria-pressed={activeSection === "BODY"}
+          onClick={() => changeSection("BODY")}><CategoryIcon category="body" compact /><span>몸 기록</span><Check size={16} className="category-choice__check" aria-hidden="true" /></button>
       </div>
 
       {readiness !== "READY" && <div className="calendar-guidance">
@@ -207,13 +213,13 @@ export function JournalArchive({
       </p>}
       <div hidden={activeSection !== "JOURNAL"}>
       {!unconfirmedEmpty && <>
-      <div className="journal-archive__mode-tabs app-choice-group" role="group" aria-label="일지 보기 방식">
-        <button className="app-choice-control category-choice" data-category="journal" type="button" aria-pressed={activeMode === "CALENDAR"} onClick={() => changeMode("CALENDAR")}>
-          <CalendarDays size={18} aria-hidden="true" /><span>월간 달력</span>
-        </button>
-        <button className="app-choice-control category-choice" data-category="journal" type="button" aria-pressed={activeMode === "CYCLE"} onClick={() => changeMode("CYCLE")}>
-          <Layers size={18} aria-hidden="true" /><span>기록 묶음</span>
-        </button>
+      <div className="journal-archive__view-controls">
+        <ViewSwitcher label="일지 보기 방식" category="journal" value={activeMode} onValueChange={changeMode}
+          className="journal-archive__view-switcher"
+          options={[
+            { value: "CALENDAR", label: "월간 달력", icon: CalendarDays },
+            { value: "CYCLE", label: "기록 묶음", icon: Layers },
+          ]} />
       </div>
 
       {activeMode === "CYCLE" ? (

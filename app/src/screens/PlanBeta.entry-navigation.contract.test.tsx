@@ -102,8 +102,12 @@ describe("plan entry supporting navigation", () => {
     render(<PlanBeta />)
     expect(screen.getByRole("heading", { name: "어떤 종목을 준비하세요?" })).toHaveFocus()
     expect(screen.getAllByRole("button", { name: "10km 한 달 훈련표" })).toHaveLength(1)
+    expectBefore(screen.getByRole("heading", { name: "어떤 종목을 준비하세요?" }),
+      screen.getByRole("button", { name: "10km 한 달 훈련표" }))
+    expectBefore(screen.getByRole("heading", { name: "어떤 종목을 준비하세요?" }),
+      screen.getByRole("button", { name: "개인 계획 파일 불러오기" }))
     expectBefore(screen.getByRole("button", { name: "10km 한 달 훈련표" }),
-      screen.getByRole("heading", { name: "어떤 종목을 준비하세요?" }))
+      screen.getByRole("button", { name: "개인 계획 파일 불러오기" }))
     const user = await fillEntry()
     screen.getByRole("button", { name: "기록 입력 완료" }).focus()
     await user.keyboard("{Enter}")
@@ -133,7 +137,9 @@ describe("plan entry supporting navigation", () => {
     await user.click(screen.getByRole("button", { name: /7일만 먼저 받기/u }))
     expect(screen.getByRole("heading", { name: "계획이 준비됐어요" })).toHaveFocus()
     await user.click(screen.getByRole("button", { name: "이 일정으로 시작" }))
-    await waitFor(() => expect(screen.getByRole("heading", { name: "7일 훈련 계획" })).toHaveFocus())
+    // The real saved-plan view is lazy-loaded; await its arrival before checking focus.
+    const savedHeading = await screen.findByRole("heading", { name: "7일 훈련 계획" }, { timeout: 10_000 })
+    await waitFor(() => expect(savedHeading).toHaveFocus())
     expect(loadPlanBetaState()).not.toBeNull()
     expect(screen.getAllByRole("button", { name: "10km 한 달 훈련표" })).toHaveLength(1)
     expectBefore(screen.getByRole("heading", { name: "7일 훈련 계획" }),

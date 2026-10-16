@@ -54,7 +54,7 @@ export function LatestJournalDay({ entries, today, storage, onOpenDay, onOpenArc
       <h2>최근 기록</h2>
       <button type="button" onClick={onOpenArchive}>전체 일지 <ChevronRight size={16} aria-hidden="true" /></button>
     </div>
-    <CategoryCard category="journal" onClick={() => onOpenDay?.(latest)}
+    <CategoryCard variant="row" category="journal" onClick={() => onOpenDay?.(latest)}
       aria-label={`${year}년 ${dateLabel} 기록 ${dayEntries.length}개 보기 · ${kinds}`} aria-describedby={descriptionId}
       title={<span className="home-hub__latest-heading">
           <strong>{visibleDate} · {singleKind ?? `기록 ${dayEntries.length}개`}</strong>

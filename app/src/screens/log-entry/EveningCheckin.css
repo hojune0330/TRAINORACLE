@@ -1,9 +1,52 @@
 /* Scoped to the check-in: shared form and injury-editor contracts stay intact. */
 .evening-checkin__choices {
   display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 9em), 1fr));
   gap: var(--space-2);
   padding-inline: var(--space-5);
 }
+button.evening-checkin__choice.category-card {
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 20px;
+  grid-template-rows: auto auto;
+  align-content: center;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  min-width: 0;
+  min-height: 88px;
+  padding: var(--space-3);
+}
+.evening-checkin__choice-icon.category-icon {
+  grid-column: 1;
+  grid-row: 1;
+  flex-basis: 32px;
+  width: 32px;
+  height: 32px;
+}
+.evening-checkin__choice-label.category-card__copy {
+  grid-column: 1;
+  grid-row: 2;
+  display: block;
+  min-width: 0;
+  font-size: var(--fs-body);
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.evening-checkin__choice > svg:last-child {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  justify-self: end;
+}
+button.evening-checkin__choice--memo.category-card {
+  grid-column: 1 / -1;
+  grid-template-columns: 32px minmax(0, 1fr) 20px;
+  grid-template-rows: minmax(0, 1fr);
+  min-height: var(--app-touch-min, 44px);
+}
+button.evening-checkin__choice--memo .evening-checkin__choice-icon { grid-column: 1; grid-row: 1; }
+button.evening-checkin__choice--memo .evening-checkin__choice-label { grid-column: 2; grid-row: 1; }
+button.evening-checkin__choice--memo > svg:last-child { grid-column: 3; grid-row: 1; }
 .evening-checkin__review { display: grid; gap: var(--space-3); margin: 0; }
 .evening-checkin__review-row {
   display: grid;
@@ -27,6 +70,7 @@
 .evening-checkin__metrics label { display: block; margin-bottom: var(--space-2); font-size: var(--fs-body-sm); }
 .evening-checkin__metrics input { width: 100%; min-width: 0; box-sizing: border-box; }
 @media (max-width: 359px) { .evening-checkin__metrics { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 350px) { .evening-checkin__choices { padding-inline: var(--space-3); } }
 .evening-checkin__body-date {
   display: flex;
   flex-wrap: wrap;

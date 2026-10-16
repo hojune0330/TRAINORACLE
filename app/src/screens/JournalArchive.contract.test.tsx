@@ -113,7 +113,7 @@ describe("journal archive surface", () => {
       onOpenDay={vi.fn()} onBack={back} />)
     expect(screen.getByRole(readiness === "ERROR" ? "alert" : "status")).toHaveTextContent(/확인하지 못|불러오지 못|불러오고 있어요/)
     expect(screen.queryByRole("grid")).toBeNull()
-    expect(screen.queryByRole("button", { name: "기록 묶음" })).toBeNull()
+    expect(screen.queryByRole("radio", { name: "기록 묶음" })).toBeNull()
     expect(screen.queryByRole("button", { name: "내 달력" })).toBeNull()
     expect(screen.queryByText(/0개 기록|이날 작성한 일지가 없어요/)).toBeNull()
     if (readiness === "LOADING") expect(screen.queryByRole("button", { name: "일지 다시 불러오기" })).toBeNull()
@@ -158,7 +158,7 @@ describe("journal archive surface", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("일지를 불러오지 못했어요")
     expect(screen.getByText("예시 · 내 기록에 저장되지 않아요")).toBeVisible()
     expect(screen.getByRole("heading", { name: "일지가 쌓인 달력" })).toBeVisible()
-    fireEvent.click(screen.getByRole("button", { name: "기록 묶음" }))
+    fireEvent.click(screen.getByRole("radio", { name: "기록 묶음" }))
     expect(screen.queryByRole("grid")).toBeNull()
     expect(screen.queryByText(/0개 기록/)).toBeNull()
     fireEvent.click(screen.getByRole("button", { name: "월간 달력으로" }))
@@ -182,6 +182,26 @@ describe("journal archive surface", () => {
     expect(expandedTitle).toHaveClass("app-heading--section")
     expect(expandedTitle).not.toHaveClass("app-heading--accent")
     expect(container.querySelectorAll(".app-heading--accent")).toHaveLength(1)
+  })
+
+  it("separates content selection, the writing entry, and same-screen archive views", async () => {
+    const user = userEvent.setup()
+    const onWriteLog = vi.fn()
+    render(<JournalArchive entries={ENTRIES} selection={{ selectedMonth: null, selectedWeekStart: null }}
+      onSelectionChange={vi.fn()} onOpenDay={vi.fn()} onBack={vi.fn()} onWriteLog={onWriteLog} />)
+
+    const contentChoices = screen.getByRole("group", { name: "일지와 몸 기록" })
+    expect(contentChoices.querySelectorAll(".category-choice__check")).toHaveLength(2)
+    expect(screen.getByRole("radiogroup", { name: "일지 보기 방식" })).toBeVisible()
+    expect(screen.getByRole("radio", { name: "월간 달력" })).toHaveAttribute("data-state", "checked")
+    expect(screen.getByRole("button", { name: "새 일지 작성" })).toBeVisible()
+
+    await user.click(screen.getByRole("radio", { name: "기록 묶음" }))
+    expect(screen.getByRole("radio", { name: "기록 묶음" })).toHaveAttribute("data-state", "checked")
+    expect(screen.queryByRole("button", { name: "새 일지 작성" })).toBeNull()
+    await user.click(screen.getByRole("button", { name: "월간 달력으로" }))
+    await user.click(screen.getByRole("button", { name: "새 일지 작성" }))
+    expect(onWriteLog).toHaveBeenCalledOnce()
   })
 
   it("keeps an opened example explicit but removes its empty illustration until emptiness is confirmed", async () => {
@@ -324,7 +344,7 @@ describe("journal archive surface", () => {
       />,
     )
 
-    await user.click(screen.getByRole("button", { name: "기록 묶음" }))
+    await user.click(screen.getByRole("radio", { name: "기록 묶음" }))
     await user.click(screen.getByText("주기 시작일과 표시 기준"))
     fireEvent.change(screen.getByLabelText("주기 시작일"), { target: { value: "2026-07-10" } })
 
