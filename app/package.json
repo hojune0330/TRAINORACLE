@@ -36,7 +36,7 @@
     "test:account-state-validator": "node scripts/build-account-state-validator.mjs --check && node scripts/build-account-plan-collection-validator.mjs --check && node --test scripts/account-state-validator.test.mjs",
     "test:account-record-validator": "node scripts/build-account-journal-record-validator.mjs --check && node --test scripts/account-journal-record-validator.test.mjs",
     "test:e2e:generic": "npm run build && node e2e/run-full-suite.mjs",
-    "test:e2e": "npm run test:e2e:generic && npm run test:e2e:calendar-decoration && npm run test:e2e:account-calendar-decoration && npm run test:e2e:file-analysis"
+    "test:e2e": "npm run test:e2e:generic && npm run test:e2e:tower-defense && npm run test:e2e:calendar-decoration && npm run test:e2e:account-calendar-decoration && npm run test:e2e:file-analysis"
   },
   "dependencies": {
     "@radix-ui/react-radio-group": "1.5.1",

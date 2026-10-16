@@ -61,6 +61,18 @@ test("the real arena remains mandatory in every fixture project with a loopback 
   assert.match(worker, /arena\.server\.listen\(0, "127\.0\.0\.1"/)
 })
 
+test("tower defense has one mandatory dedicated owner, without generic duplicate collection", () => {
+  const generic = readFileSync(new URL('../playwright.config.ts', import.meta.url), 'utf8')
+  const dedicated = readFileSync(new URL('../playwright.tower-defense.config.ts', import.meta.url), 'utf8')
+  const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'))
+  assert.match(generic, /testIgnore:\s*\[[^\]]*"\*\*\/tower-defense\.spec\.ts"/)
+  assert.match(dedicated, /testMatch:\s*'tower-defense\.spec\.ts'/)
+  assert.equal(pkg.scripts['test:e2e:tower-defense'], 'playwright test --config playwright.tower-defense.config.ts')
+  assert(pkg.scripts['test:e2e'].split(' && ').includes('npm run test:e2e:tower-defense'))
+  assert(commands(jobs['app-browser-dedicated']).includes('npm run test:e2e:tower-defense'))
+  assert(needs(jobs['app-browser']).includes('app-browser-dedicated'))
+})
+
 function bashCommand() {
   if (process.platform !== "win32") return "bash"
   const git = spawnSync("git", ["--exec-path"], { encoding: "utf8", windowsHide: true, shell: false })
