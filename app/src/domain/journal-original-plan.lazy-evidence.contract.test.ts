@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { beforeEach, expect, it, vi } from "vitest"
 import { accountPlanPacketFixture } from "./account/account-plan.test-fixtures"
 import { setActiveLocalAccount } from "./account/local-journal-ownership"
@@ -10,10 +11,11 @@ import { hasMultiAdjustedOriginalPlansV3, MULTI_ADJUSTED_PLAN_ARCHIVE_V3_KEY, pr
 import type { RetainedMultiAdjustedEvidenceV3 } from "./selected-multi-adjusted-plan-v3"
 import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identity"
 
-beforeEach(() => {
+beforeEach(async () => {
   setActiveLocalAccount(null)
   window.localStorage.clear()
   window.sessionStorage.clear()
+  await initializeCanonicalJournalFixture()
 })
 
 it("does not read multi-plan evidence for a linked V3 journal", () => {

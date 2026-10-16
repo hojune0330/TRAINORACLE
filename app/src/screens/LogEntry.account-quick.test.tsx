@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import React from "react"
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
@@ -14,7 +15,7 @@ const initial: PostSessionEntry = { id: "quick-review-fixture", kind: "post-sess
   savedAt: "2026-09-08T00:00:00.000Z", syncState: "local", system: "", title: "", distanceKm: "",
   durationMin: "", avgPace: "", rpe: 0, memo: "무릎이 아파", memoPurpose: "ANALYZABLE_TRAINING_NOTE" }
 
-beforeEach(() => { mocks.enabled = true; vi.clearAllMocks(); window.localStorage.clear() })
+beforeEach(async () => { mocks.enabled = true; vi.clearAllMocks(); window.localStorage.clear(); await initializeCanonicalJournalFixture() })
 afterEach(cleanup)
 
 it.each(["ACCOUNT", "PENDING", "CONFLICT"] as const)("completes Quick only after ACCOUNT acknowledgement, starting with %s", async storage => {

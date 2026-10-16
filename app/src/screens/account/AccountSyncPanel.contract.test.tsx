@@ -3,10 +3,12 @@ import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { saveSyncConsent } from "../../domain/account/sync"
 import { AccountSyncPanel } from "./AccountSyncPanel"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 
 afterEach(() => { cleanup(); vi.unstubAllEnvs() })
-beforeEach(() => {
+beforeEach(async () => {
   window.localStorage.clear()
+  await initializeCanonicalJournalFixture()
   vi.stubEnv("VITE_FEATURE_ACCOUNT_JOURNAL", "false")
   vi.stubEnv("VITE_KILL_ACCOUNT_JOURNAL", "false")
 })

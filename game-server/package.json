@@ -1,0 +1,15 @@
+{
+  "name": "trainoracle-friend-arena",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.19.0"
+  },
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test *.test.mjs"
+  },
+  "dependencies": {
+    "ws": "8.22.0"
+  }
+}

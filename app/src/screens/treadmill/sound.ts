@@ -2,13 +2,14 @@
  * Tiny synthesized game sounds (WebAudio oscillators). No audio files, no network.
  * The AudioContext is created only after a user gesture and only when sound is on.
  */
-export type GameSound = "tick" | "go" | "jump" | "land" | "hit" | "clearHazard" | "stage" | "win" | "lose" | "tap"
+export type GameSound = "tick" | "go" | "jump" | "dash" | "land" | "hit" | "clearHazard" | "stage" | "win" | "lose" | "tap"
 
 type Note = { f: number; to?: number; t: number; d: number; type?: OscillatorType; v?: number }
 const SOUNDS: Record<GameSound, Note[]> = {
   tick: [{ f: 660, t: 0, d: 0.08, type: "square", v: 0.08 }],
   go: [{ f: 880, t: 0, d: 0.18, type: "square", v: 0.1 }],
   jump: [{ f: 420, to: 820, t: 0, d: 0.12, type: "triangle", v: 0.16 }],
+  dash: [{ f: 240, to: 1100, t: 0, d: 0.10, type: "triangle", v: 0.09 }],
   land: [{ f: 160, to: 90, t: 0, d: 0.06, type: "sine", v: 0.12 }],
   hit: [{ f: 180, to: 60, t: 0, d: 0.22, type: "sawtooth", v: 0.14 }],
   clearHazard: [{ f: 990, t: 0, d: 0.06, type: "square", v: 0.06 }, { f: 1320, t: 0.05, d: 0.08, type: "square", v: 0.06 }],

@@ -1,5 +1,6 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { cleanup, render, screen } from "@testing-library/react"
-import { afterEach, expect, it } from "vitest"
+import { beforeEach, afterEach, expect, it } from "vitest"
 import { ALL_WORKOUT_CATALOG, calculateCatalogWorkout, calculatedWorkoutSequence, type WorkoutCalculationInputs } from "@impl/prescription/all-workout-calculator"
 import { parsePrescriptionSequenceV3 } from "@impl/prescription/sequence-v3"
 import { bindCatalogSession, resolveCatalogBinding } from "@impl/prescription/catalog-session-binding"
@@ -11,6 +12,10 @@ import { formatTrainingSeconds, prescriptionLabel, sessionExecutionSteps } from 
 import { CatalogWorkoutDetail } from "./CatalogWorkoutDetail"
 import { PlanSchedulePreview } from "./PlanSchedulePreview"
 import { WorkoutNotation } from "./WorkoutNotation"
+
+beforeEach(async () => {
+  await initializeCanonicalJournalFixture()
+})
 
 afterEach(cleanup)
 

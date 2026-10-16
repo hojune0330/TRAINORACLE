@@ -25,6 +25,10 @@ import type { RenderView } from "./treadmill/draw"
 import { drawRunner } from "./treadmill/sprites"
 import { loadToriArt } from "./treadmill/runner-art"
 import { loadSceneArt } from "./treadmill/scene-art"
+import { loadPartyArt } from "./treadmill/party-art"
+import { PartyEffect } from "./treadmill/PartyEffect"
+import { ActionFeedback, useActionFeedback } from "./treadmill/ActionFeedback"
+import { actionFeedback } from "./treadmill/action-feedback"
 import type { GamePalette, RunnerCharacter } from "./treadmill/sprites"
 import { fxPalette, mountShaderSky } from "./treadmill/shader-sky"
 import type { ShaderSky } from "./treadmill/shader-sky"
@@ -37,6 +41,9 @@ import "../styles/treadmill-tour.css"
 import "./treadmill/game-reward-actions.css"
 import "./treadmill/upgrade-choice.css"
 import "./treadmill/game-navigation.css"
+import "./treadmill/game-feedback.css"
+import { FriendArena } from "./treadmill/FriendArena"
+import { arenaInvitation } from "./treadmill/arena-types"
 
 const fillStyle = (fill: number) => ({ "--fill": Math.max(0, Math.min(1, fill)).toFixed(3) }) as React.CSSProperties
 const upgradeName = (id: string) => TREADMILL_UPGRADES.find(upgrade => upgrade.id === id)?.name ?? id
@@ -95,6 +102,11 @@ function unlocksBetween(before: MinigameProgress, after: MinigameProgress): stri
 }
 
 export function TreadmillGame({ onBack, backLabel = "더보기로 돌아가기" }: { readonly onBack: () => void; readonly backLabel?: string }) {
+  const [friends, setFriends] = React.useState(() => !!arenaInvitation())
+  return friends ? <FriendArena onBack={() => setFriends(false)} /> : <SoloTreadmillGame onBack={onBack} backLabel={backLabel} onFriends={() => setFriends(true)} />
+}
+
+function SoloTreadmillGame({ onBack, backLabel, onFriends }: { readonly onBack: () => void; readonly backLabel: string; readonly onFriends: () => void }) {
   const store = useMinigameProgress()
   const saved = useSavedRun()
   const [leave, setLeave] = React.useState<null | { title: string; detail: string; action: () => void; canSave: boolean; replaceSaved: boolean; returnToRun: boolean }>(null)
@@ -104,6 +116,7 @@ export function TreadmillGame({ onBack, backLabel = "더보기로 돌아가기" 
   React.useEffect(() => {
     if (character === "tori") void loadToriArt()
     void loadSceneArt()
+    void loadPartyArt()
   }, [character])
   const [screen, setScreen] = React.useState<Screen>("map")
   const [course, setCourse] = React.useState<Course>({ kind: "city", city: TOUR_CITIES[0]! })
@@ -115,6 +128,7 @@ export function TreadmillGame({ onBack, backLabel = "더보기로 돌아가기" 
   const [equipped, setEquipped] = React.useState<TreadmillUpgrade | null>(null)
   const state = React.useRef(newTreadmillRun(courseStages(course)))
   const [view, setView] = React.useState<TreadmillState>(state.current)
+  const { cue, show: showAction, clear: clearAction } = useActionFeedback()
   const canvas = React.useRef<HTMLCanvasElement>(null)
   const skyCanvas = React.useRef<HTMLCanvasElement>(null)
   const sky = React.useRef<ShaderSky | null>(null)
@@ -163,12 +177,19 @@ export function TreadmillGame({ onBack, backLabel = "더보기로 돌아가기" 
     const before = state.current
     if (["start", "resume", "retryStage", "pause"].includes(input.type)) setEquipped(null)
     state.current = treadmillCommand(state.current, input)
+    const reaction = actionFeedback(before, state.current, input)
+    showAction(reaction)
+    if (reaction?.kind === "dash") playGameSound("dash", renderView.current.sound)
     if (before.mode === "running" && state.current.mode === "paused") setPauseReason(reason)
     if (state.current.mode !== "running" || input.type === "start") releaseInputs()
     if (input.type === "jump" && state.current.stats.jumps > before.stats.jumps) playGameSound("jump", renderView.current.sound)
     setView(state.current)
-  }, [])
+  }, [showAction])
   const updateHeld = () => command({ type: "run", held: keyboardHeld.current || gestures.current.held })
+
+  React.useEffect(() => {
+    if (screen !== "play" || view.mode !== "running" || menuOpen || leave) clearAction()
+  }, [screen, view.mode, menuOpen, leave, clearAction])
 
   React.useEffect(() => {
     const motion = window.matchMedia("(prefers-reduced-motion: reduce)")
@@ -396,6 +417,7 @@ export function TreadmillGame({ onBack, backLabel = "더보기로 돌아가기" 
     {screen === "map" && saved.slot.kind === "saved" && <section className="treadmill-game__resume-card" aria-label="중간 저장한 판">
       <h2>{savedTitle} · 이어서 달릴까요?</h2>
       <p>{saved.slot.run.state.stage + 1}구간 · {Math.floor(treadmillElapsed(saved.slot.run.state))}/{treadmillCourseSeconds(saved.slot.run.state)}초 · 에너지 {Math.ceil(saved.slot.run.state.energy)}</p>
+      {saved.slot.run.notice && <p role="status">{saved.slot.run.notice}</p>}
       <p>{saved.slot.run.state.upgrades.length ? `강화: ${saved.slot.run.state.upgrades.map(upgradeName).join(" · ")}` : "강화 선택 전"} · 이 기기에 저장됨</p>
       <button type="button" className="treadmill-game__cta" onClick={resumeSaved}><Play size={18} aria-hidden="true" />저장한 판 이어하기</button>
       <button type="button" className="treadmill-game__text-button" onClick={discardSaved}>저장한 판 지우기</button>
@@ -404,6 +426,7 @@ export function TreadmillGame({ onBack, backLabel = "더보기로 돌아가기" 
       <h2>저장한 판을 불러올 수 없어요</h2><p>게임 버전이 달라졌거나 저장 내용이 손상됐어요. 완주 기록은 유지돼요.</p>
       <button type="button" className="treadmill-game__ghost" onClick={discardSaved}>저장한 판 지우기</button>
     </section>}
+    {screen === "map" && <button className="treadmill-game__cta arena-entry" onClick={onFriends}>친구와 밀어내기 · 90초 무한 리젠</button>}
     {screen === "map" && <TourMap progress={progress} season={season} onSeason={setSeason} status={store.status} onShop={() => { setMenuTab("shop"); setMenuOpen(true) }}
       onPlay={item => chooseCourse({ kind: "city", city: item })} onPractice={() => chooseCourse({ kind: "practice" })} />}
 
@@ -435,7 +458,7 @@ export function TreadmillGame({ onBack, backLabel = "더보기로 돌아가기" 
           <p className="treadmill-game__warning" role="status" data-tone={warning.tone}>{warning.text}</p>
           {view.stats.combo > 1 && live && <div className="treadmill-game__combo" aria-label={`연속 ${view.stats.combo}`}>콤보 ×{view.stats.combo}</div>}
         </div>
-        <div className="treadmill-game__gesture-hint" aria-label="화면 조작 안내">
+        <div className="treadmill-game__gesture-hint" aria-label="화면 조작 안내" data-held={view.running && !view.exhausted}>
           <span>{view.exhausted ? "손을 떼면 회복" : view.running ? "달리는 중 · 떼면 회복" : "화면 꾹 달리기"}</span>
           <span aria-label="점프 에너지">↗ 점프 ⚡{view.jumpCost}</span>
           <span aria-label="대시 충전">두 번 대시 {view.cooldown > 0 ? `${view.cooldown.toFixed(1)}초` : `⚡${TREADMILL_RULES.dashCost}`}</span>
@@ -461,7 +484,8 @@ export function TreadmillGame({ onBack, backLabel = "더보기로 돌아가기" 
         onPointerUp={event => { gestures.current.up(event.pointerId, { x: event.clientX, y: event.clientY, time: event.timeStamp }); updateHeld() }}
         onPointerCancel={event => { gestures.current.cancel(event.pointerId); updateHeld() }}
         onLostPointerCapture={event => { gestures.current.cancel(event.pointerId); updateHeld() }} />
-      {running && view.countdown > 0 && equipped && <div className="treadmill-game__equipped" role="status"><strong>{upgradeName(equipped)} 장착!</strong><span>{UPGRADE_STORIES[equipped].effect}</span></div>}
+      {running && !menuOpen && !leave && <ActionFeedback cue={cue} />}
+      {running && view.countdown > 0 && equipped && <div className="treadmill-game__equipped" role="status"><PartyEffect key={equipped} id={equipped === 'spring' ? 'jump-pad' : equipped === 'economy' ? 'supply-capsule' : 'upgrade-core'} size={64} reduced={reduced} /><strong>{upgradeName(equipped)} 장착!</strong><span>{UPGRADE_STORIES[equipped].effect}</span></div>}
 
       {view.mode === "paused" && !menuOpen && !leave && <div className="treadmill-game__overlay">
         <div className="treadmill-game__card treadmill-game__card--small">
@@ -487,7 +511,7 @@ export function TreadmillGame({ onBack, backLabel = "더보기로 돌아가기" 
           {firstTime
             ? <ul className="treadmill-game__rules">
               <li><b><Footprints size={18} aria-hidden="true" /></b><span><strong>화면을 꾹 누르면 달리기</strong>손을 떼면 회복하며 뒤로 밀려요</span></li>
-              <li><b><MoveUp size={18} aria-hidden="true" /></b><span><strong>위로 쓸어 올리면 점프</strong>대각선 위로도 가능해요</span></li>
+              <li><b><MoveUp size={18} aria-hidden="true" /></b><span><strong>위로 쓸어 올리면 점프</strong>손을 뗄 필요 없이 내렸다 다시 올려요</span></li>
               <li><b><ChevronsRight size={18} aria-hidden="true" /></b><span><strong>두 번 누르면 대시</strong>짧게 빠르게 앞으로</span></li>
             </ul>
             : <p className="treadmill-game__ready-hint">{stages[0]!.hint}{cityBest > 0 && <> · 최고 <strong>{cityBest.toLocaleString("ko-KR")}점</strong></>}</p>}
@@ -498,7 +522,7 @@ export function TreadmillGame({ onBack, backLabel = "더보기로 돌아가기" 
         </section>
       </div>}
 
-      {view.mode === "upgrade" && nextStage && <UpgradeChoice state={view} nextStage={nextStage} onPick={pickUpgrade} />}
+      {view.mode === "upgrade" && nextStage && <UpgradeChoice state={view} nextStage={nextStage} onPick={pickUpgrade} reduced={reduced} />}
 
       {ended && <div className="treadmill-game__overlay">
         <section className="treadmill-game__card treadmill-game__result" aria-labelledby="treadmill-result-title" data-result={view.mode}>

@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import * as store from "./journal-store"
 import { privateEntry } from "./private-memo-test-fixtures"
@@ -14,9 +15,10 @@ import * as decorationService from "./account/account-decoration-service"
 const local = () => ({ ...privateEntry("a", ""), memoPurpose: "ANALYZABLE_TRAINING_NOTE" as const, distanceKm: "1" })
 const enable = () => vi.stubEnv("VITE_FEATURE_ACCOUNT_JOURNAL", "true")
 
-beforeEach(() => {
+beforeEach(async () => {
   window.localStorage.clear()
   window.sessionStorage.clear()
+  await initializeCanonicalJournalFixture()
   vi.stubEnv("VITE_FEATURE_ACCOUNT_JOURNAL", "false")
   vi.stubEnv("VITE_KILL_ACCOUNT_JOURNAL", "false")
   setActiveLocalAccount("owner")

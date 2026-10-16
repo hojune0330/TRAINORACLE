@@ -67,6 +67,16 @@ if (previewOnly) {
 const enabled = canonicalOracleEnabled(configuration, oracleOption);
 configuration.VITE_FEATURE_ORACLE_V2 = String(enabled);
 configuration.VITE_KILL_ORACLE_V2 ??= 'false';
+// Friend arena is an independently deployed public game service. Keep it opt-in
+// until its endpoint has passed real two-client verification; retain on republish.
+const arenaOption = process.argv.find(arg => arg.startsWith('--arena-url='));
+if (arenaOption) {
+  const endpoint = new URL(arenaOption.slice('--arena-url='.length));
+  if (endpoint.protocol !== 'wss:' || endpoint.username || endpoint.password || endpoint.search || endpoint.hash || endpoint.pathname !== '/') {
+    throw Error('INVALID_PUBLIC_ARENA_URL');
+  }
+  configuration.VITE_FRIEND_ARENA_URL = endpoint.href;
+}
 for (const name of Object.keys(process.env)) if (name.startsWith('VITE_')) delete process.env[name];
 Object.assign(process.env, configuration);
 const { validateHostedReleaseEnvironment } = await import('../app/scripts/validate-hosted-release-env.mjs');

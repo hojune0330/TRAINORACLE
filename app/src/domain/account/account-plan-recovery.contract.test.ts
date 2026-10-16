@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { webcrypto } from "node:crypto"
 import { beforeEach, afterEach, it, expect, vi } from "vitest"
 import { createAccountPlanService } from "./account-plan-service"
@@ -9,7 +10,7 @@ import { setActiveLocalAccount } from "./local-journal-ownership"
 import { ACCOUNT_WRITE_REJECTIONS } from "./account-write-rejection"
 
 const ownerId = "11111111-1111-4111-8111-111111111111"
-beforeEach(() => { vi.stubGlobal("crypto", webcrypto); localStorage.clear(); setActiveLocalAccount(null) })
+beforeEach(async () => { vi.stubGlobal("crypto", webcrypto); localStorage.clear(); await initializeCanonicalJournalFixture(); setActiveLocalAccount(null) })
 afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); vi.useRealTimers() })
 
 it("initialization failure is FAILED, not an empty account or successful device fallback", async () => {
@@ -76,7 +77,7 @@ it.each([3, 4, 5, 6] as const)("V%s measured distinct original capacity rejects 
   const document = emptyAccountPlanDocument()
   let firstPacketBytes = 0, rejectedBytes = 0
   for (let index = 0; index <= 100; index++) {
-    localStorage.clear()
+    localStorage.clear(); await initializeCanonicalJournalFixture();
     const packet = accountPlanPacketFixture(version, new Date(TODAY.getTime() + index * 1000))
     if (!index) firstPacketBytes = new TextEncoder().encode(JSON.stringify(packet)).byteLength
     const entry = accountPlanEntry(packet)

@@ -20,7 +20,7 @@ const KIND_LABELS: Record<HomeOraclePreviewProps["kind"], string> = {
 export function HomeOraclePreview({ answer, kind, onOpen }: HomeOraclePreviewProps) {
   // Examples remain opt-in. The home invitation contains no fictional result.
   if (kind === "example") return <section className="home-hub__oracle home-hub__oracle--example" aria-label="오라클 · 예시 결과" data-oracle-kind={kind}>
-    <CategoryCard category="oracle" title="예시 결과 보기" onClick={onOpen} />
+    <CategoryCard category="oracle" title="운동 분석 예시 보기" onClick={onOpen} />
   </section>
   // Detailed loading/error and recovery notices stay at the top of Home.
   if (kind === "unavailable") return <section className="home-hub__oracle-fallback" aria-label="오라클 · 결과를 표시할 수 없어요" data-oracle-kind={kind}>

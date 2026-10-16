@@ -1,0 +1,164 @@
+{
+  "schemaVersion": 1,
+  "planId": "run-party-v1-20261014",
+  "status": "asset-files-validated-gameplay-integration-pending",
+  "autoSubmit": false,
+  "newGenerationCount": 2,
+  "creditsSpentThisPreparation": 0,
+  "defaultProvider": "Tripo Studio H3.1 existing Pro",
+  "historicalEstimateCredits": 50,
+  "liveQuoteVerified": true,
+  "sourceRoot": "repository-root",
+  "runtimeFormat": "WebP sprites; Canvas 2D",
+  "runtimeIncrementBudgetBytes": 1048576,
+  "assets": [
+    {
+      "id": "A-01",
+      "name": "tori-diagonal",
+      "status": "baked-ready",
+      "source": "character-art/tori/tripo/2026-10-12/motion/tori-game-motions.fbx",
+      "sourceSha256": "e6d3417b3727bf13fcf987d6e2400e78fa0f9414c2db51e325bc69019ae2314e",
+      "method": "offline-bake",
+      "frames": {
+        "run": 8,
+        "idle": 2,
+        "jump": 3,
+        "hit": 1,
+        "fall": 1,
+        "cheer": 1
+      },
+      "generationCalls": 0,
+      "output": "app/public/game/run-party-v1/tori-diagonal.webp"
+    },
+    {
+      "id": "A-02",
+      "name": "park-tree",
+      "status": "rebaked-ready",
+      "source": "character-art/scenery/seoul-v1/sources/tree.fbx",
+      "method": "reuse-or-rebake",
+      "generationCalls": 0
+    },
+    {
+      "id": "A-03",
+      "name": "rock",
+      "status": "rebaked-ready",
+      "source": "character-art/scenery/seoul-v1/sources/rock.fbx",
+      "method": "reuse-or-rebake",
+      "generationCalls": 0
+    },
+    {
+      "id": "A-04",
+      "name": "hurdle",
+      "status": "rebaked-ready",
+      "source": "character-art/scenery/seoul-v1/sources/hurdle.fbx",
+      "method": "reuse-or-rebake",
+      "generationCalls": 0
+    },
+    {
+      "id": "A-05",
+      "name": "defense-base-gate",
+      "status": "base-rebaked-shield-effect-pending",
+      "source": "character-art/scenery/seoul-v1/sources/gate.fbx",
+      "method": "reuse-with-shield-overlay",
+      "generationCalls": 0
+    },
+    {
+      "id": "A-06",
+      "name": "background-landmark",
+      "status": "rebaked-ready",
+      "source": "character-art/scenery/seoul-v1/sources/tower.fbx",
+      "method": "reuse",
+      "generationCalls": 0
+    },
+    {
+      "id": "A-07",
+      "name": "road-kit",
+      "status": "layout-prototype-only",
+      "source": null,
+      "method": "local-procedural",
+      "variants": [
+        "straight",
+        "curve",
+        "incline",
+        "tower-pad"
+      ],
+      "generationCalls": 0
+    },
+    {
+      "id": "A-08",
+      "name": "dust-runner-base",
+      "status": "produced-validated",
+      "source": "character-art/run-party-v1/sources/dust-runner-base.glb",
+      "method": "tripo-studio-then-local-variants",
+      "variants": [
+        "normal",
+        "fast",
+        "armored"
+      ],
+      "generationCalls": 1,
+      "historicalEstimateCredits": 25,
+      "targetTriangles": 3000,
+      "targetTextureSize": 512,
+      "promptFile": "character-art/run-party-v1/PROMPTS.md",
+      "output": "app/public/game/run-party-v1/props.webp",
+      "actualCredits": 25
+    },
+    {
+      "id": "A-09",
+      "name": "wind-device",
+      "status": "produced-validated",
+      "source": "character-art/run-party-v1/sources/wind-device.glb",
+      "method": "tripo-studio-housing-local-rotor",
+      "generationCalls": 1,
+      "historicalEstimateCredits": 25,
+      "targetTriangles": 3000,
+      "targetTextureSize": 512,
+      "promptFile": "character-art/run-party-v1/PROMPTS.md",
+      "output": "app/public/game/run-party-v1/props.webp",
+      "actualCredits": 25
+    },
+    {
+      "id": "A-10",
+      "name": "ball-launcher",
+      "status": "baked-ready",
+      "source": null,
+      "method": "local-primitives",
+      "generationCalls": 0
+    },
+    {
+      "id": "A-11",
+      "name": "supply-flag",
+      "status": "baked-ready",
+      "source": null,
+      "method": "local-primitives",
+      "generationCalls": 0
+    },
+    {
+      "id": "A-12",
+      "name": "supply-token",
+      "status": "baked-ready",
+      "source": null,
+      "method": "local-primitives",
+      "generationCalls": 0
+    },
+    {
+      "id": "A-13",
+      "name": "upgrade-shield-effects",
+      "status": "wind-preview-only-other-effects-pending",
+      "source": null,
+      "method": "canvas-effects",
+      "variants": [
+        "level-band",
+        "wind-ring",
+        "shield-hit",
+        "shield-reset",
+        "supply-pickup"
+      ],
+      "generationCalls": 0
+    }
+  ],
+  "creditsSpentProduction": 50,
+  "balanceBefore": 2910,
+  "balanceAfter": 2860,
+  "productionReceipt": "character-art/run-party-v1/PRODUCTION_RECEIPT.md"
+}

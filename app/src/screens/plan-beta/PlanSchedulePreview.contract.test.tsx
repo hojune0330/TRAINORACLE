@@ -6,7 +6,8 @@ import type { PlanSession } from "@impl/plan-generator/types"
 import { bindCatalogSession, resolveCatalogBinding } from "@impl/prescription/catalog-session-binding"
 import type { WorkoutCalculationInputs } from "@impl/prescription/all-workout-calculator"
 import { formatPaceSeconds } from "@impl/prescription/record-pace"
-import { formatTrainingSeconds } from "./labels"
+import { formatTrainingSeconds, prescriptionLabel } from "./labels"
+import { catalogWorkoutReader } from "../../domain/catalog-workout-reader"
 import { PlanSchedulePreview } from "./PlanSchedulePreview"
 
 const sessions: readonly PlanSession[] = [
@@ -59,8 +60,8 @@ describe("plan schedule preview", () => {
     const calendar = screen.getByRole("grid", { name: "2026년 8월 달력" })
     const rest = calendar.querySelector<HTMLButtonElement>('button[data-date="2026-08-18"]')!
     expect(rest).toHaveAccessibleName(expect.stringContaining("대회 날짜"))
-    expect(rest.querySelector(".prescription-calendar__rest")).toHaveTextContent("휴식")
-    expect(rest.querySelector(".calendar-training-mark")).toBeNull()
+    expect(rest.querySelector('.calendar-training-mark[data-tone="off"]')).toHaveTextContent("휴식")
+    expect(rest.querySelector('.calendar-training-mark:not([data-tone="off"])')).toBeNull()
     const empty = calendar.querySelector<HTMLButtonElement>('button[data-date="2026-08-19"]')!
     expect(empty.querySelector(".prescription-calendar__rest")).toBeNull()
     expect(empty).toHaveTextContent("예정 없음")
@@ -74,7 +75,7 @@ describe("plan schedule preview", () => {
       presentation="prescription-calendar" showRpeGuide={false}
       programProjection={{ kind: "THREE_CYCLE_PROGRAM", calendarDayCount: 29 }} />)
     expect(screen.getByRole("region", { name: "한 달 훈련표 · 9.5일 × 3" })).toBeInTheDocument()
-    await user.click(screen.getByRole("button", { name: "하루씩" }))
+    await user.click(screen.getByRole("radio", { name: "하루씩" }))
     const list = screen.getByRole("list", { name: "날짜별 계획 미리보기" })
     expect(list.children).toHaveLength(29)
     expect(within(list).getByRole("button", { name: "11월 8일 일요일 전체 처방 보기" })).toBeVisible()
@@ -86,7 +87,7 @@ describe("plan schedule preview", () => {
   it("keeps the standard presentation by default for existing callers", () => {
     render(<PlanSchedulePreview startDate="2026-08-17" sessions={sessions} />)
 
-    expect(screen.queryByRole("group", { name: "계획 일정 보기" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("radiogroup", { name: "계획 일정 보기" })).not.toBeInTheDocument()
   })
 
   it("shows each workout name and exact core amount in a seven-column prescription calendar", async () => {
@@ -128,9 +129,9 @@ describe("plan schedule preview", () => {
       renderSessionAction={session => session.day === 1 ? <button type="button">이 훈련 일지 쓰기</button> : null}
       renderSessionFooter={() => <button type="button">진행 기록 자세히</button>} />)
 
-    await user.click(screen.getByRole("button", { name: "하루씩" }))
+    await user.click(screen.getByRole("radio", { name: "하루씩" }))
 
-    expect(screen.getByRole("button", { name: "하루씩" })).toHaveAttribute("aria-pressed", "true")
+    expect(screen.getByRole("radio", { name: "하루씩" })).toHaveAttribute("aria-checked", "true")
     expect(screen.getByRole("list", { name: "날짜별 계획 미리보기" })).toHaveAttribute("data-display-mode", "swipe")
     await user.click(screen.getByRole("button", { name: "8월 17일 월요일 선택" }))
     expect(screen.getByRole("button", { name: "이전 날짜" })).toBeDisabled()
@@ -172,9 +173,105 @@ describe("plan schedule preview", () => {
     const readerMorning = within(reader).getByRole("group", { name: "8월 17일 월요일 오전 세션" })
     await user.click(within(readerMorning).getByText("일지·진행 기록"))
     expect(within(readerMorning).getByRole("button", { name: "진행 기록 자세히" })).toBeVisible()
-    await user.click(within(reader).getByRole("button", { name: "달력으로 돌아가기" }))
+    await user.click(within(reader).getByRole("button", { name: "하루씩으로 돌아가기" }))
     await waitFor(() => expect(dateButton).toHaveFocus())
     expect(JSON.stringify(sessions)).toBe(original)
+  })
+
+  it("opens the full prescription before recording from a dated summary", async () => {
+    const user = userEvent.setup()
+    const write = vi.fn()
+    const original = JSON.stringify(sessions)
+    render(<PlanSchedulePreview startDate="2026-08-17" sessions={sessions}
+      presentation="prescription-calendar" detailsExpanded={false}
+      readerNotice={<p role="status">몸 상태를 먼저 확인해 주세요</p>}
+      renderSessionAction={session => session.role === "REST" ? null : <button type="button" onClick={() => write(session)}>이 훈련 일지 쓰기</button>} />)
+    await user.click(screen.getByRole("radio", { name: "하루씩" }))
+    const summary = screen.getByRole("group", { name: "8월 17일 월요일 오전 세션" })
+    const open = within(summary).getByRole("button", { name: "8월 17일 월요일 오전 훈련 내용 보기" })
+    const summaryWrite = within(summary).getByRole("button", { name: "이 훈련 일지 쓰기" })
+    expect(summary).toHaveTextContent("주요")
+    expect(summary).toHaveTextContent("전체 25–40분 · 힘든 정도 5–6/10")
+    expect(open.compareDocumentPosition(summaryWrite) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
+    await user.click(open)
+    expect(write).not.toHaveBeenCalled()
+    const reader = screen.getByRole("dialog", { name: "2026년 8월 17일 월요일" })
+    expect(within(reader).getByRole("status")).toHaveTextContent("몸 상태를 먼저 확인해 주세요")
+    const morning = within(reader).getByRole("group", { name: "8월 17일 월요일 오전 세션" })
+    const prescription = within(morning).getByText("표시된 총 시간 안에서 걷거나 천천히 달리며 몸이 부드럽게 움직이는지 확인하세요.")
+    const record = within(morning).getByRole("button", { name: "이 훈련 일지 쓰기" })
+    expect(prescription).toBeVisible()
+    expect(prescription.compareDocumentPosition(record) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
+    expect(within(morning).queryByRole("button", { name: /훈련 내용 보기/u })).not.toBeInTheDocument()
+    await user.click(record)
+    expect(write).toHaveBeenCalledExactlyOnceWith(sessions[0])
+    expect(JSON.stringify(sessions)).toBe(original)
+  })
+
+  it("shows concise catalog work and exact plain work before opening content or recording in day summaries", async () => {
+    const inputs: WorkoutCalculationInputs = {
+      eventDistanceM: 10000, experience: "EXPERIENCED", availableSeconds: null,
+      confirmedRequirements: [], fiveK: null, segmentPaces: [],
+    }
+    const catalog = bindCatalogSession({ ...sessions[0]!, slot: "PM" }, "P-LT-B-480", inputs, true)
+    if (!catalog) throw Error("Expected the verified long cruise interval fixture")
+    const reading = catalogWorkoutReader(catalog)
+    if (!reading) throw Error("Expected the verified catalog reading")
+    expect(reading.summary).toContain("8분씩 2번")
+    const plain = { day: 1, slot: "AM", role: "QUALITY", plannedEnergyIntent: "LT_INTENT", prescription: {
+      kind: "PACE_TARGET", setCount: 1, repetitionsPerSet: 5, repetitionDistanceM: 1000,
+      targetRepSeconds: 300, targetEventDistanceM: 5000, repetitionRecoverySeconds: 60,
+      repetitionRecoveryMode: "JOG", setRecoverySeconds: null, setRecoveryMode: "NOT_APPLICABLE",
+    } } as unknown as PlanSession
+    const projected = [plain, catalog]
+    const original = JSON.stringify(projected)
+    const write = vi.fn()
+    render(<PlanSchedulePreview startDate="2026-08-17" sessions={projected}
+      presentation="prescription-calendar" detailsExpanded={false}
+      renderSessionAction={session => <button type="button" onClick={() => write(session)}>이 훈련 일지 쓰기</button>} />)
+    await userEvent.setup().click(screen.getByRole("radio", { name: "하루씩" }))
+    for (const [session, slot, expected] of [[plain, "오전", prescriptionLabel(plain, true)], [catalog, "오후", "8분 × 2회 · RPE 6–7 · 사이 1분 조깅"]] as const) {
+      const summary = screen.getByRole("group", { name: `8월 17일 월요일 ${slot} 세션` })
+      const main = within(summary).getByText(expected)
+      const open = within(summary).getByRole("button", { name: `8월 17일 월요일 ${slot} 훈련 내용 보기` })
+      const record = within(summary).getByRole("button", { name: "이 훈련 일지 쓰기" })
+      expect(main).toBeVisible()
+      expect(main.closest("details")).toBeNull()
+      expect(main.compareDocumentPosition(open) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
+      expect(open.compareDocumentPosition(record) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
+      expect(main).toHaveTextContent(session === plain ? "5 × 1km" : "8분 × 2회")
+      expect(main).not.toHaveTextContent("본운동 체감 노력 제안")
+    }
+    expect(write).not.toHaveBeenCalled()
+    expect(JSON.stringify(projected)).toBe(original)
+  })
+
+  it("retains the full catalog effort explanation when opening a concise day summary", async () => {
+    const inputs: WorkoutCalculationInputs = {
+      eventDistanceM: 10000, experience: "EXPERIENCED", availableSeconds: null,
+      confirmedRequirements: [], fiveK: null, segmentPaces: [],
+    }
+    const catalog = bindCatalogSession(sessions[0]!, "P-LT-B-480", inputs, true)
+    if (!catalog) throw Error("Expected the verified long cruise interval fixture")
+    const reading = catalogWorkoutReader(catalog)
+    if (!reading) throw Error("Expected the verified catalog reading")
+    const original = JSON.stringify(catalog)
+    const user = userEvent.setup()
+    render(<PlanSchedulePreview startDate="2026-08-17" sessions={[catalog]}
+      presentation="prescription-calendar" detailsExpanded={false} />)
+    await user.click(screen.getByRole("radio", { name: "하루씩" }))
+    expect(screen.getByText("8분 × 2회 · RPE 6–7 · 사이 1분 조깅")).toBeVisible()
+    expect(screen.queryByText(reading.phases.main)).not.toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: "8월 17일 월요일 오전 훈련 내용 보기" }))
+    const reader = screen.getByRole("dialog", { name: "2026년 8월 17일 월요일" })
+    expect(within(reader).getByText(reading.phases.main)).toBeVisible()
+    expect(within(reader).getByText(reading.phases.main)).toHaveTextContent("본운동 체감 노력 제안 힘든 정도(RPE) 6–7/10")
+    const warmup = within(reader).getByRole("list", { name: "준비 순서" })
+    expect(warmup).toHaveTextContent("15분")
+    expect(warmup).toHaveTextContent("힘든 정도(RPE) 2–3/10")
+    expect(warmup).toHaveTextContent("20초 가속 달리기 4번 (전력질주 아님) · 사이 40초 걷기 · 마지막 뒤 1분 걷기")
+    expect(within(reader).getByText(reading.phases.cooldown, { exact: false })).toBeVisible()
+    expect(JSON.stringify(catalog)).toBe(original)
   })
 
   it("starts narrow viewports in list mode and leaves later view changes to the user", async () => {
@@ -189,15 +286,15 @@ describe("plan schedule preview", () => {
       render(<PlanSchedulePreview startDate="2026-08-17" frameLengthDays={7} sessions={sessions}
         presentation="prescription-calendar" detailsExpanded={false} />)
 
-      expect(screen.getByRole("button", { name: "하루씩" })).toHaveAttribute("aria-pressed", "true")
+      expect(screen.getByRole("radio", { name: "하루씩" })).toHaveAttribute("aria-checked", "true")
       expect(screen.queryByRole("grid", { name: "2026년 8월 달력" })).not.toBeInTheDocument()
       matchMedia.mockImplementation((query: string) => ({
         matches: false, media: query, addEventListener: vi.fn(), removeEventListener: vi.fn(),
       }))
-      expect(screen.getByRole("button", { name: "하루씩" })).toHaveAttribute("aria-pressed", "true")
+      expect(screen.getByRole("radio", { name: "하루씩" })).toHaveAttribute("aria-checked", "true")
 
-      await user.click(screen.getByRole("button", { name: "달력" }))
-      expect(screen.getByRole("button", { name: "달력" })).toHaveAttribute("aria-pressed", "true")
+      await user.click(screen.getByRole("radio", { name: "달력" }))
+      expect(screen.getByRole("radio", { name: "달력" })).toHaveAttribute("aria-checked", "true")
       expect(screen.getByRole("grid", { name: "2026년 8월 달력" })).toBeVisible()
     } finally {
       if (originalMatchMedia) Object.defineProperty(window, "matchMedia", originalMatchMedia)
@@ -443,7 +540,7 @@ describe("plan schedule preview", () => {
       readerNotice={<p role="status">몸 상태를 먼저 확인해 주세요</p>}
       renderSessionAction={session => <button onClick={() => write(session)}>일지 쓰기 {session.slot}</button>}
       renderSessionFooter={() => <span>명시적으로 진행 선택</span>} />)
-    const opener = screen.getByRole("button", { name: "8월 17일 월요일 오후 훈련과 일지 크게 보기" })
+    const opener = screen.getByRole("button", { name: "8월 17일 월요일 오후 훈련 내용 보기" })
     await user.click(opener)
     const reader = screen.getByRole("dialog")
     expect(within(reader).getByRole("status")).toHaveTextContent("몸 상태를 먼저 확인해 주세요")

@@ -1,0 +1,32 @@
+{
+  "provider": "Tripo Studio",
+  "model": "H3.1",
+  "private": true,
+  "date": "2026-10-14",
+  "seed": null,
+  "balanceBefore": 2860,
+  "balanceAfter": 2785,
+  "creditsSpent": 75,
+  "apiCalls": 0,
+  "newPayments": 0,
+  "tasks": [
+    {
+      "id": "jump-pad",
+      "taskId": "74011bb4-4d63-475a-9e24-4c15fbef8404",
+      "credits": 25,
+      "prompt": "Single isolated original toy jump pad for a friendly park running game. Extremely simple chunky rounded silhouette, quarter-detail mobile game prop readable at 64 pixels. A low wide navy circular base, one thick mint cushion disk on top, one large raised cream upward arrow on the cushion. Only these three solid masses. Smooth matte solid colors mint turquoise, deep navy and warm cream. The arrow is a simple broad chevron shape without lettering. Low profile stable platform, no mechanical detail, no springs, wires, screws, buttons, textures, environment or floor. One centered complete object. Original design."
+    },
+    {
+      "id": "supply-capsule",
+      "taskId": "6498c6eb-ff8a-4eae-b7fa-59921b1c76c1",
+      "credits": 25,
+      "prompt": "Single isolated original supply capsule for a friendly running party game. Extremely simple chunky toy form, one quarter of normal game detail, readable at 64 pixels. A squat rounded capsule container with a warm cream lower half, mint turquoise upper half and a single broad deep navy equatorial band. One large yellow lightning symbol on the front. Four solid colors, smooth matte finish, large clean shapes. Broad stable bottom, no legs or handles. No tiny details, screws, seams, cables, screen, letters, words, logo, environment or floor plane. Entire complete centered object. Original playful design."
+    },
+    {
+      "id": "upgrade-core",
+      "taskId": "07c2704f-a238-4cc1-bd40-8a70043a4b6a",
+      "credits": 25,
+      "prompt": "Single isolated original upgrade energy core for a friendly running party game. Extremely simple chunky toy icon, quarter-detail mobile game style readable at 64 pixels. One fat golden yellow rounded diamond crystal with only four broad front facets, seated inside one thick mint turquoise U shaped cradle on a small deep navy round base. Crystal is upright, opaque matte golden yellow, not glass. Exactly three main masses. Smooth clean broad shapes and saturated flat colors. No little crystals, screws, mechanical details, text, logo, symbols, realistic textures, environment or floor plane. Complete centered object, original design."
+    }
+  ]
+}

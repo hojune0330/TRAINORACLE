@@ -19,6 +19,9 @@ describe("form input names", () => {
     expect(screen.getByRole("textbox", { name: "거리 (km)" })).toBeVisible()
     expect(screen.getByRole("textbox", { name: "시간 (분)" })).toBeVisible()
     expect(screen.getByRole("textbox", { name: "평균 페이스 (/km)" })).toBeVisible()
+    expect(screen.getByRole("textbox", { name: "거리 (km)" }).closest("label")).toHaveTextContent("거리 km")
+    expect(screen.getByRole("textbox", { name: "시간 (분)" }).closest("label")).toHaveTextContent("시간 분")
+    expect(screen.getByRole("textbox", { name: "평균 페이스 (/km)" }).closest("label")).toHaveTextContent("평균 페이스 /km")
   })
 
   it("names controls in the active evening step and keeps optional measures grouped", async () => {

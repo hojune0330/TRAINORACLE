@@ -6,7 +6,7 @@ import {
   type PlanEventGroup,
 } from "@impl/plan-generator/types"
 import type { PrescriptionOperationalComponents } from "@impl/prescription/types"
-import manifestSource from "./detailed-prescription-manifest.json"
+import manifestSource from "./detailed-prescription-manifest.json" with { type: "json" }
 import { DISTANCE_ADOPTION, DISTANCE_ADOPTION_ACTIVE } from "./distance-prescription-adoption"
 
 const COMPONENT_TYPES = ["WARMUP", "COOLDOWN", "DOWNSHIFT", "STOP_CONDITIONS"] as const

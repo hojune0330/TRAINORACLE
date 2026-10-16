@@ -46,11 +46,13 @@ export type HomeProps = {
   readonly onOpenContent?: () => void
   readonly onOpenRewards?: () => void
   readonly onDecorateToday?: () => void
+  readonly introductionAllowed?: boolean
 }
 
 export function Home({
   onWriteLog, onOpenDay, onOpenArchive, onOpenGuide, onOpenPlan,
   onOpenNextTraining, onOpenTrends, onOpenImport, onOpenRecords, onOpenOracle, oraclePreview, oraclePreviewLabel, onOpenMore, onOpenMinigame, onOpenAccount, onOpenContent, onOpenRewards,
+  introductionAllowed = true,
 }: HomeProps) {
   const [, setRevision] = React.useState(0)
   const journalSnapshot = useCalendarSnapshot()
@@ -83,7 +85,8 @@ export function Home({
   const planState = planRead.kind === "loaded" ? planRead.state : null
   const adjustedPlan = planRead.kind === "adjusted_loaded" || planRead.kind === "adjusted_v3_loaded" || planRead.kind === "multi_adjusted_v3_loaded"
     ? { ...planRead.state.selection, progress: planRead.state.progress } : null
-  const accountCurrent = accountPlansEnabled() ? accountPlanService()?.snapshot().currentPlan : null
+  const accountPlanSnapshot = accountPlansEnabled() ? accountPlanService()?.snapshot() : null
+  const accountCurrent = accountPlanSnapshot?.currentPlan ?? null
   const original = accountCurrent?.kind === "evidence_required" ? accountCurrent.packet.state : null
   const homePlan = original ? original.version === 2 || original.version === 3
     ? original
@@ -153,6 +156,10 @@ export function Home({
     <div className="training-home-screen">
       <TrainingHome
         model={model}
+        introductionAllowed={introductionAllowed}
+        introductionReady={journalSnapshot.status === "READY" && athleteRecords.status === "READY"
+          && planRead.kind !== "invalid" && planRead.kind !== "storage_error" && safetyNotice === undefined
+          && (!accountPlansEnabled() || accountPlanSnapshot?.status === "READY" || accountPlanSnapshot?.status === "EMPTY")}
         journalReadiness={journalSnapshot.status}
         analysisAvailable={toDateDistance.week.totalKm !== null}
         safetyNotice={safetyNotice}

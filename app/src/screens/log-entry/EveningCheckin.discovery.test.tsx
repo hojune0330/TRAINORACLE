@@ -12,8 +12,19 @@ it("names both multi-exercise and memo choices without adding another required c
   const pick = vi.fn()
   render(<EntryChooser onPick={pick} />)
   expect(screen.getByRole("button", { name: /자세히 기록.*운동별로 자세히/ })).toBeVisible()
+  expect(screen.getByTestId("entry-choice-quick-session")).toHaveClass("category-card--row")
   fireEvent.click(screen.getByRole("button", { name: /컨디션·메모.*수면·몸 상태·기분·메모/ }))
   expect(pick).toHaveBeenCalledWith("evening")
+})
+
+it("keeps the four optional condition choices distinct from a full-width memo entry", () => {
+  const { container } = render(<EveningCheckin />)
+  const choices = container.querySelectorAll(".evening-checkin__choice")
+  expect(choices).toHaveLength(5)
+  expect(Array.from(choices, choice => choice.getAttribute("data-entry-choice")))
+    .toEqual(["condition", "mood", "sleep", "metrics", "memo"])
+  expect(container.querySelectorAll(".evening-checkin__choice--memo")).toHaveLength(1)
+  expect(container.querySelector(".evening-checkin__choice--memo")).toHaveTextContent("메모 쓰기")
 })
 
 it("allows a memo-only route without inventing recovery measurements", () => {

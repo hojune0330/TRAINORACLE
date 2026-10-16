@@ -15,6 +15,17 @@ describe("runner camera", () => {
     expect(moved.toPx(0.66) - moved.toPx(0.56)).toBeCloseTo(0.1 * moved.beltWidth)
     expect(moved.floor).toBeLessThan(600 * 0.82)
   })
+  it("shows backward displacement immediately after release instead of pinning the runner", () => {
+    const camera = createRunnerCamera()
+    const before = camera(run, 390, 700, false)
+    let after = before
+    for (let i = 1; i <= 120; i++) after = camera({ ...run, running: false, x: .5 - .07 * i / 60, seconds: i / 60 }, 390, 700, false)
+    expect(after.toPx(.36)).toBeLessThan(before.toPx(.5) - 45)
+    expect(after.toPx(.36)).toBeGreaterThan(0)
+    for (let i = 121; i <= 360; i++) after = camera({ ...run, running: false, x: .5 - .07 * i / 60, seconds: i / 60 }, 390, 700, false)
+    expect(after.toPx(.06)).toBeGreaterThan(0)
+    expect(after.toPx(.08)).toBeLessThan(50)
+  })
   it("accelerates scenery on dash and freezes the camera and travel on pause", () => {
     const camera = createRunnerCamera()
     camera(run, 360, 600, false)

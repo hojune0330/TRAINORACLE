@@ -1,10 +1,12 @@
-import { ArrowRight, ChevronDown } from "lucide-react"
+import { ChevronDown } from "lucide-react"
 import type { StructuredJournalObservation } from "../../domain/journal-observation"
 import type { PlanBetaState } from "../../domain/plan-beta-schema"
 import { derivePersonalOracle } from "../../domain/personal-oracle"
 import { isoShift } from "../../domain/dates"
 import { eligibleMetricValue } from "../../domain/trend-analysis"
 import { AppHeading } from "../../components/AppHeading"
+import { CategoryCard } from "../../components/CategoryCard"
+import { MetricSummary } from "../../components/MetricSummary"
 
 const INSIGHT_LABEL = {
   DISTANCE_FLOW: "달린 거리",
@@ -48,18 +50,20 @@ export function PersonalOraclePanel({
   const available = oracle.insights.filter(insight => insight.available && insight.id !== "PLAN_FOLLOW_THROUGH")
   const showRecent = recent && available.length === 0
   const receipt = savedCount > 0 ? `최근 8주 훈련 일지 ${savedCount}건을 남겼어요.` : null
+  const metricItems = available.map(insight => {
+    const period = insight.id === "DISTANCE_FLOW" ? "최근 4주" : "최근 8주"
+    const prefix = `${period} `
+    const headlineValue = insight.headline.startsWith(prefix) ? insight.headline.slice(prefix.length) : insight.headline
+    const value = headlineValue.replace(/(?:을|를) 기록했어요$/u, "")
+    return { id: insight.id, label: INSIGHT_LABEL[insight.id], value, period }
+  })
+  const showRecentAction = Boolean((latestSaved && onOpenDay) || (!latestSaved && onWriteLog))
+  const showPlanAction = hasPlan && Boolean(onOpenPlan)
   // The parent owns the first-record/example entry. Do not fill an empty result
   // with unavailable metrics or explanations of a result that does not exist.
   if (available.length === 0 && !recent && !latestSaved) {
-    return hasPlan && onOpenPlan ? <button type="button" className="personal-oracle__action"
-      onClick={onOpenPlan}>훈련표 보기<ArrowRight size={16} aria-hidden="true" /></button> : null
+    return hasPlan && onOpenPlan ? <CategoryCard category="training" variant="row" title="훈련표 보기" onClick={onOpenPlan} /> : null
   }
-  const renderInsight = (insight: typeof oracle.insights[number]) => <article key={insight.id} className="personal-oracle__insight">
-    <div>
-      <span>{INSIGHT_LABEL[insight.id]}</span>
-      <h3>{insight.headline}</h3>
-    </div>
-  </article>
   return (
     <section className="personal-oracle" aria-labelledby="personal-oracle-title">
       <header className="personal-oracle__header">
@@ -68,7 +72,9 @@ export function PersonalOraclePanel({
 
       {receipt && <p className="personal-oracle__summary">{receipt}</p>}
 
-      <div className="personal-oracle__insights">
+      <MetricSummary label="최근 분석 지표" items={metricItems} />
+
+      {(showRecent || (available.length === 0 && !recent && latestSaved)) && <div className="personal-oracle__insights">
         {showRecent && <article className="personal-oracle__insight">
           <div><span>{recent.loggedOn} 운동 기록</span><h3>힘든 정도 {recent.rpe}/10</h3>
             <p>직접 남긴 느낌이에요. 체력 점수는 아니에요.</p></div>
@@ -76,14 +82,15 @@ export function PersonalOraclePanel({
         {!recent && available.length === 0 && latestSaved && <article className="personal-oracle__insight">
           <div><span>최근 훈련 일지</span><h3>{latestSaved.date}</h3><p>그날 남긴 운동을 다시 읽어보세요.</p></div>
         </article>}
-        {available.map(renderInsight)}
       </div>
+      }
 
-      {latestSaved && onOpenDay ? <button type="button" className="personal-oracle__action"
-        onClick={() => onOpenDay(latestSaved.date)}>최근 일지 읽기<ArrowRight size={16} aria-hidden="true" /></button>
-        : !latestSaved && onWriteLog ? <button type="button" className="personal-oracle__action" onClick={onWriteLog}>운동 기록 남기기<ArrowRight size={16} aria-hidden="true" /></button> : null}
-
-      {hasPlan && onOpenPlan && <button type="button" className="personal-oracle__action" onClick={onOpenPlan}>훈련표 보기<ArrowRight size={16} aria-hidden="true" /></button>}
+      {(showRecentAction || showPlanAction) && <div className="personal-oracle__actions">
+        {latestSaved && onOpenDay ? <CategoryCard category="journal" variant="row" title="최근 일지 읽기"
+          onClick={() => onOpenDay(latestSaved.date)} />
+          : !latestSaved && onWriteLog ? <CategoryCard category="journal" variant="row" title="운동 기록 남기기" onClick={onWriteLog} /> : null}
+        {hasPlan && onOpenPlan && <CategoryCard category="training" variant="row" title="훈련표 보기" onClick={onOpenPlan} />}
+      </div>}
 
       {(available.length > 0 || recent) && <details className="personal-oracle__details">
         <summary>

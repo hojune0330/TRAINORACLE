@@ -6,6 +6,7 @@ export type ProductAnnouncement = {
   readonly title: string
   readonly description: string
   readonly actionLabel: string
+  readonly illustration?: "running-game-announcement" | "pace-calculator-announcement"
 }
 
 export const MINIGAME_ANNOUNCEMENT: ProductAnnouncement = {
@@ -13,6 +14,7 @@ export const MINIGAME_ANNOUNCEMENT: ProductAnnouncement = {
   title: "러닝 투어가 열렸어요",
   description: "멈추면 밀려나는 트랙, 한 판 달려볼까요?",
   actionLabel: "게임하기",
+  illustration: "running-game-announcement",
 }
 
 export const announcementKey = (notice: ProductAnnouncement): string =>

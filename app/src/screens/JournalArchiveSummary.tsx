@@ -27,18 +27,11 @@ export function SummaryList<T>({
   readonly renderItem: (item: T) => React.ReactNode
 }) {
   return (
-    <section aria-label={label} style={{ paddingTop: 20 }}>
-      {showLabel && <div style={{
-        padding: "0 20px 10px",
-        fontFamily: "var(--mono)",
-        fontSize: 10,
-        fontWeight: 600,
-        color: "var(--ink-3)",
-        letterSpacing: "0.14em",
-      }}>
+    <section className="journal-archive__summary-list" aria-label={label}>
+      {showLabel && <div className="journal-archive__summary-list-title">
         {label}
       </div>}
-      <div style={{ margin: "0 20px", borderTop: "1px solid var(--ink)" }}>
+      <div className="journal-archive__summary-list-items">
         {items.map((item) => (
           <React.Fragment key={itemKey(item)}>{renderItem(item)}</React.Fragment>
         ))}
@@ -63,59 +56,23 @@ export function SummaryButton({
       type="button"
       onClick={onClick}
       aria-label={ariaLabel}
-      style={{
-        width: "100%",
-        minHeight: 76,
-        padding: "13px 0",
-        border: 0,
-        borderBottom: "1px solid var(--hair)",
-        background: "transparent",
-        color: "inherit",
-        display: "grid",
-        gridTemplateColumns: "minmax(0, 1fr) 24px",
-        gap: 10,
-        alignItems: "center",
-        textAlign: "left",
-        cursor: "pointer",
-      }}
+      className="journal-archive__summary-button"
     >
-      <span style={{ minWidth: 0 }}>
-        <span style={{
-          display: "block",
-          fontFamily: "var(--sans)",
-          fontSize: 15,
-          fontWeight: 600,
-          lineHeight: 1.35,
-          overflowWrap: "anywhere",
-        }}>
+      <span className="journal-archive__summary-button-copy">
+        <span className="journal-archive__summary-button-heading">
           {heading}
         </span>
-        <span style={{
-          display: "block",
-          marginTop: 5,
-          fontFamily: "var(--mono)",
-          fontSize: 10,
-          lineHeight: 1.55,
-          color: "var(--ink-2)",
-          overflowWrap: "anywhere",
-        }}>
+        <span className="journal-archive__summary-button-metrics">
           {kindText(summary.kindCounts)}
           {metricParts(summary.metrics).map((part) => ` · ${part}`)}
         </span>
         {summary.excludedRecordCount > 0 && (
-          <span style={{
-            display: "block",
-            marginTop: 4,
-            fontFamily: "var(--mono)",
-            fontSize: 9.5,
-            lineHeight: 1.45,
-            color: "var(--ink-3)",
-          }}>
+          <span className="journal-archive__summary-button-excluded">
             출처를 확인할 수 없어 제외된 기록 {summary.excludedRecordCount}건
           </span>
         )}
       </span>
-      <ChevronRight aria-hidden="true" size={18} color="var(--ink-3)" />
+      <ChevronRight aria-hidden="true" size={18} className="journal-archive__summary-button-chevron" />
     </button>
   )
 }

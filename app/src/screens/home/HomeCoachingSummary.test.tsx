@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, expect, it, vi } from "vitest"
 import { HomeCoachingSummary } from "./HomeCoachingSummary"
@@ -21,11 +22,13 @@ it("shows a useful general article immediately when reviews are empty and return
   const heading = screen.getByRole("heading", { name: "훈련법 읽기" })
   expect(heading).toBeVisible()
   expect(screen.getByText("일반 훈련 정보")).toBeVisible()
-  expect(screen.getByText(/같은 거리를 뛰어도 연속 달리기와 회복을 넣은 반복 달리기는 구성이 달라요/)).toBeVisible()
+  expect(screen.getByText("무엇이 달라졌는지부터 나눠 봐요.")).toBeVisible()
+  expect(screen.queryByText(/같은 거리를 뛰어도 연속 달리기와 회복을 넣은 반복 달리기는 구성이 달라요/)).toBeNull()
   expect(screen.queryByText(/계획에서 운동을 기록하면/)).toBeNull()
   expect(screen.getByRole("button", { name: /계획과 다르게 운동했다면/ })).toBeVisible()
   fireEvent.click(screen.getByRole("button", { name: /계획과 다르게 운동했다면/ }))
   expect(screen.getByRole("dialog")).toBeVisible()
+  expect(screen.getByText(/같은 거리를 뛰어도 연속 달리기와 회복을 넣은 반복 달리기는 구성이 달라요/)).toBeVisible()
   expect(screen.getByText(/개인의 훈련이나 몸 상태를 분석한 결과는 아니에요/)).toBeVisible()
   fireEvent.click(screen.getByRole("button", { name: "훈련 코칭으로 돌아가기" }))
   await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull())
@@ -52,15 +55,18 @@ it("does not interrupt general reading on unrelated journal revisions", () => {
   expect(screen.getByRole("dialog")).toBeVisible()
 })
 
-it("prioritizes recording and shows one prepared preview without a second entry wrapper", () => {
+it("shows plan and analysis before optional recording on welcome without a second entry wrapper", () => {
   const model: TrainingHomeViewModel = { homeMode: "WELCOME", todayMessage: "", todayRecordCount: 0, journalSummary: "", flowSummary: "", planSummary: "저장된 계획 없음", analysisSummary: "", showMinjiPrompt: true, nextTraining: null, briefing: "" }
   render(<TrainingHome model={model} onOpenOracle={vi.fn()} oraclePreview={<h2>오라클 미리보기</h2>} />)
+  const plan = screen.getByRole("button", { name: "훈련 계획 받기" })
   const write = screen.getByRole("button", { name: "오늘 운동 기록 쓰기" })
   const preview = screen.getByRole("heading", { name: "오라클 미리보기" })
+  expect(plan).toBeVisible()
   expect(write).toBeVisible()
   expect(preview.closest("details")).toBeNull()
   expect(preview).toBeVisible()
-  expect(write.compareDocumentPosition(preview) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  expect(plan.compareDocumentPosition(preview) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  expect(preview.compareDocumentPosition(write) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   expect(screen.queryByRole("heading", { name: "훈련 코칭" })).toBeNull()
   expect(screen.queryByRole("heading", { name: "더 살펴보기" })).toBeNull()
   expect(screen.queryByText("내 훈련, 무엇부터 개선할까요?")).toBeNull()
@@ -83,7 +89,8 @@ it("refreshes the date filter after the tab resumes across midnight", () => {
   expect(readMultiEvidence).not.toHaveBeenCalled()
 })
 
-it("memoizes a failed V6 evidence read across visible coaching records", () => {
+it("memoizes a failed V6 evidence read across visible coaching records", async () => {
+  await initializeCanonicalJournalFixture()
   const packet = accountPlanPacketFixture(6)
   if (packet.state.version !== 6) throw Error("Expected V6 plan")
   const state = packet.state
@@ -108,7 +115,8 @@ it("memoizes a failed V6 evidence read across visible coaching records", () => {
   expect(readMultiEvidence).toHaveBeenCalledOnce()
 })
 
-it("reuses a successful V6 evidence read when a coaching record opens", () => {
+it("reuses a successful V6 evidence read when a coaching record opens", async () => {
+  await initializeCanonicalJournalFixture()
   const packet = accountPlanPacketFixture(6)
   if (packet.state.version !== 6 || packet.evidence === null || !("slots" in packet.evidence) || !("rpeBindings" in packet.evidence)) throw Error("Expected V6 plan evidence")
   const evidence = packet.evidence as RetainedMultiAdjustedEvidenceV3

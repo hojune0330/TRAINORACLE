@@ -16,10 +16,11 @@
 .treadmill-game__route::before { content: ""; position: absolute; left: 50%; top: 12px; bottom: 12px; width: 6px; transform: translateX(-50%); border-radius: 3px; background: repeating-linear-gradient(var(--game-panel) 0 10px, transparent 10px 18px); opacity: 0.8; }
 .treadmill-game__route li { position: relative; display: flex; }
 .treadmill-game__route li[data-side="right"] { justify-content: flex-end; }
-.treadmill-game button.treadmill-game__city { width: min(78%, 290px); min-height: 72px; display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: var(--space-2); align-items: center; padding: var(--space-2) var(--space-3); text-align: left; border-radius: var(--tm-radius); border: var(--tm-edge) solid var(--game-outline); border-bottom-width: 6px; background: var(--game-panel); color: var(--game-ink); }
-.treadmill-game button.treadmill-game__city:active:not(:disabled) { border-bottom-width: var(--tm-edge); transform: translateY(3px); }
+.treadmill-game button.treadmill-game__city { width: min(78%, 290px); min-height: 72px; display: grid; grid-template-columns: 58px minmax(0, 1fr); gap: var(--space-2); align-items: center; padding: var(--space-2) var(--space-3); text-align: left; border-radius: var(--tm-radius); border: var(--tm-edge) solid var(--game-outline); border-bottom-width: 6px; background: var(--game-panel); color: var(--game-ink); }
+.treadmill-game button.treadmill-game__city:active:not(:disabled) { transform: translateY(2px) scale(.98); }
 .treadmill-game button.treadmill-game__city:disabled { background: var(--game-panel-edge); color: var(--game-ink-soft); cursor: default; }
-.treadmill-game__city-pin { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; border: 2px solid var(--game-outline); background: var(--game-gold); color: var(--game-ink); }
+.treadmill-game__city-pin { position:relative; width:58px; height:58px; display:grid; place-items:center; border-radius:14px; background:var(--game-gold); color:var(--game-ink); }
+.treadmill-game__city-lock-badge { position:absolute; right:0; bottom:0; padding:3px; box-sizing:content-box; border-radius:50%; background:var(--game-panel); }
 .treadmill-game__city[data-state="done"] .treadmill-game__city-pin { background: var(--game-good); }
 .treadmill-game__city[data-state="locked"] .treadmill-game__city-pin { background: var(--game-rail); }
 .treadmill-game__city[data-state="open"] .treadmill-game__city-pin { animation: treadmill-bob 1.4s var(--ease-out) infinite alternate; }

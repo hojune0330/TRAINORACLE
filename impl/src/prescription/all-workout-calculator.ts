@@ -1,4 +1,4 @@
-import rawCatalog from "./all-workout-catalog.json"
+import rawCatalog from "./all-workout-catalog.json" with { type: "json" }
 import { canonicalJsonFingerprint } from "../plan-generator/candidate-identity"
 import { parsePrescriptionSequenceV3 } from "./sequence-v3"
 import type { PrescriptionSequenceV3, SequenceNodeV3, RecoveryStepV3 } from "./sequence-v3"

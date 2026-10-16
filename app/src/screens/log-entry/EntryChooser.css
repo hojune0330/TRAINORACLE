@@ -1,0 +1,13 @@
+.entry-chooser__options {
+  display: grid;
+  gap: var(--space-1);
+  margin: var(--space-3) 20px 0;
+}
+
+button.entry-chooser__option.category-card--row {
+  width: 100%;
+}
+
+@media (max-width: 350px) {
+  .entry-chooser__options { margin-inline: 12px; }
+}

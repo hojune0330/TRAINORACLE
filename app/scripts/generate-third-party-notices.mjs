@@ -52,6 +52,8 @@ export function renderNotices(packages = productionPackages()) {
     return `<section id="${escape(item.name)}">\n<h2>${escape(item.name)} ${escape(item.version)}</h2>\n<p>라이선스: ${escape(item.license)}</p>\n${body}\n</section>`
   }).join("\n")
   const font = normalize(readFileSync(join(appRoot, "public/fonts/Pretendard-LICENSE.txt"), "utf8")).trim()
+  const adapted = JSON.parse(readFileSync(join(appRoot, "scripts/ui-source-attributions.json"), "utf8"))
+  const adaptedSections = adapted.map(item => `<section id="${escape(item.id)}">\n<h2>${escape(item.name)}</h2>\n<p>검토 리비전: ${escape(item.version)} · ${escape(item.license)}</p>\n<p><a href="${escape(item.url)}">원본 소스</a></p>\n<p>원본 파일: ${escape(item.sourceFiles.join(", "))}</p>\n<p>적용 파일: ${escape(item.localFiles.join(", "))}</p>\n<p>${escape(item.changes)}</p>\n<pre>${escape(item.text)}</pre>\n</section>`).join("\n")
   return `<!doctype html>
 <!-- 자동 생성 파일: app/scripts/generate-third-party-notices.mjs 가 package-lock.json 에서 만든다. 손으로 고치지 말 것. -->
 <html lang="ko">
@@ -80,6 +82,9 @@ ${rows}
 <tr><td><a href="#pretendard">Pretendard (글꼴)</a></td><td>—</td><td>OFL-1.1</td></tr>
 </tbody></table>
 ${sections}
+<h2>선별 이식한 UI 소스</h2>
+<p>아래 코드는 표시 구조만 이식했습니다. 원본 제품의 서버·추적·분석 기능은 포함하지 않습니다.</p>
+${adaptedSections}
 <section id="pretendard">
 <h2>Pretendard (글꼴)</h2>
 <p>라이선스: SIL Open Font License 1.1</p>

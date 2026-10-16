@@ -1,6 +1,7 @@
 import React from "react"
-import { CheckCircle2, ChevronRight, Flag, HeartPulse, PencilLine } from "lucide-react"
-import "../../styles/category-cards.css"
+import { CheckCircle2, Flag, HeartPulse, PencilLine } from "lucide-react"
+import { CategoryCard } from "../../components/CategoryCard"
+import "./EntryChooser.css"
 import { compactDate, dowOf } from "../../domain/dates"
 import { todayISO } from "../../domain/journal-store"
 import { useCalendarSnapshot } from "../../hooks/useCalendarEntries"
@@ -50,7 +51,7 @@ export function EntryChooser({ onBack, onPick, onOpenImport, targetDate }: Entry
         </div>
         <div className="contextual-entry-intro">
           <div className="contextual-entry-intro__copy">
-            <AppHeading ref={headingRef} tabIndex={-1} as="h1" variant="screen" accent className="entry-chooser__title">무엇을 기록할까요?</AppHeading>
+            <AppHeading ref={headingRef} tabIndex={-1} as="h2" variant="screen" accent className="entry-chooser__title">무엇을 기록할까요?</AppHeading>
             {readMessage !== null && <p role={journalSnapshot.status === "ERROR" ? "alert" : "status"}>
               {readMessage}
             </p>}
@@ -59,20 +60,11 @@ export function EntryChooser({ onBack, onPick, onOpenImport, targetDate }: Entry
         </div>
       </div>
 
-      <div className="app-choice-group" style={{ marginTop: 18, padding: "0 20px", display: "grid" }}>
+      <div className="entry-chooser__options app-choice-group">
         {ENTRY_OPTIONS.map((option) => (
-          <button className="category-card" data-category={option.id === "evening" ? "body" : "record"} type="button" key={option.id} data-testid={`entry-choice-${option.id}`} onClick={() => onPick?.(option.id)} style={{
-            width: "100%", textAlign: "left",
-            minHeight: 64,
-            display: "grid", gridTemplateColumns: "40px minmax(0, 1fr) 18px", gap: 12, alignItems: "center",
-          }}>
-            <span className="category-icon" aria-hidden="true"><option.Icon size={20} /></span>
-            <div style={{ minWidth: 0, wordBreak: "keep-all", overflowWrap: "anywhere" }}>
-              <div style={{ fontFamily: "var(--sans)", fontSize: 16, fontWeight: 500, color: "var(--ink)", letterSpacing: 0 }}>{option.t}</div>
-              <div style={{ fontFamily: "var(--sans)", fontSize: 12, color: "var(--ink-3)", letterSpacing: 0, marginTop: 3 }}>{option.d}</div>
-            </div>
-            <ChevronRight size={18} aria-hidden="true" />
-          </button>
+          <CategoryCard key={option.id} className="entry-chooser__option" data-testid={`entry-choice-${option.id}`}
+            category={option.id === "evening" ? "body" : "record"} icon={option.Icon} title={option.t}
+            description={option.d} variant="row" onClick={() => onPick?.(option.id)} />
         ))}
       </div>
 

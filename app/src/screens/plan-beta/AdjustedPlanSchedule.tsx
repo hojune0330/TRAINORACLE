@@ -17,6 +17,8 @@ import { TermHelp } from "../../components/TermHelp"
 import { AdjustedJournalOriginalPlan } from "../journal/AdjustedJournalOriginalPlan"
 import "./AdjustedPlanSchedule.css"
 import { DatedPlanPanel } from "./DatedPlanPanel"
+import { CalendarRoleIcon } from "../../components/CalendarTrainingMark"
+import { CALENDAR_TRAINING_LABELS, plannedCalendarTone } from "../../domain/calendar-training-presentation"
 
 export function AdjustedPlanSchedule({ loaded, onWritePlannedSessionLog, returnToSession, onStoredChange, onPrepareNext, onExportPlan, onImportPlan, readEvidence = () => RETAINED_ADJUSTED_PLAN_EVIDENCE }: {
   readonly loaded: Extract<PlanBetaStateReadResult, { kind: "adjusted_loaded" }>
@@ -57,7 +59,8 @@ export function AdjustedPlanSchedule({ loaded, onWritePlannedSessionLog, returnT
       const label = ENERGY_INTENT_LABELS[session.plannedEnergyIntent]
       const recorded = loaded.state.progress.find(item => item.sessionDay === day && item.sessionSlot === session.slot)
       return <section key={session.slot} tabIndex={-1} data-session-slot={session.slot} aria-label={`${session.slot === "AM" ? "오전" : "오후"} 훈련`}>
-        <h3>{session.slot === "AM" ? "오전" : "오후"} · {session.role === "REST" ? "휴식" : label.title}</h3>
+        <p className="adjusted-plan-role"><CalendarRoleIcon tone={plannedCalendarTone(session)} />{session.slot === "AM" ? "오전" : "오후"} · {CALENDAR_TRAINING_LABELS[plannedCalendarTone(session)]}</p>
+        <h3>{session.role === "REST" ? "휴식" : label.title}</h3>
         <TermHelp term={label.term} />
         <AdjustedJournalOriginalPlan session={session} date={date} explanation={loaded.explanation} context="plan" />
         <p role="status">{recorded === undefined ? "아직 진행 기록이 없어요." : PROGRESS_LABELS[recorded.state]}</p>
@@ -77,7 +80,7 @@ export function AdjustedPlanSchedule({ loaded, onWritePlannedSessionLog, returnT
                     : "진행 기록을 저장하지 못했어요. 계획을 다시 열어 현재 상태를 확인해 주세요.")
                 }}><Icon size={16} aria-hidden="true" />{PROGRESS_LABELS[state]}</button>)}
         </div>
-        {onWritePlannedSessionLog !== undefined && <button type="button" onClick={() => {
+        {onWritePlannedSessionLog !== undefined && <button className="adjusted-plan-write" type="button" onClick={() => {
           const draft = createPlannedSessionLogDraft(plan, session, new Date().toISOString())
           if (draft === null) { setError("이 훈련의 연결 정보를 확인하지 못했어요. 일지는 열지 않았어요."); return }
           onWritePlannedSessionLog(draft)

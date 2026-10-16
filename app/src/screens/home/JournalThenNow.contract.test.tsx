@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { isoShift } from "../../domain/dates"
@@ -44,7 +45,7 @@ function entry(id: string, date: string, title: string, slot: "AM" | "PM" = "PM"
 }
 
 describe("journal then-now comparison", () => {
-  beforeEach(() => window.localStorage.clear())
+  beforeEach(async () => { window.localStorage.clear(); await initializeCanonicalJournalFixture() })
   afterEach(cleanup)
 
   it("shows both dated records together without exposing memo text", () => {

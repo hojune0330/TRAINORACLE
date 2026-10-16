@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { beforeEach, describe, expect, it } from "vitest"
 import { generatePlanFromDraft } from "./plan-beta-flow"
 import { replaceCandidateCatalogWorkout } from "./catalog-plan-binding"
@@ -8,7 +9,7 @@ import type { WorkoutCalculationInputs } from "@impl/prescription/all-workout-ca
 import { bindCatalogSession } from "@impl/prescription/catalog-session-binding"
 import { planPrescriptionBasis } from "./plan-prescription-basis"
 
-beforeEach(() => { localStorage.clear(); sessionStorage.clear() })
+beforeEach(async () => { localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture() })
 
 function fixture() {
   const result = generatePlanFromDraft({ eventGroup: "FIVE_K", eventDistanceM: 5000,

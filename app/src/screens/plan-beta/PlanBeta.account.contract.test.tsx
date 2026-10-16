@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import React from "react"
 import { webcrypto } from "node:crypto"
 import { beforeEach, afterEach, it, expect, vi } from "vitest"
@@ -38,7 +39,7 @@ function createService() {
 }
 beforeEach(async () => {
   vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(TODAY); vi.stubGlobal("crypto", webcrypto)
-  localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(COLLECTION_OWNER)
+  localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture(); setActiveLocalAccount(COLLECTION_OWNER)
   resetAccountJournalProjection(COLLECTION_OWNER)
   setAccountJournalProjectionStatus(COLLECTION_OWNER, "READY")
   trusted = []; remote = collectionServer(); runtime.enabled = true

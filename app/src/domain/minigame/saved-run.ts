@@ -15,18 +15,18 @@ const frame = z.object({
   energy: finite(0, 100), running: z.boolean(), exhausted: z.boolean(),
   dashLeft: finite(0, 1), cooldown: finite(0, 10), invulnerable: finite(0, 1),
   hitFlash: finite(), landed: finite(), spawned: z.number().int().min(0).max(128),
-  hazards: z.array(z.object({ id: count, kind: z.enum(["barrier", "spike"]),
+  hazards: z.array(z.object({ id: count, kind: z.enum(["barrier", "spike", "cone", "crate"]),
     x: finite(-1, 2), hit: z.boolean(), passed: z.boolean() }).strict()).max(128),
   upgrades: z.array(upgrade).max(2),
   stats: z.object({ hits: count, cleared: count, jumps: count, dashes: count,
     restSeconds: finite(0, 90), lowestEnergy: finite(0, 100), combo: count,
     bestCombo: count, score: count, retries: count }).strict(),
 }).strict()
-const schema = z.object({ version: z.literal(1), rulesVersion: z.literal(TREADMILL_RULES.version),
+const schema = z.object({ version: z.literal(1), rulesVersion: z.union([z.literal(3), z.literal(TREADMILL_RULES.version)]),
   course: z.string().max(30), savedAt: z.string().datetime(),
   state: frame.extend({ checkpoint: frame.nullable() }).strict(),
 }).strict()
-export type SavedRun = { readonly course: string; readonly savedAt: string; readonly state: TreadmillState }
+export type SavedRun = { readonly course: string; readonly savedAt: string; readonly state: TreadmillState; readonly notice?: string }
 export type SavedRunRead = { readonly kind: "empty"; readonly raw: null }
   | { readonly kind: "saved"; readonly raw: string; readonly run: SavedRun }
   | { readonly kind: "invalid"; readonly raw: string }
@@ -62,6 +62,17 @@ export function decodeSavedRun(raw: string): SavedRun | null {
     if (state.checkpoint) {
       const { checkpoint: _, ...checkpoint } = restore(state.checkpoint)
       restored.checkpoint = { ...checkpoint, mode: "running" }
+    }
+    if (data.rulesVersion === 3 && state.mode !== "upgrade") {
+      // The old spawn index refers to a different schedule. Resume safely at the
+      // current stage checkpoint, preserving the build and completed-stage score.
+      const fresh = state.upgrades.reduce(applyUpgrade, newTreadmillRun(stages))
+      const checkpoint = restored.checkpoint ?? { ...fresh, stage: state.stage, mode: "running" as const }
+      const { checkpoint: _unused, ...clean } = { ...fresh, ...checkpoint, checkpoint: null }
+      return { course: data.course, savedAt: data.savedAt,
+        notice: "장애물 구성이 바뀌어 저장한 구간의 출발점에서 이어져요. 강화는 유지돼요.",
+        state: { ...clean, mode: "paused", countdown: TREADMILL_RULES.countdownStage,
+          running: false, exhausted: false, checkpoint: clean } }
     }
     return { course: data.course, savedAt: data.savedAt, state: restored }
   } catch { return null }

@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { stateFixture } from "../plan-beta-store.test-fixture"
 import { planBetaStateV3Schema } from "../plan-beta-schema"
@@ -73,11 +74,11 @@ import {
   loadLatestPlanFromServer,
 } from "./plan-cloud-backup"
 
-beforeEach(() => {
+beforeEach(async () => {
   savedRow = null
   serverRows = null
   pendingSelectResponse = null
-  window.localStorage.clear()
+  window.localStorage.clear(); await initializeCanonicalJournalFixture();
   setActiveLocalAccount("user-1")
 })
 

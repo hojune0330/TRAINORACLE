@@ -1,0 +1,35 @@
+[
+  {
+    "id": "umami-metrics",
+    "name": "Umami MetricsBar / MetricCard",
+    "version": "ec0ff50388c264ed8ce46f00967e92f7e71476ae",
+    "license": "MIT",
+    "url": "https://github.com/umami-software/umami/tree/ec0ff50388c264ed8ce46f00967e92f7e71476ae/src/components/metrics",
+    "sourceFiles": [
+      "src/components/metrics/MetricsBar.tsx",
+      "src/components/metrics/MetricCard.tsx"
+    ],
+    "localFiles": [
+      "src/components/MetricSummary.tsx",
+      "src/styles/source-ui.css"
+    ],
+    "changes": "값·제목·보조 정보와 auto-fit 배치만 기존 React 18/CSS로 이식. 통계 계산, 숫자 기본값, 색상 판정, 카운트업 및 원본 종속성 제외.",
+    "text": "MIT License\n\nCopyright (c) 2022 Umami Software, Inc. <hello@umami.is>\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
+  },
+  {
+    "id": "cal-diy-segmented-control",
+    "name": "Cal.diy SegmentedControl",
+    "version": "54343aa685ae8f33159d2f485ec4a57bad5c574a",
+    "license": "MIT",
+    "url": "https://github.com/calcom/cal.diy/blob/54343aa685ae8f33159d2f485ec4a57bad5c574a/packages/ui/components/segmented-control/SegmentedControl.tsx",
+    "sourceFiles": [
+      "packages/ui/components/segmented-control/SegmentedControl.tsx"
+    ],
+    "localFiles": [
+      "src/components/ViewSwitcher.tsx",
+      "src/styles/source-ui.css"
+    ],
+    "changes": "부모가 관리하는 값·옵션과 선택 배치를 이식. Tailwind 대신 기존 CSS, 고유 ID와 Radix RadioGroup, 줄바꿈 및 명시적 체크 표시로 접근성 보완. 날짜와 저장 로직 제외.",
+    "text": "MIT License\n\nCopyright (c) 2020-present Cal.com, Inc.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
+  }
+]

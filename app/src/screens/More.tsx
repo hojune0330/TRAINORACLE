@@ -1,5 +1,7 @@
 import React from "react"
-import { ArrowLeft, BookOpen, Calculator, ChevronRight, CircleHelp, DatabaseBackup, Flag, Gamepad2, MessageSquareText, Newspaper, ScrollText, ShieldCheck, Sticker, Trash2, UserRound, Watch } from "lucide-react"
+import { ArrowLeft, Calculator, CalendarDays, ChartNoAxesCombined, CircleHelp, CircleUserRound, Compass, DatabaseBackup, Flag, Gamepad2, Info, LibraryBig, MessageSquareText, Newspaper, NotebookText, ScrollText, ShieldCheck, Sticker, Trash2, UserRound, Watch } from "lucide-react"
+import { AppHeading } from "../components/AppHeading"
+import { MenuAction } from "../components/MenuAction"
 import { DataSafetyNotice } from "../components/DataSafetyNotice"
 import { feedbackConfig } from "../domain/feedback/feedback-config"
 import { SafeJournalExport } from "./home/DeviceJournal"
@@ -9,12 +11,13 @@ import { loadTrash } from "../domain/journal-trash"
 import "../styles/home-menu.css"
 import { captureReaderPosition, restoreReaderPosition, type ReaderPosition } from "../navigation/readerPosition"
 import { useNavigationReturnFrame } from "../hooks/useNavigationReturnFrame"
+import { HomeIdentityArtwork } from "./home/HomeIntroduction"
 
-export type MoreView = "tools" | "learning" | "account" | "backup" | "about"
+export type MoreView = "tools" | "learning" | "account" | "backup" | "about" | "introduction"
 
 const VIEW_TITLES: Record<MoreView, string> = {
   tools: "더보기", learning: "훈련 배우기", account: "계정·기록 보관",
-  backup: "백업·복원·휴지통", about: "앱 정보·개인정보·문의",
+  backup: "백업·복원·휴지통", about: "앱 정보·개인정보·문의", introduction: "앱 소개",
 }
 
 export type MoreProps = {
@@ -36,6 +39,8 @@ export type MoreProps = {
   readonly onOpenOracleLibrary?: () => void
   readonly onOpenRecords?: () => void
   readonly onOpenImport?: () => void
+  readonly onOpenPlan?: () => void
+  readonly onOpenAnalysis?: () => void
 }
 
 export function More({
@@ -57,6 +62,8 @@ export function More({
   onOpenOracleLibrary,
   onOpenRecords,
   onOpenImport,
+  onOpenPlan,
+  onOpenAnalysis,
 }: MoreProps) {
   const [internalView, setInternalView] = React.useState<MoreView>("tools")
   const activeView = view ?? internalView
@@ -87,79 +94,90 @@ export function More({
           <ArrowLeft aria-hidden="true" size={19} />
         </button>
         <div>
-          <h1 ref={heading} tabIndex={-1}>{VIEW_TITLES[activeView]}</h1>
+          <AppHeading as="h1" ref={heading} tabIndex={-1}>{VIEW_TITLES[activeView]}</AppHeading>
         </div>
       </header>
 
-      <div className="more-screen__list">
+      <div className={`more-screen__list${activeView === "tools" ? " more-screen__list--tools" : ""}`}>
         {activeView === "tools" && <>
-        {(onOpenPaceCalculator || onOpenImport || onOpenRecords) && <h2 className="more-screen__group-label">훈련 도구</h2>}
-        {onOpenPaceCalculator && <UtilityRow icon={Calculator} label="페이스 계산" onClick={onOpenPaceCalculator} />}
-        {onOpenRecords && <UtilityRow icon={Flag} label="경기 기록 추가·수정" onClick={onOpenRecords} />}
-        {onOpenImport && <UtilityRow icon={Watch} label="워치 파일 가져오기" onClick={onOpenImport} />}
-        {(onOpenRunningProfile || onOpenRecordReading || onOpenOracleLibrary) && <h2 className="more-screen__group-label">오라클</h2>}
-        {onOpenRunningProfile && <UtilityRow icon={UserRound} label="러닝 취향" detail="취향 점수 · 친구와 비교" onClick={onOpenRunningProfile} />}
-        {onOpenRecordReading && <UtilityRow icon={Calculator} label="최고기록으로 풀이하기" detail="저장 없이 내 기록·친구 기록 비교" onClick={onOpenRecordReading} />}
-        {onOpenOracleLibrary && <UtilityRow icon={BookOpen} label="오라클 읽을거리" onClick={onOpenOracleLibrary} />}
-        <h2 className="more-screen__group-label">훈련 배우기</h2>
-        <UtilityRow icon={BookOpen} label="민지의 예시 일지" onClick={onOpenMinji} />
-        <UtilityRow icon={CircleHelp} label="훈련 용어집·도움말" onClick={onOpenGuide} />
-        {onOpenContent && <UtilityRow icon={Newspaper} label="훈련법 읽기" onClick={onOpenContent} />}
-        {onOpenRewards && <UtilityRow icon={Sticker} label="일지 꾸미기" onClick={onOpenRewards} />}
-        {onOpenMinigame && <UtilityRow icon={Gamepad2} label="미니게임" detail="러닝 투어 · 서울에서 런던까지" onClick={onOpenMinigame} />}
-        <h2 className="more-screen__group-label">관리·도움말</h2>
-        <UtilityRow icon={UserRound} label={VIEW_TITLES.account} onClick={() => changeView("account")} />
-        <UtilityRow icon={DatabaseBackup} label={VIEW_TITLES.backup} onClick={() => changeView("backup")} />
-        <UtilityRow icon={ShieldCheck} label={VIEW_TITLES.about} onClick={() => changeView("about")} />
+        {(onOpenPaceCalculator || onOpenImport || onOpenRecords) && <MenuGroup title="훈련 도구">
+          {onOpenPaceCalculator && <MenuAction category="training" icon={Calculator} label="페이스 계산" illustration="pace-calculator-announcement" onClick={onOpenPaceCalculator} />}
+          {onOpenRecords && <MenuAction category="record" icon={Flag} label="경기 기록 추가·수정" onClick={onOpenRecords} />}
+          {onOpenImport && <MenuAction category="record" icon={Watch} label="워치 파일 가져오기" onClick={onOpenImport} />}
+        </MenuGroup>}
+        {(onOpenRunningProfile || onOpenRecordReading || onOpenOracleLibrary) && <MenuGroup title="오라클">
+          {onOpenRunningProfile && <MenuAction category="oracle" icon={UserRound} label="러닝 취향" detail="취향 점수 · 친구와 비교" onClick={onOpenRunningProfile} />}
+          {onOpenRecordReading && <MenuAction category="oracle" icon={ChartNoAxesCombined} label="최고기록으로 풀이하기" detail="저장 없이 내 기록·친구 기록 비교" onClick={onOpenRecordReading} />}
+          {onOpenOracleLibrary && <MenuAction category="oracle" icon={LibraryBig} label="오라클 읽을거리" onClick={onOpenOracleLibrary} />}
+        </MenuGroup>}
+        <MenuGroup title="배우기">
+          <MenuAction category="journal" icon={NotebookText} label="일지 예시 보기" onClick={onOpenMinji} />
+          <MenuAction category="training" icon={CircleHelp} label="훈련 용어집·도움말" onClick={onOpenGuide} />
+          {onOpenContent && <MenuAction category="training" icon={Newspaper} label="훈련법 읽기" onClick={onOpenContent} />}
+        </MenuGroup>
+        {(onOpenRewards || onOpenMinigame) && <MenuGroup title="꾸미기·게임">
+          {onOpenRewards && <MenuAction category="journal" icon={Sticker} label="일지 꾸미기" onClick={onOpenRewards} />}
+          {onOpenMinigame && <MenuAction icon={Gamepad2} label="미니게임" detail="러닝 투어 · 서울에서 런던까지" illustration="running-game-announcement" onClick={onOpenMinigame} />}
+        </MenuGroup>}
+        <MenuGroup title="관리">
+          <MenuAction icon={Compass} label={VIEW_TITLES.introduction} onClick={() => changeView("introduction")} />
+          <MenuAction icon={CircleUserRound} label={VIEW_TITLES.account} onClick={() => changeView("account")} />
+          <MenuAction icon={DatabaseBackup} label={VIEW_TITLES.backup} onClick={() => changeView("backup")} />
+          <MenuAction icon={Info} label={VIEW_TITLES.about} onClick={() => changeView("about")} />
+        </MenuGroup>
         </>}
+        {activeView === "introduction" && <section className="more-screen__introduction" aria-labelledby="app-introduction-purpose">
+          <HomeIdentityArtwork size={64} />
+          <AppHeading as="h2" variant="section" id="app-introduction-purpose">운동을 분석하고 <br />훈련 계획을 세워요</AppHeading>
+          <nav aria-label="앱의 주요 기능">
+            {onOpenPlan && <MenuAction category="training" icon={CalendarDays} label="훈련 계획 보기" onClick={onOpenPlan} />}
+            {onOpenAnalysis && <MenuAction category="oracle" icon={ChartNoAxesCombined} label="운동 분석 보기" onClick={onOpenAnalysis} />}
+          </nav>
+        </section>}
         {activeView === "learning" && <>
-        <UtilityRow icon={BookOpen} label="민지의 예시 일지" onClick={onOpenMinji} />
-        <UtilityRow icon={CircleHelp} label="훈련 용어집·도움말" onClick={onOpenGuide} />
-        {onOpenContent !== undefined && <UtilityRow icon={Newspaper} label="훈련법 읽기" onClick={onOpenContent} />}
-        {onOpenRewards !== undefined && <UtilityRow icon={Sticker} label="일지 꾸미기" onClick={onOpenRewards} />}
-        {onOpenMinigame && <UtilityRow icon={Gamepad2} label="미니게임" detail="러닝 투어 · 서울에서 런던까지" onClick={onOpenMinigame} />}
+        <MenuGroup title="예시와 읽을거리">
+          <MenuAction category="journal" icon={NotebookText} label="일지 예시 보기" onClick={onOpenMinji} />
+          <MenuAction category="training" icon={CircleHelp} label="훈련 용어집·도움말" onClick={onOpenGuide} />
+          {onOpenContent && <MenuAction category="training" icon={Newspaper} label="훈련법 읽기" onClick={onOpenContent} />}
+        </MenuGroup>
+        {(onOpenRewards || onOpenMinigame) && <MenuGroup title="꾸미기·게임">
+          {onOpenRewards && <MenuAction category="journal" icon={Sticker} label="일지 꾸미기" onClick={onOpenRewards} />}
+          {onOpenMinigame && <MenuAction icon={Gamepad2} label="미니게임" detail="러닝 투어 · 서울에서 런던까지" illustration="running-game-announcement" onClick={onOpenMinigame} />}
+        </MenuGroup>}
         </>}
         {activeView === "account" && <>
-        {onOpenAccount && <UtilityRow icon={UserRound} label="계정 저장 상태 확인" onClick={onOpenAccount} />}
-        <InstallShortcutMenuEntry />
+        <MenuGroup title="계정과 앱">
+          {onOpenAccount && <MenuAction icon={CircleUserRound} label="계정 저장 상태 확인" onClick={onOpenAccount} />}
+          <InstallShortcutMenuEntry />
+        </MenuGroup>
         <DataSafetyNotice onOpenAccount={onOpenAccount} />
         </>}
         {activeView === "backup" && <>
-        <SafeJournalExport onOpenRestore={onOpenRestore} />
+        <MenuGroup title="파일 백업과 복원">
+          <SafeJournalExport onOpenRestore={onOpenRestore} />
+        </MenuGroup>
         <details className="more-screen__trash">
           <summary><Trash2 size={19} aria-hidden="true" /><span>휴지통 · {trashCount}개</span></summary>
           {trashCount === 0 ? <p>지운 일지가 없어요.</p> : <TrashBin onChanged={() => setTrashCount(loadTrash().length)} />}
         </details>
         </>}
         {activeView === "about" && <>
+        <MenuGroup title="문의와 기기">
         {onOpenFeedback === undefined ? (
-          <a className="more-screen__row" href="?feedback=1">
-            <MessageSquareText aria-hidden="true" size={19} />
-            <span><strong>문의 게시판</strong>{!feedbackAvailable && <small>준비 중</small>}</span>
-          </a>
+          <MenuAction icon={MessageSquareText} label="문의 게시판" detail={feedbackAvailable ? undefined : "준비 중"} href="?feedback=1" />
         ) : (
-          <UtilityRow icon={MessageSquareText} label="문의 게시판" detail={feedbackAvailable ? undefined : "준비 중"} onClick={onOpenFeedback} />
+          <MenuAction icon={MessageSquareText} label="문의 게시판" detail={feedbackAvailable ? undefined : "준비 중"} onClick={onOpenFeedback} />
         )}
-        <a className="more-screen__row" href="./support.html" target="_blank" rel="noreferrer">
-          <Watch aria-hidden="true" size={19} />
-          <span><strong>기기 연동 상태</strong><small>Garmin · COROS</small></span>
-        </a>
-        <a className="more-screen__row" href="./legal/privacy.html" target="_blank" rel="noreferrer">
-          <ShieldCheck aria-hidden="true" size={19} />
-          <span><strong>개인정보처리방침</strong></span>
-        </a>
-        <a className="more-screen__row" href="./legal/terms.html" target="_blank" rel="noreferrer">
-          <ScrollText aria-hidden="true" size={19} />
-          <span><strong>이용약관</strong></span>
-        </a>
-        <a className="more-screen__row" href="./legal/open-source.html" target="_blank" rel="noreferrer">
-          <Sticker aria-hidden="true" size={19} />
-          <span><strong>스티커·오픈소스 출처</strong></span>
-        </a>
-        <a className="more-screen__row" href="./legal/third-party-notices.html" target="_blank" rel="noreferrer">
-          <ScrollText aria-hidden="true" size={19} />
-          <span><strong>오픈소스 소프트웨어 고지</strong><small>앱에 포함된 소프트웨어의 라이선스 전문을 확인해요</small></span>
-        </a>
+        <MenuAction icon={Watch} label="기기 연동 상태" detail="Garmin · COROS" href="./support.html" target="_blank" />
+        </MenuGroup>
+        <MenuGroup title="개인정보와 이용 안내">
+          <MenuAction icon={ShieldCheck} label="개인정보처리방침" href="./legal/privacy.html" target="_blank" />
+          <MenuAction icon={ScrollText} label="이용약관" href="./legal/terms.html" target="_blank" />
+        </MenuGroup>
+        <MenuGroup title="출처와 라이선스">
+          <MenuAction category="journal" icon={Sticker} label="스티커·오픈소스 출처" href="./legal/open-source.html" target="_blank" />
+          <MenuAction icon={LibraryBig} label="오픈소스 소프트웨어 고지" detail="앱에 포함된 소프트웨어의 라이선스 전문을 확인해요" href="./legal/third-party-notices.html" target="_blank" />
+        </MenuGroup>
         </>}
       </div>
 
@@ -167,18 +185,10 @@ export function More({
   )
 }
 
-function UtilityRow({ icon: Icon, label, detail, onClick }: {
-  readonly icon: typeof BookOpen
-  readonly label: string
-  readonly detail?: string
-  readonly onClick: () => void
-}) {
-  const descriptionId = React.useId()
-  return (
-    <button className="more-screen__row app-choice-control" type="button" onClick={event => { event.currentTarget.focus({ preventScroll: true }); onClick() }} aria-label={label} aria-describedby={detail ? descriptionId : undefined}>
-      <Icon aria-hidden="true" size={19} />
-      <span><strong>{label}</strong>{detail && <small id={descriptionId}>{detail}</small>}</span>
-      <ChevronRight aria-hidden="true" size={18} />
-    </button>
-  )
+function MenuGroup({ title, children }: { readonly title: string; readonly children: React.ReactNode }) {
+  const titleId = React.useId()
+  return <section className="more-screen__group" aria-labelledby={titleId}>
+    <AppHeading as="h2" variant="section" className="more-screen__group-label" id={titleId}>{title}</AppHeading>
+    {children}
+  </section>
 }

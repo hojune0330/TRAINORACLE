@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import React from "react"
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { beforeEach, afterEach, expect, it, vi } from "vitest"
@@ -8,7 +9,7 @@ import { activePlanBetaStorageKey } from "../../domain/plan-beta-store"
 import { readAdjustedOriginalPlans } from "../../domain/adjusted-plan-archive"
 import { setActiveLocalAccount } from "../../domain/account/local-journal-ownership"
 import { TODAY } from "../../domain/prescription-quality-matrix.test-fixtures"
-beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
+beforeEach(async () => { localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.useRealTimers() })
 it("shows the file count and requires confirmation before the real historical import", async () => {
   const { old, retained, now, input } = await adjustedSuccessorFixture(date => vi.setSystemTime(date))

@@ -20,7 +20,7 @@ import type {
   PlanContinuityInput,
 } from "@impl/plan-generator/types"
 import type { RacePlacementState } from "@impl/plan-generator/race-placement"
-import raceDateRetentionAuthority from "../../../reports/review/RACE_DATE_RETENTION_AUTHORITY.json"
+import raceDateRetentionAuthority from "../../../reports/review/RACE_DATE_RETENTION_AUTHORITY.json" with { type: "json" }
 import {
   createEvaluatorFailureSignal,
   mapD9ResultToRveSignal,

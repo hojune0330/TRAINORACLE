@@ -31,6 +31,9 @@ const imageFiles = {
   "preference-social": "preference-social-v1.webp",
   "preference-explore": "preference-explore-v1.webp",
   "preference-refresh": "preference-refresh-v1.webp",
+  "running-game-announcement": "running-game-announcement-v1.webp",
+  "pace-calculator-announcement": "pace-calculator-announcement-v1.webp",
+  "backup-journal-file": "backup-journal-file-v1.webp",
 } as const
 
 export type ContextualIllustrationName = keyof typeof imageFiles

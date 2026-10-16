@@ -26,6 +26,7 @@ import { createAccountBackupRestoration, type AccountRestoreOutcome } from "../d
 import { useImportOwnerScope } from "./import-activities/useImportOwnerScope"
 import { BACKUP_JSON_IMPORT_LIMITS } from "../domain/restore/backup-json-stream"
 import { nextActionFeedback } from "../components/next-action"
+import { ContextualIllustration } from "../components/ContextualIllustration"
 
 const mono: React.CSSProperties = { fontFamily: "var(--mono)" }
 const backupFileLimitMb = BACKUP_JSON_IMPORT_LIMITS.blobBytes / (1024 * 1024)
@@ -162,7 +163,7 @@ export function RestoreBackup({ onBack, onOpenHome }: {
             style={{ ...secondaryBtn, width: 44, minWidth: 44, minHeight: 44, fontSize: 18 }}
           >←</button>
         )}
-        <div>
+        <div style={{ minWidth: 0, flex: "1 1 auto" }}>
           <div style={{ ...mono, fontSize: 9.5, color: "var(--ink-3)", letterSpacing: "0.14em", textTransform: "uppercase" }}>
             RESTORE · 백업 되돌리기
           </div>
@@ -170,6 +171,7 @@ export function RestoreBackup({ onBack, onOpenHome }: {
             내려받은 백업 되돌리기
           </h1>
         </div>
+        {stage.step === "pick" && !busy && failure === null && <ContextualIllustration image="backup-journal-file" />}
       </div>
 
       <div

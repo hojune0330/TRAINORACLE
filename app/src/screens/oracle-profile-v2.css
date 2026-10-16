@@ -14,14 +14,19 @@
 .oracle-v2__chrome { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--line); }
 .oracle-v2__chrome > span:not(.app-chrome-title) { font-size: var(--fs-caption); overflow-wrap: anywhere; }
 .oracle-v2__body { max-width: 640px; margin-inline: auto; padding: 16px; }
-.oracle-v2__tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
+.oracle-v2 .oracle-v2__tabs.view-switcher { display: flex; flex-wrap: nowrap; gap: 2px; margin-bottom: var(--space-3); padding: 2px; }
+.oracle-v2 .oracle-v2__tabs.view-switcher > button.view-switcher__item { flex: 1 1 0; min-width: 0; gap: var(--space-1); padding: var(--space-2); font-size: var(--fs-caption); }
+.oracle-v2 .oracle-v2__groups.view-switcher { margin-block: var(--space-3); }
+.oracle-v2 .oracle-v2__groups.view-switcher > button.view-switcher__item { flex: 1 1 6rem; }
+.oracle-v2__secondary-actions { display: grid; gap: var(--space-1); margin-block: var(--space-3); }
 .oracle-v2__entry-links { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-block: var(--space-4); }
 .oracle-v2__intro-scope { margin-block: 0 var(--space-4); color: var(--ink-2); }
+.oracle-v2__identity > .profile-companion { flex: 0 0 auto; }
+.oracle-v2__identity .profile-companion__button { white-space: nowrap; }
 .oracle-v2__entry-choices { display: grid; gap: var(--space-3); margin-block: var(--space-4); }
 .oracle-v2__entry-choices button { width: 100%; min-height: 64px; justify-content: space-between; padding: var(--space-4); text-align: left; }
 .oracle-v2__entry-choices button > span { display: block; font-weight: 600; }
 .oracle-v2__entry-choices small { display: block; margin-top: var(--space-1); font-size: var(--fs-caption); font-weight: 400; line-height: 1.5; }
-.oracle-v2 .oracle-v2__settings-entry { width: 100%; justify-content: space-between; text-align: left; margin-block: var(--space-4); }
 .oracle-v2__status, .oracle-v2__eyebrow { font-size: 12px; color: var(--ink-muted, var(--ink)); }
 .oracle-v2__identity { display: flex; align-items: center; gap: 12px; margin-block: var(--space-4) var(--space-3); }
 .oracle-v2__identity > svg { flex-shrink: 0; color: var(--ink-muted, var(--ink)); }
@@ -50,8 +55,9 @@
 .oracle-v2 dt { overflow-wrap: anywhere; }
 .oracle-v2 dd { margin: 0; text-align: right; overflow-wrap: anywhere; }
 .oracle-v2 dd small { display: block; font-size: 12px; }
-.oracle-v2__axis-list, .oracle-v2__groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 16px 0; }
+.oracle-v2__axis-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 16px 0; }
 .oracle-v2__topics, .oracle-v2__choices { display: grid; gap: 8px; }
+.oracle-v2__topics { margin-block: var(--space-3); }
 .oracle-v2__topics button, .oracle-v2__choices button, .oracle-v2__saved { width: 100%; text-align: left; justify-content: space-between; overflow-wrap: anywhere; }
 .oracle-v2__topics button { border-width: 0 0 1px; border-radius: 0; padding-block: 16px; }
 .oracle-v2__saved { margin-bottom: 8px; }

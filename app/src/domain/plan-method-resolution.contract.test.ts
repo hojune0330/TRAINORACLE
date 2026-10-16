@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identity"
 import { configurationReference } from "@impl/prescription/prescription-adjustment"
@@ -20,14 +21,16 @@ beforeEach(() => {
 })
 afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers() })
 
-function generated(fixture = RUNTIME_CASES[0], seconds: number = fixture.performanceSeconds) {
+async function generated(fixture = RUNTIME_CASES[0], seconds: number = fixture.performanceSeconds) {
   localStorage.clear()
+  await initializeCanonicalJournalFixture()
   const selectedRecordId = saveCurrentRecord(fixture.eventDistanceM, seconds)
   return generatePlanFromDraft(draftFor(fixture), "NO_KNOWN_RISK", { selectedRecordId })
 }
 
-function prescription(fixture: typeof RUNTIME_CASES[number] = RUNTIME_CASES[0], seconds: number = fixture.performanceSeconds) {
+async function prescription(fixture: typeof RUNTIME_CASES[number] = RUNTIME_CASES[0], seconds: number = fixture.performanceSeconds) {
   localStorage.clear()
+  await initializeCanonicalJournalFixture()
   const selectedRecordId = saveCurrentRecord(fixture.eventDistanceM, seconds)
   const result = generatePlanFromDraft(draftFor(fixture), "NO_KNOWN_RISK", { selectedRecordId })
   if (result.kind !== "generated") throw new Error("Expected generated fixture")
@@ -37,8 +40,8 @@ function prescription(fixture: typeof RUNTIME_CASES[number] = RUNTIME_CASES[0], 
 }
 
 describe("source configuration and individual resolution", () => {
-  it.each(RUNTIME_CASES.slice(0, 4))("$eventDistanceM preserves exact source, fractional target and explanation binding", fixture => {
-    const p = prescription(fixture, fixture.performanceSeconds + 0.137)
+  it.each(RUNTIME_CASES.slice(0, 4))("$eventDistanceM preserves exact source, fractional target and explanation binding", async fixture => {
+    const p = await prescription(fixture, fixture.performanceSeconds + 0.137)
     const before = JSON.stringify(p)
     const binding = resolvePlanMethodPrescription(p)
     expect(binding).not.toBeNull()
@@ -56,9 +59,9 @@ describe("source configuration and individual resolution", () => {
     expect(deriveSequenceTotals(definition.configuration.sequence).qualityDistanceM).toBe(p.totals.qualityDistanceM)
   })
 
-  it("keeps source identity stable across athlete records but changes resolved identity", () => {
-    const a = resolvePlanMethodPrescription(prescription(RUNTIME_CASES[0], 121.5))!
-    const b = resolvePlanMethodPrescription(prescription(RUNTIME_CASES[0], 137.37))!
+  it("keeps source identity stable across athlete records but changes resolved identity", async () => {
+    const a = resolvePlanMethodPrescription(await prescription(RUNTIME_CASES[0], 121.5))!
+    const b = resolvePlanMethodPrescription(await prescription(RUNTIME_CASES[0], 137.37))!
     expect(a.source).toEqual(b.source)
     expect(a.resolved.anchorContentFingerprint).not.toBe(b.resolved.anchorContentFingerprint)
     expect(a.resolved.prescriptionContentFingerprint).not.toBe(b.resolved.prescriptionContentFingerprint)
@@ -66,8 +69,8 @@ describe("source configuration and individual resolution", () => {
     expect(a.resolved.targetRepSeconds).toBe(30.375)
   })
 
-  it("binds explanation content even if a changed text mistakenly retains its version", () => {
-    const p = prescription()
+  it("binds explanation content even if a changed text mistakenly retains its version", async () => {
+    const p = await prescription()
     const original = explanationModule.templateExplanation(p)!
     const a = resolvePlanMethodPrescription(p)!
     vi.spyOn(explanationModule, "templateExplanation").mockReturnValue({ ...original, recovery: "TEST changed recovery rationale" })
@@ -78,8 +81,8 @@ describe("source configuration and individual resolution", () => {
     expect(a.bindingFingerprint).not.toBe(b.bindingFingerprint)
   })
 
-  it("does not write a projected sequence into a legacy prescription", () => {
-    const { sequence: _sequence, prescriptionFingerprint: _old, ...content } = prescription()
+  it("does not write a projected sequence into a legacy prescription", async () => {
+    const { sequence: _sequence, prescriptionFingerprint: _old, ...content } = await prescription()
     const old = { ...content, prescriptionFingerprint: `canonical-json-v1:${JSON.stringify(content)}` }
     const before = JSON.stringify(old)
     const write = vi.spyOn(Storage.prototype, "setItem")
@@ -90,22 +93,22 @@ describe("source configuration and individual resolution", () => {
   })
 
   it.each(["targetRepSeconds", "repetitionRecoverySeconds", "repetitionsPerSet", "templateContentFingerprint"] as const)
-  ("rejects changed %s even with a recomputed stored fingerprint", field => {
-    const { prescriptionFingerprint: _fingerprint, ...content } = prescription()
+  ("rejects changed %s even with a recomputed stored fingerprint", async field => {
+    const { prescriptionFingerprint: _fingerprint, ...content } = await prescription()
     const changed = { ...content, [field]: field === "templateContentFingerprint" ? `sha256:${"0".repeat(64)}` : 999 }
     expect(resolvePlanMethodPrescription({ ...changed, prescriptionFingerprint: `canonical-json-v1:${JSON.stringify(changed)}` })).toBeNull()
   })
 
-  it("rejects private extra fields and getters without reading the getter", () => {
-    const p = prescription()
+  it("rejects private extra fields and getters without reading the getter", async () => {
+    const p = await prescription()
     const getter = vi.fn(() => "private")
     expect(resolvePlanMethodPrescription({ ...p, memo: "private" })).toBeNull()
     expect(resolvePlanMethodPrescription(Object.defineProperty({ ...p }, "memo", { enumerable: true, get: getter }))).toBeNull()
     expect(getter).not.toHaveBeenCalled()
   })
 
-  it("returns detached definitions and resolutions rather than mutable registry references", () => {
-    const p = prescription()
+  it("returns detached definitions and resolutions rather than mutable registry references", async () => {
+    const p = await prescription()
     const binding = resolvePlanMethodPrescription(p)!
     const first = readPlanMethodDefinition(binding.source.template)!
     Reflect.set(first.mapping.method, "configurationId", "changed")
@@ -117,8 +120,8 @@ describe("source configuration and individual resolution", () => {
   })
 
   it.each([{ version: "9.9.9" }, { templateId: "UNKNOWN" }, { fingerprint: `sha256:${"f".repeat(64)}` }])
-  ("does not create a source definition for unknown identity %j", change => {
-    const p = prescription()
+  ("does not create a source definition for unknown identity %j", async change => {
+    const p = await prescription()
     expect(readPlanMethodDefinition({ templateId: p.templateId, version: p.templateVersion,
       fingerprint: p.templateContentFingerprint, ...change })).toBeNull()
   })
@@ -132,10 +135,10 @@ describe("source configuration and individual resolution", () => {
     expect(resolveDetailedPlanTemplateOptions(draftFor(RUNTIME_CASES[0]), TODAY.toISOString())).toEqual([])
   })
 
-  it.each(["definition", "explanation"] as const)("keeps the real candidate RPE-only when %s binding is missing", missing => {
+  it.each(["definition", "explanation"] as const)("keeps the real candidate RPE-only when %s binding is missing", async missing => {
     if (missing === "definition") vi.spyOn(definitionModule, "readPlanMethodDefinition").mockReturnValue(null)
     else vi.spyOn(explanationModule, "templateExplanation").mockReturnValue(null)
-    const result = generated()
+    const result = await generated()
     expect(result.kind).toBe("generated")
     if (result.kind !== "generated") throw new Error("Expected baseline fallback")
     expect(result.generated.candidates.flatMap(item => item.sessions).some(item => item.prescription.kind === "PACE_TARGET")).toBe(false)

@@ -1,8 +1,9 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { Trends } from "../Trends"
 
-beforeEach(() => { localStorage.clear(); sessionStorage.clear() })
+beforeEach(async () => { localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture() })
 afterEach(() => { cleanup(); vi.unstubAllEnvs() })
 
 it("puts a meaningful task title before navigation without inventing a result for the first visit", () => {
@@ -17,6 +18,22 @@ it("puts a meaningful task title before navigation without inventing a result fo
   expect(screen.queryByRole("region", { name: "누적 거리와 변화" })).toBeNull()
   fireEvent.click(screen.getByRole("button", { name: "운동 기록 쓰기" }))
   expect(write).toHaveBeenCalledOnce()
+})
+
+it("keeps a fixed check slot on Oracle destinations and analysis choices", () => {
+  render(<Trends />)
+  const destinations = screen.getByRole("group", { name: "오라클 항목" })
+  expect(within(destinations).getAllByRole("button")).toHaveLength(3)
+  for (const button of within(destinations).getAllByRole("button")) {
+    expect(button.querySelector(":scope > .category-choice__check")).toBeInTheDocument()
+  }
+  const reading = within(destinations).getByRole("button", { name: "읽을거리·관심" })
+  expect(reading).toHaveTextContent("읽을거리")
+
+  const analyses = screen.getByRole("group", { name: "훈련 분석 자세히 보기" })
+  for (const button of within(analyses).getAllByRole("button")) {
+    expect(button.querySelector(":scope > .category-choice__check")).toBeInTheDocument()
+  }
 })
 
 it("offers direct analysis choices and lets the selected result own its title without losing return context", () => {

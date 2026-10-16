@@ -1,0 +1,31 @@
+.friend-arena { color: var(--game-ink); }
+.friend-arena .treadmill-game__header { flex-shrink: 0; color: var(--game-cloud); }
+.arena-entry { margin: 12px 0; }
+.arena-lobby { display: grid; gap: 16px; padding: 24px 16px; border: 3px solid var(--game-outline); border-radius: 24px; background: var(--game-panel); color: var(--game-ink); }
+.arena-lobby h2 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 24px; }
+.arena-lobby p { margin: 0; line-height: 1.6; }
+.arena-lobby label { display: grid; gap: 8px; font-weight: 700; }
+.arena-lobby input { min-width: 0; width: 100%; min-height: 44px; padding: 12px; border: 2px solid var(--game-outline); border-radius: 12px; background: var(--game-cloud); color: var(--game-ink); font: inherit; box-sizing: border-box; }
+.arena-lobby .arena-invite { font-size: 13px; }
+.arena-note { color: var(--game-ink-soft); font-size: 13px; }
+.arena-members, .arena-results { display: grid; gap: 8px; list-style: none; padding: 0; margin: 0; }
+.arena-members li, .arena-results li { display: grid; gap: 4px; padding: 12px; border: 2px solid var(--game-panel-edge); border-radius: 12px; overflow-wrap: anywhere; }
+.arena-members [data-self="true"] { border-color: var(--game-gold-dark); }
+.arena-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.friend-arena button:disabled { opacity: .5; cursor: default; }
+.arena-error, .arena-connection { padding: 12px; margin: 0; border-radius: 12px; background: var(--game-panel); color: var(--game-ink); z-index: 3; }
+.arena-error { border: 2px solid var(--game-danger); }
+.arena-field { position: relative; flex: 1; min-height: 0; overflow: hidden; border-radius: 20px; background: var(--game-sky-top); }
+.arena-field canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; user-select: none; -webkit-touch-callout: none; }
+.arena-hud { position: absolute; top: 12px; left: 12px; right: 12px; display: grid; gap: 8px; text-align: center; pointer-events: none; color: var(--game-ink); }
+.arena-hud > strong { justify-self: center; padding: 4px 20px; border: 3px solid var(--game-outline); border-radius: 24px; background: var(--game-gold); font-size: 24px; }
+.arena-hud > span { font-size: 13px; }
+.arena-scoreboard { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.arena-scoreboard > div { display: grid; gap: 4px; padding: 8px; background: var(--game-panel); border: 2px solid var(--game-outline); border-radius: 12px; font-size: 13px; overflow-wrap: anywhere; }
+.arena-scoreboard [data-self="true"] { border-color: var(--game-gold-dark); }
+.arena-hud label { display: flex; align-items: center; gap: 8px; background: var(--game-panel); padding: 8px; border-radius: 12px; font-size: 13px; }
+.arena-hud progress { flex: 1; width: 0; accent-color: var(--game-good); }
+.arena-countdown { position: absolute; inset: 35% 0 auto; display: grid; text-align: center; pointer-events: none; color: var(--game-ink); }
+.arena-countdown strong { font-size: 64px; }
+.arena-hints { position: absolute; left: 12px; right: 12px; bottom: 12px; text-align: center; pointer-events: none; border-radius: 12px; background: var(--game-panel); color: var(--game-ink); padding: 8px; font-size: 13px; line-height: 1.5; }
+@media (max-height: 580px) { .arena-hud { gap: 4px; } .arena-hud > span { display: none; } .arena-scoreboard > div { padding: 4px; } .arena-hints { bottom: 4px; padding: 4px; } }

@@ -1,4 +1,5 @@
-import { afterEach, describe, expect, it } from "vitest"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
+import { beforeEach, afterEach, describe, expect, it } from "vitest"
 import type { PrescriptionSequenceV3 } from "@impl/prescription/sequence-v3"
 import { bindDefaultCatalogSessions } from "@impl/prescription/catalog-session-binding"
 import { buildWorkoutMemo, workoutMemoText, type WorkoutMemoSession } from "./workout-memo"
@@ -7,6 +8,7 @@ import { memoSessionFixture } from "./workout-memo.test-fixtures"
 import { memoDisplayLines, memoLineEmphasis, presentWorkoutMemo, workoutMemoPresentationText } from "./workout-memo-presentation"
 import { notationEffort, sequencePhaseNotation } from "./workout-notation"
 
+beforeEach(async () => { await initializeCanonicalJournalFixture() })
 afterEach(() => localStorage.clear())
 const rpe: WorkoutMemoSession = { day: 1, slot: "AM", role: "EASY", plannedEnergyIntent: "BASE_INTENT", prescription: {
   kind: "RPE_TIME_RANGE", durationMinutes: { minimum: 35, maximum: 35 }, rpe: { minimum: 3, maximum: 4 },

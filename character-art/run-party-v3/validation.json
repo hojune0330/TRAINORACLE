@@ -1,0 +1,8 @@
+{
+  "status": "passed",
+  "newModels": 2,
+  "runtimeIcons": 5,
+  "payloadBytes": 39528,
+  "allImagesInsideBounds": true,
+  "workingTriangleLimit": 3000
+}

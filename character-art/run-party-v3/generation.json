@@ -1,0 +1,21 @@
+{
+  "date": "2026-10-15",
+  "tool": "Tripo Studio H3.1",
+  "balanceBefore": 2785,
+  "balanceAfter": 2735,
+  "totalCredits": 50,
+  "assets": [
+    {
+      "id": "track-island",
+      "taskId": "bfcdc4a6-9ae5-492d-95f5-a50165cbfeea",
+      "prompt": "Single original miniature park running track island, a map selection icon for a simple mobile game. Extremely chunky and minimal toy geometry, quarter detail, readable at 64 pixels. One thick rounded square navy base with a green mint top. One broad coral oval running loop with just one cream lane line. One small rounded tree at the center of the oval. Only large clean masses, smooth matte flat colors, no buildings, fence, tiny markings, text, numbers, logo, people or realistic textures. Entire isolated object, no background or floor plane. Original design.",
+      "credits": 25
+    },
+    {
+      "id": "respawn-beacon",
+      "taskId": "8db72b52-4809-444f-ae76-dca8983c754c",
+      "prompt": "Single isolated original respawn beacon for a friendly running party game. Extremely simple chunky toy geometry, readable at 64 pixels. A squat round deep navy pedestal with a thick mint ring around its upper edge. At its center stands one short broad cream pillar topped with one large rounded yellow four-point star. Three to four solid masses, flat matte colors, simple silhouette. Upright on a stable flat bottom. No words, logos, extra symbols, characters, wires, bolts, buttons, small details, realistic textures, floor plane or environment. Original playful design, not a weapon.",
+      "credits": 25
+    }
+  ]
+}

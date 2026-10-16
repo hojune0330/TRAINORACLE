@@ -28,10 +28,10 @@ describe("upgrade explanation and honest previews", () => {
   })
   it("shows the actual stacked jump floor and accumulated costs, not the first-pick label", () => {
     const spring = applyUpgrade(newTreadmillRun(), "spring")
-    expect(upgradePreview(spring, "spring").gain).toBe("점프 에너지 4 → 2")
+    expect(upgradePreview(spring, "spring").gain).toBe("점프 에너지 3 → 2")
     expect(upgradePreview(spring, "spring").cost).toBe("달리기 추진력 88 → 77.4%")
     const grip = applyUpgrade(newTreadmillRun(), "grip")
-    expect(upgradePreview(grip, "grip").cost).toBe("점프 에너지 11 → 14")
+    expect(upgradePreview(grip, "grip").cost).toBe("점프 에너지 10 → 13")
     expect(upgradePreview(grip, "grip").gain).toBe("진흙 추진력 150 → 200%")
   })
 })

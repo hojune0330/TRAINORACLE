@@ -5,7 +5,7 @@
  * the hit boxes are the same on every screen.
  */
 export const TREADMILL_RULES = {
-  version: 3,
+  version: 4,
   stageSeconds: 30,
   waveSeconds: 10,
   waveSupply: 75,
@@ -15,13 +15,13 @@ export const TREADMILL_RULES = {
   frontEdge: 0.88,
   runDrain: 9,
   recovery: 20,
-  jumpCost: 8,
+  jumpCost: 7,
   dashCost: 20,
   dashSeconds: 0.45,
   dashSpeed: 0.42,
   dashCooldown: 2.5,
   gravity: 1150,
-  jumpVelocity: 470,
+  jumpVelocity: 560,
   hazardSpeed: 0.28,
   hazardEntry: 1.06,
   runnerHalfWidth: 0.018,
@@ -31,7 +31,7 @@ export const TREADMILL_RULES = {
   checkpointRefill: 30,
   telegraphSeconds: 1.4,
   /** Gap (hazard centre minus runner) where a jump clears. Drawn as a guide only. */
-  jumpWindow: [0.07, 0.12],
+  jumpWindow: [0.07, 0.14],
   warnRear: 0.2,
   /** "3, 2, 1" before a run and a short "ready" beat after every resume. Belt is still. */
   countdownStart: 3,
@@ -40,7 +40,7 @@ export const TREADMILL_RULES = {
   countdownStage: 2,
 } as const
 
-export type TreadmillHazardKind = "barrier" | "spike"
+export type TreadmillHazardKind = "barrier" | "spike" | "cone" | "crate"
 /** The rule a stage plays by. Names and art may change per city; the surface decides the physics. */
 export type TreadmillSurface = "track" | "mud" | "spikes"
 export type TreadmillStage = {
@@ -49,18 +49,20 @@ export type TreadmillStage = {
 }
 
 export const TREADMILL_HAZARDS: Record<TreadmillHazardKind, { halfWidth: number; height: number }> = {
-  barrier: { halfWidth: 0.022, height: 26 },
-  spike: { halfWidth: 0.03, height: 16 },
+  barrier: { halfWidth: 0.022, height: 20 },
+  spike: { halfWidth: 0.03, height: 12 },
+  cone: { halfWidth: 0.016, height: 12 },
+  crate: { halfWidth: 0.036, height: 18 },
 }
 
 /** Practice course. `at` is the stage second at which a hazard enters from the front edge. */
 const BASE_STAGES = [
-  { id: "track", surface: "track", name: "트랙", belt: 0.07, movement: 0.115, hint: "기본 속도. 달리고 쉬는 박자를 익히는 구간",
-    course: [{ at: 1.6, kind: "barrier" }, { at: 4.6, kind: "barrier" }, { at: 7.2, kind: "barrier" }] },
-  { id: "mud", surface: "mud", name: "진흙", belt: 0.084, movement: 0.115, hint: "달려도 덜 나아가요. 앞쪽 공간을 미리 벌어 두세요",
-    course: [{ at: 1.2, kind: "barrier" }, { at: 3.6, kind: "barrier" }, { at: 5.6, kind: "barrier" }, { at: 7.6, kind: "barrier" }] },
-  { id: "spikes", surface: "spikes", name: "가시밭", belt: 0.074, movement: 0.115, hint: "가시는 한 번만 닿아도 끝. 점프할 에너지를 남기세요",
-    course: [{ at: 1.0, kind: "spike" }, { at: 2.9, kind: "spike" }, { at: 4.6, kind: "barrier" }, { at: 5.9, kind: "spike" }, { at: 7.6, kind: "spike" }] },
+  { id: "track", surface: "track", name: "트랙", belt: 0.07, movement: 0.115, hint: "낮은 콘·허들·넓은 상자. 모양을 보고 점프 박자를 바꿔요",
+    course: [{ at: 1.2, kind: "cone" }, { at: 2.5, kind: "barrier" }, { at: 4.9, kind: "crate" }, { at: 6.2, kind: "cone" }, { at: 7.5, kind: "barrier" }] },
+  { id: "mud", surface: "mud", name: "진흙", belt: 0.084, movement: 0.115, hint: "연속 장애물 사이에서 회복. 넓은 상자는 조금 일찍 점프해요",
+    course: [{ at: 1.2, kind: "barrier" }, { at: 2.5, kind: "cone" }, { at: 3.8, kind: "crate" }, { at: 5.1, kind: "barrier" }, { at: 6.4, kind: "crate" }, { at: 7.7, kind: "cone" }] },
+  { id: "spikes", surface: "spikes", name: "가시밭", belt: 0.074, movement: 0.115, hint: "네 종류가 섞여 나와요. 가시는 닿으면 끝, 점프할 에너지를 남겨요",
+    course: [{ at: 1.2, kind: "cone" }, { at: 2.5, kind: "spike" }, { at: 3.8, kind: "barrier" }, { at: 5.1, kind: "crate" }, { at: 6.4, kind: "spike" }, { at: 7.7, kind: "barrier" }] },
 ] as const satisfies readonly TreadmillStage[]
 
 /** Three short waves: the middle wave reverses the rhythm; supplies separate the waves. */
@@ -338,10 +340,14 @@ export function treadmillWarning(state: TreadmillState): { text: string; tone: T
   if (state.exhausted) return { text: "에너지 0 · 손을 놓아야 회복돼요", tone: "danger" }
   const ahead = nearestHazard(state)
   if (ahead && ahead.x - state.x < 0.2) {
-    return { text: ahead.kind === "spike" ? "가시! 점프" : "장애물! 점프", tone: ahead.kind === "spike" ? "danger" : "caution" }
+    return { text: ahead.kind === "spike" ? "가시! 점프" : ahead.kind === "crate" ? "넓은 상자! 일찍 점프" : ahead.kind === "cone" ? "낮은 콘! 점프" : "허들! 점프", tone: ahead.kind === "spike" ? "danger" : "caution" }
   }
   if (state.hitFlash < 0.8) return { text: state.message, tone: "caution" }
   if (state.energy < state.jumpCost + 4) return { text: "에너지 부족 · 잠깐 놓고 회복", tone: "caution" }
+  if (!state.running && state.dashLeft === 0) {
+    const seconds = Math.max(0, (state.x - TREADMILL_RULES.fallEdge) / state.stages[state.stage]!.belt)
+    return { text: `뒤로 밀려요 · 약 ${Math.ceil(seconds)}초 뒤 낙하`, tone: "caution" }
+  }
   if (upcomingHazards(state).length > 0) return { text: "곧 장애물이 와요", tone: "neutral" }
   return { text: state.running ? "달리는 중" : "회복 중 · 뒤로 밀려요", tone: "neutral" }
 }

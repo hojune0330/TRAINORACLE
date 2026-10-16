@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import React from "react"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
@@ -10,8 +11,8 @@ import { sessionWorkoutName, sessionWorkoutNotation } from "../../domain/workout
 vi.mock("../../domain/journal-original-plan", () => ({ readJournalOriginalPlan: vi.fn() }))
 vi.mock("../../domain/journal-store", async importOriginal => ({ ...await importOriginal<object>(), saveEntry: vi.fn(() => ({ ok: true })) }))
 let fixture: ReturnType<typeof repetitionFixture>
-beforeEach(() => {
-  localStorage.clear(); sessionStorage.clear(); vi.clearAllMocks()
+beforeEach(async () => {
+  localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture(); vi.clearAllMocks()
   vi.useFakeTimers(); vi.setSystemTime(REPETITION_TEST_NOW)
   fixture = repetitionFixture(); vi.useRealTimers()
   vi.mocked(readJournalOriginalPlan).mockReturnValue(fixture.original)

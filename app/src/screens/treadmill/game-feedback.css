@@ -1,0 +1,31 @@
+/* Only opacity/transform animate. Inputs and simulation never wait for transitions. */
+.treadmill-game button { transition: transform 90ms ease-out, filter 90ms ease-out, background-color 120ms ease-out; -webkit-tap-highlight-color: transparent; }
+.treadmill-game button:active:not(:disabled) { transform: translateY(2px) scale(.98); filter: brightness(.94); }
+.treadmill-game button:focus-visible { outline: 3px solid var(--game-gold); outline-offset: 3px; }
+@media (hover:hover) { .treadmill-game button:hover:not(:disabled) { filter: brightness(1.06); } }
+.treadmill-game__map, .treadmill-game__stage, .arena-lobby, .arena-field { animation: game-enter 180ms ease-out both; }
+.treadmill-game__card { animation: game-card-enter 180ms ease-out both; }
+.upgrade-choice .treadmill-game__upgrades button { animation: game-choice-enter 180ms ease-out backwards; }
+.upgrade-choice .treadmill-game__upgrades button:nth-child(2) { animation-delay: 45ms; }
+.upgrade-choice .treadmill-game__upgrades button:nth-child(3) { animation-delay: 90ms; }
+.treadmill-game__gesture-hint span { transition: background-color 100ms ease-out, color 100ms ease-out; }
+.treadmill-game__gesture-hint[data-held="true"] span:first-child { background: var(--game-good); color: var(--game-ink); }
+.treadmill-game__gesture-hint[data-held="true"] span:first-child::before { content: '● '; }
+.game-action-feedback { position:absolute; top:clamp(138px,24%,210px); left:12px; right:12px; z-index:2; display:grid; justify-items:center; pointer-events:none; }
+.game-action-feedback__cue { display:flex; align-items:center; gap:8px; max-width:100%; padding:8px 12px; border:2px solid var(--game-outline); border-bottom-width:4px; border-radius:14px; background:var(--game-panel); color:var(--game-ink); animation:game-cue-enter 160ms ease-out both; }
+.game-action-feedback__cue[data-kind="dash"] { border-color:var(--game-neon-blue,var(--game-outline)); }
+.game-action-feedback__cue[data-kind="wait"] { background:var(--game-gold); }
+.game-action-feedback__cue strong { display:block; font-size:15px; }
+.game-action-feedback__cue small { display:block; font-size:11px; }
+.treadmill-game__equipped .treadmill-party-icon { animation:game-equip 400ms ease-out both; }
+@keyframes game-enter { from { opacity:0; } to { opacity:1; } }
+@keyframes game-card-enter { from { opacity:0; transform:translateY(8px) scale(.98); } to { opacity:1; transform:none; } }
+@keyframes game-choice-enter { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+@keyframes game-cue-enter { from { opacity:0; transform:translateY(5px) scale(.94); } to { opacity:1; transform:none; } }
+@keyframes game-equip { 0% {transform:scale(.65) rotate(-12deg)} 65% {transform:scale(1.12) rotate(3deg)} 100% {transform:none} }
+.treadmill-game[data-reduced] *, .treadmill-game[data-reduced] *::before { animation:none !important; transition:none !important; }
+.treadmill-game[data-reduced] button:active:not(:disabled) { transform:none !important; }
+@media (prefers-reduced-motion:reduce) {
+  .treadmill-game *, .treadmill-game *::before { animation:none !important; transition:none !important; }
+  .treadmill-game button:active:not(:disabled) { transform:none !important; }
+}

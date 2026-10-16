@@ -37,6 +37,8 @@
 }
 .training-lexicon__eyebrow { display: inline-flex; align-items: center; gap: var(--space-2); color: var(--brand); font: 700 var(--fs-caption)/1.3 var(--mono); }
 .training-lexicon__header h1 { margin: var(--space-2) 0; font-size: var(--fs-app-title); line-height: 1.3; letter-spacing: 0; }
+.training-lexicon__heading { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.training-lexicon__heading > h1 { min-width: 0; overflow-wrap: anywhere; }
 .training-lexicon__header p { max-width: 64ch; margin: 0; color: var(--ink-2); font-size: var(--fs-body); line-height: 1.6; word-break: keep-all; }
 
 .training-lexicon__tools { padding: var(--space-5) 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-3); border-bottom: var(--bw-line) solid var(--hair); }

@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { generatePlanFromDraft } from "../../domain/plan-beta-flow"
 import { setActiveLocalAccount } from "../../domain/account/local-journal-ownership"
@@ -11,9 +12,9 @@ const midnight = () => new Date(2026, 8, 7, 0, 0, 0, 0)
 const beforeMidnight = () => new Date(midnight().getTime() - 1_000)
 const afterMidnight = () => new Date(midnight().getTime() + 1_000)
 
-beforeEach(() => {
+beforeEach(async () => {
   localStorage.clear()
-  sessionStorage.clear()
+  sessionStorage.clear(); await initializeCanonicalJournalFixture()
   setActiveLocalAccount(null)
   vi.useFakeTimers({ toFake: ["Date"] })
   vi.setSystemTime(beforeMidnight())

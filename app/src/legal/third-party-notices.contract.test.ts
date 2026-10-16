@@ -30,4 +30,16 @@ describe("app-wide open-source software notice", () => {
     expect(readFileSync("src/screens/More.tsx", "utf8")).toContain("./legal/third-party-notices.html")
     expect(readFileSync("src/screens/treadmill/GamePanels.tsx", "utf8")).toContain("legal/third-party-notices.html")
   })
+  it("retains pinned source provenance and the full MIT terms for adapted UI", () => {
+    const sources = JSON.parse(readFileSync("scripts/ui-source-attributions.json", "utf8"))
+    expect(sources).toHaveLength(2)
+    for (const item of sources) {
+      expect(item.version).toMatch(/^[a-f0-9]{40}$/u)
+      expect(committed).toContain(item.version)
+      expect(committed).toContain(item.name)
+      expect(item.text).toContain("Permission is hereby granted, free of charge")
+      expect(item.text).toContain("Copyright (c)")
+    }
+    expect(productionPackages().some((item: Pkg) => item.name === "@radix-ui/react-radio-group" && item.version === "1.5.1")).toBe(true)
+  })
 })

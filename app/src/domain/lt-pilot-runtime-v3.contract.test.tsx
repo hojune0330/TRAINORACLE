@@ -1,4 +1,5 @@
 import React from "react"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { generatePlanCandidates } from "@impl/plan-generator/generator"
@@ -19,9 +20,10 @@ const NOW = new Date("2026-09-28T12:00:00.000Z")
 const show = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "showModal")
 const close = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "close")
 
-beforeEach(() => {
+beforeEach(async () => {
   localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null)
   vi.useFakeTimers(); vi.setSystemTime(NOW)
+  await initializeCanonicalJournalFixture()
   Object.defineProperty(HTMLDialogElement.prototype, "showModal", { configurable: true,
     value() { this.setAttribute("open", "") } })
   Object.defineProperty(HTMLDialogElement.prototype, "close", { configurable: true,

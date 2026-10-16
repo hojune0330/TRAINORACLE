@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { deriveSequenceTotals, compareMainMethods } from "@impl/prescription/sequence"
 import type { PlanSession } from "@impl/plan-generator/types"
@@ -10,7 +11,7 @@ import { parsePlanBetaState } from "./plan-beta-schema"
 import { generatePlanFromDraft, selectPlanForActivation } from "./plan-beta-flow"
 import { RUNTIME_CASES, TODAY, draftFor, saveCurrentRecord } from "./prescription-quality-matrix.test-fixtures"
 
-beforeEach(() => { localStorage.clear(); sessionStorage.clear(); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
+beforeEach(async () => { localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture(); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
 afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks() })
 
 describe("prescription-bound explanations", () => {

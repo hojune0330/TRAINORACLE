@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { createElement } from "react"
 import { act, cleanup, fireEvent, render, renderHook, screen } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
@@ -31,6 +32,7 @@ const record = (id: string, overrides: Partial<AthleteRecord> = {}): AthleteReco
 const server = record("server"), device = record("device"), stale = record("server", { performanceSeconds: 900 })
 let state: AccountAthleteRecordsState
 // Exercise source authority with a real draft; only the pace transformation is stubbed.
+await initializeCanonicalJournalFixture();
 const generated = (() => {
   const result = generatePlanFromDraft({ eventGroup: "FIVE_K", eventDistanceM: 5000,
     competitionDivision: "OPEN", experienceBand: "EXPERIENCED", availableDayCount: "EVERY_DAY",
@@ -40,11 +42,11 @@ const generated = (() => {
   return result.generated
 })()
 const preview = { synthetic: "preview" } as unknown as PlanGenerationSuccess
-beforeEach(() => {
+beforeEach(async () => {
   vi.clearAllMocks()
   vi.useFakeTimers({ toFake: ["Date"] })
   vi.setSystemTime(new Date("2026-10-02T03:00:00.000Z"))
-  localStorage.clear()
+  localStorage.clear(); await initializeCanonicalJournalFixture();
   setActiveLocalAccount(A)
   state = { ownerId: A, status: "READY", confirmed: true, documentId: "document-a", serverRevision: 1, records: [server] }
   vi.mocked(readAccountAthleteRecordsState).mockImplementation(() => state)

@@ -1,4 +1,6 @@
 import React from "react"
+import { arenaInvitation } from "./screens/treadmill/arena-types"
+import { isPlainHomeEntry } from "./screens/home/HomeIntroduction"
 import { acknowledgeAnnouncement, MINIGAME_ANNOUNCEMENT } from "./domain/product-announcements"
 import { oracleV2FeatureEnabled } from "./domain/oracle-rollout"
 import { productFeatures } from "./domain/product-features"
@@ -184,6 +186,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
   const [accountScopeRevision, setAccountScopeRevision] = React.useState(0)
   const [, refreshAccountJournals] = React.useReducer((revision: number) => revision + 1, 0)
   const [v, setV] = React.useState(() => {
+    if (arenaInvitation()) return INITIAL_VIEW_STATE
     const recoveryTab = readRecoveryTab()
     const accountEntry = accountFeatureEnabled() && typeof window !== "undefined"
       && (new URLSearchParams(window.location.search).get("account") === "1" || loungeEntryIntent().requested)
@@ -194,6 +197,9 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
       : INITIAL_VIEW_STATE
   })
   React.useEffect(() => { clearRecoveryTab() }, [])
+  // A direct route or interrupted-task recovery must never become an introduction.
+  const [allowHomeIntroduction] = React.useState(() => v.tab === "home" && !v.accountOpen
+    && !oracleEntry.requested && readRecoveryTab() === null && isPlainHomeEntry(window.location))
   const [savedToast, setSavedToast] = React.useState<ShellToastState | null>(null)
   const confirmedSaveEffects = React.useRef<{
     entryId: string; savedAt: string; scope: number; rewardMessage: string; rewardRetry?: boolean
@@ -231,7 +237,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
   const [athleteRecordsOpen, setAthleteRecordsOpen] = React.useState(false)
   const [homeDetailOrigin, setHomeDetailOrigin] = React.useState<"home" | "rewards">("home")
   const scrollRegionRef = React.useRef<HTMLElement>(null)
-  const [utilityView, setUtilityView] = React.useState<"more" | "guide" | "minji" | "content" | "rewards" | "minigame" | null>(null)
+  const [utilityView, setUtilityView] = React.useState<"more" | "guide" | "minji" | "content" | "rewards" | "minigame" | null>(() => arenaInvitation() ? "minigame" : null)
   const [utilityOrigin, setUtilityOrigin] = React.useState<"home" | "more">("more")
   const [moreView, setMoreView] = React.useState<MoreView>("tools")
   const moreVisibleRef = React.useRef(false)
@@ -470,7 +476,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
       } else if (moreVisibleRef.current) {
         const marker = event.state?.[MORE_HISTORY_KEY]
         const section = marker?.owner === overlayHistoryOwnerRef.current ? marker.view : "tools"
-        if (["tools", "learning", "account", "backup", "about"].includes(section)) setMoreView(section)
+        if (["tools", "learning", "account", "backup", "about", "introduction"].includes(section)) setMoreView(section)
       }
     }
     window.addEventListener("popstate", onPopState)
@@ -1061,6 +1067,8 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
         onOpenOracleLibrary={oracleV2Enabled() ? () => openOverlay({ kind: "running-profile", stage: "overview", initialView: "library" }) : undefined}
         onOpenRecords={() => openOverlay({ kind: "athlete-records" })}
         onOpenImport={openImport}
+        onOpenPlan={() => goTab("plan")}
+        onOpenAnalysis={() => goTab("trends")}
         onOpenFeedback={() => openOverlay({ kind: "feedback" })}
         onOpenAccount={accountEnabled ? () => runViewTransition("push", () => setV(s => ({ ...s, accountOpen: true }))) : undefined}
         onOpenRestore={openRestore}
@@ -1099,6 +1107,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
       }), true)
       : (
         <Home
+          introductionAllowed={allowHomeIntroduction && overlay === null}
           oraclePreview={homeOraclePreview}
           oraclePreviewLabel={homeCandidate ? "내 기록으로 본 오라클" : homeSourceUnavailable ? "오라클 기록 상태" : homePlanState ? "오라클" : "오라클 결과 예시 보기"}
           onOpenImport={openImport}
@@ -1339,7 +1348,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
       hideTabBar={(overlay !== null ? overlay.kind !== "oracle" : v.tab === "log" && v.entryType !== "choose")
         || (v.tab === "home" && utilityView === "minigame")}
       wideTask={overlay === null && (v.tab === "log" || v.tab === "plan")}
-      wideResults={overlay === null ? v.tab === "trends"
+      wideResults={overlay === null ? v.tab === "trends" || (v.tab === "home" && utilityView === "more" && !v.accountOpen && !v.restoreOpen)
         : overlay.kind === "running-profile" || overlay.kind === "oracle"
           || (overlay.kind === "record-reading" && (overlay.stage === "self-result" || overlay.stage === "pair-result"))}
     >

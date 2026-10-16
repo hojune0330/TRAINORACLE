@@ -1,6 +1,6 @@
 import React, { type ReactNode } from "react"
-import { Check, ChevronLeft, ChevronRight, CircleMinus, HeartPulse, Maximize2, SkipForward, PanelsTopLeft } from "lucide-react"
-import { CategoryIcon } from "../../components/CategoryCard"
+import { CalendarDays, Check, ChevronLeft, ChevronRight, CircleMinus, HeartPulse, SkipForward, PanelsTopLeft } from "lucide-react"
+import { ViewSwitcher } from "../../components/ViewSwitcher"
 import type { PlanProgressState } from "@impl/plan-generator/types"
 import type { PlanSession } from "@impl/plan-generator/types"
 import { TermHelp } from "../../components/TermHelp"
@@ -13,9 +13,9 @@ import { formatPaceSeconds } from "@impl/prescription/record-pace"
 import { resolveCatalogBinding } from "@impl/prescription/catalog-session-binding"
 import { calculatedWorkoutSequence } from "@impl/prescription/all-workout-calculator"
 import { MonthCalendar } from "../../components/MonthCalendar"
-import { CalendarTrainingMark } from "../../components/CalendarTrainingMark"
+import { CalendarRoleIcon, CalendarTrainingMark } from "../../components/CalendarTrainingMark"
 import { CALENDAR_TRAINING_LABELS, plannedCalendarTone } from "../../domain/calendar-training-presentation"
-import { notationDistance, notationNumber, sequencePhaseNotation } from "../../domain/workout-notation"
+import { notationDistance, notationEffort, notationNumber, notationTime, sequencePhaseNotation } from "../../domain/workout-notation"
 import {
   prescriptionLabel,
   sessionExecution,
@@ -93,6 +93,38 @@ function prescriptionCalendarCellAmount(session: PlanSession): string {
   }
   const repetition = `${prescription.repetitionsPerSet}×${notationDistance(prescription.repetitionDistanceM)}`
   return prescription.setCount > 1 ? `${prescription.setCount}세트\n${repetition}` : repetition
+}
+
+function prescriptionCalendarSummary(session: PlanSession): string {
+  const prescription = session.prescription
+  if (prescription.kind !== "RPE_TIME_RANGE" || !prescription.catalogWorkout) return prescriptionLabel(session, true)
+  const calculation = resolveCatalogBinding(prescription.catalogWorkout)
+  const fallback = prescriptionLabel(session)
+  if (!calculation) return fallback
+  const main = calculatedWorkoutSequence(calculation)?.main
+  if (!main || main.length !== 1) return fallback
+  const node = main[0]!
+  const segment = node.kind === "segment" ? node
+    : node.repeatUnit === "REPETITION" && node.children.length === 1 ? node.children[0] : undefined
+  // Shorten only a single work/repeat shape. Keep sets, compound work and terminal
+  // recovery in the existing complete notation rather than dropping structure.
+  if (!segment || segment.kind !== "segment" || segment.role !== "WORK"
+    || node.label !== null || segment.label !== null || node.recoveryAfter.length
+    || segment.target.kind !== "EFFORT_GUIDANCE"
+    || node.kind === "group" && (segment.repeatCount !== 1 || segment.recoveryBetweenRepeats.length || segment.recoveryAfter.length)) return fallback
+  const effort = notationEffort(segment.target.cue, "COACH")
+  if (!effort.startsWith("RPE ")) return fallback
+  const amount = segment.work.kind === "duration"
+    ? segment.work.durationSeconds === null ? null : notationTime(segment.work.durationSeconds, "PLAIN")
+    : segment.work.distanceM === null ? null : notationDistance(segment.work.distanceM)
+  if (amount === null) return fallback
+  const recoveries = node.recoveryBetweenRepeats.map(step => {
+    if ("distanceM" in step || step.seconds === null || (step.mode !== "WALK" && step.mode !== "JOG")) return null
+    return `${notationTime(step.seconds, "PLAIN")} ${step.mode === "WALK" ? "걷기" : "조깅"}`
+  })
+  if (recoveries.some(recovery => recovery === null)) return fallback
+  return `${amount}${node.repeatCount > 1 ? ` × ${node.repeatCount}회` : ""} · ${effort}`
+    + (node.repeatCount > 1 && recoveries.length ? ` · 사이 ${recoveries.join(" + ")}` : "")
 }
 
 function isNarrowViewport(): boolean {
@@ -524,7 +556,7 @@ export function PlanSchedulePreview({
                       explanationContext={explanationContext}
                       loadEvidence={loadEvidence}
                       compact={previewDisplayMode === "swipe" || (prescriptionCalendar && scheduleView === "list")}
-                      compactNotation={prescriptionCalendar && scheduleView === "list" ? prescriptionCalendarAmount(session) : undefined}
+                      compactNotation={prescriptionCalendar && scheduleView === "list" ? prescriptionCalendarSummary(session) : undefined}
                       lightweightSummary={prescriptionCalendar && scheduleView === "list"}
                       progress={sessionProgress?.(session)}
                       showProgress={prescriptionCalendar && scheduleView === "list" && sessionProgress !== undefined}
@@ -555,6 +587,7 @@ export function PlanSchedulePreview({
       </section>
       {reader !== null && <PlanDayReader date={reader.date} sessions={readerDay?.sessions ?? []}
         initialSlot={reader.slot} initialSection={reader.section} canPrevious canNext
+        backLabel={prescriptionCalendar && scheduleView === "list" ? "하루씩으로 돌아가기" : undefined}
         returnFocusTo={readerRequestOrigin.current !== null || readerOpenedFromCalendar.current || reader.section === "records"
           ? date => (readerRequestOrigin.current?.isConnected ? readerRequestOrigin.current : null)
             ?? calendarRef.current?.querySelector<HTMLElement>(`button[data-date="${date}"]`)
@@ -642,7 +675,6 @@ function PlanSessionPreview({
           ))}
         </ol>
       ))}
-      {!expanded && footer}
     </>
   )
 
@@ -658,20 +690,20 @@ function PlanSessionPreview({
     >
       <header>
         <span className="plan-schedule-preview__slot">{sessionSlotLabel(session.slot)}</span>
+        <span className="plan-session-role"><CalendarRoleIcon tone={plannedCalendarTone(session)} />{CALENDAR_TRAINING_LABELS[plannedCalendarTone(session)]}</span>
         {!lightweightSummary && <PlanFlowCodeHelp
           primary={flow.primary}
           secondary={flow.secondary}
           kind={flow.kind}
         />}
-        {!lightweightSummary && onExpand && <button className="plan-session-expand" type="button" onClick={onExpand}
-          aria-label={`${calendarDateLabel(date)} ${sessionSlotLabel(session.slot)} 훈련과 일지 크게 보기`} title="훈련과 일지 크게 보기"
-          aria-haspopup="dialog"><Maximize2 size={17} aria-hidden="true" /></button>}
       </header>
       <div className="plan-session-content">
         <strong>{sessionLabel(session, expanded)}</strong>
         {!(lightweightSummary && session.role === "REST") && !(expanded && hasCompleteDurationStep) && <small className={session.role === "REST" ? "plan-session-help" : "plan-session-metric"}>
           {compactNotation ?? prescriptionLabel(session, expanded)}
         </small>}
+        {lightweightSummary && session.prescription.kind === "RPE_TIME_RANGE" && session.prescription.catalogWorkout &&
+          <small className="plan-session-help">{prescriptionCalendarAmount(session)}</small>}
         {lightweightSummary && showProgress && <small className="prescription-calendar__progress" aria-label="현재 진행 상태">
           {progress === undefined
             ? "예정"
@@ -679,17 +711,21 @@ function PlanSessionPreview({
               ? "휴식 기록"
               : PROGRESS_LABELS[progress]}
         </small>}
-        {action}
-        {expanded && footer && <details className="plan-session-records" data-session-records>
-          <summary>일지·진행 기록</summary>{footer}
-        </details>}
-        {expanded && allowMemoExport && <WorkoutMemoTool session={session} date={date} state={explanationContext?.kind === "CANDIDATE" ? "PREVIEW" : "PLAN"} />}
+        {!expanded && onExpand && <button className="plan-session-open" type="button" onClick={onExpand}
+          aria-label={`${calendarDateLabel(date)} ${sessionSlotLabel(session.slot)} 훈련 내용 보기`}
+          aria-haspopup="dialog">훈련 내용 보기<ChevronRight size={18} aria-hidden="true" /></button>}
         {!lightweightSummary && compact ? (
           <details className="plan-day-card__details" open={returnedFromJournal}>
             <summary>{sessionSlotLabel(session.slot)} 훈련 방법과 기록</summary>
-            <div>{details}</div>
+            <div>{details}{footer}</div>
           </details>
         ) : !lightweightSummary && details}
+        {action && <div className="plan-session-record-action">{action}</div>}
+        {expanded && footer && <details className="plan-session-records" data-session-records>
+          <summary>일지·진행 기록</summary>{footer}
+        </details>}
+        {!expanded && !compact && footer}
+        {expanded && allowMemoExport && <WorkoutMemoTool session={session} date={date} state={explanationContext?.kind === "CANDIDATE" ? "PREVIEW" : "PLAN"} />}
         {showOriginalNotation && <details className="plan-session-records">
           <summary>기존 훈련 표기</summary>
           <p><strong>{sessionLabel(session)}</strong></p>
@@ -773,12 +809,9 @@ function PlanTrainingFlow({
         <strong>{scheduleTitle}</strong>
         <span>{days[0]?.date.slice(5).replace("-", "/")} ~ {days.at(-1)?.date.slice(5).replace("-", "/")}</span>
       </header>
-      {prescriptionCalendar && <div className="prescription-calendar__view-toggle app-choice-group" role="group" aria-label="계획 일정 보기">
-        <button className="app-choice-control category-choice" data-category="training" type="button" aria-pressed={scheduleView === "calendar"}
-          onClick={() => onScheduleViewChange("calendar")}><CategoryIcon category="training" compact />달력</button>
-        <button className="app-choice-control category-choice" data-category="training" type="button" aria-pressed={scheduleView === "list"}
-          onClick={() => onScheduleViewChange("list")}><CategoryIcon category="training" icon={PanelsTopLeft} compact />하루씩</button>
-      </div>}
+      {prescriptionCalendar && <ViewSwitcher<ScheduleView> label="계획 일정 보기" category="training" value={scheduleView}
+        onValueChange={onScheduleViewChange} className="prescription-calendar__view-toggle"
+        options={[{ value: "calendar", label: "달력", icon: CalendarDays }, { value: "list", label: "하루씩", icon: PanelsTopLeft }]} />}
       {outsidePlanMonth && showCalendar && <button className="calendar-range-return" type="button" onClick={() => {
         setMonth(days[0]!.date.slice(0, 7))
         onToday?.(days[0]!.date)

@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { webcrypto } from "node:crypto"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { syntheticGoalProgram } from "./account/account-goal-program.test-fixtures"
@@ -58,8 +59,8 @@ vi.mock("./plan-mutation-lock", () => ({ PLAN_BETA_MUTATION_LOCK_NAME: "goal-acc
     return work({})
   } }) }))
 
-beforeEach(() => {
-  localStorage.clear(); setActiveLocalAccount(owner); vi.stubGlobal("crypto", webcrypto)
+beforeEach(async () => {
+  localStorage.clear(); await initializeCanonicalJournalFixture(); setActiveLocalAccount(owner); vi.stubGlobal("crypto", webcrypto)
   vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(new Date("2026-10-11T00:00:00.000Z"))
   const document = syntheticGoalProgram()
   document.revision = 2

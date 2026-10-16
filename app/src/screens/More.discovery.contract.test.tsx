@@ -1,8 +1,29 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { afterEach, expect, it, vi } from "vitest"
 import { More } from "./More"
 
 afterEach(cleanup)
+
+it("replays the app introduction and returns to its exact opener and reader scroll", async () => {
+  const plan = vi.fn(), analysis = vi.fn()
+  render(<div className="app-scroll-region"><More onBack={vi.fn()} onOpenMinji={vi.fn()} onOpenGuide={vi.fn()}
+    onOpenPlan={plan} onOpenAnalysis={analysis} /></div>)
+  const region = document.querySelector<HTMLElement>(".app-scroll-region")!
+  region.scrollTop = 430
+  fireEvent.click(screen.getByRole("button", { name: "앱 소개" }))
+  expect(screen.getByRole("heading", { level: 1, name: "앱 소개" })).toHaveFocus()
+  expect(screen.getByRole("heading", { level: 2, name: "운동을 분석하고 훈련 계획을 세워요" })).toBeVisible()
+  expect(screen.queryByText(/내 기록 결과/)).toBeNull()
+  fireEvent.click(screen.getByRole("button", { name: "훈련 계획 보기" }))
+  fireEvent.click(screen.getByRole("button", { name: "운동 분석 보기" }))
+  expect(plan).toHaveBeenCalledOnce(); expect(analysis).toHaveBeenCalledOnce()
+  region.scrollTop = 0
+  fireEvent.click(screen.getByRole("button", { name: "더보기로 돌아가기" }))
+  await waitFor(() => expect(screen.getByRole("button", { name: "앱 소개" })).toHaveFocus())
+  expect(region.scrollTop).toBe(430)
+  fireEvent.click(screen.getByRole("button", { name: "앱 소개" }))
+  expect(screen.getByRole("heading", { name: "앱 소개", level: 1 })).toBeVisible()
+})
 
 it("restores the management opener and scroll when returning to More", async () => {
   render(<div className="app-scroll-region"><More onBack={vi.fn()} onOpenMinji={vi.fn()} onOpenGuide={vi.fn()} /></div>)
@@ -33,7 +54,7 @@ it("shows learning and decoration destinations directly in More", () => {
     ["훈련법 읽기", "onOpenContent"],
     ["일지 꾸미기", "onOpenRewards"],
     ["미니게임", "onOpenMinigame"],
-    ["민지의 예시 일지", "onOpenMinji"],
+    ["일지 예시 보기", "onOpenMinji"],
     ["훈련 용어집·도움말", "onOpenGuide"],
   ] as const
   const actions = Object.fromEntries(entries.map(([, key]) => [key, vi.fn()]))
@@ -45,6 +66,10 @@ it("shows learning and decoration destinations directly in More", () => {
     fireEvent.click(button)
     expect(actions[key]).toHaveBeenCalledOnce()
   }
+  expect(within(screen.getByRole("region", { name: "배우기" })).getByRole("button", { name: "일지 예시 보기" })).toBeVisible()
+  expect(within(screen.getByRole("region", { name: "배우기" })).queryByRole("button", { name: "미니게임" })).toBeNull()
+  expect(within(screen.getByRole("region", { name: "꾸미기·게임" })).getByRole("button", { name: "일지 꾸미기" })).toBeVisible()
+  expect(within(screen.getByRole("region", { name: "꾸미기·게임" })).getByRole("button", { name: "미니게임" })).toBeVisible()
   expect(screen.getByText("저장 없이 내 기록·친구 기록 비교")).toBeVisible()
   expect(screen.getByText("러닝 투어 · 서울에서 런던까지")).toBeVisible()
   fireEvent.click(screen.getByRole("button", { name: "백업·복원·휴지통" }))

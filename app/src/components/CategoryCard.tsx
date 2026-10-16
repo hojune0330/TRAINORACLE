@@ -35,8 +35,8 @@ function CategoryCardCopy({ category, icon, title, label, description, titleId, 
 }
 
 /** One destination, one native button. No nested actions or persistence. */
-export const CategoryCard = forwardRef<HTMLButtonElement, CardCopy & Omit<ButtonHTMLAttributes<HTMLButtonElement>, "title" | "children">>(function CategoryCard({ category, icon, title, label, description, titleId, headingLevel, className = "", ...button }, ref) {
-  return <button {...button} ref={ref} type="button" className={`category-card ${className}`.trim()} data-category={category}>
+export const CategoryCard = forwardRef<HTMLButtonElement, CardCopy & { readonly variant?: "card" | "row" } & Omit<ButtonHTMLAttributes<HTMLButtonElement>, "title" | "children">>(function CategoryCard({ category, icon, title, label, description, titleId, headingLevel, variant = "card", className = "", ...button }, ref) {
+  return <button {...button} ref={ref} type="button" className={`category-card${variant === "row" ? " category-card--row" : ""} ${className}`.trim()} data-category={category}>
     <CategoryCardCopy {...{ category, icon, title, label, description, titleId, headingLevel }} />
     <ChevronRight className="category-card__chevron" size={18} aria-hidden="true" />
   </button>

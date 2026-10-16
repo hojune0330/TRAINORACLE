@@ -14,11 +14,11 @@ beforeEach(() => {
 
 describe("training home presentation", () => {
   it.each([
-    { model: BASE, title: "오늘 운동을 기록해요" },
+    { model: BASE, title: "운동 분석과 훈련 계획" },
     { model: TRAINING, title: "훈련과 기록" },
     { model: { ...BASE, homeMode: "JOURNAL", showMinjiPrompt: false, journalSummary: "1일 · 1개의 기록" } satisfies TrainingHomeViewModel, title: "내 기록" },
   ])("uses one accented hero and section headings for $title", ({ model, title }) => {
-    const { container } = render(<TrainingHome model={model} />)
+    const { container } = render(<TrainingHome model={model} introductionAllowed={false} />)
     const hero = screen.getByRole("heading", { level: 1, name: title })
     expect(hero).toHaveClass("app-heading--hero", "app-heading--accent")
     expect(hero).toHaveAttribute("id", "home-hub-title")
@@ -83,10 +83,10 @@ describe("training home presentation", () => {
   it("keeps welcome focused on recording and planning with a named learning and decoration entry", () => {
     const learn = vi.fn(); const decorate = vi.fn(); const guide = vi.fn()
     render(<TrainingHome model={BASE} onOpenContent={learn} onOpenRewards={decorate} onOpenGuide={guide} />)
-    expect(screen.getByRole("heading", { name: "오늘 운동을 기록해요" })).toBeVisible()
+    expect(screen.getByRole("heading", { name: "운동 분석과 훈련 계획" })).toBeVisible()
     expect(screen.getByRole("button", { name: "훈련법 읽기" })).toBeVisible()
     expect(screen.getByRole("button", { name: "일지 꾸미기" })).toBeVisible()
-    expect(screen.getByRole("navigation", { name: "오늘 기록 또는 계획 만들기" }).querySelectorAll("button")).toHaveLength(2)
+    expect(screen.getByRole("navigation", { name: "훈련 계획과 운동 분석" }).querySelectorAll("button")).toHaveLength(1)
     expect(screen.getByRole("button", { name: "훈련법 읽기" }).closest("details")).toBeNull()
     expect(screen.getByRole("button", { name: "일지 꾸미기" }).closest("details")).toBeNull()
     fireEvent.click(screen.getByRole("button", { name: "훈련법 읽기" })); fireEvent.click(screen.getByRole("button", { name: "일지 꾸미기" }))
@@ -110,7 +110,7 @@ describe("training home presentation", () => {
     expect(screen.queryByText("가상 기록으로 결과 화면을 먼저 둘러볼 수 있어요.")).toBeNull()
     expect(preview.querySelector("img")).toBeNull()
     expect(open).not.toHaveBeenCalled()
-    fireEvent.click(within(preview).getByRole("button", { name: "예시 결과 보기" }))
+    fireEvent.click(within(preview).getByRole("button", { name: "운동 분석 예시 보기" }))
     expect(open).toHaveBeenCalledOnce()
   })
   it("places safety notice immediately after the header", () => {
@@ -140,11 +140,13 @@ describe("training home presentation", () => {
     expect(screen.getByTestId("install")).toBeVisible()
     expect(screen.getByRole("button", { name: "더보기" })).toHaveAttribute("data-install-shortcut-return", "home")
   })
-  it("uses the next-training reader callback first without making the entry card a prescription", () => {
+  it("shows the saved core prescription and opens its full reader before recording", () => {
     const next = vi.fn(); const plan = vi.fn()
     render(<TrainingHome model={TRAINING} onOpenNextTraining={next} onOpenPlan={plan} />)
     const card = screen.getByRole("button", { name: /^다음 훈련 ·/u })
-    expect(card).not.toHaveTextContent(/전체 25–40분/u)
+    expect(card).toHaveTextContent(/전체 25–40분/u)
+    expect(card).toHaveTextContent("주요")
+    expect(card).toHaveAccessibleName(/주요/u)
     expect(card).toHaveTextContent("훈련 내용 보기")
     fireEvent.click(card)
     expect(next).toHaveBeenCalledOnce(); expect(plan).not.toHaveBeenCalled()
@@ -156,7 +158,7 @@ describe("training home presentation", () => {
     expect(screen.getByRole("heading", { name: "훈련과 기록" })).toBeVisible()
     const next = screen.getByRole("button", { name: /^다음 훈련 ·/u })
     expect(next).toHaveAccessibleName(/10월 9일.*오후/u)
-    expect(next).not.toHaveTextContent(/25–40분/u)
+    expect(next).toHaveTextContent(/25–40분/u)
     expect(screen.queryByText(TRAINING.todayMessage)).toBeNull()
     expect(screen.queryByText(/오늘의 훈련|휴식일|미완료/u)).toBeNull()
     const recent = screen.getByTestId("actual-recent")
@@ -245,7 +247,7 @@ describe("training home presentation", () => {
     expect(within(status).queryByRole("heading")).toBeNull()
     expect(within(status).getByText("기록 상태를 확인한 뒤 결과를 볼 수 있어요.")).toBeVisible()
     expect(within(status).queryByText("확인되지 않은 기록으로는 결과를 만들지 않아요.")).toBeNull()
-    expect(within(status).queryByRole("button", { name: "예시 결과 보기" })).toBeNull()
+    expect(within(status).queryByRole("button", { name: "운동 분석 예시 보기" })).toBeNull()
     fireEvent.click(within(status).getByRole("button", { name: "기록 상태 확인" }))
     expect(open).toHaveBeenCalledOnce()
   })

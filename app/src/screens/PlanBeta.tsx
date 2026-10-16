@@ -1,6 +1,5 @@
 import React from "react"
-import { FileUp, Flag } from "lucide-react"
-import { CategoryCard } from "../components/CategoryCard"
+import { ChevronRight, FileUp, Flag } from "lucide-react"
 import { ErrorBoundary } from "../components/ErrorBoundary"
 import { ACCOUNT_PLAN_EVENT, accountPlanService, accountPlansEnabled } from "../domain/account/account-plan-service"
 import { ensureAccountPlanHistory } from "../domain/account/account-plan-domain"
@@ -173,6 +172,7 @@ export function PlanBeta(props: Omit<React.ComponentProps<typeof PlanBetaContent
   const service = accountPlanService(), { view, retry } = useAccountPlanRuntime(service)
   const [goalSession, setGoalSession] = React.useState<{ owner: string | null; generation: number } | null>(null)
   const goalEntryButton = React.useRef<HTMLButtonElement>(null)
+  const goalEntryDescription = React.useId()
   React.useEffect(() => onLocalJournalScopeChange(() => setGoalSession(null)), [])
   const closeGoalProgram = () => {
     setGoalSession(null)
@@ -207,11 +207,11 @@ export function PlanBeta(props: Omit<React.ComponentProps<typeof PlanBetaContent
     onRetry={loadHistory} onCancel={cancelHistory} />
   const accountContentOwnsEntry = !!collection?.legacyPending || needsHistoryForNewPlan || historical !== null
   const goalProgramEntry = <div className="plan-program-entry">
-    <CategoryCard category="training" icon={Flag} title="10km 한 달 훈련표" ref={goalEntryButton} onClick={() => {
+    <button className="plan-entry-link" type="button" ref={goalEntryButton} aria-label="10km 한 달 훈련표" aria-describedby={goalEntryDescription} onClick={() => {
       const context = { owner: localAccountScopeSnapshot(), generation: localJournalScopeGeneration() }
       runDraftSafeNavigation(() => setGoalSession(context), false,
         () => localAccountScopeIsCurrent(context.owner) && context.generation === localJournalScopeGeneration())
-    }} />
+    }}><Flag size={18} aria-hidden="true" /><span>10km 한 달 훈련표<small id={goalEntryDescription}>별도 목표 프로그램 · 9.5일 × 3</small></span><ChevronRight size={18} aria-hidden="true" /></button>
   </div>
   if (goalSession && localAccountScopeIsCurrent(goalSession.owner) && goalSession.generation === localJournalScopeGeneration()) {
     return <ErrorBoundary><React.Suspense fallback={<p role="status">훈련표를 열고 있어요.</p>}>
@@ -413,7 +413,7 @@ function PlanBetaContent(props: Omit<React.ComponentProps<typeof LegacyPlanBeta>
     <LegacyPlanArchiveDownloads revision={read} />
     {read.kind === "missing" && <MultiPlanCloudControlsV3 fingerprint={null} readEvidence={readMultiV3Evidence}
       readRestoreReview={props.readMultiRestoreReviewV3 ?? readCurrentMultiRestoreReviewV3} onCurrentRestored={() => setRead(readCurrent())} />}
-    <div className="plan-program-entry"><CategoryCard category="training" icon={FileUp} title="개인 계획 파일 불러오기" onClick={() => setImportOpen(true)} /></div></>} />
+    <div className="plan-program-entry"><button className="plan-entry-link plan-entry-link--secondary" type="button" onClick={() => setImportOpen(true)}><FileUp size={18} aria-hidden="true" /><span>개인 계획 파일 불러오기</span><ChevronRight size={18} aria-hidden="true" /></button></div></>} />
   </div></>
   }
   return <>{renderContent()}{!legacyOwnsEntry && props.goalProgramEntry}</>
@@ -955,15 +955,16 @@ function LegacyPlanBeta({
       }} />
     </React.Suspense> : null
 
+  const withGoalEntry = (content: React.ReactNode) => <>{content}{goalProgramEntry}</>
   const renderContent = () => {
-  if (recordsOpen && !instantEntryOpen) return recordsView
+  if (recordsOpen && !instantEntryOpen) return withGoalEntry(recordsView)
 
   if (notationReaderOpen && !instantEntryOpen) {
-    return <NotationReader onBack={() => setNotationReaderOpen(false)} />
+    return withGoalEntry(<NotationReader onBack={() => setNotationReaderOpen(false)} />)
   }
 
   if (cloudRestorePending && stored === null) {
-    return <p role="status" style={{ padding: 24 }}>계정에 저장된 훈련 계획을 확인하고 있어요.</p>
+    return withGoalEntry(<p role="status" style={{ padding: 24 }}>계정에 저장된 훈련 계획을 확인하고 있어요.</p>)
   }
 
   if (stored !== null && nextPredecessor === null) {
@@ -1044,6 +1045,7 @@ function LegacyPlanBeta({
           <button type="button" onClick={onAdjustedStored}>현재 계획 다시 확인</button>
         </div>}
       </section>}
+      {goalProgramEntry}
       {!activePlanEditing && planTools}
       </>
     )
@@ -1073,6 +1075,7 @@ function LegacyPlanBeta({
           setStep("safety")
         }}
       />
+      {goalProgramEntry}
       </>
     )
   }
@@ -1092,19 +1095,20 @@ function LegacyPlanBeta({
           generateCandidates(draft)
         }}
       />
+      {goalProgramEntry}
       </>
     )
   }
 
-  if (adjustingMultiV3 !== null) return <MultiAdjustedPlanEditFlowV3 {...adjustingMultiV3.entry}
+  if (adjustingMultiV3 !== null) return withGoalEntry(<MultiAdjustedPlanEditFlowV3 {...adjustingMultiV3.entry}
     isCurrentDraft={() => draftRevision.current === adjustingMultiV3.revision}
-    onCancel={() => setAdjustingMultiV3(null)} onSaved={() => { setAdjustingMultiV3(null); onAdjustedStored() }} />
-  if (adjustingV3 !== null) return <AdjustedPlanEditFlowV3 {...adjustingV3.entry}
+    onCancel={() => setAdjustingMultiV3(null)} onSaved={() => { setAdjustingMultiV3(null); onAdjustedStored() }} />)
+  if (adjustingV3 !== null) return withGoalEntry(<AdjustedPlanEditFlowV3 {...adjustingV3.entry}
     isCurrentDraft={() => draftRevision.current === adjustingV3.revision}
-    onCancel={() => setAdjustingV3(null)} onSaved={() => { setAdjustingV3(null); onAdjustedStored() }} />
-  if (adjusting !== null) return <AdjustedPlanEditFlow {...adjusting.entry}
+    onCancel={() => setAdjustingV3(null)} onSaved={() => { setAdjustingV3(null); onAdjustedStored() }} />)
+  if (adjusting !== null) return withGoalEntry(<AdjustedPlanEditFlow {...adjusting.entry}
     isCurrentDraft={() => draftRevision.current === adjusting.revision}
-    onCancel={() => setAdjusting(null)} onSaved={() => { setAdjusting(null); onAdjustedStored() }} />
+    onCancel={() => setAdjusting(null)} onSaved={() => { setAdjusting(null); onAdjustedStored() }} />)
 
   if (generated !== null && gate !== null && generatedIntake !== null && generatedEvidence !== null) {
     const adjustmentActions: Record<string, () => void> = {}
@@ -1235,6 +1239,7 @@ function LegacyPlanBeta({
             void saveCandidate(selection, generated)
           }}
         />
+        {goalProgramEntry}
         {planTools}
       </>
     )
@@ -1281,6 +1286,7 @@ function LegacyPlanBeta({
     </div>
     {recordsView}
     {notationReaderOpen && <NotationReader onBack={() => setNotationReaderOpen(false)} />}
+    {goalProgramEntry}
     {!recordsOpen && !notationReaderOpen && planTools}
   </>
 
@@ -1416,16 +1422,9 @@ function LegacyPlanBeta({
           {planErrorMessage(errorCode)}
         </div>
       )}
+      {goalProgramEntry}
     </>
   )
   }
-  const goalEntryFirst = storageRead.kind === "missing" && stored === null
-    && !cloudRestorePending && cloudPersistence !== "FAILED"
-    && !recordsOpen && !notationReaderOpen && !blocked && racePreview === null
-    && adjusting === null && adjustingV3 === null && adjustingMultiV3 === null
-  return <>
-    {goalEntryFirst && goalProgramEntry}
-    {renderContent()}
-    {!goalEntryFirst && goalProgramEntry}
-  </>
+  return renderContent()
 }

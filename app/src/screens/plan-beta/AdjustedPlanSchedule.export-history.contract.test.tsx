@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import React from "react"
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
@@ -25,9 +26,9 @@ const create = vi.fn(() => "blob:synthetic-full-history"), revoke = vi.fn()
 const file = { kind: "exported" as const, raw: '{"syntheticFullHistory":true}', archivedCount: 18 }
 const downloadName = "개인 보관용 계획 파일 받기"
 let click: ReturnType<typeof vi.spyOn>
-beforeEach(() => {
+beforeEach(async () => {
   HTMLDialogElement.prototype.showModal = function () { this.setAttribute("open", "") }
-  localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount("account-a")
+  localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture(); setActiveLocalAccount("account-a")
   vi.useFakeTimers(); vi.setSystemTime(TODAY)
   mocks.history.mockReset().mockResolvedValue(true); mocks.export.mockReset().mockReturnValue(file)
   create.mockReset().mockReturnValue("blob:synthetic-full-history"); revoke.mockReset()

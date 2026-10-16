@@ -1,4 +1,5 @@
 import { useEffect, useId, useState } from "react"
+import { ChevronRight } from "lucide-react"
 import type { InstantPlanToday } from "../../domain/instant-plan-contract"
 import { IncompleteWorkoutNotice } from "./IncompleteWorkoutNotice"
 import { AppHeading } from "../AppHeading"
@@ -16,6 +17,8 @@ export type InstantPlanTodayViewProps = {
   readonly compact?: boolean
   /** Entry cards open the existing complete session reader. */
   readonly navigationCards?: boolean
+  /** Display only: supplied from the original session, never inferred from its time slot. */
+  readonly sessionRoleLabel?: (sessionId: string) => string | undefined
 }
 
 const stateMessages: Record<InstantPlanToday["state"], string> = {
@@ -79,16 +82,16 @@ function SessionDetail({
           <summary>훈련 방법</summary>{steps(otherSteps)}
         </details>}
       </> : steps(session.steps)}
+      {onViewSession && <button className="instant-plan__content-open" type="button"
+        aria-label={`${session.slotLabel} 훈련 내용 보기`} onClick={() => onViewSession(session.id)}>훈련 내용 보기<ChevronRight size={18} aria-hidden="true" /></button>}
       {canRecord && <div className="instant-plan__actions">
-        {!session.recorded && onRecordSession && <button className="instant-plan__button" type="button"
+        {!session.recorded && onRecordSession && <button className="instant-plan__entry-record" type="button"
           aria-label={`${session.slotLabel} 훈련 기록 남기기`} onClick={() => onRecordSession(session.id)}>
           {compact ? "일지 쓰기" : `${session.slotLabel} 훈련 기록 남기기`}
         </button>}
         {compact && onChangeSchedule && <button className="instant-plan__secondary" type="button"
           onClick={() => onChangeSchedule(session.id)}>{changeScheduleLabel}</button>}
       </div>}
-      {onViewSession && <button className="instant-plan__secondary" type="button"
-        aria-label={`${session.slotLabel} 훈련 방법·근거`} onClick={() => onViewSession(session.id)}>훈련 방법·근거</button>}
     </section>
   )
 }
@@ -103,6 +106,7 @@ export function InstantPlanTodayView({
   onContinue,
   compact = false,
   navigationCards = false,
+  sessionRoleLabel,
 }: InstantPlanTodayViewProps) {
   const headingId = useId()
   const canRecord = today.state === "SCHEDULED" || today.state === "PARTLY_RECORDED"
@@ -126,10 +130,14 @@ export function InstantPlanTodayView({
     {today.sourceLabel && <p className="instant-plan__source">{today.sourceLabel}</p>}
     {showSessions ? <div className="category-card-grid">
       {today.sessions.map(session => <div className="instant-plan__entry-session" key={session.id}>
-        <CategoryCard category="training" title={session.title} label={session.slotLabel}
-          description={session.recorded ? "남긴 기록 있음" : "훈련 내용 보기"}
+        <p className="instant-plan__entry-slot">{session.slotLabel}{sessionRoleLabel?.(session.id) && ` · ${sessionRoleLabel(session.id)}`}</p>
+        <h3>{session.title}</h3>
+        {session.steps.filter(step => step.role === "TOTAL_DURATION" || step.role === "MAIN").map((step, index) =>
+          <p className="instant-plan__entry-amount" key={`${step.role}-${index}`}>{step.instruction}</p>)}
+        <button className="instant-plan__content-open" data-category="training" type="button"
           aria-label={`${session.slotLabel} 훈련 내용 보기 · ${session.title}`}
-          onClick={() => onViewSession(session.id)} />
+          onClick={() => onViewSession(session.id)}>훈련 내용 보기<ChevronRight size={18} aria-hidden="true" /></button>
+        {session.recorded && <p className="instant-plan__hint">남긴 기록 있음</p>}
         {session.guidanceNotice && <IncompleteWorkoutNotice detail={session.guidanceNotice} />}
         {canRecord && !session.recorded && onRecordSession && <button className="instant-plan__entry-record" type="button"
           onClick={() => onRecordSession(session.id)} aria-label={`${session.slotLabel} 훈련 기록 남기기`}>일지 쓰기</button>}

@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import React from "react"
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
@@ -40,11 +41,11 @@ const today = "2026-10-04"
 function accountState(patch: Partial<AccountAthleteRecordsState> = {}): AccountAthleteRecordsState {
   return { status: "EMPTY", ownerId: activeLocalAccount(), documentId: null, serverRevision: 0, records: [], confirmed: true, ...patch }
 }
-beforeEach(() => {
+beforeEach(async () => {
   vi.clearAllMocks()
   calendar.override = null
   vi.mocked(accountPlansEnabled).mockReturnValue(false)
-  window.localStorage.clear(); window.sessionStorage.clear(); setActiveLocalAccount(null)
+  window.localStorage.clear(); window.sessionStorage.clear(); await initializeCanonicalJournalFixture(); setActiveLocalAccount(null)
   window.history.replaceState({ syntheticOracleOrigin: true }, "", window.location.href)
   vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(new Date("2026-10-04T03:00:00.000Z"))
   vi.mocked(accountAthleteRecordsEnabled).mockReturnValue(false)

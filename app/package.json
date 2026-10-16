@@ -38,6 +38,7 @@
     "test:e2e": "npm run test:e2e:generic && npm run test:e2e:calendar-decoration && npm run test:e2e:account-calendar-decoration && npm run test:e2e:file-analysis"
   },
   "dependencies": {
+    "@radix-ui/react-radio-group": "1.5.1",
     "@supabase/supabase-js": "^2.109.0",
     "@use-gesture/react": "^10.3.1",
     "lucide-react": "^0.468.0",
