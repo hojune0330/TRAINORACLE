@@ -19,6 +19,16 @@
 
 ## 게시 경로
 
+명시적으로 수동 게시를 선택한 경우 main 병합 커밋에 `[manual-pages]`를 넣는다.
+이 표식은 자동 게시만 생략하며 필수 검사에는 영향을 주지 않는다. 같은 main의
+필수 관문 통과를 확인한 뒤 아래 보존형 게시 도구로 수동 게시한다.
+
+로컬 built-preview 검사에서는 `app`에서
+`node scripts/run-local-preview-tests.mjs <Playwright 선택 인수>`를 사용할 수 있다.
+서버 준비, HTTP 응답, 실제 브라우저의 앱 탐색 렌더를 먼저 확인한 후 요청한
+검사만 실행한다. 기본 브라우저 경로가 격리된 환경에서는 설치된 경로를
+`PLAYWRIGHT_BROWSERS_PATH`로 명시한다. 이 경로는 기존 전체 CI 관문을 대체하지 않는다.
+
 CI도 기존 검증된 .tools/build-oracle-pages-release.mjs와
 .tools/publish-oracle-pages-release.mjs를 쓴다. 기존 공개 설정과 --account-held를
 유지하고, previews/·이전 해시 자산을 보존한다. root 삭제·force push는 없다.

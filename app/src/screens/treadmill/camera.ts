@@ -30,7 +30,11 @@ export function createRunnerCamera() {
     elapsed = time; stage = state.stage; wasPropelling = propelling
     const beltWidth = reduced ? width * 0.86 : span
     const left = reduced ? width * 0.1 : -offset * span
-    const floor = Math.min(height - 48, height * 0.79) + lift
+    // A fixed reduced-motion camera cannot follow a landscape jump downward.
+    // Reserve static headroom instead; do not change physics or add camera motion.
+    const floor = reduced && height < 320
+      ? Math.min(height - 8, height * 0.96)
+      : Math.min(height - 48, height * 0.79) + lift
     return { left, beltWidth, floor, travel, speed, offset, toPx: (x: number) => left + x * beltWidth }
   }
 }

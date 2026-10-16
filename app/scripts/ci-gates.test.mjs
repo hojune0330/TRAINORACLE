@@ -119,6 +119,10 @@ test("CI preserves publication and avoids duplicate branch runs and browser buil
   assert.equal(jobs['deploy-pages'].concurrency['cancel-in-progress'], false)
   assert(jobs['deploy-pages'].needs.includes('delivery-complete'))
   assert(jobs['deploy-pages'].needs.includes('delivery-scope'))
+  assert(jobs['deploy-pages'].if.includes("!contains(github.event.head_commit.message, '[manual-pages]')"))
+  for (const [name, job] of Object.entries(jobs)) {
+    if (name !== 'deploy-pages') assert(!String(job.if).includes('manual-pages'), name)
+  }
   for (const [name, job] of Object.entries(jobs)) assert(job['timeout-minutes'] > 0 && job['timeout-minutes'] <= 45, name)
   const publish = commands(jobs['deploy-pages']).join('\n')
   assert(publish.includes('build-oracle-pages-release.mjs --account-held'))

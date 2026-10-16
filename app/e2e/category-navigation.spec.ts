@@ -58,7 +58,7 @@ test("category cards open full workouts and visible editing without changing the
   await expect(reader).toBeVisible()
   await expect(reader.getByRole("term").filter({ hasText: /^본운동$/u })).toBeVisible()
   await expect(reader).toContainText(/\d+분/u)
-  await reader.getByRole("button", { name: "달력으로 돌아가기", exact: true }).click()
+  await reader.getByRole("button", { name: /^(?:달력|하루씩)으로 돌아가기$/u, exact: true }).click()
   await expect(reader).not.toBeVisible()
   await expect(card).toBeFocused()
 
@@ -85,7 +85,7 @@ test("category cards open full workouts and visible editing without changing the
   await homeWorkout.click()
   await expect(reader).toBeVisible()
   await expect(reader.getByRole("term").filter({ hasText: /^본운동$/u })).toBeVisible()
-  await reader.getByRole("button", { name: "달력으로 돌아가기", exact: true }).click()
+  await reader.getByRole("button", { name: /^(?:달력|하루씩)으로 돌아가기$/u, exact: true }).click()
   expect(await page.evaluate(() => localStorage.getItem("trainoracle.plan-beta.v1"))).toBe(before)
 
   await tabs.getByRole("button", { name: "일지", exact: true }).click()

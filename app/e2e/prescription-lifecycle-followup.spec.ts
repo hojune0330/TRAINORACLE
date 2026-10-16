@@ -5,7 +5,7 @@ import { closeActiveDayReader, openActiveDayReader, openSessionRecords } from ".
 
 async function openPlan(page: Page) {
   const dayReader = page.locator("dialog.plan-day-reader")
-  if (await dayReader.isVisible()) await dayReader.getByRole("button", { name: "달력으로 돌아가기" }).click()
+  if (await dayReader.isVisible()) await dayReader.getByRole("button", { name: /^(?:달력|하루씩)으로 돌아가기$/u }).click()
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련", exact: true }).click()
 }
 async function storedPlan(page: Page) {

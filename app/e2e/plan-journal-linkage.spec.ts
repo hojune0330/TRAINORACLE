@@ -52,7 +52,7 @@ test("links one explicitly selected plan session to its journal without copying 
   await expect.poll(() => page.evaluate(() => JSON.parse(
     window.localStorage.getItem("trainoracle.plan-beta.v1") ?? "null",
   )?.progress)).toEqual([{ sessionDay: 1, sessionSlot: "AM", state: "COMPLETED" }])
-  await page.getByRole("dialog").getByRole("button", { name: "달력으로 돌아가기" }).click()
+  await page.getByRole("dialog").getByRole("button", { name: /^(?:달력|하루씩)으로 돌아가기$/u }).click()
   const beforeReview = await page.evaluate(() => window.localStorage.getItem("trainoracle.plan-beta.v1"))
   // The elapsed frame's review now lives inside the next-plan disclosure.
   await page.getByRole("button", { name: "다음 계획 시작하기", exact: true }).click()

@@ -131,7 +131,7 @@ test("shows an executable record-based workout and opens its same stored method"
   await expect(reader.locator('[data-phase="cooldown"]')).toContainText("10분")
   await expect(reader.getByText("5 × 1km · 222.2초/1km · 5K 경기 평균 페이스 · 반복 사이 150초 조깅", { exact: true }).first()).toBeVisible()
   await reader.screenshot({ path: info.outputPath("same-workout-reader-375.png") })
-  await reader.getByRole("button", { name: "달력으로 돌아가기" }).click()
+  await reader.getByRole("button", { name: /^(?:달력|하루씩)으로 돌아가기$/u }).click()
   expect(await page.evaluate(() => localStorage.getItem("trainoracle.plan-beta.v1"))).toBe(before)
   await expect(workout).toBeFocused()
 })

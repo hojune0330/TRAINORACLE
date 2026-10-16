@@ -20,7 +20,7 @@ for (const width of [320, 375]) {
     await page.getByRole("button", { name: /^매일/u }).click()
     await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }).click()
     const recommendation = page.getByRole("region", { name: "1500m · 9일 훈련", exact: true })
-    await recommendation.getByRole("group", { name: "계획 일정 보기" }).getByRole("button", { name: "달력", exact: true }).click()
+    await recommendation.getByRole("radiogroup", { name: "계획 일정 보기" }).getByRole("radio", { name: "달력", exact: true }).click()
     await expect(recommendation.getByRole("grid")).toBeVisible()
     const rangeDates = () => recommendation.locator('[data-in-range="true"] button[data-date]')
       .evaluateAll(nodes => nodes.map(node => node.getAttribute("data-date")!))

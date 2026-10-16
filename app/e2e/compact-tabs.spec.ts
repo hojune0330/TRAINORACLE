@@ -51,12 +51,13 @@ test("shared choices keep selection, keyboard operation and enlarged labels acro
   await page.goto("/?app=1&uitest=1")
   const navigation = page.getByRole("navigation", { name: "주 탭" })
   await navigation.getByRole("button", { name: "일지", exact: true }).click()
-  const cycle = page.getByRole("button", { name: "기록 묶음", exact: true })
+  const cycle = page.getByRole("radio", { name: "기록 묶음", exact: true })
   await cycle.focus()
-  await page.keyboard.press("Enter")
-  await expect(cycle).toHaveAttribute("aria-pressed", "true")
-  await page.getByRole("button", { name: "월간 달력", exact: true }).click()
-  await expect(cycle).toHaveAttribute("aria-pressed", "false")
+  // Radio options activate with Space; Enter is intentionally suppressed by Radix.
+  await page.keyboard.press("Space")
+  await expect(cycle).toHaveAttribute("aria-checked", "true")
+  await page.getByRole("radio", { name: "월간 달력", exact: true }).click()
+  await expect(cycle).toHaveAttribute("aria-checked", "false")
 
   await navigation.getByRole("button", { name: "오라클", exact: true }).click()
   const choices = page.getByRole("group", { name: "오라클 항목" }).getByRole("button")

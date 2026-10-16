@@ -28,7 +28,7 @@ test("shows a dated AM and PM plan before selection and after reload", async ({ 
   const candidateDays = page.getByRole("list", { name: "날짜별 계획 미리보기", exact: true }).first()
   await expect(candidateDays.getByRole("group", { name: /훈련 2개/u })).toHaveCount(3)
   const overview = page.getByLabel("9일 훈련 일정").first()
-  await overview.getByRole("button", { name: "달력", exact: true }).click()
+  await overview.getByRole("radio", { name: "달력", exact: true }).click()
   await expect(overview.getByRole("button", {
     name: /8월 25일 화요일/u,
   })).toContainText("기본")
@@ -38,7 +38,7 @@ test("shows a dated AM and PM plan before selection and after reload", async ({ 
   await expect(overview.getByRole("button", {
     name: /8월 25일 화요일/u,
   })).toContainText("회복")
-  await overview.getByRole("button", { name: "하루씩", exact: true }).click()
+  await overview.getByRole("radio", { name: "하루씩", exact: true }).click()
   const candidateDay = candidateDays.getByRole("group", {
     name: "8월 25일 화요일 · 훈련 2개",
   }).first()
@@ -47,7 +47,7 @@ test("shows a dated AM and PM plan before selection and after reload", async ({ 
   await candidateDay.getByRole("button", { name: "8월 25일 화요일 전체 처방 보기", exact: true }).click()
   const candidateReader = page.getByRole("dialog", { name: /^2026년 8월 25일/u })
   await expect(candidateReader.getByRole("button", { name: "회복 운동 REC 훈련 설명 보기", exact: true })).toBeVisible()
-  await candidateReader.getByRole("button", { name: "달력으로 돌아가기", exact: true }).click()
+  await candidateReader.getByRole("button", { name: /^(?:달력|하루씩)으로 돌아가기$/u, exact: true }).click()
   await page.getByRole("button", { name: /선택하기|이 일정으로 시작/u }).first().click()
   await expect(page.getByRole("heading", { name: "9일 훈련 계획" })).toBeVisible()
   await page.reload()

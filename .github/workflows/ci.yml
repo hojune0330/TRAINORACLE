@@ -358,7 +358,8 @@ jobs:
         run: node -e "console.log(require('./.tools/ci-delivery-scope.cjs').assertDeliveryResults(JSON.parse(process.env.DELIVERY_NEEDS)))"
 
   deploy-pages:
-    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main' && needs.delivery-scope.outputs.full == 'true'
+    # An explicitly manual release still runs every gate; only automatic publication is suppressed.
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main' && needs.delivery-scope.outputs.full == 'true' && !contains(github.event.head_commit.message, '[manual-pages]')
     needs:
       - delivery-scope
       - delivery-complete

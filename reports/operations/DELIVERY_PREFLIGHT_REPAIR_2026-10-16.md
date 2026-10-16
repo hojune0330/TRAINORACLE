@@ -1,0 +1,23 @@
+# Delivery preflight repair — 2026-10-16
+
+## Causes separated
+
+- A sandbox-local Playwright cache path did not contain the installed browser. Explicit `PLAYWRIGHT_BROWSERS_PATH` selects the existing installation; no browser reinstall is needed.
+- Independent server/browser launches mixed execution contexts and began tests before demonstrated app readiness. The local preview runner now owns one loopback server, verifies HTTP and app navigation in the browser, then starts the selected tests. Failures are propagated, not converted to passes.
+- Responsive candidate assertions counted both the primary recommendation and the comparison. Scope to the comparison preserves its one-expanded-candidate contract.
+- Same-position, rapid pointer answers could trigger the deliberate double-tap guard. These journal lifecycle scenarios use keyboard slot activation, as other existing progression tests do. The guard itself remains unchanged.
+- The upward popover covers the heading. Tapping its uncovered viewport gutter validates outside-touch dismissal without forcing a click through the note; Escape coverage remains.
+- Reduced motion intentionally fixes the camera/background. Assertions distinguish this from ordinary tracking. A real short-landscape jump/HUD overlap was found and static headroom added, without altering game physics or adding motion.
+- Main `6384e91f4ad7a9bc084b68542f4ddd685ad31771` was incorporated. Its source-backed UI and the prior delivery fixes are retained; the two merge conflicts were resolved explicitly.
+- Its ViewSwitcher uses radio semantics (`radiogroup`, `radio`, `aria-checked`, Space activation), and the day reader returns either to the calendar or day list. Update the affected browser consumers together, retaining selection, focus restoration, persistence and navigation assertions.
+- Use the available Node 22 runtime with npm 11 for this lockfile. An interrupted installation and the older bundled npm 10 produced unrelated compiler/lock errors. A complete npm 11 offline installation restored 425 packages without modifying the lockfile.
+
+## Observed evidence (not publication proof)
+
+- Before rebuilding the integrated UI: 32 mobile/narrow browser cases passed; the remaining popover case was reproduced, fixed, and passed separately. One desktop-only exclusion in that selection was skipped as declared by the original test.
+- Final integrated focused browser run: 12 passed across mobile, narrow-touch and reduced-motion projects, covering radio keyboard/large labels, edited-plan partial journal and successor lifecycle, obstacle continuity, and landscape jump/HUD separation. The real camera defect passes on the rebuilt integrated app.
+- CI gate/changed-scope tests: 10 passed, including rejection of failed/cancelled/incomplete results.
+- Integrated application and browser TypeScript checks and production build passed. Focused camera and home-summary unit tests: 13 passed. Integrated calendar flow/month navigation and basic compact-control browser cases: 6 passed; radio keyboard activation was subsequently corrected to Space and passed on mobile.
+- The `[manual-pages]` main-commit marker suppresses only automatic publication. All release gates remain mandatory; manual publication must follow their successful settled-source results.
+
+No merge to main, publication, or authenticated user transaction is asserted by this note.

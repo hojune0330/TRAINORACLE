@@ -4,6 +4,16 @@ import { createRunnerCamera } from "./camera"
 const run = { ...newTreadmillRun(), mode: "running" as const, running: true, countdown: 0 }
 
 describe("runner camera", () => {
+  it("reserves fixed landscape jump headroom without reintroducing reduced camera motion", () => {
+    const camera = createRunnerCamera()
+    const standing = camera(run, 780, 284, true)
+    const jumping = camera({ ...run, y: 120, seconds: .4, dashLeft: .2 }, 780, 284, true)
+    expect(jumping.floor).toBe(standing.floor)
+    expect(jumping.floor - 120 - 65).toBeGreaterThan(72)
+    expect(jumping.floor).toBeLessThan(284)
+    expect(jumping.offset).toBe(0)
+    expect(jumping.travel).toBe(0)
+  })
   it("smooths exhaustion recoil instead of snapping the shared projection", () => {
     const camera = createRunnerCamera()
     const before = camera({ ...run, x: .7 }, 390, 700, false)

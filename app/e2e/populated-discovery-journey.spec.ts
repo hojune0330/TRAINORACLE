@@ -29,7 +29,7 @@ for (const width of [320, 375]) {
     await page.getByRole("button", { name: "일지·메모 원문 열기", exact: true }).click()
     await expect(page.getByText("모의 훈련 1", { exact: true })).toBeVisible()
     await page.getByRole("button", { name: "일지 목록으로 돌아가기", exact: true }).click()
-    await page.getByRole("button", { name: "달력으로 돌아가기", exact: true }).click()
+    await page.getByRole("button", { name: /^(?:달력|하루씩)으로 돌아가기$/u, exact: true }).click()
     await expect(archive.getByRole("grid", { name: "2026년 10월 달력" })).toBeVisible()
     await archive.getByRole("button", { name: "이전 달", exact: true }).click()
     await expect(archive.getByRole("grid", { name: "2026년 9월 달력" })).toBeVisible()

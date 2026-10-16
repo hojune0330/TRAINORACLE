@@ -27,7 +27,7 @@ test("shows a saved upcoming training on home and opens its existing plan", asyn
   await expect(reader).toBeVisible()
   await expect(reader.locator(".training-instructions__cards")).toContainText("힘든 정도")
   await expect(reader).not.toContainText("목표 페이스")
-  await reader.getByRole("button", { name: "달력으로 돌아가기", exact: true }).click()
+  await reader.getByRole("button", { name: /^(?:달력|하루씩)으로 돌아가기$/u, exact: true }).click()
   await expect(page.getByRole("heading", { name: "9일 훈련 계획", exact: true })).toBeVisible()
   if (await page.evaluate(() => matchMedia("(max-width: 767px)").matches)) {
     await expect(page.getByRole("group", { name: "훈련 날짜 선택" })).toBeVisible()

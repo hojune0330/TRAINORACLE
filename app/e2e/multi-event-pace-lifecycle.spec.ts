@@ -219,10 +219,10 @@ async function assertBoundSuccessor(page: Page, persona: Persona, source: Athlet
     const date = new Date(startDate)
     date.setUTCDate(date.getUTCDate() + main.day - 1)
     const overview = page.getByLabel(`${predecessor.intake.requestedFrameLength}일 훈련 일정`).first()
-    await overview.getByRole("button", { name: "달력", exact: true }).click()
+    await overview.getByRole("radio", { name: "달력", exact: true }).click()
     await overview.getByRole("button", { name: new RegExp(`${date.getUTCMonth() + 1}월 ${date.getUTCDate()}일`) }).click()
     await expect(page.getByRole("dialog")).toContainText(readerTargetText(persona.event, main.minimum))
-    await page.getByRole("button", { name: "달력으로 돌아가기", exact: true }).click()
+    await page.getByRole("button", { name: /^(?:달력|하루씩)으로 돌아가기$/u, exact: true }).click()
   }
   return evidence
 }
@@ -299,7 +299,7 @@ for (const persona of personas) test(`${persona.id} ${persona.name}`, async ({ p
       const rows = await assertNumeric(page, persona, persona.seconds, source)
       await openActiveDayReader(page, rows[0]!.day - 1)
       await expect(page.getByRole("dialog")).toContainText(readerTargetText(persona.event, rows[0]!.minimum))
-      await page.getByRole("button", { name: "달력으로 돌아가기", exact: true }).click()
+      await page.getByRole("button", { name: /^(?:달력|하루씩)으로 돌아가기$/u, exact: true }).click()
       const views = await page.evaluate(async ({ path, event }) =>
         (await import(/* @vite-ignore */ path) as typeof Harness).records(event), { path: helperPath, event: persona.event })
       if (persona.condition === "recent" || persona.condition === "unknown" || persona.condition === "rolling") {
@@ -482,7 +482,7 @@ for (const persona of personas) test(`${persona.id} ${persona.name}`, async ({ p
         plannedSessionLink: { sessionDay: main.day, sessionSlot: main.slot } })
       expect((await plan(page)).progress).toEqual([])
       await page.getByRole("button", { name: "완료", exact: true }).click()
-      const returnToCalendar = page.getByRole("button", { name: "달력으로 돌아가기", exact: true })
+      const returnToCalendar = page.getByRole("button", { name: /^(?:달력|하루씩)으로 돌아가기$/u, exact: true })
       if (await returnToCalendar.isVisible()) await returnToCalendar.click()
       await tab(page)
       const savedReader = await openActiveDayReader(page, main.day - 1)
