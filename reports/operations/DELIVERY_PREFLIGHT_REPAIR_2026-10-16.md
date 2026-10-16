@@ -64,3 +64,19 @@ audit visits all 10 fixed parts, measures every side/level control, preserves
 ordering and selections, checks Space/Enter and focus restoration, then reaches
 memo and the unobstructed save action. Both touch projects pass this full scenario.
 The failed hosted run remains a failure; these corrections require new hosted gates.
+
+## Concurrent main integration
+
+During the next run, main advanced to `d915e46e9816747e2045fed483c82a463653f29e`
+through the companion collection/motion changes in PR367 and PR370. The PR runner
+tested that combined tree, not just the older local baseline. Those merged changes
+are preserved. The base-material inventory now excludes every registered collection,
+not only OPEN_CUTE_V1; the exact 35 base IDs/prices/counts remain asserted. The focused
+base/companion collection tests pass 15/15. The save-result asset check follows the
+new companion, verifies loaded pixels and its 80px frame, and requires a still poster
+without an atlas in reduced motion. All four focused browser projects pass.
+No training rule, account hold or acquisition condition was changed by these repairs.
+The UTC run also exposed an asynchronous account-test race: a checking message can
+render before the mocked setup request starts. Waiting for that request before
+resolving it preserves the pre-admission denial and subsequent admission assertions.
+All 11 account session-exit cases pass locally after the synchronization correction.

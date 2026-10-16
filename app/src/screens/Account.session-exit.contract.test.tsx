@@ -141,9 +141,10 @@ describe("Account session exit", () => {
     render(<Account />)
 
     expect(await screen.findByText("가입 정보를 안전하게 저장하고 있어요. 이 화면을 잠시 그대로 두세요.")).toBeVisible()
+    await waitFor(() => expect(mocks.loadSetup).toHaveBeenCalled())
     expect(screen.queryByRole("button", { name: "합성 삭제 완료" })).not.toBeInTheDocument()
 
-    resolveSetup({ ok: true, ready: true, message: "준비됨" })
+    await act(async () => { resolveSetup({ ok: true, ready: true, message: "준비됨" }) })
     expect(await screen.findByRole("button", { name: "합성 삭제 완료" })).toBeVisible()
   })
 

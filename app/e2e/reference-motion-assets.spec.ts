@@ -69,8 +69,15 @@ test("confirmed save keeps the next action readable beside the small object", as
   await page.getByRole("button", { name: /^저장/ }).click()
   const result = page.locator(".journal-save-result")
   await expect(result).toBeVisible()
-  const illustration = result.locator('img[src$="journal-saved-v2.webp"]')
-  await expect.poll(() => illustration.evaluate(image => (image as HTMLImageElement).naturalWidth)).toBe(256)
+  const companion = result.locator('.companion-motion[data-motion="nod"]')
+  const illustration = companion.locator('img.companion-motion__poster[src$="otter-idle.webp"]')
+  await expect.poll(() => illustration.evaluate(image => (image as HTMLImageElement).naturalWidth)).toBeGreaterThan(0)
+  await expect(companion.locator(".companion-motion__frame")).toHaveCSS("width", "80px")
+  await expect(companion.locator(".companion-motion__frame")).toHaveCSS("height", "80px")
+  if (await page.evaluate(() => matchMedia("(prefers-reduced-motion: reduce)").matches)) {
+    await expect(companion).toHaveAttribute("data-playback", "still")
+    await expect(companion.locator(".companion-motion__atlas")).toHaveCount(0)
+  }
   await expect(result.getByRole("button", { name: "기록 보기", exact: true })).toHaveCSS("border-radius", "12px")
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   await page.screenshot({ path: info.outputPath("saved-result-375.png"), fullPage: true })
