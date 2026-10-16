@@ -6,12 +6,15 @@ import type { WorkoutNotationStyle } from "../domain/workout-notation"
 import { MEMO_PAPERS, downloadMemo, memoFileName, renderWorkoutMemoPng, type MemoPaper } from "../domain/workout-memo-export"
 import { onLocalJournalScopeChange } from "../domain/account/local-journal-ownership"
 import { WorkoutMemoSheet } from "./WorkoutMemoSheet"
+import { CompanionStampPicker } from "./CompanionStampPicker"
+import type { CompanionStamp } from "../domain/training-companions"
 import "../styles/workout-memo.css"
 
 export function WorkoutMemoTool({ session, date, state = "PREVIEW" }: { readonly session: WorkoutMemoSession } & WorkoutMemoContext) {
   const [wording, setWording] = React.useState<WorkoutNotationStyle>("PLAIN")
   const memo = React.useMemo(() => buildWorkoutMemo(session, { date, state }, wording), [session, date, state, wording])
   const [paper, setPaper] = React.useState<MemoPaper>("yellow")
+  const [stamp, setStamp] = React.useState<CompanionStamp | null>(null)
   const [group, setGroup] = React.useState<WorkoutMemoGroup>("brief")
   const [views, setViews] = React.useState<Record<WorkoutMemoGroup, WorkoutMemoView>>({ brief: "standard", detail: "method" })
   const view = views[group]
@@ -24,7 +27,7 @@ export function WorkoutMemoTool({ session, date, state = "PREVIEW" }: { readonly
   const lock = React.useRef(false), epoch = React.useRef(0)
   const png = React.useRef<{ key: string; blob: Blob } | null>(null)
   const text = presentation ? workoutMemoPresentationText(presentation) : ""
-  const key = `${view}:${wording}:${paper}:${text}`
+  const key = `${view}:${wording}:${paper}:${stamp?.animal ?? "none"}:${stamp?.pose ?? "none"}:${text}`
   React.useEffect(() => {
     epoch.current++; lock.current = false; png.current = null
     setBusy(false); setMessage(null); setFailed(false); setFallback(false); setInvalidated(false)
@@ -52,7 +55,7 @@ export function WorkoutMemoTool({ session, date, state = "PREVIEW" }: { readonly
         if (current()) setMessage("복사했어요.")
       } else {
         const cached = png.current?.key === key ? png.current.blob : null
-        const blob = cached ?? await renderWorkoutMemoPng(memo, paper, view)
+        const blob = cached ?? await renderWorkoutMemoPng(memo, paper, view, stamp)
         if (!current()) return
         png.current = { key, blob }
         const name = memoFileName(memo)
@@ -88,10 +91,11 @@ export function WorkoutMemoTool({ session, date, state = "PREVIEW" }: { readonly
     </div>
     <div id={panelId} hidden={!open}>
     {open && <div className="workout-memo-tool__body">
-      <WorkoutMemoSheet memo={presentation} paper={paper} />
+      <WorkoutMemoSheet memo={presentation} paper={paper} stamp={stamp} />
       <details className="workout-memo-tool__customization">
         <summary>표현·꾸미기</summary>
         <div className="workout-memo-tool__options">
+          <CompanionStampPicker value={stamp} onChange={setStamp} disabled={busy} />
           <div className="workout-memo-tool__layouts workout-memo-tool__subchoices app-choice-group" role="group" aria-label="메모 세부 보기">
             {WORKOUT_MEMO_VIEWS.filter(item => item.group === group).map(item => <button className="app-choice-control" key={item.id} type="button"
               aria-pressed={view === item.id} disabled={busy} onClick={() => setViews(previous => ({ ...previous, [group]: item.id }))}>{item.label}</button>)}
