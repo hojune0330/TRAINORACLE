@@ -2,7 +2,7 @@ import React from 'react'
 import { ArrowLeft, Pause, Trophy, Play, Save, RotateCcw } from 'lucide-react'
 import { newSoloPush, startSoloPush, advanceSoloPush, pushInput, pushSeriesPoints } from '../../domain/minigame/solo-push'
 import type { SoloPush } from '../../domain/minigame/solo-push'
-import { newSoloDefense, startDefenseWave, advanceSoloDefense, defenseInput, buyFacility, FACILITIES, DEFENSE_RULES, waveCount } from '../../domain/minigame/solo-defense'
+import { startDefenseWave, advanceSoloDefense, defenseInput, buyFacility, FACILITIES, DEFENSE_RULES, waveCount } from '../../domain/minigame/solo-defense'
 import type { SoloDefense, FacilityKind } from '../../domain/minigame/solo-defense'
 import { bestSoloRecord, loadSoloCheckpoint, readSoloRecords, saveSoloCheckpoint, storeSoloRecord } from '../../domain/minigame/solo-party-storage'
 import type { SoloRecord } from '../../domain/minigame/solo-party-storage'
@@ -17,6 +17,7 @@ import { loadSceneArt } from './scene-art'
 import { loadPartyArt } from './party-art'
 import { PartyIcon } from './PartyIcon'
 import { GameModeArtwork } from './GameModeArtwork'
+import { TowerDefense } from './TowerDefense'
 import { loadDefenseArt } from './defense-art'
 import { DefenseIcon } from './DefenseIcon'
 import { GameLeaveDialog } from './GameLeaveDialog'
@@ -32,6 +33,7 @@ const modes = ['push', 'survival', 'defense'] as const
 const members = [{ id: 'you', name: '나', ready: true, connected: true }, { id: 'bot', name: '연습 상대', ready: true, connected: true }]
 
 export function SoloParty({ onBack, onFriends }: { readonly onBack: () => void; readonly onFriends: () => void }) {
+  const [towerDefense, setTowerDefense] = React.useState(false)
   const current = React.useRef<Session | null>(null), runId = React.useRef(''), recorded = React.useRef(false)
   const [view, setView] = React.useState<Session | null>(null), [paused, setPaused] = React.useState(false)
   const [notice, setNotice] = React.useState(''), [saved, setSaved] = React.useState<ReturnType<typeof loadSoloCheckpoint>>(null)
@@ -72,7 +74,7 @@ export function SoloParty({ onBack, onFriends }: { readonly onBack: () => void; 
     else if (view.phase === 'finished' || (view.mode !== 'defense' && view.phase === 'ready')) menu()
     else pause()
   }
-  useTaskFlowBack({ enabled: true, onBack: requestBack })
+  useTaskFlowBack({ enabled: !towerDefense, onBack: requestBack })
   const action = React.useCallback((value?: 'jump' | 'dash') => {
     const s = current.current
     if (!s || paused) return
@@ -171,6 +173,7 @@ export function SoloParty({ onBack, onFriends }: { readonly onBack: () => void; 
   const time = view && view.mode !== 'defense' ? view.game.time : view?.time ?? 0
   const countdown = view && view.mode !== 'defense' ? Math.ceil(-view.game.time) : view?.phase === 'countdown' ? Math.ceil(view.countdown) : 0
   const point = (e: React.PointerEvent) => ({ x: e.clientX, y: e.clientY, time: performance.now() })
+  if (towerDefense) return <TowerDefense onBack={() => setTowerDefense(false)} />
   return <section className="treadmill-game solo-party" data-screen={playing ? 'play' : 'map'} data-phase={view?.phase ?? 'select'} data-solo-mode={mode}>
     <header className="treadmill-game__header">
       <button className="treadmill-game__icon" aria-label={view ? '종목 선택으로' : '러닝 투어로'} onClick={requestBack}><ArrowLeft size={20} /></button>
@@ -179,11 +182,11 @@ export function SoloParty({ onBack, onFriends }: { readonly onBack: () => void; 
     </header>
     {notice && <p className="solo-party__notice" role="status">{notice}</p>}
     {!view && <div className="solo-party__menu">
-      {saved && <button className="treadmill-game__cta" onClick={() => start(saved.state, saved.id)}><Play size={20} /> 디펜스 {saved.state.wave}웨이브 이어하기</button>}
-      <div className="solo-party__games">{modes.map(m => { const best = bestSoloRecord(records, m); return <button key={m} className="solo-party__mode" onClick={() => start(m === 'defense' ? newSoloDefense() : newSoloPush(m))}>
+      {saved && <button className="treadmill-game__cta" onClick={() => start(saved.state, saved.id)}><Play size={20} /> 이전 러닝 디펜스 {saved.state.wave}웨이브 이어하기</button>}
+      <div className="solo-party__games">{modes.map(m => { const best = bestSoloRecord(records, m); return <button key={m} className="solo-party__mode" onClick={() => m === 'defense' ? setTowerDefense(true) : start(newSoloPush(m))}>
         <GameModeArtwork mode={m} />
-        <span><strong>{titles[m]}</strong><span>{m !== 'defense' ? '컴퓨터와 90초 × 2라운드' : '시설을 짓고 지키는 최대 60초 × 3웨이브'}</span>
-          <small>{best ? m === 'survival' ? `최고 기록 · 낙하 ${best.falls} · 점프 회피 ${best.success}` : m === 'push' ? `최고 기록 · 시리즈 승점 ${best.wins}/4 · 밀어냄 ${best.success}` : `최고 기록 · 놓친 적 ${best.missed}/48 · 낙하 ${best.falls}` : m === 'survival' ? '연속 장애물 · 낙하 적은 순 · 서로 밀리지 않아요' : m === 'push' ? '트랙 → 커브 · 시간 끝까지 무한 리젠' : '직접 뛰며 밀치기 · 예산으로 시설 강화'}</small></span>
+        <span><strong>{m === 'defense' ? '타워 디펜스' : titles[m]}</strong><span>{m !== 'defense' ? '컴퓨터와 90초 × 2라운드' : '숲길 방어전 · 6웨이브 · 배치와 강화'}</span>
+          <small>{m === 'defense' ? '연사·포격·감속 · 기지 체력 20을 지키세요' : best ? m === 'survival' ? `최고 기록 · 낙하 ${best.falls} · 점프 회피 ${best.success}` : `최고 기록 · 시리즈 승점 ${best.wins}/4 · 밀어냄 ${best.success}` : m === 'survival' ? '연속 장애물 · 낙하 적은 순 · 서로 밀리지 않아요' : '트랙 → 커브 · 시간 끝까지 무한 리젠'}</small></span>
       </button> })}</div>
       <button className="treadmill-game__ghost" onClick={onFriends}>친구 파티</button>
       {records.length > 0 && <details className="solo-party__history"><summary>최근 도전 기록 {Math.min(5, records.length)}판</summary>
@@ -255,7 +258,7 @@ export function SoloParty({ onBack, onFriends }: { readonly onBack: () => void; 
       <p className="solo-party__comparison">{comparison}</p>
       <p role="status">{recordStatus}</p>
       {recordStatus.startsWith('기록을 저장하지') && <button className="treadmill-game__ghost" onClick={sync}>기록 저장 다시 시도</button>}
-      <button className="treadmill-game__cta" onClick={() => start(view.mode === 'defense' ? newSoloDefense() : newSoloPush(view.mode))}>같은 종목 새로 시작</button>
+      <button className="treadmill-game__cta" onClick={() => view.mode === 'defense' ? (menu(), setTowerDefense(true)) : start(newSoloPush(view.mode))}>같은 종목 새로 시작</button>
       {view.mode === 'defense' && <DefenseRecap reviews={reviews} expected={3} />}
       <button className="treadmill-game__ghost" onClick={menu}>다른 종목 고르기</button>
       <button className="treadmill-game__ghost" onClick={onFriends}>친구 파티</button>

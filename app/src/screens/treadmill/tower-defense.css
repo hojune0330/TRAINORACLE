@@ -1,0 +1,60 @@
+.treadmill-game.tower-defense { display: flex; flex-direction: column; max-width: 680px; margin: auto; padding-bottom: 24px; }
+.tower-defense > .treadmill-game__header { order: 0; position: sticky; top: 0; z-index: 6; background: var(--game-belt-dark); }
+.tower-defense .td-hud { order: 1; position: sticky; top: 64px; z-index: 5; }
+.tower-defense .td-board { order: 2; position: sticky; top: 128px; z-index: 4; }
+.tower-defense[data-phase="won"] .td-board,.tower-defense[data-phase="lost"] .td-board { position: relative; top: auto; }
+.tower-defense .td-build,.tower-defense .td-result,.tower-defense .td-intro { order: 3; }
+.tower-defense .td-wave { order: 4; }
+.tower-defense .td-notice { order: 5; }
+.tower-defense .td-panel { margin: 12px; padding: 16px; border: 2px solid var(--game-outline); border-radius: 16px; background: var(--game-panel); color: var(--game-ink); display: grid; gap: 12px; }
+.tower-defense h2 { margin: 0; font-size: 18px; line-height: 1.4; }
+.tower-defense p, .tower-defense ol { margin: 0; font-size: 14px; line-height: 1.65; }
+.tower-defense small { color: var(--game-ink-soft); font-size: 12px; line-height: 1.5; }
+.tower-defense button { cursor: pointer; min-height: 44px; touch-action: manipulation; }
+.tower-defense button:disabled { opacity: .5; cursor: default; }
+.tower-defense button:focus-visible { outline: 3px solid var(--game-gold-dark); outline-offset: 2px; }
+.td-intro-art { display: flex; justify-content: center; padding: 16px; background: var(--game-hill-near); border-radius: 12px; }
+.td-intro-art img { width: 80px; height: 80px; object-fit: contain; }
+.td-hud { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin: 8px 12px; padding: 8px; border: 2px solid var(--game-outline); border-radius: 12px; background: var(--game-panel); color: var(--game-ink); font-size: 13px; }
+.td-hud button { background: var(--game-gold); border: 2px solid var(--game-outline); border-radius: 8px; min-width: 44px; font-weight: 800; color: var(--game-ink); }
+.td-board { position: relative; margin: 0 8px; border: 3px solid var(--game-outline); border-radius: 14px; overflow: hidden; }
+.td-board svg { display: block; width: 100%; height: auto; }
+.td-grass { fill: var(--game-hill-near); }
+.td-road-edge { fill: none; stroke: var(--game-outline); stroke-width: 116px; stroke-linejoin: round; }
+.td-road { fill: none; stroke: var(--game-mud-light); stroke-width: 104px; stroke-linejoin: round; }
+.td-road-texture { fill: none; stroke: url(#td-dirt); stroke-width: 94px; stroke-linejoin: round; }
+.td-map-label,.td-level { fill: var(--game-ink); font-weight: 900; font-size: 40px; paint-order: stroke; stroke: var(--game-panel); stroke-width: 6px; }
+.td-level { font-size: 30px; }
+.td-gate { fill: var(--game-sky-top); stroke: var(--game-outline); stroke-width: 8px; }
+.td-foundation { fill: var(--game-panel); stroke: var(--game-outline); stroke-width: 6px; }
+.td-selected { stroke: var(--game-gold); stroke-width: 18px; }
+.td-range { fill: var(--game-sky-top); fill-opacity: .2; stroke: var(--game-panel); stroke-width: 6px; stroke-dasharray: 18 12; }
+.td-pad { position: absolute; transform: translate(-50%,-50%); width: 44px; height: 44px; padding: 0; border: 0; background: transparent; color: var(--game-ink); }
+.td-pad span { position: absolute; top: -5px; left: -3px; border: 1px solid var(--game-outline); border-radius: 50%; width: 18px; height: 18px; font-size: 11px; font-weight: 800; background: var(--game-panel); }
+.td-pad[aria-pressed="true"] span { background: var(--game-gold); }
+.td-enemy,.td-tower-rapid { fill: var(--game-hill-near); }
+.td-enemy-armored,.td-enemy-boss,.td-tower-cannon { fill: var(--game-danger); }
+.td-enemy-swift { fill: var(--game-gold); }
+.td-tower-frost { fill: var(--game-sky-top); }
+.td-frozen { fill: none; stroke: var(--game-sky-top); stroke-width: 8px; }
+.td-hp-back { fill: var(--game-outline); }
+.td-hp { fill: var(--game-good); }
+.td-shot line { stroke: var(--game-gold); stroke-width: 9px; }
+.td-shot circle { fill: var(--game-gold); fill-opacity: .5; }
+.td-shot-frost line,.td-shot-frost circle { stroke: var(--game-sky-top); fill: var(--game-sky-top); }
+.td-shot-cannon circle { fill: var(--game-danger); fill-opacity: .3; stroke: var(--game-gold); stroke-width: 5px; }
+.td-enemy-list { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; }
+.td-enemy-list span { display: flex; align-items: center; }
+.td-enemy-list img { width: 40px; height: 40px; object-fit: contain; }
+.td-shop { display: grid; gap: 8px; }
+.td-shop button,.td-upgrades button { border: 2px solid var(--game-outline); border-bottom-width: 4px; border-radius: 12px; background: var(--game-panel); color: var(--game-ink); padding: 8px; text-align: left; }
+.td-shop button { display: flex; align-items: center; gap: 8px; }
+.td-shop img { width: 52px; height: 52px; object-fit: contain; }
+.td-shop span,.td-upgrades button { display: grid; gap: 4px; }
+.td-upgrades { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.td-notice { margin: 12px!important; padding: 10px; border-radius: 8px; background: var(--game-panel); color: var(--game-ink); }
+.treadmill-game.td-dialog { display: none; min-height: 0; width: min(420px,calc(100vw - 32px)); max-height: 85dvh; overflow: auto; padding: 20px; border: 3px solid var(--game-outline); border-radius: 18px; background: var(--game-panel); color: var(--game-ink); }
+.treadmill-game.td-dialog[open] { display: block; }
+.td-dialog::backdrop { background: var(--game-outline); opacity: .65; }
+.td-dialog > * { margin-bottom: 16px; }
+.td-dialog button { display: block; width: 100%; min-height: 44px; }

@@ -1,7 +1,14 @@
 import { test, expect, type Page } from '@playwright/test'
 import type { SoloDefense } from '../src/domain/minigame/solo-defense'
+import { newSoloDefense } from '../src/domain/minigame/solo-defense'
 import type { SoloPush } from '../src/domain/minigame/solo-push'
-import { SOLO_CHECKPOINT_KEY, SOLO_RECORDS_KEY } from '../src/domain/minigame/solo-party-storage'
+import { SOLO_CHECKPOINT_KEY, SOLO_RECORDS_KEY, saveSoloCheckpoint } from '../src/domain/minigame/solo-party-storage'
+
+async function seedLegacyDefense(page: Page) {
+  let value = ''
+  saveSoloCheckpoint({getItem:()=>value,setItem:(_key,raw)=>{value=raw},removeItem:()=>{}},newSoloDefense(),'legacy-compatibility')
+  await page.addInitScript(({key,raw})=>{if(!sessionStorage.getItem('legacy-seeded')){localStorage.setItem(key,raw);sessionStorage.setItem('legacy-seeded','1')}},{key:SOLO_CHECKPOINT_KEY,raw:value})
+}
 
 test('solo survival finishes two rounds and saves jump achievements separately', async ({page}) => {
   await openParty(page)
@@ -36,11 +43,12 @@ async function freeze(page: Page) {
 const field = (page: Page) => page.locator('.solo-party canvas')
 const state = async (page: Page) => JSON.parse((await field(page).getAttribute('data-state'))!) as SoloDefense | SoloPush
 
-test('solo defense builds, handles continuous touch and pause, resumes a saved wave and records a full series', async ({ page }, info) => {
+test('legacy saved defense builds, handles continuous touch and pause, resumes a saved wave and records a full series', async ({ page }, info) => {
   const errors: string[] = [], sockets: string[] = []
   page.on('pageerror', e => errors.push(e.message)); page.on('websocket', s => sockets.push(s.url()))
+  await seedLegacyDefense(page)
   await openParty(page)
-  await page.getByRole('button', { name: /^러닝 디펜스/ }).click()
+  await page.getByRole('button', { name: '이전 러닝 디펜스 1웨이브 이어하기' }).click()
   await page.getByRole('button', { name: /^공 발사기 설치/ }).click()
   await expect(page.getByText('남은 예산 3개 · 변경 미확정')).toBeVisible()
   await page.getByRole('button', { name: '이번 변경 취소' }).click()
@@ -81,7 +89,7 @@ test('solo defense builds, handles continuous touch and pause, resumes a saved w
   const checkpoint = await page.evaluate(key => JSON.parse(localStorage.getItem(key)!), SOLO_CHECKPOINT_KEY)
   expect(checkpoint.wave).toBe(2); expect(checkpoint.facilities[1].kind).toBe('fan')
   await page.reload(); await openParty(page)
-  await page.getByRole('button', { name: '디펜스 2웨이브 이어하기' }).click()
+  await page.getByRole('button', { name: '이전 러닝 디펜스 2웨이브 이어하기' }).click()
   await expect(page.getByText(`남은 예산 ${checkpoint.budget}개`, { exact: true })).toBeVisible()
   await expect(page.getByLabel('웨이브별 결과')).toContainText('이어하기 전 웨이브는 합계만 남아 있어요')
   for (const wave of [2, 3]) {
@@ -99,7 +107,7 @@ test('solo defense builds, handles continuous touch and pause, resumes a saved w
   expect(await page.evaluate(key => localStorage.getItem(key), SOLO_CHECKPOINT_KEY)).toBeNull()
   await page.screenshot({ path: info.outputPath('defense-result-phone.png'), fullPage: true })
   await page.getByRole('button', { name: '다른 종목 고르기' }).click()
-  await expect(page.getByRole('button', { name: /^러닝 디펜스.*최고 기록/ })).toBeVisible()
+  await expect(page.getByRole('button', { name: /^타워 디펜스/ })).toBeVisible()
   await page.getByText('최근 도전 기록 1판', { exact: true }).click()
   await expect(page.locator('.solo-party__history')).toContainText(`막은 적 ${results[0].success}/48`)
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
@@ -139,9 +147,10 @@ test('small screens and missing art retain playable controls and readable naviga
     await page.emulateMedia({ reducedMotion: 'reduce' })
     await page.route('**/game/**', route => route.request().resourceType() === 'image' ? route.abort() : route.continue())
   } else await page.setViewportSize({ width: 320, height: 800 })
+  await seedLegacyDefense(page)
   await openParty(page)
   await page.screenshot({ path: info.outputPath('solo-selection.png'), fullPage: true })
-  await page.getByRole('button', { name: /^러닝 디펜스/ }).click()
+  await page.getByRole('button', { name: '이전 러닝 디펜스 1웨이브 이어하기' }).click()
   await page.getByRole('button', { name: /^공 발사기 설치/ }).click()
   await page.getByRole('button', { name: /^2번 칸/ }).click()
   await page.getByRole('button', { name: /^바람 장치 설치/ }).click()
