@@ -1,0 +1,312 @@
+{
+  "schemaVersion": 1,
+  "collection": "image-library-v1",
+  "date": "2026-10-16",
+  "sourceBaseline": "d9cbcceafb14201d82b1137976536107e71e0f01",
+  "producerModel": "gpt-6.1-sol",
+  "imageTool": "built-in image_gen",
+  "plannedCount": 30,
+  "tripoCallsThisBatch": 0,
+  "assets": [
+    {
+      "id": "td-rapid-tower",
+      "group": "defense",
+      "nameKo": "연사탑",
+      "role": "빠른 단일 공격 타워",
+      "file": "defense/td-rapid-tower.png",
+      "tripoStage": "1단계",
+      "status": "image-produced",
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "td-cannon-tower",
+      "group": "defense",
+      "nameKo": "포격탑",
+      "role": "장갑 대응·범위 공격 타워",
+      "file": "defense/td-cannon-tower.png",
+      "tripoStage": "1단계",
+      "status": "image-produced",
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "td-frost-tower",
+      "group": "defense",
+      "nameKo": "냉각탑",
+      "role": "감속 타워",
+      "file": "defense/td-frost-tower.png",
+      "tripoStage": "1단계",
+      "status": "image-produced",
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "td-rapid-tower-upgraded",
+      "group": "defense",
+      "nameKo": "강화 연사탑",
+      "role": "연사탑의 시각적 강화 구분",
+      "file": "defense/td-rapid-tower-upgraded.png",
+      "tripoStage": "2단계",
+      "status": "image-produced",
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "td-cannon-tower-upgraded",
+      "group": "defense",
+      "nameKo": "강화 포격탑",
+      "role": "포격탑의 시각적 강화 구분",
+      "file": "defense/td-cannon-tower-upgraded.png",
+      "tripoStage": "2단계",
+      "status": "image-produced",
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "td-frost-tower-upgraded",
+      "group": "defense",
+      "nameKo": "강화 냉각탑",
+      "role": "냉각탑의 시각적 강화 구분",
+      "file": "defense/td-frost-tower-upgraded.png",
+      "tripoStage": "2단계",
+      "status": "image-produced",
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "td-enemy-scout",
+      "group": "defense",
+      "nameKo": "정찰 적",
+      "role": "보통 적의 이동 표식",
+      "file": "defense/td-enemy-scout.png",
+      "tripoStage": "3단계",
+      "status": "image-produced",
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "td-enemy-swift",
+      "group": "defense",
+      "nameKo": "질주 적",
+      "role": "빠른 적의 이동 표식",
+      "file": "defense/td-enemy-swift.png",
+      "tripoStage": "3단계",
+      "status": "image-produced",
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "td-enemy-armored",
+      "group": "defense",
+      "nameKo": "장갑 적",
+      "role": "장갑 적의 방어 특성 표식",
+      "file": "defense/td-enemy-armored.png",
+      "tripoStage": "3단계",
+      "status": "image-produced",
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "td-enemy-boss",
+      "group": "defense",
+      "nameKo": "대장 적",
+      "role": "마지막 웨이브의 대형 적",
+      "file": "defense/td-enemy-boss.png",
+      "tripoStage": "3단계",
+      "status": "image-produced",
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "td-base-gate",
+      "group": "defense",
+      "nameKo": "기지 관문",
+      "role": "방어 목표·경로 출구",
+      "file": "defense/td-base-gate.png",
+      "tripoStage": "1단계",
+      "status": "image-produced",
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "td-build-pad",
+      "group": "defense",
+      "nameKo": "건설 받침",
+      "role": "타워 설치 지점",
+      "file": "defense/td-build-pad.png",
+      "tripoStage": "기존 도형 유지 가능",
+      "status": "image-produced",
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "world-tree-broadleaf",
+      "group": "world",
+      "nameKo": "둥근 나무",
+      "role": "전장·공원 주변 배경",
+      "file": "world/world-tree-broadleaf.png",
+      "tripoStage": "기존 모델 비교 후 결정",
+      "status": "image-produced",
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "world-rock-cluster",
+      "group": "world",
+      "nameKo": "바위 묶음",
+      "role": "길 가장자리 배경·장애물",
+      "file": "world/world-rock-cluster.png",
+      "tripoStage": "기존 모델 비교 후 결정",
+      "status": "image-produced",
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "world-road-barrier",
+      "group": "world",
+      "nameKo": "도로 차단봉",
+      "role": "러닝 장애물·경계",
+      "file": "world/world-road-barrier.png",
+      "tripoStage": "기존 모델 비교 후 결정",
+      "status": "image-produced",
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "world-jump-hurdle",
+      "group": "world",
+      "nameKo": "점프 허들",
+      "role": "넘을 수 있는 낮은 장애물",
+      "file": "world/world-jump-hurdle.png",
+      "tripoStage": "기존 모델 비교 후 결정",
+      "status": "image-produced",
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "world-bounce-pad",
+      "group": "world",
+      "nameKo": "점프 발판",
+      "role": "점프 장치·맵 표식",
+      "file": "world/world-bounce-pad.png",
+      "tripoStage": "2단계",
+      "status": "image-produced",
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "world-rotating-sweeper",
+      "group": "world",
+      "nameKo": "회전 장애물",
+      "role": "파티 경기의 움직이는 장애물",
+      "file": "world/world-rotating-sweeper.png",
+      "tripoStage": "2단계",
+      "status": "image-produced",
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "world-respawn-beacon",
+      "group": "world",
+      "nameKo": "리젠 표식",
+      "role": "친구 경기 복귀 지점",
+      "file": "world/world-respawn-beacon.png",
+      "tripoStage": "기존 모델 비교 후 결정",
+      "status": "image-produced",
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "world-short-bridge",
+      "group": "world",
+      "nameKo": "짧은 다리",
+      "role": "맵 구간 연결물",
+      "file": "world/world-short-bridge.png",
+      "tripoStage": "2단계",
+      "status": "image-produced",
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "world-mud-patch",
+      "group": "world",
+      "nameKo": "진흙 지형",
+      "role": "느려지는 지형 표식",
+      "file": "world/world-mud-patch.png",
+      "tripoStage": "2D 유지",
+      "status": "image-produced",
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "world-grass-island",
+      "group": "world",
+      "nameKo": "잔디 섬",
+      "role": "맵·스테이지 선택 오브젝트",
+      "file": "world/world-grass-island.png",
+      "tripoStage": "기존 모델 비교 후 결정",
+      "status": "image-produced",
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "fx-hit-burst",
+      "group": "fx",
+      "nameKo": "타격 섬광",
+      "role": "명중 순간 효과",
+      "file": "fx/fx-hit-burst.png",
+      "tripoStage": "2D 유지",
+      "status": "image-produced",
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "fx-cannon-blast",
+      "group": "fx",
+      "nameKo": "포격 폭발",
+      "role": "범위 공격 순간 효과",
+      "file": "fx/fx-cannon-blast.png",
+      "tripoStage": "2D 유지",
+      "status": "image-produced",
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "fx-frost-burst",
+      "group": "fx",
+      "nameKo": "냉각 파편",
+      "role": "감속 적용 순간 효과",
+      "file": "fx/fx-frost-burst.png",
+      "tripoStage": "2D 유지",
+      "status": "image-produced",
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "fx-dash-trail",
+      "group": "fx",
+      "nameKo": "대시 잔상",
+      "role": "러닝 가속 순간 효과",
+      "file": "fx/fx-dash-trail.png",
+      "tripoStage": "2D 유지",
+      "status": "image-produced",
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "fx-upgrade-burst",
+      "group": "fx",
+      "nameKo": "강화 섬광",
+      "role": "강화 적용 순간 효과",
+      "file": "fx/fx-upgrade-burst.png",
+      "tripoStage": "2D 유지",
+      "status": "image-produced",
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "reward-victory-medal",
+      "group": "fx",
+      "nameKo": "승리 메달",
+      "role": "경기 결과 이미지",
+      "file": "fx/reward-victory-medal.png",
+      "tripoStage": "2D 유지",
+      "status": "image-produced",
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "reward-star",
+      "group": "fx",
+      "nameKo": "완주 별",
+      "role": "완주 결과 이미지",
+      "file": "fx/reward-star.png",
+      "tripoStage": "2D 유지",
+      "status": "image-produced",
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "reward-treasure-chest",
+      "group": "fx",
+      "nameKo": "보상 상자",
+      "role": "게임 보상 안내 이미지",
+      "file": "fx/reward-treasure-chest.png",
+      "tripoStage": "후순위",
+      "status": "image-produced",
+      "runtimeIntegrated": false
+    }
+  ]
+}

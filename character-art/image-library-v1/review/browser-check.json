@@ -1,0 +1,19 @@
+{
+  "pass": true,
+  "url": "local-gallery",
+  "planned": 30,
+  "imagesLoaded": 30,
+  "filterCounts": {
+    "defense": 12,
+    "world": 10,
+    "fx": 8,
+    "first": 4
+  },
+  "dialog": true,
+  "focusReturn": true,
+  "backgroundToggle": true,
+  "mobileOverflow": false,
+  "narrowOverflow": false,
+  "errors": [],
+  "scope": "Asset gallery browser and readability review. No gameplay integration or Tripo conversion."
+}

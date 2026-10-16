@@ -1,0 +1,880 @@
+{
+  "schemaVersion": 1,
+  "plannedCount": 30,
+  "checkedCount": 30,
+  "pass": true,
+  "errors": [],
+  "assets": [
+    {
+      "id": "td-rapid-tower",
+      "file": "defense/td-rapid-tower.png",
+      "format": "PNG",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "e367b2f52e404cf2953382863ec5330bff27b574c81459c048f9cb634f900b63",
+      "bytes": 811215,
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "cornerAlpha": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "transparentPixels": 927765,
+      "transparentFraction": 0.59,
+      "visibleBoundsAlphaAbove16": [
+        186,
+        148,
+        1128,
+        1127
+      ],
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "td-cannon-tower",
+      "file": "defense/td-cannon-tower.png",
+      "format": "PNG",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "06749f095b03670d4d6b3fd47ebe9be9513e17adc41e84fba1864842af522e01",
+      "bytes": 876632,
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "cornerAlpha": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "transparentPixels": 848720,
+      "transparentFraction": 0.5397,
+      "visibleBoundsAlphaAbove16": [
+        159,
+        151,
+        1112,
+        1152
+      ],
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "td-frost-tower",
+      "file": "defense/td-frost-tower.png",
+      "format": "PNG",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "cbccbf6b4f4d426094eb7f8dce967a77e1d998d915bf0abe0f067fffa062d236",
+      "bytes": 699129,
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "cornerAlpha": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "transparentPixels": 1033595,
+      "transparentFraction": 0.6573,
+      "visibleBoundsAlphaAbove16": [
+        236,
+        120,
+        1019,
+        1159
+      ],
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "td-rapid-tower-upgraded",
+      "file": "defense/td-rapid-tower-upgraded.png",
+      "format": "PNG",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "04f54253f7c15de9ab84823b915e332fec3bb980d726acb0c8eea18b68ac1355",
+      "bytes": 924034,
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "cornerAlpha": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "transparentPixels": 844305,
+      "transparentFraction": 0.5369,
+      "visibleBoundsAlphaAbove16": [
+        143,
+        139,
+        1175,
+        1157
+      ],
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "td-cannon-tower-upgraded",
+      "file": "defense/td-cannon-tower-upgraded.png",
+      "format": "PNG",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "ba90345d194ff8ed70f2732b92e0e407b8cff565f1aea6a5500e53ad0138cf70",
+      "bytes": 909257,
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "cornerAlpha": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "transparentPixels": 815743,
+      "transparentFraction": 0.5188,
+      "visibleBoundsAlphaAbove16": [
+        152,
+        144,
+        1140,
+        1153
+      ],
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "td-frost-tower-upgraded",
+      "file": "defense/td-frost-tower-upgraded.png",
+      "format": "PNG",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "e20beb5fc6e5d902f773229be3d599517b55aa70b35186b628383fa39c7604b4",
+      "bytes": 727360,
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "cornerAlpha": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "transparentPixels": 1002571,
+      "transparentFraction": 0.6376,
+      "visibleBoundsAlphaAbove16": [
+        236,
+        99,
+        1021,
+        1186
+      ],
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "td-enemy-scout",
+      "file": "defense/td-enemy-scout.png",
+      "format": "PNG",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "31537750ea6cbf0df49bc7deddf6e969fbdd849161bb05fec19cd079cff5624b",
+      "bytes": 548632,
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "cornerAlpha": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "transparentPixels": 1144053,
+      "transparentFraction": 0.7275,
+      "visibleBoundsAlphaAbove16": [
+        203,
+        206,
+        1069,
+        1029
+      ],
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "td-enemy-swift",
+      "file": "defense/td-enemy-swift.png",
+      "format": "PNG",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "0e8152e1cded5e86d366547161c2eed38fb246149381e33f44026698ee14c2b8",
+      "bytes": 532285,
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "cornerAlpha": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "transparentPixels": 1220086,
+      "transparentFraction": 0.7759,
+      "visibleBoundsAlphaAbove16": [
+        218,
+        193,
+        1121,
+        1028
+      ],
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "td-enemy-armored",
+      "file": "defense/td-enemy-armored.png",
+      "format": "PNG",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "bfe84c40c7c1121ee1a60bc6e0c5b6059ba7a82a4e12df78280357f74200a295",
+      "bytes": 889483,
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "cornerAlpha": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "transparentPixels": 850944,
+      "transparentFraction": 0.5411,
+      "visibleBoundsAlphaAbove16": [
+        37,
+        160,
+        1232,
+        1097
+      ],
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "td-enemy-boss",
+      "file": "defense/td-enemy-boss.png",
+      "format": "PNG",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "ec7934acb6b0f91d4b59dd94931603c033ab959c415533dd50d09a20e2966f8a",
+      "bytes": 796763,
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "cornerAlpha": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "transparentPixels": 1002938,
+      "transparentFraction": 0.6378,
+      "visibleBoundsAlphaAbove16": [
+        163,
+        147,
+        1118,
+        1133
+      ],
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "td-base-gate",
+      "file": "defense/td-base-gate.png",
+      "format": "PNG",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "6c30284436435ec9e071c8816d7e1c2c988e74c4385b869b76ab14fb0a0bee5d",
+      "bytes": 622498,
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "cornerAlpha": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "transparentPixels": 1072846,
+      "transparentFraction": 0.6822,
+      "visibleBoundsAlphaAbove16": [
+        232,
+        201,
+        1078,
+        1140
+      ],
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "td-build-pad",
+      "file": "defense/td-build-pad.png",
+      "format": "PNG",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "85e9ba3d7ff81776787797cc6d1d402f2ab1b1e87b36a116e0c2d5ffa735f7bf",
+      "bytes": 724025,
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "cornerAlpha": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "transparentPixels": 962176,
+      "transparentFraction": 0.6119,
+      "visibleBoundsAlphaAbove16": [
+        111,
+        275,
+        1143,
+        1030
+      ],
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "world-tree-broadleaf",
+      "file": "world/world-tree-broadleaf.png",
+      "format": "PNG",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "0c5f9131b6db1f255e943f3c033768ededcbcc9966fc79c7c7c7e64183e328de",
+      "bytes": 838510,
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "cornerAlpha": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "transparentPixels": 889559,
+      "transparentFraction": 0.5657,
+      "visibleBoundsAlphaAbove16": [
+        90,
+        77,
+        1166,
+        1172
+      ],
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "world-rock-cluster",
+      "file": "world/world-rock-cluster.png",
+      "format": "PNG",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "54e57986ecdd63e585abcefbd3f5e104dcf0edde7b75ff7f10f06ae76bd2f3d0",
+      "bytes": 766388,
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "cornerAlpha": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "transparentPixels": 957314,
+      "transparentFraction": 0.6088,
+      "visibleBoundsAlphaAbove16": [
+        194,
+        154,
+        1108,
+        1100
+      ],
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "world-road-barrier",
+      "file": "world/world-road-barrier.png",
+      "format": "PNG",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "ddf78800bbefe8321b6305745958a62853adc861323b911fafb67e97c8a7b376",
+      "bytes": 670568,
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "cornerAlpha": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "transparentPixels": 1043285,
+      "transparentFraction": 0.6634,
+      "visibleBoundsAlphaAbove16": [
+        80,
+        165,
+        1186,
+        1125
+      ],
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "world-jump-hurdle",
+      "file": "world/world-jump-hurdle.png",
+      "format": "PNG",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "2c1ef71f1bf62d1dfb23d9e8ed4c99f855f8220a53167d9e91e0fa6a6dbadabb",
+      "bytes": 517162,
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "cornerAlpha": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "transparentPixels": 1196167,
+      "transparentFraction": 0.7607,
+      "visibleBoundsAlphaAbove16": [
+        99,
+        114,
+        1160,
+        1163
+      ],
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "world-bounce-pad",
+      "file": "world/world-bounce-pad.png",
+      "format": "PNG",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "4678c1017e41b3eb8ac7461af03c179ff2c612f7a3b652a190093cc43dc12c99",
+      "bytes": 903739,
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "cornerAlpha": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "transparentPixels": 856099,
+      "transparentFraction": 0.5444,
+      "visibleBoundsAlphaAbove16": [
+        43,
+        194,
+        1211,
+        1075
+      ],
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "world-rotating-sweeper",
+      "file": "world/world-rotating-sweeper.png",
+      "format": "PNG",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "9056a147a90ba1ab630134d40ce6948e00f628d8a35a4addef25424845a22e70",
+      "bytes": 456990,
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "cornerAlpha": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "transparentPixels": 1271440,
+      "transparentFraction": 0.8085,
+      "visibleBoundsAlphaAbove16": [
+        18,
+        287,
+        1242,
+        974
+      ],
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "world-respawn-beacon",
+      "file": "world/world-respawn-beacon.png",
+      "format": "PNG",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "b37d4f91bb356ae783f5536ae14bf72215d0209a848b72a56931965c95f342cc",
+      "bytes": 759108,
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "cornerAlpha": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "transparentPixels": 949766,
+      "transparentFraction": 0.604,
+      "visibleBoundsAlphaAbove16": [
+        174,
+        119,
+        1098,
+        1153
+      ],
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "world-short-bridge",
+      "file": "world/world-short-bridge.png",
+      "format": "PNG",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "55c3e9a51d7663beb8ee7360308655ed428adc2c0aabaf6ab319a43768aaf24c",
+      "bytes": 835234,
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "cornerAlpha": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "transparentPixels": 975203,
+      "transparentFraction": 0.6202,
+      "visibleBoundsAlphaAbove16": [
+        22,
+        135,
+        1215,
+        1096
+      ],
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "world-mud-patch",
+      "file": "world/world-mud-patch.png",
+      "format": "PNG",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "430fee325e79bc5532964db7fa664be3afb1a4f11b8d5e45de1eaec43da374ae",
+      "bytes": 682692,
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "cornerAlpha": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "transparentPixels": 960628,
+      "transparentFraction": 0.6109,
+      "visibleBoundsAlphaAbove16": [
+        27,
+        289,
+        1231,
+        973
+      ],
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "world-grass-island",
+      "file": "world/world-grass-island.png",
+      "format": "PNG",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "4b3d66e911131b532a9ecdcf3c6f4ac198560a504a9d6bce6f83d1ce31b848cd",
+      "bytes": 830279,
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "cornerAlpha": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "transparentPixels": 876146,
+      "transparentFraction": 0.5572,
+      "visibleBoundsAlphaAbove16": [
+        75,
+        130,
+        1178,
+        1135
+      ],
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "fx-hit-burst",
+      "file": "fx/fx-hit-burst.png",
+      "format": "PNG",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "d9a0a635304b4e6a39bb052462d309886ec4bcffe24a03ff65e45fa45c743d34",
+      "bytes": 719025,
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "cornerAlpha": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "transparentPixels": 1055922,
+      "transparentFraction": 0.6715,
+      "visibleBoundsAlphaAbove16": [
+        55,
+        45,
+        1198,
+        1148
+      ],
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "fx-cannon-blast",
+      "file": "fx/fx-cannon-blast.png",
+      "format": "PNG",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "7670a2746c4b6e7b11a47487b6df4bc4cd56bacaeaac556d7c7f8d61b36853bc",
+      "bytes": 901563,
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "cornerAlpha": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "transparentPixels": 782173,
+      "transparentFraction": 0.4974,
+      "visibleBoundsAlphaAbove16": [
+        74,
+        95,
+        1180,
+        1095
+      ],
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "fx-frost-burst",
+      "file": "fx/fx-frost-burst.png",
+      "format": "PNG",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "55603be54260f90b0b9c7d009de04ac1d6033c09c6f10b6e0cdbda23cfca96eb",
+      "bytes": 353351,
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "cornerAlpha": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "transparentPixels": 1371779,
+      "transparentFraction": 0.8723,
+      "visibleBoundsAlphaAbove16": [
+        108,
+        118,
+        1147,
+        1132
+      ],
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "fx-dash-trail",
+      "file": "fx/fx-dash-trail.png",
+      "format": "PNG",
+      "width": 1896,
+      "height": 830,
+      "mode": "RGBA",
+      "sha256": "eacc9e35bcf002595c22d2e44203cd2e521acab742d9d7cd45b24f11c428001d",
+      "bytes": 504249,
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "cornerAlpha": [
+        0,
+        0,
+        1,
+        0
+      ],
+      "transparentPixels": 1159585,
+      "transparentFraction": 0.7369,
+      "visibleBoundsAlphaAbove16": [
+        58,
+        195,
+        1850,
+        642
+      ],
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "fx-upgrade-burst",
+      "file": "fx/fx-upgrade-burst.png",
+      "format": "PNG",
+      "width": 1247,
+      "height": 1261,
+      "mode": "RGBA",
+      "sha256": "3c593c8de836b8dcfc59461380a1cabda66c7d9ad7e786991877d9d9d8e9cbdf",
+      "bytes": 562465,
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "cornerAlpha": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "transparentPixels": 1201148,
+      "transparentFraction": 0.7639,
+      "visibleBoundsAlphaAbove16": [
+        302,
+        60,
+        943,
+        1216
+      ],
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "reward-victory-medal",
+      "file": "fx/reward-victory-medal.png",
+      "format": "PNG",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "7867ffc7484b86486599a748fbaff20cb145f7f3ed3a6f721ef2d1c83ee818e2",
+      "bytes": 1045980,
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "cornerAlpha": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "transparentPixels": 696622,
+      "transparentFraction": 0.443,
+      "visibleBoundsAlphaAbove16": [
+        142,
+        55,
+        1111,
+        1202
+      ],
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "reward-star",
+      "file": "fx/reward-star.png",
+      "format": "PNG",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "7e0e5717a3d27cdf07b664eb4503f812f1c8eafc44832a64b97f27cd78d17b7e",
+      "bytes": 694865,
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "cornerAlpha": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "transparentPixels": 972787,
+      "transparentFraction": 0.6186,
+      "visibleBoundsAlphaAbove16": [
+        106,
+        132,
+        1148,
+        1080
+      ],
+      "runtimeIntegrated": false
+    },
+    {
+      "id": "reward-treasure-chest",
+      "file": "fx/reward-treasure-chest.png",
+      "format": "PNG",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "3f12bacc41822e617086f48bf2a9af4992714c4ef6c3996f27a77c85a0e67d3b",
+      "bytes": 1043171,
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "cornerAlpha": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "transparentPixels": 697260,
+      "transparentFraction": 0.4434,
+      "visibleBoundsAlphaAbove16": [
+        64,
+        131,
+        1207,
+        1124
+      ],
+      "runtimeIntegrated": false
+    }
+  ],
+  "scope": "Original file integrity, uniqueness, dimensions and alpha only. Visual readability is reviewed separately."
+}
