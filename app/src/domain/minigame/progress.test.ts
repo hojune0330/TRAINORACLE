@@ -15,7 +15,7 @@ const doc = (data: MinigameProgress) => ({ version: 3, state: "ACCOUNT_STATE", k
 describe("tour unlocks", () => {
   it("opens Seoul only, then each next city after a clear, then season 2 after Busan", () => {
     const fresh = emptyMinigameProgress()
-    expect(TOUR_CITIES.filter(item => cityUnlocked(fresh, item)).map(item => item.id)).toEqual(["seoul"])
+    expect(TOUR_CITIES.filter(item => cityUnlocked(fresh, item)).map(item => item.id)).toEqual(["seoul", "starlight"])
     expect(seasonUnlocked(fresh, "world")).toBe(false)
     const seoul = clear(fresh, "seoul")
     expect(cityUnlocked(seoul, city("daejeon"))).toBe(true)
@@ -34,6 +34,21 @@ describe("tour unlocks", () => {
     const failed = recordCityResult(emptyMinigameProgress(), "seoul", 0, 900)
     expect(failed).toEqual(emptyMinigameProgress())
     expect(cityUnlocked(failed, city("daejeon"))).toBe(false)
+  })
+  it("opens fantasy immediately without unlocking the city campaign or replacing its history", () => {
+    const old = clear(emptyMinigameProgress(), "seoul")
+    expect(seasonUnlocked(old, "fantasia")).toBe(true)
+    expect(cityUnlocked(old, city("starlight"))).toBe(true)
+    const won = recordCityResult(old, "starlight", 3, 0)
+    expect(won.cities.seoul).toEqual(old.cities.seoul)
+    expect(won.cities.starlight).toEqual({stars: 3, bestScore: 0, clears: 1})
+    expect(seasonUnlocked(won, "world")).toBe(false)
+    expect(cityUnlocked(won, city("tokyo"))).toBe(false)
+    expect(nextCity(won, "london")).toBeUndefined()
+    expect(nextCity(won, "starlight")).toBeUndefined()
+    expect(validateAccountMinigameProgressUpdate(doc(old), doc(won))).toBe(true)
+    const destructive = {...won, cities: {starlight: won.cities.starlight!}}
+    expect(validateAccountMinigameProgressUpdate(doc(old), doc(destructive))).toBe(false)
   })
   it("keeps the best stars and score, and counts clears", () => {
     let progress = recordCityResult(emptyMinigameProgress(), "seoul", 3, 1200)

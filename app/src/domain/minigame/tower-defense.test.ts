@@ -1,7 +1,7 @@
 import {describe,it,expect} from 'vitest'
-import {newTowerDefense,buildTower,upgradeTower,sellTower,startTowerWave,stepTowerDefense,TD_WAVES,TD_LENGTH,TD_EVENT_LIMIT,routePoint} from './tower-defense'
+import {newTowerDefense,buildTower,upgradeTower,sellTower,startTowerWave,stepTowerDefense,TD_WAVES,TD_LENGTH,TD_EVENT_LIMIT,routePoint,getTDMap,getTDWaveEntry} from './tower-defense'
 import type {TowerDefense,Enemy,EnemyKind,TowerKind} from './tower-defense'
-import {saveTD,loadTD,recordTD,readTDRecords,TD_SAVE,TD_RECORDS} from './tower-defense-storage'
+import {saveTD,loadTD,recordTD,readTDRecords,TD_SAVE,TD_RECORDS,tdSaveKey} from './tower-defense-storage'
 const wave=(s:TowerDefense)=>{expect(startTowerWave(s)).toBe(true);let n=0;while(s.phase==='wave'&&n++<12000)stepTowerDefense(s,1/60);expect(n).toBeLessThan(12000)}
 const storage=()=>{const data=new Map<string,string>();return {getItem:(k:string)=>data.get(k)??null,setItem:(k:string,v:string)=>{data.set(k,v)},removeItem:(k:string)=>{data.delete(k)}}}
 describe('classic tower defense',()=>{
@@ -29,6 +29,89 @@ describe('classic tower defense',()=>{
  it('does not advance while prepared, after defeat, or with invalid dt',()=>{const s=newTowerDefense();stepTowerDefense(s,1);expect(s.time).toBe(0);startTowerWave(s);stepTowerDefense(s,NaN);stepTowerDefense(s,-1);expect(s.time).toBe(0);expect(routePoint(TD_LENGTH)).toEqual({x:12,y:8})})
  it('saves and restores real economy and upgrades without affecting legacy saves',()=>{const store=storage(),s=newTowerDefense();store.setItem('trainoracle.solo-party.checkpoint.v2','legacy');buildTower(s,1,'rapid');upgradeTower(s,1,'reach');wave(s);saveTD(store,s,'run');const loaded=loadTD(store)!;expect(loaded.state.gold).toBe(s.gold);expect(loaded.state.towers[0]?.branch).toBe('reach');expect(loaded.state.phase).toBe('prepare');expect(store.getItem('trainoracle.solo-party.checkpoint.v2')).toBe('legacy');startTowerWave(s);expect(()=>saveTD(store,s,'run')).toThrow()})
  it('preserves malformed storage and records results only once',()=>{const store=storage(),s=newTowerDefense();store.setItem(TD_SAVE,'broken');expect(()=>saveTD(store,s,'run')).toThrow();expect(store.getItem(TD_SAVE)).toBe('broken');s.phase='lost';s.lives=0;recordTD(store,s,'run');recordTD(store,s,'run');expect(readTDRecords(store)).toHaveLength(1);expect(store.getItem(TD_SAVE)).toBe('broken');store.setItem(TD_RECORDS,'invalid');expect(()=>recordTD(store,s,'other')).toThrow();expect(store.getItem(TD_RECORDS)).toBe('invalid')})
+})
+
+describe('separate, larger defense worlds',()=>{
+ it('sells only the selected tower and preserves other towers and their investment',()=>{
+  const s=newTowerDefense('starlight');buildTower(s,1,'rapid');buildTower(s,2,'cannon')
+  const cannon=s.towers[1];expect(sellTower(s,1)).toBe(true)
+  expect(s.gold).toBe(49);expect(s.towers).toEqual([cannon]);expect(sellTower(s,1)).toBe(false)
+  expect(sellTower(s,2)).toBe(true);expect(s.gold).toBe(126);expect(s.towers).toHaveLength(0)
+ })
+ it('keeps the original map as the default and uses real world units for the new map',()=>{
+  const legacy=newTowerDefense(),fresh=newTowerDefense('starlight'),map=getTDMap(fresh)
+  expect(getTDMap(legacy).id).toBe('forest');expect(legacy.mapId).toBeUndefined()
+  expect(routePoint(TD_LENGTH)).toEqual({x:12,y:8});expect(getTDMap().pads).toHaveLength(8)
+  expect(map.bounds).toEqual({width:24,height:16});expect(map.pads).toHaveLength(14)
+  expect(map.length).toBe(40.5);expect(routePoint(map.length,fresh.mapId)).toEqual({x:24,y:12})
+  expect(map.regions.map(r=>r.id)).toEqual(['spring','bridge','gate'])
+  expect(buildTower(legacy,13,'rapid')).toBe(false);expect(buildTower(fresh,13,'rapid')).toBe(true)
+ })
+ it('announces relay entrances before combat and spawns there while leaving legacy waves unchanged',()=>{
+  const s=newTowerDefense('starlight');s.wave=2
+  expect(getTDWaveEntry(s)).toMatchObject({wave:3,distance:14.5,position:{x:10,y:8},regionId:'bridge'})
+  startTowerWave(s);expect(getTDWaveEntry(s)).toMatchObject({wave:3,distance:14.5})
+  advance(s,.55);expect(s.enemies[0]!.distance).toBeGreaterThan(14.5);expect(s.enemies[0]!.distance).toBeLessThan(15)
+  const old=newTowerDefense();old.wave=4;expect(getTDWaveEntry(old)).toMatchObject({wave:5,distance:0,position:{x:0,y:2}})
+  s.phase='prepare';s.wave=4;expect(getTDWaveEntry(s)).toMatchObject({wave:5,distance:29.5,position:{x:16,y:9},regionId:'gate'})
+ })
+ it('requires moving investment beyond the first region and permits a legal six-wave relay defense',()=>{
+  const held=newTowerDefense('starlight');buildTower(held,1,'rapid');buildTower(held,2,'cannon');wave(held)
+  buildTower(held,0,'frost');wave(held);upgradeTower(held,2,'power');wave(held)
+  expect(held.phase).toBe('lost');expect(held.wave).toBe(3);expect(held.kills).toBe(20);expect(held.leaks).toBe(10)
+
+  const s=newTowerDefense('starlight');let spent=0,refunded=0,earned=0
+  const action=(perform:()=>boolean)=>{const before=s.gold;expect(perform()).toBe(true);const cost=before-s.gold;if(cost>0)spent+=cost;else refunded-=cost;expect(s.gold).toBeGreaterThanOrEqual(0)}
+  action(()=>buildTower(s,1,'rapid'));action(()=>buildTower(s,2,'cannon'))
+  for(let i=0;i<6;i++){
+   if(i===1)action(()=>upgradeTower(s,1,'power'))
+   if(i===2){action(()=>sellTower(s,1));action(()=>sellTower(s,2));action(()=>buildTower(s,4,'rapid'));action(()=>buildTower(s,5,'cannon'));action(()=>upgradeTower(s,5,'power'))}
+   if(i===3){action(()=>buildTower(s,7,'frost'));action(()=>upgradeTower(s,5,'power'))}
+   if(i===4){action(()=>sellTower(s,4));action(()=>sellTower(s,5));action(()=>sellTower(s,7));action(()=>buildTower(s,10,'rapid'));action(()=>buildTower(s,11,'cannon'));action(()=>buildTower(s,9,'frost'));action(()=>upgradeTower(s,11,'power'));action(()=>upgradeTower(s,11,'power'));action(()=>upgradeTower(s,10,'power'))}
+   if(i===5){action(()=>upgradeTower(s,10,'power'));action(()=>buildTower(s,12,'cannon'))}
+   const beforeWave=s.gold;wave(s);earned+=s.gold-beforeWave
+  }
+  expect(s.phase).toBe('won');expect(s.kills).toBe(100);expect(s.leaks).toBe(0)
+  expect(s.lives).toBe(20);expect(s.time).toBeCloseTo(133.75,1)
+  expect(refunded).toBe(523);expect(spent).toBe(1521)
+  expect(s.gold).toBe(492);expect(s.gold).toBe(180+earned+refunded-spent)
+ })
+ it('continues past the legacy exit and leaks only at the new map exit',()=>{
+  const s=newTowerDefense('starlight');startTowerWave(s);s.spawned=TD_WAVES[0]!.units.length
+  s.enemies=[enemy(100,'scout',TD_LENGTH+.2)];stepTowerDefense(s,.1)
+  expect(s.lives).toBe(20);expect(s.enemies).toHaveLength(1);expect(s.leaks).toBe(0)
+  s.enemies[0]!.distance=getTDMap(s).length-.001;stepTowerDefense(s,1/60)
+  expect(s.lives).toBe(19);expect(s.leaks).toBe(1)
+  expect(s.events?.find(e=>e.type==='leak')?.position).toEqual({x:24,y:12})
+ })
+ it('fires and lands projectiles on a remote pad using the new path coordinates',()=>{
+  const s=newTowerDefense('starlight');buildTower(s,11,'cannon');startTowerWave(s)
+  s.spawned=TD_WAVES[0]!.units.length;s.enemies=[enemy(100,'armored',35,105)]
+  stepTowerDefense(s,1/60)
+  expect(s.shots[0]?.from).toEqual(getTDMap(s).pads[11]);expect(s.shots[0]?.to.x).toBe(20)
+  advance(s,.4);expect(s.enemies[0]!.hp).toBe(75)
+  const event=s.events?.find(e=>e.type==='hit');expect(event?.position.x).toBe(20);expect(event?.position.y).toBeGreaterThan(10.5)
+ })
+ it('retains both map checkpoints and their results even when run ids happen to match',()=>{
+  const store=storage(),old=newTowerDefense(),fresh=newTowerDefense('starlight')
+  buildTower(old,1,'rapid');upgradeTower(old,1,'reach');buildTower(fresh,13,'rapid');upgradeTower(fresh,13,'reach')
+  saveTD(store,old,'same-id');const legacyBytes=store.getItem(TD_SAVE)
+  saveTD(store,fresh,'same-id')
+  expect(store.getItem(TD_SAVE)).toBe(legacyBytes);expect(loadTD(store)!.state.mapId).toBeUndefined()
+  expect(loadTD(store,'starlight')!.state).toMatchObject({mapId:'starlight',gold:50,towers:[{pad:13,level:2,branch:'reach'}]})
+  fresh.phase='lost';fresh.lives=0;recordTD(store,fresh,'same-id');recordTD(store,fresh,'same-id')
+  expect(readTDRecords(store,'starlight')).toHaveLength(1);expect(readTDRecords(store)).toHaveLength(0)
+  expect(loadTD(store,'starlight')).toBeNull();expect(store.getItem(TD_SAVE)).toBe(legacyBytes)
+ })
+ it('rejects unknown maps, wrong slots and new-only pads in a legacy checkpoint without changing bytes',()=>{
+  const store=storage(),fresh=newTowerDefense('starlight');buildTower(fresh,13,'rapid');saveTD(store,fresh,'fresh')
+  const key=tdSaveKey('starlight'),saved=store.getItem(key)!,parsed=JSON.parse(saved)
+  store.setItem(key,JSON.stringify({...parsed,mapId:'future-map'}));const unknown=store.getItem(key)
+  expect(()=>loadTD(store,'starlight')).toThrow();expect(()=>saveTD(store,fresh,'replace')).toThrow();expect(store.getItem(key)).toBe(unknown)
+  store.setItem(key,JSON.stringify({...parsed,mapId:undefined,towers:[]}));expect(()=>loadTD(store,'starlight')).toThrow()
+  store.setItem(TD_SAVE,JSON.stringify({...parsed,mapId:undefined}));const invalidLegacy=store.getItem(TD_SAVE)
+  expect(()=>loadTD(store)).toThrow();expect(store.getItem(TD_SAVE)).toBe(invalidLegacy)
+ })
 })
 
 const advance=(s:TowerDefense,seconds:number)=>{for(let i=0;i<Math.ceil(seconds*60);i++)stepTowerDefense(s,1/60)}

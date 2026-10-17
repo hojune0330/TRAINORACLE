@@ -1,0 +1,249 @@
+{
+  "createdUtc": "2026-10-17T01:00:02.402145+00:00",
+  "generator": "Existing paid Tripo source + original local Blender construction",
+  "newTripoTasks": 0,
+  "newCredits": 0,
+  "liveStudioBalanceQueried": false,
+  "sourcesUnchanged": true,
+  "assets": [
+    {
+      "id": "gate",
+      "file": "gate.webp",
+      "size": [
+        512,
+        512
+      ],
+      "aspectRatio": 1,
+      "origin": [
+        0.5,
+        0.78
+      ],
+      "pathAlignmentOrigin": [
+        0.5,
+        0.78
+      ],
+      "pathAlignmentNote": "Ground-plane centre; landmark is decorative unless gameplay explicitly defines interaction.",
+      "alphaBounds": [
+        30,
+        112,
+        482,
+        427
+      ],
+      "bytes": 63696,
+      "sha256": "00a202e19b5d15937a37086daa6f30000d715cdfeaaf41b3e6eeb6debbbb26cd",
+      "source": "character-art/defense-v4/working/finish-gate.glb",
+      "originalSource": "character-art/defense-v4/sources/finish-gate.glb",
+      "originalSha256": "74c3638a9900e9e7ea0592061d2bd0f65ca2e9c2969c95676db51ab247ca66df",
+      "originalTaskId": "ee1027bd-13c1-4127-843f-78f1a4915bb2",
+      "workingGLB": "character-art/fantasy-world-v1/working/gate.glb",
+      "workingGLBBytes": 126572,
+      "workingGLBSha256": "913cab5876ad6b12553533feb11f241f407de6eec1d94d694b766454a85809f3",
+      "triangles": 3080,
+      "authoring": "character-art/fantasy-world-v1/gate.blend",
+      "renderOrthoSpan": 3.211729634891857,
+      "worldBounds": [
+        [
+          -1.413161039352417,
+          -0.5899999737739563,
+          0.0
+        ],
+        [
+          1.413161039352417,
+          0.5206075310707092,
+          2.450000047683716
+        ]
+      ],
+      "cameraMatrix": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.7399400472640991,
+          -0.6726728081703186,
+          -5.533679008483887
+        ],
+        [
+          0.0,
+          0.6726728081703186,
+          0.7399400472640991,
+          7.423928260803223
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "shadow": "No ground-plane shadow baked; draw a separate contact shadow if required.",
+      "physics": "Alpha bounds and image padding are not collision geometry."
+    },
+    {
+      "id": "crystal",
+      "file": "crystal.webp",
+      "size": [
+        512,
+        512
+      ],
+      "aspectRatio": 1,
+      "origin": [
+        0.5,
+        0.78
+      ],
+      "pathAlignmentOrigin": [
+        0.5,
+        0.78
+      ],
+      "pathAlignmentNote": "Ground-plane centre; landmark is decorative unless gameplay explicitly defines interaction.",
+      "alphaBounds": [
+        29,
+        61,
+        476,
+        477
+      ],
+      "bytes": 70754,
+      "sha256": "c9c2410f6c0316a00c7f125932ba4d14f93c5f8c0fdd2067d072a452b1e62467",
+      "source": "character-art/run-party-v2/working/upgrade-core.glb",
+      "originalSource": "character-art/run-party-v2/sources/upgrade-core.glb",
+      "originalSha256": "7dd4ba337842def9d9e15fc51d41626558763a894a9c528ae4a41ac552d3474c",
+      "originalTaskId": "07c2704f-a238-4cc1-bd40-8a70043a4b6a",
+      "workingGLB": "character-art/fantasy-world-v1/working/crystal.glb",
+      "workingGLBBytes": 108228,
+      "workingGLBSha256": "59d6687dc988e3cfe5c31226b0fd5591b2091377254cb0856d88ba4f2d50dced",
+      "triangles": 2984,
+      "authoring": "character-art/fantasy-world-v1/crystal.blend",
+      "renderOrthoSpan": 1.9208332354372197,
+      "worldBounds": [
+        [
+          -0.8451666235923767,
+          -0.4737495183944702,
+          0.0
+        ],
+        [
+          0.8208460807800293,
+          0.4737495183944702,
+          1.75
+        ]
+      ],
+      "cameraMatrix": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.7399400472640991,
+          -0.6726728081703186,
+          -5.801131248474121
+        ],
+        [
+          0.0,
+          0.6726728081703186,
+          0.7399400472640991,
+          7.180789947509766
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "shadow": "No ground-plane shadow baked; draw a separate contact shadow if required.",
+      "physics": "Alpha bounds and image padding are not collision geometry."
+    },
+    {
+      "id": "bridge",
+      "file": "bridge.webp",
+      "size": [
+        512,
+        512
+      ],
+      "aspectRatio": 1,
+      "origin": [
+        0.5,
+        0.78
+      ],
+      "pathAlignmentOrigin": [
+        0.5,
+        0.615971
+      ],
+      "pathAlignmentNote": "Use this origin when a ground-plane path must visually meet the raised central walking surface.",
+      "alphaBounds": [
+        31,
+        232,
+        482,
+        458
+      ],
+      "bytes": 53694,
+      "sha256": "18218a2968312b32afb0551aad5ad8bc31b89867a0d3149497a077fd076cc59d",
+      "source": "character-art/scenery/seoul-v1/sources/rock.fbx",
+      "originalSource": "character-art/scenery/seoul-v1/sources/rock.fbx",
+      "originalSha256": "96e651bae0e71a353bcb8c5c944dbf765a8aed6ad437142e4163cc2465ff2392",
+      "originalTaskId": "23168032-2c39-4dbe-a29b-17ae6c143fcd",
+      "workingGLB": "character-art/fantasy-world-v1/working/bridge.glb",
+      "workingGLBBytes": 474344,
+      "workingGLBSha256": "738ad0574f7a7d6c76f1799f01433cd1526a0c02f7ea6040f5c3d7eb9178d5d5",
+      "triangles": 14052,
+      "authoring": "character-art/fantasy-world-v1/bridge.blend",
+      "renderOrthoSpan": 3.9143497293645684,
+      "worldBounds": [
+        [
+          -1.7118266820907593,
+          -0.675000011920929,
+          -0.009969314560294151
+        ],
+        [
+          1.7223138809204102,
+          0.675000011920929,
+          1.1734068393707275
+        ]
+      ],
+      "cameraMatrix": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.7399400472640991,
+          -0.6726728081703186,
+          -5.388107776641846
+        ],
+        [
+          0.0,
+          0.6726728081703186,
+          0.7399400472640991,
+          7.556265830993652
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "shadow": "No ground-plane shadow baked; draw a separate contact shadow if required.",
+      "physics": "Alpha bounds and image padding are not collision geometry."
+    }
+  ],
+  "scripts": [
+    {
+      "file": "tools/bake.py",
+      "sha256": "387ca14a5cd7f087b391d2db0883d62374797e4874b6f73373456972951c809a"
+    },
+    {
+      "file": "tools/pack.py",
+      "sha256": "d8179cf39733f5b23ad98035aea7bcc16b8beb94fdd30a7f7af904143a7a3aa7"
+    }
+  ],
+  "scope": "Rendered and visually inspected local assets. Runtime placement, gameplay and deployment are separate."
+}

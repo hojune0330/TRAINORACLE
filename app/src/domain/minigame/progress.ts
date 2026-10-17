@@ -102,6 +102,8 @@ export function cityCleared(progress: MinigameProgress, cityId: string): boolean
 
 /** A season opens when the previous season's last city is cleared. */
 export function seasonUnlocked(progress: MinigameProgress, season: TourSeasonId): boolean {
+  // The shared fantasy world is an independent entry, not a reward for the city campaign.
+  if (season === "fantasia") return true
   const index = TOUR_SEASONS.findIndex(item => item.id === season)
   if (index <= 0) return index === 0
   const previous = TOUR_CITIES.filter(city => city.season === TOUR_SEASONS[index - 1]!.id)
@@ -119,6 +121,7 @@ export function cityUnlocked(progress: MinigameProgress, city: TourCity): boolea
 export function nextCity(progress: MinigameProgress, cityId: string): TourCity | undefined {
   const index = TOUR_CITIES.findIndex(city => city.id === cityId)
   const next = TOUR_CITIES[index + 1]
+  if (next?.season === "fantasia" && TOUR_CITIES[index]?.season !== "fantasia") return undefined
   return next && cityUnlocked(progress, next) ? next : undefined
 }
 

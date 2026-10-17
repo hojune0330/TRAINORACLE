@@ -15,7 +15,7 @@ import type { TreadmillCommand, TreadmillStage, TreadmillState, TreadmillUpgrade
 import { TOUR_CITIES, tourStages } from "../domain/minigame/tour"
 import type { TourCity, TourSeasonId } from "../domain/minigame/tour"
 import {
-  MINIGAME_CHARACTERS, activeCharacter, characterUnlocked, medalsOf, nextCity, recordCityResult, seasonUnlocked, updateMinigameSettings, withMedals,
+  MINIGAME_CHARACTERS, activeCharacter, characterUnlocked, cityUnlocked, medalsOf, nextCity, recordCityResult, seasonUnlocked, updateMinigameSettings, withMedals,
 } from "../domain/minigame/progress"
 import { buyTrail, equipTrail, medalForRun, runMedalsLeftToday, MINIGAME_REWARD_RULES } from "../domain/minigame/rewards"
 import type { MinigameProgress } from "../domain/minigame/progress"
@@ -25,6 +25,7 @@ import type { RenderView } from "./treadmill/draw"
 import { drawRunner } from "./treadmill/sprites"
 import { loadToriArt } from "./treadmill/runner-art"
 import { loadSceneArt } from "./treadmill/scene-art"
+import { loadFantasyArt } from "./treadmill/fantasy-art"
 import { loadPartyArt } from "./treadmill/party-art"
 import { PartyEffect } from "./treadmill/PartyEffect"
 import { GameLounge } from "./treadmill/GameLounge"
@@ -101,24 +102,29 @@ function unlocksBetween(before: MinigameProgress, after: MinigameProgress): stri
 }
 
 export function TreadmillGame({ onBack, backLabel = "더보기로 돌아가기" }: { readonly onBack: () => void; readonly backLabel?: string }) {
-  return <GameLounge onBack={onBack} backLabel={backLabel} renderTour={back => <SoloTreadmillGame onBack={back} backLabel="게임 소개로" />} />
+  return <GameLounge onBack={onBack} backLabel={backLabel} renderTour={(back, cityId, onDefense) => <SoloTreadmillGame onBack={back} backLabel="게임 소개로" initialCityId={cityId} onDefense={onDefense} />} />
 }
 
-function SoloTreadmillGame({ onBack, backLabel }: { readonly onBack: () => void; readonly backLabel: string }) {
+function SoloTreadmillGame({ onBack, backLabel, initialCityId, onDefense }: { readonly onBack: () => void; readonly backLabel: string; readonly initialCityId?: string; readonly onDefense?: () => void }) {
   const store = useMinigameProgress()
   const saved = useSavedRun()
   const [leave, setLeave] = React.useState<null | { title: string; detail: string; action: () => void; canSave: boolean; replaceSaved: boolean; returnToRun: boolean }>(null)
   const { progress } = store
   const settings = progress.settings
   const character = activeCharacter(progress)
+  const initialCity = initialCityId ? tourCity(initialCityId) : undefined
+  const entryCity = initialCity && cityUnlocked(progress, initialCity) ? initialCity : undefined
   React.useEffect(() => {
     if (character === "tori") void loadToriArt()
     void loadSceneArt()
     void loadPartyArt()
   }, [character])
-  const [screen, setScreen] = React.useState<Screen>("map")
-  const [course, setCourse] = React.useState<Course>({ kind: "city", city: TOUR_CITIES[0]! })
-  const [season, setSeason] = React.useState<TourSeasonId>(() => seasonUnlocked(progress, "world") ? "world" : "korea")
+  const [screen, setScreen] = React.useState<Screen>(() => entryCity ? "play" : "map")
+  const [course, setCourse] = React.useState<Course>(() => ({ kind: "city", city: entryCity ?? TOUR_CITIES[0]! }))
+  React.useEffect(() => {
+    if (course.kind === "city" && course.city.id === "starlight") void loadFantasyArt()
+  }, [course])
+  const [season, setSeason] = React.useState<TourSeasonId>(() => entryCity?.season ?? (seasonUnlocked(progress, "world") ? "world" : "korea"))
   const [menuOpen, setMenuOpen] = React.useState(false)
   const [pauseReason, setPauseReason] = React.useState("직접 일시정지했어요.")
   const [menuTab, setMenuTab] = React.useState<"settings" | "shop">("settings")
@@ -262,7 +268,7 @@ function SoloTreadmillGame({ onBack, backLabel }: { readonly onBack: () => void;
   }, [command, settle, screen])
 
   // Optional WebGPU sky, only with high effects. Absent or failed => the 2D canvas paints its own sky.
-  const wantShader = screen === "play" && settings.effects === "high"
+  const wantShader = screen === "play" && settings.effects === "high" && city?.season !== "fantasia"
   React.useEffect(() => {
     const skyElement = skyCanvas.current, container = surface.current
     if (!wantShader || !skyElement || !container) return
@@ -286,7 +292,17 @@ function SoloTreadmillGame({ onBack, backLabel }: { readonly onBack: () => void;
   const total = treadmillCourseSeconds(view)
   const elapsed = Math.min(total, Math.floor(treadmillElapsed(view)))
   const focusField = () => canvas.current?.focus({ preventScroll: true })
-  const start = () => { setResult(null); command({ type: "start", stages: courseStages(course) }); playGameSound("tap", settings.sound); focusField() }
+  const begin = () => { setResult(null); command({ type: "start", stages: courseStages(course) }); playGameSound("tap", settings.sound); focusField() }
+  const start = () => {
+    // Direct world entry shows a ready screen without silently discarding another saved run.
+    if (saved.slot.raw !== null) {
+      saved.clearError()
+      setLeave({ title: "저장한 판 대신 새로 시작할까요?", detail: "중간 저장한 판만 지워요. 완주 기록과 모은 별은 유지돼요.",
+        action: begin, canSave: false, replaceSaved: true, returnToRun: false })
+      return
+    }
+    begin()
+  }
   const resume = () => { command({ type: "resume" }); focusField() }
   const inProgress = screen === "play" && ["running", "paused", "upgrade"].includes(view.mode)
   React.useEffect(() => {
@@ -308,6 +324,7 @@ function SoloTreadmillGame({ onBack, backLabel }: { readonly onBack: () => void;
 
   const openCourse = (next: Course) => {
     setCourse(next); setResult(null)
+    if (next.kind === "city") setSeason(next.city.season)
     state.current = newTreadmillRun(courseStages(next)); setView(state.current)
     setScreen("play"); playGameSound("tap", settings.sound)
   }
@@ -507,7 +524,7 @@ function SoloTreadmillGame({ onBack, backLabel }: { readonly onBack: () => void;
 
       {view.mode === "ready" && <div className="treadmill-game__overlay">
         <section className="treadmill-game__card" aria-labelledby="treadmill-ready-title" data-first={firstTime || undefined}>
-          <span className="treadmill-game__ribbon">{city ? `${city.country} · ${TOUR_CITIES.indexOf(city) + 1}번째 도시` : `연습 · ${total}초`}</span>
+          <span className="treadmill-game__ribbon">{city?.season === "fantasia" ? `판타지 러닝 · ${total}초` : city ? `${city.country} · ${TOUR_CITIES.indexOf(city) + 1}번째 도시` : `연습 · ${total}초`}</span>
           {city
             ? <><h2 id="treadmill-ready-title">{city.name} · {city.tagline}</h2>
               <ol className="treadmill-game__intro-stages">{stages.map((item, index) => <li key={item.id} data-stage={item.surface}><b>{index + 1}</b>{item.name}</li>)}</ol></>
@@ -552,9 +569,11 @@ function SoloTreadmillGame({ onBack, backLabel }: { readonly onBack: () => void;
             </div>
           </div>}
           <div className="treadmill-game__result-actions">
+            {view.mode === "clear" && city?.season === "fantasia" && onDefense
+              && <RewardActionButton type="button" tone="primary" className="game-reward-result__cta" onClick={onDefense}><ArrowRight size={18} aria-hidden="true" />같은 숲 방어하러 가기</RewardActionButton>}
             {view.mode === "clear" && following
               && <RewardActionButton type="button" tone="primary" className="game-reward-result__cta" onClick={() => openCourse({ kind: "city", city: following })}><ArrowRight size={18} aria-hidden="true" />다음 도시 · {following.name}</RewardActionButton>}
-            {view.mode === "clear" && !following
+            {view.mode === "clear" && !following && !(city?.season === "fantasia" && onDefense)
               && <RewardActionButton type="button" tone="primary" className="game-reward-result__cta" onClick={backToMap}><MapIcon size={18} aria-hidden="true" />지도에서 보기</RewardActionButton>}
             {canRetryStage
               && <RewardActionButton type="button" tone="primary" className="game-reward-result__cta" onClick={retryStage}><RotateCcw size={18} aria-hidden="true" />{view.stage + 1}구간부터 다시<small>강화 유지 · 별 최대 1개</small></RewardActionButton>}

@@ -9,9 +9,9 @@
 import { extendTreadmillCourse, TREADMILL_STAGES, TREADMILL_RULES } from "./treadmill"
 import type { TreadmillHazardKind, TreadmillStage, TreadmillSurface } from "./treadmill"
 
-export type TourSeasonId = "korea" | "world"
+export type TourSeasonId = "korea" | "world" | "fantasia"
 export type TourWeather = "clear" | "rain" | "petals" | "sea" | "heat" | "snow"
-export type TourLandmark = "namsan" | "hanbit" | "tower83" | "gwangan" | "tokyoTower" | "osakaCastle" | "eiffel" | "bigBen"
+export type TourLandmark = "namsan" | "hanbit" | "tower83" | "gwangan" | "tokyoTower" | "osakaCastle" | "eiffel" | "bigBen" | "starlightGate"
 
 export type TourCity = {
   readonly id: string
@@ -33,6 +33,7 @@ export type TourCity = {
 export const TOUR_SEASONS: readonly { id: TourSeasonId; name: string; subtitle: string }[] = [
   { id: "korea", name: "시즌 1 · 코리아 투어", subtitle: "서울에서 부산까지" },
   { id: "world", name: "시즌 2 · 월드 투어", subtitle: "도쿄에서 런던까지" },
+  { id: "fantasia", name: "판타지 · 별빛 릴레이 숲", subtitle: "별빛 샘에서 숲의 관문까지" },
 ]
 
 export const TOUR_CITIES: readonly TourCity[] = [
@@ -60,6 +61,9 @@ export const TOUR_CITIES: readonly TourCity[] = [
   { id: "london", season: "world", name: "런던", country: "영국", tagline: "하이드파크에서 빅벤까지", landmark: "bigBen",
     weather: ["rain", "rain", "snow"], stageNames: ["하이드파크", "비 오는 템스 강변", "빅벤 겨울밤"],
     stageHints: ["비가 와도 박자는 그대로", "젖은 강변길은 끈적여요", "월드 투어 마지막 구간"], level: 7 },
+  { id: "starlight", season: "fantasia", name: "별빛 릴레이 숲", country: "판타지", tagline: "부유섬과 수정 다리를 건너 관문까지", landmark: "starlightGate",
+    weather: ["clear", "clear", "clear"], stageNames: ["별빛 샘", "수정 다리", "숲의 관문"],
+    stageHints: ["샘을 따라 달려요. 장애물은 점프로 넘어요", "이끼 낀 다리는 덜 나아가요. 앞쪽 여유를 남겨요", "관문 앞 가시는 닿으면 끝. 점프할 에너지를 남겨요"], level: 2 },
 ]
 
 const SURFACES: readonly TreadmillSurface[] = ["track", "mud", "spikes"]

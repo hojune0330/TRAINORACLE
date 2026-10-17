@@ -1,0 +1,189 @@
+{
+  "blender": "4.5.14 LTS",
+  "newTripoTasks": 0,
+  "newCredits": 0,
+  "size": [
+    512,
+    512
+  ],
+  "origin": [
+    0.5,
+    0.78
+  ],
+  "assets": [
+    {
+      "id": "gate",
+      "source": "character-art/defense-v4/working/finish-gate.glb",
+      "sourceSha256": "d4e8c61ca75603b8bc71ecedf06c90e7c6bab75554565e92a3c232244b343106",
+      "originalSource": "character-art/defense-v4/sources/finish-gate.glb",
+      "originalSha256": "74c3638a9900e9e7ea0592061d2bd0f65ca2e9c2969c95676db51ab247ca66df",
+      "origin": [
+        0.5,
+        0.7799998819828033
+      ],
+      "groundPixel": [
+        256.0,
+        399.3599395751953
+      ],
+      "orthoScale": 3.211729634891857,
+      "cameraMatrix": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.7399400472640991,
+          -0.6726728081703186,
+          -5.533679008483887
+        ],
+        [
+          0.0,
+          0.6726728081703186,
+          0.7399400472640991,
+          7.423928260803223
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "meshCount": 8,
+      "sourceGeometryTriangles": 2696,
+      "worldBounds": [
+        [
+          -1.413161039352417,
+          -0.5899999737739563,
+          0.0
+        ],
+        [
+          1.413161039352417,
+          0.5206075310707092,
+          2.450000047683716
+        ]
+      ],
+      "workingGLB": "working/gate.glb",
+      "render": "renders/gate.png"
+    },
+    {
+      "id": "crystal",
+      "source": "character-art/run-party-v2/working/upgrade-core.glb",
+      "sourceSha256": "e8a3e583841f8d89f13c4f66af5f549381769eb0acd14d024e500d195d2e7503",
+      "originalSource": "character-art/run-party-v2/sources/upgrade-core.glb",
+      "originalSha256": "7dd4ba337842def9d9e15fc51d41626558763a894a9c528ae4a41ac552d3474c",
+      "origin": [
+        0.5,
+        0.779999703168869
+      ],
+      "groundPixel": [
+        256.0,
+        399.35984802246094
+      ],
+      "orthoScale": 1.9208332354372197,
+      "cameraMatrix": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.7399400472640991,
+          -0.6726728081703186,
+          -5.801131248474121
+        ],
+        [
+          0.0,
+          0.6726728081703186,
+          0.7399400472640991,
+          7.180789947509766
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "meshCount": 7,
+      "sourceGeometryTriangles": 2696,
+      "worldBounds": [
+        [
+          -0.8451666235923767,
+          -0.4737495183944702,
+          0.0
+        ],
+        [
+          0.8208460807800293,
+          0.4737495183944702,
+          1.75
+        ]
+      ],
+      "workingGLB": "working/crystal.glb",
+      "render": "renders/crystal.png"
+    },
+    {
+      "id": "bridge",
+      "source": "character-art/scenery/seoul-v1/sources/rock.fbx",
+      "sourceSha256": "96e651bae0e71a353bcb8c5c944dbf765a8aed6ad437142e4163cc2465ff2392",
+      "originalSource": "character-art/scenery/seoul-v1/sources/rock.fbx",
+      "originalSha256": "96e651bae0e71a353bcb8c5c944dbf765a8aed6ad437142e4163cc2465ff2392",
+      "origin": [
+        0.5,
+        0.7799999117851257
+      ],
+      "groundPixel": [
+        256.0,
+        399.3599548339844
+      ],
+      "orthoScale": 3.9143497293645684,
+      "cameraMatrix": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.7399400472640991,
+          -0.6726728081703186,
+          -5.388107776641846
+        ],
+        [
+          0.0,
+          0.6726728081703186,
+          0.7399400472640991,
+          7.556265830993652
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "meshCount": 38,
+      "sourceGeometryTriangles": 10788,
+      "worldBounds": [
+        [
+          -1.7118266820907593,
+          -0.675000011920929,
+          -0.009969314560294151
+        ],
+        [
+          1.7223138809204102,
+          0.675000011920929,
+          1.1734068393707275
+        ]
+      ],
+      "workingGLB": "working/bridge.glb",
+      "render": "renders/bridge.png"
+    }
+  ]
+}

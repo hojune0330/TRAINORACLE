@@ -3,6 +3,7 @@ import type { TourCity } from "../../domain/minigame/tour"
 import { citySceneFor, drawCityBackdrop, drawCityGround } from "./city-art"
 import { gamePalette } from "./sprites"
 import { loadSceneArt } from "./scene-art"
+import { loadFantasyArt } from "./fantasy-art"
 
 /** Reuses the playable world's renderer so the map never promises a different course. */
 export function CityPreview({ city }: { readonly city: TourCity }) {
@@ -21,7 +22,7 @@ export function CityPreview({ city }: { readonly city: TourCity }) {
       drawCityGround(ctx, palette, scene, frame, 0.1, 0)
     }
     paint()
-    void loadSceneArt().then(() => {
+    void Promise.all([loadSceneArt(), city.id === "starlight" ? loadFantasyArt() : Promise.resolve()]).then(() => {
       if (!mounted) return
       paint()
       canvas.dataset.art = "settled"
@@ -30,6 +31,6 @@ export function CityPreview({ city }: { readonly city: TourCity }) {
   }, [city])
   return <span className="treadmill-game__city-preview" aria-hidden="true">
     <canvas ref={ref} width={390} height={210} data-art="loading" />
-    <span>트랙 <i /> 진흙 <i /> 야간</span>
+    <span>{city.season === "fantasia" ? <>샘 <i /> 다리 <i /> 관문</> : <>트랙 <i /> 진흙 <i /> 야간</>}</span>
   </span>
 }

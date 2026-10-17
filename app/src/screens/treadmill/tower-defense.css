@@ -132,3 +132,43 @@
 }
 @media (prefers-reduced-motion: reduce) { .td-shop button:active,.td-upgrades button:active { transform: none; } }
 [data-reduced-motion="true"] .td-shop button:active,[data-reduced-motion="true"] .td-upgrades button:active { transform: none; }
+
+/* A movable world. HUD and construction stay in screen space. */
+.tower-defense .td-map-workspace { order: 3; min-width: 0; margin: 0 12px; }
+.tower-defense .td-entry-notice { order: 2; margin: 2px 12px 8px; color: var(--game-panel); font-size: 12px; }
+.tower-defense .td-map-workspace .td-board { position: relative; top: auto; margin: 0; aspect-ratio: 9 / 11; touch-action: none; cursor: grab; }
+.tower-defense .td-map-workspace .td-board:active { cursor: grabbing; }
+.td-camera-tools { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 7px; }
+.td-camera-tools button,.td-region-nav button,.td-pad-shortcut { border: 1px solid var(--game-outline); background: var(--game-panel); color: var(--game-ink); border-radius: 10px; min-width: 44px; padding: 6px 9px; font-size: 12px; font-weight: 700; }
+.td-camera-tools button[aria-pressed="true"],.td-pad-shortcut[aria-pressed="true"] { background: var(--game-gold); border-color: var(--game-gold-dark); }
+.td-world-pin { position: absolute; pointer-events: none; transform: translate(-50%,8px); display: grid; place-items: center; min-width: 22px; height: 22px; border: 2px solid var(--game-outline); border-radius: 50%; background: var(--game-panel); color: var(--game-ink); font-size: 12px; font-weight: 800; }
+.td-world-pin[data-selected="true"] { background: var(--game-gold); }
+.td-map-navigator { display: flex; gap: 10px; margin-top: 8px; align-items: center; }
+.td-minimap { width: 108px; height: 92px; flex-shrink: 0; padding: 0; border: 2px solid var(--game-outline); border-radius: 8px; background: var(--game-hill-near); overflow: hidden; }
+.td-minimap svg { display: block; width: 100%; height: 100%; }
+.td-mini-path { fill: none; stroke: var(--game-panel); stroke-width: 42; }
+.td-mini-pad { fill: var(--game-ink); }
+.td-mini-selected { fill: var(--game-gold); }
+.td-mini-enemy { fill: var(--game-danger); }
+.td-mini-view { fill: var(--game-sky-low); fill-opacity: .15; stroke: var(--game-gold); stroke-width: 30; }
+.td-region-nav { min-width: 0; }
+.td-region-nav small { color: var(--game-panel-edge); font-size: 11px; }
+.td-region-nav > div { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.td-region-nav button { font-size: 11px; padding: 4px 6px; }
+.td-pad-list { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 10px; }
+.td-pad-shortcut { position: relative; padding: 4px; flex: 1 0 44px; max-width: 56px; }
+.td-pad-shortcut span { position: absolute; font-size: 6px; right: 5px; bottom: 3px; color: var(--game-defense-health); }
+.td-field-caption { background: var(--game-panel); padding: 4px 6px; border-radius: 5px; bottom: 8px; right: 8px; font-size: 10px; }
+.td-range-caption { bottom: 36px; }
+@container (min-width: 800px) {
+ .treadmill-game.tower-defense { max-width: 1180px; grid-template-columns: minmax(0,1fr) 300px; }
+ .tower-defense .td-map-workspace { grid-column: 1; grid-row: 4 / 8; margin-right: 0; }
+ .tower-defense .td-map-workspace .td-board { width: 100%; max-height: none; }
+ .tower-defense .td-entry-notice { grid-column: 1 / -1; grid-row: 4; }
+ .tower-defense[data-map="starlight"] .td-map-workspace { grid-row: 5 / 9; }
+ .tower-defense[data-map="starlight"] .td-build { grid-row: 5; }
+ .tower-defense[data-map="starlight"] .td-wave { grid-row: 6; }
+ .tower-defense[data-map="starlight"] .td-notice { grid-row: 7; }
+ .tower-defense:is([data-phase="won"],[data-phase="lost"]) .td-map-workspace { grid-row: 3 / 8; }
+ .tower-defense:is([data-phase="won"],[data-phase="lost"]) .td-result { grid-row: 3; }
+}

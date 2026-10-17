@@ -11,6 +11,7 @@ import type { TourCity, TourLandmark, TourWeather } from "../../domain/minigame/
 import { roundRect } from "./sprites"
 import type { GamePalette } from "./sprites"
 import { drawSceneProp, drawWorldProp } from "./scene-art"
+import { drawFantasyBackdrop, drawFantasyGround } from "./fantasy-art"
 
 export type CityScene = { city: TourCity; surface: TreadmillSurface; weather: TourWeather }
 export type CityFrame = {
@@ -34,6 +35,7 @@ export function cityHorizon(floor: number) {
 
 /** Background: sky (unless a shader draws it), sun or moon, skyline with the landmark. */
 export function drawCityBackdrop(context: CanvasRenderingContext2D, palette: GamePalette, scene: CityScene, frame: CityFrame) {
+  if (scene.city.season === "fantasia") return drawFantasyBackdrop(context, palette, scene.surface, frame)
   const { width, floor, travel, clock, reduced, skyFromShader } = frame
   const horizon = cityHorizon(floor)
   context.clearRect(0, 0, width, frame.height)
@@ -194,6 +196,7 @@ function sea(context: CanvasRenderingContext2D, palette: GamePalette, scene: Cit
 
 /** Tilted ground: field / beach / plaza, a running track receding into depth, scrolling cross lines and props. */
 export function drawCityGround(context: CanvasRenderingContext2D, palette: GamePalette, scene: CityScene, frame: CityFrame, warnRear: number, near: number) {
+  if (scene.city.season === "fantasia") return drawFantasyGround(context, palette, scene.surface, frame, warnRear, near)
   const { width, height, floor, left, beltWidth, travel, low } = frame
   const horizon = cityHorizon(floor) + (scene.weather === "sea" ? 14 : 0)
   const depthY = (d: number) => horizon + (floor - horizon) / d

@@ -1,12 +1,26 @@
 import { beforeEach, describe, expect, it } from "vitest"
 import { advanceTreadmill, newTreadmillRun, treadmillCommand } from "./treadmill"
 import { decodeSavedRun, readSavedRun, removeSavedRun, SAVED_RUN_KEY, writeSavedRun } from "./saved-run"
+import { tourCity, tourStages } from "./tour"
 
 const key = SAVED_RUN_KEY
 const started = () => treadmillCommand(newTreadmillRun(), { type: "start" })
 beforeEach(() => localStorage.clear())
 
 describe("device-only suspended run", () => {
+  it("restores fantasy and legacy city courses independently and refuses to overwrite an existing run", () => {
+    const state = treadmillCommand(newTreadmillRun(tourStages(tourCity("starlight")!)), {type: "start"})
+    expect(writeSavedRun(localStorage, key, "seoul", started(), null)).toBe(true)
+    const legacy = localStorage.getItem(key)!
+    expect(writeSavedRun(localStorage, key, "starlight", state, null)).toBe(false)
+    expect(decodeSavedRun(legacy)?.state.stages[0]?.id).toBe("seoul-track")
+    expect(writeSavedRun(localStorage, key, "starlight", state, legacy)).toBe(true)
+    const fantasy = readSavedRun(localStorage, key)
+    if (fantasy.kind !== "saved") throw Error("missing fantasy run")
+    expect(fantasy.run.course).toBe("starlight")
+    expect(fantasy.run.state.stages.map(stage => stage.name)).toEqual(["별빛 샘", "수정 다리", "숲의 관문"])
+    expect(fantasy.run.state.mode).toBe("paused")
+  })
   it("round-trips position, moving obstacles, energy and stats, releasing held input", () => {
     let state = { ...started(), countdown: 0 }
     state = treadmillCommand(state, { type: "run", held: true })

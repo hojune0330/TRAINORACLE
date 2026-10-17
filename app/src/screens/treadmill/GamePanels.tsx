@@ -80,7 +80,7 @@ export function TourMap({ progress, season, onSeason, onPlay, onPractice, status
           <button type="button" className="treadmill-game__city" data-city={city.id} data-state={stars > 0 ? "done" : unlocked ? "open" : "locked"}
             disabled={!unlocked} onClick={() => onPlay(city)}
             aria-label={`${city.name}${unlocked ? "" : " (잠김)"} · ${city.tagline}${stars ? ` · 별 ${stars}개` : ""}`}>
-            {city.id === "seoul" && <CityPreview city={city} />}
+            {(city.id === "seoul" || city.season === "fantasia") && <CityPreview city={city} />}
             <b className="treadmill-game__city-pin" aria-hidden="true"><PartyIcon id="track-island" size={58} fallback={<MapPin size={18} />} />{!unlocked && <Lock className="treadmill-game__city-lock-badge" size={16} />}</b>
             <span className="treadmill-game__city-text">
               <strong>{city.name}<small>{city.country}</small></strong>

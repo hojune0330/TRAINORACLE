@@ -4,6 +4,9 @@ import { GAME_CATALOG, loungeGame } from './game-catalog'
 import type { LoungeGameId, LoungePlay } from './game-catalog'
 import { SoloParty } from './SoloParty'
 import { FriendArena } from './FriendArena'
+import {getTDMap}
+from '../../domain/minigame/tower-defense'
+import type {TDMapId} from '../../domain/minigame/tower-defense'
 import { TowerDefense } from './TowerDefense'
 import { arenaInvitation } from './arena-types'
 import { PartyIcon } from './PartyIcon'
@@ -18,7 +21,7 @@ import { useTaskFlowBack } from '../../hooks/useTaskFlowBack'
 import './game-lounge.css'
 
 type Route = 'lounge' | 'tour' | 'solo' | 'friends' | 'defense' | 'legacy'
-type Props = { onBack: () => void; backLabel: string; renderTour: (back: () => void) => React.ReactNode }
+type Props = { onBack: () => void; backLabel: string; renderTour: (back: () => void, cityId?:string, onDefense?:()=>void) => React.ReactNode }
 
 /** Existing licensed/generated game art, with text always carrying the destination. */
 function GameArt({ id, large = false }: { id: LoungeGameId; large?: boolean }) {
@@ -36,14 +39,17 @@ export function GameLounge({ onBack, backLabel, renderTour }: Props) {
   const [tab, setTab] = React.useState<'games' | 'records'>('games')
   const [filter, setFilter] = React.useState<'all' | 'solo' | 'friends'>('all')
   const [query, setQuery] = React.useState('')
+  const [tdMap,setTdMap]=React.useState<TDMapId>('starlight')
+  const [tourEntry,setTourEntry]=React.useState<string|undefined>()
   const [tdEntry, setTdEntry] = React.useState<'new' | 'resume'>('new')
-  const [tdSaved, setTdSaved] = React.useState<ReturnType<typeof loadTD>>(null)
+  const [tdCheckpoints,setTDCheckpoints]=React.useState<NonNullable<ReturnType<typeof loadTD>>[]>([])
+  const tdSaved=tdCheckpoints.find(item=>getTDMap(item.state).id===tdMap)??null
   const [legacy, setLegacy] = React.useState(false)
   const [tdRecords, setTdRecords] = React.useState<TDRecord[]>([])
   const [records, setRecords] = React.useState<SoloRecord[]>([])
   const [errors, setErrors] = React.useState<string[]>([])
   const store = useMinigameProgress(), savedRun = useSavedRun()
-  const returnFocus = React.useRef<LoungeGameId | null>(null)
+  const returnFocus = React.useRef<string | null>(null)
   const surface = React.useRef<HTMLElement>(null)
   const title = React.useRef<HTMLHeadingElement>(null)
   const listScroll = React.useRef<{ node: HTMLElement; top: number }[]>([])
@@ -59,16 +65,20 @@ export function GameLounge({ onBack, backLabel, renderTour }: Props) {
     if (route !== 'lounge') return
     savedRun.refresh()
     const messages: string[] = []
-    try { setTdSaved(loadTD(localStorage)) } catch { messages.push('디펜스 이어하기를 읽지 못했어요. 기존 저장은 보존했어요.') }
-    try { setTdRecords(readTDRecords(localStorage)) } catch { messages.push('디펜스 기록을 읽지 못했어요.') }
+    const checkpoints:NonNullable<ReturnType<typeof loadTD>>[]=[],defenseRecords:TDRecord[]=[]
+    for(const map of ['forest','starlight'] as TDMapId[]){
+      try{const saved=loadTD(localStorage,map);if(saved)checkpoints.push(saved)}catch{messages.push(`${getTDMap(map).name} 이어하기를 읽지 못했어요. 기존 저장은 보존했어요.`)}
+      try{defenseRecords.push(...readTDRecords(localStorage,map))}catch{messages.push(`${getTDMap(map).name} 기록을 읽지 못했어요.`)}
+    }
+    setTDCheckpoints(checkpoints);setTdRecords(defenseRecords)
     try { setRecords(readSoloRecords(localStorage)) } catch { messages.push('대결 기록을 읽지 못했어요.') }
     try { setLegacy(!!loadSoloCheckpoint(localStorage)) } catch { messages.push('이전 러닝 디펜스 저장을 읽지 못했어요.') }
     setErrors(messages)
     title.current?.focus({ preventScroll: true })
-  }, [route, selected, tab])
+  }, [route, selected, tab, tdMap])
   const backToDetail = () => setRoute('lounge')
-  const open = (id: LoungeGameId, _button?: HTMLButtonElement) => {
-    returnFocus.current = id; listScroll.current = scrollParents().map(node => ({ node, top: node.scrollTop }))
+  const open = (id: LoungeGameId, button?: HTMLButtonElement) => {
+    returnFocus.current = button?.dataset.gameOpen ?? id; listScroll.current = scrollParents().map(node => ({ node, top: node.scrollTop }))
     setSelected(id); setPlay(filter === 'friends' ? 'friends' : 'solo')
     for (const node of scrollParents()) node.scrollTop = 0
   }
@@ -76,20 +86,20 @@ export function GameLounge({ onBack, backLabel, renderTour }: Props) {
     if (!game) return
     // Adding a catalog entry requires its real destination; never silently route a new game elsewhere.
     const launchers: Record<LoungeGameId, () => void> = {
-      tour: () => setRoute('tour'),
+      tour: () => {setTourEntry(undefined);setRoute('tour')},
       defense: () => { setTdEntry('new'); setRoute('defense') },
       push: () => setRoute(play === 'friends' ? 'friends' : 'solo'),
       survival: () => setRoute(play === 'friends' ? 'friends' : 'solo'),
     }
     launchers[game.id]()
   }
-  if (route === 'tour') return renderTour(backToDetail)
-  if (route === 'defense') return <TowerDefense onBack={backToDetail} entry={tdEntry} />
+  if (route === 'tour') return renderTour(backToDetail,tourEntry,()=>{setTdMap('starlight');setTdEntry('new');setSelected('defense');setRoute('defense')})
+  if (route === 'defense') return <TowerDefense key={tdMap} onBack={backToDetail} entry={tdEntry} mapId={tdMap} onRun={()=>{setTourEntry('starlight');setSelected('tour');setRoute('tour')}} />
   if (route === 'solo' && (selected === 'push' || selected === 'survival')) return <SoloParty initialMode={selected} onBack={backToDetail} onFriends={() => { setPlay('friends'); setRoute('friends') }} />
   if (route === 'legacy') return <SoloParty onBack={backToDetail} onFriends={() => { setSelected(null); setTab('games'); setFilter('friends'); setRoute('lounge') }} />
   if (route === 'friends') return <FriendArena initialMode={selected === 'survival' ? 'survival' : 'push'} onBack={backToDetail} />
 
-  const bestTD = tdRecords.filter(r => r.won).sort((a, b) => b.lives - a.lives)[0]
+  const defenseRecords = (['forest', 'starlight'] as const).map(id => ({ id, records: tdRecords.filter(record => getTDMap(record).id === id) }))
   const completedCities = TOUR_CITIES.filter(city => (store.progress.cities[city.id]?.stars ?? 0) > 0)
   return <section ref={surface} className="game-lounge" data-view={selected ?? tab} data-reduced={store.progress.settings.motion === 'reduce'}>
     <header className="game-lounge__header">
@@ -105,9 +115,9 @@ export function GameLounge({ onBack, backLabel, renderTour }: Props) {
       </nav>
       {errors.map(error => <p key={error} className="game-lounge__error" role="alert">{error}</p>)}
       {tab === 'games' ? <>
-        {(tdSaved || savedRun.slot.kind === 'saved') && <section className="game-lounge__resume" aria-label="저장한 게임"><h2>이어서 할 수 있어요</h2>
-          {savedRun.slot.kind === 'saved' && <button onClick={() => { setSelected('tour'); setRoute('tour') }}><GameArt id="tour" /><span><strong>러닝 투어</strong><small>저장한 구간에서 다시 출발</small></span><ChevronRight size={18} /></button>}
-          {tdSaved && <button onClick={() => { setSelected('defense'); setTdEntry('resume'); setRoute('defense') }}><GameArt id="defense" /><span><strong>타워 디펜스</strong><small>{tdSaved.state.wave + 1}웨이브 준비 · 기지 체력 {tdSaved.state.lives}</small></span><ChevronRight size={18} /></button>}
+        {(tdCheckpoints.length>0 || savedRun.slot.kind === 'saved') && <section className="game-lounge__resume" aria-label="저장한 게임"><h2>이어서 할 수 있어요</h2>
+          {savedRun.slot.kind === 'saved' && <button onClick={() => { setTourEntry(undefined); setSelected('tour'); setRoute('tour') }}><GameArt id="tour" /><span><strong>러닝 투어</strong><small>저장한 구간에서 다시 출발</small></span><ChevronRight size={18} /></button>}
+          {tdCheckpoints.map(checkpoint=><button key={getTDMap(checkpoint.state).id} onClick={() => {setTdMap(getTDMap(checkpoint.state).id);setSelected('defense');setTdEntry('resume');setRoute('defense')}}><GameArt id="defense"/><span><strong>타워 디펜스 · {getTDMap(checkpoint.state).name}</strong><small>{checkpoint.state.wave+1}웨이브 준비 · 기지 체력 {checkpoint.state.lives}</small></span><ChevronRight size={18}/></button>)}
         </section>}
         <div className="game-lounge__section-heading"><h2>어떤 게임을 할까요?</h2></div>
         <label className="game-lounge__search"><span className="sr-only">게임 검색</span><input type="search" placeholder="게임 이름이나 종류로 찾기" value={query} onChange={e => setQuery(e.target.value)} /></label>
@@ -119,7 +129,10 @@ export function GameLounge({ onBack, backLabel, renderTour }: Props) {
       </> : <div className="game-lounge__records"><h2>내가 해낸 도전</h2><p>점수 하나 대신, 게임마다의 성취를 모았어요.</p>
         <button className="game-lounge__record" data-game-open="tour" onClick={e => open('tour', e.currentTarget)}><GameArt id="tour" /><span><strong>러닝 투어</strong><b>{completedCities.length ? `${completedCities.length}개 도시 완주` : '아직 완주한 도시가 없어요'}</b><small>{completedCities.length ? completedCities.map(c => c.name).join(' · ') : '첫 도시부터 도전해 보세요'}</small></span><ChevronRight size={18} /></button>
         {(['push', 'survival'] as const).map(id => { const best = bestSoloRecord(records, id); return <button className="game-lounge__record" data-game-open={id} key={id} onClick={e => open(id, e.currentTarget)}><GameArt id={id} /><span><strong>{loungeGame(id).name}</strong><b>{best ? id === 'push' ? `최고 시리즈 승점 ${best.wins}/4` : `최소 낙하 ${best.falls}회` : '아직 완료한 경기가 없어요'}</b><small>{best ? `${id === 'push' ? '밀어냄' : '점프 회피'} ${best.success}회 · 컴퓨터 상대` : '두 라운드를 마치면 기록이 남아요'}</small></span><ChevronRight size={18} /></button> })}
-        <button className="game-lounge__record" data-game-open="defense" onClick={e => open('defense', e.currentTarget)}><GameArt id="defense" /><span><strong>타워 디펜스</strong><b>{bestTD ? `6웨이브 방어 · 기지 ${bestTD.lives}/20` : tdRecords.length ? `최고 ${Math.max(...tdRecords.map(r => r.wave))}웨이브 도전` : '아직 완료한 방어전이 없어요'}</b><small>{bestTD ? `막은 적 ${bestTD.kills} · 놓친 적 ${bestTD.leaks}` : '기지를 지키고 첫 완주에 도전해요'}</small></span><ChevronRight size={18} /></button>
+        {defenseRecords.map(({id, records}) => {
+          const best = records.filter(record => record.won).sort((a, b) => b.lives - a.lives)[0]
+          return <button key={id} className="game-lounge__record" data-game-open={`defense-${id}`} onClick={e => { setTdMap(id); open('defense', e.currentTarget) }}><GameArt id="defense" /><span><strong>타워 디펜스 · {getTDMap(id).name}</strong><b>{best ? `6웨이브 방어 · 기지 ${best.lives}/20` : records.length ? `최고 ${Math.max(...records.map(record => record.wave))}웨이브 도전` : '아직 완료한 방어전이 없어요'}</b><small>{best ? `막은 적 ${best.kills} · 놓친 적 ${best.leaks}` : '기지를 지키고 첫 완주에 도전해요'}</small></span><ChevronRight size={18} /></button>
+        })}
         <p className="game-lounge__hint">대결·디펜스 기록은 이 기기에 저장돼요. 러닝 투어는 기존 계정 저장 설정을 따라요. 친구 전적은 함께한 방에서 비교해요.</p>
       </div>}
       {(legacy || records.some(r => r.mode === 'defense')) && <details className="game-lounge__archive"><summary>이전 버전 저장</summary><p>전에 하던 러닝 디펜스의 이어하기와 기록을 확인할 수 있어요.</p><button className="game-lounge__secondary" onClick={() => setRoute('legacy')}>이전 러닝 디펜스 열기</button></details>}
@@ -129,7 +142,9 @@ export function GameLounge({ onBack, backLabel, renderTour }: Props) {
       <div className="game-lounge__detail-body">
         {game.friends ? <fieldset className="game-lounge__players"><legend>누구와 할까요?</legend>{(['solo', 'friends'] as const).map(value => <label key={value} data-selected={play === value}><input type="radio" name="lounge-players" value={value} checked={play === value} onChange={() => setPlay(value)} /><span><strong>{value === 'solo' ? '혼자 하기' : '친구와 하기'}</strong><small>{value === 'solo' ? '컴퓨터 상대 · 90초 × 2라운드' : '초대한 친구와 1:1 · 한 판 90초'}</small></span><Check size={20} aria-hidden="true" /></label>)}</fieldset>
           : <p className="game-lounge__format">혼자 플레이 <i aria-hidden="true">·</i> {game.solo}</p>}
+        {game.id==='defense'&&<fieldset className="game-lounge__map-choice"><legend>방어할 지역</legend>{(['starlight','forest'] as TDMapId[]).map(id=><button key={id} aria-pressed={tdMap===id} onClick={()=>setTdMap(id)}>{id==='starlight'?'별빛 릴레이 숲':'기존 숲길 관문'}<small>{id==='starlight'?'넓은 전장 · 이동과 확대 · 14지점':'첫 지도 · 8지점'}</small></button>)}</fieldset>}
         <section className="game-lounge__how"><h2>이렇게 하면 돼요</h2><ol>{game.rules.map(rule => <li key={rule}>{rule}</li>)}</ol><p className="game-lounge__goal"><strong>이번 판 목표</strong>{game.outcome}</p></section>
+        {(game.id==='defense'||game.id==='tour')&&<div className="game-lounge__fantasy"><img src={`${import.meta.env.BASE_URL}game/fantasy-world-v1/panorama.webp`} alt="부유섬과 수정 다리, 별빛 숲의 관문"/><div><strong>별빛 릴레이 숲</strong><p>같은 숲에서 길을 달리고, 관문을 지켜요.</p><button onClick={()=>{setTourEntry('starlight');setRoute('tour')}}>판타지 러닝 코스</button></div></div>}
         {game.friends && <p className="game-lounge__hint">{play === 'friends' ? '두 명이 각자 겨루는 개인전이에요. 방을 만든 뒤 링크로 친구를 초대해요.' : '컴퓨터 상대와 연습해요. 시간 끝까지 몇 번이든 다시 살아나요.'}</p>}
         {game.id === 'defense' && errors.map(error => <p role="alert" key={error} className="game-lounge__error">{error}</p>)}
       </div>

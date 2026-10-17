@@ -2,7 +2,7 @@ import {test,expect,type Page} from '@playwright/test'
 const root=(page:Page)=>page.locator('.tower-defense')
 const board=(page:Page)=>page.locator('.td-battlefield')
 const canvas=(page:Page)=>page.locator('canvas[data-defense-renderer]')
-async function open(page:Page){await page.goto('./?app=1');await page.getByRole('button',{name:'더보기',exact:true}).click();await page.getByRole('button',{name:'게임 라운지',exact:true}).click();await page.getByRole('button',{name:'타워 디펜스 게임 소개',exact:true}).click()}
+async function open(page:Page,map:'forest'|'starlight'='forest'){await page.goto('./?app=1');await page.getByRole('button',{name:'더보기',exact:true}).click();await page.getByRole('button',{name:'게임 라운지',exact:true}).click();await page.getByRole('button',{name:'타워 디펜스 게임 소개',exact:true}).click();if(map==='forest')await page.getByRole('button',{name:/^기존 숲길 관문/}).click()}
 async function pauseClock(page:Page){await page.clock.pauseAt(await page.evaluate(()=>Date.now())+60_000)}
 async function freeze(page:Page){await page.clock.install();await pauseClock(page)}
 async function withoutWebGL(page:Page){
@@ -86,8 +86,50 @@ test('no towers means defeat, missing art and narrow viewport remain usable',asy
  }
  await build(page,2,'연사탑');await expect(page.getByRole('button',{name:'2번 건설 지점',exact:true})).toHaveAttribute('aria-description','연사탑 1레벨');await upgrade(page,2);await page.getByRole('button',{name:'판매 · 91골드 회수 (70%)',exact:true}).click();await expect(root(page)).toHaveAttribute('data-gold','141')
  await page.getByRole('button',{name:'디펜스 나가기',exact:true}).click();await page.getByRole('button',{name:'이번 진행을 저장하지 않고 나가기',exact:true}).click();await page.clock.resume();await page.getByRole('button',{name:'새 방어전 시작',exact:true}).click();await rendererReady(page,info.project.name!=='phone');await pauseClock(page);await expect(root(page)).toHaveAttribute('data-gold','180')
- for(const button of await page.locator('.td-pad').all()){const box=await button.boundingBox();expect(box!.width).toBeGreaterThanOrEqual(44);expect(box!.height).toBeGreaterThanOrEqual(44)}
+ for(const button of await page.locator('.td-pad-shortcut').all()){const box=await button.boundingBox();expect(box!.width).toBeGreaterThanOrEqual(44);expect(box!.height).toBeGreaterThanOrEqual(44)}
  await finishWave(page,1);await expect(root(page)).toHaveAttribute('data-lives','12');await page.getByRole('button',{name:'2웨이브 시작',exact:true}).click();await settleWave(page);await expect(page.getByRole('heading',{name:'기지가 함락됐어요'})).toBeVisible();await expect(root(page)).toHaveAttribute('data-lives','0');expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true)
  await page.clock.fastForward(2000);await page.screenshot({path:info.outputPath('td-defeat-settled.png')})
- await page.getByRole('button',{name:'종목 선택으로',exact:true}).click();await expect(page.getByRole('heading',{name:'타워 디펜스',exact:true})).toBeVisible()
+ await page.getByRole('button',{name:'게임 소개로',exact:true}).click();await expect(page.getByRole('heading',{name:'타워 디펜스',exact:true})).toBeVisible()
+})
+
+test('fantasy map camera, relay entrances, split save and running connection',async({page},info)=>{
+ await withoutWebGL(page)
+ const errors:string[]=[];page.on('pageerror',error=>errors.push(error.message))
+ await open(page,'starlight');await page.getByRole('button',{name:'새 방어전 시작',exact:true}).click();await rendererReady(page)
+ await expect(board(page)).toHaveAttribute('data-map','starlight')
+ await expect(page.getByRole('button',{name:'14번 건설 지점',exact:true})).toBeVisible()
+ const initialX=Number(await board(page).getAttribute('data-camera-x'))
+ await page.getByRole('button',{name:'숲의 관문',exact:true}).click()
+ expect(Number(await board(page).getAttribute('data-camera-x'))).toBeGreaterThan(initialX+500)
+ await page.getByRole('button',{name:'전체 지도',exact:true}).click()
+ expect(Number(await board(page).getAttribute('data-camera-zoom'))).toBeLessThan(.5)
+ await page.screenshot({path:info.outputPath('fantasy-overview.png')})
+ await page.getByRole('button',{name:'수정 다리',exact:true}).click()
+ await board(page).scrollIntoViewIfNeeded();const box=(await board(page).boundingBox())!,before=Number(await board(page).getAttribute('data-camera-x'))
+ await page.mouse.move(box.x+box.width*.5,box.y+box.height*.5);await page.mouse.down();await page.mouse.move(box.x+box.width*.25,box.y+box.height*.5,{steps:8});await page.mouse.up()
+ expect(Number(await board(page).getAttribute('data-camera-x'))).toBeGreaterThan(before+100)
+ await page.getByRole('button',{name:'선두 따라가기',exact:true}).click();await expect(page.getByRole('button',{name:'선두 따라가기',exact:true})).toHaveAttribute('aria-pressed','true')
+ await page.getByRole('button',{name:'별빛 샘',exact:true}).click();await expect(page.getByRole('button',{name:'선두 따라가기',exact:true})).toHaveAttribute('aria-pressed','false')
+ await freeze(page)
+ const sell=async(pad:number)=>{await page.getByRole('button',{name:`${pad}번 건설 지점`,exact:true}).click();await page.getByRole('button',{name:/^판매 ·/}).click()}
+ await build(page,2,'연사탑');await build(page,3,'포격탑');await finishWave(page,1);await expect(root(page)).toHaveAttribute('data-gold','104')
+ await page.getByRole('button',{name:'디펜스 일시정지',exact:true}).click();await page.getByRole('button',{name:'저장하고 나가기',exact:true}).click()
+ const saved=await page.evaluate(()=>({legacy:localStorage.getItem('trainoracle.tower-defense.checkpoint.v1'),fantasy:JSON.parse(localStorage.getItem('trainoracle.tower-defense.checkpoint.v1.starlight')!)}))
+ expect(saved.legacy).toBeNull();expect(saved.fantasy).toMatchObject({mapId:'starlight',wave:1,gold:104})
+ await page.clock.resume();await page.getByRole('button',{name:'2웨이브 이어하기',exact:true}).click();await rendererReady(page);await pauseClock(page)
+ await upgrade(page,2);await finishWave(page,2)
+ await expect(page.locator('.td-entry-notice')).toContainText('수정 다리')
+ await sell(2);await expect(page.getByRole('button',{name:'3번 건설 지점',exact:true})).toHaveAttribute('aria-description','포격탑 1레벨');await sell(3)
+ await build(page,5,'연사탑');await build(page,6,'포격탑');await upgrade(page,6);await finishWave(page,3)
+ await build(page,8,'냉각탑');await upgrade(page,6,true);await finishWave(page,4)
+ await expect(page.locator('.td-entry-notice')).toContainText('숲의 관문')
+ await sell(5);await sell(6);await sell(8)
+ await build(page,11,'연사탑');await build(page,12,'포격탑');await build(page,10,'냉각탑');await upgrade(page,12);await upgrade(page,12,true);await upgrade(page,11);await finishWave(page,5)
+ await upgrade(page,11,true);await build(page,13,'포격탑');await finishWave(page,6)
+ await expect(root(page)).toHaveAttribute('data-lives','20');await expect(root(page)).toHaveAttribute('data-gold','492')
+ await page.screenshot({path:info.outputPath('fantasy-result.png')})
+ await page.clock.resume();await page.getByRole('button',{name:'이 숲을 달려보기',exact:true}).click()
+ await expect(page.getByText('판타지 러닝 · 90초',{exact:true})).toBeVisible()
+ await expect(page.getByRole('heading',{name:'별빛 릴레이 숲 투어',exact:true})).toBeVisible()
+ expect(errors).toEqual([]);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true)
 })

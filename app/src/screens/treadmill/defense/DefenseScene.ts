@@ -1,12 +1,15 @@
 import Phaser from 'phaser'
-import {TD_PATH, TD_PADS, TD_TOWERS, routePoint, towerStats} from '../../../domain/minigame/tower-defense'
+import {getTDMap, getTDWaveEntry, TD_TOWERS, routePoint, towerStats} from '../../../domain/minigame/tower-defense'
 import type {TowerDefense, TowerKind, EnemyKind} from '../../../domain/minigame/tower-defense'
-import {FIELD_WIDTH, FIELD_HEIGHT, FIELD_UNIT, FIELD_Y_UNIT, fieldPoint, directionFrame} from './coordinates'
+import {FIELD_UNIT, FIELD_Y_UNIT, fieldPoint, fieldSize, directionFrame} from './coordinates'
+import {VIEW_WIDTH, VIEW_HEIGHT} from './world-camera'
+import type {WorldCamera} from './world-camera'
 import {readDefensePalette} from './palette'
 import type {DefensePalette} from './palette'
 
 export type DefenseBridge = {
  state: () => TowerDefense | null
+ camera: () => WorldCamera
  selected: () => number
  paused: () => boolean
  reduced: () => boolean
@@ -42,6 +45,7 @@ export class DefenseScene extends Phaser.Scene {
  private stamp = 0
  private lastState: TowerDefense | null = null
  private endedAt = 0
+ private entryMarker!: Phaser.GameObjects.Text
 
  constructor(bridge: DefenseBridge, palette: DefensePalette) { super('forest-defense'); this.bridge = bridge; this.palette = palette }
  preload() {
@@ -51,6 +55,7 @@ export class DefenseScene extends Phaser.Scene {
    this.load.image(`${kind}-fallback`, asset(`kenney-td/tile${kind in TD_TOWERS ? TD_TOWERS[kind as TowerKind].tile : ({scout:245,swift:247,armored:246,boss:248} as const)[kind as EnemyKind]}.png`))
   }
   for (const kind of ['scout','swift','armored','boss']) this.load.spritesheet(`${kind}-reactions`, asset(`defense-v5/${kind}-reactions.webp`), {frameWidth:128,frameHeight:128})
+  if(getTDMap(this.bridge.state()??undefined).id==='starlight')for(const name of ['ground','gate','crystal','bridge'])this.load.image(`fantasy-${name}`,asset(`fantasy-world-v1/${name}.webp`))
   this.load.image('tree', asset('seoul-v1/tree.webp'))
   this.load.image('rock', asset('seoul-v1/rock.webp'))
   this.load.image('base', asset('defense-v4/base.webp'))
@@ -59,9 +64,10 @@ export class DefenseScene extends Phaser.Scene {
  create() {
   this.makeFallbacks()
   this.paintGround()
+  this.entryMarker=this.add.text(0,0,'',{fontFamily:this.palette.fontFamily,fontSize:'28px',fontStyle:'bold',color:this.palette.css.label,backgroundColor:this.palette.css.white,padding:{x:12,y:9}}).setOrigin(.5,1).setDepth(13000)
   this.range = this.add.graphics().setDepth(2)
-  this.health = this.add.graphics().setDepth(1500)
-  this.effects = this.add.graphics().setDepth(1600)
+  this.health = this.add.graphics().setDepth(10000)
+  this.effects = this.add.graphics().setDepth(11000)
   this.game.canvas.setAttribute('data-defense-renderer', this.game.renderer.type === Phaser.WEBGL ? 'webgl' : 'canvas')
   this.game.canvas.setAttribute('aria-hidden', 'true')
   this.bridge.ready(this.missing)
@@ -80,41 +86,45 @@ export class DefenseScene extends Phaser.Scene {
   }
  }
  private paintGround() {
-  const g = this.add.graphics().setDepth(0)
-  g.fillStyle(this.palette.color.ground).fillRect(0,0,FIELD_WIDTH,FIELD_HEIGHT)
-  g.fillStyle(this.palette.color.grass).fillRoundedRect(24,24,1152,1250,80)
-  // Quiet planted islands, not a busy repeated tile texture underneath enemies.
-  for (let i = 0; i < 40; i++) {
-   const x = (i * 173 + 67) % FIELD_WIDTH, y = (i * 277 + 43) % FIELD_HEIGHT
-   g.fillStyle(i % 2 ? this.palette.color.grassLight : this.palette.color.grassShade, .45).fillEllipse(x,y,120+(i%3)*50,60)
+  const map=getTDMap(this.bridge.state()??undefined),world=fieldSize(map.id),fantasy=map.id==='starlight'
+  const g=this.add.graphics().setDepth(0)
+  g.fillStyle(this.palette.color.ground).fillRect(0,0,world.width,world.height)
+  if(fantasy&&this.textures.exists('fantasy-ground'))this.add.image(0,0,'fantasy-ground').setOrigin(0).setDisplaySize(world.width,world.height).setDepth(-1)
+  if(fantasy&&this.textures.exists('fantasy-ground'))g.clear()
+  else {
+   g.fillStyle(this.palette.color.grass).fillRoundedRect(24,24,world.width-48,world.height-48,80)
+   for(let i=0;i<40;i++)g.fillStyle(i%2?this.palette.color.grassLight:this.palette.color.grassShade,.45).fillEllipse((i*173+67)%world.width,(i*277+43)%world.height,120+(i%3)*50,60)
   }
-  const points = TD_PATH.map(fieldPoint)
-  g.lineStyle(108, this.palette.color.pathEdge, 1).strokePoints(points, false)
-  g.lineStyle(98, this.palette.color.pathBorder, 1).strokePoints(points, false)
-  g.lineStyle(78, this.palette.color.path, 1).strokePoints(points, false)
-  g.lineStyle(56, this.palette.color.pathLight, 1).strokePoints(points, false)
-  for (let d = 0; d < 27; d += .55) {
-   const p = fieldPoint(routePoint(d)); g.fillStyle(this.palette.color.pathDetail, .35).fillEllipse(p.x+Math.sin(d*7)*17,p.y+Math.cos(d*4)*15,9,5)
-  }
-  for (const [i,p] of TD_PADS.entries()) {
-   const f = fieldPoint(p)
+  const points=map.path.map(fieldPoint)
+  g.lineStyle(112,this.palette.color.pathEdge).strokePoints(points,false)
+  g.lineStyle(102,this.palette.color.pathBorder).strokePoints(points,false)
+  g.lineStyle(84,this.palette.color.path).strokePoints(points,false)
+  g.lineStyle(62,this.palette.color.pathLight).strokePoints(points,false)
+  for(let d=0;d<map.length;d+=.55){const p=fieldPoint(routePoint(d,map.id));g.fillStyle(this.palette.color.pathDetail,.35).fillEllipse(p.x+Math.sin(d*7)*17,p.y+Math.cos(d*4)*15,9,5)}
+  for(const [i,p] of map.pads.entries()){
+   const f=fieldPoint(p)
    g.fillStyle(this.palette.color.foundationShadow,.32).fillEllipse(f.x,f.y+12,112,68)
    g.fillStyle(this.palette.color.foundation).fillEllipse(f.x,f.y,110,66)
    g.lineStyle(5,this.palette.color.foundationBorder).strokeEllipse(f.x,f.y,110,66)
-   this.add.text(f.x, f.y, '+', {fontFamily:this.palette.fontFamily,fontSize:'30px',color:this.palette.css.foundationInk,fontStyle:'bold'}).setOrigin(.5).setDepth(1)
+   this.add.text(f.x,f.y,'+',{fontFamily:this.palette.fontFamily,fontSize:'30px',color:this.palette.css.foundationInk,fontStyle:'bold'}).setOrigin(.5).setDepth(1)
   }
-  const decor = [[.7,.5,1.1],[2.2,.5,.8],[4.5,.7,1.2],[6.2,.6,.8],[8,.7,.7],[11.3,.8,1],[.6,4.4,.8],[.7,8.6,1.2],[2.2,9.2,1],[5.8,9,.9],[7.8,8.8,1.1],[9.4,9.2,.7],[11.4,9.6,1]]
-  for (const [x,y,s] of decor) {
-   const p = fieldPoint({x:x!,y:y!})
-   if (this.textures.exists('tree')) this.add.image(p.x,p.y,'tree').setDisplaySize(155*s!,155*s!).setOrigin(.5,.8).setDepth(p.y/2)
+  if(fantasy){
+   // Landmarks sit outside the walkable path and build pads. Only the path carries enemies.
+   for(const [x,y,size] of [[2,1,220],[9,1,180],[18,2,230],[21,14,240],[2,14,190]]){
+    const p=fieldPoint({x:x!,y:y!});if(this.textures.exists('fantasy-crystal'))this.add.image(p.x,p.y,'fantasy-crystal').setDisplaySize(size!,size!).setOrigin(.5,.78).setDepth(1)
+   }
+   const bridge=fieldPoint({x:13,y:9})
+   if(this.textures.exists('fantasy-bridge'))this.add.image(bridge.x,bridge.y,'fantasy-bridge').setDisplaySize(340,340).setOrigin(.5,.78).setDepth(1)
+  }else{
+   for(const [x,y,size] of [[.7,.5,170],[4.5,.7,190],[8,.7,140],[11.3,.8,160],[.7,8.6,190],[5.8,9,150],[9.4,9.2,120]]){
+    const p=fieldPoint({x:x!,y:y!});if(this.textures.exists('tree'))this.add.image(p.x,p.y,'tree').setDisplaySize(size!,size!).setOrigin(.5,.8).setDepth(1)
+   }
   }
-  for (const p of [{x:4.4,y:1.3},{x:6,y:3.1},{x:1,y:7.9},{x:9.1,y:8.1}]) {
-   const f=fieldPoint(p);if(this.textures.exists('rock'))this.add.image(f.x,f.y,'rock').setDisplaySize(78,78).setOrigin(.5,.8).setDepth(1)
-  }
-  const exit = fieldPoint({x:11.6,y:8})
-  if(this.textures.exists('base'))this.add.image(exit.x,exit.y-25,'base').setDisplaySize(180,180).setOrigin(.5,.75).setDepth(exit.y)
-  this.add.text(30,170,'침입 경로 →',{fontFamily:this.palette.fontFamily,fontSize:'25px',color:this.palette.css.label,fontStyle:'bold'}).setDepth(5)
-  this.add.text(1060,1110,'기지',{fontFamily:this.palette.fontFamily,fontSize:'25px',color:this.palette.css.label,fontStyle:'bold'}).setDepth(5)
+  const entry=fieldPoint(map.path[0]!),exit=fieldPoint(map.path[map.path.length-1]!)
+  const baseTexture=fantasy&&this.textures.exists('fantasy-gate')?'fantasy-gate':'base'
+  if(this.textures.exists(baseTexture))this.add.image(exit.x-(fantasy?80:0),exit.y-18,baseTexture).setDisplaySize(fantasy?270:180,fantasy?270:180).setOrigin(.5,.78).setDepth(exit.y)
+  this.add.text(entry.x+30,entry.y-90,'침입 경로 →',{fontFamily:this.palette.fontFamily,fontSize:'25px',color:this.palette.css.label,fontStyle:'bold',stroke:this.palette.css.white,strokeThickness:5}).setDepth(5)
+  this.add.text(exit.x-(fantasy?110:0),exit.y+70,'지켜야 할 관문',{fontFamily:this.palette.fontFamily,fontSize:'25px',color:this.palette.css.label,fontStyle:'bold',stroke:this.palette.css.white,strokeThickness:5}).setOrigin(.5).setDepth(5)
  }
  private actor(kind: TowerKind | EnemyKind, x:number, y:number, size:number): Actor {
   const texture=this.textures.exists(kind)?kind:`${kind}-fallback`
@@ -133,20 +143,24 @@ export class DefenseScene extends Phaser.Scene {
   // A fresh run has time 0; remove all retained objects and event IDs from the previous run.
   if(this.lastState && this.lastState!==s) this.clearActors()
   this.lastState=s;this.stamp=s.time
+  const map=getTDMap(s),camera=this.bridge.camera()
+  this.cameras.main.setZoom(camera.zoom).centerOn(camera.x,camera.y)
+  const entry=getTDWaveEntry(s),entryPoint=fieldPoint(entry.position)
+  this.entryMarker.setPosition(Math.max(130,entryPoint.x),entryPoint.y-60).setText(`${s.phase==='prepare'?'다음 입구':'침입 중'} ↓`).setVisible(map.id==='starlight'&&s.phase!=='won'&&s.phase!=='lost')
   if(s.phase==='lost'&&!this.endedAt)this.endedAt=now
   const effectTime=s.time+(s.phase==='lost'?(now-this.endedAt)/1000:0)
   this.frameCount++
   if(this.frameCount%30===0){this.game.canvas.dataset.frames=String(this.frameCount);this.game.canvas.dataset.enemies=String(s.enemies.length);this.game.canvas.dataset.projectiles=String(s.shots.length)}
   const reduced=this.bridge.reduced(),paused=this.bridge.paused()
   this.range.clear();this.effects.clear();this.health.clear()
-  const selected=this.bridge.selected(),active=s.towers.find(t=>t.pad===selected),pad=fieldPoint(TD_PADS[selected]!)
+  const selected=this.bridge.selected(),active=s.towers.find(t=>t.pad===selected),pad=fieldPoint(map.pads[selected]??map.pads[0]!)
   if(active) {
    const r=towerStats(active).range*FIELD_UNIT,ry=towerStats(active).range*FIELD_Y_UNIT
    this.range.fillStyle(this.palette.color.range,.12).fillEllipse(pad.x,pad.y,r*2,ry*2).lineStyle(3,this.palette.color.range,.8).strokeEllipse(pad.x,pad.y,r*2,ry*2)
   }
   this.range.lineStyle(8,this.palette.color.selection,1).strokeEllipse(pad.x,pad.y+3,116,72)
   for(const t of s.towers) {
-   const p=fieldPoint(TD_PADS[t.pad]!),key=`${t.kind}-${t.level}`
+   const p=fieldPoint(map.pads[t.pad]!),key=`${t.kind}-${t.level}`
    let a=this.towers.get(t.pad)
    if(!a){a=this.actor(t.kind,p.x,p.y,212);this.towers.set(t.pad,a)}
    if(this.lastBuild.get(t.pad)!==key){this.lastBuild.set(t.pad,key);this.buildAt.set(t.pad,now);if(!paused)this.playSound('build',.18)}
@@ -169,7 +183,7 @@ export class DefenseScene extends Phaser.Scene {
   }
   for(const [id,a] of this.towers)if(!s.towers.some(t=>t.pad===id)){a.image.destroy();a.shadow.destroy();this.towers.delete(id);this.lastBuild.delete(id)}
   for(const e of s.enemies) {
-   const p=fieldPoint(routePoint(e.distance)),ahead=fieldPoint(routePoint(e.distance+.08))
+   const p=fieldPoint(routePoint(e.distance,map.id)),ahead=fieldPoint(routePoint(e.distance+.08,map.id))
    const size=e.kind==='boss'?224:e.kind==='armored'?172:148
    let a=this.enemies.get(e.id);if(!a){a=this.actor(e.kind,p.x,p.y,size);this.enemies.set(e.id,a)}
    const cadence=(e.kind==='swift'?12:e.kind==='boss'?6:e.kind==='armored'?8:10)*(e.slowUntil>s.time?.65:1)
@@ -210,7 +224,7 @@ export class DefenseScene extends Phaser.Scene {
     this.seenEvents.add(ev.id)
     if(ev.type==='impact'&&ev.kind==='cannon'&&!paused&&!reduced&&now-this.lastSound>120){this.playSound('impact',.18);this.lastSound=now;this.cameras.main.shake(75,.001)}
     if(ev.type==='kill'&&ev.enemyKind){const image=this.actor(ev.enemyKind,p.x,p.y,ev.enemyKind==='boss'?224:ev.enemyKind==='armored'?172:148);image.shadow.destroy();this.corpse.set(ev.id,image.image)}
-    if(ev.type==='kill'||ev.type==='leak')this.damageText.set(ev.id,this.add.text(p.x,p.y-45,ev.type==='kill'?`+${ev.bounty??0}`:`−${ev.amount??1}`,{fontFamily:this.palette.fontFamily,fontSize:'27px',fontStyle:'bold',color:ev.type==='kill'?this.palette.css.bounty:this.palette.css.lossText,stroke:this.palette.css.textOutline,strokeThickness:4}).setOrigin(.5).setDepth(1800))
+    if(ev.type==='kill'||ev.type==='leak')this.damageText.set(ev.id,this.add.text(p.x,p.y-45,ev.type==='kill'?`+${ev.bounty??0}`:`−${ev.amount??1}`,{fontFamily:this.palette.fontFamily,fontSize:'27px',fontStyle:'bold',color:ev.type==='kill'?this.palette.css.bounty:this.palette.css.lossText,stroke:this.palette.css.textOutline,strokeThickness:4}).setOrigin(.5).setDepth(12000))
    }
    if(ev.type==='hit'||ev.type==='impact') {
     const radius=ev.kind==='cannon'?15+fraction*65:8+fraction*24
@@ -241,7 +255,7 @@ export class DefenseScene extends Phaser.Scene {
 
 export function createDefenseGame(parent:HTMLElement,bridge:DefenseBridge) {
  const palette=readDefensePalette(parent)
- return new Phaser.Game({type:Phaser.AUTO,parent,width:FIELD_WIDTH,height:FIELD_HEIGHT,backgroundColor:palette.css.ground,banner:false,
+ return new Phaser.Game({type:Phaser.AUTO,parent,width:VIEW_WIDTH,height:VIEW_HEIGHT,backgroundColor:palette.css.ground,banner:false,
   scene:new DefenseScene(bridge,palette),audio:{disableWebAudio:false},render:{antialias:true,roundPixels:false},
   scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH},fps:{target:60,min:20},
   input:{mouse:{preventDefaultWheel:false},touch:{capture:false}},disableContextMenu:true})

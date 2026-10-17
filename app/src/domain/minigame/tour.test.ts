@@ -25,13 +25,14 @@ function play(stages: readonly TreadmillStage[], picks: readonly TreadmillUpgrad
 }
 
 describe("running tour content", () => {
-  it("has two seasons of four cities with stable, unique ids", () => {
-    expect(TOUR_SEASONS.map(season => season.id)).toEqual(["korea", "world"])
+  it("preserves both city campaigns and adds an independent fantasy region with stable, unique ids", () => {
+    expect(TOUR_SEASONS.map(season => season.id)).toEqual(["korea", "world", "fantasia"])
     expect(citiesOf("korea").map(city => city.name)).toEqual(["서울", "대전", "대구", "부산"])
     expect(citiesOf("world").map(city => city.name)).toEqual(["도쿄", "오사카", "파리", "런던"])
     expect(new Set(TOUR_CITIES.map(city => city.id)).size).toBe(TOUR_CITIES.length)
     for (const city of TOUR_CITIES) expect(city.id).toMatch(/^[a-z][a-z0-9-]{1,23}$/u)
-    expect(TOUR_CITIES.map(city => city.level)).toEqual(TOUR_CITIES.map((_, index) => index))
+    expect(TOUR_CITIES.filter(city => city.season !== "fantasia").map(city => city.level)).toEqual([0, 1, 2, 3, 4, 5, 6, 7])
+    expect(citiesOf("fantasia").map(city => city.id)).toEqual(["starlight"])
     expect(tourCity("busan")?.landmark).toBe("gwangan")
   })
   it("builds each city on the same three surfaces, and gets harder city by city", () => {
@@ -42,9 +43,11 @@ describe("running tour content", () => {
       expect(stages.map(stage => stage.name)).toEqual(city.stageNames)
       const hazards = stages.reduce((sum, stage) => sum + stage.course.length, 0)
       const belt = stages[0]!.belt
-      expect(hazards, city.id).toBeGreaterThanOrEqual(previous.hazards)
-      expect(belt, city.id).toBeGreaterThan(previous.belt)
-      previous = { hazards, belt }
+      if (city.season !== "fantasia") {
+        expect(hazards, city.id).toBeGreaterThanOrEqual(previous.hazards)
+        expect(belt, city.id).toBeGreaterThan(previous.belt)
+        previous = { hazards, belt }
+      }
       for (const stage of stages) {
         const times = stage.course.map(item => item.at)
         expect(times, stage.id).toEqual([...times].sort((a, b) => a - b))
@@ -53,7 +56,7 @@ describe("running tour content", () => {
         expect(Math.max(...times)).toBeLessThan(TREADMILL_RULES.stageSeconds)
       }
     }
-    expect(tourStages(TOUR_CITIES[TOUR_CITIES.length - 1]!).reduce((sum, stage) => sum + stage.course.length, 0))
+    expect(tourStages(tourCity("london")!).reduce((sum, stage) => sum + stage.course.length, 0))
       .toBeGreaterThan(TREADMILL_STAGES.reduce((sum, stage) => sum + stage.course.length, 0))
   })
   it("plays a city course through the same engine and finishes on its last stage", () => {
@@ -76,7 +79,7 @@ describe("tour balance guard (game feel, not training)", () => {
     }
   })
   it("still does not reward doing nothing or only holding run, even in the first city", () => {
-    for (const city of [TOUR_CITIES[0]!, TOUR_CITIES[TOUR_CITIES.length - 1]!]) {
+    for (const city of [tourCity("seoul")!, tourCity("london")!, tourCity("starlight")!]) {
       expect(play(tourStages(city), ["grip", "grip"], state => state).failure, city.id).toBe("fall")
       const holdOnly: Strategy = state => {
         const next = state.running ? state : treadmillCommand(state, { type: "run", held: true })
@@ -92,6 +95,6 @@ describe("tour balance guard (game feel, not training)", () => {
       const end = play(stages, ["grip", "grip"], careless)
       return end.stage * TREADMILL_RULES.stageSeconds + end.seconds
     }
-    expect(survived(tourStages(TOUR_CITIES[TOUR_CITIES.length - 1]!))).toBeLessThanOrEqual(survived(tourStages(TOUR_CITIES[0]!)))
+    expect(survived(tourStages(tourCity("london")!))).toBeLessThanOrEqual(survived(tourStages(TOUR_CITIES[0]!)))
   })
 })
