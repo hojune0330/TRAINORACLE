@@ -1,7 +1,10 @@
 # DELIVERY — 별빛 릴레이 숲 지도 확장과 러닝 연결
 
-작성일: 2026-10-17 KST. **로컬 검수 일부 완료 · CI·공개 배포 미완료.**
-기준 소스는 `aca8db64`이며 이 기준 위의 현재 작업 트리를 검수했다.
+작성일: 2026-10-17 KST. **CI 성공 · 공개 배포 확인 · 공개 phone E2E 통과.**
+공개 스크린샷 파일·시각 검수와 WebP 5종 응답도 확인했다. 아래 상태는 실행 담당이
+마지막으로 전달한 확인 시점의 기록이며, 서비스 상태를 계속 감시한다는 뜻은 아니다.
+기준 소스는 `aca8db64`이며 이 기준 위의 변경을 검수했다. 이번 구현 소스
+`6951b24d2faec065b1e7787992380521bed162ed`는 `main`에 push됐다.
 담당은 root와 협업 작업자 3명이다. 이 기록의 검사 결과·수동 화면 확인은
 실행 담당 root가 전달한 결과이며, 문서 담당은 소스·산출물 경로를 확인해
 정리했을 뿐 테스트를 재실행하거나 배포하지 않았다.
@@ -26,10 +29,13 @@
 |---|---|---|
 | 관련 단위 검사 | **6파일·60건 통과** | 47.99초, 프로젝트 고정 Node **24.19.0** |
 | 초기 타입 검사 | **통과** | 최종 변경 후 재검사와 구분 |
-| 최종 타입 검사 | **진행 중** | 완료 결과 아직 미기록 |
+| 최종 app 타입 검사 | **통과** | `tsc` exit 0 |
+| 최종 E2E 타입 검사 | **통과** | `tsc` exit 0 |
 | 기존 지도 phone E2E | **2건 통과** | 33.3초 / 15.8초 |
 | 판타지 지도 phone E2E | **1건 통과** | 16.8초 |
-| 판타지 지도 desktop E2E | **1건 통과** | 17.6초 |
+| 판타지 지도 desktop E2E | **1건 통과, 수정 후 재통과** | 초기 17.6초; desktop 결과 grid 수정 후 20.6초 |
+| Production bundle | **빌드 완료** | 2811 modules, 1분44초 |
+| Publisher preflight | **READY_NOT_PUBLISHED** | 450 files; 게시 전 점검 결과이며 배포 아님 |
 
 단위 검사의 최종 실행 옵션은 `--pool=threads --maxWorkers=1 --no-isolate`다.
 기본 격리 실행에서는 호스트의 worker 시작 오류 3건이 발생했다. 이것은 테스트가
@@ -41,6 +47,9 @@
 현재 화면과 달라 최종 assertion에서 한 번 실패했다. 기대 제목을 수정하고 다시
 실행한 phone/desktop 결과가 위 통과 기록이다. 초기 실패를 누락하거나 첫 실행부터
 모두 통과한 것으로 보고하지 않는다.
+
+이후 desktop 결과 화면의 grid를 수정하고 판타지 desktop E2E를 다시 실행해
+20.6초에 통과했다. 최종 app·E2E 타입 검사도 각각 exit 0으로 끝났다.
 
 E2E 소스는 [`app/e2e/tower-defense.spec.ts`](../../app/e2e/tower-defense.spec.ts)다.
 현재 판타지 시나리오는 WebGL을 사용하지 않는 렌더 경로와 제어된 브라우저 시간을
@@ -67,13 +76,40 @@ E2E 소스는 [`app/e2e/tower-defense.spec.ts`](../../app/e2e/tower-defense.spec
 확인한 것과, 이미 존재하는 구버전 저장의 보존 회귀 검사는 구분한다. 기존 저장
 보존 규칙은 관련 단위 검사와 기존 지도 E2E의 별도 확인 대상이다.
 
-현재 로컬 캡처는 아래에 있다. `app/test-results`는 실행 산출물이므로 후속 실행으로
-교체될 수 있으며 이 경로가 저장소 게시·공개 호스팅 완료를 뜻하지 않는다.
+로컬 phone 캡처는 후속 desktop 실행으로 교체되어 **현재 해당 파일이 없다**.
+phone 검사 통과 기록과 캡처의 현재 보존 상태는 구분한다. 현재 로컬 desktop
+캡처 경로는 아래다. `app/test-results`는 실행 산출물이므로 후속 실행으로 교체될 수
+있으며 이 경로 자체가 저장소 게시·공개 호스팅 완료를 뜻하지 않는다.
 
-- `app/test-results/tower-defense/tower-defense-fantasy-map--d0f51-save-and-running-connection-phone/fantasy-overview.png`
-- `app/test-results/tower-defense/tower-defense-fantasy-map--d0f51-save-and-running-connection-phone/fantasy-result.png`
 - `app/test-results/tower-defense/tower-defense-fantasy-map--d0f51-save-and-running-connection-desktop/fantasy-overview.png`
 - `app/test-results/tower-defense/tower-defense-fantasy-map--d0f51-save-and-running-connection-desktop/fantasy-result.png`
+
+## 제한된 전략 비교
+
+`defense_simulation` 담당의 도메인 실행 결과를 전달받아 기록했다. 아래 시간은
+실행 벽시계나 사람이 고민한 시간이 아니라 각 정책의 **시뮬레이션 전투 시간**이다.
+발행 소스의 판타지 지도에서 비교한 다섯 정책이며, 전역 최적 전략 탐색이나
+사람의 재미·재방문 검사가 아니다. 최종 시뮬레이션 보고의 처치·누수 값도 대조했다.
+
+| 정책 | 종료 | 기지 체력 | 처치 / 누수 | 남은 골드 | 시뮬레이션 초 |
+|---|---|---:|---|---:|---:|
+| 기준: 화력 강화 + 판매·재배치 | 6웨이브 완주 | 20 | 100 / 0 | 492 | 133.750 |
+| 사거리 강화 분기 | 6웨이브 완주 | 20 | 100 / 0 | 492 | 139.017 |
+| 기준에서 냉각탑 2개 생략 | 6웨이브 완주 | 20 | 100 / 0 | 603 | 131.533 |
+| 4웨이브 이후 추가 투자 없음 | 5웨이브 패배 | 0 | 58 / 16 | 308 | 103.317 |
+| 판매·재배치 없음 | 6웨이브 완주 | 10 | 95 / 5 | 418 | 186.150 |
+
+이 비교에서는 기준 화력·재배치 정책이 사거리 분기보다 같은 체력·잔액으로
+5.267초 빨랐다. 냉각탑 두 개를 생략한 정책은 기지 체력을 유지하면서 잔액이
+111골드 더 남고 2.217초 빨랐다. 따라서 **현재 비교 정책에서 냉각탑 투자의
+추가 가치가 드러나지 않았으며 후속 검토 대상**이다. 냉각을 생략한 정책은
+투자 금액·공격 조합이 달라 감속 효과만을 분리한 동일 지출 대조 실험은 아니다.
+모든 지도·배치에서 냉각탑이 무의미하다고 일반화하거나 수치 변경을 확정하지 않는다.
+
+후반 무투자는 5웨이브에서 패배했고, 판매·재배치가 없는 정책은 체력10과
+5누수로 완주했다. 이는 해당 정책에서 후반 위치 대응의 결과 차이를 보여준다.
+패배로 일찍 종료된 103.317초를 더 효율적인 완주 시간으로 비교하지 않는다.
+단위·E2E 통과와 위 다섯 정책 결과만으로 밸런스나 재미를 합격 처리하지 않는다.
 
 ## 수동 화면·에셋 검수
 
@@ -108,26 +144,77 @@ E2E 소스는 [`app/e2e/tower-defense.spec.ts`](../../app/e2e/tower-defense.spec
 | 단계 | 상태 | 확인값 |
 |---|---|---|
 | 기준 소스 | 확인 | `aca8db64` |
-| 이번 변경의 발행 소스 SHA | **미발행** | pending |
-| 최종 타입 검사 | **진행 중** | pending |
-| 호스팅 CI 실행/결과 | **미발행·미완료** | pending |
-| Pages 배포 SHA | **미발행** | pending |
-| 공개 배포 결과 | **대기** | pending |
-| 공개 영수증·빌드 원장 소스 일치 | **미확인** | pending |
-| 공개 브라우저 화면·에셋 응답 | **미확인** | pending |
+| 이번 변경의 발행 소스 SHA | **main push 완료** | `6951b24d2faec065b1e7787992380521bed162ed` |
+| 최종 타입 검사 | **app·E2E 모두 통과** | 각각 `tsc` exit 0 |
+| 호스팅 CI 실행/결과 | **전체 success** | [run 38991062640](https://github.com/hojune0330/TRAINORACLE/actions/runs/38991062640), 실행 head가 발행 소스 전체 SHA와 일치 |
+| Production bundle | **완료** | 2811 modules / 1분44초 |
+| Publisher preflight | **게시 전 점검 완료** | `READY_NOT_PUBLISHED`, 450 files; 이후 guarded publish 결과와 구분 |
+| Pages 배포 SHA | **발행 완료** | `c9a889d406c21ee8b5990fdc2e38ed9930fc1643` |
+| 공개 배포 결과 | **GitHub Pages API built** | `2026-10-17T02:15:15Z` (KST 11:15:15) |
+| 공개 영수증·빌드 원장 소스 일치 | **확인** | 두 문서 모두 `6951b24d2faec065b1e7787992380521bed162ed` |
+| 공개 브라우저 기능·에셋 | **phone E2E 통과** | 360×800, 누락 에셋0·페이지 오류0·가로 넘침 없음 |
+| 공개 스크린샷 파일·시각 검수 | **확인** | overview/result PNG 실제 존재·직접 이미지 검수 |
+| 공개 WebP 5종 | **확인** | 모두 HTTP 200 / `image/webp`, 납품 바이트 수와 일치 |
 
-이전 디펜스 배포의 SHA나 성공 CI를 이번 판타지 지도 배포 증거로 재사용하지 않는다.
-위 칸은 해당 작업의 실제 실행 결과가 확보된 뒤 갱신한다. 커밋·CI 성공·정적 파일
-응답·공개 화면 검수를 서로 바꿔 부르지 않는다.
+CI의 정확한 head는 `6951b24d2faec065b1e7787992380521bed162ed`다. 계약 검사·
+UTC 단위·KST 단위·app-quality·dedicated뿐 아니라 **app-browser-generic 4개,
+app-browser, delivery-complete 모두 success**로 끝났다. 자동 `deploy-pages`는
+`manual-pages` 조건으로 skipped다. 자동 배포 단계가 성공했다고 기록하지 않는다.
+실행 담당이 [dedicated 작업 117273943892](https://github.com/hojune0330/TRAINORACLE/actions/runs/38991062640/job/117273943892)의
+실제 로그를 읽어 `tower-defense.spec.ts` 전용 **18 passed (7.3m)**를 확인했다.
+그중 마지막 reduced-motion 판타지 시나리오는 17.2초다. 이는 해당 CI 시나리오의
+확인 범위이며 모든 누락 에셋 조합이나 실제 기기 성능을 검증한 것은 아니다.
+
+수동 guarded publish 후 GitHub Pages API의 `built`와 다음 공개 문서의 소스
+일치를 **02:15 UTC 이후** 확인했다.
+
+- [공개 배포 영수증](https://hojune0330.github.io/TRAINORACLE/trainoracle-deploy-receipt.json)
+- [공개 빌드 원장](https://hojune0330.github.io/TRAINORACLE/trainoracle-build-manifest.json)
+
+영수증의 방식은 `PRESERVING_GUARDED_MANUAL`이다.
+`deployedAt: 2026-10-17T02:12:52.452Z`는 **패키지 생성 시각**이며 Pages API의
+실제 `built` 시각 `2026-10-17T02:15:15Z`와 구분한다. 이전 디펜스의 SHA나
+성공 CI를 이번 배포 증거로 재사용하지 않았다.
+
+### 공개 사이트 phone 확인
+
+[공개 사이트](https://hojune0330.github.io/TRAINORACLE/?app=1)에서
+`fantasy map camera, relay entrances, split save and running connection`
+시나리오가 **phone 360×800**, 테스트 38.6초 / 전체 실행 44.3초로 통과했다.
+실행 담당이 확인한 범위는 다음과 같다.
+
+- 전체 지도·지역 이동·드래그·선두 추적의 수동 해제.
+- 판타지 독립 저장·이어하기와 여섯 웨이브 진행.
+- 기지 체력20·처치100·남은 골드492 및 판타지 러닝 준비 화면 연결.
+- 누락 에셋0, 페이지 오류0, 가로 넘침 없음.
+
+이 검사는 **강제 Canvas 렌더와 제어된 브라우저 시간**을 사용한다. 공개 사이트의
+동작 확인이며 실제 iPhone GPU 성능이나 손가락 핀치 검수가 아니다. 공개 CUA
+재연결은 `Transport closed`로 사용할 수 없어 Playwright로 검증했다.
+이전 390×844 CUA 화면 검수는 로컬 확인으로 유지한다.
+
+공개 E2E 산출물은 별도 작업 경로
+`.scratch/fantasy-public-evidence-20261017/tower-defense-fantasy-map--d0f51-save-and-running-connection-phone/`에
+있다. 실행 담당 root가 `fantasy-overview.png`, `fantasy-result.png`의 실제
+존재를 확인하고 `view_image`로 두 PNG를 직접 열어 보았다. 지도·랜드마크·
+카메라 시야·미니맵·건설 지점 번호가 실제 화면에 표시되는 것을 확인했다.
+
+공개 `/game/fantasy-world-v1/` 아래 WebP 5종도 모두 **HTTP 200**,
+**Content-Type `image/webp`**로 응답했다. 실제 바이트 수는 ground 445,048,
+panorama 271,410, gate 63,696, crystal 70,754, bridge 53,694로 납품본과 같다.
+응답 형식·바이트 수 확인과 두 화면의 직접 검수를 완료했으며, 이 결과를 실제
+iPhone 핀치나 러닝 전체 판의 검증으로 확대하지 않는다. 커밋·CI 성공·정적 파일
+응답·공개 기능 검사·화면의 직접 검수는 각각의 증거로 구분한다.
 
 ## 검수 범위 밖과 남은 작업
 
 - **실제 iPhone 두 손가락 핀치**, 손가락 해제 시 오탭, 터치 지연·장시간 성능.
 - 친구 경기 접속·동기화·재접속·동시 플레이. 이번 판타지 맵 로컬 검수에 포함하지 않음.
-- 다양한 투자 전략·실패 경로·반복 플레이의 재미. 단일 시나리오 완주로 확정하지 않음.
+- 위 다섯 정책을 넘어선 전략의 균형·사용자의 실패 원인 이해·반복 플레이의 재미.
+  냉각탑 투자 가치의 후속 검토도 남아 있다.
 - 러닝 전체 판의 지속 제스처·장애물 읽기·낙하·복귀. 이번에는 진입·시작·일시정지 확인.
-- 판타지 맵의 모든 누락 에셋 조합·렌더러 실패·모션 감소·최대 혼잡 상황.
-- 최종 타입 검사 결과, 발행 소스 SHA, CI, Pages 배포와 공개 결과 확인.
+- 판타지 맵의 모든 누락 에셋 조합·렌더러 실패·최대 혼잡 상황. 모션 감소는
+  전용 CI 시나리오가 통과했지만 모든 조건의 검증으로 확대하지 않는다.
 
 추가 에셋 수나 문서 분량을 완료 기준으로 삼지 않는다. 다음 보고는 확인된 단계와
 실패·수정 이력, 아직 남은 범위를 이 기록과 같은 수준으로 구분한다.
