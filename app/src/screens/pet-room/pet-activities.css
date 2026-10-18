@@ -34,6 +34,8 @@
 .pet-care-prop--drag { cursor: grab; }
 .pet-drop-target { position: absolute; z-index: 3; min-width: 70px; max-width: 38%; min-height: 48px; padding: 10px; border: 2px dashed var(--pet-green); border-radius: 20px; transform: translate(-50%, -50%); background: var(--pet-paper); font-size: 13px !important; }
 .pet-drop-target--ready { border-style: solid; outline: 3px solid var(--pet-paper); }
+.pet-throw-choices .pet-drop-target, .pet-home .pet-care-world .pet-throw-choices .pet-drop-target:not(:disabled):active { transform: translate(-50%, -130%); }
+.pet-throw-choices .pet-drop-target::after { content: '↓'; position: absolute; left: 50%; top: 100%; transform: translateX(-50%); color: var(--pet-green); font-size: 22px; pointer-events: none; }
 .pet-stroke-guide { position: absolute; left: 21%; right: 15%; top: 29%; text-align: center; font-size: 36px; color: var(--pet-green); pointer-events: none; }
 .pet-hide-cushions { position: absolute; z-index: 4; left: 5%; right: 5%; bottom: 5%; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .pet-hide-cushions button { position: relative; min-width: 44px; min-height: 64px; border: 0; padding: 0; background: transparent; }
