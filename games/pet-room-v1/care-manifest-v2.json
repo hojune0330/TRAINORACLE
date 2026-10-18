@@ -1,0 +1,46 @@
+{
+  "version": 2,
+  "generatedAt": "2026-10-19",
+  "tool": "OpenAI image_gen.imagegen",
+  "assets": [
+    {
+      "id": "room-curtains-v2",
+      "file": "room-curtains-v2.webp",
+      "width": 1254,
+      "height": 1254,
+      "alpha": false,
+      "bytes": 50346,
+      "sha256": "54d8e0c41122ba4a8aaa6a3f53053ae30f334f847522f275f8ee61ec0aabc4c0"
+    },
+    {
+      "id": "care-props-v2",
+      "file": "care-props-v2.webp",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "bytes": 92938,
+      "sha256": "278c7ca7e90b2a7f1fdcaf6ad36a846b2b7a998e7bc441b822160bb6db314a9d",
+      "grid": [
+        3,
+        2
+      ],
+      "props": [
+        "ball",
+        "bowl",
+        "folded",
+        "blanket",
+        "pillow",
+        "basket"
+      ]
+    },
+    {
+      "id": "room-sleep-v2",
+      "file": "room-sleep-v2.webp",
+      "width": 1254,
+      "height": 1254,
+      "alpha": false,
+      "bytes": 39348,
+      "sha256": "76a2179c788f3317a4d701d028d1c08599943f04cda32a2c52302266afc0dc81"
+    }
+  ]
+}
