@@ -55,7 +55,7 @@ describe("home hub destinations and information", () => {
     render(<Home onOpenDay={onOpenDay} onOpenArchive={onOpenArchive} />)
     const day = screen.getByRole("button", { name: "2026년 7월 14일 기록 3개 보기 · 훈련 2 · 컨디션·메모 1" })
     expect(day).toHaveTextContent("7월 14일 · 기록 3개")
-    expect(day).toHaveAccessibleDescription("이 브라우저에 저장됨")
+    expect(day).not.toHaveAccessibleDescription()
     fireEvent.click(day)
     fireEvent.click(screen.getByRole("button", { name: "전체 일지" }))
     expect(onOpenDay).toHaveBeenCalledWith("2026-07-14")
@@ -73,7 +73,7 @@ describe("home hub destinations and information", () => {
     render(<Home />)
     const day = screen.getByRole("button", { name: /2026년 7월 14일 기록 1개 보기/ })
     expect(day).toHaveTextContent("가져온 기록 포함")
-    expect(day).toHaveAccessibleDescription("이 브라우저에 저장됨 · 가져온 기록 포함")
+    expect(day).toHaveAccessibleDescription("가져온 기록 포함")
     expect(day).not.toHaveTextContent("계정 보관")
   })
 
@@ -125,9 +125,10 @@ describe("home hub destinations and information", () => {
     render(<TrainingHome model={model} onOpenNextTraining={openNext} onOpenPlan={openPlan} />)
     const next = screen.getByRole("button", { name: /^다음 훈련 ·/ })
     expect(next).toHaveAccessibleName(/템포 훈련.*LT.*7월 14일.*오후/)
-    // Only utility destinations become shorter; actual training instructions stay visible.
+    // Legacy quality instructions stay explicit; the redundant footer is removed.
     expect(next).toHaveTextContent("전체 25–40분 · 힘든 정도 5–6/10")
-    expect(next).toHaveTextContent("오후 훈련도 있어요")
+    expect(next).not.toHaveTextContent("오후 훈련도 있어요")
+    expect(model.nextTraining.laterSameDaySession).not.toBeNull()
     expect(model.nextTraining.session.prescription).toEqual(TRAINING.nextTraining.session.prescription)
     fireEvent.click(next)
     expect(openNext).toHaveBeenCalledOnce()

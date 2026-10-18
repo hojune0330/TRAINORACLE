@@ -19,6 +19,8 @@ export type InstantPlanTodayViewProps = {
   readonly navigationCards?: boolean
   /** Display only: supplied from the original session, never inferred from its time slot. */
   readonly sessionRoleLabel?: (sessionId: string) => string | undefined
+  /** True only for a source EASY session; absent or unknown roles keep the full preview. */
+  readonly compactSessionSummary?: (sessionId: string) => boolean
 }
 
 const stateMessages: Record<InstantPlanToday["state"], string> = {
@@ -42,6 +44,16 @@ const continueLabels: Partial<Record<InstantPlanToday["state"], string>> = {
 }
 
 type TodaySession = InstantPlanToday["sessions"][number]
+
+function navigationSummary(session: TodaySession, compact: boolean): string {
+  const totals = session.steps.filter(step => step.role === "TOTAL_DURATION")
+  // Reuse the existing complete-session projection, never add up displayed
+  // phase strings. Only explicitly supplied EASY roles may collapse
+  // the preview; MAIN, unknown roles and unresolved work retain their content.
+  const visible = compact && totals.length > 0 && !session.guidanceNotice
+    ? totals : session.steps.filter(step => step.role === "TOTAL_DURATION" || step.role === "MAIN")
+  return visible.map(step => step.instruction.replace(/^준비·회복·정리 포함 /u, "총 ")).join(" · ")
+}
 
 function SessionDetail({
   session,
@@ -107,6 +119,7 @@ export function InstantPlanTodayView({
   compact = false,
   navigationCards = false,
   sessionRoleLabel,
+  compactSessionSummary,
 }: InstantPlanTodayViewProps) {
   const headingId = useId()
   const canRecord = today.state === "SCHEDULED" || today.state === "PARTLY_RECORDED"
@@ -129,19 +142,21 @@ export function InstantPlanTodayView({
     </header>
     {today.sourceLabel && <p className="instant-plan__source">{today.sourceLabel}</p>}
     {showSessions ? <div className="category-card-grid">
-      {today.sessions.map(session => <div className="instant-plan__entry-session" key={session.id}>
-        <p className="instant-plan__entry-slot">{session.slotLabel}{sessionRoleLabel?.(session.id) && ` · ${sessionRoleLabel(session.id)}`}</p>
-        <h3>{session.title}</h3>
-        {session.steps.filter(step => step.role === "TOTAL_DURATION" || step.role === "MAIN").map((step, index) =>
-          <p className="instant-plan__entry-amount" key={`${step.role}-${index}`}>{step.instruction}</p>)}
-        <button className="instant-plan__content-open" data-category="training" type="button"
+      {today.sessions.map(session => {
+        const roleLabel = sessionRoleLabel?.(session.id)
+        const summary = navigationSummary(session, compactSessionSummary?.(session.id) === true)
+        return <div className="instant-plan__entry-session" key={session.id}>
+        <CategoryCard category="training" title={session.title} headingLevel={3}
+          label={[session.slotLabel, roleLabel].filter(Boolean).join(" · ")}
+          description={summary}
           aria-label={`${session.slotLabel} 훈련 내용 보기 · ${session.title}`}
-          onClick={() => onViewSession(session.id)}>훈련 내용 보기<ChevronRight size={18} aria-hidden="true" /></button>
+          aria-description={[roleLabel, summary].filter(Boolean).join(" · ")}
+          onClick={() => onViewSession(session.id)} />
         {session.recorded && <p className="instant-plan__hint">남긴 기록 있음</p>}
         {session.guidanceNotice && <IncompleteWorkoutNotice detail={session.guidanceNotice} />}
         {canRecord && !session.recorded && onRecordSession && <button className="instant-plan__entry-record" type="button"
           onClick={() => onRecordSession(session.id)} aria-label={`${session.slotLabel} 훈련 기록 남기기`}>일지 쓰기</button>}
-      </div>)}
+      </div>})}
     </div> : <>
       {today.state === "UNAVAILABLE" && <p className="instant-plan__status" role="alert">{stateMessages.UNAVAILABLE}</p>}
       {onContinue && <CategoryCard category="training" title={today.state === "COMPLETED" ? "지난 훈련 보기" : "전체 일정 보기"} onClick={onContinue} />}

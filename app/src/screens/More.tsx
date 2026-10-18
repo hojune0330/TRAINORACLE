@@ -106,8 +106,8 @@ export function More({
           {onOpenImport && <MenuAction category="record" icon={Watch} label="워치 파일 가져오기" onClick={onOpenImport} />}
         </MenuGroup>}
         {(onOpenRunningProfile || onOpenRecordReading || onOpenOracleLibrary) && <MenuGroup title="오라클">
-          {onOpenRunningProfile && <MenuAction category="oracle" icon={Heart} label="러닝 취향" detail="취향 점수 · 친구와 비교" onClick={onOpenRunningProfile} />}
-          {onOpenRecordReading && <MenuAction category="oracle" icon={ChartNoAxesCombined} label="최고기록으로 풀이하기" detail="저장 없이 내 기록·친구 기록 비교" onClick={onOpenRecordReading} />}
+          {onOpenRunningProfile && <MenuAction category="oracle" icon={Heart} label="러닝 취향" onClick={onOpenRunningProfile} />}
+          {onOpenRecordReading && <MenuAction category="oracle" icon={ChartNoAxesCombined} label="최고기록으로 풀이하기" onClick={onOpenRecordReading} />}
           {onOpenOracleLibrary && <MenuAction category="oracle" icon={BookOpen} label="오라클 읽을거리" onClick={onOpenOracleLibrary} />}
         </MenuGroup>}
         <MenuGroup title="배우기">
@@ -117,7 +117,7 @@ export function More({
         </MenuGroup>
         {(onOpenRewards || onOpenMinigame) && <MenuGroup title="꾸미기·게임">
           {onOpenRewards && <MenuAction category="journal" icon={NotebookPen} label="일지 꾸미기" onClick={onOpenRewards} />}
-          {onOpenMinigame && <MenuAction icon={Gamepad2} label="게임 라운지" detail="러닝·대결·디펜스 · 혼자 또는 친구와" illustration="running-game-announcement" onClick={onOpenMinigame} />}
+          {onOpenMinigame && <MenuAction icon={Gamepad2} label="게임 라운지" illustration="running-game-announcement" onClick={onOpenMinigame} />}
         </MenuGroup>}
         <MenuGroup title="관리">
           <MenuAction icon={Compass} label={VIEW_TITLES.introduction} onClick={() => changeView("introduction")} />
@@ -142,7 +142,7 @@ export function More({
         </MenuGroup>
         {(onOpenRewards || onOpenMinigame) && <MenuGroup title="꾸미기·게임">
           {onOpenRewards && <MenuAction category="journal" icon={NotebookPen} label="일지 꾸미기" onClick={onOpenRewards} />}
-          {onOpenMinigame && <MenuAction icon={Gamepad2} label="게임 라운지" detail="러닝·대결·디펜스 · 혼자 또는 친구와" illustration="running-game-announcement" onClick={onOpenMinigame} />}
+          {onOpenMinigame && <MenuAction icon={Gamepad2} label="게임 라운지" illustration="running-game-announcement" onClick={onOpenMinigame} />}
         </MenuGroup>}
         </>}
         {activeView === "account" && <>
@@ -176,7 +176,7 @@ export function More({
         </MenuGroup>
         <MenuGroup title="출처와 라이선스">
           <MenuAction category="journal" icon={Sticker} label="스티커·오픈소스 출처" href="./legal/open-source.html" target="_blank" />
-          <MenuAction icon={LibraryBig} label="오픈소스 소프트웨어 고지" detail="앱에 포함된 소프트웨어의 라이선스 전문을 확인해요" href="./legal/third-party-notices.html" target="_blank" />
+          <MenuAction icon={LibraryBig} label="오픈소스 소프트웨어 고지" href="./legal/third-party-notices.html" target="_blank" />
         </MenuGroup>
         </>}
       </div>

@@ -267,7 +267,7 @@ export function OracleProfileExperience(props: OracleProfileExperienceProps) {
           {visibleScores.length === 0 && illustrationAllowed && !questionOpen && <ProfileCompanion mode="intro" />}
         </div>
         {visibleScores.length === 0 ? <>
-          <p className="oracle-v2__intro-scope">선택 사항 · 질문 3개로 계획 취향을 살펴봐요. 체력·실력 평가는 아니에요.</p>
+          <p className="oracle-v2__intro-scope">취향 질문(선택) · 체력·실력 평가는 아니에요.</p>
           <div className="oracle-v2__entry-choices app-choice-group" role="group" aria-label="러닝 취향 시작 방법">
             <button type="button" className="oracle-v2__primary" aria-label="내 훈련 방식 알아보기 · 질문 3개" disabled={blocked} onClick={() => openQuestions("STRUCTURE")}><span>질문 3개 답하기</span><ArrowRight size={18} aria-hidden="true" /></button>
           </div>

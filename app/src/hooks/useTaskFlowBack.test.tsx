@@ -2,7 +2,7 @@ import React from "react"
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { useTaskFlowBack } from "./useTaskFlowBack"
-import { beginBrowserPopNavigation, consumeBrowserBackLayer, registerBrowserBackLayer } from "../navigation/browserNavigation"
+import { beginBrowserPopNavigation, consumeBrowserBackLayer, registerBrowserBackLayer, requestBrowserBackLayer } from "../navigation/browserNavigation"
 
 const account = vi.hoisted(() => ({ generation: 0 }))
 vi.mock("../domain/account/local-journal-ownership", () => ({ localJournalScopeGeneration: () => account.generation }))
@@ -34,6 +34,17 @@ function Flow({ busy = false, initial = 0, onBack = () => {} }: { busy?: boolean
 }
 
 describe("task-flow native Back adapter", () => {
+  it("does not restore a button-requested parent after the account scope changes before POP", () => {
+    const back = vi.fn()
+    render(<Flow initial={1} onBack={back} />)
+    expect(requestBrowserBackLayer()).toBe(true)
+    expect(back).not.toHaveBeenCalled()
+    account.generation += 1
+    act(() => { expect(popTo(parent)).toBe(true) })
+    expect(back).not.toHaveBeenCalled()
+    expect(screen.getByRole("heading")).toHaveTextContent("질문 1")
+  })
+
   it("steps backward once per Back without losing answers or leaving a sentinel on the first question", () => {
     const back = vi.fn(), push = vi.spyOn(window.history, "pushState")
     render(<React.StrictMode><Flow onBack={back} /></React.StrictMode>)

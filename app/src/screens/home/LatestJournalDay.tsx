@@ -48,6 +48,7 @@ export function LatestJournalDay({ entries, today, storage, onOpenDay, onOpenArc
   const singleKind = dayEntries.length === 1 ? KIND_LABELS.find(([kind]) => kind === dayEntries[0]?.kind)?.[1] : null
   const storageLabel = describeStorage(dayEntries, storage)
   const imported = dayEntries.some(entry => hasImportedField(entry.fieldProvenance))
+  const notice = [storageLabel, imported ? "가져온 기록 포함" : null].filter(Boolean).join(" · ")
 
   return <section className="home-hub__recent" aria-label="최근 하루 기록">
     <div className="home-hub__section-heading">
@@ -55,24 +56,24 @@ export function LatestJournalDay({ entries, today, storage, onOpenDay, onOpenArc
       <button type="button" onClick={onOpenArchive}>전체 일지 <ChevronRight size={16} aria-hidden="true" /></button>
     </div>
     <CategoryCard variant="row" category="journal" onClick={() => onOpenDay?.(latest)}
-      aria-label={`${year}년 ${dateLabel} 기록 ${dayEntries.length}개 보기 · ${kinds}`} aria-describedby={descriptionId}
+      aria-label={`${year}년 ${dateLabel} 기록 ${dayEntries.length}개 보기 · ${kinds}`} aria-describedby={notice ? descriptionId : undefined}
       title={<span className="home-hub__latest-heading">
           <strong>{visibleDate} · {singleKind ?? `기록 ${dayEntries.length}개`}</strong>
           <JournalDecorationPreview item={decorationPreviews.get(latest)} />
         </span>}
-      description={<span className="home-hub__summary-copy">
+      description={dayEntries.length > 1 || notice ? <span className="home-hub__summary-copy">
         {dayEntries.length > 1 && <span>{kinds}</span>}
-        <small id={descriptionId}>{storageLabel}{imported ? " · 가져온 기록 포함" : ""}</small>
-      </span>} />
+        {notice && <small id={descriptionId}>{notice}</small>}
+      </span> : undefined} />
   </section>
 }
 
-function describeStorage(entries: readonly JournalEntry[], storage?: LatestJournalStorage): string {
+function describeStorage(entries: readonly JournalEntry[], storage?: LatestJournalStorage): string | null {
   if (storage === undefined) return "저장 범위 확인 필요"
   if (storage.owner === null) {
     // A restored/legacy synced flag alone cannot identify any current account receipt.
     return storage.readiness === "READY" && storage.accountStatus === "IDLE" && entries.every(entry => entry.syncState === "local")
-      ? "이 브라우저에 저장됨"
+      ? null // Routine storage scope remains in the journal reader, not every home row.
       : "보관된 기록 · 계정 저장 미확인"
   }
   const storedCount = entries.filter(entry => matchesStoredVersion(entry, storage.accountStoredVersions)).length
@@ -81,6 +82,7 @@ function describeStorage(entries: readonly JournalEntry[], storage?: LatestJourn
       && matchesStoredVersion(entry, storage.currentConfirmedVersions)).length : 0
   const cachedCount = storedCount - confirmedCount
   const deviceCount = entries.length - storedCount
+  if (confirmedCount === entries.length) return null
   const parts = [
     ...(confirmedCount > 0 ? [`계정 보관${entries.length > 1 ? ` ${confirmedCount}개` : ""}`] : []),
     ...(cachedCount > 0 ? [`마지막 확인 기록 ${cachedCount}개`] : []),

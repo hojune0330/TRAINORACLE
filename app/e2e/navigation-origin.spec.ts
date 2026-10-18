@@ -9,6 +9,20 @@ test.beforeEach(async ({ page, baseURL }) => {
     ? route.continue() : route.abort())
 })
 
+test("training content returns focus to its More entry", async ({ page }) => {
+  await page.goto("/?app=1&uitest=1")
+  await page.getByRole("button", { name: "더보기", exact: true }).click()
+  const opener = page.getByRole("button", { name: "훈련법 읽기", exact: true })
+  await opener.click()
+  await expect(page.getByRole("heading", { name: "어떤 훈련이 궁금한가요?" })).toBeVisible()
+  await page.getByRole("button", { name: "이전 화면", exact: true }).click()
+  await expect(opener).toBeFocused()
+  await expect(page.getByRole("heading", { name: "더보기", exact: true })).toBeVisible()
+  // Focus remains stable after another animation frame, not just before a late POP.
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))
+  await expect(opener).toBeFocused()
+})
+
 test("returns every audited child screen to the screen that opened it", async ({ page }) => {
   await page.goto("/?app=1")
 

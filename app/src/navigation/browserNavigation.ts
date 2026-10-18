@@ -71,6 +71,20 @@ export function hasPendingBrowserBackLayer(): boolean {
   return pendingBackLayerId !== null
 }
 
+/** Let a screen's Back button consume its owned entry before restoring its
+ * parent. Closing the screen first queues a disposal POP that can cancel the
+ * parent's focus/scroll return frame. False means no owned layer handled it. */
+export function requestBrowserBackLayer(): boolean {
+  if (pendingBackLayerId !== null) return true
+  const marker = layerMarker(window.history.state)
+  const layer = marker === null ? undefined : layers.get(marker)
+  if (!layer?.active || !layer.ownsEntry) return false
+  if (layer.pendingBack || !mayClose(layer)) return true
+  layer.pendingBack = true
+  window.history.back()
+  return true
+}
+
 function mayClose(layer: BackLayer): boolean {
   try { return layer.options?.canClose() === true }
   catch { return false }

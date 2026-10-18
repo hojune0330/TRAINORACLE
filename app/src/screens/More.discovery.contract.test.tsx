@@ -70,8 +70,10 @@ it("shows learning and decoration destinations directly in More", () => {
   expect(within(screen.getByRole("region", { name: "배우기" })).queryByRole("button", { name: "게임 라운지" })).toBeNull()
   expect(within(screen.getByRole("region", { name: "꾸미기·게임" })).getByRole("button", { name: "일지 꾸미기" })).toBeVisible()
   expect(within(screen.getByRole("region", { name: "꾸미기·게임" })).getByRole("button", { name: "게임 라운지" })).toBeVisible()
-  expect(screen.getByText("저장 없이 내 기록·친구 기록 비교")).toBeVisible()
-  expect(screen.getByText("러닝·대결·디펜스 · 혼자 또는 친구와")).toBeVisible()
+  for (const name of ["러닝 취향", "최고기록으로 풀이하기", "게임 라운지"]) {
+    expect(screen.getByRole("button", { name })).toHaveTextContent(new RegExp(`^${name}$`))
+    expect(screen.getByRole("button", { name })).not.toHaveAccessibleDescription()
+  }
   fireEvent.click(screen.getByRole("button", { name: "백업·복원·휴지통" }))
   expect(screen.getByRole("button", { name: "내려받은 백업 되돌리기" })).toBeVisible()
 })

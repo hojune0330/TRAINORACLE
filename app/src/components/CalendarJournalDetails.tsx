@@ -164,7 +164,6 @@ export function CalendarJournalDetails({ entries, date, onOpenDay, onWriteDate, 
       }}>
         <BookOpen size={18} aria-hidden="true" />일지·메모 원문 열기
       </button>
-      <small>메모는 원래 일지에서 확인해요. 공유 설정은 바뀌지 않아요.</small>
     </>}
   </section>
 }
@@ -198,7 +197,7 @@ function entrySummary(entry: JournalEntry): string | null {
   const exercises = entry.kind === "post-session"
     ? [...new Set((entry.exerciseLog?.components ?? []).map(component => EXERCISE_KINDS[component.kind]))]
     : []
-  return [...values.filter((value): value is string => value !== null), ...exercises].slice(0, 2).join(" · ") || "기록 내용을 확인할 수 있어요"
+  return [...values.filter((value): value is string => value !== null), ...exercises].slice(0, 2).join(" · ") || null
 }
 
 function summaryFact(entry: JournalEntry, label: string, field: string, value: string | number | null | undefined, suffix = ""): string | null {

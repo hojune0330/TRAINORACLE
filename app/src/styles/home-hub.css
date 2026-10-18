@@ -37,7 +37,9 @@
 .home-hub__intro > .app-heading { margin-top:0; }
 .home-hub__today, .home-hub__next, .home-hub__summary { margin-top:var(--space-4); }
 .home-hub__today, .home-hub__next { padding:0; }
-.home-hub__next > .app-heading { margin-bottom:var(--space-3); }
+.home-hub__next-heading { display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:var(--space-2); margin-bottom:var(--space-3); }
+.home-hub__next-heading > .app-heading { margin:0; }
+.home-hub__next-heading > time { color:var(--ink-2); font-size:var(--fs-body); }
 .home-hub__today--record-action { padding-block:0; border-block:0; }
 .home-hub__today--record-action > .home-hub__section-label { margin-bottom:var(--space-3); }
 .home-hub__today p { margin:8px 0 16px; line-height:1.6; }
@@ -83,8 +85,7 @@
 .home-hub__announcement .product-announcement { margin-top:0; }
 .home-hub__announcement { margin-top:var(--space-3); }
 .home-hub__next-prescription { display:block; color:var(--ink-2); margin-top:var(--space-1); }
-.home-hub__next-open { display:block; margin-top:var(--space-2); color:var(--category-training); font-size:var(--fs-body-sm); font-weight:600; }
-.home-hub__next-open > span { color:var(--ink-3); font-weight:400; }
+.home-hub__next-role { color:var(--category-training); font-weight:600; }
 .home-hub button:focus-visible { outline:3px solid var(--brand); outline-offset:3px; }
 @media (max-width:380px) {
   /* Keep the first actions usable when a platform scrollbar narrows content.

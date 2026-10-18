@@ -30,7 +30,6 @@ export function HomeOraclePreview({ answer, kind, onOpen }: HomeOraclePreviewPro
   if (kind === "plan") return null
   return <section className={`home-hub__oracle home-hub__oracle--${kind}`} aria-label={`오라클 · ${KIND_LABELS[kind]}`} data-oracle-kind={kind}>
     <CategoryCard category="oracle" title="내 훈련 분석" headingLevel={2}
-      description={kind === "partial" ? "확인된 일부 기록으로 보기" : undefined}
       aria-label="내 훈련 분석" onClick={onOpen} />
   </section>
 }

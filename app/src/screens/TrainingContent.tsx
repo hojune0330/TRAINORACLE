@@ -20,6 +20,7 @@ import { useTaskFlowBack } from "../hooks/useTaskFlowBack"
 import { localJournalScopeGeneration } from "../domain/account/local-journal-ownership"
 import { useNavigationReturnFrame } from "../hooks/useNavigationReturnFrame"
 import { captureReaderPosition, restoreReaderPosition, type ReaderPosition } from "../navigation/readerPosition"
+import { requestBrowserBackLayer } from "../navigation/browserNavigation"
 
 const SOURCE_STATE_LABEL: Record<TrainingContentSourceState, string> = {
   DIRECT_SOURCE_REOPENED: "원문 확인 자료",
@@ -160,7 +161,7 @@ export function TrainingContent({ onBack }: { readonly onBack: () => void }) {
 
   return (
     <div ref={root} className="training-content-screen">
-      <ContentHeader title="훈련 방법 배우기" onBack={onBack} />
+      <ContentHeader title="훈련 방법 배우기" onBack={() => { if (!requestBrowserBackLayer()) onBack() }} />
       <div className="training-content-intro">
         <div className="training-content-intro__heading">
           <AppHeading variant="screen" accent tabIndex={-1}>어떤 훈련이 궁금한가요?</AppHeading>
@@ -173,7 +174,7 @@ export function TrainingContent({ onBack }: { readonly onBack: () => void }) {
       <div className="training-content-list" aria-label="훈련법 콘텐츠 목록">
         {TRAINING_CONTENT_CATALOG.map(article => (
           <CategoryCard key={article.id} category="training" icon={BookOpen} variant="row"
-            label={`${article.category} · ${SOURCE_STATE_LABEL[article.sourceState]}`}
+            label={SOURCE_STATE_LABEL[article.sourceState]}
             title={<>{article.title}{saved.includes(article.id) && <BookmarkCheck aria-label="저장됨" size={17} />}</>}
             onClick={event => openReader(article.id, event.currentTarget)} />
         ))}

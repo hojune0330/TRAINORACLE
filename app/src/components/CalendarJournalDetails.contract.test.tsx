@@ -101,6 +101,19 @@ describe("calendar structured actual records", () => {
       expect.objectContaining({ date, entryId: session.id, scroll: 0 }))
   })
 
+  it("leaves a record choice without filler when no structured summary was supplied", () => {
+    render(<CalendarJournalDetails date={date} entries={[
+      { ...session, distanceKm: "", durationMin: "", avgPace: "" }, evening,
+    ]} />)
+    const choice = screen.getByRole("button", { name: /시간대 미기록 · 훈련 기록/u })
+    expect(choice.querySelector(".calendar-journal-detail__entry-summary")).toBeNull()
+    expect(screen.queryByText("기록 내용을 확인할 수 있어요")).not.toBeInTheDocument()
+    expect(screen.queryByText(/메모는 원래 일지에서 확인해요/u)).not.toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "일지·메모 원문 열기" })).toBeVisible()
+    expect(screen.getByText("계획과 별도로 남긴 실제 기록이에요.")).toBeVisible()
+    expect(document.body.textContent).not.toContain("PRIVATE")
+  })
+
   it("keeps intervals and weights as components, without inventing distance or total load", () => {
     render(<CalendarJournalDetails date={date} entries={[{ ...session, activitySlot: "PM", exerciseLog: {
       version: 1, source: "SELF_REPORTED", components: [

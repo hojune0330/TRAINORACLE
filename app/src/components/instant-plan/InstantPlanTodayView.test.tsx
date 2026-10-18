@@ -33,6 +33,9 @@ describe("InstantPlanTodayView", () => {
     expect(screen.queryByText("각 반복 사이 90초 걷기")).toBeNull()
     const afternoon = screen.getByRole("button", { name: "오후 훈련 내용 보기 · 반복 훈련" })
     expect(afternoon).toHaveAttribute("data-category", "training")
+    expect(afternoon).toHaveClass("category-card")
+    expect(afternoon).toHaveTextContent("반복 훈련")
+    expect(afternoon).not.toHaveTextContent("훈련 내용 보기")
     fireEvent.click(afternoon)
     expect(view).toHaveBeenCalledExactlyOnceWith("pm")
     expect(record).not.toHaveBeenCalled()
@@ -41,12 +44,55 @@ describe("InstantPlanTodayView", () => {
     expect(JSON.stringify(today)).toBe(original)
   })
 
+  it("uses the existing total once in entry cards and retains exact slot navigation and detailed steps", () => {
+    const view = vi.fn(), record = vi.fn()
+    const compact = { ...today, sessions: [{ ...today.sessions[1]!, title: "중간 걷기 조깅 · Split Easy", steps: [
+      { role: "TOTAL_DURATION" as const, label: "총 시간", instruction: "준비·회복·정리 포함 47분" },
+      { role: "MAIN" as const, label: "본운동", instruction: "22분 · RPE 3–4 → 2분 걷기 → 23분 · RPE 3–4" },
+    ] }] }
+    const original = JSON.stringify(compact)
+    const { rerender } = render(<InstantPlanTodayView today={compact} navigationCards
+      compactSessionSummary={id => id === "pm"} sessionRoleLabel={() => "기본"} onViewSession={view} onRecordSession={record} />)
+    const card = screen.getByRole("button", { name: "오후 훈련 내용 보기 · 중간 걷기 조깅 · Split Easy" })
+    expect(card).toHaveTextContent("오후 · 기본")
+    expect(card).toHaveAccessibleDescription("기본 · 총 47분")
+    expect(screen.getAllByText("총 47분")).toHaveLength(1)
+    expect(card).not.toHaveTextContent("22분")
+    fireEvent.click(within(card).getByRole("heading", { name: "중간 걷기 조깅 · Split Easy" }))
+    expect(view).toHaveBeenCalledExactlyOnceWith("pm")
+    expect(record).not.toHaveBeenCalled()
+    rerender(<InstantPlanTodayView today={compact} />)
+    expect(screen.getByText("47분")).toBeVisible()
+    expect(screen.getByText("준비·회복·정리 포함")).toBeVisible()
+    const main = screen.getByRole("list", { name: "본운동 순서" })
+    expect(main).toHaveTextContent(/22분.*RPE 3–4.*2분 걷기.*23분.*RPE 3–4/)
+    expect(JSON.stringify(compact)).toBe(original)
+  })
+
+  it.each(["주요", "기본", undefined])("does not infer a compact summary from the %s display label", role => {
+    const main = "400m × 3회 · 400m 한 번에 100초 · 반복 사이 90초 걷기"
+    const projected = { ...today, sessions: [{ ...today.sessions[1]!, steps: [
+      { role: "TOTAL_DURATION" as const, label: "총 시간", instruction: "준비·회복·정리 포함 23분" },
+      { role: "MAIN" as const, label: "본운동", instruction: main },
+    ] }] }
+    const original = JSON.stringify(projected)
+    render(<InstantPlanTodayView today={projected} navigationCards sessionRoleLabel={() => role} onViewSession={vi.fn()} />)
+    const card = screen.getByRole("button", { name: "오후 훈련 내용 보기 · 반복 훈련" })
+    expect(card).toHaveTextContent("총 23분")
+    expect(card).toHaveTextContent(main)
+    expect(card).toHaveAccessibleDescription([role, `총 23분 · ${main}`].filter(Boolean).join(" · "))
+    expect(JSON.stringify(projected)).toBe(original)
+  })
+
   it("keeps incomplete-workout warnings outside the navigation card and blocks recording when unavailable", () => {
-    const warned = { ...today, sessions: [{ ...today.sessions[0]!, guidanceNotice: "반복 횟수와 회복 시간은 정해지지 않았어요." }] }
+    const warned = { ...today, sessions: [{ ...today.sessions[0]!, guidanceNotice: "반복 횟수와 회복 시간은 정해지지 않았어요.",
+      steps: [{ role: "TOTAL_DURATION" as const, label: "총 시간", instruction: "총 35분 · RPE 6~7" }, ...today.sessions[0]!.steps],
+    }] }
     const props = { navigationCards: true, onViewSession: vi.fn(), onRecordSession: vi.fn() }
     const { rerender } = render(<InstantPlanTodayView today={warned} {...props} />)
     expect(screen.getByText("이 시간 내내 강하게 뛰지 마세요.")).toBeVisible()
     expect(screen.getByText("이 시간 내내 강하게 뛰지 마세요.").closest("details")).toBeNull()
+    expect(screen.getByRole("button", { name: "오전 훈련 내용 보기 · 준비 훈련" })).toHaveTextContent("안내된 동작 12분")
     rerender(<InstantPlanTodayView today={{ ...warned, state: "UNAVAILABLE" }} {...props} />)
     expect(screen.getByRole("alert")).toBeVisible()
     expect(screen.queryByRole("button", { name: /훈련 기록 남기기|훈련 내용 보기/ })).toBeNull()

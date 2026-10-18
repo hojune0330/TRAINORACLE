@@ -268,10 +268,15 @@ describe("AppShell origin-preserving navigation", { timeout: 15000 }, () => {
     render(<AppShell />)
 
     await user.click(screen.getByRole("button", { name: "더보기" }))
-    await user.click(await screen.findByRole("button", { name: "훈련법 읽기" }))
+    const readingOpener = await screen.findByRole("button", { name: "훈련법 읽기" })
+    const region = document.querySelector<HTMLElement>(".app-scroll-region")!
+    region.scrollTop = 280
+    await user.click(readingOpener)
     expect(await screen.findByRole("heading", { name: "어떤 훈련이 궁금한가요?" })).toBeVisible()
     await user.click(screen.getByRole("button", { name: "이전 화면" }))
     expect(await screen.findByRole("heading", { name: "더보기" })).toBeVisible()
+    await waitFor(() => expect(screen.getByRole("button", { name: "훈련법 읽기" })).toHaveFocus())
+    expect(region.scrollTop).toBe(280)
     await user.click(await screen.findByRole("button", { name: "앱 정보·개인정보·문의" }))
     await user.click(screen.getByRole("button", { name: "문의 게시판" }))
     expect(await screen.findByRole("heading", { name: "문의 게시판" })).toBeVisible()

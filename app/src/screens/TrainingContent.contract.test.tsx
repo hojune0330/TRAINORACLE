@@ -42,6 +42,8 @@ describe("training content reader", () => {
     expect(container.querySelector('img[src$="running-shoe-v2.webp"]')).toHaveAttribute("width", "64")
     expect(screen.getByRole("button", { name: /노르웨이식 더블 스레숄드/u })).toHaveTextContent("추가 검토 중인 기사")
     expect(screen.getByRole("button", { name: /크루즈 인터벌/u })).toHaveTextContent("원문 확인 자료")
+    expect(screen.queryByText("요즘 해외 훈련법 · 추가 검토 중인 기사")).toBeNull()
+    expect(screen.queryByText("훈련 개념 · 원문 확인 자료")).toBeNull()
     const help = screen.getByText("훈련 자료와 읽기 포인트 안내")
     expect(help.closest("details")).not.toHaveAttribute("open")
     fireEvent.click(help)
@@ -52,6 +54,7 @@ describe("training content reader", () => {
     const { container } = render(<TrainingContent onBack={vi.fn()} />)
     fireEvent.click(screen.getByRole("button", { name: /크루즈 인터벌은 지속주와/u }))
 
+    expect(screen.getByText("훈련 개념")).toBeVisible()
     expect(container.querySelector('img[src$="running-shoe-v2.webp"]')).toBeNull()
     expect(screen.getByRole("heading", { level: 1 })).toHaveClass("app-heading--screen", "app-heading--accent")
     expect(container.querySelectorAll(".app-heading--accent")).toHaveLength(1)

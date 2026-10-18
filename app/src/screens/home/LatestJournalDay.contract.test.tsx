@@ -31,7 +31,7 @@ describe("latest journal day concise information and storage proof", () => {
     render(<LatestJournalDay entries={entries} today={TODAY} storage={context()} onOpenDay={openDay} />)
     const day = screen.getByRole("button", { name: "2026년 10월 11일 기록 1개 보기 · 훈련 1" })
     expect(day.querySelector("strong")).toHaveTextContent("10월 11일 · 훈련")
-    expect(day).toHaveAccessibleDescription("이 브라우저에 저장됨 · 가져온 기록 포함")
+    expect(day).toHaveAccessibleDescription("가져온 기록 포함")
     fireEvent.click(day)
     expect(openDay).toHaveBeenCalledWith("2026-10-11")
     expect(entries).toEqual(before)
@@ -44,8 +44,22 @@ describe("latest journal day concise information and storage proof", () => {
     const day = screen.getByRole("button", { name: "2025년 12월 31일 기록 3개 보기 · 훈련 2 · 컨디션·메모 1" })
     expect(day.querySelector("strong")).toHaveTextContent("2025년 12월 31일 · 기록 3개")
     expect(day).toHaveTextContent("훈련 2 · 컨디션·메모 1")
-    expect(day).toHaveAccessibleDescription("이 브라우저에 저장됨")
+    expect(day).not.toHaveAccessibleDescription()
     expect(screen.getAllByRole("button", { name: /기록 3개 보기/ })).toHaveLength(1)
+  })
+
+  it.each(["local", "synced"] as const)("omits routine %s storage notices without leaving an empty description", syncState => {
+    const open = vi.fn()
+    render(<LatestJournalDay entries={[{ ...ENTRY, syncState }]} today={TODAY} storage={context(syncState === "synced" ? {
+      owner: "synthetic-owner", accountStatus: "READY",
+      accountStoredVersions: new Map([[ENTRY.id, ENTRY]]), currentConfirmedVersions: new Map([[ENTRY.id, ENTRY]]),
+    } : {})} onOpenDay={open} />)
+    const day = screen.getByRole("button", { name: /기록 1개 보기/ })
+    expect(day).not.toHaveAccessibleDescription()
+    expect(day.querySelector(".category-card__description")).toBeNull()
+    expect(day).not.toHaveTextContent(/이 브라우저에 저장됨|계정 보관/)
+    fireEvent.click(day)
+    expect(open).toHaveBeenCalledWith(ENTRY.date)
   })
 
   it("describes account storage only for the scoped current receipt and retains mixed counts", () => {

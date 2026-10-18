@@ -6,9 +6,9 @@ import type { HomeSession, TrainingHomeViewModel } from "../../domain/home-view-
 import { AppHeading } from "../../components/AppHeading"
 import type { OracleTopicId } from "../../domain/oracle-exploration"
 import { sessionWorkoutNotation } from "../../domain/workout-notation"
-import { catalogWorkoutReader } from "../../domain/catalog-workout-reader"
+import { resolveCatalogBinding } from "@impl/prescription/catalog-session-binding"
 import { CALENDAR_TRAINING_LABELS, plannedCalendarTone } from "../../domain/calendar-training-presentation"
-import { sessionLabel, sessionSlotLabel } from "../plan-beta/labels"
+import { formatTrainingSeconds, sessionLabel, sessionSlotLabel } from "../plan-beta/labels"
 import type { LogEntryType } from "../log-entry/shared"
 import type { CalendarReadiness } from "../../domain/calendar-context"
 import { HomeIdentityArtwork, HomeIntroduction, useHomeIntroduction } from "./HomeIntroduction"
@@ -132,18 +132,40 @@ function WelcomeToday({ onWriteLog, onOpenPlan, analysisEntry }: { onWriteLog?: 
 
 function NextTrainingCard({ next, onOpen }: { next: NonNullable<TrainingHomeViewModel["nextTraining"]>; onOpen?: () => void }) {
   const descriptionId = useId()
-  const later = next.laterSameDaySession
   const role = CALENDAR_TRAINING_LABELS[plannedCalendarTone(next.session)]
-  const prescription = catalogWorkoutReader(next.session)?.summary ?? nextTrainingPrescriptionLabel(next.session)
+  const prescription = nextTrainingPreview(next.session)
   const accessibleName = `다음 훈련 · ${sessionLabel(next.session)} · ${nextTrainingDateLabel(next.date)} · ${sessionSlotLabel(next.session.slot)} · ${role}`
   return <section className="home-hub__next" aria-labelledby="home-hub-next">
-    <AppHeading as="h2" variant="section" id="home-hub-next" className="home-hub__section-label">다음 훈련</AppHeading>
+    <div className="home-hub__next-heading">
+      <AppHeading as="h2" variant="section" id="home-hub-next" className="home-hub__section-label">다음 훈련</AppHeading>
+      <time dateTime={next.date}>{nextTrainingDateLabel(next.date, true)}</time>
+    </div>
     <CategoryCard category="training" title={sessionLabel(next.session)}
-      label={`${nextTrainingDateLabel(next.date)} · ${sessionSlotLabel(next.session.slot)} · ${role}`}
-      description={<><span id={descriptionId} className="home-hub__next-prescription">{prescription}</span>
-        <span className="home-hub__next-open">훈련 내용 보기{later !== null && <span> · {sessionSlotLabel(later.slot)} 훈련도 있어요</span>}</span></>}
+      description={<span id={descriptionId} className="home-hub__next-prescription">{next.session.role === "QUALITY" && <span className="home-hub__next-role">{role} · </span>}{prescription}</span>}
       onClick={onOpen} aria-label={accessibleName} aria-describedby={descriptionId} />
   </section>
+}
+
+/** Home is a destination preview, not the execution instructions. Read the
+ * verified full-session total; never substitute an old envelope for a broken
+ * binding or guess the missing time of distance-based work. */
+function nextTrainingPreview(session: HomeSession): string {
+  const prescription = session.prescription
+  if (prescription.kind === "RPE_TIME_RANGE") {
+    if (prescription.catalogWorkout) {
+      const workout = resolveCatalogBinding(prescription.catalogWorkout)
+      if (!workout) return "훈련 내용 확인 필요"
+      const total = workout.totals.seconds
+      if (!total) return "시간 확인 필요"
+      return `총 ${formatTrainingSeconds(total.minimum)}${total.minimum === total.maximum ? "" : `–${formatTrainingSeconds(total.maximum)}`}`
+    }
+    // Legacy quality envelopes are not a continuous-work prescription. Keep
+    // their existing instructions until the full structure can be verified.
+    if (session.role === "QUALITY") return nextTrainingPrescriptionLabel(session)
+    const { minimum, maximum } = prescription.durationMinutes
+    return `총 ${minimum}${minimum === maximum ? "" : `–${maximum}`}분`
+  }
+  return nextTrainingPrescriptionLabel(session)
 }
 
 function TodaySection({ model, readiness, onWriteLog, onOpenToday }: { model: TrainingHomeViewModel; readiness: CalendarReadiness; onWriteLog?: (entryType?: LogEntryType) => void; onOpenToday?: () => void }) {
@@ -173,10 +195,12 @@ function SummaryRow({ category, label, detail, onClick }: { category: AppCategor
     onClick={onClick} aria-label={label} aria-describedby={detail ? descriptionId : undefined} />
 }
 
-function nextTrainingDateLabel(iso: string): string {
-  const [, month, day] = iso.split("-")
+function nextTrainingDateLabel(iso: string, compact = false): string {
+  const [year, month, day] = iso.split("-")
   const base = `${Number(month)}월 ${Number(day)}일`
   const today = new Date(); const target = new Date(`${iso}T00:00:00`); const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate())
   const diffDays = Math.round((target.getTime() - startOfToday.getTime()) / 86400000)
-  if (diffDays === 0) return `오늘(${base})`; if (diffDays === 1) return `내일(${base})`; return base
+  if (diffDays === 0) return compact ? "오늘" : `오늘(${base})`
+  if (diffDays === 1) return compact ? "내일" : `내일(${base})`
+  return Number(year) === today.getFullYear() ? base : `${year}년 ${base}`
 }

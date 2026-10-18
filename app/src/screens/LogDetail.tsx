@@ -351,7 +351,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
       {entries.length > 0 && (
         <div className="journal-day-overview" aria-label={`${countSummary} 기록`}>
           <div>
-            <span>오늘의 기록</span>
+            <span>이날 기록</span>
             <strong>{entries.length}개</strong>
             <small>{countSummary}</small>
           </div>
@@ -549,7 +549,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
 
       {entries.length > 0 && (
         <>
-          <div className="journal-day-end" data-testid="journal-day-end" aria-hidden="true"><span>오늘 기록 끝</span></div>
+          <div className="journal-day-end" data-testid="journal-day-end" aria-hidden="true"><span>기록 끝</span></div>
           {!readOnly && <JournalDetailActions
             date={date}
             entries={actionEntries}

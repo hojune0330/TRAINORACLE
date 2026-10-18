@@ -135,6 +135,7 @@ export function SavedToast({
 }) {
   const presentation = receiptPresentation(receipt)
   const needsReview = reviewMessage !== undefined
+  const detail = needsReview ? reviewMessage : presentation.detail
   const actionable = !needsReview && presentation.actionLabel !== undefined
   // generic receipt의 "백업 안내 보기"는 추이가 아니라 백업/복원 화면으로 이동한다 (§4-2)
   const onAction = receipt.kind === "generic" ? onOpenBackup : onOpenTrends
@@ -159,9 +160,7 @@ export function SavedToast({
             </button>
           )}
         </div>
-        <div className="saved-toast__detail">
-          {needsReview ? reviewMessage : presentation.detail}
-        </div>
+        {detail != null && <div className="saved-toast__detail">{detail}</div>}
         {rewardMessage !== undefined && <div className="saved-toast__reward">{rewardMessage}</div>}
         {rewardRetry && onRetryReward && <button className="saved-toast__action" type="button" disabled={rewardLoading} onClick={onRetryReward}>
           {rewardLoading ? "포인트 확인 중" : "포인트 다시 확인"}
@@ -181,7 +180,7 @@ export function SavedToast({
 
 export function receiptPresentation(receipt: SavedFactReceipt): {
   readonly title: string
-  readonly detail: string
+  readonly detail: string | null
   readonly actionLabel?: string
 } {
   const dateLabel = receipt.savedDate === undefined ? undefined : savedDateLabel(receipt.savedDate)
@@ -193,13 +192,13 @@ export function receiptPresentation(receipt: SavedFactReceipt): {
         title: `${dateLabel === undefined ? "" : `${dateLabel} `}통증 기록이 저장됐어요`,
         detail: receipt.moodAlsoSaved
           ? "기분도 함께 저장됐어요."
-          : "선택한 날짜의 통증 기록을 저장했어요.",
+          : null,
         ...(canOpenRecentTrends ? { actionLabel: "통증 추이 보기" } : {}),
       }
     case "mood":
       return {
         title: `${dateLabel === undefined ? "" : `${dateLabel} `}기분 기록이 저장됐어요`,
-        detail: "선택한 날짜의 기분을 저장했어요.",
+        detail: null,
         ...(canOpenRecentTrends ? { actionLabel: "기분 추이 보기" } : {}),
       }
     case "distance":

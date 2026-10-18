@@ -18,7 +18,7 @@ test("shows a saved upcoming training on home and opens its existing plan", asyn
 
   const nextTraining = page.getByRole("region", { name: "다음 훈련" })
   await expect(nextTraining).toContainText("1월 10일")
-  await expect(nextTraining).toContainText("훈련 내용 보기")
+  await expect(nextTraining).not.toContainText("훈련 내용 보기")
   await expect(nextTraining).not.toContainText("목표 페이스")
   const before = await page.evaluate(() => localStorage.getItem("trainoracle.plan-beta.v1"))
   const entry = nextTraining.getByRole("button", { name: /^다음 훈련/u })

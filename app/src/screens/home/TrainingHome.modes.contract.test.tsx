@@ -44,25 +44,27 @@ describe("training home presentation", () => {
     fireEvent.click(screen.getByRole("button", { name: "오라클 결과 보기" }))
     expect(explore).toHaveBeenCalledWith("level")
   })
-  it("opens the prepared analysis from one concise card without repeating its explanation on home", () => {
+  it.each(["personal", "partial"] as const)("opens the %s analysis from one concise card without repeating its explanation on home", kind => {
     const open = vi.fn()
     render(<TrainingHome model={TRAINING} oraclePreview={<HomeOraclePreview
-      kind="personal"
+      kind={kind}
       question="최근 경기 기록을 비교했어요"
       answer="같은 종목에 저장한 두 기록을 나란히 볼 수 있어요."
       sourceLabel="출처 · 경기 기록 · 2026.09.12 / 2026.09.28"
       onOpen={open}
     />} />)
-    const preview = screen.getByRole("region", { name: "오라클 · 내 기록 결과" })
+    const preview = screen.getByRole("region", { name: kind === "personal" ? "오라클 · 내 기록 결과" : "오라클 · 기록 일부로 확인" })
     expect(preview).toBeVisible()
     expect(preview.closest("details")).toBeNull()
-    expect(preview).toHaveAttribute("data-oracle-kind", "personal")
+    expect(preview).toHaveAttribute("data-oracle-kind", kind)
     expect(preview.querySelector('img[src$="analysis-lens-v2.webp"]')).toBeNull()
     expect(within(preview).queryByText(/2026\.09\.12 \/ 2026\.09\.28/u)).toBeNull()
     expect(within(preview).queryByText("같은 종목에 저장한 두 기록을 나란히 볼 수 있어요.")).toBeNull()
     expect(screen.getAllByRole("region", { name: /오라클/u })).toHaveLength(1)
     expect(screen.queryByRole("button", { name: / · 결과 보기$/u })).not.toBeInTheDocument()
     const result = within(preview).getByRole("button", { name: "내 훈련 분석" })
+    expect(result).toHaveTextContent(/^내 훈련 분석$/)
+    expect(result.querySelector(".category-card__description")).toBeNull()
     expect(result).toHaveAttribute("data-category", "oracle")
     expect(preview.querySelectorAll("button")).toHaveLength(1)
     expect(within(preview).getByRole("heading", { level: 2, name: "내 훈련 분석" })).toBeVisible()
@@ -171,7 +173,7 @@ describe("training home presentation", () => {
     expect(card).toHaveTextContent(/전체 25–40분/u)
     expect(card).toHaveTextContent("주요")
     expect(card).toHaveAccessibleName(/주요/u)
-    expect(card).toHaveTextContent("훈련 내용 보기")
+    expect(card).not.toHaveTextContent("훈련 내용 보기")
     fireEvent.click(card)
     expect(next).toHaveBeenCalledOnce(); expect(plan).not.toHaveBeenCalled()
   })

@@ -18,6 +18,59 @@ function popTo(state: unknown): boolean {
 }
 
 describe("native browser layer history", () => {
+  it("waits for an owned Back entry to depart before restoring its parent, once", async () => {
+    const close = vi.fn()
+    const layer = navigation.registerBrowserBackLayer({ id: "screen-back", canClose: () => true, onClose: close })
+    expect(navigation.requestBrowserBackLayer()).toBe(true)
+    expect(navigation.requestBrowserBackLayer()).toBe(true)
+    expect(window.history.back).toHaveBeenCalledOnce()
+    expect(close).not.toHaveBeenCalled()
+    expect(popTo({ parent: "origin" })).toBe(true)
+    expect(close).toHaveBeenCalledOnce()
+    layer.dispose()
+    await Promise.resolve()
+    expect(window.history.back).toHaveBeenCalledOnce()
+    expect(navigation.requestBrowserBackLayer()).toBe(false)
+  })
+
+  it("keeps a guarded screen open when its own Back button requests navigation", () => {
+    const close = vi.fn()
+    navigation.registerBrowserBackLayer({ id: "guarded-screen", canClose: () => false, onClose: close })
+    expect(navigation.requestBrowserBackLayer()).toBe(true)
+    expect(window.history.back).not.toHaveBeenCalled()
+    expect(close).not.toHaveBeenCalled()
+  })
+
+  it("consumes only the current child and leaves its active parent's entry intact", () => {
+    const parentClose = vi.fn(), childClose = vi.fn()
+    navigation.registerBrowserBackLayer({ id: "button-parent", canClose: () => true, onClose: parentClose })
+    const parentState = window.history.state
+    navigation.registerBrowserBackLayer({ id: "button-child", canClose: () => true, onClose: childClose })
+    expect(navigation.requestBrowserBackLayer()).toBe(true)
+    expect(childClose).not.toHaveBeenCalled()
+    expect(popTo(parentState)).toBe(true)
+    expect(childClose).toHaveBeenCalledOnce()
+    expect(parentClose).not.toHaveBeenCalled()
+    expect(window.history.state).toEqual(parentState)
+  })
+
+  it("does not fall back to leaving a screen while a prior layer departure is pending", () => {
+    const close = vi.fn()
+    const layer = navigation.registerBrowserBackLayer({ id: "pending-button", canClose: () => true, onClose: close })
+    layer.close()
+    expect(navigation.requestBrowserBackLayer()).toBe(true)
+    expect(window.history.back).toHaveBeenCalledOnce()
+    expect(close).toHaveBeenCalledOnce()
+  })
+
+  it("leaves the screen's local Back fallback available without an owned entry", () => {
+    expect(navigation.requestBrowserBackLayer()).toBe(false)
+    vi.spyOn(window.history, "pushState").mockImplementation(() => { throw Error("synthetic denial") })
+    navigation.registerBrowserBackLayer({ id: "unowned-screen", canClose: () => true, onClose: vi.fn() })
+    expect(navigation.requestBrowserBackLayer()).toBe(false)
+    expect(window.history.back).not.toHaveBeenCalled()
+  })
+
   it("does not reinterpret an inspected parent POP as closing the flow mounted by that POP", () => {
     const event = new PopStateEvent("popstate", { state: { parent: "origin" } })
     expect(navigation.consumeBrowserBackLayer(event)).toBe(false)

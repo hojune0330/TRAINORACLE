@@ -68,7 +68,9 @@ it("offers one-axis questions or direct reading without promising six completed 
   expect(screen.getByRole("button", { name: "읽을거리" })).toBeVisible()
   expect(screen.getByRole("button", { name: "친구와 취향 비교" })).toBeVisible()
   expect(screen.getByRole("button", { name: "프로필 설정·추가 정보" })).toBeVisible()
-  expect(screen.getByText("선택 사항 · 질문 3개로 계획 취향을 살펴봐요. 체력·실력 평가는 아니에요.")).toBeVisible()
+  expect(screen.getByText("취향 질문(선택) · 체력·실력 평가는 아니에요.")).toBeVisible()
+  expect(screen.queryByText(/질문 3개로 계획 취향/)).toBeNull()
+  expect(screen.getByRole("status")).toHaveTextContent("임시 응답은 새로고침하면 사라져요.")
   expect(screen.queryByText("6가지 취향을 점수와 육각 그래프로 볼 수 있어요.")).toBeNull()
   expect(screen.queryByRole("navigation", { name: "러닝 취향 보기" })).toBeNull()
   expect(screen.queryByRole("img", { name: /러닝 취향/ })).toBeNull()
@@ -358,7 +360,7 @@ it("keeps the response-based result and its answer evidence together", () => {
 it("asks one question at a time and only commits after the third response", async () => {
   const p = props(); render(<OracleProfileExperience {...p} />)
   fireEvent.click(screen.getByRole("button", { name: "내 훈련 방식 알아보기 · 질문 3개" }))
-  expect(screen.getByText(/선택 사항/u)).toBeVisible()
+  expect(screen.getByText(/취향 질문\(선택\)/u)).toBeVisible()
   for (let n = 0; n < 3; n++) {
     expect(within(dialog()).getAllByRole("heading", { hidden: true })).toHaveLength(1)
     expect(within(dialog()).getByRole("heading", { level: 1, hidden: true })).toHaveClass("app-heading--screen", "app-heading--accent")

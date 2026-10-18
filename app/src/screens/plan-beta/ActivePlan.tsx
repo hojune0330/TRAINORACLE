@@ -265,6 +265,7 @@ export function ActivePlan({
       </section>}
       {executionMessage && <div className="plan-execution-status" role="status">{executionMessage}</div>}
       <InstantPlanTodayView today={todayView} compact navigationCards onContinue={showSchedule} changeScheduleLabel="휴식·건너뜀 기록"
+        compactSessionSummary={id => activePlan.sessions.find(item => instantSessionId(item) === id)?.role === "EASY"}
         sessionRoleLabel={id => {
           const session = activePlan.sessions.find(item => instantSessionId(item) === id)
           return session ? CALENDAR_TRAINING_LABELS[plannedCalendarTone(session)] : undefined

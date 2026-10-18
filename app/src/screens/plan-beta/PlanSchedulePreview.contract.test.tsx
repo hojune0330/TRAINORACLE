@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { PlanSession } from "@impl/plan-generator/types"
 import { bindCatalogSession, resolveCatalogBinding } from "@impl/prescription/catalog-session-binding"
-import type { WorkoutCalculationInputs } from "@impl/prescription/all-workout-calculator"
+import { ALL_WORKOUT_CATALOG, type WorkoutCalculationInputs } from "@impl/prescription/all-workout-calculator"
 import { formatPaceSeconds } from "@impl/prescription/record-pace"
 import { formatTrainingSeconds, prescriptionLabel } from "./labels"
 import { catalogWorkoutReader } from "../../domain/catalog-workout-reader"
@@ -272,6 +272,55 @@ describe("plan schedule preview", () => {
     expect(warmup).toHaveTextContent("20초 가속 달리기 4번 (전력질주 아님) · 사이 40초 걷기 · 마지막 뒤 1분 걷기")
     expect(within(reader).getByText(reading.phases.cooldown, { exact: false })).toBeVisible()
     expect(JSON.stringify(catalog)).toBe(original)
+  })
+
+  it("keeps easy navigation to one verified total, without changing the full workout or slot", async () => {
+    const source = ALL_WORKOUT_CATALOG.find(entry => entry.id === "X-BASE-09")!
+    const catalog = bindCatalogSession({ day: 1, slot: "AM", role: "EASY", plannedEnergyIntent: "BASE_INTENT",
+      prescription: { kind: "RPE_TIME_RANGE", rpe: { minimum: 3, maximum: 4 }, durationMinutes: { minimum: 60, maximum: 60 } },
+    }, source.id, {
+      eventDistanceM: 10000, experience: source.experience[0] as WorkoutCalculationInputs["experience"], availableSeconds: null,
+      confirmedRequirements: [], fiveK: null, segmentPaces: [],
+    }, true)
+    if (!catalog) throw Error("Expected the verified Split Easy fixture")
+    const original = JSON.stringify(catalog)
+    const user = userEvent.setup()
+    render(<PlanSchedulePreview startDate="2026-08-17" sessions={[catalog]}
+      presentation="prescription-calendar" detailsExpanded={false} sessionProgress={() => undefined} />)
+    await user.click(screen.getByRole("radio", { name: "하루씩" }))
+    const summary = screen.getByRole("group", { name: "8월 17일 월요일 오전 세션" })
+    expect(within(summary).getAllByText("전체 47분")).toHaveLength(1)
+    expect(summary).toHaveTextContent("오전")
+    expect(summary).toHaveTextContent("기본")
+    expect(summary).toHaveTextContent("중간 걷기 조깅 · Split Easy")
+    expect(summary).not.toHaveTextContent(/22분|23분|RPE|예정/)
+    const date = screen.getByRole("button", { name: "8월 17일 월요일 전체 처방 보기" })
+    expect(date).not.toHaveTextContent("전체 처방 보기")
+    await user.click(within(summary).getByRole("button", { name: "8월 17일 월요일 오전 훈련 내용 보기" }))
+    const reader = screen.getByRole("dialog", { name: "2026년 8월 17일 월요일" })
+    expect(reader).toHaveTextContent(/22분.*2분 걷기.*23분/)
+    expect(reader).toHaveTextContent("힘든 정도(RPE) 3–4/10")
+    expect(JSON.stringify(catalog)).toBe(original)
+  })
+
+  it("keeps unresolved catalog time visible instead of shortening it to a valid-looking total", async () => {
+    const source = ALL_WORKOUT_CATALOG.find(entry => entry.id === "X-BASE-09")!
+    const catalog = bindCatalogSession({ day: 1, slot: "AM", role: "EASY", plannedEnergyIntent: "BASE_INTENT",
+      prescription: { kind: "RPE_TIME_RANGE", rpe: { minimum: 3, maximum: 4 }, durationMinutes: { minimum: 60, maximum: 60 } },
+    }, source.id, {
+      eventDistanceM: 10000, experience: source.experience[0] as WorkoutCalculationInputs["experience"], availableSeconds: null,
+      confirmedRequirements: [], fiveK: null, segmentPaces: [],
+    }, true)
+    if (!catalog || catalog.role !== "EASY" || catalog.prescription.kind !== "RPE_TIME_RANGE" || !catalog.prescription.catalogWorkout) throw Error("Expected EASY catalog binding")
+    const invalid: PlanSession = { ...catalog, prescription: { ...catalog.prescription, catalogWorkout: {
+      ...catalog.prescription.catalogWorkout, calculationFingerprint: "invalid-synthetic-fingerprint",
+    } } }
+    render(<PlanSchedulePreview startDate="2026-08-17" sessions={[invalid]}
+      presentation="prescription-calendar" detailsExpanded={false} />)
+    await userEvent.setup().click(screen.getByRole("radio", { name: "하루씩" }))
+    const summary = screen.getByRole("group", { name: "8월 17일 월요일 오전 세션" })
+    expect(summary).toHaveTextContent("시간 확인 필요")
+    expect(summary).not.toHaveTextContent("전체 47분")
   })
 
   it("starts narrow viewports in list mode and leaves later view changes to the user", async () => {

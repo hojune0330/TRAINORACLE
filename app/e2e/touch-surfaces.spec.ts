@@ -76,7 +76,7 @@ test("audits populated home, detail, and trends actions", async ({ page }, testI
   await auditTouchTargets(page, [
     { name: "detail.summary", locator: page.locator(".journal-entry-summary"), count: 2 },
     { name: "detail.expand-all", locator: page.getByRole("button", { name: "모두 펼쳐보기" }) },
-    { name: "detail.manage", locator: page.getByRole("button", { name: /이 날의 기록 관리/u }) },
+    { name: "detail.manage", locator: page.getByRole("button", { name: "추가·수정" }) },
     { name: "detail.decorate", locator: page.getByRole("button", { name: "일지 꾸미기 열기" }) },
   ])
   const decorationLauncher = page.getByRole("button", { name: "일지 꾸미기 열기" })
@@ -87,7 +87,7 @@ test("audits populated home, detail, and trends actions", async ({ page }, testI
   expect(decorationBox).not.toBeNull()
   expect(navigationBox).not.toBeNull()
   expect((decorationBox?.y ?? 0) + (decorationBox?.height ?? 0)).toBeLessThanOrEqual((navigationBox?.y ?? 0) + 0.5)
-  const manageToggle = page.getByRole("button", { name: /이 날의 기록 관리/u })
+  const manageToggle = page.getByRole("button", { name: "추가·수정" })
   await expect(manageToggle).toHaveAttribute("aria-expanded", "false")
   await expect(page.getByTestId("journal-add-entry")).toBeHidden()
   await expect(page.locator('[data-testid^="journal-edit-"]')).toHaveCount(2)

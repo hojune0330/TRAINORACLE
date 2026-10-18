@@ -527,7 +527,7 @@ export function PlanSchedulePreview({
                         onClick={() => openDayReader(index)} aria-haspopup="dialog"
                         aria-label={`${calendarDateLabel(date)} 전체 처방 보기`}>
                         <time dateTime={date}>{calendarDateLabel(date)}</time>
-                        <small>{dayAnnotations?.[date] ?? `DAY ${day}`} · 전체 처방 보기</small>
+                        <small>{dayAnnotations?.[date] ?? `DAY ${day}`}</small>
                       </button>
                     ) : <>
                       <time dateTime={date}>{calendarDateLabel(date)}</time>
@@ -651,6 +651,12 @@ function PlanSessionPreview({
   const flow = sessionFlowLabel(session)
   const executionSteps = sessionExecutionSteps(session, expanded)
   const hasCompleteDurationStep = executionSteps.some(step => step.role === "TOTAL_DURATION")
+  // Navigation summaries may use the verified whole-session total. Keep MAIN
+  // prescriptions and unresolved catalog links in their existing readable form.
+  const compactCatalogAmount = lightweightSummary && session.role === "EASY"
+    && session.prescription.kind === "RPE_TIME_RANGE" && session.prescription.catalogWorkout
+    && resolveCatalogBinding(session.prescription.catalogWorkout)?.totals.seconds
+    ? prescriptionCalendarAmount(session) : undefined
   const showOriginalNotation = expanded && session.prescription.kind === "RPE_TIME_RANGE"
     && session.prescription.catalogWorkout !== undefined
     && (sessionLabel(session, true) !== sessionLabel(session) || prescriptionLabel(session, true) !== prescriptionLabel(session))
@@ -700,14 +706,12 @@ function PlanSessionPreview({
       <div className="plan-session-content">
         <strong>{sessionLabel(session, expanded)}</strong>
         {!(lightweightSummary && session.role === "REST") && !(expanded && hasCompleteDurationStep) && <small className={session.role === "REST" ? "plan-session-help" : "plan-session-metric"}>
-          {compactNotation ?? prescriptionLabel(session, expanded)}
+          {compactCatalogAmount ?? compactNotation ?? prescriptionLabel(session, expanded)}
         </small>}
-        {lightweightSummary && session.prescription.kind === "RPE_TIME_RANGE" && session.prescription.catalogWorkout &&
+        {lightweightSummary && !compactCatalogAmount && session.prescription.kind === "RPE_TIME_RANGE" && session.prescription.catalogWorkout &&
           <small className="plan-session-help">{prescriptionCalendarAmount(session)}</small>}
-        {lightweightSummary && showProgress && <small className="prescription-calendar__progress" aria-label="현재 진행 상태">
-          {progress === undefined
-            ? "예정"
-            : progress === "RESTED" && session.role === "REST"
+        {lightweightSummary && showProgress && progress !== undefined && <small className="prescription-calendar__progress" aria-label="현재 진행 상태">
+          {progress === "RESTED" && session.role === "REST"
               ? "휴식 기록"
               : PROGRESS_LABELS[progress]}
         </small>}

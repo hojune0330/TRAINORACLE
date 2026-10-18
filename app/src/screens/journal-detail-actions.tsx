@@ -67,10 +67,10 @@ export function JournalDetailActions({
   const editableEntries = entries.filter((entry) => canEditJournalEntry(entry) && !hasDuplicateId(entries, entry.id))
   if (onAddEntry === undefined && (onEditEntry === undefined || editableEntries.length === 0)) return null
 
-  const managementSummary = [
-    onAddEntry === undefined ? null : "새 기록 추가",
-    editableEntries.length > 0 ? `수정 ${editableEntries.length}개` : null,
-  ].filter((label): label is string => label !== null).join(" · ")
+  const canEdit = onEditEntry !== undefined && editableEntries.length > 0
+  const managementLabel = onAddEntry !== undefined
+    ? canEdit ? "추가·수정" : "일지 더 쓰기"
+    : "일지 수정"
 
   return (
     <section className="journal-detail-actions" data-open={open ? "true" : "false"}>
@@ -85,9 +85,8 @@ export function JournalDetailActions({
         <span className="journal-detail-actions__summary-content">
           <span className="journal-detail-actions__title">
             <Settings2 aria-hidden="true" size={16} />
-            이 날의 기록 관리
+            {managementLabel}
           </span>
-          <small>{managementSummary}</small>
           <ChevronDown aria-hidden="true" size={18} />
         </span>
       </button>
