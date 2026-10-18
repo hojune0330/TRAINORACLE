@@ -1,21 +1,21 @@
 import React, { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { ArrowLeft, BookOpen, Check, ChevronRight, Moon, Sun, X } from 'lucide-react'
 import type { SleepInnGameProps } from '../sleep-inn/types'
-import { CARE_LABEL, PETS, POSE_FRAME, petAsset, petById, type CareAction, type PetId, type PetPose } from './pet-catalog'
+import { CARE_LABEL, PETS, petById, type CareAction, type PetId, type PetPose } from './pet-catalog'
 import { adoptPet, atHome, canAdopt, careDay, careFor, createHome, finishMorning, invitePet, loadHome, persistHome, refreshVisitors, restAgain, sleepTogether, wakeTogether, type HomeLoad, type PetBond, type PetHome } from './pet-engine'
 import { careVoice, PET_VOICES } from './pet-personality'
 import { memoriesFor, nextCare, nextMemory } from './pet-memories'
+import { ActionArt, PetSprite, PropArt, petRoomAsset } from './PetArt'
+import { PetCareScene } from './PetCareScene'
+import { PetBedtimeScene } from './PetBedtimeScene'
+import { PetStoryBook } from './PetStoryBook'
+import { petStory } from './pet-story'
 import './pet-room.css'
+import './pet-activities.css'
 
 const asset = `${import.meta.env.BASE_URL}games/pet-room-v1/`
-const framePosition = (frame: number) => `${(frame % 3) * 50}% ${Math.floor(frame / 3) * 100}%`
-
-export function PetSprite({ id, pose = 'awake', className = '' }: { id: PetId; pose?: PetPose; className?: string }) {
-  return <span aria-hidden="true" className={`pet-sprite ${className}`} style={{ backgroundImage: `url("${petAsset(id)}")`, backgroundPosition: framePosition(POSE_FRAME[pose]) }} />
-}
-function ActionArt({ frame }: { frame: number }) {
-  return <span aria-hidden="true" className="pet-action-art" style={{ backgroundImage: `url("${asset}actions.webp")`, backgroundPosition: framePosition(frame) }} />
-}
+export { PetSprite } from './PetArt'
+type Activity = { kind: 'care'; id: PetId; action: Exclude<CareAction, 'bed'>; turn: number } | { kind: 'bed' } | { kind: 'story'; id: PetId }
 function MemoryAlbum({ id, bond }: { id: PetId; bond: PetBond }) {
   const memories = memoriesFor(id, bond)
   const next = nextMemory(bond)
@@ -47,6 +47,9 @@ function PetRoomSession({ journal, persistenceScope, onBack, onOpenJournal, retu
   const [tab, setTab] = useState<'room' | 'friends'>('room')
   const [filter, setFilter] = useState<'all' | 'known' | 'ready' | 'family'>('all')
   const [details, setDetails] = useState<PetId | null>(null)
+  const [activity, setActivity] = useState<Activity | null>(null)
+  const activityRef = useRef(activity)
+  activityRef.current = activity
   const [adopted, setAdopted] = useState<PetId | null>(null)
   const [reaction, setReaction] = useState<{ id: PetId; pose: PetPose; key: number } | null>(null)
   const [stirred, setStirred] = useState(false)
@@ -75,7 +78,7 @@ function PetRoomSession({ journal, persistenceScope, onBack, onOpenJournal, retu
     const refreshed = refreshVisitors(current.home, careDay())
     if (!current.error && (current.raw === null || refreshed !== current.home)) commit(refreshed)
     const checkDay = () => {
-      if (document.visibilityState !== 'visible') return
+      if (document.visibilityState !== 'visible' || activityRef.current) return
       const next = refreshVisitors(saved.current.home, careDay())
       if (next !== saved.current.home) commit(next)
     }
@@ -88,14 +91,15 @@ function PetRoomSession({ journal, persistenceScope, onBack, onOpenJournal, retu
   useEffect(() => {
     onCanExitReady?.(() => {
       if (detailRef.current) { closeDetails(); return false }
+      if (activityRef.current) { closeActivity(); return false }
       return true // Every successful action was already saved; failed actions never replace that state.
     })
     return () => onCanExitReady?.(null)
   }, [onCanExitReady])
   useEffect(() => {
-    if (contentRef.current) contentRef.current.inert = !!details
+    if (contentRef.current) contentRef.current.inert = !!details || !!activity
     if (details) detailHeading.current?.focus({ preventScroll: true })
-  }, [details])
+  }, [details, activity])
 
   function reload() {
     const next = readHome(persistenceScope)
@@ -107,12 +111,30 @@ function PetRoomSession({ journal, persistenceScope, onBack, onOpenJournal, retu
     setReaction({ id, pose, key: Date.now() })
     timer.current = setTimeout(() => setReaction(null), 2300)
   }
+  function beginActivity(next: Activity) {
+    if (saved.current.error) return
+    modalOpener.current = document.activeElement instanceof HTMLElement ? document.activeElement : roomTabRef.current
+    activityRef.current = next; setActivity(next)
+  }
+  function closeActivity() {
+    if (contentRef.current) contentRef.current.inert = false
+    activityRef.current = null; setActivity(null)
+    const current = saved.current.home
+    const next = refreshVisitors(current, careDay())
+    // Finish with the visible friend first, then welcome today's visitors. Keep this companion beside them.
+    if (next !== current) commit(invitePet(next, current.selected), '새 친구들도 놀러 왔어요. 방금 함께한 친구도 옆에 있어요.')
+    modalOpener.current?.focus({ preventScroll: true })
+  }
   function care(action: Exclude<CareAction, 'bed'>) {
+    const current = saved.current.home
+    if (current.sleeping || current.morning) return
+    beginActivity({ kind: 'care', id: current.selected, action, turn: interactions.current[`${current.selected}:${action}`] ?? 0 })
+  }
+  function finishCare(id: PetId, action: Exclude<CareAction, 'bed'>) {
     // Keep the pet the user can see. A new day is refreshed on entry/focus or waking,
     // never halfway through a care action that would otherwise target an unseen visitor.
     const current = saved.current.home
-    if (current.sleeping || current.morning) return
-    const id = current.selected
+    if (current.sleeping || current.morning || current.selected !== id || !atHome(current).includes(id)) return false
     const already = current.pets[id]!.actions[action].includes(careDay())
     const next = careFor(current, id, action, careDay())
     const turn = interactions.current[`${id}:${action}`] ?? 0
@@ -122,7 +144,9 @@ function PetRoomSession({ journal, persistenceScope, onBack, onOpenJournal, retu
       reactTo(id, action === 'pet' ? 'happy' : action === 'feed' ? 'eating' : 'playing')
       setSpeech(careVoice(id, action, turn))
       interactions.current[`${id}:${action}`] = turn + 1
+      return true
     }
+    return false
   }
   const [speech, setSpeech] = useState<string | null>(null)
   function select(id: PetId) {
@@ -134,7 +158,8 @@ function PetRoomSession({ journal, persistenceScope, onBack, onOpenJournal, retu
   function startSleep() {
     // The bedtime button refers to the guests currently in this room, even after midnight.
     const current = saved.current.home
-    if (commit(sleepTogether(current, careDay()), '잠자리 준비를 기록했어요. 이제 화면을 꺼도 괜찮아요.')) { setStirred(false); setReaction(null); setSpeech(null); setTab('room') }
+    if (current.sleeping || current.morning) return
+    if (commit(sleepTogether(current, careDay()), '잠자리 준비를 기록했어요. 이제 화면을 꺼도 괜찮아요.')) { modalOpener.current = roomTabRef.current; closeActivity(); setStirred(false); setReaction(null); setSpeech(null); setTab('room') }
   }
   function wake() {
     const before = saved.current.home
@@ -181,6 +206,7 @@ function PetRoomSession({ journal, persistenceScope, onBack, onOpenJournal, retu
   const detailBond = details ? home.pets[details] : undefined
   const careSuggestion = nextCare(selected.id, bond, careDay())
   const memoryGoal = nextMemory(bond)
+  const stories = petStory(selected.id, bond).filter(scene => scene.date)
   const filteredPets = PETS.filter(pet => filter === 'all' || (filter === 'known' && home.pets[pet.id]) || (filter === 'ready' && canAdopt(home, pet.id)) || (filter === 'family' && home.pets[pet.id]?.adoptedOn))
   return <div className={`pet-home${sleeping ? ' pet-home--night' : ''}`}>
     <div ref={contentRef} className="pet-home__content">
@@ -195,22 +221,24 @@ function PetRoomSession({ journal, persistenceScope, onBack, onOpenJournal, retu
       <button type="button" aria-current={tab === 'friends' ? 'page' : undefined} onClick={() => setTab('friends')}><ActionArt frame={5} />친구들 <span>{Object.keys(home.pets).length}/12</span></button>
     </nav>
     {tab === 'room' ? <>
-      {!sleeping && !morning && <div className="pet-bedtime-entry"><button type="button" disabled={!!error} className="pet-primary" onClick={startSleep}><ActionArt frame={3} /><span>같이 자기<small>친구들 재우고, 나도 폰 내려놓기</small></span></button></div>}
+      {!sleeping && !morning && <div className="pet-bedtime-entry"><button type="button" disabled={!!error} className="pet-primary" onClick={() => beginActivity({ kind: 'bed' })}><ActionArt frame={3} /><span>같이 자기<small>이불 펴고, 커튼 닫고, 불 끄기</small></span></button></div>}
       {morning && <section className="pet-morning" aria-label="함께 잔 친구들과 아침 인사"><strong>{selected.name}도 일어났네!</strong><p>같이 쉬었던 친구들이 아직 옆에 있어요.</p><button type="button" disabled={!!error} className="pet-primary" onClick={greetMorning}>오늘도 같이 지내기</button><button type="button" disabled={!!error} className="pet-text-button" onClick={backToSleep}>조금 더 자기</button></section>}
       <section className="pet-scene" aria-label={sleeping ? '친구들이 함께 자는 방' : '동물 친구들이 놀러 온 방'}>
-        <img className="pet-scene__background" src={`${asset}room.webp`} alt="" draggable={false} />
+        <img className="pet-scene__background" src={sleeping ? petRoomAsset('room-sleep-v2.webp') : `${asset}room.webp`} alt="" draggable={false} />
         <div className="pet-scene__badge">{sleeping ? <><Moon size={14} /> {stirred ? '눈을 떴어요' : '새근새근 자는 중'}</> : <><Sun size={14} /> {morning ? '다시 만났네' : bond.adoptedOn ? '우리 집에서 함께' : '오늘 놀러 온 친구들'}</>}</div>
         <div className="pet-scene__speech" aria-live="polite">{sleeping ? stirred ? '응…? 나도 눈이 떠졌어. 다시 잘까?' : PET_VOICES[selected.id].bed : morning ? PET_VOICES[selected.id].wake : speech ?? selected.hello}</div>
         {scenePets.map((id, index) => <button type="button" key={id} disabled={!!error || morning} className={`pet-scene__pet pet-scene__pet--${index}${reaction?.id === id ? ' pet-scene__pet--react' : ''}`} aria-label={sleeping ? `${petById(id).name} 살짝 깨우기` : morning ? `${petById(id).name} 아침 인사` : `${petById(id).name} ${index === 0 ? '쓰다듬기' : '선택하기'}`}
           onClick={() => sleeping ? setStirred(true) : index === 0 ? care('pet') : select(id)}>
-          <PetSprite key={reaction?.id === id ? reaction.key : id} id={id} pose={index === 0 ? shownPose : sleeping ? stirred ? 'awake' : 'sleeping' : morning ? 'waking' : 'awake'} />
+          {sleeping && <PropArt item="blanket" className="pet-scene__blanket" />}<PetSprite key={reaction?.id === id ? reaction.key : id} id={id} pose={index === 0 ? shownPose : sleeping ? stirred ? 'awake' : 'sleeping' : morning ? 'waking' : 'awake'} />
           <span className="pet-scene__pet-name">{petById(id).name}{home.pets[id]?.adoptedOn && <Check size={12} />}</span>
         </button>)}
       </section>
+      {(sleeping || morning) && present.length > 3 && <section className="pet-resting-friends" aria-label="함께 쉬는 친구 모두"><p>{present.length}명이 함께 쉬고 있어요.</p><div>{present.map(id => <span key={id}><PetSprite id={id} pose={sleeping ? 'sleeping' : 'waking'} /><span>{petById(id).name}</span></span>)}</div></section>}
       <section className="pet-selected" aria-label={`${selected.name} 돌보기`}>
         <div className="pet-selected__heading"><div><span>{selected.animal} · {bond.adoptedOn ? '우리 집 식구' : '방문 친구'}</span><h2>{selected.name} <small>{bond.caredDays.length}일 돌봤어요</small></h2></div><button type="button" className="pet-text-button" onClick={() => openDetails(selected.id)}>{bond.adoptedOn ? '우리 추억' : '입양 조건'}<ChevronRight size={17} /></button></div>
         {!sleeping && !morning ? <>
           <p className="pet-favorite-hint">좋아하는 것 · {selected.favorite}</p>
+          <button type="button" className="pet-story-entry" disabled={!!error} onClick={() => beginActivity({ kind: 'story', id: selected.id })}><ActionArt frame={5} /><span><strong>{selected.name} 이야기</strong><small>{stories[stories.length - 1]!.copy[0]} · {stories.length}/4장</small></span><ChevronRight size={18} /></button>
           <div className="pet-care-actions">
             {(['pet', 'feed', 'play'] as const).map((action, index) => <button type="button" key={action} disabled={!!error} className={PET_VOICES[selected.id].favorite === action ? 'pet-care-favorite' : ''} onClick={() => care(action)}><ActionArt frame={index} /><strong>{action === 'pet' ? '쓰다듬기' : action === 'feed' ? '간식 주기' : '같이 놀기'}</strong>{bond.actions[action].includes(careDay()) && <span className="pet-action-done"><Check size={12} />오늘 했어요</span>}</button>)}
           </div>
@@ -269,5 +297,8 @@ function PetRoomSession({ journal, persistenceScope, onBack, onOpenJournal, retu
         </>}
       </section>
     </div>}
+    {activity?.kind === 'care' && <PetCareScene id={activity.id} action={activity.action} turn={activity.turn} onComplete={() => finishCare(activity.id, activity.action)} onClose={closeActivity} error={error} onReload={() => { closeActivity(); reload() }} />}
+    {activity?.kind === 'bed' && <PetBedtimeScene companions={[home.selected, ...present.filter(id => id !== home.selected)]} onFinish={startSleep} onClose={closeActivity} error={error} onReload={() => { closeActivity(); reload() }} />}
+    {activity?.kind === 'story' && <PetStoryBook id={activity.id} bond={home.pets[activity.id]!} onClose={closeActivity} />}
   </div>
 }

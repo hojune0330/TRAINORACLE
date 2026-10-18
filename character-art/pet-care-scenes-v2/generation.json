@@ -1,0 +1,49 @@
+{
+  "version": 2,
+  "generatedAt": "2026-10-19",
+  "tool": "OpenAI image_gen.imagegen",
+  "seed": null,
+  "scope": "Runtime states and draggable props for the approved pet bedroom. No changes to the 12 characters.",
+  "assets": [
+    {
+      "id": "room-curtains-v2",
+      "source": "C:/Users/admin/.codex/generated_images/01a11199-c304-7f42-8565-d0324740231b/exec-c72fcb38-3d18-4965-94b4-a1916ba3a8ef.png",
+      "referenced_image_paths": [
+        "D:\\admin\\Documents\\ChatGPT\\트레인 오라클\\.scratch\\pet-companion-release-20261018\\app\\public\\games\\pet-room-v1\\room.webp"
+      ],
+      "transparent_background": false,
+      "prompt": "Use case: precise-object-edit. EDIT TARGET: the provided original 2D pet bedroom. Create the exact same square bedroom background as a game runtime state, with THE TWO SAGE GREEN CURTAINS CLOSED over the window, and the small lamp still ON with a gentle warm glow. It is bedtime outside. Preserve every object, camera, outlines, proportions, wall/floor boundary, two beds at left/right, rug, bookshelf, plant, nightstand and furniture pixel placement as closely as possible. Keep the whole large central rug completely empty for separately rendered pets. Same simple cocoa outlines and warm flat hand-drawn 2D color style. No animals, no people, no lettering, no UI, no extra props, no collage, no framing. Curtains meet in the center and fully cover the window, with a few large plain folds. Soft muted bedtime atmosphere but the scene remains legible. Single square image. This is an alternate state of an existing playable room, NOT a redesigned room or concept art."
+    },
+    {
+      "id": "care-props-v2",
+      "source": "C:/Users/admin/.codex/generated_images/01a11199-c304-7f42-8565-d0324740231b/exec-46a011f6-9057-488e-a37f-6b38b6aaac6a.png",
+      "referenced_image_paths": [
+        "D:\\admin\\Documents\\ChatGPT\\트레인 오라클\\.scratch\\pet-companion-release-20261018\\app\\public\\games\\pet-room-v1\\actions.webp",
+        "D:\\admin\\Documents\\ChatGPT\\트레인 오라클\\.scratch\\pet-companion-release-20261018\\app\\public\\games\\pet-room-v1\\room.webp"
+      ],
+      "transparent_background": true,
+      "prompt": "Use case: illustration-story. Production-ready transparent 2D GAME PROP SPRITE ATLAS for the existing cozy pet bedroom, matching the provided images' thin clean cocoa outlines, rounded simple shapes, flat pastel fills, extremely little detail. EXACTLY 6 separate props, EXACT 3 columns x 2 rows on a 3:2 canvas, each equal square cell. Center every complete prop in the middle 70% of its cell, wide empty transparent margins, no bleed or overlap. Row 1 left: one small pastel blue and peach striped ball matching the first reference. Row 1 middle: one pale sage pet food bowl with three simple round tan treats, no paw logo. Row 1 right: one folded lavender blanket WITHOUT moon or symbols. Row 2 left: the SAME lavender blanket unfolded into a soft rounded rectangular sleeping mat seen slightly from above, no pillows or props on it. Row 2 middle: one simple cream pillow with sage green piping, rounded rectangle. Row 2 right: one small open honey-colored wicker basket with a soft peach lining, extremely simplified broad weave only. Entire background is true transparent alpha, no floor, no drop shadows, no cell borders, no text or numbers, no animals, no hands, no glow, no 3D. These 6 standalone props will actually be dragged, placed, and used by the pets in the game; do not draw buttons or decorative UI.",
+      "grid": [
+        3,
+        2
+      ],
+      "props": [
+        "ball",
+        "bowl",
+        "folded",
+        "blanket",
+        "pillow",
+        "basket"
+      ]
+    },
+    {
+      "id": "room-sleep-v2",
+      "source": "C:/Users/admin/.codex/generated_images/01a11199-c304-7f42-8565-d0324740231b/exec-16a72d62-391b-4870-9aff-92ccb148162b.png",
+      "referenced_image_paths": [
+        "C:\\Users\\admin\\.codex\\generated_images\\01a11199-c304-7f42-8565-d0324740231b\\exec-c72fcb38-3d18-4965-94b4-a1916ba3a8ef.png"
+      ],
+      "transparent_background": false,
+      "prompt": "Use case: lighting-weather, precise-object-edit. EDIT TARGET is this exact original cozy 2D bedroom with closed green curtains. Produce the LIGHTS-OFF runtime state. Only change illumination: the small bedside lamp is switched OFF, no glow or bright bulb, and the whole room is in soft low muted blue-gray ambient night light, still readable for a gentle bedtime game. Preserve every object position, size, crop, curtain shape, rug, beds, plant, shelving and outline precisely; no redesign. Both curtains remain fully closed. Same square canvas and simple warm hand-drawn flat 2D art, just subdued nighttime colors. Keep the large central rug empty for pet sprites. No characters, no UI, no words, no new moon or stars or decorative effects. The lamp shade should be a dim matte color, not emissive. This will crossfade directly from the supplied lights-on frame, so camera and geometry must match."
+    }
+  ]
+}

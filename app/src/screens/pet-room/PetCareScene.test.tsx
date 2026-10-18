@@ -1,0 +1,90 @@
+import React from 'react'
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { afterEach, expect, it, vi } from 'vitest'
+import { PetCareScene } from './PetCareScene'
+import { PET_PLAY } from './pet-play'
+const makeProps = () => ({ id: 'puppy' as const, action: 'play' as const, turn: 0, onComplete: vi.fn(() => true), onClose: vi.fn(), error: null, onReload: vi.fn() })
+afterEach(() => { cleanup(); vi.useRealTimers(); vi.restoreAllMocks() })
+function pointer(element: HTMLElement, type: string, x: number, y: number) {
+  const event = new MouseEvent(type, { bubbles: true, button: 0, clientX: x, clientY: y })
+  Object.defineProperty(event, 'pointerId', { value: 1 })
+  fireEvent(element, event)
+}
+function roomBounds(container: HTMLElement) {
+  vi.spyOn(container.querySelector('.pet-care-world')!, 'getBoundingClientRect').mockReturnValue({ x: 0, y: 0, left: 0, top: 0, width: 100, height: 100, right: 100, bottom: 100, toJSON: () => ({}) })
+}
+it('needs a full round trip and a catch, and cancels the timer when leaving', () => {
+  vi.useFakeTimers()
+  const props = makeProps()
+  const view = render(<PetCareScene {...props} />)
+  fireEvent.click(screen.getByRole('button', { name: '왼쪽으로' }))
+  act(() => { vi.advanceTimersByTime(PET_PLAY.puppy.travelMs * 2) })
+  expect(props.onComplete).not.toHaveBeenCalled()
+  fireEvent.click(screen.getByRole('button', { name: '공 받기' }))
+  expect(props.onComplete).toHaveBeenCalledTimes(1)
+  view.unmount()
+  const next = makeProps()
+  const second = render(<PetCareScene {...next} />)
+  fireEvent.click(screen.getByRole('button', { name: '오른쪽으로' }))
+  second.unmount()
+  act(() => { vi.runAllTimers() })
+  expect(next.onComplete).not.toHaveBeenCalled()
+})
+it('accepts dragging toward either fetch target, not just the default right target', () => {
+  vi.useFakeTimers()
+  const props = makeProps()
+  const view = render(<PetCareScene {...props} />)
+  roomBounds(view.container)
+  const ball = screen.getByRole('button', { name: '공 들기' })
+  pointer(ball, 'pointerdown', 23, 78)
+  pointer(ball, 'pointermove', 30, 48)
+  pointer(ball, 'pointerup', 30, 48)
+  expect(screen.getByText('내가 가져올게!')).toBeVisible()
+  expect(props.onComplete).not.toHaveBeenCalled()
+  act(() => { vi.advanceTimersByTime(PET_PLAY.puppy.travelMs * 2) })
+  fireEvent.click(screen.getByRole('button', { name: '공 받기' }))
+  expect(props.onComplete).toHaveBeenCalledTimes(1)
+})
+it('rejects an empty-hand click, a wrong drop and pointer cancellation before feeding', () => {
+  const props = { ...makeProps(), action: 'feed' as const }
+  const view = render(<PetCareScene {...props} />)
+  roomBounds(view.container)
+  const bowl = screen.getByRole('button', { name: '간식 그릇 들기' })
+  fireEvent.click(screen.getByRole('button', { name: '그릇 놓을 자리' }))
+  pointer(bowl, 'pointerdown', 24, 79)
+  pointer(bowl, 'pointermove', 15, 15)
+  pointer(bowl, 'pointerup', 15, 15)
+  pointer(bowl, 'pointerdown', 24, 79)
+  pointer(bowl, 'pointermove', 65, 88)
+  pointer(bowl, 'pointercancel', 65, 88)
+  expect(props.onComplete).not.toHaveBeenCalled()
+  pointer(bowl, 'pointerdown', 24, 79)
+  pointer(bowl, 'pointermove', 65, 88)
+  pointer(bowl, 'pointerup', 65, 88)
+  expect(props.onComplete).toHaveBeenCalledTimes(1)
+})
+it('ignores short jitter and repeated motion in the same direction while stroking', () => {
+  const props = { ...makeProps(), action: 'pet' as const }
+  const view = render(<PetCareScene {...props} />)
+  roomBounds(view.container)
+  const pet = screen.getByRole('button', { name: '살살 쓰다듬기' })
+  pointer(pet, 'pointerdown', 40, 60)
+  pointer(pet, 'pointermove', 44, 60)
+  expect(screen.getByText('0/3')).toBeVisible()
+  pointer(pet, 'pointermove', 56, 60)
+  pointer(pet, 'pointermove', 78, 60)
+  expect(screen.getByText('1/3')).toBeVisible()
+  pointer(pet, 'pointermove', 35, 60)
+  expect(props.onComplete).not.toHaveBeenCalled()
+  pointer(pet, 'pointermove', 58, 60)
+  expect(props.onComplete).toHaveBeenCalledTimes(1)
+})
+it('never awards a wrong cushion guess and completes only after finding the shown ball', () => {
+  const props = { ...makeProps(), id: 'mouse' as const }
+  render(<PetCareScene {...props} />)
+  fireEvent.click(screen.getByRole('button', { name: '봤어! 숨겨 봐' }))
+  fireEvent.click(screen.getByRole('button', { name: '왼쪽 쿠션 들기' }))
+  expect(props.onComplete).not.toHaveBeenCalled()
+  fireEvent.click(screen.getByRole('button', { name: '오른쪽 쿠션 들기' }))
+  expect(props.onComplete).toHaveBeenCalledTimes(1)
+})

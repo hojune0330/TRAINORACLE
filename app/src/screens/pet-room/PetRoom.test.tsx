@@ -3,22 +3,103 @@ import { act, cleanup, fireEvent, render, screen, within } from '@testing-librar
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { PetRoom } from './PetRoom'
 import { careDay, careFor, createHome, parseHome, petHomeKey, sleepTogether } from './pet-engine'
-import { petById } from './pet-catalog'
+import { PET_IDS, petById, type PetId } from './pet-catalog'
 import { careVoice, PET_VOICES } from './pet-personality'
+import { PET_PLAY } from './pet-play'
+
+it('does not add care when a scene is opened, abandoned or closed through the host Back gate', () => {
+  let canExit: (() => boolean) | null = null
+  render(<PetRoom {...props} onCanExitReady={callback => { canExit = callback }} />)
+  const before = localStorage.getItem(petHomeKey('guest'))
+  fireEvent.click(screen.getByRole('button', { name: '간식 주기' }))
+  fireEvent.click(screen.getByRole('button', { name: '그릇 놓을 자리' }))
+  expect(localStorage.getItem(petHomeKey('guest'))).toBe(before)
+  act(() => { expect(canExit!()).toBe(false) })
+  expect(screen.queryByRole('dialog')).toBeNull()
+  expect(canExit!()).toBe(true)
+  fireEvent.click(screen.getByRole('button', { name: /^같이 자기/ }))
+  fireEvent.click(screen.getByRole('button', { name: '친구들 이불 펴 주기' }))
+  fireEvent.click(screen.getByRole('button', { name: '커튼 닫아 주기' }))
+  fireEvent.click(screen.getByRole('button', { name: '방으로 돌아가기' }))
+  expect(localStorage.getItem(petHomeKey('guest'))).toBe(before)
+})
+
+it('saves all current companions only when lights are switched off and uses the matching night art', () => {
+  render(<PetRoom {...props} />)
+  const before = stored()
+  fireEvent.click(screen.getByRole('button', { name: /^같이 자기/ }))
+  fireEvent.click(screen.getByRole('button', { name: '친구들 이불 펴 주기' }))
+  fireEvent.click(screen.getByRole('button', { name: '커튼 닫아 주기' }))
+  expect(stored()).toEqual(before)
+  fireEvent.click(screen.getByRole('button', { name: '불 끄고 같이 자기' }))
+  expect(stored().sleeping?.pets).toEqual(before.visitors)
+  for (const id of before.visitors) expect(stored().pets[id]!.actions.bed).toEqual([careDay()])
+  expect(screen.getByRole('button', { name: '우리 방' })).toHaveFocus()
+  const room = screen.getByRole('region', { name: '친구들이 함께 자는 방' })
+  expect(room.querySelector('img')).toHaveAttribute('src', '/games/pet-room-v1/room-sleep-v2.webp')
+})
+
+it('opens only earned story scenes and reading a story never changes the care record', () => {
+  render(<PetRoom {...props} />)
+  const before = localStorage.getItem(petHomeKey('guest'))
+  fireEvent.click(screen.getByRole('button', { name: new RegExp(stored().selected === 'puppy' ? '두부 이야기' : petById(stored().selected).name + ' 이야기') }))
+  const scene = within(screen.getByRole('dialog'))
+  const chapters = scene.getByRole('navigation', { name: '이야기 장면 고르기' })
+  expect(within(chapters).getAllByRole('button').filter(button => !(button as HTMLButtonElement).disabled)).toHaveLength(1)
+  fireEvent.click(scene.getByRole('button', { name: '친구한테 돌아가기' }))
+  expect(localStorage.getItem(petHomeKey('guest'))).toBe(before)
+})
 
 const props = { persistenceScope: 'guest', journal: { date: '2026-01-01', status: 'missing' as const }, onBack: vi.fn(), onOpenJournal: vi.fn(), onOldGame: vi.fn() }
 beforeEach(() => { localStorage.clear(); localStorage.setItem(petHomeKey('guest'), JSON.stringify(createHome(careDay(), 123))) })
 afterEach(() => { cleanup(); vi.useRealTimers(); vi.restoreAllMocks() })
 const stored = () => parseHome(localStorage.getItem(petHomeKey('guest'))!)!
+it('shows every pet being put to bed, including a full twelve-pet adopted home', () => {
+  const home = createHome(careDay(), 123)
+  for (const id of PET_IDS) home.pets[id] = { metOn: careDay(), caredDays: [], actions: { pet: [], feed: [], play: [], bed: [] }, adoptedOn: careDay() }
+  localStorage.setItem(petHomeKey('guest'), JSON.stringify(home))
+  render(<PetRoom {...props} />)
+  fireEvent.click(screen.getByRole('button', { name: /^같이 자기/ }))
+  const scene = screen.getByRole('dialog')
+  expect(scene.querySelectorAll('.pet-bedtime-friend')).toHaveLength(12)
+  for (const id of PET_IDS) expect(within(scene).getByText(petById(id).name, { exact: true })).toBeVisible()
+  quickBed()
+  expect(stored().sleeping?.pets).toHaveLength(12)
+  expect(screen.getByRole('region', { name: '함께 쉬는 친구 모두' }).querySelectorAll('.pet-sprite')).toHaveLength(12)
+})
+function finishFeed() {
+  const scene = within(screen.getByRole('dialog'))
+  fireEvent.click(scene.getByRole('button', { name: '간식 그릇 들기' }))
+  fireEvent.click(scene.getByRole('button', { name: '그릇 놓을 자리' }))
+  fireEvent.click(scene.getByRole('button', { name: '다 먹었네! 방으로 가기' }))
+}
+function quickBed() {
+  fireEvent.click(screen.getByRole('button', { name: '졸려요, 바로 재우기' }))
+}
+function finishPlay(id: PetId, turn: number) {
+  const scene = within(screen.getByRole('dialog'))
+  if (PET_PLAY[id].style === 'hide') {
+    fireEvent.click(scene.getByRole('button', { name: '봤어! 숨겨 봐' }))
+    fireEvent.click(scene.getByRole('button', { name: `${['왼쪽', '가운데', '오른쪽'][(turn + id.length) % 3]} 쿠션 들기` }))
+  } else {
+    fireEvent.click(scene.getByRole('button', { name: PET_PLAY[id].style === 'fetch' ? '왼쪽으로' : '공 굴리기' }))
+    act(() => { vi.advanceTimersByTime(PET_PLAY[id].travelMs * 2) })
+    fireEvent.click(scene.getByRole('button', { name: '공 받기' }))
+  }
+  fireEvent.click(scene.getByRole('button', { name: '잘 놀았어! 방으로 가기' }))
+}
 
 it('records real today, shows care poses, and restores sleeping pets after remount', () => {
   const view = render(<PetRoom {...props} />)
   const id = stored().selected
   fireEvent.click(screen.getByRole('button', { name: '간식 주기' }))
+  expect(stored().pets[id]!.caredDays).toEqual([])
+  finishFeed()
   expect(stored().pets[id]!.caredDays).toEqual([careDay()])
   expect(stored().pets[id]!.actions.feed).toEqual([careDay()])
   expect(screen.getByText(careVoice(id, 'feed', 0))).toBeVisible()
   fireEvent.click(screen.getByRole('button', { name: /^같이 자기/ }))
+  quickBed()
   expect(stored().sleeping).not.toBeNull()
   view.unmount()
   render(<PetRoom {...props} />)
@@ -38,7 +119,9 @@ it('never shows saved care or adoption after a storage failure', () => {
   const before = localStorage.getItem(petHomeKey('guest'))
   vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw Error('quota') })
   fireEvent.click(screen.getByRole('button', { name: '쓰다듬기' }))
-  expect(screen.getByRole('alert')).toHaveTextContent('저장되지 않았어요')
+  const scene = within(screen.getByRole('dialog'))
+  for (let i = 0; i < 3; i++) fireEvent.click(scene.getByRole('button', { name: '살살 한 번 더' }))
+  expect(scene.getByRole('alert')).toHaveTextContent('저장되지 않았어요')
   expect(localStorage.getItem(petHomeKey('guest'))).toBe(before)
   expect(screen.queryByText(careVoice(stored().selected, 'pet', 0))).toBeNull()
 })
@@ -109,9 +192,13 @@ it('cares for the pet shown on screen when midnight passes without a focus chang
   expect(screen.getByRole('region', { name: `${petById(home.selected).name} 돌보기` })).toBeVisible()
   vi.setSystemTime(new Date(2026, 9, 19, 0, 1))
   fireEvent.click(screen.getByRole('button', { name: '간식 주기' }))
+  window.dispatchEvent(new Event('focus'))
+  finishFeed()
   expect(stored().selected).toBe(home.selected)
   expect(stored().pets[home.selected]!.actions.feed).toEqual(['2026-10-19'])
-  expect(stored().visitors).toEqual(home.visitors)
+  expect(stored().day).toBe('2026-10-19')
+  expect(stored().visitors).not.toEqual(home.visitors)
+  expect(stored().invited).toBe(home.selected)
 })
 
 it('puts the visible guests to bed after midnight, not newly drawn unseen guests', () => {
@@ -122,6 +209,7 @@ it('puts the visible guests to bed after midnight, not newly drawn unseen guests
   render(<PetRoom {...props} />)
   vi.setSystemTime(new Date(2026, 9, 19, 0, 1))
   fireEvent.click(screen.getByRole('button', { name: /^같이 자기/ }))
+  quickBed()
   expect(stored().sleeping).toEqual({ day: '2026-10-19', pets: home.visitors })
   expect(stored().pets[home.selected]!.actions.bed).toEqual(['2026-10-19'])
 })
@@ -151,11 +239,14 @@ it('keeps the same pet for morning greeting across reload, then keeps that compa
 })
 
 it('shows personal reactions without awarding duplicate care and saves the actual moment in the album', () => {
+  vi.useFakeTimers()
   render(<PetRoom {...props} />)
   const id = stored().selected
   fireEvent.click(screen.getByRole('button', { name: '같이 놀기' }))
+  finishPlay(id, 0)
   expect(screen.getByText(careVoice(id, 'play', 0))).toBeVisible()
   fireEvent.click(screen.getByRole('button', { name: /같이 놀기/ }))
+  finishPlay(id, 1)
   expect(screen.getByText(careVoice(id, 'play', 1))).toBeVisible()
   expect(stored().pets[id]!.actions.play).toEqual([careDay()])
   fireEvent.click(screen.getByRole('button', { name: '입양 조건' }))
