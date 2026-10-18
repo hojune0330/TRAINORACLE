@@ -22,6 +22,7 @@ function Host({ onClose }: { onClose: () => void }) {
   return open ? <SleepInnEntry date={date} returnLabel="라운지로" onBack={() => { onClose(); setOpen(false) }} /> : <p>라운지</p>
 }
 function enterPuzzle() {
+  fireEvent.click(screen.getByRole('button', { name: '내 여관' }))
   fireEvent.click(screen.getByRole('button', { name: '이야기 건너뛰기' }))
   fireEvent.click(screen.getByRole('button', { name: '바로 쉬기' }))
   fireEvent.click(screen.getByRole('button', { name: '다시 왔어요' }))
@@ -29,7 +30,7 @@ function enterPuzzle() {
 }
 beforeEach(async () => {
   localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null)
-  window.history.replaceState({}, '', '/')
+  window.history.replaceState({}, '', '/#sleep-inn=INN1.invalid')
   await initializeCanonicalJournalFixture()
 })
 afterEach(async () => { cleanup(); await popTo({}); vi.restoreAllMocks(); setActiveLocalAccount(null) })
@@ -78,7 +79,10 @@ it.each([false, true])('preserves corrupt storage on native exit (unsaved action
   const back = vi.spyOn(window.history, 'back').mockImplementation(() => undefined)
   const close = vi.fn()
   render(<Host onClose={close} />)
-  if (changed) fireEvent.click(screen.getByRole('button', { name: '이야기 건너뛰기' }))
+  if (changed) {
+    fireEvent.click(screen.getByRole('button', { name: '내 여관' }))
+    fireEvent.click(screen.getByRole('button', { name: '이야기 건너뛰기' }))
+  }
   fireEvent(screen.getByRole('dialog', { name: '꿈손님 여관' }), new Event('cancel', { cancelable: true }))
   if (changed) {
     expect(close).not.toHaveBeenCalled()

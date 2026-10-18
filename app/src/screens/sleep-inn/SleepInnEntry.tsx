@@ -7,6 +7,7 @@ import { LOCAL_JOURNALS_CHANGED } from '../../domain/journal-change-events'
 import { registerBrowserBackLayer } from '../../navigation/browserNavigation'
 import { LogEntry } from '../LogEntry'
 import { SleepInnGame } from './SleepInnGame'
+import { PetRoom } from '../pet-room/PetRoom'
 import { selectSleepJournal, sleepJournalChoices, sleepJournalProjection } from './sleep-inn-journal'
 import type { SleepInnJournalContext } from './types'
 import { hasSleepInnInviteFragment } from './social'
@@ -67,6 +68,8 @@ function useSleepInnDialog(dialog: React.RefObject<HTMLDialogElement | null>, on
 }
 
 function SleepInnEntryScoped({ date, entryId, draft, onBack, returnLabel = '일지로 돌아가기', onJournalSaved }: SleepInnEntryProps) {
+  const [fromOldInvite] = React.useState(hasSleepInnInviteFragment)
+  const [oldGame, setOldGame] = React.useState(hasSleepInnInviteFragment)
   const dialog = React.useRef<HTMLDialogElement>(null)
   const editorExit = React.useRef<(() => void) | null>(null)
   const gameReturn = React.useRef<{ focus: HTMLElement | null; scrollTop: number } | null>(null)
@@ -130,7 +133,7 @@ function SleepInnEntryScoped({ date, entryId, draft, onBack, returnLabel = '일�
     setEditing(current?.kind === 'evening' ? { entry: current } : {})
   }
   const returnFromEditor = () => { restoringGame.current = true; setEditing(null); refresh() }
-  return <dialog ref={dialog} aria-label="꿈손님 여관" style={dialogStyle}
+  return <dialog ref={dialog} aria-label={oldGame ? '꿈손님 여관' : '우리 집 친구들'} style={dialogStyle}
     onCancel={event => { event.preventDefault(); if (editing) editorExit.current?.(); else close() }}>
     <div hidden={editing !== null}>
       {!draft && (snapshot.entries.length > 1 || selectedMissing || disconnected) && <section style={{ padding: 'var(--space-4)' }} aria-label="연결할 일지 선택">
@@ -147,8 +150,10 @@ function SleepInnEntryScoped({ date, entryId, draft, onBack, returnLabel = '일�
       </section>}
       {receipt && <p role="status" style={{ padding: 'var(--space-4)' }}>{receipt}</p>}
       {notice && <p role="alert" style={{ padding: 'var(--space-4)' }}>{notice}</p>}
-      <SleepInnGame journal={context} persistenceScope={activeLocalAccount() ?? 'guest'} onBack={close}
-        onOpenJournal={openJournal} returnLabel={returnLabel} onCanExitReady={registerGameCanExit} />
+      {oldGame ? <SleepInnGame journal={context} persistenceScope={activeLocalAccount() ?? 'guest'} onBack={fromOldInvite ? close : () => setOldGame(false)}
+        onOpenJournal={openJournal} returnLabel={fromOldInvite ? returnLabel : '우리 방으로 돌아가기'} onCanExitReady={registerGameCanExit} />
+        : <PetRoom journal={context} persistenceScope={activeLocalAccount() ?? 'guest'} onBack={close}
+          onOpenJournal={openJournal} returnLabel={returnLabel} onCanExitReady={registerGameCanExit} onOldGame={() => setOldGame(true)} />}
     </div>
     {editing !== null && <LogEntry entryType="evening" targetDate={date} initialEntry={editing.entry}
       initialSection="sleep" embedded onNavigationReady={exit => { editorExit.current = exit }}
@@ -162,13 +167,18 @@ function SleepInnEntryScoped({ date, entryId, draft, onBack, returnLabel = '일�
 }
 
 /** Mount-time date selection: midnight never silently moves an already opened game. */
-export function SleepInnLoungeEntry({ onJournalSaved }: { onJournalSaved?: ((entry: JournalEntry) => void) | undefined }) {
-  const [date, setDate] = React.useState<string | null>(() => hasSleepInnInviteFragment() ? todayISO() : null)
+export function SleepInnLoungeEntry({ onJournalSaved, initialOpen = false, onOpened }: {
+  onJournalSaved?: ((entry: JournalEntry) => void) | undefined
+  initialOpen?: boolean
+  onOpened?: (() => void) | undefined
+}) {
+  const [date, setDate] = React.useState<string | null>(() => hasSleepInnInviteFragment() || initialOpen ? todayISO() : null)
+  React.useEffect(() => { if (date) onOpened?.() }, [date, onOpened])
   return <>
     <button type="button" className="game-lounge__game" onClick={() => setDate(todayISO())}>
-      <span className="game-lounge-art" aria-hidden="true"><img src={`${import.meta.env.BASE_URL}games/sleep-inn/room.png`} alt="" draggable={false} /></span>
-      <span className="game-lounge__game-copy"><strong>꿈손님 여관</strong><span>다른 부탁을 가진 손님들의 자리를 찾아요</span><small>5장 이야기 · 혼자 배치하고 친구와 엽서 교환</small></span>
+      <span className="game-lounge-art" aria-hidden="true"><img src={`${import.meta.env.BASE_URL}games/pet-room-v1/room.webp`} alt="" draggable={false} /></span>
+      <span className="game-lounge__game-copy"><strong>우리 집 친구들</strong><span>놀러 온 동물을 돌보고, 함께 자요</span><small>12종의 친구 · 30일 돌보기 또는 미션을 마치면 입양</small></span>
     </button>
-    {date && <SleepInnEntry date={date} onBack={() => setDate(null)} onJournalSaved={onJournalSaved} returnLabel="게임 라운지로 돌아가기" />}
+    {date && <SleepInnEntry date={date} onBack={() => setDate(null)} onJournalSaved={onJournalSaved} returnLabel="다른 게임 보기" />}
   </>
 }

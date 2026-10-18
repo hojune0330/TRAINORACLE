@@ -42,6 +42,8 @@ export function GameLounge({ onBack, backLabel, renderTour, onJournalSaved }: Pr
   const [tab, setTab] = React.useState<'games' | 'records'>('games')
   const [filter, setFilter] = React.useState<'all' | 'solo' | 'friends'>('all')
   const [query, setQuery] = React.useState('')
+  const [petHomeOpened, setPetHomeOpened] = React.useState(false)
+  const markPetHomeOpened = React.useCallback(() => setPetHomeOpened(true), [])
   const [tdMap,setTdMap]=React.useState<TDMapId>('starlight')
   const [tourEntry,setTourEntry]=React.useState<string|undefined>()
   const [tdEntry, setTdEntry] = React.useState<'new' | 'resume'>('new')
@@ -58,7 +60,7 @@ export function GameLounge({ onBack, backLabel, renderTour, onJournalSaved }: Pr
   const listScroll = React.useRef<{ node: HTMLElement; top: number }[]>([])
   const game = selected ? loungeGame(selected) : null
   const games = GAME_CATALOG.filter(item => (filter !== 'friends' || item.friends) && `${item.name} ${item.category} ${item.goal}`.includes(query.trim()))
-  const showSleepInn = filter !== 'friends' && (!query.trim() || '꿈손님 여관 수면 일지 방 꾸미기'.includes(query.trim()))
+  const showSleepInn = filter !== 'friends' && (!query.trim() || '우리 집 친구들 펫 동물 입양 돌보기 수면 일지 꿈손님 여관'.includes(query.trim()))
   const scrollParents = () => { const nodes: HTMLElement[] = []; for (let node = surface.current?.parentElement; node; node = node.parentElement) if (node.scrollHeight > node.clientHeight) nodes.push(node); return nodes }
   const closeDetail = () => { setSelected(null); requestAnimationFrame(() => {
     surface.current?.querySelector<HTMLButtonElement>(`[data-game-open="${returnFocus.current}"]`)?.focus({ preventScroll: true })
@@ -124,7 +126,7 @@ export function GameLounge({ onBack, backLabel, renderTour, onJournalSaved }: Pr
           {tdCheckpoints.map(checkpoint=><button key={getTDMap(checkpoint.state).id} onClick={() => {setTdMap(getTDMap(checkpoint.state).id);setSelected('defense');setTdEntry('resume');setRoute('defense')}}><GameArt id="defense"/><span><strong>타워 디펜스 · {getTDMap(checkpoint.state).name}</strong><small>{checkpoint.state.wave+1}웨이브 준비 · 기지 체력 {checkpoint.state.lives}</small></span><ChevronRight size={18}/></button>)}
         </section>}
         <div className="game-lounge__section-heading"><h2>어떤 게임을 할까요?</h2></div>
-        {showSleepInn && <React.Suspense fallback={null}><SleepInnLoungeEntry onJournalSaved={onJournalSaved} /></React.Suspense>}
+        {showSleepInn && <React.Suspense fallback={null}><SleepInnLoungeEntry onJournalSaved={onJournalSaved} initialOpen={!petHomeOpened} onOpened={markPetHomeOpened} /></React.Suspense>}
         <label className="game-lounge__search"><span className="sr-only">게임 검색</span><input type="search" placeholder="게임 이름이나 종류로 찾기" value={query} onChange={e => setQuery(e.target.value)} /></label>
         <div className="game-lounge__filters" role="group" aria-label="참가 방식으로 게임 찾기">{(['all', 'solo', 'friends'] as const).map(value => <button key={value} aria-pressed={filter === value} onClick={() => setFilter(value)}>{value === 'all' ? '전체' : value === 'solo' ? '혼자' : '친구와'}</button>)}</div>
         <div className="game-lounge__catalog">{games.map(item => <button key={item.id} className="game-lounge__game" data-game-open={item.id} onClick={e => open(item.id, e.currentTarget)} aria-label={`${item.name} 게임 소개`}>

@@ -1,0 +1,325 @@
+{
+  "version": 1,
+  "generatedAt": "2026-10-18",
+  "tool": "OpenAI built-in imagegen",
+  "assets": [
+    {
+      "id": "otter",
+      "file": "pets/otter.webp",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "bytes": 136536,
+      "sha256": "8b4a49bb716bb886f7762d94e0b3af0c67972744a4130b53873d0f5d4f17b5a1",
+      "grid": [
+        3,
+        2
+      ],
+      "cell": [
+        512,
+        512
+      ],
+      "poses": [
+        "awake",
+        "happy",
+        "eating",
+        "playing",
+        "sleeping",
+        "waking"
+      ]
+    },
+    {
+      "id": "seal",
+      "file": "pets/seal.webp",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "bytes": 106772,
+      "sha256": "7f7fc524542e21cc4b099c253936755c478a872a75749aef306a90ad088caa77",
+      "grid": [
+        3,
+        2
+      ],
+      "cell": [
+        512,
+        512
+      ],
+      "poses": [
+        "awake",
+        "happy",
+        "eating",
+        "playing",
+        "sleeping",
+        "waking"
+      ]
+    },
+    {
+      "id": "red-panda",
+      "file": "pets/red-panda.webp",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "bytes": 151628,
+      "sha256": "02aa1823cc266215cc97ed3317acb7e63039c5754e21b7174175fa422b6dcf5a",
+      "grid": [
+        3,
+        2
+      ],
+      "cell": [
+        512,
+        512
+      ],
+      "poses": [
+        "awake",
+        "happy",
+        "eating",
+        "playing",
+        "sleeping",
+        "waking"
+      ]
+    },
+    {
+      "id": "duck",
+      "file": "pets/duck.webp",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "bytes": 126848,
+      "sha256": "5939f2cb58213ec54e87e1a9ab3835fbcc798e508ca995b16715557ab1042914",
+      "grid": [
+        3,
+        2
+      ],
+      "cell": [
+        512,
+        512
+      ],
+      "poses": [
+        "awake",
+        "happy",
+        "eating",
+        "playing",
+        "sleeping",
+        "waking"
+      ]
+    },
+    {
+      "id": "hedgehog",
+      "file": "pets/hedgehog.webp",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "bytes": 127246,
+      "sha256": "ce101b55fe3ccadaa9466d421db9636cd4b7e4995609d2cfc1c9099222a9f813",
+      "grid": [
+        3,
+        2
+      ],
+      "cell": [
+        512,
+        512
+      ],
+      "poses": [
+        "awake",
+        "happy",
+        "eating",
+        "playing",
+        "sleeping",
+        "waking"
+      ]
+    },
+    {
+      "id": "mouse",
+      "file": "pets/mouse.webp",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "bytes": 149936,
+      "sha256": "4eedb9ec58e93a670e398aa036f7e544507e69c9d4ede02895fe50ba501d16ff",
+      "grid": [
+        3,
+        2
+      ],
+      "cell": [
+        512,
+        512
+      ],
+      "poses": [
+        "awake",
+        "happy",
+        "eating",
+        "playing",
+        "sleeping",
+        "waking"
+      ]
+    },
+    {
+      "id": "rabbit",
+      "file": "pets/rabbit.webp",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "bytes": 126980,
+      "sha256": "6ad28ca5daee12e15c4c3fb1029ce5aee4447055ef16819f21f599ef4eabb42b",
+      "grid": [
+        3,
+        2
+      ],
+      "cell": [
+        512,
+        512
+      ],
+      "poses": [
+        "awake",
+        "happy",
+        "eating",
+        "playing",
+        "sleeping",
+        "waking"
+      ]
+    },
+    {
+      "id": "puppy",
+      "file": "pets/puppy.webp",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "bytes": 174038,
+      "sha256": "026ecc0500baf5474d41791a60d3d04f021b1dc2e88779e47d5f100416044675",
+      "grid": [
+        3,
+        2
+      ],
+      "cell": [
+        512,
+        512
+      ],
+      "poses": [
+        "awake",
+        "happy",
+        "eating",
+        "playing",
+        "sleeping",
+        "waking"
+      ]
+    },
+    {
+      "id": "chinchilla",
+      "file": "pets/chinchilla.webp",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "bytes": 157448,
+      "sha256": "69e87a426947b07797eb56ccc29997af3855d1e3aba6f884615be708442499cb",
+      "grid": [
+        3,
+        2
+      ],
+      "cell": [
+        512,
+        512
+      ],
+      "poses": [
+        "awake",
+        "happy",
+        "eating",
+        "playing",
+        "sleeping",
+        "waking"
+      ]
+    },
+    {
+      "id": "guinea-pig",
+      "file": "pets/guinea-pig.webp",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "bytes": 131026,
+      "sha256": "0d3fffe3c8320d37b30469943e54533295c7f6dec7e8ee838acd9442a8c54935",
+      "grid": [
+        3,
+        2
+      ],
+      "cell": [
+        512,
+        512
+      ],
+      "poses": [
+        "awake",
+        "happy",
+        "eating",
+        "playing",
+        "sleeping",
+        "waking"
+      ]
+    },
+    {
+      "id": "penguin",
+      "file": "pets/penguin.webp",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "bytes": 125520,
+      "sha256": "dc3f434c8e0adb87de6e4f713a39a7ec9b3c58470addf781bc4c01cca68f7d0a",
+      "grid": [
+        3,
+        2
+      ],
+      "cell": [
+        512,
+        512
+      ],
+      "poses": [
+        "awake",
+        "happy",
+        "eating",
+        "playing",
+        "sleeping",
+        "waking"
+      ]
+    },
+    {
+      "id": "tortoise",
+      "file": "pets/tortoise.webp",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "bytes": 128716,
+      "sha256": "0f7574828ed595d36b5b3033d172be1afa9b11caca477627744ac7b7e1610dea",
+      "grid": [
+        3,
+        2
+      ],
+      "cell": [
+        512,
+        512
+      ],
+      "poses": [
+        "awake",
+        "happy",
+        "eating",
+        "playing",
+        "sleeping",
+        "waking"
+      ]
+    },
+    {
+      "id": "room",
+      "file": "room.webp",
+      "width": 1254,
+      "height": 1254,
+      "alpha": false,
+      "bytes": 57838,
+      "sha256": "6a9bd3aa2742e0d460d1decd5024a2d7d1273a47f8e4790b86dd255de0b37677"
+    },
+    {
+      "id": "actions",
+      "file": "actions.webp",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "bytes": 103122,
+      "sha256": "62621e918ed09dee585ce0c28621894410f985bd1269766c9c25f05d8d0b47cb"
+    }
+  ]
+}

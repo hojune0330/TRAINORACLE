@@ -1,0 +1,9 @@
+
+ RUN  v4.1.10 D:/admin/Documents/ChatGPT/트레인 오라클/.scratch/sleep-inn-release-20261018/app
+
+································
+
+ Test Files  3 passed (3)
+      Tests  32 passed (32)
+   Start at  23:00:37
+   Duration  51.28s (transform 632ms, setup 4.00s, import 4.62s, tests 4.41s, environment 36.27s)

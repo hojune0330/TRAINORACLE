@@ -4,6 +4,7 @@ test('illustrated games and depth survival remain readable on small screens',asy
   await page.goto('./?app=1')
   await page.getByRole('button',{name:'더보기',exact:true}).click()
   await page.getByRole('button',{name:'게임 라운지',exact:true}).click()
+  await page.getByRole('button',{name:'다른 게임 보기',exact:true}).first().click()
   await page.waitForFunction(()=>[...document.querySelectorAll('.game-lounge-art img')].every(i=>(i as HTMLImageElement).complete))
   for(const width of [320,390,900]) {
     await page.setViewportSize({width,height:844})
@@ -33,6 +34,7 @@ test('missing art still permits selecting and playing survival',async({page:fall
     await fallback.goto('./?app=1')
     await fallback.getByRole('button',{name:'더보기',exact:true}).click()
     await fallback.getByRole('button',{name:'게임 라운지',exact:true}).click()
+    await fallback.getByRole('button',{name:'다른 게임 보기',exact:true}).first().click()
     await expect(fallback.locator('.game-lounge__game')).toHaveCount(5)
     await fallback.getByRole('button',{name:'장애물 생존 게임 소개',exact:true}).click()
     await fallback.getByRole('button',{name:'컴퓨터와 시작하기',exact:true}).click()

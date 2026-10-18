@@ -8,7 +8,8 @@ import { beginBrowserPopNavigation } from '../../navigation/browserNavigation'
 import { useTaskFlowBack } from '../../hooks/useTaskFlowBack'
 import type { SleepInnGameProps } from './types'
 
-vi.mock('./SleepInnGame', () => ({ SleepInnGame: ({ journal, onBack, onOpenJournal }: SleepInnGameProps) => {
+vi.mock('./SleepInnGame', () => ({ SleepInnGame: ({ onBack }: SleepInnGameProps) => <button onClick={onBack}>게임 닫기</button> }))
+vi.mock('../pet-room/PetRoom', () => ({ PetRoom: ({ journal, onBack, onOpenJournal }: SleepInnGameProps) => {
   const [turn, setTurn] = React.useState(0)
   return <section aria-label="게임 검사 화면"><p data-testid="sleep-context">{JSON.stringify(journal)}</p>
     <button onClick={() => setTurn(value => value + 1)}>게임 진행 {turn}</button>
@@ -58,23 +59,23 @@ it('returns to the lounge once by button or native Back without consuming the lo
   }
   render(<React.StrictMode><Lounge /></React.StrictMode>)
   const loungeState = window.history.state
-  const opener = screen.getByRole('button', { name: /꿈손님 여관/ })
+  const opener = screen.getByRole('button', { name: /우리 집 친구들/ })
   const region = opener.closest<HTMLElement>('.app-scroll-region')!
   region.scrollTop = 137
   opener.focus()
   fireEvent.click(opener)
-  expect(screen.getByRole('dialog', { name: '꿈손님 여관' })).toBeVisible()
+  expect(screen.getByRole('dialog', { name: '우리 집 친구들' })).toBeVisible()
   fireEvent.click(screen.getByRole('button', { name: '게임 닫기' }))
-  expect(screen.queryByRole('dialog', { name: '꿈손님 여관' })).toBeNull()
+  expect(screen.queryByRole('dialog', { name: '우리 집 친구들' })).toBeNull()
   expect(back).toHaveBeenCalledTimes(1)
   await popTo(loungeState)
   expect(leaveLounge).not.toHaveBeenCalled()
   expect(opener).toHaveFocus()
   expect(region.scrollTop).toBe(137)
   fireEvent.click(opener)
-  expect(screen.getByRole('dialog', { name: '꿈손님 여관' })).toBeVisible()
+  expect(screen.getByRole('dialog', { name: '우리 집 친구들' })).toBeVisible()
   await popTo(loungeState)
-  expect(screen.queryByRole('dialog', { name: '꿈손님 여관' })).toBeNull()
+  expect(screen.queryByRole('dialog', { name: '우리 집 친구들' })).toBeNull()
   expect(leaveLounge).not.toHaveBeenCalled()
   expect(opener).toHaveFocus()
 })
@@ -86,7 +87,7 @@ it('edits the same real journal and returns to the still-mounted game after conf
   fireEvent.click(screen.getByRole('button', { name: '게임 진행 0' }))
   const gameState = window.history.state
   const opener = screen.getByRole('button', { name: '수면 일지 열기' })
-  const dialog = screen.getByRole('dialog', { name: '꿈손님 여관' })
+  const dialog = screen.getByRole('dialog', { name: '우리 집 친구들' })
   dialog.scrollTop = 127
   opener.focus()
   fireEvent.click(opener)
@@ -173,7 +174,7 @@ it('opens a missing-date editor without changing the chosen date or declaring un
   expect(document.querySelector(`time[datetime="${date}"]`)).not.toBeNull()
   expect(saved).not.toHaveBeenCalled()
   expect(loadEntries()).toHaveLength(0)
-  fireEvent(screen.getByRole('dialog', { name: '꿈손님 여관' }), new Event('cancel', { cancelable: true }))
+  fireEvent(screen.getByRole('dialog', { name: '우리 집 친구들' }), new Event('cancel', { cancelable: true }))
   expect(screen.getByRole('dialog', { name: '작성 중인 기록을 저장할까요?' })).toBeVisible()
 })
 
@@ -194,14 +195,14 @@ it('preserves invalid raw input and selected date across the draft game roundtri
   fireEvent.click(screen.getByRole('button', { name: '수면' }))
   fireEvent.change(screen.getByRole('textbox', { name: '수면 시간' }), { target: { value: '25' } })
   const originalState = window.history.state
-  fireEvent.click(screen.getByRole('button', { name: '꿈손님 여관 열기' }))
-  await screen.findByRole('dialog', { name: '꿈손님 여관' })
+  fireEvent.click(screen.getByRole('button', { name: '펫과 함께 자기' }))
+  await screen.findByRole('dialog', { name: '우리 집 친구들' })
   expect(screen.getByTestId('sleep-context')).toHaveTextContent(date)
   expect(screen.getByTestId('sleep-context')).toHaveTextContent('draft')
   expect(JSON.parse(screen.getByTestId('sleep-context').textContent ?? '{}')).not.toHaveProperty('sleepH')
   fireEvent.click(screen.getByRole('button', { name: '수면 일지 열기' }))
   await popTo(originalState)
-  await waitFor(() => expect(screen.queryByRole('dialog', { name: '꿈손님 여관' })).toBeNull())
+  await waitFor(() => expect(screen.queryByRole('dialog', { name: '우리 집 친구들' })).toBeNull())
   expect(screen.getByRole('textbox', { name: '수면 시간' })).toHaveValue('25')
   expect(screen.getByRole('textbox', { name: '수면 시간' })).toHaveAttribute('aria-invalid', 'true')
   expect(loadEntries()).toHaveLength(0)

@@ -345,7 +345,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, onJournalSave
 
   return (
     <div className={`journal-detail-page${decorationStudio ? " paper-grid" : " journal-detail-page--reader"}`}>
-      {!readOnly && !decorationStudio && <button type="button" className="quick-log__secondary" style={{ minHeight: 44 }} onClick={() => setSleepInnOpen(true)}>꿈손님 여관 열기</button>}
+      {!readOnly && !decorationStudio && <button type="button" className="quick-log__secondary" style={{ minHeight: 44 }} onClick={() => setSleepInnOpen(true)}>펫과 함께 자기</button>}
       {sleepInnOpen && <React.Suspense fallback={<p role="status">여관을 여는 중이에요.</p>}>
         <SleepInnEntry key={date} date={date} entryId={entries.find(entry => entry.id === initialEntryId && entry.kind === "evening")?.id}
           onBack={() => { setSleepInnOpen(false); setRev(value => value + 1) }} onJournalSaved={entry => { onJournalSaved?.(entry); setRev(value => value + 1) }} />

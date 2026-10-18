@@ -287,7 +287,7 @@ function EveningCheckinEditor({ onBack, onExit, onDone, targetDate, initialEntry
       <fieldset disabled={saving} style={{ border: 0, margin: 0, padding: 0, minWidth: 0 }}>
       <TopBar onBack={flow.history.length > 0 ? goBackFlow : navigation.back} onExit={navigation.exit}>컨디션·메모</TopBar>
       {!embedded && <button type="button" className="quick-log__secondary" style={{ minHeight: 44 }} onClick={() => setSleepInnOpen(true)}>
-        <Moon size={18} aria-hidden="true" /> 꿈손님 여관 열기
+        <Moon size={18} aria-hidden="true" /> 펫과 함께 자기
       </button>}
       {sleepInnOpen && <React.Suspense fallback={<p role="status">여관을 여는 중이에요.</p>}>
         <SleepInnEntry date={entryDate} draft={{ date: entryDate, entryId, status: "draft", sourceLabel: "작성 중인 일지 · 아직 저장하지 않음",
