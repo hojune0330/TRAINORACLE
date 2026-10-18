@@ -45,7 +45,7 @@
 .inn-cell:focus-visible { outline-offset: 0 !important; background: #fff9e94d; }
 .inn-sprite { display: block; background-size: 300% 200%; background-repeat: no-repeat; aspect-ratio: 1; pointer-events: none; }
 .inn-cell .inn-sprite { width: 85%; position: absolute; bottom: 2%; left: 7.5%; pointer-events: none; transition: filter 150ms ease, transform 150ms ease; }
-.inn-cell--selected .inn-sprite { transform: translateY(-5px); filter: drop-shadow(0 3px 3px #27696744); }
+.inn-cell--selected .inn-sprite { transform: translateY(-5px); }
 .inn-cell--still { pointer-events: none; }
 .inn-cell--still .inn-sprite { bottom: 2%; pointer-events: none; }
 .inn-cell__name { position: absolute; bottom: -1px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 12px; font-weight: 700; line-height: 1.5; padding: 1px 5px; border-radius: 6px; background: #fff8e7f5; border: 1px solid #d7c7a7; }
@@ -112,7 +112,7 @@
 /* Season navigation and rooms share one stable action hierarchy. */
 .inn-nav { display: flex; max-width: 568px; margin: 8px auto 0; padding: 0 16px; gap: 4px; }
 .inn-nav button { flex: 1; min-width: 0; min-height: 44px; border: 0; border-radius: 12px; background: transparent; color: #626b5c; display: flex; align-items: center; justify-content: center; gap: 5px; font-size: 12px; font-weight: 650; padding: 7px 3px; }
-.inn-nav [aria-current=page] { background: #e5ece2; color: #285c50; box-shadow: inset 0 -2px 0 #567b61; }
+.inn-nav [aria-current=page] { background: #e5ece2; color: #285c50; border-bottom: 2px solid #567b61; }
 .inn-main { padding-top: 16px; }
 .inn-eyebrow { color: #636b5e; }
 .inn-heading h1 { text-wrap: balance; }
@@ -123,7 +123,7 @@
 .inn-cell--selected .inn-cell__floor { background: #c8e8d2b8; border: 2px solid #2b6756; }
 .inn-cell--locked .inn-cell__floor { background: #d9c8aa99; border-style: dashed; border-color: #8c7958; }
 .inn-cell--wet .inn-cell__floor { background: repeating-linear-gradient(-7deg,#b8dce799 0 4px,#91bccb99 5px 6px,#b8dce799 8px 12px); border-color: #6d9fae; }
-.inn-cell--window .inn-cell__floor { box-shadow: inset 0 3px 0 #e3bd68; }
+.inn-cell--window .inn-cell__floor { border-top: 3px solid #e3bd68; }
 .inn-cell--lit .inn-cell__floor { background: #ffe2a2b3; border-color: #bb963a; }
 .inn-cell__name { display: inline-flex; align-items: center; gap: 2px; max-width: 120%; min-height: 20px; font-size: 11px; }
 .inn-cell__coordinate { font-size: 10px; font-weight: 800; font-variant-numeric: tabular-nums; color: #4e5c45; padding-right: 3px; margin-right: 1px; border-right: 1px solid #c8bda1; }

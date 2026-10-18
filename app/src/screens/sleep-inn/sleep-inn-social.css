@@ -10,7 +10,7 @@
 .inn-social-share summary { cursor: pointer; padding: 12px 4px; font-size: 14px; font-weight: 700; }
 .inn-social-card-list, .inn-social-stamps, .inn-social-actions { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
 .inn-social-card-list button, .inn-social-stamps button, .inn-social-actions button { padding: 10px 12px; border: 1px solid #bfcdb6; border-radius: 12px; background: #f3f7eb; color: #425a43; font-size: 13px; font-weight: 650; }
-.inn-social button[aria-pressed=true] { color: #194d40; border-color: #3e8169; background: #dceee1; box-shadow: inset 0 0 0 1px #3e8169; }
+.inn-social button[aria-pressed=true] { color: #194d40; border: 2px solid #3e8169; padding: 9px 11px; background: #dceee1; }
 .inn-social-import { margin: 16px 0 10px; }
 .inn-social-preview, .inn-social-visit { margin-top: 16px; padding-top: 8px; border-top: 1px solid #d9ddce; }
 .inn-social-room { margin: 12px 0; padding: 12px 0 10px; border-radius: 16px; border: 1px solid #d8caad; background: #f7f0df; }
