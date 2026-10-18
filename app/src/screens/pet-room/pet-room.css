@@ -30,7 +30,7 @@
 .pet-scene__pet--1 { z-index: 1; left: 2%; bottom: 24%; width: 31%; }
 .pet-scene__pet--2 { z-index: 2; right: 1%; bottom: 23%; width: 33%; }
 .pet-scene__pet .pet-sprite { width: 100%; }
-.pet-scene__pet:disabled { opacity: 1; }
+.pet-home .pet-scene__pet:disabled { opacity: 1; }
 .pet-scene__pet--react .pet-sprite { animation: pet-reaction 480ms ease-out; }
 .pet-scene__pet-name { display: inline-flex; align-items: center; gap: 3px; margin-top: -10px; background: #fffaf1db; border: 1px solid #e6dacb99; padding: 3px 8px; border-radius: 12px; font-size: 12px; }
 .pet-home--night .pet-scene { background: #37394d; }

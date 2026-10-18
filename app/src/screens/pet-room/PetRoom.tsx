@@ -203,7 +203,7 @@ function PetRoomSession({ journal, persistenceScope, onBack, onOpenJournal, retu
         <div className="pet-scene__speech" aria-live="polite">{sleeping ? stirred ? '응…? 나도 눈이 떠졌어. 다시 잘까?' : PET_VOICES[selected.id].bed : morning ? PET_VOICES[selected.id].wake : speech ?? selected.hello}</div>
         {scenePets.map((id, index) => <button type="button" key={id} disabled={!!error || morning} className={`pet-scene__pet pet-scene__pet--${index}${reaction?.id === id ? ' pet-scene__pet--react' : ''}`} aria-label={sleeping ? `${petById(id).name} 살짝 깨우기` : morning ? `${petById(id).name} 아침 인사` : `${petById(id).name} ${index === 0 ? '쓰다듬기' : '선택하기'}`}
           onClick={() => sleeping ? setStirred(true) : index === 0 ? care('pet') : select(id)}>
-          <PetSprite id={id} pose={index === 0 ? shownPose : sleeping ? stirred ? 'awake' : 'sleeping' : morning ? 'waking' : 'awake'} />
+          <PetSprite key={reaction?.id === id ? reaction.key : id} id={id} pose={index === 0 ? shownPose : sleeping ? stirred ? 'awake' : 'sleeping' : morning ? 'waking' : 'awake'} />
           <span className="pet-scene__pet-name">{petById(id).name}{home.pets[id]?.adoptedOn && <Check size={12} />}</span>
         </button>)}
       </section>
