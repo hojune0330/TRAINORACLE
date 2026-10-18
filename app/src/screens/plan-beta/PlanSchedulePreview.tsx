@@ -1,12 +1,14 @@
 import React, { type ReactNode } from "react"
 import { CalendarDays, Check, ChevronLeft, ChevronRight, CircleMinus, HeartPulse, SkipForward, PanelsTopLeft } from "lucide-react"
 import { ViewSwitcher } from "../../components/ViewSwitcher"
+import { CategoryCard } from "../../components/CategoryCard"
 import type { PlanProgressState } from "@impl/plan-generator/types"
 import type { PlanSession } from "@impl/plan-generator/types"
 import { TermHelp } from "../../components/TermHelp"
 import { isValidIsoDate, isoShift, isoToDate } from "../../domain/dates"
 import { calendarEntriesByDate, planCalendarDate } from "../../domain/calendar-context"
 import { useCalendarPosition } from "../../hooks/useCalendarPosition"
+import { usePlanScheduleView, type PlanScheduleView } from "../../hooks/usePlanScheduleView"
 import { useLocalToday } from "../../hooks/useLocalToday"
 import { calendarReducedMotion } from "../../hooks/useCalendarMotion"
 import { formatPaceSeconds } from "@impl/prescription/record-pace"
@@ -39,7 +41,7 @@ import { CalendarJournalBadge, CalendarJournalDetails, calendarJournalDescriptio
 const WEEKDAYS = ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"] as const
 type FrameLengthDays = 7 | 9 | 9.5 | 10
 type ScheduleDisplayMode = "stack" | "swipe"
-type ScheduleView = "calendar" | "list"
+type ScheduleView = PlanScheduleView
 type SessionFlowKind = "main" | "base" | "recovery" | "off"
 
 export type PlanSchedulePresentation = "standard" | "prescription-calendar"
@@ -127,15 +129,6 @@ function prescriptionCalendarSummary(session: PlanSession): string {
     + (node.repeatCount > 1 && recoveries.length ? ` · 사이 ${recoveries.join(" + ")}` : "")
 }
 
-function isNarrowViewport(): boolean {
-  return typeof window !== "undefined" && typeof window.matchMedia === "function"
-    && window.matchMedia("(max-width: 767px)").matches
-}
-
-function initialScheduleView(): ScheduleView {
-  return isNarrowViewport() ? "list" : "calendar"
-}
-
 type SessionFlowLabel = {
   readonly primary: "MAIN" | "BASE" | "REC" | "OFF"
   readonly secondary?: "LT" | "VO2" | "GLY" | "ATP" | "MIX"
@@ -155,6 +148,7 @@ export function PlanSchedulePreview({
   timelineHeading,
   displayMode = "stack",
   presentation = "standard",
+  embedded = false,
   programProjection,
   dayAnnotations,
   explanationContext,
@@ -168,6 +162,8 @@ export function PlanSchedulePreview({
   readerRequest,
   sessionProgress,
   allowMemoExport = true,
+  scheduleView: controlledScheduleView,
+  onScheduleViewChange,
 }: {
   readonly startDate: string
   readonly frameLengthDays?: FrameLengthDays
@@ -179,6 +175,8 @@ export function PlanSchedulePreview({
   readonly timelineHeading?: string
   readonly displayMode?: ScheduleDisplayMode
   readonly presentation?: PlanSchedulePresentation
+  /** The parent already provides the plan title and date range. */
+  readonly embedded?: boolean
   /** Read-only projection of three source frames; never a new 29-day engine frame. */
   readonly programProjection?: { readonly kind: "THREE_CYCLE_PROGRAM"; readonly calendarDayCount: 29 }
   readonly dayAnnotations?: Readonly<Record<string, string>>
@@ -193,7 +191,8 @@ export function PlanSchedulePreview({
   readonly readerRequest?: PlanReaderRequest
   readonly sessionProgress?: (session: PlanSession) => PlanProgressState | undefined
   readonly allowMemoExport?: boolean
-}) {
+} & ({ readonly scheduleView?: undefined; readonly onScheduleViewChange?: undefined }
+  | { readonly scheduleView: ScheduleView; readonly onScheduleViewChange: (view: ScheduleView) => void })) {
   const validStartDate = isValidIsoDate(startDate)
   const dayCount = programProjection?.kind === "THREE_CYCLE_PROGRAM" ? 29 : Math.ceil(frameLengthDays)
   const scheduleTitle = programProjection ? "한 달 훈련표 · 9.5일 × 3" : `${frameLengthDays}일 훈련 일정`
@@ -211,7 +210,9 @@ export function PlanSchedulePreview({
   const selectedDate = nav.date
   const setSelectedDate = nav.selectDate
   const [calendarDetailsOpen, setCalendarDetailsOpen] = React.useState(false)
-  const [scheduleView, setScheduleView] = React.useState<ScheduleView>(initialScheduleView)
+  const rememberedView = usePlanScheduleView(`${calendarIdentity}:${explanationContext?.generatedAt ?? ""}`, controlledScheduleView === undefined)
+  const scheduleView = controlledScheduleView ?? rememberedView.view
+  const setScheduleView = onScheduleViewChange ?? rememberedView.selectView
   const [reader, setReader] = React.useState<{ date: string; slot?: PlanSession["slot"]; section?: "records" } | null>(null)
   // Keep the original reader mounted after its last journal is deleted so its undo
   // action and nested Back entry survive until the athlete leaves this date.
@@ -281,7 +282,6 @@ export function PlanSchedulePreview({
     setReaderJournalDate(null)
     readerRequestOrigin.current = null
     readerOpenedFromCalendar.current = false
-    setScheduleView(initialScheduleView())
   }, [calendarIdentity])
 
   React.useEffect(() => {
@@ -396,6 +396,23 @@ export function PlanSchedulePreview({
 
   if (!validStartDate) return null
 
+  const embeddedDailyView = embedded && prescriptionCalendar && scheduleView === "list"
+  const dateControls = <>
+    {prescriptionCalendar && scheduleView === "list" && days.some(day => day.date === today) && <button
+      type="button" className="plan-day-deck__today" onClick={() => moveToDay(days.findIndex(day => day.date === today))}>
+      오늘
+    </button>}
+    {previewDisplayMode === "swipe" && <div className="plan-day-deck__controls">
+      <button type="button" onClick={() => moveToDay(activeDayIndex - 1)} disabled={activeDayIndex === 0} aria-label="이전 날짜">
+        <ChevronLeft aria-hidden="true" size={19} />
+      </button>
+      <output aria-live="polite" aria-label="현재 날짜 위치">{activeDayIndex + 1}/{dayCount}</output>
+      <button type="button" onClick={() => moveToDay(activeDayIndex + 1)} disabled={activeDayIndex === dayCount - 1} aria-label="다음 날짜">
+        <ChevronRight aria-hidden="true" size={19} />
+      </button>
+    </div>}
+  </>
+
   return (
     <>
       {showRpeGuide && showDetails && <PlanRpeGuide />}
@@ -410,6 +427,8 @@ export function PlanSchedulePreview({
         dayAnnotations={dayAnnotations}
         selectedDate={selectedDate}
         presentation={presentation}
+        embedded={embedded}
+        dateControls={embeddedDailyView ? dateControls : undefined}
         scheduleView={scheduleView}
         onScheduleViewChange={setScheduleView}
         onToday={date => {
@@ -446,34 +465,10 @@ export function PlanSchedulePreview({
           ? scheduleView === "list" ? "날짜별 훈련 목록" : "선택한 날짜 훈련 카드"
           : "날짜별 훈련 카드"}
       >
-        {(timelineHeading !== undefined || previewDisplayMode === "swipe") && (
+        {!embeddedDailyView && (timelineHeading !== undefined || previewDisplayMode === "swipe") && (
           <header className="plan-day-deck__header">
-            <span>
-              {timelineHeading !== undefined && <h2>{timelineHeading}</h2>}
-            </span>
-            {previewDisplayMode === "swipe" && (
-              <div className="plan-day-deck__controls">
-                <button
-                  type="button"
-                  onClick={() => moveToDay(activeDayIndex - 1)}
-                  disabled={activeDayIndex === 0}
-                  aria-label="이전 날짜"
-                >
-                  <ChevronLeft aria-hidden="true" size={19} />
-                </button>
-                <output aria-live="polite" aria-label="현재 날짜 위치">
-                  {activeDayIndex + 1}/{dayCount}
-                </output>
-                <button
-                  type="button"
-                  onClick={() => moveToDay(activeDayIndex + 1)}
-                  disabled={activeDayIndex === dayCount - 1}
-                  aria-label="다음 날짜"
-                >
-                  <ChevronRight aria-hidden="true" size={19} />
-                </button>
-              </div>
-            )}
+            {timelineHeading !== undefined && <span><h2>{timelineHeading}</h2></span>}
+            {dateControls}
           </header>
         )}
         {prescriptionCalendar && previewDisplayMode === "swipe" && <div
@@ -585,6 +580,7 @@ export function PlanSchedulePreview({
           })}
         </ol>
       </section>
+      {embeddedDailyView && <PlanSessionGuidance prescriptionCalendar sessionProgress={sessionProgress} />}
       {reader !== null && <PlanDayReader date={reader.date} sessions={readerDay?.sessions ?? []}
         initialSlot={reader.slot} initialSection={reader.section} canPrevious canNext
         backLabel={prescriptionCalendar && scheduleView === "list" ? "하루씩으로 돌아가기" : undefined}
@@ -663,6 +659,17 @@ function PlanSessionPreview({
   const originalCalculation = showOriginalNotation && session.prescription.kind === "RPE_TIME_RANGE"
     && session.prescription.catalogWorkout ? resolveCatalogBinding(session.prescription.catalogWorkout) : null
   const originalSequence = originalCalculation ? calculatedWorkoutSequence(originalCalculation) : null
+  const navigationCard = !expanded && onExpand !== undefined
+  const summary = <>
+    {!(lightweightSummary && session.role === "REST") && !(expanded && hasCompleteDurationStep) && <small className={session.role === "REST" ? "plan-session-help" : "plan-session-metric"}>
+      {compactCatalogAmount ?? compactNotation ?? prescriptionLabel(session, expanded)}
+    </small>}
+    {lightweightSummary && !compactCatalogAmount && session.prescription.kind === "RPE_TIME_RANGE" && session.prescription.catalogWorkout &&
+      <small className="plan-session-help">{prescriptionCalendarAmount(session)}</small>}
+    {lightweightSummary && showProgress && progress !== undefined && <small className="prescription-calendar__progress" aria-label="현재 진행 상태">
+      {progress === "RESTED" && session.role === "REST" ? "휴식 기록" : PROGRESS_LABELS[progress]}
+    </small>}
+  </>
   const details = (
     <>
       {executionSteps.length === 0 && session.prescription.kind !== "PACE_TARGET" && (
@@ -689,35 +696,38 @@ function PlanSessionPreview({
       className="plan-day-card__session"
       data-flow-kind={flow.kind}
       data-session-slot={session.slot}
+      data-navigation-card={navigationCard ? "true" : undefined}
       role="group"
       aria-label={`${calendarDateLabel(date)} ${sessionSlotLabel(session.slot)} 세션${returnedFromJournal ? " · 일지에서 돌아온 세션" : ""}`}
       data-returned-session={returnedFromJournal ? "true" : undefined}
       tabIndex={expanded ? -1 : undefined}
     >
-      <header>
-        <span className="plan-schedule-preview__slot">{sessionSlotLabel(session.slot)}</span>
-        <span className="plan-session-role"><CalendarRoleIcon tone={plannedCalendarTone(session)} />{CALENDAR_TRAINING_LABELS[plannedCalendarTone(session)]}</span>
+      {navigationCard ? <>
+        {!lightweightSummary && <header><PlanFlowCodeHelp primary={flow.primary} secondary={flow.secondary} kind={flow.kind} /></header>}
+        <CategoryCard category="training" headingLevel={3}
+        title={sessionLabel(session, expanded)}
+        label={`${sessionSlotLabel(session.slot)} · ${CALENDAR_TRAINING_LABELS[plannedCalendarTone(session)]}`}
+        description={summary}
+        aria-label={`${calendarDateLabel(date)} ${sessionSlotLabel(session.slot)} 훈련 내용 보기`}
+        aria-description={[CALENDAR_TRAINING_LABELS[plannedCalendarTone(session)], sessionLabel(session, expanded),
+          compactCatalogAmount ?? compactNotation ?? prescriptionLabel(session, expanded)].join(" · ")}
+        aria-haspopup="dialog" onClick={onExpand} />
+      </> : <header data-compact-meta={expanded || undefined}>
+        {expanded ? <span className="plan-session-role"><CalendarRoleIcon tone={plannedCalendarTone(session)} />
+          <span>{sessionSlotLabel(session.slot)} · {CALENDAR_TRAINING_LABELS[plannedCalendarTone(session)]}</span>
+        </span> : <>
+          <span className="plan-schedule-preview__slot">{sessionSlotLabel(session.slot)}</span>
+          <span className="plan-session-role"><CalendarRoleIcon tone={plannedCalendarTone(session)} />{CALENDAR_TRAINING_LABELS[plannedCalendarTone(session)]}</span>
+        </>}
         {!lightweightSummary && <PlanFlowCodeHelp
           primary={flow.primary}
           secondary={flow.secondary}
           kind={flow.kind}
+          primaryDisplay={expanded ? "code" : "full"}
         />}
-      </header>
+      </header>}
       <div className="plan-session-content">
-        <strong>{sessionLabel(session, expanded)}</strong>
-        {!(lightweightSummary && session.role === "REST") && !(expanded && hasCompleteDurationStep) && <small className={session.role === "REST" ? "plan-session-help" : "plan-session-metric"}>
-          {compactCatalogAmount ?? compactNotation ?? prescriptionLabel(session, expanded)}
-        </small>}
-        {lightweightSummary && !compactCatalogAmount && session.prescription.kind === "RPE_TIME_RANGE" && session.prescription.catalogWorkout &&
-          <small className="plan-session-help">{prescriptionCalendarAmount(session)}</small>}
-        {lightweightSummary && showProgress && progress !== undefined && <small className="prescription-calendar__progress" aria-label="현재 진행 상태">
-          {progress === "RESTED" && session.role === "REST"
-              ? "휴식 기록"
-              : PROGRESS_LABELS[progress]}
-        </small>}
-        {!expanded && onExpand && <button className="plan-session-open" type="button" onClick={onExpand}
-          aria-label={`${calendarDateLabel(date)} ${sessionSlotLabel(session.slot)} 훈련 내용 보기`}
-          aria-haspopup="dialog">훈련 내용 보기<ChevronRight size={18} aria-hidden="true" /></button>}
+        {!navigationCard && <><strong>{sessionLabel(session, expanded)}</strong>{summary}</>}
         {!lightweightSummary && compact ? (
           <details className="plan-day-card__details" open={returnedFromJournal}>
             <summary>{sessionSlotLabel(session.slot)} 훈련 방법과 기록</summary>
@@ -778,6 +788,8 @@ function PlanTrainingFlow({
   dayAnnotations,
   selectedDate,
   presentation,
+  embedded,
+  dateControls,
   scheduleView,
   onScheduleViewChange,
   onSelectDate,
@@ -794,6 +806,8 @@ function PlanTrainingFlow({
   readonly dayAnnotations?: Readonly<Record<string, string>>
   readonly selectedDate: string
   readonly presentation: PlanSchedulePresentation
+  readonly embedded: boolean
+  readonly dateControls?: ReactNode
   readonly scheduleView: ScheduleView
   readonly onScheduleViewChange: (view: ScheduleView) => void
   readonly onSelectDate: (date: string) => void
@@ -808,14 +822,17 @@ function PlanTrainingFlow({
   const prescriptionCalendar = presentation === "prescription-calendar"
   const showCalendar = !prescriptionCalendar || scheduleView === "calendar"
   return (
-    <section ref={calendarRef} className="plan-training-flow" data-presentation={presentation} aria-label={scheduleTitle}>
-      <header>
+    <section ref={calendarRef} className="plan-training-flow" data-presentation={presentation} data-embedded={embedded || undefined} aria-label={scheduleTitle}>
+      {!embedded && <header>
         <strong>{scheduleTitle}</strong>
         <span>{days[0]?.date.slice(5).replace("-", "/")} ~ {days.at(-1)?.date.slice(5).replace("-", "/")}</span>
-      </header>
-      {prescriptionCalendar && <ViewSwitcher<ScheduleView> label="계획 일정 보기" category="training" value={scheduleView}
+      </header>}
+      {prescriptionCalendar && <div className="plan-training-flow__tools" role="group" aria-label="훈련 일정 보기와 날짜 이동">
+        <ViewSwitcher<ScheduleView> label="계획 일정 보기" category="training" value={scheduleView}
         onValueChange={onScheduleViewChange} className="prescription-calendar__view-toggle"
-        options={[{ value: "calendar", label: "달력", icon: CalendarDays }, { value: "list", label: "하루씩", icon: PanelsTopLeft }]} />}
+        options={[{ value: "calendar", label: "달력", icon: CalendarDays }, { value: "list", label: "하루씩", icon: PanelsTopLeft }]} />
+        {dateControls && <div className="plan-training-flow__date-tools">{dateControls}</div>}
+      </div>}
       {outsidePlanMonth && showCalendar && <button className="calendar-range-return" type="button" onClick={() => {
         setMonth(days[0]!.date.slice(0, 7))
         onToday?.(days[0]!.date)
@@ -850,24 +867,31 @@ function PlanTrainingFlow({
           </CalendarTrainingMark>
         })}{prescriptionCalendar && byDate.get(date)?.sessions.length === 0 && <span className="prescription-calendar__empty">예정 없음</span>}
         <CalendarJournalBadge entries={journalByDate.get(date) ?? []} date={date} /></>} />}
-      <details className="plan-session-guidance">
-        <summary>훈련 구분·약어</summary>
-        <p>AM 오전 · PM 오후. {prescriptionCalendar ? "달력의 날짜를 누르면 선택한 날의 전체 처방을 볼 수 있어요." : "주요 훈련의 종류와 방법은 날짜를 눌러 확인해요."}</p>
-        <ul className="plan-training-flow__legend" aria-label="훈련 구분">
-          <li><PlanFlowCodeHelp primary="MAIN" kind="main" variant="legend" /></li>
-          <li><PlanFlowCodeHelp primary="BASE" kind="base" variant="legend" /></li>
-          <li><PlanFlowCodeHelp primary="REC" kind="recovery" variant="legend" /></li>
-          <li><PlanFlowCodeHelp primary="OFF" kind="off" variant="legend" /></li>
-        </ul>
-        {sessionProgress && <ul className="plan-training-flow__legend" aria-label="진행 기록 표시">
-          {(Object.keys(PROGRESS_ICONS) as PlanProgressState[]).map(state => {
-            const Icon = PROGRESS_ICONS[state]
-            return <li key={state}><Icon size={14} aria-hidden="true" />{PROGRESS_LABELS[state]}</li>
-          })}
-        </ul>}
-      </details>
+      {!(embedded && prescriptionCalendar && scheduleView === "list") && <PlanSessionGuidance prescriptionCalendar={prescriptionCalendar} sessionProgress={sessionProgress} />}
     </section>
   )
+}
+
+function PlanSessionGuidance({ prescriptionCalendar, sessionProgress }: {
+  readonly prescriptionCalendar: boolean
+  readonly sessionProgress?: (session: PlanSession) => PlanProgressState | undefined
+}) {
+  return <details className="plan-session-guidance">
+    <summary>훈련 구분·약어</summary>
+    <p>AM 오전 · PM 오후. {prescriptionCalendar ? "달력의 날짜를 누르면 선택한 날의 전체 처방을 볼 수 있어요." : "주요 훈련의 종류와 방법은 날짜를 눌러 확인해요."}</p>
+    <ul className="plan-training-flow__legend" aria-label="훈련 구분">
+      <li><PlanFlowCodeHelp primary="MAIN" kind="main" variant="legend" /></li>
+      <li><PlanFlowCodeHelp primary="BASE" kind="base" variant="legend" /></li>
+      <li><PlanFlowCodeHelp primary="REC" kind="recovery" variant="legend" /></li>
+      <li><PlanFlowCodeHelp primary="OFF" kind="off" variant="legend" /></li>
+    </ul>
+    {sessionProgress && <ul className="plan-training-flow__legend" aria-label="진행 기록 표시">
+      {(Object.keys(PROGRESS_ICONS) as PlanProgressState[]).map(state => {
+        const Icon = PROGRESS_ICONS[state]
+        return <li key={state}><Icon size={14} aria-hidden="true" />{PROGRESS_LABELS[state]}</li>
+      })}
+    </ul>}
+  </details>
 }
 
 function buildScheduleDays(

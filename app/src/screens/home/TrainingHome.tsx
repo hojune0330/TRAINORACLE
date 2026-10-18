@@ -1,4 +1,4 @@
-import { BookOpen, CalendarDays, CheckCircle2, ChevronRight, Ellipsis, NotebookPen, PencilLine } from "lucide-react"
+import { BookOpen, CalendarDays, ChartColumn, CheckCircle2, ChevronRight, Ellipsis, NotebookPen, PencilLine } from "lucide-react"
 import { useId, useRef, type ReactNode } from "react"
 import { CategoryCard, type AppCategory } from "../../components/CategoryCard"
 import { CategoryShortcuts, type CategoryShortcutItem } from "../../components/CategoryShortcuts"
@@ -60,7 +60,7 @@ export function TrainingHome({
   const analysisEntry = oraclePreview ? oraclePreview
     : onOpenOracle && <section className="home-hub__oracle"><CategoryCard category="oracle" title="오라클 결과 보기" onClick={() => onOpenOracle("level")} /></section>
   const shortcuts: CategoryShortcutItem[] = []
-  if (onOpenTrends) shortcuts.push({ id: "trends", category: "oracle", label: "훈련량", accessibleLabel: "훈련량·변화 보기", onClick: onOpenTrends })
+  if (onOpenTrends) shortcuts.push({ id: "trends", category: "oracle", icon: ChartColumn, label: "훈련량", accessibleLabel: "훈련량·변화 보기", onClick: onOpenTrends })
   if (onOpenGuide) shortcuts.push({ id: "example", category: "journal", label: "일지 예시", accessibleLabel: "일지 예시 보기", onClick: onOpenGuide })
   if (onOpenContent) shortcuts.push({ id: "training-guide", category: "training", icon: BookOpen, label: "훈련법", accessibleLabel: "훈련법 읽기", onClick: onOpenContent })
   if (onOpenRewards) shortcuts.push({ id: "decoration", category: "journal", icon: NotebookPen, label: "꾸미기", accessibleLabel: "일지 꾸미기", onClick: onOpenRewards })

@@ -1,4 +1,3 @@
-import { ContextualIllustration } from "./ContextualIllustration"
 import { CompanionMotion } from "./CompanionMotion"
 import { EXECUTION_STOP_CUE } from "../screens/plan-beta/labels"
 import "../styles/training-instruction-cards.css"
@@ -31,16 +30,17 @@ export function TrainingInstructionCards({ steps }: { readonly steps: readonly I
         const detail = step.detail.endsWith(EXECUTION_STOP_CUE)
           ? step.detail.slice(0, -EXECUTION_STOP_CUE.length).trimEnd() : step.detail
         const total = step.role === "TOTAL_DURATION"
+        const main = step.role === "MAIN"
         const totalPrefix = "준비·회복·정리 포함 "
         const separatedTotal = total && detail.startsWith(totalPrefix)
         const parts = instructionParts(detail)
-        return <div className={`training-instructions__card${total ? " training-instructions__card--total" : ""}`} key={`${index}-${step.role}`}>
+        return <div className={`training-instructions__card${total ? " training-instructions__card--total" : ""}${main ? " training-instructions__card--main" : ""}`} key={`${index}-${step.role}`}>
           <dt>{step.title}</dt>
           <dd>
             {total ? <><div className="training-instructions__total-value">
               <strong className={separatedTotal ? "training-instructions__duration" : "training-instructions__detail"}>{separatedTotal ? detail.slice(totalPrefix.length) : detail}</strong>
               {separatedTotal && <span className="training-instructions__included">{totalPrefix.trimEnd()}</span>}
-              </div><CompanionMotion interactive />
+              </div>
             </> : parts.length > 1 ? <ol className="training-instructions__sequence" aria-label={`${step.title} 순서`}>
               {parts.map((part, partIndex) => {
                 const candidate = part.indexOf(" · ")
@@ -56,8 +56,11 @@ export function TrainingInstructionCards({ steps }: { readonly steps: readonly I
       })}
     </dl>
     {hasStopCue && <aside className="training-instructions__coach" aria-label="운동 중 기억할 점">
-      <ContextualIllustration image="otter-check" />
-      <div><p className="training-instructions__coach-name">운동 중 기억해 주세요</p><p>{EXECUTION_STOP_CUE}</p></div>
+      <div className="training-instructions__coach-heading">
+        <p className="training-instructions__coach-name">운동 중 기억해 주세요</p>
+        <CompanionMotion interactive />
+      </div>
+      <p>{EXECUTION_STOP_CUE}</p>
     </aside>}
   </div>
 }

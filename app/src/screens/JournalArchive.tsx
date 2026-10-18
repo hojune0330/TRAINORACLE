@@ -1,6 +1,5 @@
 import React from "react"
-import { ArrowLeft, CalendarDays, Check, Layers, PencilLine, RefreshCw } from "lucide-react"
-import { CategoryIcon } from "../components/CategoryCard"
+import { ArrowLeft, BookOpen, CalendarDays, HeartPulse, Layers, PencilLine, RefreshCw } from "lucide-react"
 import { ViewSwitcher } from "../components/ViewSwitcher"
 import {
   projectJournalArchive,
@@ -111,19 +110,39 @@ export function JournalArchive({
   const latest = recentCalendarDate(dates, today)
   const nav = useCalendarPosition("journal", selection.selectedMonth ? `${selection.selectedMonth}-01` : latest ?? today, readiness === "READY")
   const displayedMonth = nav.month
+  const navigationFocus = React.useRef<string | null>(null)
+  React.useLayoutEffect(() => {
+    const date = navigationFocus.current
+    if (!date || nav.date !== date || displayedMonth !== date.slice(0, 7)) return
+    const target = calendarRoot.current?.querySelector<HTMLButtonElement>(`.month-calendar__grid button[data-date="${date}"]`)
+    if (target) {
+      navigationFocus.current = null
+      target.focus({ preventScroll: true })
+    }
+  }, [nav.date, displayedMonth, calendarRoot])
+  const moveToDate = (date: string) => {
+    navigationFocus.current = date
+    nav.selectDate(date)
+  }
   React.useLayoutEffect(() => {
     const returned = validJournalCalendarReturn(calendarReturn, entries)
     if (returned && activeMode === "CALENDAR" && (nav.date !== returned.date || nav.month !== returned.date.slice(0, 7))) nav.selectDate(returned.date)
   }, [calendarReturn, entries, activeMode, nav.date, nav.month, nav.selectDate])
   const [emptyView, setEmptyView] = React.useState<"example" | "calendar">("calendar")
+  const [emptyIllustrationFailed, setEmptyIllustrationFailed] = React.useState(false)
   const unconfirmedEmpty = readiness !== "READY" && entries.length === 0
     && !(activeMode === "CALENDAR" && emptyView === "example")
   const exampleVisible = emptyView === "example"
+  const recordObject = activeSection === "BODY" ? "기록을" : "일지를"
   const readMessage = readiness === "LOADING"
-    ? entries.length > 0 ? "저장된 일지를 보고 있어요. 최신 기록을 불러오는 중이에요." : "일지를 불러오고 있어요."
-    : entries.length > 0 ? "저장된 일지를 보고 있어요. 최신 기록은 아직 확인하지 못했어요."
-      : readiness === "STALE" ? "최신 일지를 아직 확인하지 못했어요. 기록이 없는 상태로 표시하지 않아요."
-        : "일지를 불러오지 못했어요. 기록이 없는 것은 아니에요."
+    ? entries.length > 0 ? `저장된 ${recordObject} 보고 있어요. 최신 기록을 불러오는 중이에요.` : `${recordObject} 불러오고 있어요.`
+    : entries.length > 0 ? `저장된 ${recordObject} 보고 있어요. 최신 기록은 아직 확인하지 못했어요.`
+      : readiness === "STALE" ? `최신 ${recordObject} 아직 확인하지 못했어요. 기록이 없는 상태로 표시하지 않아요.`
+        : `${recordObject} 불러오지 못했어요. 기록이 없는 것은 아니에요.`
+  const showLatest = latest !== null && (nav.date !== latest || displayedMonth !== latest.slice(0, 7))
+  const nearest = dates.includes(nav.date) ? null : nearestCalendarDate(dates, nav.date)
+  const showNearest = nearest !== null && nearest !== latest
+  const futureRecordsOnly = dates.length > 0 && latest === null
   const selectedMonth = archive.months.find((month) => month.month === selection.selectedMonth) ?? null
   const calendarMonth = archive.months.find(month => month.month === displayedMonth) ?? {
     month: displayedMonth, entryCount: 0, kindCounts: { postSession: 0, evening: 0, race: 0 },
@@ -177,7 +196,7 @@ export function JournalArchive({
           <ArrowLeft aria-hidden="true" size={18} />
         </button>
         <div className="journal-archive__heading">
-          <AppHeading as="h1" variant="screen" accent className="journal-archive__title">
+          <AppHeading as="h1" variant="screen" className="journal-archive__title">
             {activeSection === "BODY" ? "몸 기록" : heading}
           </AppHeading>
         </div>
@@ -187,17 +206,17 @@ export function JournalArchive({
         </button>}
       </header>
 
-      <div className="journal-archive__content-tabs app-choice-group" role="group" aria-label="일지와 몸 기록">
-        <button type="button" className="journal-archive__content-choice app-choice-control category-choice" data-category="journal" aria-pressed={activeSection === "JOURNAL"}
-          onClick={() => changeSection("JOURNAL")}><CategoryIcon category="journal" compact /><span>일지</span><Check size={16} className="category-choice__check" aria-hidden="true" /></button>
-        <button type="button" className="journal-archive__content-choice app-choice-control category-choice" data-category="body" aria-pressed={activeSection === "BODY"}
-          onClick={() => changeSection("BODY")}><CategoryIcon category="body" compact /><span>몸 기록</span><Check size={16} className="category-choice__check" aria-hidden="true" /></button>
+      <div className="journal-archive__content-tabs journal-archive__navigation" role="group" aria-label="일지와 몸 기록">
+        <button type="button" className="journal-archive__content-choice" data-category="journal" aria-pressed={activeSection === "JOURNAL"}
+          onClick={() => changeSection("JOURNAL")}><BookOpen size={18} aria-hidden="true" /><span>일지</span></button>
+        <button type="button" className="journal-archive__content-choice" data-category="body" aria-pressed={activeSection === "BODY"}
+          onClick={() => changeSection("BODY")}><HeartPulse size={18} aria-hidden="true" /><span>몸 기록</span></button>
       </div>
 
       {readiness !== "READY" && <div className="calendar-guidance">
         <p role={readiness === "ERROR" ? "alert" : "status"}>{readMessage}</p>
         {onRetry && readiness !== "LOADING" && <button type="button" className="calendar-range-return" onClick={onRetry}>
-          <RefreshCw size={18} aria-hidden="true" /> 일지 다시 불러오기
+          <RefreshCw size={18} aria-hidden="true" /> {activeSection === "BODY" ? "몸 기록" : "일지"} 다시 불러오기
         </button>}
       </div>}
 
@@ -215,10 +234,10 @@ export function JournalArchive({
       {!unconfirmedEmpty && <>
       <div className="journal-archive__view-controls">
         <ViewSwitcher label="일지 보기 방식" category="journal" value={activeMode} onValueChange={changeMode}
-          className="journal-archive__view-switcher"
+          className="journal-archive__view-switcher journal-archive__navigation"
           options={[
-            { value: "CALENDAR", label: "월간 달력", icon: CalendarDays },
-            { value: "CYCLE", label: "기록 묶음", icon: Layers },
+            { value: "CALENDAR", label: "달력", ariaLabel: "월간 달력", icon: CalendarDays },
+            { value: "CYCLE", label: "묶음", ariaLabel: "기록 묶음", icon: Layers },
           ]} />
       </div>
 
@@ -254,11 +273,11 @@ export function JournalArchive({
         <>
           {exampleVisible ? <CalendarEmptyExample today={today} expanded={emptyView === "example"} onExpand={() => setEmptyView("example")}
             onCalendar={() => setEmptyView("calendar")} onWrite={onWriteLog} hasRealRecords={entries.length > 0} illustrationAllowed={readiness === "READY"} /> : <>
-          <div className="calendar-guidance-actions">
-            {latest && <button type="button" onClick={() => nav.selectDate(latest)}>최근 일지 · {latest.slice(5).replace("-", "/")}</button>}
-            {!dates.includes(nav.date) && dates.length > 0 && nearestCalendarDate(dates, nav.date) !== latest && <button type="button" onClick={() => { const date = nearestCalendarDate(dates, nav.date); if (date) nav.selectDate(date) }}>가까운 기록</button>}
-            {dates.length > 0 && !latest && <span>미래 날짜의 기록이 있어요.</span>}
-          </div>
+          {(showLatest || showNearest || futureRecordsOnly) && <div className="calendar-guidance-actions">
+            {showLatest && <button type="button" aria-label={`최근 기록 날짜 ${dayLabel(latest)}로 이동`} onClick={() => moveToDate(latest)}>최근 날짜 · {latest.slice(5).replace("-", "/")}</button>}
+            {showNearest && <button type="button" aria-label={`가까운 기록 날짜 ${dayLabel(nearest)}로 이동`} onClick={() => moveToDate(nearest)}>가까운 날짜</button>}
+            {futureRecordsOnly && <span>미래 날짜의 기록이 있어요.</span>}
+          </div>}
           {calendarDecorationState === null ? <JournalMonthCalendar month={calendarMonth} entries={entries} onOpenDay={onOpenDay} onWriteDate={onWriteDate}
             calendarReturn={calendarReturn} onCalendarReturnConsumed={onCalendarReturnConsumed}
             selectedDate={nav.date} onSelectedDateChange={nav.selectDate} onMonthChange={nav.selectMonth} /> :
@@ -267,7 +286,12 @@ export function JournalArchive({
                 calendarReturn={calendarReturn} onCalendarReturnConsumed={onCalendarReturnConsumed}
                 selectedDate={nav.date} onSelectedDateChange={nav.selectDate} onMonthChange={nav.selectMonth} />
             </CalendarDecorationFrame>}
-          {entries.length === 0 && readiness === "READY" && <button type="button" className="calendar-range-return" onClick={() => setEmptyView("example")}>일지가 쌓인 예시 보기</button>}
+          {entries.length === 0 && readiness === "READY" && <div className="journal-archive__empty-actions">
+            {!emptyIllustrationFailed && <img className="journal-archive__empty-illustration"
+              src={`${import.meta.env.BASE_URL}illustrations/journal-empty-v1.png`} alt="" width={64} height={64}
+              loading="lazy" onError={() => setEmptyIllustrationFailed(true)} />}
+            <button type="button" className="calendar-range-return" aria-label="일지가 쌓인 예시 보기" onClick={() => setEmptyView("example")}>일지 예시</button>
+          </div>}
           </>}
           {archive.months.length > 0 && !exampleVisible && (
             <InfoDisclosure title="다른 달 찾기" purpose="actions">

@@ -144,7 +144,7 @@ const mount = (initial = ready()) => {
 it("shows the guest helper without starting an account read", () => {
   vi.mocked(activeLocalAccount).mockReturnValue(null)
   render(<OracleProfileV2 {...props} />)
-  expect(screen.getByRole("button", { name: "마리의 답변 팁" })).toBeVisible()
+  expect(screen.getByRole("button", { name: "답변 팁 보기" })).toBeVisible()
   expect(screen.getByText("게스트 · 임시 응답은 새로고침하면 사라져요.")).toBeVisible()
   expect(createOracleV2Service).not.toHaveBeenCalled()
 })
@@ -152,7 +152,7 @@ it("shows the guest helper without starting an account read", () => {
 it("does not normalize a real account loading state into a ready helper", () => {
   mount({ ...ready(), status: "LOADING" })
   expect(screen.getByText("계정에서 불러오는 중")).toBeVisible()
-  expect(screen.queryByRole("button", { name: "마리의 답변 팁" })).not.toBeInTheDocument()
+  expect(screen.queryByRole("button", { name: "답변 팁 보기" })).not.toBeInTheDocument()
   expect(screen.getByRole("button", { name: "내 훈련 방식 알아보기 · 질문 3개" })).toBeDisabled()
 })
 

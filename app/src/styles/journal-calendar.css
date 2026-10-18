@@ -4,8 +4,7 @@
 }
 
 .journal-archive__header {
-  padding: var(--space-4) var(--space-5) var(--space-3);
-  border-bottom: var(--bw-line) solid var(--ink);
+  padding: var(--space-4) var(--space-4) var(--space-3);
   display: grid;
   grid-template-columns: var(--app-touch-min) minmax(0, 1fr);
   gap: var(--space-2);
@@ -16,77 +15,121 @@
   grid-template-columns: var(--app-touch-min) minmax(0, 1fr) var(--app-touch-min);
 }
 
-.journal-archive__back {
+.journal-archive__back,
+.journal-archive__header-write {
+  box-sizing: border-box;
   width: var(--app-touch-min);
   height: var(--app-touch-min);
-  border: var(--bw-line) solid var(--line);
+  border: 0;
   border-radius: var(--r-action);
-  background: transparent;
+  background: var(--surface-2);
   color: var(--ink);
   display: grid;
   place-items: center;
   cursor: pointer;
 }
 
-.journal-archive__header-write {
-  display: grid;
-  place-items: center;
-  width: var(--app-touch-min);
-  height: var(--app-touch-min);
-  border: 1px solid var(--category-journal);
-  border-radius: var(--r-action);
-  background: var(--category-journal-wash);
-  color: var(--category-journal);
-  cursor: pointer;
-}
-
+.journal-archive__back:focus-visible,
 .journal-archive__header-write:focus-visible {
-  outline: 2px solid var(--category-journal);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
 
 .journal-archive__heading { min-width: 0; }
 
-.journal-archive__heading h1 {
+.journal-archive .journal-archive__title.app-heading {
   margin: 0;
-  color: var(--ink);
-  font-family: var(--sans);
-  font-size: var(--fs-app-section-title);
-  font-weight: 600;
-  line-height: 1.25;
-  word-break: keep-all;
-  overflow-wrap: break-word;
+}
+
+.journal-archive .journal-archive__navigation {
+  display: flex;
+  flex-wrap: nowrap;
+  min-width: 0;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border-radius: var(--r-action);
+  background: var(--surface-2);
 }
 
 .journal-archive__content-tabs {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-2);
-  margin: 10px 20px 0;
+  margin: 0 var(--space-4) var(--space-3);
 }
 
-button.app-choice-control.journal-archive__content-choice.category-choice {
-  justify-content: flex-start;
+.journal-archive .journal-archive__content-choice,
+.journal-archive .journal-archive__view-switcher > button.view-switcher__item {
+  box-sizing: border-box;
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-width: 0;
   min-height: var(--app-touch-min, 44px);
   padding: var(--space-2) var(--space-3);
-  border-width: 0 0 2px;
-  border-radius: var(--r-action) var(--r-action) 0 0;
+  border: var(--bw-line) solid transparent;
+  border-radius: var(--r-action);
   background: transparent;
   color: var(--ink-2);
+  font: 600 var(--fs-body) / 1.5 var(--sans);
+  text-align: center;
+  white-space: normal;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+  touch-action: manipulation;
 }
 
-button.app-choice-control.journal-archive__content-choice.category-choice:is([aria-pressed="true"], [aria-selected="true"]) {
-  border-color: var(--category-ink);
-  background: var(--category-wash);
+.journal-archive__content-choice > svg { flex-shrink: 0; }
+.journal-archive__content-choice > span { min-width: 0; }
+
+.journal-archive .journal-archive__content-choice[aria-pressed="true"],
+.journal-archive .journal-archive__view-switcher > button.view-switcher__item[data-state="checked"] {
+  border-color: transparent;
+  background: var(--surface);
   color: var(--category-ink);
+  font-weight: 750;
+}
+
+.journal-archive__content-choice:focus-visible,
+.journal-archive .journal-archive__view-switcher > button.view-switcher__item:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
 }
 
 .journal-archive__view-controls {
-  margin: 10px 20px 0;
+  margin: 0 var(--space-4) var(--space-2);
 }
 
 .journal-archive__view-switcher {
-  width: 100%;
+  width: fit-content;
+  max-width: 100%;
+}
+
+/* This view uses a filled label as its selection cue, without a second check. */
+.journal-archive__view-switcher .view-switcher__mark {
+  display: none;
+}
+
+.journal-archive__empty-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: var(--space-2) var(--space-4);
+}
+
+.journal-archive__empty-illustration {
+  display: block;
+  flex: 0 0 64px;
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+}
+
+.journal-archive__empty-actions .calendar-range-return {
+  min-width: 0;
+  text-align: left;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
 .journal-archive__write-entry {
@@ -182,42 +225,30 @@ button.app-choice-control.journal-archive__content-choice.category-choice:is([ar
   padding-top: 22px;
 }
 
-.journal-month-calendar__summary {
-  margin: 0 20px 13px;
-  display: flex;
-  align-items: end;
-  justify-content: space-between;
-  gap: 12px;
-  border-bottom: 1px solid var(--hair);
-  padding-bottom: 10px;
-}
-
-.journal-month-calendar__summary strong {
-  min-width: 0;
-  color: var(--ink);
-  font-family: var(--sans);
-  font-size: 13px;
-  line-height: 1.4;
-}
-
-.journal-month-calendar__summary span {
-  flex: 0 0 auto;
-  color: var(--ink-3);
-  font-family: var(--mono);
-  font-size: var(--fs-body-sm);
-  line-height: 1.4;
-  white-space: nowrap;
-}
+.journal-calendar-browse { min-width: 0; padding: var(--space-1) 0 var(--space-2); }
 
 .journal-calendar-browse .month-calendar__toolbar {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  justify-content: space-between;
   gap: var(--space-2);
 }
 
 .journal-calendar-browse .month-calendar__toolbar h3 { min-width: 0; }
-.journal-calendar-browse .month-calendar__toolbar > div { grid-column: 2; }
+.journal-calendar-browse .month-calendar__toolbar > div { flex: 0 0 auto; }
+
+/* User-selected paper stays behind the date grid; empty chrome needs no paper box. */
+.journal-archive .calendar-decoration-frame[data-theme-active="true"] .month-calendar[data-presentation="journal-archive"] {
+  background: transparent;
+}
+.journal-archive .calendar-decoration-frame[data-theme-active="false"][data-has-header="false"][data-has-footer="false"] {
+  border-color: transparent;
+  background: transparent;
+}
+.journal-archive .calendar-decoration-frame[data-theme-active="false"][data-has-header="false"][data-has-footer="false"] > .calendar-decoration-frame__content {
+  background: transparent;
+}
 
 .journal-month-calendar__legend {
   margin: -5px 20px 13px;
@@ -355,24 +386,7 @@ button.app-choice-control.journal-archive__content-choice.category-choice:is([ar
 }
 
 @media (max-width: 350px) {
-  .journal-archive__header { padding-inline: var(--space-3); }
-  .journal-archive__content-tabs,
-  .journal-archive__view-controls { margin-inline: 12px; }
-  .journal-month-calendar__summary { margin-inline: 12px; }
-  .journal-month-calendar__summary strong { font-size: 12px; }
   .journal-month-calendar__legend { margin-inline: 12px; }
   .journal-month-calendar__cell--empty,
   .journal-month-calendar__cell--recorded button { padding-inline: 5px; }
-  .journal-calendar-browse .month-calendar__toolbar { grid-template-columns: minmax(0, 1fr); }
-  .journal-calendar-browse .month-calendar__toolbar > div { grid-column: 1; }
-}
-
-@media (max-width: 380px) {
-  .journal-month-calendar__summary {
-    align-items: start;
-    flex-direction: column;
-    gap: var(--space-1);
-  }
-
-  .journal-month-calendar__summary span { white-space: normal; }
 }

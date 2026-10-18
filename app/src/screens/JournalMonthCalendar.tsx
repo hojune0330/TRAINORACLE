@@ -9,6 +9,7 @@ import { PlanDayReader } from "./plan-beta/PlanDayReader"
 import { CalendarTrainingMark } from "../components/CalendarTrainingMark"
 import { calendarMarksDescription, journalCalendarMarks, type CalendarTrainingMarkData } from "../domain/calendar-training-presentation"
 import { calendarRecordDates } from "../domain/calendar-context"
+import { projectJournalMonthCalendar } from "../domain/journal-calendar"
 import { JournalDecorationPreview, useJournalDecorationPreviews } from "./journal/JournalDecorationPreview"
 import { onLocalJournalScopeChange } from "../domain/account/local-journal-ownership"
 import { validJournalCalendarReturn, type JournalCalendarReturn, type OpenJournalDay } from "../navigation/readerPosition"
@@ -48,7 +49,6 @@ export function JournalMonthCalendar({ month, onOpenDay, onMonthChange, entries 
   React.useEffect(() => onLocalJournalScopeChange(() => {
     restoredReturn.current = null; setReaderDate(null); setInternalDate(undefined)
   }), [])
-  const summaryId = React.useId()
   const recordDates = React.useMemo(() => calendarRecordDates(entries), [entries])
   const activeDates = React.useMemo(
     () => new Set(entries.map((entry) => entry.date).filter(isValidIsoDate)),
@@ -81,14 +81,13 @@ export function JournalMonthCalendar({ month, onOpenDay, onMonthChange, entries 
     })
     return result
   }, [entries])
+  const hasVisibleTrainingMarks = React.useMemo(() => projectJournalMonthCalendar(month.month, [])
+    .some(cell => marksByDate.get(cell.date)?.some(mark => mark.tone !== "journal")), [month.month, marksByDate])
 
   return (
-    <section ref={calendarRoot} className="journal-calendar-browse" aria-labelledby={summaryId}>
-      <div className="journal-month-calendar__summary" id={summaryId}>
-        <strong>날짜별 일지</strong>
-        {month.entryCount > 0 && activeDays > 0 && <span>이 달 {activeDays}일 · {month.entryCount}개 기록</span>}
-      </div>
-      <MonthCalendar category="journal" trainingColors month={month.month} today={today} selectedDate={selectedDate} highlightedRange={highlightedRange}
+    <section ref={calendarRoot} className="journal-calendar-browse" aria-label="날짜별 일지">
+      <MonthCalendar category="journal" presentation="journal-archive" trainingColors={hasVisibleTrainingMarks} month={month.month} today={today} selectedDate={selectedDate} highlightedRange={highlightedRange}
+        summary={month.entryCount > 0 && activeDays > 0 ? `${activeDays}일 · ${month.entryCount}개 기록` : undefined}
         onMonthChange={onMonthChange} onToday={setSelectedDate} onSelectDate={date => {
           openDate(date)
         }}
@@ -97,14 +96,16 @@ export function JournalMonthCalendar({ month, onOpenDay, onMonthChange, entries 
           return day ? [kindText(day.kindCounts), calendarMarksDescription(marksByDate.get(date) ?? []), "일지 열기"].filter(Boolean).join(" · ") : "일지 없음"
         }}
         dayAdornmentDescription={date => decorationPreviews.has(date) ? "일지에 그림 장식 있음" : undefined}
-        renderDayAdornment={date => <JournalDecorationPreview item={decorationPreviews.get(date)} />}
+        renderDayAdornment={date => {
+          const item = decorationPreviews.get(date)
+          return item ? <JournalDecorationPreview item={item} /> : null
+        }}
         renderDay={date => {
           const day = byDate.get(date)
           if (!day) return null
           const marks = marksByDate.get(date) ?? []
           if (marks.length) return <>
-            {marks.slice(0, 3).map((mark, index) => <CalendarTrainingMark key={index} {...mark} />)}
-            {marks.length > 3 && <span className="month-calendar__event">+{marks.length - 3}</span>}
+            {marks.map((mark, index) => <CalendarTrainingMark key={index} {...mark} />)}
           </>
           return <>
             {day.kindCounts.postSession > 0 && <CalendarTrainingMark tone="unknown" label={`훈련 ${day.kindCounts.postSession}`} />}

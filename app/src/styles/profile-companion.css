@@ -19,8 +19,20 @@
   cursor: pointer;
   transition: transform 160ms var(--ease-out-strong), border-color 160ms var(--ease-out-strong);
 }
-.profile-companion .profile-companion__button:hover,
 .profile-companion .profile-companion__button[aria-expanded="true"] { border-color: var(--line); }
+@media (hover: hover) and (pointer: fine) {
+  .profile-companion .profile-companion__button:hover { border-color: var(--line); }
+}
+.profile-companion__action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  color: var(--brand);
+  font-size: var(--fs-body-sm);
+  font-weight: 600;
+}
+.profile-companion__action svg { flex: 0 0 auto; }
 .profile-companion .profile-companion__button:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
 .profile-companion .profile-companion__button:not(:disabled):not([aria-disabled="true"]):active { transform: translateY(2px); }
 .profile-companion .profile-companion__tip { max-width: 28ch; margin: var(--space-2) 0; font-size: var(--fs-caption); color: var(--ink-2); line-height: 1.6; }

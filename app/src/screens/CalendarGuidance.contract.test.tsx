@@ -22,8 +22,10 @@ it("opens at the recent activity date and does not jump when later data arrives"
   fireEvent.click(screen.getByRole("button", { name: "이전 달" }))
   view.rerender(<JournalArchive {...props} entries={[entry("2026-07-10"), entry("2026-09-29")]} />)
   expect(screen.getByRole("grid", { name: "2026년 6월 달력" })).toBeVisible()
-  fireEvent.click(screen.getByRole("button", { name: /최근 일지/ }))
+  fireEvent.click(screen.getByRole("button", { name: /최근 기록 날짜/ }))
   expect(screen.getByRole("grid", { name: "2026년 9월 달력" })).toBeVisible()
+  expect(screen.getByRole("button", { name: /2026년 9월 29일/ })).toHaveFocus()
+  expect(screen.queryByRole("button", { name: /최근 기록 날짜/ })).toBeNull()
 })
 it("does not show sample data during loading or failure, and keeps explicit examples separate", () => {
   const view = render(<JournalArchive {...props} entries={[]} readiness="LOADING" />)

@@ -20,13 +20,11 @@ describe("journal input layout", () => {
     expect(measurementCss).toContain(".post-session-measurements__unit")
   })
 
-  it("keeps the month title and controls together at 375px and stacks only in the narrow fallback", () => {
+  it("lets the archive month toolbar reflow naturally when text needs more room", () => {
     const toolbar = archiveCss.match(/\.journal-calendar-browse \.month-calendar__toolbar\s*\{([^}]+)\}/u)?.[1] ?? ""
-    const narrowToolbar = archiveCss.match(/@media \(max-width: 350px\)\s*\{[\s\S]*?\.journal-calendar-browse \.month-calendar__toolbar\s*\{([^}]+)\}/u)?.[1] ?? ""
-    const tabletMobileToolbar = archiveCss.match(/@media \(max-width: 380px\)\s*\{([\s\S]*?)\n\}/u)?.[1] ?? ""
 
-    expect(toolbar).toMatch(/grid-template-columns:\s*minmax\(0,\s*1fr\)\s+auto/u)
-    expect(narrowToolbar).toMatch(/grid-template-columns:\s*minmax\(0,\s*1fr\)/u)
-    expect(tabletMobileToolbar).not.toContain("month-calendar__toolbar")
+    expect(toolbar).toMatch(/display:\s*flex/u)
+    expect(toolbar).toMatch(/flex-wrap:\s*wrap/u)
+    expect(archiveCss).toMatch(/\.journal-calendar-browse \.month-calendar__toolbar h3\s*\{\s*min-width:\s*0/u)
   })
 })

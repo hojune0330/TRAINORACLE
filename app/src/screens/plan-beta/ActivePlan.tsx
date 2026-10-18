@@ -47,12 +47,14 @@ import { resolveCurrentPlannedSession, samePlannedSessionLink } from "../../doma
 import { journalResultLabel } from "../../domain/journal-plan-progress"
 import { PlanPrescriptionBasis } from "./PlanPrescriptionBasis"
 import { InstantPlanTodayView } from "../../components/instant-plan/InstantPlanTodayView"
+import { IncompleteWorkoutNotice } from "../../components/instant-plan/IncompleteWorkoutNotice"
 import { instantSessionId } from "./instant-plan-today"
 import { projectCurrentInstantToday } from "./instant-plan-today-context"
 import { useLocalToday } from "../../hooks/useLocalToday"
 import { SessionExplanationEntry } from "./SessionExplanation"
 import { useCalendarEntries } from "../../hooks/useCalendarEntries"
 import { EasyTrainingTimes } from "./EasyTrainingTimes"
+import { usePlanScheduleView } from "../../hooks/usePlanScheduleView"
 
 const PROGRESS_ACTIONS: readonly {
   readonly state: PlanProgressState
@@ -165,6 +167,10 @@ export function ActivePlan({
   const hasDetailedPrescription = detailedPrescription !== undefined
   const frameComplete = isPlanFrameCompletionEligible(state, today)
   const startDate = state.intake.startDate ?? state.generatedAt.slice(0, 10)
+  const scheduleIdentity = `active-plan:${state.generatedAt}:${activePlan.candidateId}:${startDate}:${frameLengthDays}`
+  const scheduleView = usePlanScheduleView(scheduleIdentity)
+  const showTodayContext = scheduleView.view === "calendar"
+    || !["SCHEDULED", "PARTLY_RECORDED", "RECORDED"].includes(todayView.state)
   const frameDayCount = Math.ceil(frameLengthDays)
   const focusLabel = ENERGY_INTENT_LABELS[activePlan.selectedEnergyIntent].title
   const visibleSessions = activePlan.sessions.filter(session => session.day >= 1 && session.day <= frameDayCount)
@@ -264,7 +270,8 @@ export function ActivePlan({
         </div>)}
       </section>}
       {executionMessage && <div className="plan-execution-status" role="status">{executionMessage}</div>}
-      <InstantPlanTodayView today={todayView} compact navigationCards onContinue={showSchedule} changeScheduleLabel="휴식·건너뜀 기록"
+      {showTodayContext && <InstantPlanTodayView today={scheduleView.view === "list" ? { ...todayView, sessions: [] } : todayView}
+        compact navigationCards={scheduleView.view === "calendar"} onContinue={showSchedule} changeScheduleLabel="휴식·건너뜀 기록"
         compactSessionSummary={id => activePlan.sessions.find(item => instantSessionId(item) === id)?.role === "EASY"}
         sessionRoleLabel={id => {
           const session = activePlan.sessions.find(item => instantSessionId(item) === id)
@@ -281,11 +288,14 @@ export function ActivePlan({
         onRecordSession={onWriteSessionLog === undefined ? undefined : id => {
           const session = activePlan.sessions.find(item => instantSessionId(item) === id)
           if (session && session.role !== "REST") onWriteSessionLog(session)
-        }} />
+        }} />}
       <PlanPrescriptionBasis sessions={visibleSessions} noticePlacement="only" />
       <div ref={scheduleAnchor} tabIndex={-1} aria-label="전체 일정과 기록">
       <PlanSchedulePreview
         presentation="prescription-calendar"
+        embedded
+        scheduleView={scheduleView.view}
+        onScheduleViewChange={scheduleView.selectView}
         journalEntries={calendarEntries}
         journalEntriesComplete={journalRead.status === "complete"}
         readerRequest={readerRequest}
@@ -297,7 +307,6 @@ export function ActivePlan({
         loadEvidence={loadSessionEvidence}
         focusSession={returnedSession ?? undefined}
         showRpeGuide={false}
-        timelineHeading="날짜별 훈련"
         displayMode="swipe"
         detailsExpanded={false}
         readerNotice={saveNotice || executionMessage || executionBlocked ? <>
@@ -390,11 +399,19 @@ export function ActivePlan({
             </details>
           </>
         )}
-        renderSessionAction={onWriteSessionLog === undefined ? undefined : (session, leave) => session.role !== "REST" && (
-          <button className="active-plan__journal-action" type="button" onClick={() => leave ? leave(() => onWriteSessionLog(session)) : onWriteSessionLog(session)}>
-            <Pencil size={16} aria-hidden="true" />이 훈련 일지 쓰기
-          </button>
-        )}
+        renderSessionAction={(session, leave) => {
+          const guidance = checkedToday.sessions.find(item => item.id === instantSessionId(session))?.guidanceNotice
+          const hasLinkedJournal = !recorded.has(`${session.day}:${session.slot}`) && linkedResults.has(`${session.day}:${session.slot}`)
+          const canWrite = onWriteSessionLog !== undefined && session.role !== "REST"
+          if (!guidance && !hasLinkedJournal && !canWrite) return undefined
+          return <>
+            {guidance && <IncompleteWorkoutNotice detail={guidance} />}
+            {hasLinkedJournal && <p className="plan-caption">남긴 기록 있음</p>}
+            {canWrite && <button className="active-plan__journal-action" type="button" onClick={() => leave ? leave(() => onWriteSessionLog(session)) : onWriteSessionLog(session)}>
+              <Pencil size={16} aria-hidden="true" />이 훈련 일지 쓰기
+            </button>}
+          </>
+        }}
         renderSessionFooter={(session) => {
           const current = recorded.get(`${session.day}:${session.slot}`)
           const results = linkedResults.get(`${session.day}:${session.slot}`) ?? []

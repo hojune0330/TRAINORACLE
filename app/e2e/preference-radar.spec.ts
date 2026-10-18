@@ -100,7 +100,7 @@ test("six real scores render a full radar and a single answer edit preserves the
     "계획65점 · 답이 엇갈림", "기록 도전75점", "강한 달리기0점", "함께 달리기50점", "새로운 경험25점", "기분 전환75점",
   ])
   await expect(page.getByRole("button", { name: "계획을 챙기는 여우 캐릭터 이야기", exact: true })).toHaveCount(0)
-  await expect(page.getByRole("button", { name: "마리의 결과 안내", exact: true })).toBeVisible()
+  await expect(page.getByRole("button", { name: "결과 안내 보기", exact: true })).toBeVisible()
   await expect(radar.locator(".preference-radar__shape")).toHaveCount(1)
 })
 
@@ -145,10 +145,10 @@ test("a real zero stays distinct from missing answers at 320px with large text a
   await expect(page.locator(".oracle-v2__body .app-heading--screen").first()).toHaveCSS("font-size", "48px")
   await checkRadarLayout(page)
   await expect(radar.getByRole("button").first()).toHaveCSS("transition-duration", "0s")
-  await page.getByRole("button", { name: "마리의 결과 안내", exact: true }).click()
+  await page.getByRole("button", { name: "결과 안내 보기", exact: true }).click()
   await expect(page.getByText("선택한 답으로 정리한 취향이에요. 실력이나 건강을 평가한 결과는 아니에요.")).toBeVisible()
   await page.keyboard.press("Escape")
-  await expect(page.getByRole("button", { name: "마리의 결과 안내", exact: true })).toHaveAttribute("aria-expanded", "false")
+  await expect(page.getByRole("button", { name: "결과 안내 보기", exact: true })).toHaveAttribute("aria-expanded", "false")
   await page.setViewportSize({ width: 320, height: 2400 })
   await radar.screenshot({ path: info.outputPath("radar-partial-large-320.png"), animations: "disabled" })
 })

@@ -50,7 +50,7 @@ export function TrainingContent({ onBack, backOwner = "screen" }: {
   const root = React.useRef<HTMLDivElement>(null)
   const listReturn = React.useRef<ReaderPosition | null>(null)
   const { schedule } = useNavigationReturnFrame()
-  const region = () => root.current?.closest<HTMLElement>(".app-scroll-region") ?? root.current
+  const region = () => root.current?.closest<HTMLElement>(".oracle-v2__reader-body, .app-scroll-region") ?? root.current
   const openReader = (article: TrainingContentId | null, opener: HTMLElement) => {
     listReturn.current = captureReaderPosition(region(), opener)
     if (article === null) setBasics(true)

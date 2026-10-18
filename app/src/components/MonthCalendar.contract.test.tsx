@@ -16,6 +16,28 @@ function CalendarHarness({ initial = "2026-09", live = false }: { initial?: stri
 }
 
 describe("shared civil-date calendar", () => {
+  it("keeps the journal month face in one fully named control and leaves standard calendars unskinned", () => {
+    const props = { month: "2026-10", today: "2026-10-18", onMonthChange: vi.fn(), onSelectDate: vi.fn(),
+      dayDescription: () => "", renderDay: () => null }
+    const view = render(<MonthCalendar {...props} category="journal" presentation="journal-archive" />)
+    const month = screen.getByRole("button", { name: "2026년 10월 · 년월과 날짜 이동" })
+    expect(within(month).getByText("2026년")).toBeVisible()
+    expect(month.querySelector(".month-calendar__month-value")).toHaveTextContent("10월")
+    expect(view.container.querySelector<HTMLElement>(".month-calendar")?.style.getPropertyValue("--journal-calendar-paper"))
+      .toContain("illustrations/journal-calendar-paper-v1.webp")
+    fireEvent.click(month)
+    const input = screen.getByLabelText("날짜로 이동")
+    input.focus()
+    fireEvent.keyDown(input, { key: "Escape" })
+    expect(month).toHaveFocus()
+    expect(screen.queryByLabelText("날짜로 이동")).toBeNull()
+
+    view.rerender(<MonthCalendar {...props} />)
+    expect(screen.getByRole("button", { name: "2026년 10월 · 년월과 날짜 이동" })).toHaveTextContent("2026년 10월")
+    expect(view.container.querySelector(".month-calendar__year")).toBeNull()
+    expect(view.container.querySelector<HTMLElement>(".month-calendar")?.style.getPropertyValue("--journal-calendar-paper")).toBe("")
+  })
+
   it("closes date tools with Escape and restores the month trigger without changing dates", () => {
     render(<CalendarHarness />)
     const trigger = screen.getByRole("button", { name: /년월과 날짜 이동/ })
@@ -114,6 +136,10 @@ describe("shared civil-date calendar", () => {
     const dateButton = screen.getByRole("button", { name: "2026년 9월 27일 일요일 · 일지 있음 · 일지에 그림 장식 있음" })
     expect(dateButton.querySelector(".month-calendar__date-heading--with-adornment")).toBeTruthy()
     expect(dateButton.querySelector("[aria-hidden='true'] [data-testid='picture']")).toBeTruthy()
+    const unadornedDate = screen.getByRole("button", { name: "2026년 9월 28일 월요일 · 일지 있음" })
+    expect(unadornedDate.querySelector(".month-calendar__date-heading--with-adornment")).toBeNull()
+    expect(unadornedDate.querySelector(".month-calendar__day-adornment")).toBeNull()
+    expect(unadornedDate.querySelector(".month-calendar__events")).toBeNull()
     expect(within(screen.getByRole("grid", { name: "2026년 9월 달력" })).getAllByRole("button")).toHaveLength(35)
     fireEvent.click(dateButton)
     expect(select).toHaveBeenCalledTimes(1)

@@ -33,6 +33,17 @@
   margin: 0;
 }
 
+.training-instructions__card--total {
+  padding-block: var(--space-3);
+  background: var(--surface-2);
+  border-color: transparent;
+}
+
+.training-instructions__card--total dt {
+  margin-block-end: var(--space-1);
+  font-size: var(--fs-body-sm);
+}
+
 .training-instructions__card--total dd {
   display: flex;
   flex-wrap: wrap;
@@ -40,15 +51,44 @@
   gap: var(--space-1) var(--space-3);
 }
 
+.training-instructions__card--total .training-instructions__total-value {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-3);
+}
+
 .training-instructions__duration {
-  font-size: var(--fs-app-metric);
+  font-size: var(--fs-body-lg);
   font-weight: var(--fw-app-heading);
   font-variant-numeric: tabular-nums;
-  line-height: 1.2;
+  line-height: 1.5;
 }
 
 .training-instructions__included {
   color: var(--ink-2);
+  font-size: var(--fs-body-sm);
+}
+
+.training-instructions__card--main {
+  padding-block: var(--space-5);
+}
+
+.training-instructions__card--main dt {
+  color: var(--ink);
+  font-size: var(--fs-body-lg);
+}
+
+.training-instructions__card--main .training-instructions__detail,
+.training-instructions__card--main .training-instructions__sequence strong {
+  font-size: var(--fs-h3);
+  font-weight: var(--fw-app-heading);
+  line-height: 1.6;
+}
+
+.training-instructions__card--main .training-instructions__sequence p {
+  font-size: var(--fs-body-lg);
+  line-height: 1.6;
 }
 
 .training-instructions .training-instructions__sequence {
@@ -85,18 +125,21 @@
 }
 
 .training-instructions__coach {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
   margin-block-start: var(--space-3);
   padding: var(--space-3);
   border-radius: var(--r-task-surface);
   background: var(--paper);
 }
 
-.training-instructions__coach > div { min-width: 0; }
-.training-instructions__coach .contextual-illustration { flex: 0 0 64px; }
+.training-instructions__coach-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-block-end: var(--space-2);
+  min-width: 0;
+}
+
 .training-instructions .training-instructions__coach-name {
-  margin-block-end: var(--space-1);
   font-weight: var(--fw-app-heading);
 }

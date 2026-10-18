@@ -27,11 +27,14 @@ export function PlanFlowCodeHelp({
   secondary,
   kind,
   variant = "badge",
+  primaryDisplay = "full",
 }: {
   readonly primary: PlanFlowPrimaryCode
   readonly secondary?: PlanFlowSecondaryCode
   readonly kind: PlanFlowKind
   readonly variant?: "legend" | "badge"
+  /** A neighbouring role label supplies the full name in a compact reader header. */
+  readonly primaryDisplay?: "full" | "code"
 }) {
   const { open, toggle, close, wrapRef, portalRef } = usePopover()
   const appNavigation = useAppOverlayNavigation()
@@ -75,8 +78,10 @@ export function PlanFlowCodeHelp({
           aria-hidden="true"
         >
           <span className="plan-flow-code-help__name">
-            <strong>{primaryEntry.label}</strong>
-            <small>{primaryEntry.code ?? primary}</small>
+            {primaryDisplay === "code" ? <strong>{primaryEntry.code ?? primary}</strong> : <>
+              <strong>{primaryEntry.label}</strong>
+              <small>{primaryEntry.code ?? primary}</small>
+            </>}
           </span>
           {secondaryEntry !== undefined && (
             <span className="plan-flow-code-help__name" data-secondary="true">

@@ -39,15 +39,12 @@
 .month-calendar__event[data-kind="base"] { color: var(--brand); }
 .month-calendar__event[data-kind="recovery"], .month-calendar__event[data-kind="off"] { color: var(--ink-3); }
 .month-calendar__empty { padding: var(--space-4) 0; color: var(--ink-3); font-size: var(--fs-body); }
-.journal-calendar-browse { padding: var(--space-3) var(--space-1); }
-.journal-calendar-browse .journal-month-calendar__summary { margin-inline: var(--space-2); }
 .plan-training-flow > .month-calendar { margin-top: var(--space-3); }
 .month-calendar__event[data-kind="race"] { color: var(--ink-blue); font-weight: 650; }
 .month-calendar__event[data-kind="journal"] { color: var(--ink-2); }
 @media (max-width: 350px) {
   .month-calendar__grid td button { min-height: 64px; }
   .journal-archive .cycle-calendar { padding-inline: 0; }
-  .journal-calendar-browse { padding-inline: 0; }
 }
 .month-calendar__plan-event { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; column-gap: 2px; }
 .month-calendar__plan-event > svg { flex-shrink: 0; }
@@ -132,3 +129,162 @@
 [data-reduced-motion] .month-calendar__grid td button { transition: none; }
 [data-reduced-motion] .month-calendar__grid td button:active { transform: none; }
 @media (prefers-reduced-motion: reduce) { .calendar-reader-transition { animation: none; } }
+
+/* A journal calendar face, independent of the saved margin-band coordinates.
+   The blank generated texture never contains dates, labels or training marks. */
+.month-calendar[data-presentation="journal-archive"] {
+  box-sizing: border-box;
+  margin-inline: min(var(--space-4), max(0px, calc((100% - 7 * var(--app-touch-min) - 2 * var(--bw-line)) / 2)));
+  padding-block: var(--space-3) var(--space-2);
+  border: var(--bw-line) solid var(--line);
+  border-radius: var(--r-task-surface);
+  background-color: var(--paper, var(--surface));
+  background-image: linear-gradient(color-mix(in srgb, var(--surface) 60%, transparent), color-mix(in srgb, var(--surface) 60%, transparent)), var(--journal-calendar-paper, none);
+  background-position: center;
+  background-size: cover;
+}
+.month-calendar[data-presentation="journal-archive"] .month-calendar__toolbar {
+  margin: 0;
+  padding-inline: var(--space-3);
+}
+.month-calendar[data-presentation="journal-archive"] .month-calendar__toolbar h3 { max-width: 100%; }
+.month-calendar[data-presentation="journal-archive"] .month-calendar__toolbar .month-calendar__month {
+  align-items: flex-end;
+  gap: var(--space-2);
+  min-width: 0;
+  max-width: 100%;
+  padding-block: var(--space-1);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.month-calendar[data-presentation="journal-archive"] .month-calendar__month-label { display: grid; gap: var(--space-1); min-width: 0; }
+.month-calendar[data-presentation="journal-archive"] .month-calendar__year {
+  color: var(--ink-2);
+  font-size: var(--fs-caption);
+  font-weight: 500;
+  line-height: 1;
+}
+.month-calendar[data-presentation="journal-archive"] .month-calendar__month-value {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-1);
+  font-size: var(--fs-app-metric);
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  white-space: nowrap;
+}
+.month-calendar[data-presentation="journal-archive"] .month-calendar__month-unit { font-size: var(--fs-body-lg); font-weight: 600; }
+.month-calendar[data-presentation="journal-archive"] .month-calendar__toolbar .month-calendar__month > svg { flex-shrink: 0; margin-bottom: var(--space-1); }
+.month-calendar[data-presentation="journal-archive"] .month-calendar__actions {
+  gap: 0;
+  border: var(--bw-line) solid var(--line);
+  border-radius: var(--r-action);
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+}
+.month-calendar[data-presentation="journal-archive"] .month-calendar__toolbar .month-calendar__today,
+.month-calendar[data-presentation="journal-archive"] .month-calendar__toolbar .month-calendar__month-nav {
+  color: var(--ink-2);
+  background: transparent;
+}
+.month-calendar[data-presentation="journal-archive"] .month-calendar__toolbar .month-calendar__today { font-size: var(--fs-body-lg); }
+.month-calendar[data-presentation="journal-archive"] .month-calendar__summary {
+  margin: var(--space-1) var(--space-3) 0;
+  color: var(--ink-2);
+  font-size: var(--fs-caption);
+  line-height: 1.5;
+}
+.month-calendar[data-presentation="journal-archive"] .month-calendar__jump { margin-inline: var(--space-2); }
+.month-calendar[data-presentation="journal-archive"] .month-calendar__grid {
+  margin-top: var(--space-2);
+  border-spacing: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.month-calendar[data-presentation="journal-archive"] .month-calendar__grid th {
+  border-block: var(--bw-line) solid color-mix(in srgb, var(--line) 65%, transparent);
+  background: color-mix(in srgb, var(--surface) 50%, transparent);
+  font-weight: 500;
+}
+.month-calendar[data-presentation="journal-archive"] .month-calendar__grid tbody tr + tr td {
+  border-top: var(--bw-line) solid color-mix(in srgb, var(--line) 45%, transparent);
+}
+/* A definite table-cell height lets the button fill the resolved row height;
+   intrinsic record content still grows the row, including at enlarged text. */
+.month-calendar[data-presentation="journal-archive"] .month-calendar__grid td { height: 1px; }
+.month-calendar[data-presentation="journal-archive"] .month-calendar__grid td button {
+  box-sizing: border-box;
+  height: 100%;
+  min-width: var(--app-touch-min);
+  min-height: var(--app-touch-min);
+  padding: var(--space-1) 0;
+}
+.month-calendar[data-presentation="journal-archive"] .month-calendar__date-heading {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  min-height: 32px;
+}
+/* Separate adjacent enlarged numbers without drawing a full cell grid. */
+.month-calendar[data-presentation="journal-archive"] td + td .month-calendar__date-heading::before {
+  content: "";
+  position: absolute;
+  inset-block: var(--space-2);
+  inset-inline-start: 0;
+  border-inline-start: var(--bw-line) solid var(--line);
+  pointer-events: none;
+}
+.month-calendar[data-presentation="journal-archive"] .month-calendar__number { min-width: 32px; font-size: var(--fs-body-lg); font-weight: 500; }
+.month-calendar[data-presentation="journal-archive"] .month-calendar__grid button[aria-current="date"] .month-calendar__number { text-decoration: none; }
+.month-calendar[data-presentation="journal-archive"] .month-calendar__grid button[data-selected] { background: transparent; }
+.month-calendar[data-presentation="journal-archive"] .month-calendar__grid button[data-selected] .month-calendar__number { font-weight: 750; }
+.month-calendar[data-presentation="journal-archive"] .month-calendar__grid button[data-selected][aria-current="date"] .month-calendar__number {
+  outline: var(--bw-line) solid var(--calendar-accent);
+  outline-offset: 2px;
+}
+.month-calendar[data-presentation="journal-archive"] .month-calendar__events { padding-bottom: 0; }
+/* The two Korean characters in a 200% slot need 41.5px. Reclaim the mark's
+   decorative margins so a minimum 44px date has 42px inside its border. */
+.month-calendar[data-presentation="journal-archive"] .month-calendar__events > .calendar-training-mark { margin-inline: 0; }
+.month-calendar[data-presentation="journal-archive"] .calendar-training-mark__slot {
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+.month-calendar[data-presentation="journal-archive"] .calendar-training-mark__label {
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+.month-calendar[data-presentation="journal-archive"] .calendar-color-guide {
+  margin: var(--space-1) var(--space-2) 0;
+}
+.month-calendar[data-presentation="journal-archive"] .calendar-color-guide summary {
+  background: transparent;
+  font-weight: 500;
+}
+.month-calendar[data-presentation="journal-archive"] .calendar-color-guide ul { padding: var(--space-2); }
+/* A chosen paper theme always wins, including when it is used outside archive chrome. */
+.calendar-decoration-frame[data-theme-active="true"] .month-calendar[data-presentation="journal-archive"] {
+  background-color: transparent;
+  background-image: none;
+}
+@media (max-width: 350px) {
+  .month-calendar[data-presentation="journal-archive"] { margin-inline: 0; }
+}
+@media (hover: hover) and (pointer: fine) {
+  .month-calendar[data-presentation="journal-archive"] .month-calendar__toolbar .month-calendar__month-nav:hover,
+  .month-calendar[data-presentation="journal-archive"] .month-calendar__toolbar .month-calendar__today:hover {
+    background: var(--surface-2);
+  }
+}
+@media (forced-colors: active) {
+  .month-calendar[data-presentation="journal-archive"] { background-image: none; }
+  .month-calendar[data-presentation="journal-archive"] .month-calendar__grid button[aria-current="date"] .month-calendar__number { border-color: CanvasText; }
+  .month-calendar[data-presentation="journal-archive"] .month-calendar__grid button[data-selected] .month-calendar__number {
+    forced-color-adjust: none;
+    border-color: Highlight;
+    background: Highlight;
+    color: HighlightText;
+  }
+  .month-calendar[data-presentation="journal-archive"] .month-calendar__grid button[data-selected][aria-current="date"] .month-calendar__number { outline-color: CanvasText; }
+}

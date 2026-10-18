@@ -1,4 +1,4 @@
-import { useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react"
+import { useId, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react"
 import { ChevronDown, ChevronLeft, ChevronRight, CircleHelp } from "lucide-react"
 import { isValidIsoDate, isoShift, isoToDate } from "../domain/dates"
 import { projectJournalMonthCalendar } from "../domain/journal-calendar"
@@ -28,19 +28,22 @@ type Props = {
   readonly onToday?: (date: string) => void
   readonly dayDescription: (date: string) => string
   readonly renderDay: (date: string) => ReactNode
-  /** Read-only visual cue reserved beside the date number; never creates a separate hit target. */
+  /** Return null on dates without a read-only cue; never creates a separate hit target. */
   readonly renderDayAdornment?: (date: string) => ReactNode
   /** Short assistive description corresponding to renderDayAdornment. */
   readonly dayAdornmentDescription?: (date: string) => string | undefined
   readonly highlightedRange?: { readonly start: string; readonly end: string }
   readonly trainingColors?: boolean
   readonly category?: "training" | "journal"
+  /** Archive reading surface only; training calendars retain their current layout. */
+  readonly presentation?: "standard" | "journal-archive"
+  readonly summary?: string | undefined
   /** Journal overview only. Detailed training calendars keep their full session labels. */
   readonly compact?: boolean
 }
 
 export function MonthCalendar({ month, today, selectedDate, onMonthChange, onSelectDate, onToday, dayDescription, renderDay,
-  renderDayAdornment, dayAdornmentDescription, highlightedRange, trainingColors = false, category = "training", compact = false }: Props) {
+  renderDayAdornment, dayAdornmentDescription, highlightedRange, trainingColors = false, category = "training", presentation = "standard", summary, compact = false }: Props) {
   const headingId = useId()
   const jumpId = useId()
   const monthTrigger = useRef<HTMLButtonElement>(null)
@@ -53,6 +56,9 @@ export function MonthCalendar({ month, today, selectedDate, onMonthChange, onSel
   const weeks = Array.from({ length: cells.length / 7 }, (_, i) => cells.slice(i * 7, i * 7 + 7))
   const monthDate = isoToDate(`${month}-01`)
   const label = `${monthDate.getFullYear()}년 ${monthDate.getMonth() + 1}월`
+  const paperStyle = presentation === "journal-archive" ? {
+    "--journal-calendar-paper": `url("${import.meta.env.BASE_URL}illustrations/journal-calendar-paper-v1.webp")`,
+  } as CSSProperties : undefined
   const tabDate = focusedDate?.startsWith(month) ? focusedDate
     : selectedDate?.startsWith(month) ? selectedDate : today.startsWith(month) ? today : `${month}-01`
 
@@ -71,10 +77,16 @@ export function MonthCalendar({ month, today, selectedDate, onMonthChange, onSel
     }
   }
 
-  return <section className="month-calendar" data-category={category} data-compact={compact || undefined} data-reduced-motion={motion.reduced || undefined} aria-labelledby={headingId}>
+  return <section className="month-calendar" style={paperStyle} data-category={category} data-presentation={presentation === "standard" ? undefined : presentation} data-compact={compact || undefined} data-reduced-motion={motion.reduced || undefined} aria-labelledby={headingId}>
     <header className="month-calendar__toolbar">
-      <h3 id={headingId} aria-live="polite"><button ref={monthTrigger} type="button" className="month-calendar__month" aria-label={`${label} · 년월과 날짜 이동`} aria-expanded={jumpOpen} aria-controls={jumpId} onClick={() => setJumpOpen(value => !value)}>{label}<ChevronDown size={16} aria-hidden="true" /></button></h3>
-      <div>
+      <h3 id={headingId} aria-live="polite"><button ref={monthTrigger} type="button" className="month-calendar__month" aria-label={`${label} · 년월과 날짜 이동`} aria-expanded={jumpOpen} aria-controls={jumpId} onClick={() => setJumpOpen(value => !value)}>
+        {presentation === "journal-archive" ? <span className="month-calendar__month-label" aria-hidden="true">
+          <span className="month-calendar__year">{monthDate.getFullYear()}년</span>
+          <span className="month-calendar__month-value">{monthDate.getMonth() + 1}<span className="month-calendar__month-unit">월</span></span>
+        </span> : label}
+        <ChevronDown size={16} aria-hidden="true" />
+      </button></h3>
+      <div className="month-calendar__actions">
         <button type="button" className="month-calendar__today" onClick={() => {
           setFocusedDate(today)
           onMonthChange(today.slice(0, 7))
@@ -89,6 +101,7 @@ export function MonthCalendar({ month, today, selectedDate, onMonthChange, onSel
         </button>
       </div>
     </header>
+    {summary && <p className="month-calendar__summary">{summary}</p>}
     {jumpOpen && <div id={jumpId} className="month-calendar__jump" onKeyDown={event => {
       if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); setJumpOpen(false); monthTrigger.current?.focus() }
     }}>
@@ -113,6 +126,10 @@ export function MonthCalendar({ month, today, selectedDate, onMonthChange, onSel
           const inRange = highlightedRange !== undefined && cell.date >= highlightedRange.start && cell.date <= highlightedRange.end
           const description = dayDescription(cell.date)
           const adornmentDescription = dayAdornmentDescription?.(cell.date)
+          const adornment = renderDayAdornment?.(cell.date)
+          const hasAdornment = adornment !== null && adornment !== undefined && adornment !== false
+          const content = renderDay(cell.date)
+          const hasContent = content !== null && content !== undefined && content !== false
           const name = [calendarDayLabel(cell.date), description, adornmentDescription].filter(Boolean).join(" · ")
           return <td key={cell.date} role="gridcell" aria-selected={selected} data-outside={outside || undefined} data-in-range={inRange || undefined} data-weekday={isoToDate(cell.date).getDay()}>
             <button
@@ -130,11 +147,11 @@ export function MonthCalendar({ month, today, selectedDate, onMonthChange, onSel
                 if (outside) onMonthChange(cell.date.slice(0, 7))
                 onSelectDate(cell.date)
               }}>
-              <span className={`month-calendar__date-heading${renderDayAdornment === undefined ? "" : " month-calendar__date-heading--with-adornment"}`}>
+              <span className={`month-calendar__date-heading${hasAdornment ? " month-calendar__date-heading--with-adornment" : ""}`}>
                 <time dateTime={cell.date} className="month-calendar__number">{cell.day}</time>
-                {renderDayAdornment !== undefined && <span className="month-calendar__day-adornment" aria-hidden="true">{renderDayAdornment(cell.date)}</span>}
+                {hasAdornment && <span className="month-calendar__day-adornment" aria-hidden="true">{adornment}</span>}
               </span>
-              <span className="month-calendar__events" aria-hidden="true">{renderDay(cell.date)}</span>
+              {hasContent && <span className="month-calendar__events" aria-hidden="true">{content}</span>}
             </button>
           </td>
         })}

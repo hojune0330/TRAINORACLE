@@ -87,6 +87,8 @@ describe("plan schedule preview", () => {
   it("keeps the standard presentation by default for existing callers", () => {
     render(<PlanSchedulePreview startDate="2026-08-17" sessions={sessions} />)
 
+    expect(screen.getByText("9.5일 훈련 일정")).toBeVisible()
+    expect(screen.getByText("08/17 ~ 08/26")).toBeVisible()
     expect(screen.queryByRole("radiogroup", { name: "계획 일정 보기" })).not.toBeInTheDocument()
   })
 
@@ -237,7 +239,9 @@ describe("plan schedule preview", () => {
       const record = within(summary).getByRole("button", { name: "이 훈련 일지 쓰기" })
       expect(main).toBeVisible()
       expect(main.closest("details")).toBeNull()
-      expect(main.compareDocumentPosition(open) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
+      expect(open).toContainElement(main)
+      expect(open).toHaveClass("category-card")
+      expect(open.querySelector("button")).toBeNull()
       expect(open.compareDocumentPosition(record) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
       expect(main).toHaveTextContent(session === plain ? "5 × 1km" : "8분 × 2회")
       expect(main).not.toHaveTextContent("본운동 체감 노력 제안")

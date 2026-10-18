@@ -13,7 +13,7 @@ export function ViewSwitcher<T extends string>({ label, category, value, onValue
   readonly category: AppCategory
   readonly value: T
   readonly onValueChange: (value: T) => void
-  readonly options: readonly { readonly value: T; readonly label: string; readonly icon?: LucideIcon }[]
+  readonly options: readonly { readonly value: T; readonly label: string; readonly ariaLabel?: string; readonly icon?: LucideIcon }[]
   readonly className?: string
 }) {
   const groupId = useId()
@@ -25,7 +25,7 @@ export function ViewSwitcher<T extends string>({ label, category, value, onValue
     }}>
     {options.map(option => {
       const Icon = option.icon
-      return <RadioGroup.Item key={option.value} id={`${groupId}-${option.value}`} value={option.value} className="view-switcher__item">
+      return <RadioGroup.Item key={option.value} id={`${groupId}-${option.value}`} value={option.value} aria-label={option.ariaLabel} className="view-switcher__item">
         {Icon && <Icon size={18} aria-hidden="true" />}
         <span className="view-switcher__label">{option.label}</span>
         <span className="view-switcher__mark" aria-hidden="true"><RadioGroup.Indicator><Check size={16} /></RadioGroup.Indicator></span>

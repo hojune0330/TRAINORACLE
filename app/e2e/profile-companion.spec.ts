@@ -18,7 +18,7 @@ async function openProfile(page: Page) {
 test("preference questions, reactive helper and optional next topic retain answers at 375px", async ({ page }, info) => {
   await page.setViewportSize({ width: 375, height: 812 })
   await openProfile(page)
-  const helper = page.getByRole("button", { name: "마리의 답변 팁" })
+  const helper = page.getByRole("button", { name: "답변 팁 보기" })
   await expect.poll(() => helper.locator("img").evaluate(node => (node as HTMLImageElement).naturalWidth)).toBe(256)
   await helper.focus()
   await page.keyboard.press("Enter")
@@ -74,7 +74,7 @@ test("large text, missing pictures and app motion preference keep answers usable
     window.dispatchEvent(new StorageEvent("storage", { key: "trainoracle.calendar-reduced-motion.v1" }))
   })
   await openProfile(page)
-  await page.getByRole("button", { name: "마리의 답변 팁" }).click()
+  await page.getByRole("button", { name: "답변 팁 보기" }).click()
   await expect(page.getByText("정답은 없어요. 평소 내 모습에 가까운 답을 골라요.")).toBeVisible()
   await page.getByRole("button", { name: "내 훈련 방식 알아보기 · 질문 3개", exact: true }).click()
   const dialog = page.getByRole("dialog", { name: "계획 선호", exact: true })

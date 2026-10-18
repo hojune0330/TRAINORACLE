@@ -700,12 +700,48 @@
   margin-top: var(--space-4);
 }
 
+.plan-training-flow__tools {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.plan-training-flow__date-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-3);
+}
+
+.plan-training-flow__date-tools .plan-day-deck__today {
+  margin-left: 0;
+}
+
 .plan-day-deck__header {
   min-height: var(--app-touch-min);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.plan-day-deck__today {
+  min-width: var(--app-touch-min);
+  min-height: var(--app-touch-min);
+  margin-left: auto;
+  padding: var(--space-2);
+  border: var(--bw-line) solid var(--line);
+  border-radius: var(--r-action);
+  background: var(--surface);
+  color: var(--ink);
+  font: 600 var(--fs-body) / 1.5 var(--sans);
+  cursor: pointer;
+}
+
+.plan-day-deck__today:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
 }
 
 .plan-day-deck__header > span {
@@ -1114,7 +1150,7 @@
 }
 
 .plan-day-deck[data-prescription-calendar-view="list"] .plan-schedule-preview__sessions {
-  gap: 0;
+  gap: var(--space-3);
 }
 
 .plan-day-deck[data-prescription-calendar-view="list"] .plan-schedule-preview__sessions > section {
@@ -1227,6 +1263,11 @@
   margin-bottom: var(--space-2);
   padding-bottom: var(--space-2);
   border-bottom: var(--bw-line) solid var(--hair);
+}
+
+.plan-day-card__session > header[data-compact-meta="true"] {
+  justify-content: flex-start;
+  gap: var(--space-2) var(--space-3);
 }
 
 .plan-schedule-preview__slot {
@@ -4068,9 +4109,17 @@
 .plan-entry-link--secondary { color: var(--ink-2); }
 .plan-entry-link:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 .plan-session-role { display: inline-flex; align-items: center; gap: var(--space-1); color: var(--ink); font: 600 var(--fs-body) / 1.5 var(--sans); }
-.plan-session-open { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); width: 100%; min-height: var(--app-touch-min); padding: var(--space-3); margin-block: var(--space-2); border: var(--bw-line) solid var(--category-training); border-radius: var(--r-action); background: var(--category-training-wash); color: var(--category-training); font: 600 var(--fs-body) / 1.5 var(--sans); text-align: left; cursor: pointer; }
-.plan-session-open > svg { flex-shrink: 0; }
-.plan-session-open:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.plan-day-deck .plan-schedule-preview .plan-schedule-preview__sessions > .plan-day-card__session[data-navigation-card="true"] {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-2);
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.plan-day-card__session[data-navigation-card="true"] .category-card__description { display: grid; gap: var(--space-1); }
+.plan-day-card__session[data-navigation-card="true"] .category-card__description > small { font: inherit; }
+.plan-day-card__session[data-navigation-card="true"] .plan-session-content:empty { display: none; }
 .plan-session-record-action { width: 100%; }
 .plan-session-record-action .active-plan__journal-action { margin-top: var(--space-2); }
 .plan-intake #plan-intake-title:focus-visible,

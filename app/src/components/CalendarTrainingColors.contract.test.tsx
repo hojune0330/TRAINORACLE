@@ -86,4 +86,38 @@ describe("calendar colors are shared by every real plan and journal adapter", ()
     expect(actual).toHaveTextContent("일지 · 오후기본플라이오 포함")
     expect(view.container.querySelector('button[data-date="2026-09-30"]')).toHaveAccessibleName(/일지 1개.*오후 기본 플라이오 포함/)
   })
+
+  it("keeps every actual journal mark visible on record-rich days, including both time slots", () => {
+    const date = "2026-09-30"
+    const entries: JournalEntry[] = [
+      { id: "race-before", kind: "race", date, savedAt: date + "T01:00:00Z", syncState: "local", stage: "pre", record: "", rank: "", result: "", memo: "" },
+      { id: "race-after", kind: "race", date, savedAt: date + "T02:00:00Z", syncState: "local", stage: "post", record: "", rank: "", result: "", memo: "" },
+      ...(["AM", "PM"] as const).map(activitySlot => ({ id: activitySlot, kind: "post-session" as const, date,
+        savedAt: date + "T03:00:00Z", syncState: "local" as const, system: "base" as const,
+        title: "", distanceKm: "", durationMin: "", avgPace: "", rpe: 0, memo: "", activitySlot })),
+    ]
+    const view = render(<JournalMonthCalendar month={projectJournalArchive(entries).months[0]!} entries={entries} onMonthChange={vi.fn()} onOpenDay={vi.fn()} />)
+    const day = view.container.querySelector(`button[data-date='${date}']`)!
+    expect(day.querySelectorAll(".calendar-training-mark")).toHaveLength(4)
+    expect([...day.querySelectorAll(".calendar-training-mark__slot")].map(node => node.textContent)).toEqual(["오전", "오후"])
+    expect(day).toHaveAccessibleName(/경기 전.*경기 결과.*오전.*오후/)
+  })
+
+  it("shows the role guide only when actual training marks are in the visible date grid", () => {
+    const emptyMonth = { month: "2026-10", entryCount: 0, kindCounts: { postSession: 0, evening: 0, race: 0 },
+      metrics: { distanceKm: null, durationMin: null, moodAverage: null, painMax: null }, excludedRecordCount: 0, weeks: [] }
+    const entries: JournalEntry[] = [{ id: "adjacent-race", kind: "race", date: "2026-09-30",
+      savedAt: "2026-09-30T12:00:00Z", syncState: "local", stage: "pre", record: "", rank: "", result: "", memo: "" }]
+    const props = { onMonthChange: vi.fn(), onOpenDay: vi.fn() }
+    const view = render(<JournalMonthCalendar {...props} month={emptyMonth} entries={[]} />)
+    expect(screen.queryByText("훈련 색·종류 알아보기")).toBeNull()
+
+    view.rerender(<JournalMonthCalendar {...props} month={emptyMonth} entries={entries} />)
+    expect(colors(view.container)).toEqual(["race"])
+    expect(screen.getByText("훈련 색·종류 알아보기")).toBeVisible()
+
+    view.rerender(<JournalMonthCalendar {...props} month={{ ...emptyMonth, month: "2026-11" }} entries={entries} />)
+    expect(view.container.querySelector("button[data-date='2026-09-30']")).toBeNull()
+    expect(screen.queryByText("훈련 색·종류 알아보기")).toBeNull()
+  })
 })

@@ -188,7 +188,7 @@ it("keeps optional guide art separate from the direct answer and reading actions
   const { rerender } = render(<OracleProfileExperience {...props()} />)
   expect(screen.queryByRole("complementary")).toBeNull()
   const title = screen.getByRole("heading", { name: "나는 어떤 달리기를 좋아할까요?" })
-  const companion = screen.getByRole("button", { name: "마리의 답변 팁" })
+  const companion = screen.getByRole("button", { name: "답변 팁 보기" })
   expect(title).toBeVisible()
   expect(companion).toBeVisible()
   expect(title.compareDocumentPosition(companion) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
@@ -205,7 +205,7 @@ it("keeps optional guide art separate from the direct answer and reading actions
 it("hides decorative manager guidance during pending, failed and conflicting account reads", () => {
   const answers = { STRUCTURE_1: 5, STRUCTURE_2: 5, STRUCTURE_3: 5 } as const
   const view = render(<OracleProfileExperience {...props({ account: true, answers })} />)
-  expect(screen.getByRole("button", { name: "마리의 결과 안내" })).toBeVisible()
+  expect(screen.getByRole("button", { name: "결과 안내 보기" })).toBeVisible()
   for (const status of ["LOADING", "PENDING", "FAILED", "CONFLICT"] as const) {
     view.rerender(<OracleProfileExperience {...props({ account: true, answers, status })} />)
     expect(view.container.querySelector("img")).toBeNull()
@@ -217,7 +217,7 @@ it("keeps preference explanations and settings usable when the companion image f
   fireEvent.error(view.container.querySelector("img")!)
   expect(view.container.querySelector("img")).toBeNull()
   expect(screen.getByRole("heading", { name: "내가 고른 달리기 취향" })).toBeVisible()
-  expect(screen.getByRole("button", { name: "마리의 결과 안내" })).toBeVisible()
+  expect(screen.getByRole("button", { name: "결과 안내 보기" })).toBeVisible()
   openSettings()
   expect(dialog()).toBeVisible()
 })
@@ -244,6 +244,51 @@ it("shows the topic list before reading and returns to the same selected group",
   expect(within(openTopics()).getByRole("radio", { name: "경기 기록" })).toHaveAttribute("aria-checked", "true")
   expect(screen.getByRole("button", { name: selectedTopic.title })).toBeVisible()
   expect(screen.queryByText(`기존 글 본문 ${selectedTopic.id}`)).toBeNull()
+})
+it("starts next, previous and swiped topics at the focused article title", () => {
+  const p = props({ initialView: "library" })
+  render(<OracleProfileExperience {...p} />)
+  const topics = ORACLE_CONTENT_CATALOG.filter(item => item.group === "A")
+  fireEvent.click(screen.getByRole("button", { name: topics[0]!.title }))
+  const body = dialog().querySelector<HTMLElement>(".oracle-v2__reader-body")!
+  const expectStart = (index: number) => {
+    expect(body.scrollTop).toBe(0)
+    expect(within(dialog()).getByRole("heading", { name: topics[index]!.title })).toHaveFocus()
+  }
+  body.scrollTop = 420
+  fireEvent.click(within(dialog()).getByRole("button", { name: "다음 읽을거리" }))
+  expectStart(1)
+  body.scrollTop = 320
+  fireEvent.click(within(dialog()).getByRole("button", { name: "이전 읽을거리" }))
+  expectStart(0)
+  body.scrollTop = 260
+  const article = dialog().querySelector("article")!
+  fireEvent.touchStart(article, { touches: [{ clientX: 240, clientY: 180 }] })
+  fireEvent.touchEnd(article, { changedTouches: [{ clientX: 100, clientY: 185 }] })
+  expectStart(1)
+  expect(p.onDraft).not.toHaveBeenCalled()
+  expect(p.onCommit).not.toHaveBeenCalled()
+})
+it("leaves the current reading position and input focus intact on same-topic updates or vertical touch", () => {
+  const p = props({ initialView: "library", renderTopicControls: () => <input aria-label="합성 읽기 입력" /> })
+  const view = render(<OracleProfileExperience {...p} />)
+  const topic = ORACLE_CONTENT_CATALOG.find(item => item.group === "A")!
+  fireEvent.click(screen.getByRole("button", { name: topic.title }))
+  const body = dialog().querySelector<HTMLElement>(".oracle-v2__reader-body")!
+  const input = within(dialog()).getByRole("textbox", { name: "합성 읽기 입력" })
+  input.focus()
+  fireEvent.change(input, { target: { value: "작성 중" } })
+  body.scrollTop = 320
+  view.rerender(<OracleProfileExperience {...p} message="동일 글의 상태 갱신" />)
+  const article = dialog().querySelector("article")!
+  fireEvent.touchStart(article, { touches: [{ clientX: 200, clientY: 100 }] })
+  fireEvent.touchEnd(article, { changedTouches: [{ clientX: 130, clientY: 240 }] })
+  expect(within(dialog()).getByRole("heading", { name: topic.title })).toBeVisible()
+  expect(body.scrollTop).toBe(320)
+  expect(input).toHaveFocus()
+  expect(input).toHaveValue("작성 중")
+  expect(p.onDraft).not.toHaveBeenCalled()
+  expect(p.onCommit).not.toHaveBeenCalled()
 })
 it("prioritizes the first survey, exposes comparison and preserves manager actions in settings", () => {
   const p = props()
@@ -501,7 +546,7 @@ it("finishes one preference before offering an optional next topic and never cal
   const p = props()
   render(<OracleProfileExperience {...p} />)
   fireEvent.click(screen.getByRole("button", { name: "내 훈련 방식 알아보기 · 질문 3개" }))
-  expect(screen.queryByRole("button", { name: "마리의 답변 팁" })).toBeNull()
+  expect(screen.queryByRole("button", { name: "답변 팁 보기" })).toBeNull()
   for (let n = 0; n < 3; n++) fireEvent.click(within(dialog()).getByRole("button", { name: "매우 그래요" }))
   await waitFor(() => expect(within(dialog()).getByRole("button", { name: "기록 도전도 알아보기" })).toBeEnabled())
   expect(screen.getAllByRole("button", { name: "계획을 챙기는 여우 캐릭터 이야기" })).toHaveLength(1)
@@ -576,7 +621,7 @@ it("keeps failed saves inside the result dialog and prevents starting another pr
   await waitFor(() => expect(within(dialog()).getByRole("alert")).toHaveTextContent("입력한 답은 이 화면에 남아 있어요."))
   expect(within(dialog()).queryByText("계정에 저장됨")).toBeNull()
   expect(within(dialog()).getByRole("button", { name: "기록 도전도 알아보기" })).toBeDisabled()
-  expect(within(dialog()).queryByRole("button", { name: "마리의 결과 안내" })).toBeNull()
+  expect(within(dialog()).queryByRole("button", { name: "결과 안내 보기" })).toBeNull()
   expect(within(dialog()).getByRole("button", { name: "다시 저장" })).toBeEnabled()
 })
 

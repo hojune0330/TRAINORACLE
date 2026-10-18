@@ -13,24 +13,32 @@ afterEach(async () => {
 })
 
 describe("training content reader", () => {
-  it("does not erase a reader's early list scroll when the initial title focus runs", async () => {
-    render(<div className="app-scroll-region"><TrainingContent onBack={vi.fn()} /></div>)
-    const region = document.querySelector<HTMLElement>(".app-scroll-region")!
+  it.each(["screen", "reader"] as const)("does not erase early list scroll before the %s title focus", async backOwner => {
+    render(<div className="app-scroll-region">{backOwner === "reader"
+      ? <div className="oracle-v2__reader-body"><TrainingContent onBack={vi.fn()} backOwner={backOwner} /></div>
+      : <TrainingContent onBack={vi.fn()} />}</div>)
+    const region = document.querySelector<HTMLElement>(backOwner === "reader" ? ".oracle-v2__reader-body" : ".app-scroll-region")!
     region.scrollTop = 320
     await waitFor(() => expect(screen.getByRole("heading", { level: 1 })).toHaveFocus())
     expect(region.scrollTop).toBe(320)
   })
-  it("focuses the article title and returns to the originating topic and scroll", async () => {
-    render(<div className="app-scroll-region"><TrainingContent onBack={vi.fn()} /></div>)
+  it.each(["screen", "reader"] as const)("uses the %s scroll owner for article start and topic return", async backOwner => {
+    render(<div className="app-scroll-region">{backOwner === "reader"
+      ? <div className="oracle-v2__reader-body"><TrainingContent onBack={vi.fn()} backOwner={backOwner} /></div>
+      : <TrainingContent onBack={vi.fn()} />}</div>)
     await waitFor(() => expect(screen.getByRole("heading", { level: 1 })).toHaveFocus())
-    const region = document.querySelector<HTMLElement>(".app-scroll-region")!
+    const outer = document.querySelector<HTMLElement>(".app-scroll-region")!
+    const region = document.querySelector<HTMLElement>(backOwner === "reader" ? ".oracle-v2__reader-body" : ".app-scroll-region")!
+    if (backOwner === "reader") outer.scrollTop = 75
     const opener = screen.getByRole("button", { name: /크루즈 인터벌은 지속주와/u })
     region.scrollTop = 320; fireEvent.click(opener)
     await waitFor(() => expect(screen.getByRole("heading", { level: 1 })).toHaveFocus())
     expect(region.scrollTop).toBe(0)
+    if (backOwner === "reader") expect(outer.scrollTop).toBe(75)
     fireEvent.click(screen.getByRole("button", { name: "이전 화면" }))
     await waitFor(() => expect(screen.getByRole("button", { name: /크루즈 인터벌은 지속주와/u })).toHaveFocus())
     expect(region.scrollTop).toBe(320)
+    if (backOwner === "reader") expect(outer.scrollTop).toBe(75)
   })
   it("shows topics and source status first and keeps the reading boundary available on demand", () => {
     const { container } = render(<TrainingContent onBack={vi.fn()} />)
