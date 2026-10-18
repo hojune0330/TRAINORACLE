@@ -1,0 +1,114 @@
+{
+  "id": "hooded-lamp",
+  "generator": "Tripo Studio H3.1 text-to-model",
+  "taskId": "91a343ee-bd3a-45e5-bdb5-492ccc430292",
+  "generationCreditsReportedByOperator": 55,
+  "localProcessingCredits": 0,
+  "source": {
+    "file": "hooded-lamp-source.glb",
+    "bytes": 64366652,
+    "sha256": "9e28f9192487b0a9adc689148e6697202536f44d0d3a7a6079bb2e9abc4000b4",
+    "meshes": 1,
+    "triangles": 1978748,
+    "materials": [
+      "tripo_mat_f39cd058-a6cd-4f29-a675-5ccb81e6f804"
+    ],
+    "bounds": {
+      "min": [
+        -0.3167419731616974,
+        -0.2788391411304474,
+        0.0
+      ],
+      "max": [
+        0.3166504204273224,
+        0.2790222465991974,
+        0.97979736328125
+      ]
+    }
+  },
+  "runtime": {
+    "file": "hooded-lamp.glb",
+    "bytes": 615500,
+    "sha256": "91180860c49230e2eb00798e44e56f2eeaab8d15640888a54dfe65469673ff3d",
+    "triangles": 5324,
+    "textureMaximum": 512,
+    "images": [
+      {
+        "name": "hooded-lamp-basecolor-mobile",
+        "sourceSize": [
+          512,
+          512
+        ],
+        "runtimeSize": [
+          512,
+          512
+        ]
+      }
+    ]
+  },
+  "processing": {
+    "tool": "4.5.14 LTS",
+    "targetTriangles": 4800,
+    "decimation": "Voxel reconstruction + collapse + 512px source-color bake",
+    "pivot": "source XY center, bottom Z=0; normalized height=2",
+    "frontYawDegrees": 0,
+    "sourcePreserved": true,
+    "localRefinements": [
+      "Blender-authored opaque rear half-cylinder shield and warm forward lens; original Tripo shade was front/back symmetric"
+    ]
+  },
+  "sprites": {
+    "size": [
+      512,
+      512
+    ],
+    "transparent": true,
+    "fixedCamera": [
+      0.0,
+      -6.0,
+      4.679999828338623
+    ],
+    "target": [
+      0.0,
+      0.0,
+      1.0800000429153442
+    ],
+    "orthoScale": 2.9000000953674316,
+    "directions": [
+      {
+        "direction": "south",
+        "yawDegreesAfterCanonicalization": 0,
+        "file": "hooded-lamp-south.png",
+        "bytes": 152192,
+        "sha256": "271ddb1454633fbb7dd623c7f5793f07d518ecf18e7664c29f31415333f6cc4c"
+      },
+      {
+        "direction": "east",
+        "yawDegreesAfterCanonicalization": 90,
+        "file": "hooded-lamp-east.png",
+        "bytes": 145456,
+        "sha256": "66d11347d83576e1b7ab8279155ced1dd5d7a256a3b7b49c2b5d8b0e4277b0f5"
+      },
+      {
+        "direction": "north",
+        "yawDegreesAfterCanonicalization": 180,
+        "file": "hooded-lamp-north.png",
+        "bytes": 149424,
+        "sha256": "48894370bbc78bd58cd669caf21fe8265d00368db91554c558c0eb6175f26086"
+      },
+      {
+        "direction": "west",
+        "yawDegreesAfterCanonicalization": 270,
+        "file": "hooded-lamp-west.png",
+        "bytes": 141890,
+        "sha256": "e6f251f1875681508193d9c1e8318e2cbf2af17201112784d44e20729a4c1f3b"
+      }
+    ],
+    "orientationVerification": "Front lens and closed rear shield visually distinguish south and north. Side views remain paired with the game direction arrow and exact lit-cell highlight."
+  },
+  "acceptance": {
+    "date": "2026-10-18",
+    "status": "VISUALLY_REVIEWED_FOR_RUNTIME_INTEGRATION",
+    "scope": "Root and asset worker inspected the transparent render; browser integration and deployment are separate checks."
+  }
+}

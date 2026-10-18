@@ -101,8 +101,8 @@ function unlocksBetween(before: MinigameProgress, after: MinigameProgress): stri
   return out
 }
 
-export function TreadmillGame({ onBack, backLabel = "더보기로 돌아가기" }: { readonly onBack: () => void; readonly backLabel?: string }) {
-  return <GameLounge onBack={onBack} backLabel={backLabel} renderTour={(back, cityId, onDefense) => <SoloTreadmillGame onBack={back} backLabel="게임 소개로" initialCityId={cityId} onDefense={onDefense} />} />
+export function TreadmillGame({ onBack, backLabel = "더보기로 돌아가기", onJournalSaved }: { readonly onBack: () => void; readonly backLabel?: string; readonly onJournalSaved?: ((entry: import("../domain/journal-store").JournalEntry) => void) | undefined }) {
+  return <GameLounge onBack={onBack} backLabel={backLabel} onJournalSaved={onJournalSaved} renderTour={(back, cityId, onDefense) => <SoloTreadmillGame onBack={back} backLabel="게임 소개로" initialCityId={cityId} onDefense={onDefense} />} />
 }
 
 function SoloTreadmillGame({ onBack, backLabel, initialCityId, onDefense }: { readonly onBack: () => void; readonly backLabel: string; readonly initialCityId?: string; readonly onDefense?: () => void }) {

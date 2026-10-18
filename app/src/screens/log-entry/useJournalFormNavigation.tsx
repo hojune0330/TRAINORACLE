@@ -10,7 +10,7 @@ import "./journal-form-navigation.css"
 type Draft = ReturnType<typeof useFormInputDraft>
 
 /** The form owns validation and persistence. Navigation never invents a draft save. */
-export function useJournalFormNavigation({ draft, onBack, onExit, onSave, flowEnabled, onStepBack, busy }: {
+export function useJournalFormNavigation({ draft, onBack, onExit, onSave, flowEnabled, onStepBack, busy, rootBackEnabled = false }: {
   draft: Draft
   onBack?: (() => void) | undefined
   onExit?: (() => void) | undefined
@@ -18,6 +18,7 @@ export function useJournalFormNavigation({ draft, onBack, onExit, onSave, flowEn
   flowEnabled: boolean
   onStepBack: () => void
   busy: boolean
+  rootBackEnabled?: boolean | undefined
 }) {
   const [exitTarget, setExitTarget] = React.useState<{ action: () => void } | null>(null)
   const [departure, setDeparture] = React.useState<{ action: () => void } | null>(null)
@@ -27,7 +28,8 @@ export function useJournalFormNavigation({ draft, onBack, onExit, onSave, flowEn
   // A safely buffered conflict may be left even though saving is unavailable.
   // Scope/lifetime authority and permission to save are different checks.
   const current = () => alive.current && scope.current === localJournalScopeGeneration()
-  useTaskFlowBack({ enabled: flowEnabled && departure === null, busy, onBack: onStepBack })
+  useTaskFlowBack({ enabled: (flowEnabled || rootBackEnabled) && departure === null, busy,
+    onBack: () => flowEnabled ? onStepBack() : request(onExit ?? onBack) })
   // Drain the form's asynchronous native Back before returning to its origin.
   React.useEffect(() => {
     if (departure === null) return

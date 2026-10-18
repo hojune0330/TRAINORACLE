@@ -20,8 +20,11 @@ import { useSavedRun } from './useSavedRun'
 import { useTaskFlowBack } from '../../hooks/useTaskFlowBack'
 import './game-lounge.css'
 
+const SleepInnLoungeEntry = React.lazy(() => import('../sleep-inn/SleepInnEntry').then(module => ({ default: module.SleepInnLoungeEntry })))
+
 type Route = 'lounge' | 'tour' | 'solo' | 'friends' | 'defense' | 'legacy'
-type Props = { onBack: () => void; backLabel: string; renderTour: (back: () => void, cityId?:string, onDefense?:()=>void) => React.ReactNode }
+type Props = { onBack: () => void; backLabel: string; renderTour: (back: () => void, cityId?:string, onDefense?:()=>void) => React.ReactNode;
+  onJournalSaved?: ((entry: import('../../domain/journal-store').JournalEntry) => void) | undefined }
 
 /** Existing licensed/generated game art, with text always carrying the destination. */
 function GameArt({ id, large = false }: { id: LoungeGameId; large?: boolean }) {
@@ -32,7 +35,7 @@ function GameArt({ id, large = false }: { id: LoungeGameId; large?: boolean }) {
   </span>
 }
 
-export function GameLounge({ onBack, backLabel, renderTour }: Props) {
+export function GameLounge({ onBack, backLabel, renderTour, onJournalSaved }: Props) {
   const [route, setRoute] = React.useState<Route>(() => arenaInvitation() ? 'friends' : 'lounge')
   const [selected, setSelected] = React.useState<LoungeGameId | null>(null)
   const [play, setPlay] = React.useState<LoungePlay>('solo')
@@ -120,6 +123,7 @@ export function GameLounge({ onBack, backLabel, renderTour }: Props) {
           {tdCheckpoints.map(checkpoint=><button key={getTDMap(checkpoint.state).id} onClick={() => {setTdMap(getTDMap(checkpoint.state).id);setSelected('defense');setTdEntry('resume');setRoute('defense')}}><GameArt id="defense"/><span><strong>타워 디펜스 · {getTDMap(checkpoint.state).name}</strong><small>{checkpoint.state.wave+1}웨이브 준비 · 기지 체력 {checkpoint.state.lives}</small></span><ChevronRight size={18}/></button>)}
         </section>}
         <div className="game-lounge__section-heading"><h2>어떤 게임을 할까요?</h2></div>
+        {filter !== 'friends' && (!query.trim() || '꿈손님 여관 수면 일지 방 꾸미기'.includes(query.trim())) && <React.Suspense fallback={null}><SleepInnLoungeEntry onJournalSaved={onJournalSaved} /></React.Suspense>}
         <label className="game-lounge__search"><span className="sr-only">게임 검색</span><input type="search" placeholder="게임 이름이나 종류로 찾기" value={query} onChange={e => setQuery(e.target.value)} /></label>
         <div className="game-lounge__filters" role="group" aria-label="참가 방식으로 게임 찾기">{(['all', 'solo', 'friends'] as const).map(value => <button key={value} aria-pressed={filter === value} onClick={() => setFilter(value)}>{value === 'all' ? '전체' : value === 'solo' ? '혼자' : '친구와'}</button>)}</div>
         <div className="game-lounge__catalog">{games.map(item => <button key={item.id} className="game-lounge__game" data-game-open={item.id} onClick={e => open(item.id, e.currentTarget)} aria-label={`${item.name} 게임 소개`}>

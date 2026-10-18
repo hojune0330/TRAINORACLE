@@ -17,6 +17,9 @@ export interface LogEntryProps {
   readonly targetDate?: string
   readonly initialEntry?: JournalEntry
   readonly initialBodyPartId?: string | undefined
+  readonly initialSection?: "sleep" | undefined
+  readonly embedded?: boolean | undefined
+  readonly onNavigationReady?: ((exit: (() => void) | null) => void) | undefined
   readonly plannedSessionLink?: PlannedSessionLink
   readonly onContinueDetailed?: (entry: JournalEntry) => void
   readonly onSaved?: (entry: JournalEntry, reviewMessage?: string, storageMessage?: string) => void
@@ -24,7 +27,7 @@ export interface LogEntryProps {
   readonly onOpenImport?: () => void
 }
 
-export function LogEntry({ entryType = "choose", onBack, onExit, onDone, onSaved, onOpenImport, onContinueDetailed, targetDate, initialEntry, initialBodyPartId, plannedSessionLink }: LogEntryProps) {
+export function LogEntry({ entryType = "choose", onBack, onExit, onDone, onSaved, onOpenImport, onContinueDetailed, targetDate, initialEntry, initialBodyPartId, initialSection, embedded, onNavigationReady, plannedSessionLink }: LogEntryProps) {
   if (entryType === "choose") {
     return <EntryChooser onBack={onBack} onPick={(picked) => onDone?.(picked)} onOpenImport={onOpenImport} targetDate={targetDate} />
   }
@@ -60,7 +63,7 @@ export function LogEntry({ entryType = "choose", onBack, onExit, onDone, onSaved
     />
   )
   if (entryType === "post-session") return <PostSessionForm key={draftKey} onBack={onBack} onExit={onExit} onDone={handleSaved} targetDate={targetDate} initialEntry={initialEntry} plannedSessionLink={plannedSessionLink} />
-  if (entryType === "evening") return <EveningCheckin key={draftKey} onBack={onBack} onExit={onExit} onDone={handleSaved} targetDate={targetDate} initialEntry={initialEntry} initialBodyPartId={initialBodyPartId} />
+  if (entryType === "evening") return <EveningCheckin key={draftKey} onBack={onBack} onExit={onExit} onDone={handleSaved} targetDate={targetDate} initialEntry={initialEntry} initialBodyPartId={initialBodyPartId} initialSection={initialSection} embedded={embedded} onNavigationReady={onNavigationReady} />
   if (entryType === "race") return <RaceForm key={draftKey} onBack={onBack} onExit={onExit} onDone={handleSaved} targetDate={targetDate} initialEntry={initialEntry} />
   return null
 }

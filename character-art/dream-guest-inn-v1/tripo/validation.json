@@ -1,0 +1,92 @@
+[
+  {
+    "id": "hooded-lamp",
+    "triangles": 5324,
+    "glbBytes": 615500,
+    "renders": [
+      {
+        "file": "hooded-lamp-south.png",
+        "bytes": 152192,
+        "alphaBounds": [
+          141,
+          115,
+          371,
+          466
+        ],
+        "transparent": true
+      },
+      {
+        "file": "hooded-lamp-east.png",
+        "bytes": 145456,
+        "alphaBounds": [
+          155,
+          106,
+          357,
+          465
+        ],
+        "transparent": true
+      },
+      {
+        "file": "hooded-lamp-north.png",
+        "bytes": 149424,
+        "alphaBounds": [
+          140,
+          115,
+          371,
+          466
+        ],
+        "transparent": true
+      },
+      {
+        "file": "hooded-lamp-west.png",
+        "bytes": 141890,
+        "alphaBounds": [
+          154,
+          107,
+          357,
+          466
+        ],
+        "transparent": true
+      }
+    ],
+    "sourceHashMatches": true
+  },
+  {
+    "id": "long-warm-stone",
+    "triangles": 4800,
+    "glbBytes": 440172,
+    "renders": [
+      {
+        "file": "long-warm-stone-south.png",
+        "bytes": 141012,
+        "alphaBounds": [
+          45,
+          138,
+          467,
+          360
+        ],
+        "transparent": true
+      }
+    ],
+    "sourceHashMatches": true
+  },
+  {
+    "id": "sealed-letter",
+    "triangles": 4800,
+    "glbBytes": 454536,
+    "renders": [
+      {
+        "file": "sealed-letter-south.png",
+        "bytes": 179186,
+        "alphaBounds": [
+          51,
+          107,
+          461,
+          434
+        ],
+        "transparent": true
+      }
+    ],
+    "sourceHashMatches": true
+  }
+]

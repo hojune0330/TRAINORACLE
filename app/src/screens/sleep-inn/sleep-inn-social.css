@@ -1,0 +1,38 @@
+.inn-social { margin: 20px 0; padding: 18px 14px; border: 1px solid #d9ddce; border-radius: 20px; background: #fffdf7; color: #3f4a3e; }
+.inn-social h2 { font-size: 20px; line-height: 1.4; margin: 0 0 8px; letter-spacing: -.04em; }
+.inn-social p { font-size: 13px; line-height: 1.65; word-break: keep-all; }
+.inn-social .inn-social-note { color: #6b7167; font-size: 12px; }
+.inn-social label { display: grid; gap: 7px; font-size: 13px; font-weight: 700; }
+.inn-social textarea { box-sizing: border-box; width: 100%; min-width: 0; border: 1px solid #bbc8b5; border-radius: 12px; padding: 12px; color: #3c4f41; background: #fffefa; font-size: 16px; line-height: 1.5; resize: vertical; overflow-wrap: anywhere; }
+.inn-social button, .inn-social summary { min-height: 44px; touch-action: manipulation; }
+.inn-social button:focus-visible, .inn-social textarea:focus-visible, .inn-social summary:focus-visible { outline: 3px solid #4c8c78; outline-offset: 2px; }
+.inn-social-share { border-top: 1px solid #e3e6d9; border-bottom: 1px solid #e3e6d9; margin: 16px 0; padding: 4px 0; }
+.inn-social-share summary { cursor: pointer; padding: 12px 4px; font-size: 14px; font-weight: 700; }
+.inn-social-card-list, .inn-social-stamps, .inn-social-actions { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+.inn-social-card-list button, .inn-social-stamps button, .inn-social-actions button { padding: 10px 12px; border: 1px solid #bfcdb6; border-radius: 12px; background: #f3f7eb; color: #425a43; font-size: 13px; font-weight: 650; }
+.inn-social button[aria-pressed=true] { color: #194d40; border-color: #3e8169; background: #dceee1; box-shadow: inset 0 0 0 1px #3e8169; }
+.inn-social-import { margin: 16px 0 10px; }
+.inn-social-preview, .inn-social-visit { margin-top: 16px; padding-top: 8px; border-top: 1px solid #d9ddce; }
+.inn-social-room { margin: 12px 0; padding: 12px 0 10px; border-radius: 16px; border: 1px solid #d8caad; background: #f7f0df; }
+.inn-social-room figcaption { padding: 0 10px; font-size: 13px; font-weight: 800; line-height: 1.5; }
+.inn-social-room figcaption small { display: block; margin-top: 4px; font-size: 11px; font-weight: 500; color: #6d705f; }
+.inn-social-room__scene { position: relative; width: 100%; margin: 8px 0 12px; aspect-ratio: 1; isolation: isolate; }
+.inn-social-room__background { display: block; width: 100%; height: 100%; object-fit: contain; mix-blend-mode: multiply; pointer-events: none; user-select: none; }
+.inn-social-room__cell { position: absolute; width: 20%; height: 18%; transform: translate(-50%, -75%); min-width: 0; padding: 0; background: transparent; pointer-events: none; }
+.inn-social-room__floor { position: absolute; bottom: 1%; left: 1%; width: 98%; height: 40%; border-radius: 5px; border: 1px solid #bfa981a3; background: #f6e3bf9c; transform: skewY(-4deg); }
+.inn-social-room__cell--wet .inn-social-room__floor { background: repeating-linear-gradient(-7deg,#a3d2e1b3 0 4px,#84b7c999 5px 6px,#a3d2e1b3 8px 12px); border-color: #6e9eb3; }
+.inn-social-room__cell--lit .inn-social-room__floor { background: #ffe2a2ad; border-color: #be9d53; }
+.inn-social-room__cell--joined .inn-social-room__floor { border-top: 2px solid #a98b5d; border-bottom: 2px solid #a98b5d; background: #d8c7a885; border-radius: 0; }
+.inn-social-room__sprite { display: block; position: absolute; bottom: 2%; left: 7.5%; width: 85%; height: auto; aspect-ratio: 1; background-size: 300% 200%; background-repeat: no-repeat; pointer-events: none; }
+.inn-social-room__sprite--single { object-fit: contain; background: none; }
+.inn-social-room__sprite--long { width: 230%; max-width: none; left: -5%; bottom: -48%; }
+.inn-social-room__name { position: absolute; display: flex; align-items: center; gap: 2px; bottom: -16px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 10px; line-height: 1.4; padding: 2px 3px; border-radius: 5px; background: #fff8eaf5; border: 1px solid #c9ba9c; color: #4c513e; }
+.inn-social-room__cell--back .inn-social-room__name { top: -18px; bottom: auto; }
+.inn-social-room__coordinate { font-size: 9px; color: #667259; padding-right: 2px; border-right: 1px solid #c4b99d; }
+.inn-social-room__direction { position: absolute; top: -3px; right: -2px; font-size: 16px; line-height: 1; font-weight: 800; padding: 2px 3px; color: #765220; border: 1px solid #c7a14f; border-radius: 50%; background: #fff1c7; }
+.inn-social-room > p { margin: 0; padding: 0 10px; text-align: center; color: #6d644d; font-size: 12px; }
+.inn-social-export { margin: 14px 0 4px; border-radius: 14px; padding: 10px; background: #edf3e8; }
+.inn-social-export textarea { font-size: 12px; font-weight: 400; }
+.inn-social-stamp { padding: 18px 12px; text-align: center; color: #3d6d50; border: 2px solid #8baf8c; border-radius: 18px; font-size: 16px !important; font-weight: 750; background: #edf4e4; }
+.inn-social-error { color: #8c4133; background: #fff0e5; padding: 12px; border-radius: 12px; }
+@media (prefers-reduced-motion: reduce) { .inn-social * { transition: none !important; animation: none !important; } }

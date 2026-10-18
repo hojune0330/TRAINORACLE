@@ -1003,6 +1003,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
       onBack,
       onAddEntry: (date: string) => runViewTransition("push", () => setV(s => viewForJournalDraft(s, date))),
       onEditEntry: (entry: JournalEntry) => runViewTransition("push", () => setV(s => viewForJournalDraft(s, entry.date, entry))),
+      onJournalSaved: confirmSavedJournalEffects,
     }
     return withReader ? (
       <DeferredMobileScreens.JournalDayReader
@@ -1075,7 +1076,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
       />
     )
   } else if (v.tab === "home" && utilityView === "minigame") {
-    screen = <DeferredMobileScreens.TreadmillGame backLabel={utilityOrigin === "home" ? "홈으로 돌아가기" : "더보기로 돌아가기"} onBack={() => runViewTransition("pop", () => setUtilityView(utilityOrigin === "home" ? null : "more"))} />
+    screen = <DeferredMobileScreens.TreadmillGame backLabel={utilityOrigin === "home" ? "홈으로 돌아가기" : "더보기로 돌아가기"} onBack={() => runViewTransition("pop", () => setUtilityView(utilityOrigin === "home" ? null : "more"))} onJournalSaved={confirmSavedJournalEffects} />
   } else if (v.tab === "home" && utilityView === "content") {
     screen = <DeferredMobileScreens.TrainingContent onBack={() => runViewTransition("pop", () => {
       const origin = trainingContentOrigin.current

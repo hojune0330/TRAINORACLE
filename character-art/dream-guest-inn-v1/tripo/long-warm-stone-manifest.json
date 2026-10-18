@@ -1,0 +1,91 @@
+{
+  "id": "long-warm-stone",
+  "generator": "Tripo Studio H3.1 text-to-model",
+  "taskId": "3063d6ee-a1c5-4c39-8748-da0f2eec16eb",
+  "generationCreditsReportedByOperator": 55,
+  "localProcessingCredits": 0,
+  "source": {
+    "file": "long-warm-stone-source.glb",
+    "bytes": 66647584,
+    "sha256": "af621b61daef9546e23d7267058e06146b36ea58244b9b04a1be0dd7bfa1aa42",
+    "meshes": 1,
+    "triangles": 1956030,
+    "materials": [
+      "tripo_mat_cf58ea66-d973-4c77-a310-d94909a88a68"
+    ],
+    "bounds": {
+      "min": [
+        -0.4898682236671448,
+        -0.3163147568702698,
+        0.0
+      ],
+      "max": [
+        0.4898377060890198,
+        0.3161926865577698,
+        0.406463623046875
+      ]
+    }
+  },
+  "runtime": {
+    "file": "long-warm-stone.glb",
+    "bytes": 440172,
+    "sha256": "bee3ff244e067ab54a9ea96bc7bd97dd98a54411642b9afb35433d3b3b117c8f",
+    "triangles": 4800,
+    "textureMaximum": 512,
+    "images": [
+      {
+        "name": "long-warm-stone-basecolor-mobile",
+        "sourceSize": [
+          512,
+          512
+        ],
+        "runtimeSize": [
+          512,
+          512
+        ]
+      }
+    ]
+  },
+  "processing": {
+    "tool": "4.5.14 LTS",
+    "targetTriangles": 4800,
+    "decimation": "Voxel reconstruction + collapse + 512px source-color bake",
+    "pivot": "source XY center, bottom Z=0; normalized height=2",
+    "frontYawDegrees": 0,
+    "sourcePreserved": true,
+    "localRefinements": []
+  },
+  "sprites": {
+    "size": [
+      512,
+      512
+    ],
+    "transparent": true,
+    "fixedCamera": [
+      0.0,
+      -6.0,
+      4.679999828338623
+    ],
+    "target": [
+      0.0,
+      0.0,
+      1.0800000429153442
+    ],
+    "orthoScale": 5.881172180175781,
+    "directions": [
+      {
+        "direction": "south",
+        "yawDegreesAfterCanonicalization": 0,
+        "file": "long-warm-stone-south.png",
+        "bytes": 141012,
+        "sha256": "8321d36af8f41476e35e21b5925c79a3b1b0caedcaaeb3ac06a26197bf5cc5b6"
+      }
+    ],
+    "orientationVerification": "Requires visual check of the generated hood before runtime acceptance"
+  },
+  "acceptance": {
+    "date": "2026-10-18",
+    "status": "VISUALLY_REVIEWED_FOR_RUNTIME_INTEGRATION",
+    "scope": "Root and asset worker inspected the transparent render; browser integration and deployment are separate checks."
+  }
+}

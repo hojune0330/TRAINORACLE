@@ -14,6 +14,7 @@ type JournalDayReaderProps = {
   readonly backDestination?: "home" | "journal" | "rewards"
   readonly onAddEntry?: (date: string) => void
   readonly onEditEntry?: (entry: JournalEntry) => void
+  readonly onJournalSaved?: ((entry: JournalEntry) => void) | undefined
   readonly initialEntryId?: string
 }
 
@@ -25,6 +26,7 @@ export function JournalDayReader({
   backDestination,
   onAddEntry,
   onEditEntry,
+  onJournalSaved,
   initialEntryId,
 }: JournalDayReaderProps) {
   const reader = React.useMemo(
@@ -74,6 +76,7 @@ export function JournalDayReader({
         onBack={onBack}
         onAddEntry={onAddEntry}
         onEditEntry={onEditEntry}
+        onJournalSaved={onJournalSaved}
         readerControls={controls}
       />
     </div>

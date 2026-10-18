@@ -1,0 +1,5 @@
+# Original high-poly exports remain local; task IDs and SHA-256 are in manifests.
+sources/*.glb
+sources/*.blend
+review/
+tools/inspect-remesh.py

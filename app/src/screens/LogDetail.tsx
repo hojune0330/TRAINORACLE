@@ -30,6 +30,8 @@ import { DecoratedJournalPageFrame } from "../components/DecoratedJournalPageFra
 import { useJournalDecorationSnapshot } from "./journal/JournalDecorationPreview"
 import "../styles/journal-detail-reader.css"
 
+const SleepInnEntry = React.lazy(() => import("./sleep-inn/SleepInnEntry").then(module => ({ default: module.SleepInnEntry })))
+
 export type LogDetailVariant = "A" | "B"
 
 export type LogDetailProps = {
@@ -38,6 +40,7 @@ export type LogDetailProps = {
   readonly onBack?: () => void
   readonly onAddEntry?: (date: string) => void
   readonly onEditEntry?: (entry: JournalEntry) => void
+  readonly onJournalSaved?: ((entry: JournalEntry) => void) | undefined
   readonly readerControls?: React.ReactNode
   readonly pageTopRef?: React.RefObject<HTMLDivElement>
   readonly initialEntryId?: string
@@ -226,9 +229,10 @@ function ReadOnlyJournalFrame({ date, children }: React.ComponentProps<typeof Jo
   return state ? <DecoratedJournalPageFrame date={date} state={state}>{children}</DecoratedJournalPageFrame> : <>{children}</>
 }
 
-function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControls, pageTopRef, initialEntryId, decorationStudio, readOnly = false, entries: suppliedEntries }: LogDetailProps) {
+function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, onJournalSaved, readerControls, pageTopRef, initialEntryId, decorationStudio, readOnly = false, entries: suppliedEntries }: LogDetailProps) {
   const PageFrame = readOnly ? ReadOnlyJournalFrame : JournalDecorationSurface
   const [rev, setRev] = React.useState(0)
+  const [sleepInnOpen, setSleepInnOpen] = React.useState(false)
   // 방금 지운 것 — 되돌리기 버튼을 그 자리에서 띄우기 위해 들고 있는다.
   // 휴지통(30일)에 남아 있으므로 이 상태가 사라져도 복구는 가능하다.
   const [justDeleted, setJustDeleted] = React.useState<
@@ -341,6 +345,11 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, readerControl
 
   return (
     <div className={`journal-detail-page${decorationStudio ? " paper-grid" : " journal-detail-page--reader"}`}>
+      {!readOnly && !decorationStudio && <button type="button" className="quick-log__secondary" style={{ minHeight: 44 }} onClick={() => setSleepInnOpen(true)}>꿈손님 여관 열기</button>}
+      {sleepInnOpen && <React.Suspense fallback={<p role="status">여관을 여는 중이에요.</p>}>
+        <SleepInnEntry key={date} date={date} entryId={entries.find(entry => entry.id === initialEntryId && entry.kind === "evening")?.id}
+          onBack={() => { setSleepInnOpen(false); setRev(value => value + 1) }} onJournalSaved={entry => { onJournalSaved?.(entry); setRev(value => value + 1) }} />
+      </React.Suspense>}
       {!decorationStudio && (readerControls === undefined ? <TopBar2 onBack={onBack}>일지</TopBar2> : readerControls)}
       <PageFrame key={date} date={date} hasEntries={entries.length > 0} pageTopRef={pageTopRef} initiallyOpen={decorationStudio !== undefined} onDone={decorationStudio?.onDone} previewMonth={decorationStudio?.previewMonth} materialsFooter={decorationStudio?.materialsFooter}>
 

@@ -31,6 +31,8 @@ import { useJournalFormNavigation } from "./useJournalFormNavigation"
 import "./EveningCheckin.css"
 import "../../styles/category-cards.css"
 
+const SleepInnEntry = React.lazy(() => import("../sleep-inn/SleepInnEntry").then(module => ({ default: module.SleepInnEntry })))
+
 const MOOD_LABELS = ["흐림", "무덤덤", "보통", "좋음", "최고"] as const
 const SLEEP_QUALITY_LABELS = ["최악", "나쁨", "보통", "좋음", "최고"] as const
 const validOptionalMeasurement = (value: string) => value.trim() === "" || (/^(?:\d+(?:\.\d+)?|\.\d+)$/u.test(value.trim()) && Number.isFinite(Number(value)) && Number(value) > 0)
@@ -54,7 +56,7 @@ export function EveningCheckin(props: EntryFormProps) {
   </FormInputDraftBoundary></JournalWritingDecorationPreview>
 }
 
-function EveningCheckinEditor({ onBack, onExit, onDone, targetDate, initialEntry, initialBodyPartId }: EntryFormProps) {
+function EveningCheckinEditor({ onBack, onExit, onDone, targetDate, initialEntry, initialBodyPartId, initialSection, embedded, onNavigationReady }: EntryFormProps) {
   const recovered = useRecoveredFormInput("evening")
   const input = recovered?.input
   const initial = initialEntry?.kind === "evening" ? initialEntry : undefined
@@ -67,7 +69,7 @@ function EveningCheckinEditor({ onBack, onExit, onDone, targetDate, initialEntry
   const finalization = useFormFinalization(entryId, accountEnabled, lastSavedAt)
   const entryDate = initial?.date ?? targetDate ?? todayISO()
   const [flow, setFlow] = React.useState<EveningFlow>(() => ({
-    location: { step: initial !== undefined || recovered !== null ? "review" : initialBodyPartId !== undefined ? "condition" : "choose", editGroup: null }, history: [],
+    location: { step: initialSection ?? (initial !== undefined || recovered !== null ? "review" : initialBodyPartId !== undefined ? "condition" : "choose"), editGroup: null }, history: [],
   }))
   const { step, editGroup } = flow.location
   const [sleep, setSleep] = React.useState(() => input?.sleep ?? initial?.sleepH ?? 0)
@@ -92,6 +94,7 @@ function EveningCheckinEditor({ onBack, onExit, onDone, targetDate, initialEntry
   const [saveError, setSaveError] = React.useState(false)
   const [emptyNotice, setEmptyNotice] = React.useState(false)
   const [accountNotice, setAccountNotice] = React.useState<string | null>(null)
+  const [sleepInnOpen, setSleepInnOpen] = React.useState(false)
   const note = usePurposeScopedMemo(input?.memo ?? initial?.note ?? "", input ? input.purpose ?? undefined : initial?.memoPurpose)
   const draft = useFormInputDraft({ kind: "evening", sleep, quality, mood, painParts, ...(bodyPartMetadata ? { bodyPartMetadata } : {}), weight, hr,
     memo: note.text, purpose: note.purpose ?? null }, entryId, true, lastSavedAt.current, sleepInputError)
@@ -154,7 +157,11 @@ function EveningCheckinEditor({ onBack, onExit, onDone, targetDate, initialEntry
     if (!sleepInputError && step !== "review") navigateTo({ step: "review", editGroup: null })
     void persist()
   },
-    flowEnabled: flow.history.length > 0, busy: saving, onStepBack: goBackFlow })
+    flowEnabled: flow.history.length > 0, busy: saving, onStepBack: goBackFlow, rootBackEnabled: embedded })
+  React.useLayoutEffect(() => {
+    onNavigationReady?.(navigation.exit)
+    return () => onNavigationReady?.(null)
+  }, [onNavigationReady, navigation.exit])
   React.useEffect(() => {
     if (step === "memo" && note.purposeError !== null) note.privateOptionRef.current?.focus()
   }, [step, note.purposeError, note.privateOptionRef])
@@ -279,6 +286,14 @@ function EveningCheckinEditor({ onBack, onExit, onDone, targetDate, initialEntry
     <div className="evening-checkin" style={{ paddingBottom: 100 }} aria-busy={saving}>
       <fieldset disabled={saving} style={{ border: 0, margin: 0, padding: 0, minWidth: 0 }}>
       <TopBar onBack={flow.history.length > 0 ? goBackFlow : navigation.back} onExit={navigation.exit}>컨디션·메모</TopBar>
+      {!embedded && <button type="button" className="quick-log__secondary" style={{ minHeight: 44 }} onClick={() => setSleepInnOpen(true)}>
+        <Moon size={18} aria-hidden="true" /> 꿈손님 여관 열기
+      </button>}
+      {sleepInnOpen && <React.Suspense fallback={<p role="status">여관을 여는 중이에요.</p>}>
+        <SleepInnEntry date={entryDate} draft={{ date: entryDate, entryId, status: "draft", sourceLabel: "작성 중인 일지 · 아직 저장하지 않음",
+          ...(!sleepInputError && sleep > 0 ? { sleepH: sleep } : {}), ...(quality > 0 ? { sleepQuality: quality } : {}) }}
+          onBack={() => setSleepInnOpen(false)} returnLabel="작성 중인 일지로 돌아가기" />
+      </React.Suspense>}
       {navigation.dialog}
       <FormFinalizationRecovery recovery={finalization} onBack={draft.back(onBack)} />
       <p className="evening-checkin__body-date">

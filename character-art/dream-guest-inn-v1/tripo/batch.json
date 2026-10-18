@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-18",
+  "product": "Tripo Studio",
+  "model": "H3.1 text-to-model",
+  "generationCount": 3,
+  "studioCreditsPerGenerationObserved": 55,
+  "studioCreditsConsumedObserved": 165,
+  "studioCreditsRemainingObserved": 2060,
+  "localBlenderProcessingCredits": 0,
+  "creditEvidence": "Observed by the operator in the connected Studio account; independent of API credits.",
+  "assets": [
+    { "id": "hooded-lamp", "taskId": "91a343ee-bd3a-45e5-bdb5-492ccc430292", "manifest": "hooded-lamp-manifest.json" },
+    { "id": "long-warm-stone", "taskId": "3063d6ee-a1c5-4c39-8748-da0f2eec16eb", "manifest": "long-warm-stone-manifest.json" },
+    { "id": "sealed-letter", "taskId": "8c433d7e-5017-4280-be71-85a5d40f5c6a", "manifest": "sealed-letter-manifest.json" }
+  ],
+  "acceptance": {
+    "meshBudget": "All three optimized GLBs are below 6000 triangles and 1 MiB each.",
+    "textures": "Each baked base-color texture is 512 by 512 pixels.",
+    "sprites": "Six 512 by 512 transparent PNGs. Four actual lamp rotations plus stone and letter.",
+    "visualReview": "Parent and asset worker inspected all six PNGs. Lamp front/back are physically distinct; side views use game arrows and lit-cell highlights.",
+    "sourcePreservation": "All three original source SHA-256 values were checked after processing; raw files are locally preserved and ignored by Git.",
+    "notClaimedHere": ["game integration", "production deployment", "physical-device testing"]
+  }
+}

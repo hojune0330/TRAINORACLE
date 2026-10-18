@@ -1,0 +1,91 @@
+{
+  "id": "sealed-letter",
+  "generator": "Tripo Studio H3.1 text-to-model",
+  "taskId": "8c433d7e-5017-4280-be71-85a5d40f5c6a",
+  "generationCreditsReportedByOperator": 55,
+  "localProcessingCredits": 0,
+  "source": {
+    "file": "sealed-letter-source.glb",
+    "bytes": 65590052,
+    "sha256": "fa1345eb31229f6483ba1c4a48ccaedc6a79260353597357b823cd9b7c02453b",
+    "meshes": 1,
+    "triangles": 1981963,
+    "materials": [
+      "tripo_mat_9151db79-4ed4-4d83-a72f-5da208fcaebd"
+    ],
+    "bounds": {
+      "min": [
+        -0.4899597764015198,
+        -0.28341683745384216,
+        0.0
+      ],
+      "max": [
+        0.4900513291358948,
+        0.28359994292259216,
+        0.846923828125
+      ]
+    }
+  },
+  "runtime": {
+    "file": "sealed-letter.glb",
+    "bytes": 454536,
+    "sha256": "ef3eae1ef4fed50bd5e652830e0aefbe95af98149e3391d483757cb1321d02b9",
+    "triangles": 4800,
+    "textureMaximum": 512,
+    "images": [
+      {
+        "name": "sealed-letter-basecolor-mobile",
+        "sourceSize": [
+          512,
+          512
+        ],
+        "runtimeSize": [
+          512,
+          512
+        ]
+      }
+    ]
+  },
+  "processing": {
+    "tool": "4.5.14 LTS",
+    "targetTriangles": 4800,
+    "decimation": "Voxel reconstruction + collapse + 512px source-color bake",
+    "pivot": "source XY center, bottom Z=0; normalized height=2",
+    "frontYawDegrees": 0,
+    "sourcePreserved": true,
+    "localRefinements": []
+  },
+  "sprites": {
+    "size": [
+      512,
+      512
+    ],
+    "transparent": true,
+    "fixedCamera": [
+      0.0,
+      -6.0,
+      4.679999828338623
+    ],
+    "target": [
+      0.0,
+      0.0,
+      1.0800000429153442
+    ],
+    "orthoScale": 2.9000000953674316,
+    "directions": [
+      {
+        "direction": "south",
+        "yawDegreesAfterCanonicalization": 0,
+        "file": "sealed-letter-south.png",
+        "bytes": 179186,
+        "sha256": "8c48e280b0af905804c3a275f1bee0d922a4f2cde6db436237b6d7932e0f9aa6"
+      }
+    ],
+    "orientationVerification": "Single front render visually reviewed; clear folded envelope flap and amber leaf seal."
+  },
+  "acceptance": {
+    "date": "2026-10-18",
+    "status": "VISUALLY_REVIEWED_FOR_RUNTIME_INTEGRATION",
+    "scope": "Root and asset worker inspected cream envelope, amber leaf seal and clean transparent contour. Browser integration and deployment are separate checks."
+  }
+}

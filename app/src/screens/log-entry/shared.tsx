@@ -15,6 +15,9 @@ export interface EntryFormProps {
   readonly targetDate?: string
   readonly initialEntry?: JournalEntry
   readonly initialBodyPartId?: string | undefined
+  readonly initialSection?: "sleep" | undefined
+  readonly embedded?: boolean | undefined
+  readonly onNavigationReady?: ((exit: (() => void) | null) => void) | undefined
   readonly plannedSessionLink?: PlannedSessionLink
 }
 
