@@ -33,7 +33,7 @@ test('missing art still permits selecting and playing survival',async({page:fall
     await fallback.goto('./?app=1')
     await fallback.getByRole('button',{name:'더보기',exact:true}).click()
     await fallback.getByRole('button',{name:'게임 라운지',exact:true}).click()
-    await expect(fallback.locator('.game-lounge__game')).toHaveCount(4)
+    await expect(fallback.locator('.game-lounge__game')).toHaveCount(5)
     await fallback.getByRole('button',{name:'장애물 생존 게임 소개',exact:true}).click()
     await fallback.getByRole('button',{name:'컴퓨터와 시작하기',exact:true}).click()
     await expect(fallback.locator('.solo-party canvas')).toBeVisible()
