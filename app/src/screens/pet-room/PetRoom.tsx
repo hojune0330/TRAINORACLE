@@ -19,7 +19,7 @@ function ActionArt({ frame }: { frame: number }) {
 function MemoryAlbum({ id, bond }: { id: PetId; bond: PetBond }) {
   const memories = memoriesFor(id, bond)
   const next = nextMemory(bond)
-  return <section className="pet-memories" aria-label={`${petById(id).name}과의 추억`}>
+  return <section className="pet-memories" aria-label={`${petById(id).name}의 추억`}>
     <h3>우리 추억 <span>{memories.length}</span></h3>
     <ol>{memories.map(memory => <li key={memory.key}>
       <PetSprite id={id} pose={memory.pose} />
@@ -118,7 +118,7 @@ function PetRoomSession({ journal, persistenceScope, onBack, onOpenJournal, retu
     const turn = interactions.current[`${id}:${action}`] ?? 0
     const beforeMemories = memoriesFor(id, current.pets[id]!).length
     const newMemory = memoriesFor(id, next.pets[id]!).length > beforeMemories
-    if (commit(next, newMemory ? '우리 추억에 새 장면이 남았어요.' : already ? '오늘 돌본 건 저장했어요. 더 놀아도 좋아요.' : `${petById(id).name}과 돌본 하루를 저장했어요.`)) {
+    if (commit(next, newMemory ? '우리 추억에 새 장면이 남았어요.' : already ? '오늘 돌본 건 저장했어요. 더 놀아도 좋아요.' : `${petById(id).name} 돌보기를 저장했어요.`)) {
       reactTo(id, action === 'pet' ? 'happy' : action === 'feed' ? 'eating' : 'playing')
       setSpeech(careVoice(id, action, turn))
       interactions.current[`${id}:${action}`] = turn + 1
@@ -145,7 +145,7 @@ function PetRoomSession({ journal, persistenceScope, onBack, onOpenJournal, retu
   }
   function greetMorning() {
     const next = finishMorning(saved.current.home, careDay())
-    if (next !== saved.current.home && commit(next, `${petById(next.selected).name}은 오늘도 방에 남아요. 같이 놀고 쉬어요.`)) {
+    if (next !== saved.current.home && commit(next, `${petById(next.selected).name}도 오늘 방에 남아요. 같이 놀고 쉬어요.`)) {
       setSpeech(PET_VOICES[next.selected].wake); reactTo(next.selected, 'happy')
     }
   }
@@ -210,7 +210,7 @@ function PetRoomSession({ journal, persistenceScope, onBack, onOpenJournal, retu
       <section className="pet-selected" aria-label={`${selected.name} 돌보기`}>
         <div className="pet-selected__heading"><div><span>{selected.animal} · {bond.adoptedOn ? '우리 집 식구' : '방문 친구'}</span><h2>{selected.name} <small>{bond.caredDays.length}일 돌봤어요</small></h2></div><button type="button" className="pet-text-button" onClick={() => openDetails(selected.id)}>{bond.adoptedOn ? '우리 추억' : '입양 조건'}<ChevronRight size={17} /></button></div>
         {!sleeping && !morning ? <>
-          <p className="pet-favorite-hint">{selected.name}이 좋아해요 · {selected.favorite}</p>
+          <p className="pet-favorite-hint">좋아하는 것 · {selected.favorite}</p>
           <div className="pet-care-actions">
             {(['pet', 'feed', 'play'] as const).map((action, index) => <button type="button" key={action} disabled={!!error} className={PET_VOICES[selected.id].favorite === action ? 'pet-care-favorite' : ''} onClick={() => care(action)}><ActionArt frame={index} /><strong>{action === 'pet' ? '쓰다듬기' : action === 'feed' ? '간식 주기' : '같이 놀기'}</strong>{bond.actions[action].includes(careDay()) && <span className="pet-action-done"><Check size={12} />오늘 했어요</span>}</button>)}
           </div>

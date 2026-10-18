@@ -159,7 +159,7 @@ it('shows personal reactions without awarding duplicate care and saves the actua
   expect(screen.getByText(careVoice(id, 'play', 1))).toBeVisible()
   expect(stored().pets[id]!.actions.play).toEqual([careDay()])
   fireEvent.click(screen.getByRole('button', { name: '입양 조건' }))
-  const album = within(screen.getByRole('region', { name: `${petById(id).name}과의 추억` }))
+  const album = within(screen.getByRole('region', { name: `${petById(id).name}의 추억` }))
   expect(album.getByText('처음 같이 논 날')).toBeVisible()
   expect(album.queryByText('첫 간식')).toBeNull()
 })

@@ -10,7 +10,7 @@ export const adoptedCareDays = (bond: PetBond) => bond.adoptedOn ? ordered(bond.
 /** Cards are derived from actual saved actions. They never invent sleep hours or streaks. */
 export function memoriesFor(id: PetId, bond: PetBond): PetMemory[] {
   const name = petById(id).name
-  const cards: PetMemory[] = [{ key: 'met', date: bond.metOn, title: '처음 만난 날', note: `${name}이 우리 방에 놀러 왔어요.`, pose: 'awake' }]
+  const cards: PetMemory[] = [{ key: 'met', date: bond.metOn, title: '처음 만난 날', note: `${name}, 우리 방에 온 걸 환영해!`, pose: 'awake' }]
   const firsts: { action: CareAction; title: string; note: string; pose: PetPose }[] = [
     { action: 'pet', title: '처음 쓰다듬은 날', note: '조심조심 손을 내밀었어요.', pose: 'happy' },
     { action: 'feed', title: '첫 간식', note: '바로 옆에서 오물오물 먹었어요.', pose: 'eating' },
