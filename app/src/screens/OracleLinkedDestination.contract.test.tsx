@@ -84,11 +84,15 @@ it("explicitly limits embedding to supported screens instead of treating other d
   }
 })
 
-it("reuses the existing method reader and its local bookmark without closing or navigating the parent", () => {
+it("reuses the existing method reader and its local bookmark without closing or navigating the parent", async () => {
   const onBack = vi.fn(), history = vi.spyOn(window.history, "pushState")
   const parentHistory = window.history.state
   const parentHref = window.location.href
-  render(<OracleLinkedDestination destination="METHODS" onBack={onBack} today={today} />)
+  function Origin() {
+    const [linked, setLinked] = React.useState(true)
+    return linked ? <OracleLinkedDestination destination="METHODS" onBack={() => { onBack(); setLinked(false) }} today={today} /> : null
+  }
+  render(<Origin />)
   expect(history).toHaveBeenCalledExactlyOnceWith({ ...parentHistory,
     [BROWSER_BACK_LAYER_HISTORY_KEY]: expect.stringMatching(/^task-flow-/u),
   }, "", parentHref)
@@ -103,7 +107,12 @@ it("reuses the existing method reader and its local bookmark without closing or 
   expect(screen.getByRole("heading", { name: "어떤 훈련이 궁금한가요?" })).toBeVisible()
   expect(onBack).not.toHaveBeenCalled()
   fireEvent.click(screen.getByRole("button", { name: "이전 화면" }))
-  expect(onBack).toHaveBeenCalledTimes(1)
+  // Finish the parent return and its owned sentinel cleanup before another reader opens.
+  await waitFor(() => {
+    expect(onBack).toHaveBeenCalledTimes(1)
+    expect(hasPendingBrowserBackLayer()).toBe(false)
+    expect(window.history.state).toEqual(parentHistory)
+  })
   expect(history).toHaveBeenCalledTimes(1)
   expect(window.location.href).toBe(parentHref)
 })

@@ -34,7 +34,7 @@ export function canEmbedOracleDestination(destination: OracleDestination): desti
 /** Content for the caller's Reader. Existing screens retain their own date validation and account guards. */
 export function OracleLinkedDestination({ destination, onBack, today }: OracleLinkedDestinationProps) {
   const scope = React.useSyncExternalStore(onLocalJournalScopeChange, localJournalScopeGeneration, () => 0)
-  if (destination === "METHODS") return <TrainingContent key={`methods-${scope}`} onBack={onBack} />
+  if (destination === "METHODS") return <TrainingContent key={`methods-${scope}`} onBack={onBack} backOwner="reader" />
   // No onSaved navigation: a confirmed or pending save remains visible until the user explicitly goes back.
   if (destination === "RECORDS") return <AthleteRecords key={`records-${scope}`} onBack={onBack} backLabel="풀이로 돌아가기" />
   if (destination === "JOURNAL" || destination === "CALENDAR") return <LinkedJournal key={`${destination}-${scope}`} today={today} onBack={onBack} />

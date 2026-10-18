@@ -75,3 +75,13 @@ workspace의 `reports/qa/all-pages-design-20261016/manifest.json`와 `utility/ma
 - 최종 변경본의 앱 TypeScript 및 E2E TypeScript 검사는 모두 종료 코드 0으로 통과했다. 로컬 검수 서버와 담당 검증 작업은 종료했다.
 - 전체 CI·릴리스 빌드·실계정·실제 iPhone 검수는 실행하지 않았다. 합성 데이터의 로컬 브라우저 검증이다.
 - 커밋·푸시·병합·배포하지 않았다. 이 보고서는 공개 서비스 반영 증거가 아니다.
+
+## 배포 요청 후 추가 확인 — 2026-10-18
+
+- 최초 구현 `af82f2b117eed94adb0842a0c115bc42e1f733ef`를 main에 반영했다. [CI 39102022618](https://github.com/hojune0330/TRAINORACLE/actions/runs/39102022618)은 실패했고 자동 게시가 생략됐다. 앞선 로컬 검증을 전체 CI 성공으로 확대하지 않는다.
+- UTC/KST 단위 검사에서 `HomeJournalReadiness` 2건은 정상 계정 보관 문구를 여전히 기대했다. 정상 상태의 불필요한 설명/ARIA 연결이 없음을 검사하도록 갱신하고, 대기·실패·계정 전환 검사와 날짜 목적지는 유지했다. 이 파일 8개 통과.
+- 4개 일반 브라우저 프로젝트는 모두 `category-navigation`의 같은 가시 문구 기대값 한 건이 실패했다. 총시간 표시와 중복 문구 부재로 갱신했다. 실제 처방 열기·카드 터치·원본 계획 불변 단언은 유지했다. 이미 성공한 동일 CI 빌드를 내려받아 해당 reduced-motion 검사 1개를 재빌드 없이 실행해 통과했다.
+- `OracleLinkedDestination`의 3개 실패에는 실제 중첩 Reader 복귀 결함이 포함됐다. 동기 fixture만 고친 대조에서는 2개가 계속 실패했다. Reader가 상속한 task-flow marker를 독립 화면처럼 소비하지 않도록 `backOwner="reader"`를 명시했다. 일반 More 화면은 기존 helper 경로를 유지한다. 연결 화면 계약 1파일 34개와 helper/flow 2파일 25개 통과.
+- 첫 로컬 Home 단위 재검사는 Windows threads worker 시작 실패로 0개 실행됐다. forks 방식으로 같은 파일을 확인했다. 첫 브라우저 재검사는 개발 서버의 최초 페이지 로딩 시간 초과였으며, 위 CI 산출물 검사 통과와 구분한다.
+- 보강 후 앱 TypeScript 검사와 `git diff --check`도 통과했다. 추가 전체 로컬 검사는 실행하지 않았다.
+- 위 보강은 후속 배포 후보다. 이 단락 자체는 게시 완료 증거가 아니며 최종 CI·배포 영수증은 별도로 확인한다.

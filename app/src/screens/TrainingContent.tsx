@@ -40,7 +40,10 @@ const COMPATIBILITY_LABEL: Record<TrainingMethodCompatibilityStatus, string> = {
   NOT_ENOUGH_DATA: "자료가 더 필요해요",
 }
 
-export function TrainingContent({ onBack }: { readonly onBack: () => void }) {
+export function TrainingContent({ onBack, backOwner = "screen" }: {
+  readonly onBack: () => void
+  readonly backOwner?: "screen" | "reader"
+}) {
   const [selected, setSelected] = React.useState<TrainingContentId | null>(null)
   const [basics, setBasics] = React.useState(false)
   const [saved, setSaved] = React.useState<readonly TrainingContentId[]>(loadSavedTrainingContent)
@@ -161,7 +164,11 @@ export function TrainingContent({ onBack }: { readonly onBack: () => void }) {
 
   return (
     <div ref={root} className="training-content-screen">
-      <ContentHeader title="훈련 방법 배우기" onBack={() => { if (!requestBrowserBackLayer()) onBack() }} />
+      <ContentHeader title="훈련 방법 배우기" onBack={() => {
+        // An enclosing reader owns its own entry above the inherited flow marker.
+        // Let it close first; normal flow disposal then consumes the sentinel.
+        if (backOwner === "reader" || !requestBrowserBackLayer()) onBack()
+      }} />
       <div className="training-content-intro">
         <div className="training-content-intro__heading">
           <AppHeading variant="screen" accent tabIndex={-1}>어떤 훈련이 궁금한가요?</AppHeading>
