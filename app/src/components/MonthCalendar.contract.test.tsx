@@ -16,6 +16,39 @@ function CalendarHarness({ initial = "2026-09", live = false }: { initial?: stri
 }
 
 describe("shared civil-date calendar", () => {
+  it("reveals Today only for that action and does not retain the intent for later month or data changes", () => {
+    const view = render(<CalendarHarness />)
+    const viewport = view.container.querySelector<HTMLElement>(".month-calendar__viewport")!
+    const scroll = vi.fn()
+    Object.defineProperty(viewport, "scrollTo", { configurable: true, value: scroll })
+    const bounds = vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (this: Element) {
+      return new DOMRect(this.getAttribute("data-date") === "2026-09-27" ? 500 : 0, 0,
+        this.classList.contains("month-calendar__viewport") ? 300 : 60, 44)
+    })
+    fireEvent.click(screen.getByRole("button", { name: "오늘" }))
+    expect(scroll).toHaveBeenCalledOnce()
+    viewport.scrollLeft = 100
+    fireEvent.click(screen.getByRole("button", { name: "다음 달" }))
+    view.rerender(<CalendarHarness />)
+    expect(scroll).toHaveBeenCalledOnce()
+    bounds.mockRestore()
+  })
+  it("uses an explicit journal legend without changing the plan MAIN explanation", () => {
+    const props = { month: "2026-10", today: "2026-10-18", onMonthChange: vi.fn(), onSelectDate: vi.fn(),
+      dayDescription: () => "", renderDay: () => null, trainingColors: true }
+    const view = render(<MonthCalendar {...props} legendContext="journal" />)
+    fireEvent.click(screen.getByText("훈련 색·종류 알아보기"))
+    const legend = screen.getByRole("list", { name: "달력 색상 범례" })
+    expect(legend).toHaveAttribute("data-context", "journal")
+    expect(legend).toHaveTextContent("LT · VO₂ · GLY · ATP-PC · MIX")
+    expect(legend).toHaveTextContent("건너뜀")
+    expect(legend).toHaveTextContent("직접 고른 종류를 확인할 수 없는 훈련 기록")
+    expect(legend).not.toHaveTextContent("플라이오 · 플라이오 포함")
+    expect(screen.getByText(/‘플라이오 포함’은 기존 종류의 색을 유지해요/)).toBeVisible()
+    expect(legend).not.toHaveTextContent("계획의 메인 운동")
+    view.rerender(<MonthCalendar {...props} legendContext="plan" />)
+    expect(screen.getByRole("list", { name: "달력 색상 범례" })).toHaveTextContent("주요 훈련계획의 메인 운동")
+  })
   it("keeps the journal month face in one fully named control and leaves standard calendars unskinned", () => {
     const props = { month: "2026-10", today: "2026-10-18", onMonthChange: vi.fn(), onSelectDate: vi.fn(),
       dayDescription: () => "", renderDay: () => null }

@@ -1063,12 +1063,14 @@
 .plan-date-rail {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: 48px;
-  padding-inline: calc(50% - 24px);
+  grid-auto-columns: max(48px, 3.4em);
+  column-gap: var(--space-1);
+  padding-inline: max(0px, calc(50% - max(24px, 1.7em)));
   box-sizing: border-box;
   overflow-x: auto;
   overscroll-behavior-inline: contain;
-  scrollbar-width: none;
+  scrollbar-width: thin;
+  scrollbar-color: var(--ink-3) var(--surface-2);
   margin-block: var(--space-2);
 }
 
@@ -1089,8 +1091,10 @@
 .plan-date-rail strong {
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  width: 2.25em;
+  height: 2.25em;
   border-radius: 50%;
   background: var(--surface);
   color: var(--ink);

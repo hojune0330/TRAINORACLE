@@ -9,11 +9,12 @@ export function CalendarRoleIcon({ tone }: Pick<CalendarTrainingMarkData, "tone"
   return <Icon size={16} aria-hidden="true" className="calendar-role-icon" />
 }
 
-export function CalendarTrainingMark({ tone, label, slot, componentCue, children }: CalendarTrainingMarkData & { readonly children?: ReactNode }) {
-  return <span className="calendar-training-mark" data-tone={tone}>
+export function CalendarTrainingMark({ tone, label, slot, componentCue, recordCount, children }: CalendarTrainingMarkData & { readonly children?: ReactNode }) {
+  return <span className="calendar-training-mark" data-tone={tone} data-record-count={recordCount && recordCount > 1 ? recordCount : undefined}>
     <CalendarRoleIcon tone={tone} />
     {slot && <span className="calendar-training-mark__slot">{slot}</span>}
     <span className="calendar-training-mark__label">{label}{children}</span>
     {componentCue && <span className="calendar-training-mark__cue">{componentCue}</span>}
+    {recordCount !== undefined && recordCount > 1 && <span className="calendar-training-mark__count">기록 {recordCount}개</span>}
   </span>
 }

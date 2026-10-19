@@ -17,7 +17,16 @@ const now = new Date("2026-09-20T03:00:00Z")
 describe("today live context", () => {
   it("suppresses executable instructions when recent journal safety is blocked", () => {
     vi.spyOn(safety, "evaluatePlanSafety").mockReturnValue({ kind: "blocked", code: "RECENT_JOURNAL_REQUIRES_REVIEW" })
-    expect(projectCurrentInstantToday(fixture(), now)).toMatchObject({ state: "UNAVAILABLE", sessions: [] })
+    expect(projectCurrentInstantToday(fixture(), now)).toMatchObject({ state: "UNAVAILABLE", unavailableReason: "JOURNAL_REVIEW", sessions: [] })
+  })
+  it("does not call an unreadable journal or an uncertain current check a pain progress record", () => {
+    const state = fixture(), original = JSON.stringify(state)
+    vi.spyOn(safety, "evaluatePlanSafety").mockReturnValue({ kind: "blocked", code: "RECENT_JOURNAL_REQUIRES_REVIEW" })
+    vi.spyOn(journal, "loadEntriesForPlanSafety").mockReturnValue({ status: "uncertain" })
+    expect(projectCurrentInstantToday(state, now)).toMatchObject({ state: "UNAVAILABLE", unavailableReason: "JOURNAL_UNREADABLE", sessions: [] })
+    vi.mocked(safety.evaluatePlanSafety).mockReturnValue({ kind: "blocked", code: "CURRENT_CHECK_REQUIRES_REVIEW" })
+    expect(projectCurrentInstantToday(state, now)).toMatchObject({ state: "UNAVAILABLE", unavailableReason: "CURRENT_BODY_REVIEW", sessions: [] })
+    expect(JSON.stringify(state)).toBe(original)
   })
   it("recognizes only a journal linked to this exact selected session", () => {
     const state = fixture()

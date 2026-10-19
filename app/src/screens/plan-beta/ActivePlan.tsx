@@ -46,7 +46,7 @@ import type { PlannedSessionLogDraft } from "../../domain/planned-session-link"
 import { resolveCurrentPlannedSession, samePlannedSessionLink } from "../../domain/planned-session-link"
 import { journalResultLabel } from "../../domain/journal-plan-progress"
 import { PlanPrescriptionBasis } from "./PlanPrescriptionBasis"
-import { InstantPlanTodayView } from "../../components/instant-plan/InstantPlanTodayView"
+import { InstantPlanTodayView, instantPlanUnavailableMessage } from "../../components/instant-plan/InstantPlanTodayView"
 import { IncompleteWorkoutNotice } from "../../components/instant-plan/IncompleteWorkoutNotice"
 import { instantSessionId } from "./instant-plan-today"
 import { projectCurrentInstantToday } from "./instant-plan-today-context"
@@ -55,6 +55,7 @@ import { SessionExplanationEntry } from "./SessionExplanation"
 import { useCalendarEntries } from "../../hooks/useCalendarEntries"
 import { EasyTrainingTimes } from "./EasyTrainingTimes"
 import { usePlanScheduleView } from "../../hooks/usePlanScheduleView"
+import type { InstantPlanUnavailableReason } from "../../domain/instant-plan-contract"
 
 const PROGRESS_ACTIONS: readonly {
   readonly state: PlanProgressState
@@ -80,6 +81,7 @@ export function ActivePlan({
   returnToSession,
   executionMessage,
   executionBlocked = false,
+  executionUnavailableReason,
   saveNotice,
   onEditPlan,
   onManagePaceRecords,
@@ -103,6 +105,7 @@ export function ActivePlan({
   readonly returnToSession?: PlannedSessionLogDraft["link"]
   readonly executionMessage?: string | null
   readonly executionBlocked?: boolean
+  readonly executionUnavailableReason?: InstantPlanUnavailableReason
   readonly saveNotice?: React.ReactNode
   readonly onEditPlan?: () => void
   readonly onManagePaceRecords?: () => void
@@ -117,9 +120,10 @@ export function ActivePlan({
   const [showCreated, setShowCreated] = React.useState(false)
   const createdCelebrationConsumed = React.useRef(false)
   const scheduleAnchor = React.useRef<HTMLDivElement>(null)
+  const periodId = React.useId()
   const checkedToday = projectCurrentInstantToday(state)
   const todayView = executionBlocked
-    ? { ...checkedToday, state: "UNAVAILABLE" as const, title: "몸 상태와 처방을 먼저 확인해 주세요", sessions: [] }
+    ? { ...checkedToday, state: "UNAVAILABLE" as const, unavailableReason: executionUnavailableReason ?? "EXECUTION_REVIEW", sessions: [] }
     : checkedToday
   const todayIds = new Set(checkedToday.sessions.map(session => session.id))
   const todayDetailedSessions = state.activePlan.sessions.filter(session => todayIds.has(instantSessionId(session))
@@ -174,6 +178,12 @@ export function ActivePlan({
   const frameDayCount = Math.ceil(frameLengthDays)
   const focusLabel = ENERGY_INTENT_LABELS[activePlan.selectedEnergyIntent].title
   const visibleSessions = activePlan.sessions.filter(session => session.day >= 1 && session.day <= frameDayCount)
+  const painProgress = state.progress.find(progress => progress.state === "PAIN_CHECKIN"
+    && visibleSessions.some(session => session.day === progress.sessionDay && session.slot === progress.sessionSlot))
+  const unavailableAction = todayView.unavailableReason === "PAIN_PROGRESS" && painProgress ? {
+    label: "통증 기록 보기", onClick: () => setReaderRequest(previous => ({ day: painProgress.sessionDay,
+      slot: painProgress.sessionSlot, section: "records", preserveSelection: true, sequence: (previous?.sequence ?? 0) + 1 })),
+  } : isValidIsoDate(startDate) && visibleSessions.length > 0 ? { label: "일정 보기", onClick: showSchedule } : undefined
   const doubleDays = twoADayTrainingDayCount(visibleSessions)
   const trainingCount = visibleSessions.filter(session => session.role !== "REST").length
   const returnedSession = returnToSession === undefined
@@ -235,9 +245,8 @@ export function ActivePlan({
       )}
       <div className="active-plan__edit-heading active-plan__category-heading">
         <CategoryIcon category="training" />
-        <h1 id="active-plan-title" tabIndex={-1}>{frameLengthDays}일 훈련 계획</h1>
+        <h1 id="active-plan-title" tabIndex={-1} aria-describedby={periodId}>{frameLengthDays}일 훈련 계획</h1>
       </div>
-      <p className="active-plan__date-range">{planDateRangeLabel(startDate, frameDayCount)}</p>
       {state.version === 3 && state.activePlanEdit && <p className="active-plan__journal-return" role="status">수정한 계획이에요. 이전 계획과 일지는 보관되어 있어요.</p>}
       {state.version === 3 && state.executionReplan && <details className="plan-detailed-options">
         <summary>수행 기록을 확인하고 바꾼 일정</summary>
@@ -269,9 +278,10 @@ export function ActivePlan({
           </button>
         </div>)}
       </section>}
-      {executionMessage && <div className="plan-execution-status" role="status">{executionMessage}</div>}
+      {executionMessage && !executionBlocked && <div className="plan-execution-status" role="status">{executionMessage}</div>}
       {showTodayContext && <InstantPlanTodayView today={scheduleView.view === "list" ? { ...todayView, sessions: [] } : todayView}
-        compact navigationCards={scheduleView.view === "calendar"} onContinue={showSchedule} changeScheduleLabel="휴식·건너뜀 기록"
+        compact dateContext="embedded" navigationCards={scheduleView.view === "calendar"}
+        onContinue={todayView.state === "UNAVAILABLE" ? undefined : showSchedule} unavailableAction={unavailableAction} changeScheduleLabel="휴식·건너뜀 기록"
         compactSessionSummary={id => activePlan.sessions.find(item => instantSessionId(item) === id)?.role === "EASY"}
         sessionRoleLabel={id => {
           const session = activePlan.sessions.find(item => instantSessionId(item) === id)
@@ -312,8 +322,7 @@ export function ActivePlan({
         readerNotice={saveNotice || executionMessage || executionBlocked ? <>
           {saveNotice}
           {(executionMessage || executionBlocked) && <div role="status">
-            {executionMessage && <p>{executionMessage}</p>}
-            {executionBlocked && <p>몸 상태와 처방을 먼저 확인해 주세요.</p>}
+            <p>{executionBlocked ? instantPlanUnavailableMessage(todayView.unavailableReason) : executionMessage}</p>
           </div>}
         </> : undefined}
         renderAfterSchedule={(
@@ -360,6 +369,7 @@ export function ActivePlan({
                 <ChevronDown aria-hidden="true" size={18} />
               </summary>
               <div className="active-plan__information-body">
+                <p id={periodId} className="active-plan__date-range">계획 기간 · <span>{planDateRangeLabel(startDate, frameDayCount)}</span></p>
                 {!frameComplete && <p>각 훈련을 마친 뒤 완료·휴식·건너뜀·통증 확인 중 하나를 기록해 주세요.</p>}
                 <p className="active-plan__carryover-warning">
                   완료하지 못한 훈련을 다음 날에 몰아서 하지 마세요. 계획에 표시된 날짜를 기준으로 진행해 주세요.

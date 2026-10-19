@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { calendarMarksDescription, journalCalendarMarks, plannedCalendarTone } from "./calendar-training-presentation"
+import { calendarMarksDescription, groupJournalCalendarMarks, journalCalendarMarks, plannedCalendarTone } from "./calendar-training-presentation"
 import type { EveningEntry, PostSessionEntry, RaceEntry } from "./journal-schema"
 
 function post(overrides: Partial<PostSessionEntry> = {}): PostSessionEntry {
@@ -8,6 +8,38 @@ function post(overrides: Partial<PostSessionEntry> = {}): PostSessionEntry {
 }
 
 describe("calendar role presentation, never prescription or intensity inference", () => {
+  it("groups only identical day, raw slot, kind and component cues while counting journal entries", () => {
+    const base = post({ activitySlot: "PM", fieldProvenance: { system: { provenance: "EXPLICIT" } } })
+    const entries = [base, { ...base, id: "second" }, { ...base, id: "morning", activitySlot: "AM" as const },
+      { ...base, id: "lt", system: "lt" }, { ...base, id: "vo2", system: "vo2" },
+      { ...base, id: "next-day", date: "2026-10-01" },
+      { ...base, id: "plyo", exerciseLog: { version: 1 as const, source: "SELF_REPORTED" as const, components: [
+        { id: "p", kind: "PLYOMETRIC" as const, name: "", rows: [] },
+      ] } }]
+    const original = JSON.stringify(entries)
+    const marks = groupJournalCalendarMarks(entries)
+    expect(marks).toHaveLength(6)
+    expect(marks[0]).toEqual({ tone: "base", label: "기본", slot: "오후", recordCount: 2 })
+    expect(marks.filter(mark => mark.componentCue === "플라이오 포함")).toHaveLength(1)
+    expect(marks.filter(mark => mark.label === "LT" || mark.label === "VO₂")).toHaveLength(2)
+    expect(calendarMarksDescription(marks)).toContain("오후 기본 기록 2개")
+    expect(calendarMarksDescription(marks)).not.toContain("훈련 2회")
+    expect(JSON.stringify(entries)).toBe(original)
+  })
+
+  it("keeps legacy raw rest/skipped slots separate without reviving hidden slots, and preserves race stages", () => {
+    const rested = post({ activityOutcome: "RESTED", activitySlot: "AM" })
+    const skipped = post({ activityOutcome: "SKIPPED", activitySlot: "PM" })
+    const race: RaceEntry = { id: "race", kind: "race", date: rested.date, savedAt: rested.savedAt,
+      syncState: "local", stage: "pre", record: "", rank: "", result: "", memo: "" }
+    const marks = groupJournalCalendarMarks([rested, { ...rested, id: "rested-pm", activitySlot: "PM" },
+      skipped, { ...skipped, id: "skipped-am", activitySlot: "AM" }, race, { ...race, id: "result", stage: "post" }])
+    expect(marks).toHaveLength(6)
+    expect(marks.slice(0, 4).map(mark => [mark.label, mark.slot, mark.recordCount])).toEqual([
+      ["휴식 기록", undefined, 1], ["휴식 기록", undefined, 1], ["건너뜀", undefined, 1], ["건너뜀", undefined, 1],
+    ])
+    expect(marks.slice(4).map(mark => mark.label)).toEqual(["경기 전", "경기 결과"])
+  })
   it("names a condition or memo entry without reading its private content", () => {
     const entry: EveningEntry = { id: "synthetic-condition", kind: "evening", date: "2026-10-12", savedAt: "2026-10-12T00:00:00Z",
       syncState: "local", sleepH: 0, sleepQuality: 0, weightKg: "", restingHr: "", painParts: {}, mood: 0, note: "" }

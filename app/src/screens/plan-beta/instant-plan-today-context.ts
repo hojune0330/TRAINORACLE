@@ -1,6 +1,7 @@
 import type { PlanBetaState } from "../../domain/plan-beta-store"
 import { evaluatePlanSafety } from "../../domain/plan-beta-flow"
-import { loadEntries, todayISO } from "../../domain/journal-store"
+import { loadEntries, loadEntriesForPlanSafety, todayISO } from "../../domain/journal-store"
+import type { InstantPlanUnavailableReason } from "../../domain/instant-plan-contract"
 import { resolveCurrentPlannedSession } from "../../domain/planned-session-link"
 import { recheckStoredDetailedPrescriptionAuthority } from "../../domain/plan-session-schema"
 import { instantSessionId, projectInstantToday } from "./instant-plan-today"
@@ -17,12 +18,13 @@ export function projectCurrentInstantToday(state: PlanBetaState, now = new Date(
   if (!today.sessions.length) return today
   // This can only suppress instructions. Starting still needs the athlete's fresh answer.
   const safety = evaluatePlanSafety("NO_KNOWN_RISK", now)
-  const unavailable = (title: string) => ({ ...today, title, state: "UNAVAILABLE" as const, sessions: [] })
-  if (safety.kind === "blocked") return unavailable("최근 기록과 몸 상태를 먼저 확인해 주세요")
+  const unavailable = (unavailableReason: InstantPlanUnavailableReason) => ({ ...today, unavailableReason, state: "UNAVAILABLE" as const, sessions: [] })
+  if (safety.kind === "blocked") return unavailable(safety.code === "CURRENT_CHECK_REQUIRES_REVIEW" ? "CURRENT_BODY_REVIEW"
+    : loadEntriesForPlanSafety().status === "complete" ? "JOURNAL_REVIEW" : "JOURNAL_UNREADABLE")
   const ids = new Set(today.sessions.map(session => session.id))
   const unavailableAuthority = state.activePlan.sessions.some(session => ids.has(instantSessionId(session))
     && session.prescription.kind === "PACE_TARGET"
     && recheckStoredDetailedPrescriptionAuthority({ operation: "START", prescription: session.prescription,
       evaluatedAt: now.toISOString(), safetyGate: safety.gate }).kind !== "permitted")
-  return unavailableAuthority ? unavailable("상세 훈련의 현재 승인 상태를 확인해 주세요") : today
+  return unavailableAuthority ? unavailable("DETAILED_AUTHORITY") : today
 }

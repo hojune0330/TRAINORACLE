@@ -1,4 +1,4 @@
-import { cleanup, render, screen, within, waitFor } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, within, waitFor } from "@testing-library/react"
 import { StrictMode } from "react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
@@ -54,6 +54,26 @@ afterEach(() => {
 afterEach(() => vi.useRealTimers())
 
 describe("plan schedule preview", () => {
+  it("reveals the existing selected rail date on an explicit Today action, not a data rerender", () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date("2026-08-17T12:00:00"))
+    const view = render(<PlanSchedulePreview startDate="2026-08-17" sessions={sessions} presentation="prescription-calendar" />)
+    fireEvent.click(screen.getByRole("radio", { name: "하루씩" }))
+    const rail = screen.getByRole("group", { name: "훈련 날짜 선택" })
+    const scroll = vi.fn()
+    Object.defineProperty(rail, "scrollTo", { configurable: true, value: scroll })
+    const bounds = vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (this: Element) {
+      return new DOMRect(this === rail ? 0 : 500, 0, this === rail ? 300 : 80, 44)
+    })
+    fireEvent.click(screen.getByRole("button", { name: /^오늘$/ }))
+    expect(scroll).toHaveBeenCalledOnce()
+    view.rerender(<PlanSchedulePreview startDate="2026-08-17" sessions={[...sessions]} presentation="prescription-calendar" />)
+    expect(scroll).toHaveBeenCalledOnce()
+    bounds.mockImplementation(function (this: Element) { return new DOMRect(this === rail ? 0 : 10, 0, this === rail ? 300 : 80, 44) })
+    fireEvent.click(screen.getByRole("button", { name: /^오늘$/ }))
+    expect(scroll).toHaveBeenCalledOnce()
+    bounds.mockRestore()
+  })
   it("keeps explicit rest quiet and shows program boundaries without inventing rest for empty dates", () => {
     render(<PlanSchedulePreview startDate="2026-08-17" sessions={sessions}
       presentation="prescription-calendar" dayAnnotations={{ "2026-08-17": "1주기 시작", "2026-08-18": "대회 날짜" }} />)
@@ -296,7 +316,7 @@ describe("plan schedule preview", () => {
     expect(within(summary).getAllByText("전체 47분")).toHaveLength(1)
     expect(summary).toHaveTextContent("오전")
     expect(summary).toHaveTextContent("기본")
-    expect(summary).toHaveTextContent("중간 걷기 조깅 · Split Easy")
+    expect(summary).toHaveTextContent("중간에 걷는 조깅")
     expect(summary).not.toHaveTextContent(/22분|23분|RPE|예정/)
     const date = screen.getByRole("button", { name: "8월 17일 월요일 전체 처방 보기" })
     expect(date).not.toHaveTextContent("전체 처방 보기")
@@ -304,6 +324,9 @@ describe("plan schedule preview", () => {
     const reader = screen.getByRole("dialog", { name: "2026년 8월 17일 월요일" })
     expect(reader).toHaveTextContent(/22분.*2분 걷기.*23분/)
     expect(reader).toHaveTextContent("힘든 정도(RPE) 3–4/10")
+    expect(within(reader).getByText("중간에 걷는 조깅")).toBeVisible()
+    await user.click(within(reader).getByText("기존 훈련 표기"))
+    expect(within(reader).getByText("중간 걷기 조깅 · Split Easy")).toBeVisible()
     expect(JSON.stringify(catalog)).toBe(original)
   })
 

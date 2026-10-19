@@ -225,7 +225,7 @@ describe("InstantPlanTodayView", () => {
     { state: "REST", message: "휴식일", action: "다음 일정 확인" },
     { state: "RETURN_AFTER_GAP", message: "기록이 없다고 미수행으로 판단하지 않아요", action: "이어가기 전 확인" },
     { state: "COMPLETED", message: "계획 기간이 끝났어요", action: "다음 단계 확인" },
-    { state: "UNAVAILABLE", message: "훈련을 안내할 수 없어요", action: "계획 상태 확인" },
+    { state: "UNAVAILABLE", message: "훈련을 불러올 수 없어요", action: "일정 보기" },
   ] as const)("does not expose stale workout instructions or record actions in $state", ({ state, message, action }) => {
     const onContinue = vi.fn()
     const onRecordSession = vi.fn()
@@ -242,6 +242,25 @@ describe("InstantPlanTodayView", () => {
     render(<InstantPlanTodayView today={{ ...today, state: "RETURN_AFTER_GAP" }} />)
     expect(screen.queryByRole("button")).not.toBeInTheDocument()
     expect(screen.getByRole("status")).toBeVisible()
+  })
+
+  it("shows one specific compact notice and only the supplied action, retaining embedded date context", () => {
+    const open = vi.fn()
+    const unavailable = { ...today, state: "UNAVAILABLE" as const, unavailableReason: "PAIN_PROGRESS" as const, sessions: [] }
+    const { rerender } = render(<InstantPlanTodayView today={unavailable} compact dateContext="embedded"
+      unavailableAction={{ label: "통증 기록 보기", onClick: open }} />)
+    const notice = screen.getByRole("region", { name: "훈련 안내" })
+    expect(notice).toHaveAccessibleDescription(today.dateLabel)
+    expect(within(notice).queryByRole("heading")).toBeNull()
+    expect(within(notice).getByRole("alert")).toHaveTextContent(/^통증 기록이 있어 훈련 안내를 멈췄어요$/)
+    expect(within(notice).getAllByRole("button")).toHaveLength(1)
+    expect(screen.queryByText(today.dateLabel)).toBeNull()
+    fireEvent.click(within(notice).getByRole("button", { name: "통증 기록 보기" }))
+    expect(open).toHaveBeenCalledOnce()
+    rerender(<InstantPlanTodayView today={{ ...unavailable, unavailableReason: "DETAILED_AUTHORITY" }} compact dateContext="embedded" />)
+    expect(screen.getByRole("alert")).toHaveTextContent("이 훈련을 지금 시작해도 되는지 확인할 수 없어요.")
+    expect(screen.queryByRole("button")).toBeNull()
+    expect(screen.queryByText(/통증 기록/)).toBeNull()
   })
 
   it("keeps total time and every execution phase visible; only method details are collapsed", async () => {

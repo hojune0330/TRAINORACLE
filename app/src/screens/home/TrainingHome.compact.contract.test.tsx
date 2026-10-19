@@ -38,7 +38,7 @@ describe("compact home training destination", () => {
     const section = screen.getByRole("region", { name: "다음 훈련" })
     expect(section.querySelector("time")).toHaveTextContent(/^오늘$/)
     expect(section.querySelector("time")).toHaveAttribute("datetime", "2026-10-18")
-    expect(card).toHaveTextContent("중간 걷기 조깅 · Split Easy")
+    expect(card).toHaveTextContent("중간에 걷는 조깅")
     expect(card).toHaveAccessibleDescription("총 47분")
     expect(card).toHaveAccessibleName(/오늘\(10월 18일\).*오전.*기본/)
     expect(card.textContent).not.toMatch(/오늘|오전|기본|훈련 내용 보기|오후 훈련도|RPE|3–4/)
@@ -66,6 +66,8 @@ describe("compact home training destination", () => {
     render(<TrainingHome model={model(invalid)} introductionAllowed={false} />)
     const card = screen.getByRole("button", { name: /^다음 훈련 ·/ })
     expect(card).toHaveAccessibleDescription("훈련 내용 확인 필요")
+    expect(card).not.toHaveTextContent("중간에 걷는 조깅")
+    expect(card).toHaveTextContent("중간 걷기 조깅 · Split Easy")
     expect(card).not.toHaveTextContent(/총 47분|총 60분/)
   })
 

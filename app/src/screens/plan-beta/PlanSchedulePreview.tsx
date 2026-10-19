@@ -50,6 +50,8 @@ export type PlanReaderRequest = Pick<PlanSession, "day" | "slot"> & {
   readonly sequence: number
   readonly section?: "records"
   readonly returnFocusToCalendar?: boolean
+  /** A notice may open another date without moving the underlying calendar. */
+  readonly preserveSelection?: boolean
 }
 const PROGRESS_ICONS = { COMPLETED: Check, RESTED: CircleMinus, SKIPPED: SkipForward, PAIN_CHECKIN: HeartPulse } as const
 
@@ -236,19 +238,22 @@ export function PlanSchedulePreview({
   const handledReaderRequest = React.useRef<number>()
   const readerRequestOrigin = React.useRef<HTMLElement | null>(null)
   const readerOpenedFromCalendar = React.useRef(false)
+  const readerPreservesSelection = React.useRef(false)
   const previousCalendarIdentity = React.useRef(calendarIdentity)
 
-  React.useEffect(() => {
+  const alignDateRail = React.useCallback((index: number, onlyIfHidden = false) => {
     const rail = dateRailRef.current
-    const selected = rail?.querySelector<HTMLElement>('[aria-pressed="true"]')
+    const selected = rail?.querySelectorAll<HTMLElement>("button").item(index)
     if (!rail || !selected) return
     const bounds = rail.getBoundingClientRect()
     const item = selected.getBoundingClientRect()
+    if (onlyIfHidden && item.left >= bounds.left && item.right <= bounds.right) return
     rail.scrollTo?.({
       left: rail.scrollLeft + item.left + item.width / 2 - bounds.left - bounds.width / 2,
       behavior: calendarReducedMotion() ? "auto" : "smooth",
     })
-  }, [activeDayIndex, scheduleView])
+  }, [])
+  React.useEffect(() => { alignDateRail(activeDayIndex) }, [activeDayIndex, scheduleView, alignDateRail])
 
   React.useEffect(() => {
     const list = scheduleRef.current
@@ -282,6 +287,7 @@ export function PlanSchedulePreview({
     setReaderJournalDate(null)
     readerRequestOrigin.current = null
     readerOpenedFromCalendar.current = false
+    readerPreservesSelection.current = false
   }, [calendarIdentity])
 
   React.useEffect(() => {
@@ -293,8 +299,11 @@ export function PlanSchedulePreview({
     readerRequestOrigin.current = readerRequest.returnFocusToCalendar
       ? null : document.activeElement instanceof HTMLElement ? document.activeElement : null
     readerOpenedFromCalendar.current = readerRequest.returnFocusToCalendar === true
-    setSelectedDate(day.date)
-    setActiveDayIndex(index)
+    readerPreservesSelection.current = readerRequest.preserveSelection === true
+    if (!readerPreservesSelection.current) {
+      setSelectedDate(day.date)
+      setActiveDayIndex(index)
+    }
     setReader({ date: day.date, slot: readerRequest.slot, section: readerRequest.section })
     setReaderJournalDate(journalEntries.some(entry => entry.date === day.date) ? day.date : null)
   }, [readerRequest, days, journalEntries])
@@ -305,6 +314,7 @@ export function PlanSchedulePreview({
 
   const moveToDay = React.useCallback((nextIndex: number) => {
     const boundedIndex = Math.min(Math.max(nextIndex, 0), days.length - 1)
+    alignDateRail(boundedIndex, true)
     pendingSlideIndex.current = previewDisplayMode === "swipe" ? boundedIndex : null
     setActiveDayIndex(boundedIndex)
     const date = days[boundedIndex]?.date
@@ -321,7 +331,7 @@ export function PlanSchedulePreview({
     }
     const reduceMotion = calendarReducedMotion()
     target.scrollIntoView?.({ behavior: reduceMotion ? "auto" : "smooth", block: "start" })
-  }, [days, previewDisplayMode, setSelectedDate])
+  }, [days, previewDisplayMode, setSelectedDate, alignDateRail])
 
   React.useLayoutEffect(() => {
     const list = scheduleRef.current
@@ -372,6 +382,7 @@ export function PlanSchedulePreview({
     if (origin !== "preserve") {
       readerRequestOrigin.current = null
       readerOpenedFromCalendar.current = origin === "calendar"
+      readerPreservesSelection.current = false
     }
     setSelectedDate(day.date)
     setActiveDayIndex(index)
@@ -389,6 +400,11 @@ export function PlanSchedulePreview({
   }
 
   const moveReader = (date: string) => {
+    if (readerPreservesSelection.current) {
+      setReader({ date })
+      setReaderJournalDate(journalEntries.some(entry => entry.date === date) ? date : null)
+      return
+    }
     const index = days.findIndex(day => day.date === date)
     if (index >= 0) openDayReader(index, undefined, "preserve")
     else { setReader({ date }); setReaderJournalDate(journalEntries.some(entry => entry.date === date) ? date : null); setSelectedDate(date) }
@@ -442,6 +458,7 @@ export function PlanSchedulePreview({
           if (index < 0) {
             readerRequestOrigin.current = null
             readerOpenedFromCalendar.current = true
+            readerPreservesSelection.current = false
             setReader({ date }); setReaderJournalDate(journalEntries.some(entry => entry.date === date) ? date : null); return
           }
           openDayReader(index, undefined, "calendar")
@@ -655,7 +672,7 @@ function PlanSessionPreview({
     ? prescriptionCalendarAmount(session) : undefined
   const showOriginalNotation = expanded && session.prescription.kind === "RPE_TIME_RANGE"
     && session.prescription.catalogWorkout !== undefined
-    && (sessionLabel(session, true) !== sessionLabel(session) || prescriptionLabel(session, true) !== prescriptionLabel(session))
+    && (sessionLabel(session, true) !== sessionLabel(session, false, "original") || prescriptionLabel(session, true) !== prescriptionLabel(session))
   const originalCalculation = showOriginalNotation && session.prescription.kind === "RPE_TIME_RANGE"
     && session.prescription.catalogWorkout ? resolveCatalogBinding(session.prescription.catalogWorkout) : null
   const originalSequence = originalCalculation ? calculatedWorkoutSequence(originalCalculation) : null
@@ -742,7 +759,7 @@ function PlanSessionPreview({
         {expanded && allowMemoExport && <WorkoutMemoTool session={session} date={date} state={explanationContext?.kind === "CANDIDATE" ? "PREVIEW" : "PLAN"} />}
         {showOriginalNotation && <details className="plan-session-records">
           <summary>기존 훈련 표기</summary>
-          <p><strong>{sessionLabel(session)}</strong></p>
+          <p><strong>{sessionLabel(session, false, "original")}</strong></p>
           {originalSequence ? <ol className="plan-session-steps" aria-label="기존 훈련 표기 순서">
             {([['warmup', '준비'], ['main', '본운동'], ['cooldown', '정리']] as const)
               .filter(([phase]) => originalSequence[phase].length > 0)

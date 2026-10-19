@@ -26,7 +26,7 @@ describe("selected plan today projection", () => {
   })
   it("pain review is not a normal executable day", () => {
     expect(projectInstantToday({ ...fixture(), progress: [{ sessionDay: 1, sessionSlot: "AM", state: "PAIN_CHECKIN" }] }, "2026-09-20"))
-      .toMatchObject({ state: "UNAVAILABLE", sessions: [] })
+      .toMatchObject({ state: "UNAVAILABLE", unavailableReason: "PAIN_PROGRESS", sessions: [] })
   })
   it("a linked AM journal counts as a record without marking PM or progress complete", () => {
     const state = fixture()
@@ -36,7 +36,7 @@ describe("selected plan today projection", () => {
     expect(state.progress).toEqual([])
   })
   it("does not call a missing date REST or shift missed workouts", () => {
-    expect(projectInstantToday(fixture(), "2026-09-21")).toMatchObject({ state: "UNAVAILABLE", sessions: [] })
+    expect(projectInstantToday(fixture(), "2026-09-21")).toMatchObject({ state: "UNAVAILABLE", unavailableReason: "NO_SESSION", sessions: [] })
   })
   it("period end is not proof of performance", () => {
     expect(projectInstantToday(fixture(), "2026-09-29")).toMatchObject({ state: "COMPLETED", sessions: [] })

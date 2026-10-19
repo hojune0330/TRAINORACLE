@@ -54,12 +54,17 @@ export type InstantPlanStepRole =
   | "METHOD"
   | "OTHER"
 
+/** Display-only causes. These never change a safety result or a saved plan. */
+export type InstantPlanUnavailableReason = "INVALID_DATE" | "NO_SESSION" | "PAIN_PROGRESS"
+  | "JOURNAL_REVIEW" | "JOURNAL_UNREADABLE" | "CURRENT_BODY_REVIEW" | "DETAILED_AUTHORITY" | "EXECUTION_REVIEW"
+
 export type InstantPlanToday = {
   readonly dateLabel: string
   readonly state: "BEFORE_START" | "SCHEDULED" | "PARTLY_RECORDED" | "RECORDED" | "REST"
     | "RETURN_AFTER_GAP" | "COMPLETED" | "UNAVAILABLE"
   readonly title: string
   readonly sourceLabel?: string
+  readonly unavailableReason?: InstantPlanUnavailableReason
   readonly sessions: readonly {
     readonly id: string
     readonly slotLabel: string

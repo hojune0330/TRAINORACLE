@@ -14,12 +14,12 @@ export function instantSessionId(session: Pick<PlanSession, "day" | "slot">): st
 export function projectInstantToday(state: PlanBetaState, today: string, linkedSessionIds: readonly string[] = []): InstantPlanToday {
   const start = state.intake.startDate ?? state.generatedAt.slice(0, 10)
   const base = { dateLabel: today, title: "오늘 훈련", sessions: [] } as const
-  if (!isValidIsoDate(start) || !isValidIsoDate(today)) return { ...base, state: "UNAVAILABLE" }
+  if (!isValidIsoDate(start) || !isValidIsoDate(today)) return { ...base, state: "UNAVAILABLE", unavailableReason: "INVALID_DATE" }
   const frame = state.activePlan.frame
   const length = Math.ceil("projectionLengthDays" in frame ? frame.projectionLengthDays ?? frame.lengthDays : frame.lengthDays)
   const days = Array.from({ length }, (_, i) => isoShift(start, i))
   if (state.progress.some(item => item.state === "PAIN_CHECKIN")) {
-    return { ...base, title: "몸 상태 확인이 남아 있어요", state: "UNAVAILABLE" }
+    return { ...base, state: "UNAVAILABLE", unavailableReason: "PAIN_PROGRESS" }
   }
   if (today > days[length - 1]!) return { ...base, title: "계획 기간이 끝났어요", state: "COMPLETED" }
   const before = today < start
@@ -29,7 +29,7 @@ export function projectInstantToday(state: PlanBetaState, today: string, linkedS
   const first = sessions.find(session => session.role !== "REST")
   const day = before ? first?.day : days.indexOf(today) + 1
   const selected = sessions.filter(session => session.day === day)
-  if (!selected.length) return { ...base, state: "UNAVAILABLE" }
+  if (!selected.length) return { ...base, state: "UNAVAILABLE", unavailableReason: "NO_SESSION" }
   const training = selected.filter(session => session.role !== "REST")
   if (!training.length) return { ...base, state: "REST" }
   const projection = training.map(session => ({

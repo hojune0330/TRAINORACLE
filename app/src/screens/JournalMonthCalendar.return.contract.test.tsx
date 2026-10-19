@@ -24,6 +24,28 @@ beforeEach(() => {
 })
 afterEach(() => { cleanup(); localStorage.clear(); vi.restoreAllMocks(); setActiveLocalAccount(null) })
 
+it("groups four journal entries into three calendar marks and preserves all four reader choices", () => {
+  const source = [
+    { ...entries[0]!, id: "am-base", system: "base", fieldProvenance: { system: { provenance: "EXPLICIT" as const } } },
+    { ...entries[1]!, id: "pm-recovery-1", system: "rest", fieldProvenance: { system: { provenance: "EXPLICIT" as const } } },
+    { ...entries[1]!, id: "pm-base", system: "base", fieldProvenance: { system: { provenance: "EXPLICIT" as const } } },
+    { ...entries[1]!, id: "pm-recovery-2", system: "rest", fieldProvenance: { system: { provenance: "EXPLICIT" as const } } },
+  ]
+  const original = JSON.stringify(source)
+  render(<JournalMonthCalendar month={projectJournalArchive(source).months[0]!} entries={source}
+    onMonthChange={vi.fn()} onOpenDay={vi.fn()} />)
+  const day = screen.getByRole("button", { name: /2026년 10월 2일 금요일.*훈련 후 4건/u })
+  expect(day.querySelectorAll(".calendar-training-mark")).toHaveLength(3)
+  expect(day).toHaveTextContent("기록 2개")
+  expect(day).toHaveAccessibleName(/오후 회복 기록 2개/u)
+  fireEvent.click(day)
+  const reader = screen.getByRole("dialog")
+  expect(reader.querySelectorAll("button[data-journal-entry-id]")).toHaveLength(4)
+  expect([...reader.querySelectorAll<HTMLButtonElement>("button[data-journal-entry-id]")].map(button => button.dataset.journalEntryId))
+    .toEqual(source.map(entry => entry.id))
+  expect(JSON.stringify(source)).toBe(original)
+})
+
 it("passes the selected record and only transient reader identifiers when opening the original", () => {
   const open = vi.fn()
   render(<JournalMonthCalendar month={month} entries={entries} onMonthChange={vi.fn()} onOpenDay={open} />)

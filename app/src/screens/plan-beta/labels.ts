@@ -125,7 +125,14 @@ export const PROGRESS_LABELS: Record<PlanProgressState, string> = {
   PAIN_CHECKIN: "통증 체크",
 }
 
-export function sessionLabel(session: WorkoutDisplaySession, plain = false): string {
+/** An exact built-in source may have a shorter UI name. Original catalog names
+ * remain available for details; arbitrary titles and unknown bindings are untouched. */
+export function sessionLabel(session: WorkoutDisplaySession, plain = false, mode: "display" | "original" = "display"): string {
+  if (mode === "original") return sessionWorkoutName(session)
+  const prescription = session.prescription
+  if (prescription?.kind === "RPE_TIME_RANGE" && prescription.catalogWorkout?.catalogId === "X-BASE-09"
+    && prescription.catalogWorkout.catalogFingerprint === "sha256:8285f615acf8589d363be3b5aeccefadd015498c96056efceef6df7da8fd171f"
+    && resolveCatalogBinding(prescription.catalogWorkout)) return "중간에 걷는 조깅"
   if (plain) {
     const reading = catalogWorkoutReader(session)
     if (reading) return reading.name

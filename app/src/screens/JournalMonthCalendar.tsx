@@ -7,7 +7,7 @@ import { isValidIsoDate, isoShift } from "../domain/dates"
 import { CalendarJournalDetails } from "../components/CalendarJournalDetails"
 import { PlanDayReader } from "./plan-beta/PlanDayReader"
 import { CalendarTrainingMark } from "../components/CalendarTrainingMark"
-import { calendarMarksDescription, journalCalendarMarks, type CalendarTrainingMarkData } from "../domain/calendar-training-presentation"
+import { calendarMarksDescription, groupJournalCalendarMarks, type CalendarTrainingMarkData } from "../domain/calendar-training-presentation"
 import { calendarRecordDates } from "../domain/calendar-context"
 import { projectJournalMonthCalendar } from "../domain/journal-calendar"
 import { JournalDecorationPreview, useJournalDecorationPreviews } from "./journal/JournalDecorationPreview"
@@ -70,11 +70,13 @@ export function JournalMonthCalendar({ month, onOpenDay, onMonthChange, entries 
   const activeDays = days.length
   const marksByDate = React.useMemo(() => {
     const result = new Map<string, CalendarTrainingMarkData[]>()
+    const entriesByDate = new Map<string, JournalEntry[]>()
     for (const entry of entries) {
-      const marks = result.get(entry.date) ?? []
-      marks.push(...journalCalendarMarks(entry))
-      result.set(entry.date, marks)
+      const day = entriesByDate.get(entry.date) ?? []
+      day.push(entry)
+      entriesByDate.set(entry.date, day)
     }
+    for (const [date, day] of entriesByDate) result.set(date, [...groupJournalCalendarMarks(day)])
     for (const marks of result.values()) marks.sort((a, b) => {
       const order = (mark: CalendarTrainingMarkData) => mark.tone === "race" ? 0 : mark.slot === "오전" ? 1 : mark.slot === "오후" ? 2 : 3
       return order(a) - order(b)
@@ -86,7 +88,7 @@ export function JournalMonthCalendar({ month, onOpenDay, onMonthChange, entries 
 
   return (
     <section ref={calendarRoot} className="journal-calendar-browse" aria-label="날짜별 일지">
-      <MonthCalendar category="journal" presentation="journal-archive" trainingColors={hasVisibleTrainingMarks} month={month.month} today={today} selectedDate={selectedDate} highlightedRange={highlightedRange}
+      <MonthCalendar category="journal" presentation="journal-archive" legendContext="journal" trainingColors={hasVisibleTrainingMarks} month={month.month} today={today} selectedDate={selectedDate} highlightedRange={highlightedRange}
         summary={month.entryCount > 0 && activeDays > 0 ? `${activeDays}일 · ${month.entryCount}개 기록` : undefined}
         onMonthChange={onMonthChange} onToday={setSelectedDate} onSelectDate={date => {
           openDate(date)

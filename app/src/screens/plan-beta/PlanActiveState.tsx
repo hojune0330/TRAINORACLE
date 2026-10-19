@@ -40,6 +40,7 @@ import { areCatalogPaceSourcesCurrent } from "../../domain/account/eligible-acco
 import { LOCAL_JOURNALS_CHANGED } from "../../domain/journal-change-events"
 import { localJournalScopeGeneration, onLocalJournalScopeChange } from "../../domain/account/local-journal-ownership"
 import { localAccountScopeIsCurrent, localAccountScopeSnapshot } from "../../domain/account/local-account-scope"
+import type { InstantPlanUnavailableReason } from "../../domain/instant-plan-contract"
 import { useLocalToday } from "../../hooks/useLocalToday"
 import { accountPlansEnabled } from "../../domain/account/account-plan-service"
 import { ensureAccountPlanHistory } from "../../domain/account/account-plan-domain"
@@ -97,6 +98,7 @@ export function PlanActiveState({
     }
   }, [executionFeedback, state.activePlan.candidateId, state.generatedAt])
   const [executionBlocked, setExecutionBlocked] = React.useState(false)
+  const [executionUnavailableReason, setExecutionUnavailableReason] = React.useState<InstantPlanUnavailableReason>()
   const [editing, setEditing] = React.useState<ActivePlanEditIntent | "hub" | null>(null)
   const [creationCelebrationConsumed, setCreationCelebrationConsumed] = React.useState(false)
   const consumeCreationCelebration = React.useCallback(() => setCreationCelebrationConsumed(true), [])
@@ -292,6 +294,8 @@ export function PlanActiveState({
     const safety = evaluatePlanSafety(currentCheck, evaluatedAt)
     if (safety.kind === "blocked") {
       setExecutionBlocked(true)
+      setExecutionUnavailableReason(safety.code === "CURRENT_CHECK_REQUIRES_REVIEW" ? "CURRENT_BODY_REVIEW"
+        : loadEntriesForPlanSafety().status === "complete" ? "JOURNAL_REVIEW" : "JOURNAL_UNREADABLE")
       setExecutionMessage("지금은 상세 세션을 시작하지 않아요. 몸 상태를 먼저 직접 확인해 주세요.")
       return
     }
@@ -302,6 +306,7 @@ export function PlanActiveState({
       safetyGate: safety.gate,
     })
     setExecutionBlocked(authority.kind !== "permitted")
+    setExecutionUnavailableReason(authority.kind !== "permitted" ? "DETAILED_AUTHORITY" : undefined)
     setExecutionMessage(authority.kind === "permitted"
       ? `현재 안전 상태와 승인 상태를 다시 확인했어요. ${operation === "START" ? "시작" : "다시 시작"}할 수 있어요. 의료 판단은 아닙니다.`
       : "현재 승인 상태에서 상세 세션을 시작하지 않아요. 저장된 계획은 그대로 유지됩니다.")
@@ -343,6 +348,7 @@ export function PlanActiveState({
         returnToSession={returnToSession}
         executionMessage={executionMessage}
         executionBlocked={executionBlocked}
+        executionUnavailableReason={executionUnavailableReason}
         saveNotice={error !== null ? <div className="plan-inline-error" role="alert">
           <p>{error}</p>
           {retry?.kind === "progress" && <button className="plan-text-action" type="button" onClick={retryPendingWrite}>

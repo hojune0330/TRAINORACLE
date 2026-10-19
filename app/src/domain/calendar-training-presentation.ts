@@ -7,6 +7,8 @@ export type CalendarTrainingMarkData = {
   readonly label: string
   readonly slot?: string
   readonly componentCue?: string
+  /** Number of journal entries represented by a display-only group. */
+  readonly recordCount?: number
 }
 
 /** Display existing roles only; do not infer training intensity from energy intent. */
@@ -48,5 +50,25 @@ export function journalCalendarMarks(entry: JournalEntry): readonly CalendarTrai
 }
 
 export function calendarMarksDescription(marks: readonly CalendarTrainingMarkData[]): string {
-  return marks.map(mark => [mark.slot, mark.label, mark.componentCue].filter(Boolean).join(" ")).join(" · ")
+  return marks.map(mark => [mark.slot, mark.label, mark.componentCue,
+    mark.recordCount && mark.recordCount > 1 ? `기록 ${mark.recordCount}개` : undefined].filter(Boolean).join(" ")).join(" · ")
+}
+
+/** Group identical visible journal classifications only. Each entry is counted
+ * once; source entries, their ordering and the individual reader stay untouched. */
+export function groupJournalCalendarMarks(entries: readonly JournalEntry[]): readonly CalendarTrainingMarkData[] {
+  const grouped = new Map<string, CalendarTrainingMarkData>()
+  for (const entry of entries) {
+    const rawSlot = entry.kind === "post-session" ? entry.activitySlot : undefined
+    const entryKeys = new Set<string>()
+    for (const source of journalCalendarMarks(entry)) {
+      const mark = source
+      const key = JSON.stringify([entry.date, entry.kind, rawSlot, mark.slot, mark.tone, mark.label, mark.componentCue])
+      if (entryKeys.has(key)) continue
+      entryKeys.add(key)
+      const previous = grouped.get(key)
+      grouped.set(key, { ...mark, recordCount: (previous?.recordCount ?? 0) + 1 })
+    }
+  }
+  return [...grouped.values()]
 }
