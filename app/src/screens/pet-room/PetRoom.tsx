@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { ArrowLeft, BookOpen, Check, ChevronRight, Moon, Sun, X } from 'lucide-react'
 import type { SleepInnGameProps } from '../sleep-inn/types'
 import { CARE_LABEL, PETS, petById, type CareAction, type PetId, type PetPose } from './pet-catalog'
-import { adoptPet, atHome, canAdopt, careDay, careFor, createHome, finishMorning, invitePet, loadHome, persistHome, refreshVisitors, restAgain, sleepTogether, wakeTogether, type HomeLoad, type PetBond, type PetHome } from './pet-engine'
+import { adoptPet, atHome, canAdopt, careDay, careFor, createHome, finishMorning, invitePet, journalFriendCredits, loadHome, persistHome, refreshVisitors, restAgain, sleepTogether, wakeTogether, type HomeLoad, type PetBond, type PetHome } from './pet-engine'
 import { careVoice, PET_VOICES } from './pet-personality'
 import { memoriesFor, nextCare, nextMemory } from './pet-memories'
 import { ActionArt, PetSprite, PropArt, petRoomAsset } from './PetArt'
@@ -10,12 +10,15 @@ import { PetCareScene } from './PetCareScene'
 import { PetBedtimeScene } from './PetBedtimeScene'
 import { PetStoryBook } from './PetStoryBook'
 import { petStory } from './pet-story'
+import { PET_JOURNAL_EVENT, pendingPetJournalError, retryPetJournalSave } from '../../domain/pet-journal-progress'
+import { FriendPages, PetJournalMeeting, PetJournalProgress } from './PetJournalFriends'
+import { acquirePetHomeLease } from '../../domain/pet-home-lock'
 import './pet-room.css'
 import './pet-activities.css'
 
 const asset = `${import.meta.env.BASE_URL}games/pet-room-v1/`
 export { PetSprite } from './PetArt'
-type Activity = { kind: 'care'; id: PetId; action: Exclude<CareAction, 'bed'>; turn: number } | { kind: 'bed' } | { kind: 'story'; id: PetId }
+type Activity = { kind: 'care'; id: PetId; action: Exclude<CareAction, 'bed'>; turn: number } | { kind: 'bed' } | { kind: 'story'; id: PetId } | { kind: 'journal' }
 function MemoryAlbum({ id, bond }: { id: PetId; bond: PetBond }) {
   const memories = memoriesFor(id, bond)
   const next = nextMemory(bond)
@@ -31,23 +34,44 @@ function MemoryAlbum({ id, bond }: { id: PetId; bond: PetBond }) {
 function readHome(scope: string): HomeLoad {
   const seed = crypto.getRandomValues(new Uint32Array(1))[0] || 1
   try { return loadHome(window.localStorage, scope, careDay(), seed) }
-  catch { return { home: createHome(careDay(), seed), raw: null, error: '기기 저장을 열지 못했어요. 다시 불러와 주세요.' } }
+  catch { return { home: createHome(careDay(), seed, scope), raw: null, error: '기기 저장을 열지 못했어요. 다시 불러와 주세요.' } }
 }
 
 export function PetRoom(props: SleepInnGameProps & { onOldGame: () => void }) {
-  return <PetRoomSession key={props.persistenceScope} {...props} />
+  return <PetRoomLease key={props.persistenceScope} {...props} />
+}
+function PetRoomLease(props: SleepInnGameProps & { onOldGame: () => void }) {
+  const [ready, setReady] = useState(false)
+  const [failure, setFailure] = useState<string | null>(null)
+  const [attempt, setAttempt] = useState(0)
+  useEffect(() => {
+    let alive = true
+    const cancellation = new AbortController()
+    let release: (() => void) | undefined
+    void acquirePetHomeLease(props.persistenceScope, cancellation.signal).then(lease => {
+      if (!alive) { if (lease.ok) lease.release(); return }
+      if (lease.ok) { release = lease.release; setReady(true); setFailure(null) }
+      else { setReady(false); setFailure(lease.error) }
+    })
+    return () => { alive = false; cancellation.abort(); release?.() }
+  }, [props.persistenceScope, attempt])
+  if (ready) return <PetRoomSession {...props} />
+  return <div className="pet-home"><header className="pet-home__header"><h1>우리 집 친구들</h1></header>{failure ? <div role="alert" className="pet-home__error"><p>{failure}</p><button type="button" onClick={() => setAttempt(value => value + 1)}>다시 열기</button></div> : <p role="status">친구 기록을 확인하고 있어요.</p>}<button type="button" className="pet-secondary" onClick={props.onBack}>{props.returnLabel ?? '돌아가기'}</button><button type="button" className="pet-text-button" onClick={props.onOldGame}>예전 여관 퍼즐 열기</button></div>
 }
 
-function PetRoomSession({ journal, persistenceScope, onBack, onOpenJournal, returnLabel = '돌아가기', onCanExitReady, onOldGame }: SleepInnGameProps & { onOldGame: () => void }) {
+function PetRoomSession({ journal, persistenceScope, onBack, onOpenJournal, journalLinkLabel, startWithJournalMeeting, returnLabel = '돌아가기', onCanExitReady, onOldGame }: SleepInnGameProps & { onOldGame: () => void }) {
   const [initial] = useState(() => readHome(persistenceScope))
   const saved = useRef(initial)
+  const sessionAlive = useRef(true)
   const [home, setHome] = useState(initial.home)
   const [error, setError] = useState(initial.error)
   const [message, setMessage] = useState('')
   const [tab, setTab] = useState<'room' | 'friends'>('room')
   const [filter, setFilter] = useState<'all' | 'known' | 'ready' | 'family'>('all')
+  const [friendsPage, setFriendsPage] = useState(0)
+  const [journalError, setJournalError] = useState(() => pendingPetJournalError(persistenceScope))
   const [details, setDetails] = useState<PetId | null>(null)
-  const [activity, setActivity] = useState<Activity | null>(null)
+  const [activity, setActivity] = useState<Activity | null>(() => startWithJournalMeeting && !initial.error && !initial.home.sleeping && !initial.home.morning && journalFriendCredits(initial.home) > 0 && PETS.some(pet => !initial.home.pets[pet.id]?.adoptedOn) ? { kind: 'journal' } : null)
   const activityRef = useRef(activity)
   activityRef.current = activity
   const [adopted, setAdopted] = useState<PetId | null>(null)
@@ -74,20 +98,33 @@ function PetRoomSession({ journal, persistenceScope, onBack, onOpenJournal, retu
     } catch { setError('저장하지 못했어요. 최신 기록을 다시 불러와 주세요.'); return false }
   }
   useEffect(() => {
+    sessionAlive.current = true
     const current = saved.current
     const refreshed = refreshVisitors(current.home, careDay())
     if (!current.error && (current.raw === null || refreshed !== current.home)) commit(refreshed)
     const checkDay = () => {
       if (document.visibilityState !== 'visible' || activityRef.current) return
+      setJournalError(pendingPetJournalError(persistenceScope))
       const next = refreshVisitors(saved.current.home, careDay())
       if (next !== saved.current.home) commit(next)
     }
     document.addEventListener('visibilitychange', checkDay)
     window.addEventListener('focus', checkDay)
-    return () => { document.removeEventListener('visibilitychange', checkDay); window.removeEventListener('focus', checkDay); if (timer.current) clearTimeout(timer.current) }
+    return () => { sessionAlive.current = false; document.removeEventListener('visibilitychange', checkDay); window.removeEventListener('focus', checkDay); if (timer.current) clearTimeout(timer.current) }
   // Account changes remount the whole session. No journal date is used for pet care.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+  useEffect(() => {
+    const refreshProgress = () => {
+      setJournalError(pendingPetJournalError(persistenceScope))
+      const latest = readHome(persistenceScope)
+      saved.current = latest; setHome(latest.home); setError(latest.error)
+    }
+    const changed = (event: StorageEvent) => { if (event.key === `trainoracle:pet-home:v2:${encodeURIComponent(persistenceScope)}`) refreshProgress() }
+    window.addEventListener(PET_JOURNAL_EVENT, refreshProgress)
+    window.addEventListener('storage', changed)
+    return () => { window.removeEventListener(PET_JOURNAL_EVENT, refreshProgress); window.removeEventListener('storage', changed) }
+  }, [persistenceScope])
   useEffect(() => {
     onCanExitReady?.(() => {
       if (detailRef.current) { closeDetails(); return false }
@@ -123,7 +160,8 @@ function PetRoomSession({ journal, persistenceScope, onBack, onOpenJournal, retu
     const next = refreshVisitors(current, careDay())
     // Finish with the visible friend first, then welcome today's visitors. Keep this companion beside them.
     if (next !== current) commit(invitePet(next, current.selected), '새 친구들도 놀러 왔어요. 방금 함께한 친구도 옆에 있어요.')
-    modalOpener.current?.focus({ preventScroll: true })
+    const focusTarget = modalOpener.current ?? roomTabRef.current
+    focusTarget?.focus({ preventScroll: true })
   }
   function care(action: Exclude<CareAction, 'bed'>) {
     const current = saved.current.home
@@ -213,13 +251,14 @@ function PetRoomSession({ journal, persistenceScope, onBack, onOpenJournal, retu
     <header className="pet-home__header">
       <button type="button" className="pet-icon-button" aria-label={returnLabel} onClick={onBack}><ArrowLeft size={22} /></button>
       <div><span>내 펫과 함께 쉬는 방</span><h1>우리 집 친구들</h1></div>
-      <button type="button" className="pet-icon-button" aria-label="수면 일지 열기" onClick={onOpenJournal}><BookOpen size={22} /></button>
+      <button type="button" className="pet-icon-button" aria-label={journalLinkLabel ?? '수면 일지 열기'} onClick={onOpenJournal}><BookOpen size={22} /></button>
     </header>
     {error && <div role="alert" className="pet-home__error"><p>{error}</p><button type="button" onClick={reload}>다시 불러오기</button></div>}
     <nav className="pet-home__tabs" aria-label="펫 메뉴">
       <button ref={roomTabRef} type="button" aria-current={tab === 'room' ? 'page' : undefined} onClick={() => setTab('room')}><ActionArt frame={4} />우리 방</button>
-      <button type="button" aria-current={tab === 'friends' ? 'page' : undefined} onClick={() => setTab('friends')}><ActionArt frame={5} />친구들 <span>{Object.keys(home.pets).length}/12</span></button>
+      <button type="button" aria-current={tab === 'friends' ? 'page' : undefined} onClick={() => setTab('friends')}><ActionArt frame={5} />친구들 <span>{Object.keys(home.pets).length}/{PETS.length}</span></button>
     </nav>
+    <PetJournalProgress home={home} unavailable={!!error} pendingError={journalError} onMeet={() => beginActivity({ kind: 'journal' })} onRetry={() => { void retryPetJournalSave(persistenceScope).then(() => { if (sessionAlive.current) { setJournalError(pendingPetJournalError(persistenceScope)); reload() } }) }} />
     {tab === 'room' ? <>
       {!sleeping && !morning && <div className="pet-bedtime-entry"><button type="button" disabled={!!error} className="pet-primary" onClick={() => beginActivity({ kind: 'bed' })}><ActionArt frame={3} /><span>같이 자기<small>이불 펴고, 커튼 닫고, 불 끄기</small></span></button></div>}
       {morning && <section className="pet-morning" aria-label="함께 잔 친구들과 아침 인사"><strong>{selected.name}도 일어났네!</strong><p>같이 쉬었던 친구들이 아직 옆에 있어요.</p><button type="button" disabled={!!error} className="pet-primary" onClick={greetMorning}>오늘도 같이 지내기</button><button type="button" disabled={!!error} className="pet-text-button" onClick={backToSleep}>조금 더 자기</button></section>}
@@ -233,7 +272,7 @@ function PetRoomSession({ journal, persistenceScope, onBack, onOpenJournal, retu
           <span className="pet-scene__pet-name">{petById(id).name}{home.pets[id]?.adoptedOn && <Check size={12} />}</span>
         </button>)}
       </section>
-      {(sleeping || morning) && present.length > 3 && <section className="pet-resting-friends" aria-label="함께 쉬는 친구 모두"><p>{present.length}명이 함께 쉬고 있어요.</p><div>{present.map(id => <span key={id}><PetSprite id={id} pose={sleeping ? 'sleeping' : 'waking'} /><span>{petById(id).name}</span></span>)}</div></section>}
+      {(sleeping || morning) && present.length > 3 && <section className="pet-resting-friends" aria-label="함께 쉬는 친구 모두"><p>{present.length}명이 함께 쉬고 있어요.</p><div>{present.map(id => <span key={id}><span>{petById(id).name}</span></span>)}</div></section>}
       <section className="pet-selected" aria-label={`${selected.name} 돌보기`}>
         <div className="pet-selected__heading"><div><span>{selected.animal} · {bond.adoptedOn ? '우리 집 식구' : '방문 친구'}</span><h2>{selected.name} <small>{bond.caredDays.length}일 돌봤어요</small></h2></div><button type="button" className="pet-text-button" onClick={() => openDetails(selected.id)}>{bond.adoptedOn ? '우리 추억' : '입양 조건'}<ChevronRight size={17} /></button></div>
         {!sleeping && !morning ? <>
@@ -254,18 +293,19 @@ function PetRoomSession({ journal, persistenceScope, onBack, onOpenJournal, retu
       {!sleeping && !morning && <section className="pet-housemates" aria-label="방에 있는 친구 선택"><h2>같이 있는 친구 <span>{present.length}</span></h2><div>{present.map(id => <button key={id} type="button" disabled={!!error} aria-pressed={selected.id === id} onClick={() => select(id)}><PetSprite id={id} /><span>{petById(id).name}</span><small>{home.pets[id]?.adoptedOn ? '우리 집' : '놀러 왔어요'}</small></button>)}</div></section>}
     </> : <section className="pet-friends">
       <div className="pet-friends__intro"><h2>다시 만나고 싶은 친구가 있나요?</h2><p>한 번 만난 친구는 언제든 초대해요.<br />못 온 날이 있어도 함께한 날은 사라지지 않아요.</p></div>
-      <div className="pet-friends__count"><strong>우리 집 식구 {myPets.length}</strong><span>만난 친구 {Object.keys(home.pets).length} / 12</span></div>
-      <div className="pet-filters" role="group" aria-label="친구 목록 고르기">{([['all', '모두'], ['known', '만난 친구'], ['ready', '입양 가능'], ['family', '우리 집']] as const).map(([value, label]) => <button key={value} type="button" aria-pressed={filter === value} onClick={() => setFilter(value)}>{label}</button>)}</div>
-      {!filteredPets.length && <p className="pet-friends__empty">{filter === 'ready' ? '아직 입양할 친구가 없어요. 만난 친구의 입양 조건을 확인해 봐요.' : '아직 우리 집 식구가 없어요. 친해진 친구를 입양하면 여기 모여요.'}</p>}
-      <div className="pet-friends__grid">{filteredPets.map(pet => {
+      <div className="pet-friends__count"><strong>우리 집 식구 {myPets.length}</strong><span>만난 친구 {Object.keys(home.pets).length} / {PETS.length}</span></div>
+      <div className="pet-filters" role="group" aria-label="친구 목록 고르기">{([['all', '모두'], ['known', '만난 친구'], ['ready', '입양 가능'], ['family', '우리 집']] as const).map(([value, label]) => <button key={value} type="button" aria-pressed={filter === value} onClick={() => { setFilter(value); setFriendsPage(0) }}>{label}</button>)}</div>
+      {!filteredPets.length && <p className="pet-friends__empty">{filter === 'ready' ? '돌봄 미션으로 바로 입양할 친구는 아직 없어요. 만난 친구의 입양 조건을 확인해 봐요.' : '아직 우리 집 식구가 없어요. 친해진 친구를 입양하면 여기 모여요.'}</p>}
+      <div className="pet-friends__grid">{filteredPets.slice(friendsPage * 12, (friendsPage + 1) * 12).map(pet => {
         const record = home.pets[pet.id]
         return <button key={pet.id} type="button" className={`pet-friend${!record ? ' pet-friend--new' : ''}`} onClick={() => openDetails(pet.id)} style={{ '--pet-accent': pet.accent } as CSSProperties}>
           <PetSprite id={pet.id} pose={record?.adoptedOn ? 'happy' : 'awake'} /><strong>{pet.name}</strong><span>{pet.animal}</span><small>{record?.adoptedOn ? '우리 집 식구' : record ? canAdopt(home, pet.id) ? '입양할 수 있어요!' : `${record.caredDays.length}일 함께했어요` : '아직 안 만났어요'}</small>
         </button>
       })}</div>
+      <FriendPages page={friendsPage} count={filteredPets.length} onChange={setFriendsPage} />
       <p className="pet-small">하루에 최대 3명이 무작위로 놀러 와요. 아직 못 만난 친구부터 와요. 새로고침해도 오늘 친구는 같아요.</p>
     </section>}
-    <section className="pet-journal-link"><div><BookOpen size={20} /><div><strong>내 수면 일지</strong><span>{journal.status === 'recorded' ? `${journal.date} · ${journal.sleepH ? `${journal.sleepH}시간 기록했어요` : '기록이 있어요'}` : journal.status === 'draft' ? '작성 중인 일지로 돌아가요' : '얼마나 잤는지는 일지에 직접 적어요'}</span></div></div><button type="button" onClick={onOpenJournal}>일지 열기<ChevronRight size={16} /></button></section>
+    <section className="pet-journal-link"><div><BookOpen size={20} /><div><strong>{journalLinkLabel ? '연결된 일지' : '내 수면 일지'}</strong><span>{journalLinkLabel ? `${journal.date} · 읽고 나서 이 방으로 돌아와요` : journal.status === 'recorded' ? `${journal.date} · ${journal.sleepH ? `${journal.sleepH}시간 기록했어요` : '기록이 있어요'}` : journal.status === 'draft' ? '작성 중인 일지로 돌아가요' : '얼마나 잤는지는 일지에 직접 적어요'}</span></div></div><button type="button" onClick={onOpenJournal}>{journalLinkLabel ?? '일지 열기'}<ChevronRight size={16} /></button></section>
     <footer className="pet-home__footer"><span>펫 기록은 이 브라우저에 저장돼요. 다른 기기에는 이어지지 않아요.</span><button type="button" className="pet-secondary" onClick={onBack}>{returnLabel}</button><button type="button" onClick={onOldGame}>예전 여관 퍼즐 열기</button></footer>
     </div>
     {detailPet && <div className="pet-detail-backdrop" onClick={event => { if (event.target === event.currentTarget) closeDetails() }}>
@@ -291,7 +331,7 @@ function PetRoomSession({ journal, persistenceScope, onBack, onOpenJournal, retu
           <div className="pet-adoption-path"><strong>30일 돌보기 <span>{detailBond.caredDays.length} / 30일</span></strong><progress max={30} value={detailBond.caredDays.length} aria-label={`${detailPet.name} 돌본 날`} /><small>연속으로 안 와도 돼요. 하루에 한 번 기록해요.</small></div>
           <p className="pet-or">또는 아래 미션 3개를 모두 끝내기</p>
           <ul className="pet-missions">{detailPet.missions.map(mission => { const count = Math.min(mission.days, detailBond.actions[mission.action].length); return <li key={mission.action}><span>{CARE_LABEL[mission.action]}</span><strong>{count >= mission.days && <Check size={15} />}{count} / {mission.days}일</strong></li> })}</ul>
-          <p className="pet-small">미션도 같은 날은 한 번만 세어요. 입양에 결제나 추첨은 없어요.</p>
+          <p className="pet-small">미션도 같은 날은 한 번만 세어요. 입양에 결제나 실패 추첨은 없어요.</p>
           {sleeping || morning ? <><button type="button" className="pet-primary" onClick={() => returnToRoom(detailPet.id)}>{sleeping ? '잠든 방으로 돌아가기' : '아침 방으로 돌아가기'}</button><p className="pet-small">아침 인사를 나눈 뒤에 초대하거나 입양해요.</p></> : canAdopt(home, detailPet.id) ? <button type="button" disabled={!!error} className="pet-primary" onClick={() => adopt(detailPet.id)}><ActionArt frame={4} />우리 집으로 입양하기</button> : <button type="button" disabled={!!error} className="pet-primary" onClick={() => returnToRoom(detailPet.id)}>{present.includes(detailPet.id) ? `${detailPet.name} 돌보러 가기` : '지금 방으로 초대하기'}</button>}
           <MemoryAlbum id={detailPet.id} bond={detailBond} />
         </>}
@@ -300,5 +340,6 @@ function PetRoomSession({ journal, persistenceScope, onBack, onOpenJournal, retu
     {activity?.kind === 'care' && <PetCareScene id={activity.id} action={activity.action} turn={activity.turn} onComplete={() => finishCare(activity.id, activity.action)} onClose={closeActivity} error={error} onReload={() => { closeActivity(); reload() }} />}
     {activity?.kind === 'bed' && <PetBedtimeScene companions={[home.selected, ...present.filter(id => id !== home.selected)]} onFinish={startSleep} onClose={closeActivity} error={error} onReload={() => { closeActivity(); reload() }} />}
     {activity?.kind === 'story' && <PetStoryBook id={activity.id} bond={home.pets[activity.id]!} onClose={closeActivity} />}
+    {activity?.kind === 'journal' && <PetJournalMeeting home={home} commit={commit} onClose={closeActivity} onGoToRoom={() => { setTab('room'); modalOpener.current = roomTabRef.current; closeActivity() }} error={error} onReload={() => { closeActivity(); reload() }} />}
   </div>
 }

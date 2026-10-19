@@ -80,3 +80,8 @@
 @keyframes pet-story-arrive { from { transform: translateX(-22px); opacity: .3; } to { transform: translateX(0); opacity: 1; } }
 @media (min-width: 640px) { .pet-activity-backdrop { padding: 20px; } .pet-activity { min-height: 0; border-radius: 24px; overflow: hidden; } }
 @media (prefers-reduced-motion: reduce) { .pet-activity *, .pet-activity *::before, .pet-activity *::after { animation: none !important; transition: none !important; } }
+.pet-activity-backdrop--contained { align-items: stretch; overflow: hidden; }
+.pet-activity--contained { display: flex; flex-direction: column; min-height: 0; max-height: 100%; padding-bottom: 0; }
+.pet-activity--contained .pet-activity__header { flex-shrink: 0; }
+.pet-activity--contained .pet-meeting { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; align-content: start; }
+.pet-meeting__confirm { flex-shrink: 0; padding: 12px 20px max(16px, env(safe-area-inset-bottom)); border-top: 1px solid var(--pet-line); background: var(--pet-paper); }

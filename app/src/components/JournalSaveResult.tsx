@@ -6,6 +6,7 @@ import { TaskFlowStep } from "./TaskFlowStep"
 import { registerBrowserBackLayer } from "../navigation/browserNavigation"
 import { localJournalScopeGeneration } from "../domain/account/local-journal-ownership"
 import { CompanionMotion } from "./CompanionMotion"
+import { PetJournalSaveLink } from "./PetJournalSaveLink"
 
 /** An acknowledged save (or safely retained pending write), never an exercise award. */
 export function JournalSaveResult({ result, onClose, onOpenSaved, onDecorateSaved, onOpenTrends, onRetryReward,
@@ -64,6 +65,8 @@ export function JournalSaveResult({ result, onClose, onOpenSaved, onDecorateSave
           {result.rewardLoading ? "포인트 확인 중" : "포인트 다시 확인"}
         </button>}
       </div>}
+      {result.storageStatus === "CONFIRMED" && result.savedJournal && !needsReview
+        && <PetJournalSaveLink key={result.savedJournal.id} journal={result.savedJournal} />}
       {summary && <div className="journal-save-result__summary">{summary}</div>}
       {children}
       {!needsReview && <div className="journal-save-result__optional">

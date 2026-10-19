@@ -1,10 +1,12 @@
 import type { CareAction, PetId } from './pet-catalog'
+import { NEW_VOICES } from './pet-new-friends'
 
 type Voice = Record<Exclude<CareAction, 'bed'>, readonly [string, string]>
   & { bed: string; wake: string; adopted: string; favorite: CareAction }
 
 // Short, authored reactions: personality lives in the interaction, not just the profile.
 export const PET_VOICES: Record<PetId, Voice> = {
+  ...NEW_VOICES,
   otter: {
     pet: ['볼도 살짝 만져 줘. 헤헤.', '네 손에 내 손도 올려 볼래.'],
     feed: ['두 손으로 꼭 잡고 먹을게!', '오물오물. 다 먹으면 공놀이할까?'],

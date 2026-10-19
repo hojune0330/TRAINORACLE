@@ -1,10 +1,12 @@
 import { type CareAction, type PetId, type PetPose } from './pet-catalog'
 import type { PetBond } from './pet-engine'
+import { NEW_STORIES } from './pet-new-friends'
 
 type SceneCopy = readonly [title: string, narration: string, speech: string]
 type Story = { action: Exclude<CareAction, 'bed'>; arrival: SceneCopy; care: SceneCopy; bed: SceneCopy; family: SceneCopy }
 // Authored from the approved pet identities, props and favorite actions. No generated runtime text.
 export const PET_STORIES: Record<PetId, Story> = {
+  ...NEW_STORIES,
   otter: { action: 'play', arrival: ['공을 가져온 손님', '동글은 공 하나를 두 손으로 들고 왔어. 문 앞에서 살짝 굴려 보네.', '이 공, 같이 굴려 볼래?'], care: ['다시 네 쪽으로', '보내 준 공을 동글이 받았어. 이번에는 네 손 쪽으로 또르르 굴렸지.', '내가 보내면 네가 받고. 우리 잘 맞네!'], bed: ['공도 쉬는 자리', '동글은 공을 이불 옆에 놓았어. 내일도 여기서 놀고 싶나 봐.', '공도 우리 옆에서 재우자.'], family: ['공 둘 곳이 생겼어', '동글은 공을 바구니에 넣고 네 옆에 앉았어. 이제 집으로 돌아갈 준비는 안 해도 돼.', '내 공도 여기 두고 살래.'] },
   seal: { action: 'pet', arrival: ['푹신한 곳을 찾아서', '말랑은 러그에 배를 대고 누웠어. 조금씩 네 쪽으로 다가오네.', '네 옆이 더 푹신할 것 같아.'], care: ['토닥토닥, 스르르', '등을 천천히 쓰다듬자 말랑의 눈이 가늘어졌어. 앞지느러미도 편하게 내려놓았지.', '응… 거기. 손이 따뜻해.'], bed: ['옆자리를 비워 뒀어', '말랑은 이불 한쪽으로 몸을 옮겼어. 네가 쉴 자리도 남겨 둔 거야.', '여기 같이 누우면 되겠다.'], family: ['매일 돌아올 자리', '말랑이 좋아하는 푹신한 자리가 생겼어. 오늘도 러그 위에서 네가 오는 쪽을 바라봐.', '이제 여기가 내 자리네.'] },
   'red-panda': { action: 'feed', arrival: ['큰 꼬리가 들어왔어', '단풍의 얼굴 뒤로 둥근 꼬리가 쏙 들어왔어. 먼저 냄새를 맡으며 방을 둘러봐.', '혹시 간식 먹을 자리도 있어?'], care: ['한 입씩 오물오물', '단풍은 그릇 앞에 앉아 간식을 조금씩 먹었어. 꼬리 끝이 살랑 움직였지.', '다 먹고 나면 네 옆에서 쉴래.'], bed: ['꼬리 이불', '단풍은 꼬리를 몸 앞으로 당겼어. 네가 펴 준 이불 위에서 동그랗게 누웠지.', '너도 이불 잘 덮어.'], family: ['꼬리까지 넉넉한 집', '단풍은 자기 꼬리만큼 자리를 확인했어. 그러고는 네 쪽으로 조금 더 붙었지.', '우리 같이 앉아도 자리 남아!'] },

@@ -37,6 +37,7 @@ import { usePlanEvidenceHistory } from "./hooks/usePlanEvidenceHistory"
 import { PlanEvidenceHistoryNotice } from "./components/PlanEvidenceHistoryNotice"
 import { useAthleteRecordsSnapshot } from "./hooks/useAthleteRecordsSnapshot"
 import { recordOracleJournalParticipation } from "./domain/oracle-participation"
+import { capturePetJournalScope, recordConfirmedPetJournalSave } from "./domain/pet-journal-progress"
 import { trackProductEvent } from "./domain/account/product-analytics-service"
 import { setAccountAuthState } from "./domain/account/account-auth-state"
 import { startVerifiedAccountScope } from "./domain/account/verified-account-scope"
@@ -577,7 +578,11 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
       setV(INITIAL_VIEW_STATE)
     }, false)
   }
+  // This render's ticket belongs to the form continuation before asynchronous
+  // storage. An A -> B -> A switch must not credit a late callback to a new scope.
+  const petJournalScope = capturePetJournalScope()
   const confirmSavedJournalEffects = (savedEntry: JournalEntry) => {
+    void recordConfirmedPetJournalSave({ date: savedEntry.date, kind: savedEntry.kind }, petJournalScope)
     const prior = confirmedSaveEffects.current
     const scope = localJournalScopeGeneration()
     if (prior?.scope === scope && prior.entryId === savedEntry.id && prior.savedAt === savedEntry.savedAt) return prior
@@ -607,7 +612,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
       // All form onDone contracts return only after a confirmed device/account
       // save; pending and conflict results stay in the form recovery flow.
       setSavedToast({ count: localOnlyCount(), phase: "enter", receipt, reviewMessage, storageMessage,
-        storageStatus: "CONFIRMED", rewardMessage, rewardRetry, completionAlreadyShown })
+        storageStatus: "CONFIRMED", savedJournal: { id: savedEntry.id, date: savedEntry.date, kind: savedEntry.kind }, rewardMessage, rewardRetry, completionAlreadyShown })
       const intent = oracleInputRef.current
       if (intent?.inputKind === "log") oracleInputRef.current = null
       if (reviewMessage === undefined && intent?.inputKind === "log" && intent.owner === activeLocalAccount()) {
@@ -1266,7 +1271,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
           // Quick owns its completion screen. Show only the existing receipt
           // notice now, so Back/closing never withholds confirmed reward status.
           setSavedToast({ count: localOnlyCount(), phase: "enter", receipt: createSavedFactReceipt(entry),
-            storageStatus: "CONFIRMED", reviewMessage, storageMessage,
+            storageStatus: "CONFIRMED", savedJournal: { id: entry.id, date: entry.date, kind: entry.kind }, reviewMessage, storageMessage,
             rewardMessage: reward.rewardMessage, rewardRetry: reward.rewardRetry, completionAlreadyShown: true })
         }}
         onDone={(picked, savedEntry, reviewMessage, storageMessage) => {

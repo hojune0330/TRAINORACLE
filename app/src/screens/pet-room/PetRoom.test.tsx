@@ -2,10 +2,14 @@ import React from 'react'
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { PetRoom } from './PetRoom'
-import { careDay, careFor, createHome, parseHome, petHomeKey, sleepTogether } from './pet-engine'
+import { careDay, careFor, confirmJournalDay, createHome, parseHome, petHomeKey, sleepTogether } from './pet-engine'
 import { PET_IDS, petById, type PetId } from './pet-catalog'
 import { careVoice, PET_VOICES } from './pet-personality'
 import { PET_PLAY } from './pet-play'
+
+// UI behavior runs after a granted room lease. Cross-tab/unsupported/awaited
+// acquisition is exercised separately in the coordinator's boundary tests.
+vi.mock('../../domain/pet-home-lock', () => ({ acquirePetHomeLease: () => ({ then: (ready: (lease: { ok: true; release: () => void }) => void) => { ready({ ok: true, release: () => {} }) } }) }))
 
 it('does not add care when a scene is opened, abandoned or closed through the host Back gate', () => {
   let canExit: (() => boolean) | null = null
@@ -54,18 +58,59 @@ const props = { persistenceScope: 'guest', journal: { date: '2026-01-01', status
 beforeEach(() => { localStorage.clear(); localStorage.setItem(petHomeKey('guest'), JSON.stringify(createHome(careDay(), 123))) })
 afterEach(() => { cleanup(); vi.useRealTimers(); vi.restoreAllMocks() })
 const stored = () => parseHome(localStorage.getItem(petHomeKey('guest'))!)!
-it('shows every pet being put to bed, including a full twelve-pet adopted home', () => {
+it('returns focus after a cancelled journal meeting and brings a confirmed friend from the collection into the room', () => {
+  const start = new Date(); start.setDate(start.getDate() - 8)
+  let home = createHome(careDay(start), 123)
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(start); date.setDate(date.getDate() + i)
+    home = confirmJournalDay(home, { date: careDay(date), kind: 'evening' }, careDay(date))
+  }
+  localStorage.setItem(petHomeKey('guest'), JSON.stringify(home))
+  render(<PetRoom {...props} />)
+  const meet = screen.getByRole('button', { name: '친구 만나기' })
+  meet.focus(); fireEvent.click(meet)
+  const before = localStorage.getItem(petHomeKey('guest'))
+  expect(document.querySelector('.pet-home__content')).toHaveProperty('inert', true)
+  fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' })
+  expect(meet).toHaveFocus()
+  expect(localStorage.getItem(petHomeKey('guest'))).toBe(before)
+  fireEvent.click(screen.getByRole('button', { name: /친구들/ }))
+  fireEvent.click(meet)
+  fireEvent.click(screen.getByRole('button', { name: '직접 고르기' }))
+  fireEvent.click(screen.getByRole('button', { name: '동글 · 수달' }))
+  fireEvent.click(screen.getByRole('button', { name: '동글, 우리 집으로 입양하기' }))
+  fireEvent.click(screen.getByRole('button', { name: '친구와 방으로 가기' }))
+  expect(screen.getByRole('button', { name: '우리 방' })).toHaveAttribute('aria-current', 'page')
+  expect(screen.getByRole('button', { name: '우리 방' })).toHaveFocus()
+  expect(stored().selected).toBe('otter')
+  expect(stored().pets.otter?.adoptedOn).toBe(careDay())
+  expect(stored().journal.claimed).toBe(1)
+})
+it('honors only an explicit saved-result meeting destination and cancels without consuming it', () => {
+  const home = createHome(careDay(), 123)
+  home.journal.days = Array.from({ length: 7 }, (_, i) => { const date = new Date(); date.setDate(date.getDate() - i); return careDay(date) })
+  localStorage.setItem(petHomeKey('guest'), JSON.stringify(home))
+  render(<PetRoom {...props} startWithJournalMeeting />)
+  expect(screen.getByRole('dialog', { name: '일지로 친구 만나기' })).toBeVisible()
+  fireEvent.click(screen.getByRole('button', { name: '나중에 만날게' }))
+  expect(screen.queryByRole('dialog')).toBeNull()
+  expect(screen.getByRole('button', { name: '우리 방' })).toHaveFocus()
+  expect(stored().journal.claimed).toBe(0)
+  expect(stored().journal.pending).toBeNull()
+})
+it('keeps every adopted friend in the bedtime handoff while only loading three scene portraits', () => {
   const home = createHome(careDay(), 123)
   for (const id of PET_IDS) home.pets[id] = { metOn: careDay(), caredDays: [], actions: { pet: [], feed: [], play: [], bed: [] }, adoptedOn: careDay() }
   localStorage.setItem(petHomeKey('guest'), JSON.stringify(home))
   render(<PetRoom {...props} />)
   fireEvent.click(screen.getByRole('button', { name: /^같이 자기/ }))
   const scene = screen.getByRole('dialog')
-  expect(scene.querySelectorAll('.pet-bedtime-friend')).toHaveLength(12)
-  for (const id of PET_IDS) expect(within(scene).getByText(petById(id).name, { exact: true })).toBeVisible()
+  expect(scene.querySelectorAll('.pet-bedtime-friend')).toHaveLength(3)
+  fireEvent.click(within(scene).getByText('함께 쉬는 친구 48명 보기'))
+  for (const id of PET_IDS) expect(scene).toHaveTextContent(petById(id).name)
   quickBed()
-  expect(stored().sleeping?.pets).toHaveLength(12)
-  expect(screen.getByRole('region', { name: '함께 쉬는 친구 모두' }).querySelectorAll('.pet-sprite')).toHaveLength(12)
+  expect(stored().sleeping?.pets).toHaveLength(48)
+  expect(screen.getByRole('region', { name: '함께 쉬는 친구 모두' }).querySelectorAll('.pet-sprite')).toHaveLength(0)
 })
 function finishFeed() {
   const scene = within(screen.getByRole('dialog'))
@@ -261,7 +306,8 @@ it('returns from an adopted pet\'s details to the sleeping room without waking a
   home.pets[id]!.adoptedOn = careDay()
   localStorage.setItem(petHomeKey('guest'), JSON.stringify(sleepTogether(home, careDay())))
   render(<PetRoom {...props} />)
-  fireEvent.click(screen.getByRole('button', { name: /친구들 3\/12/ }))
+  fireEvent.click(screen.getByRole('button', { name: /친구들 3\/48/ }))
+  fireEvent.click(screen.getByRole('button', { name: '우리 집' }))
   fireEvent.click(screen.getByRole('button', { name: new RegExp(`${petById(id).name}.*우리 집 식구`) }))
   fireEvent.click(screen.getByRole('button', { name: '잠든 방으로 돌아가기' }))
   expect(screen.queryByRole('dialog')).toBeNull()

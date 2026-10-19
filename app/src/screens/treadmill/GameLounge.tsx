@@ -143,7 +143,7 @@ export function GameLounge({ onBack, backLabel, renderTour, onJournalSaved }: Pr
         <p className="game-lounge__hint">대결·디펜스 기록은 이 기기에 저장돼요. 러닝 투어는 기존 계정 저장 설정을 따라요. 친구 전적은 함께한 방에서 비교해요.</p>
       </div>}
       {(legacy || records.some(r => r.mode === 'defense')) && <details className="game-lounge__archive"><summary>이전 버전 저장</summary><p>전에 하던 러닝 디펜스의 이어하기와 기록을 확인할 수 있어요.</p><button className="game-lounge__secondary" onClick={() => setRoute('legacy')}>이전 러닝 디펜스 열기</button></details>}
-      <p className="game-lounge__footnote">게임 기록은 실제 훈련 기록·포인트(P)와 연결되지 않아요.</p>
+      <p className="game-lounge__footnote">게임 결과는 훈련 성과나 포인트(P)에 반영되지 않아요.</p>
     </> : <>
       <div className="game-lounge__hero"><GameArt id={game.id} large /><h1 ref={title} tabIndex={-1}>{game.name}</h1><p>{game.goal}</p></div>
       <div className="game-lounge__detail-body">

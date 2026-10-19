@@ -10,7 +10,7 @@ function storage() {
   return { getItem: (key: string) => values.get(key) ?? null, setItem: (key: string, raw: string) => { values.set(key, raw) } }
 }
 describe('random visitors and earned adoption', () => {
-  it('saves the draw across reloads and introduces all twelve animals before repeats', () => {
+  it('saves the draw across reloads and introduces all forty-eight animals before repeats', () => {
     const store = storage()
     let home = createHome(day, 20261018)
     expect(new Set(home.visitors).size).toBe(3)
@@ -18,7 +18,7 @@ describe('random visitors and earned adoption', () => {
     expect(saved.ok).toBe(true)
     expect(loadHome(store, 'guest', day, 999).home.visitors).toEqual(home.visitors)
     const seen = new Set(home.visitors)
-    for (let i = 1; i <= 3; i++) {
+    for (let i = 1; i < PET_IDS.length / 3; i++) {
       home = refreshVisitors(home, dateAt(i))
       expect(home.visitors.some(id => seen.has(id))).toBe(false)
       home.visitors.forEach(id => seen.add(id))

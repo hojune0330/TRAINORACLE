@@ -5,6 +5,7 @@ import type { SavedFactReceipt } from "../domain/save-receipt"
 import { ShellToastHostProvider, ShellToastOutlet } from "./ShellToastHost"
 import { JournalSaveResult } from "./JournalSaveResult"
 import { useCalendarMotion } from "../hooks/useCalendarMotion"
+import type { SavedPetJournalRef } from "../domain/pet-journal-progress"
 
 export type ShellToastState = {
   readonly count: number
@@ -13,6 +14,8 @@ export type ShellToastState = {
   readonly reviewMessage?: string
   readonly storageMessage?: string
   readonly storageStatus?: "CONFIRMED" | "PENDING" | "CONFLICT"
+  /** Supplied only by a verified save continuation, not inferred from a receipt. */
+  readonly savedJournal?: SavedPetJournalRef
   readonly rewardMessage?: string
   readonly rewardRetry?: boolean
   readonly rewardLoading?: boolean

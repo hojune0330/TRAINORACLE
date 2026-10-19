@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, type ReactNode } from 'react'
 import { X } from 'lucide-react'
 
-export function PetOverlay({ title, onClose, children, night = false }: { title: string; onClose: () => void; children: ReactNode; night?: boolean }) {
+export function PetOverlay({ title, onClose, children, night = false, contained = false }: { title: string; onClose: () => void; children: ReactNode; night?: boolean; contained?: boolean }) {
   const heading = useRef<HTMLHeadingElement>(null)
   useEffect(() => { heading.current?.focus({ preventScroll: true }) }, [])
-  return <div className={`pet-activity-backdrop${night ? ' pet-activity-backdrop--night' : ''}`}>
-    <section className="pet-activity" role="dialog" aria-modal="true" aria-labelledby="pet-activity-title" onKeyDown={event => {
+  return <div className={`pet-activity-backdrop${night ? ' pet-activity-backdrop--night' : ''}${contained ? ' pet-activity-backdrop--contained' : ''}`}>
+    <section className={`pet-activity${contained ? ' pet-activity--contained' : ''}`} role="dialog" aria-modal="true" aria-labelledby="pet-activity-title" onKeyDown={event => {
       if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); onClose() }
       if (event.key !== 'Tab') return
       const controls = Array.from(event.currentTarget.querySelectorAll<HTMLElement>('button:not(:disabled), [tabindex="0"]'))

@@ -1,0 +1,633 @@
+{
+  "generatedAt": "2026-10-19",
+  "excluded": [
+    "character-art/pet-friends-v2/inventory.json"
+  ],
+  "files": [
+    {
+      "file": "app/public/games/pet-friends-v2/gallery.html",
+      "bytes": 47119,
+      "sha256": "13d09daa4e5af3fe4ff31e43cc247ee7019a05cbcb32ee7e189deeaac3c548df"
+    },
+    {
+      "file": "app/public/games/pet-friends-v2/manifest.json",
+      "bytes": 94220,
+      "sha256": "a7ced4f78985ab34a12f9d85541b163e5d3cc0b117b10282fd45865330eb1c80"
+    },
+    {
+      "file": "app/public/games/pet-friends-v2/pets/acorn-guardian.webp",
+      "bytes": 111084,
+      "sha256": "3ddf6e2e13f70bc9fd47a2365401c23b1d65eb497fa8f501f23d957ecfdde17d"
+    },
+    {
+      "file": "app/public/games/pet-friends-v2/pets/alpaca.webp",
+      "bytes": 141164,
+      "sha256": "2615c77a20e47e99049f7e8cf753bb21afb0d7fa01b5a95d40aed73a11879f9c"
+    },
+    {
+      "file": "app/public/games/pet-friends-v2/pets/axolotl.webp",
+      "bytes": 143526,
+      "sha256": "605b04513a097b9f81501b6637440347a1b4e0848ce534a90f8bef7c714a9737"
+    },
+    {
+      "file": "app/public/games/pet-friends-v2/pets/bat.webp",
+      "bytes": 121878,
+      "sha256": "5d1ec7e5989056344322604d0664f1139d5e76e36ee46abe496b1002bb3739b7"
+    },
+    {
+      "file": "app/public/games/pet-friends-v2/pets/bear-cub.webp",
+      "bytes": 135992,
+      "sha256": "7224925fa10588c2804adafad3adc6711238a0129a9f285c854b9ef61593c6e1"
+    },
+    {
+      "file": "app/public/games/pet-friends-v2/pets/beaver.webp",
+      "bytes": 116688,
+      "sha256": "a17a44cfa1c728d953f54edfd299615b1f557254d459d584f5a533fd1e9db476"
+    },
+    {
+      "file": "app/public/games/pet-friends-v2/pets/capybara.webp",
+      "bytes": 95056,
+      "sha256": "0b89eb80cd3b3542ad3121def4d024b39357314f52c030461e0f050a9659829f"
+    },
+    {
+      "file": "app/public/games/pet-friends-v2/pets/cat.webp",
+      "bytes": 139846,
+      "sha256": "00abc09e3cd40cedeac24f19f3ad6c1ef4cdf771b5856d355aca421af9360384"
+    },
+    {
+      "file": "app/public/games/pet-friends-v2/pets/chick.webp",
+      "bytes": 106152,
+      "sha256": "92f5652f98bf54a3fa48f531f85cd87ac944c1d69a6f9ab7b0ff5ad5ebbfe686"
+    },
+    {
+      "file": "app/public/games/pet-friends-v2/pets/cloud-sheep.webp",
+      "bytes": 132756,
+      "sha256": "2199fa430171688af6517d8a4b10a5843d59af1a8b10b6c9cc325bfb570e60c3"
+    },
+    {
+      "file": "app/public/games/pet-friends-v2/pets/coral-sprite.webp",
+      "bytes": 129950,
+      "sha256": "0d80bf9acead3aeffcf4017d0464bf757bdd5f47bb9c4109a1fbb46bfa1592af"
+    },
+    {
+      "file": "app/public/games/pet-friends-v2/pets/deer.webp",
+      "bytes": 149680,
+      "sha256": "78fdbd52d9b41902d3cbb661a3fa408e7873ee49ef0592b5f01145b09abda714"
+    },
+    {
+      "file": "app/public/games/pet-friends-v2/pets/fennec.webp",
+      "bytes": 146026,
+      "sha256": "05964e6d729929c020a989e80396ccc463c5a6885c39b837c97596d12061f989"
+    },
+    {
+      "file": "app/public/games/pet-friends-v2/pets/ferret.webp",
+      "bytes": 111654,
+      "sha256": "43b3f50a27b168b7d17c4737454b8bcce3721b0396987ea0a2261b09780f092d"
+    },
+    {
+      "file": "app/public/games/pet-friends-v2/pets/flower-bud.webp",
+      "bytes": 116554,
+      "sha256": "ca73de23f866d76d004a7bb208ead9137e69ab356aa373ddda1c2ca520fadecb"
+    },
+    {
+      "file": "app/public/games/pet-friends-v2/pets/fox.webp",
+      "bytes": 144096,
+      "sha256": "707ead9aaf90a06d988c78b7d41f5b8e871ee53cfa1fd0ccb6ccba51af3a14ee"
+    },
+    {
+      "file": "app/public/games/pet-friends-v2/pets/frog.webp",
+      "bytes": 111726,
+      "sha256": "6285f415657a3c14dc53a6f0597b8d59a6ccf5a2c7dd461e417aa6f37ef95340"
+    },
+    {
+      "file": "app/public/games/pet-friends-v2/pets/hamster.webp",
+      "bytes": 118728,
+      "sha256": "699177accc88575e484fd5eb81bb1e63774f192d9ff61f13f31fd7f72cbfe8f8"
+    },
+    {
+      "file": "app/public/games/pet-friends-v2/pets/koala.webp",
+      "bytes": 147832,
+      "sha256": "7b3b14fc5c70cf9c6291497cdefc6ecbc8ad836cfdbe589e9e4a3537c624986d"
+    },
+    {
+      "file": "app/public/games/pet-friends-v2/pets/lamb.webp",
+      "bytes": 130952,
+      "sha256": "ab52b87a18c283225ce955b03bf93330a1586b13dae6246873a85f944d8136b8"
+    },
+    {
+      "file": "app/public/games/pet-friends-v2/pets/lantern-sprout.webp",
+      "bytes": 133120,
+      "sha256": "9b845ebcb776774ebb886ba227fac87c53fe39a19b0cca3e176901df6a5be5c3"
+    },
+    {
+      "file": "app/public/games/pet-friends-v2/pets/leaf-sprite.webp",
+      "bytes": 128824,
+      "sha256": "7871186316f77af27ff7bbcae86f34de8f9c5d00ad8b46f4d601e29bac6adcf9"
+    },
+    {
+      "file": "app/public/games/pet-friends-v2/pets/moon-moth.webp",
+      "bytes": 143912,
+      "sha256": "405d5cc629ba933e84b4756c13da11f33409c269b37740b5bf46c819e1553e8e"
+    },
+    {
+      "file": "app/public/games/pet-friends-v2/pets/moss-turtle.webp",
+      "bytes": 131714,
+      "sha256": "c7bd38d96a48577619d43179d52e2356013d3bc685b86366764452ffd4f4834d"
+    },
+    {
+      "file": "app/public/games/pet-friends-v2/pets/owl.webp",
+      "bytes": 119704,
+      "sha256": "27057ba06bfdf33c00cc15b0204fe321fa82bbf75e9a30daff9bdff243e21357"
+    },
+    {
+      "file": "app/public/games/pet-friends-v2/pets/panda.webp",
+      "bytes": 119962,
+      "sha256": "82bd83fbeb97ee72c3e6a2a41a6c0f46cc2df570c89f5d0afcbdd11692aeeb14"
+    },
+    {
+      "file": "app/public/games/pet-friends-v2/pets/parakeet.webp",
+      "bytes": 106266,
+      "sha256": "c87ed4964f464f399cc8aa68ada6a8e8896023c94379008041f05d26a799dd8c"
+    },
+    {
+      "file": "app/public/games/pet-friends-v2/pets/pebble-sprout.webp",
+      "bytes": 140122,
+      "sha256": "4ff88291a29ebc0288fadcad5472e62f27847ec0aa9b47e936e3c67f8c590e33"
+    },
+    {
+      "file": "app/public/games/pet-friends-v2/pets/platypus.webp",
+      "bytes": 119888,
+      "sha256": "1c702058e17b6300060729c3c0a332eb2f6536c2618986947d2342473948776d"
+    },
+    {
+      "file": "app/public/games/pet-friends-v2/pets/pony.webp",
+      "bytes": 138660,
+      "sha256": "732966f4f5eb53b3ea97faa57be502d2fbe64d3175803ba2f630008251cf5ce8"
+    },
+    {
+      "file": "app/public/games/pet-friends-v2/pets/raccoon.webp",
+      "bytes": 130140,
+      "sha256": "50216b0f10a7e312fe364dc4b11c405b6f9ea6bfc28cde34c05769b5e34deea7"
+    },
+    {
+      "file": "app/public/games/pet-friends-v2/pets/rain-blob.webp",
+      "bytes": 112606,
+      "sha256": "b6fa5009c82c3df7b6c92a42be27631822c1e48cf27f6edd5a20a5d72a10753f"
+    },
+    {
+      "file": "app/public/games/pet-friends-v2/pets/sloth.webp",
+      "bytes": 108940,
+      "sha256": "750fc6508a7098e58b177291f58fab9b34007aa6e096b64f12780a8980626e05"
+    },
+    {
+      "file": "app/public/games/pet-friends-v2/pets/snow-sprite.webp",
+      "bytes": 116824,
+      "sha256": "e7987b1627d8835a03652f3f6990b253ae8eb9382a02d85f2ef9b4895fd8d4d6"
+    },
+    {
+      "file": "app/public/games/pet-friends-v2/pets/squirrel.webp",
+      "bytes": 142136,
+      "sha256": "a1f6d68ea3e6f6276f7790c13c061232c51eec81c15c63a837d3164f94ea0e4c"
+    },
+    {
+      "file": "app/public/games/pet-friends-v2/pets/star-mole.webp",
+      "bytes": 114948,
+      "sha256": "a516ea12480f7a523ffd6f8abd41610d181175954ae907039a2909e88f9e5f8e"
+    },
+    {
+      "file": "character-art/pet-friends-v2/generation.json",
+      "bytes": 115801,
+      "sha256": "403a8ff1a3860049507c9e8e2e19cde0930ed8388624af50505ba2563ab8938c"
+    },
+    {
+      "file": "character-art/pet-friends-v2/prepare-assets.mjs",
+      "bytes": 6781,
+      "sha256": "d38e96e8cc1cd8ae9aa98bf5dede1d62f4f6a5c9b8277c23de8c1b28bce6c35c"
+    },
+    {
+      "file": "character-art/pet-friends-v2/prepare-contact.mjs",
+      "bytes": 1791,
+      "sha256": "d4a8c9047c0f26e66ad1a881c1d4311507a6a9a221a66ffc34ff108fc4d084b7"
+    },
+    {
+      "file": "character-art/pet-friends-v2/qa/acorn-guardian-on-ivory.jpg",
+      "bytes": 98963,
+      "sha256": "c1e8cdf914c3d9ca5c84b69a6ad51aea640ac6f89f69e53160503eb480bc9588"
+    },
+    {
+      "file": "character-art/pet-friends-v2/qa/alpaca-on-ivory.jpg",
+      "bytes": 107397,
+      "sha256": "37903a9776237b401aa9ee4c3eb69aee6495643014704127e3efccb08d744dbe"
+    },
+    {
+      "file": "character-art/pet-friends-v2/qa/axolotl-on-ivory.jpg",
+      "bytes": 114380,
+      "sha256": "de1b0fc984c68a561edb88be905372a2570bc1900baafae94aea92748ca33ab9"
+    },
+    {
+      "file": "character-art/pet-friends-v2/qa/bat-on-ivory.jpg",
+      "bytes": 121968,
+      "sha256": "c89a65ce117211b62186fb8d24875cbc3f4b1f2b6b3a1250acb512aa1b0b5438"
+    },
+    {
+      "file": "character-art/pet-friends-v2/qa/bear-cub-on-ivory.jpg",
+      "bytes": 121560,
+      "sha256": "c5e5fad26e16a632042636303c69e7b3291cce9fccf6f082531ebe663e916f01"
+    },
+    {
+      "file": "character-art/pet-friends-v2/qa/beaver-on-ivory.jpg",
+      "bytes": 113931,
+      "sha256": "ae400e3fd62c8a70147583db66a94d4a3f8b01506b4127a1f22db89f3d63c61e"
+    },
+    {
+      "file": "character-art/pet-friends-v2/qa/capybara-on-ivory.jpg",
+      "bytes": 84777,
+      "sha256": "bc5ae44448f06e2fa5b6f42e0b827b467b99e077c25f77f50b07fdb6a207c1b6"
+    },
+    {
+      "file": "character-art/pet-friends-v2/qa/cat-on-ivory.jpg",
+      "bytes": 140703,
+      "sha256": "478217f8046138956452bc6844d2c58a060cd3e05ce65b51259aac86a0047adc"
+    },
+    {
+      "file": "character-art/pet-friends-v2/qa/chick-on-ivory.jpg",
+      "bytes": 96482,
+      "sha256": "594962413bab1661436e5006734a123142e3b37069074bac2c180ec6cfd99fcc"
+    },
+    {
+      "file": "character-art/pet-friends-v2/qa/cloud-sheep-on-ivory.jpg",
+      "bytes": 117011,
+      "sha256": "30745ebdbbc5b673ff2a9225cd56d0f8cec5d98a6e0dabe88bf834a038a9e55c"
+    },
+    {
+      "file": "character-art/pet-friends-v2/qa/contact-01.jpg",
+      "bytes": 137437,
+      "sha256": "c6a50b793f69fc0160104e203931d24360e9999619e7c6b130dcd59e9eec0fe2"
+    },
+    {
+      "file": "character-art/pet-friends-v2/qa/contact-02.jpg",
+      "bytes": 122046,
+      "sha256": "7eb7698b5e56cabf71a0eb002a6becf3d42b0b00a7eab4aca5581a1ad0daffa3"
+    },
+    {
+      "file": "character-art/pet-friends-v2/qa/contact-03.jpg",
+      "bytes": 126914,
+      "sha256": "feeb3a5a2a3707e43eff6f572c933ed3a70c485c6024158addeca305eff5040e"
+    },
+    {
+      "file": "character-art/pet-friends-v2/qa/contact-04.jpg",
+      "bytes": 116330,
+      "sha256": "0711015d36e828f674ad79c2740b9ef55643b56f8a6cd62bac79ce4ee99e305a"
+    },
+    {
+      "file": "character-art/pet-friends-v2/qa/contact-05.jpg",
+      "bytes": 122393,
+      "sha256": "06c3e4acc359adaa9504349316f6b08df0b29f5cd98cfbf58264e8ecd1d99833"
+    },
+    {
+      "file": "character-art/pet-friends-v2/qa/contact-06.jpg",
+      "bytes": 123297,
+      "sha256": "192d1d7b712bfd0b693d9e925366333dfce1e777e22209f4289a15b1cdcd7151"
+    },
+    {
+      "file": "character-art/pet-friends-v2/qa/contact-index.json",
+      "bytes": 1138,
+      "sha256": "01091b0b309e1bd816764a5c3dc4b9d67eb039ec86f10ee4f2cc9fea27aef06e"
+    },
+    {
+      "file": "character-art/pet-friends-v2/qa/coral-sprite-on-ivory.jpg",
+      "bytes": 110634,
+      "sha256": "5c1d6501ad43c213dc5acfa4f10f640c936ff213e9587d579e26bd8dd1d60815"
+    },
+    {
+      "file": "character-art/pet-friends-v2/qa/deer-on-ivory.jpg",
+      "bytes": 135917,
+      "sha256": "e4a9e74da06523ff77873b7f2eefa85e857953756d53b7762dfcbf5479fbea6c"
+    },
+    {
+      "file": "character-art/pet-friends-v2/qa/fennec-on-ivory.jpg",
+      "bytes": 140684,
+      "sha256": "6f6bd4c29351bd194cc4f47d19c068564652c4ba86892e6bfa83e05b63159b5c"
+    },
+    {
+      "file": "character-art/pet-friends-v2/qa/ferret-on-ivory.jpg",
+      "bytes": 111995,
+      "sha256": "b7695bb2d91ee649d7617dcfae44a8eff80d06e145972c7e89eee3c54a41d983"
+    },
+    {
+      "file": "character-art/pet-friends-v2/qa/flower-bud-on-ivory.jpg",
+      "bytes": 111832,
+      "sha256": "f55515872906aaf5aa9cb17d289c93e326716b6285a3f8256ecd5c561511c9ad"
+    },
+    {
+      "file": "character-art/pet-friends-v2/qa/fox-on-ivory.jpg",
+      "bytes": 141752,
+      "sha256": "7d122c2b3716e3114b4b14a08372060d92d7f4407f1fe10fe5f9376fde51c341"
+    },
+    {
+      "file": "character-art/pet-friends-v2/qa/frog-on-ivory.jpg",
+      "bytes": 109340,
+      "sha256": "15a316069925508372db3403672770006f104e5cd8775ead62ca277d6fc58d80"
+    },
+    {
+      "file": "character-art/pet-friends-v2/qa/hamster-on-ivory.jpg",
+      "bytes": 99346,
+      "sha256": "a5b5144b1903ff5b0973c3d8337dbeba384574a2dd9184e7dc6d833708f40e4d"
+    },
+    {
+      "file": "character-art/pet-friends-v2/qa/koala-on-ivory.jpg",
+      "bytes": 122588,
+      "sha256": "ea5f7bcdaec460f03e426af41221e4424364ef3e7c3435cd09107c7629f817f6"
+    },
+    {
+      "file": "character-art/pet-friends-v2/qa/lamb-on-ivory.jpg",
+      "bytes": 120854,
+      "sha256": "71092438546811ad3b9173558b6fa763a48b7cedbabd5c825203d0a48d90a39f"
+    },
+    {
+      "file": "character-art/pet-friends-v2/qa/lantern-sprout-on-ivory.jpg",
+      "bytes": 121291,
+      "sha256": "ee24162320429e3a6cbbcf05aee5ed03445aece55b7e0c041a712d77ef5450e3"
+    },
+    {
+      "file": "character-art/pet-friends-v2/qa/leaf-sprite-on-ivory.jpg",
+      "bytes": 111369,
+      "sha256": "fd4f308b30aaf39b76a2e1df75222a66508bcba0547cae1e557198a9bc09508e"
+    },
+    {
+      "file": "character-art/pet-friends-v2/qa/moon-moth-on-ivory.jpg",
+      "bytes": 130198,
+      "sha256": "aacbc441b59955fc1b3f08c37f53b6565e92b3e5a80dd9bdd5cbb7183dcdec37"
+    },
+    {
+      "file": "character-art/pet-friends-v2/qa/moss-turtle-on-ivory.jpg",
+      "bytes": 120248,
+      "sha256": "66b6110f7f87f4f1ceb088a88d44a5242d95298b71c3bae22e2993189c0ad555"
+    },
+    {
+      "file": "character-art/pet-friends-v2/qa/owl-on-ivory.jpg",
+      "bytes": 108590,
+      "sha256": "ac2ff527b1852bb8d76c027827e0b51c0b018c9b5a53935e003e789f52ac1c25"
+    },
+    {
+      "file": "character-art/pet-friends-v2/qa/panda-on-ivory.jpg",
+      "bytes": 123437,
+      "sha256": "e50a6e6192fc9efd251695e295d9903b6a44c3a82c59d602f5c807a1a7f5fc8c"
+    },
+    {
+      "file": "character-art/pet-friends-v2/qa/parakeet-on-ivory.jpg",
+      "bytes": 96857,
+      "sha256": "beb7f6e909039c18f3baebd1386e6e1f4841afc908564923f15fbdc7725a6bf3"
+    },
+    {
+      "file": "character-art/pet-friends-v2/qa/pebble-sprout-on-ivory.jpg",
+      "bytes": 102410,
+      "sha256": "b84b20f8e115d7f0e40f34b7ec3374be27f9583a67bdb7b688119122fc4f383c"
+    },
+    {
+      "file": "character-art/pet-friends-v2/qa/platypus-on-ivory.jpg",
+      "bytes": 110961,
+      "sha256": "3dbbbb26cd08331f5b688202e275d14e00cb7970218e6e524865308dd6bf5193"
+    },
+    {
+      "file": "character-art/pet-friends-v2/qa/pony-on-ivory.jpg",
+      "bytes": 128671,
+      "sha256": "97082ab650829dbb198b74ed036653574b18746fd45e2fc1eddeaefeb607beae"
+    },
+    {
+      "file": "character-art/pet-friends-v2/qa/raccoon-on-ivory.jpg",
+      "bytes": 130739,
+      "sha256": "adc181a0d3484955d298ca81458171e085ae84bb9026d6c7c7b7eb13339d259d"
+    },
+    {
+      "file": "character-art/pet-friends-v2/qa/rain-blob-on-ivory.jpg",
+      "bytes": 101128,
+      "sha256": "756e1dadc247e6c5d590574df535a1d6727ceda31fda2c0f41acf26bfd3a3d75"
+    },
+    {
+      "file": "character-art/pet-friends-v2/qa/sloth-on-ivory.jpg",
+      "bytes": 115890,
+      "sha256": "cfbe9275552a3d04677a3d3a436eb66a54024713fd277210c438c00548587680"
+    },
+    {
+      "file": "character-art/pet-friends-v2/qa/snow-sprite-on-ivory.jpg",
+      "bytes": 100317,
+      "sha256": "42bcfa4883721de595925ef3dffed60648bf9010870b0872fb042fde9d6c224e"
+    },
+    {
+      "file": "character-art/pet-friends-v2/qa/squirrel-on-ivory.jpg",
+      "bytes": 120697,
+      "sha256": "2409c7f254f0676cb724af5c7efe8911de1bbd54b4b89317d538de6f96560c62"
+    },
+    {
+      "file": "character-art/pet-friends-v2/qa/star-mole-on-ivory.jpg",
+      "bytes": 115504,
+      "sha256": "b50cfd7f54a52339bb7bfeff40b7a9a1d664543f35dd53c84750662e7955edfd"
+    },
+    {
+      "file": "character-art/pet-friends-v2/qa/validation.json",
+      "bytes": 55781,
+      "sha256": "d2253e426dcff52df199114ff9fbea695b259ec6cefc7cba43473d858751e923"
+    },
+    {
+      "file": "character-art/pet-friends-v2/README.md",
+      "bytes": 8793,
+      "sha256": "7d957d9cd3fd0acf01680a2beaeff8c01d0187710d66dd2d64e7aeed66bafe2b"
+    },
+    {
+      "file": "character-art/pet-friends-v2/sources/acorn-guardian.png",
+      "bytes": 1446645,
+      "sha256": "92840219c1eb7b182d078c0fb28d2248c0d8624c62051e375d93fd9e74353c1c"
+    },
+    {
+      "file": "character-art/pet-friends-v2/sources/alpaca.png",
+      "bytes": 1528319,
+      "sha256": "5fca4717ac7e98816fd8812b3471a41cde80de1bdb8c5bc2efba382033ace900"
+    },
+    {
+      "file": "character-art/pet-friends-v2/sources/axolotl.png",
+      "bytes": 1534729,
+      "sha256": "fe9e72de7986f2e6090f13941fafc4e2eabbae297e1517b1c2db77060ace26a0"
+    },
+    {
+      "file": "character-art/pet-friends-v2/sources/bat.png",
+      "bytes": 1505258,
+      "sha256": "3395e18afd37e85bd47644a7b4003daccaf0076a1d82346e3f80f3f501f41839"
+    },
+    {
+      "file": "character-art/pet-friends-v2/sources/bear-cub.png",
+      "bytes": 1530933,
+      "sha256": "1584a4b5241439edaffeb26e6de19f4312a848275a2c6591187b56f3268050f2"
+    },
+    {
+      "file": "character-art/pet-friends-v2/sources/beaver.png",
+      "bytes": 1494271,
+      "sha256": "906f0147311a5d925226bf3fbcf3aa65d98908209fc089bb5c05fde0ca876210"
+    },
+    {
+      "file": "character-art/pet-friends-v2/sources/capybara.png",
+      "bytes": 1387814,
+      "sha256": "8d6446aa27d557e958dfbde0d7e9d962c11dad92f0263fc4abc9f07803970c21"
+    },
+    {
+      "file": "character-art/pet-friends-v2/sources/cat.png",
+      "bytes": 1606272,
+      "sha256": "b862271926f2bdc78123dac28442d4c6598e797577544ebdd2de80449c5d3938"
+    },
+    {
+      "file": "character-art/pet-friends-v2/sources/chick.png",
+      "bytes": 1466651,
+      "sha256": "a3563146a3446233788969a5eb677e7bb117bafb11d7fe83f07fc8fc5395f00d"
+    },
+    {
+      "file": "character-art/pet-friends-v2/sources/cloud-sheep.png",
+      "bytes": 1512903,
+      "sha256": "1674f401dfc2c9380232a3e200dbd3b49c2fad66275cf7f8656488e9586f0794"
+    },
+    {
+      "file": "character-art/pet-friends-v2/sources/coral-sprite.png",
+      "bytes": 1520842,
+      "sha256": "29c581e76d461b82ad1e0d650c113ef930d55080b51f587bdd55feeaac2e0c6f"
+    },
+    {
+      "file": "character-art/pet-friends-v2/sources/deer.png",
+      "bytes": 1631198,
+      "sha256": "0dcdce17061972128931cd8524297faaa5995dea222e959924247ef9bd4190ce"
+    },
+    {
+      "file": "character-art/pet-friends-v2/sources/fennec.png",
+      "bytes": 1670089,
+      "sha256": "0d512c5c8b7efc7d0508e654e7a2a0bd6f84867713013434622ab71cdf065963"
+    },
+    {
+      "file": "character-art/pet-friends-v2/sources/ferret.png",
+      "bytes": 1485701,
+      "sha256": "ae239b373991247a23584dfc1160a72cc9fdf2aacf680dfe618040f319976db0"
+    },
+    {
+      "file": "character-art/pet-friends-v2/sources/flower-bud.png",
+      "bytes": 1537470,
+      "sha256": "d7d025448b7823293970626ed06a17b39a8f198bc3b952a93ae58985d97de9de"
+    },
+    {
+      "file": "character-art/pet-friends-v2/sources/fox.png",
+      "bytes": 1617520,
+      "sha256": "c7d8e661107893fbab29fe40ca1d2e1f1cee8b0bb53574c340ff074097443098"
+    },
+    {
+      "file": "character-art/pet-friends-v2/sources/frog.png",
+      "bytes": 1472879,
+      "sha256": "63087e64b584bc4ef063d664dac5c3f6a21a0c4cf3829f5cb6bb498f6ea4cb55"
+    },
+    {
+      "file": "character-art/pet-friends-v2/sources/hamster.png",
+      "bytes": 1478979,
+      "sha256": "7d058a87ca90ab9a893f70e8ddf225f90227700b799441b780a944b5f8184e17"
+    },
+    {
+      "file": "character-art/pet-friends-v2/sources/koala.png",
+      "bytes": 1564275,
+      "sha256": "f33ed37c31713f87b568a16fda76ef417c81d69e5c45eb9400f976abf103dd5a"
+    },
+    {
+      "file": "character-art/pet-friends-v2/sources/lamb.png",
+      "bytes": 1545939,
+      "sha256": "9650474b87bfba50551efb8e0ed3d2479d014fc838c318fbb13616269171007b"
+    },
+    {
+      "file": "character-art/pet-friends-v2/sources/lantern-sprout.png",
+      "bytes": 1561683,
+      "sha256": "2f712fc085994d3f88e71dca3c805dc1897c1142bf0a5764cd05f3cac6df7867"
+    },
+    {
+      "file": "character-art/pet-friends-v2/sources/leaf-sprite.png",
+      "bytes": 1504669,
+      "sha256": "abb0d23cd40e1662676012e7d2ed1f15dc1794c710ec4fae3801b8c7fd28e3e9"
+    },
+    {
+      "file": "character-art/pet-friends-v2/sources/moon-moth.png",
+      "bytes": 1589608,
+      "sha256": "125a10199f8da395b3cf90391f76b42279190a4bc38061f319c3b720138e4160"
+    },
+    {
+      "file": "character-art/pet-friends-v2/sources/moss-turtle.png",
+      "bytes": 1527278,
+      "sha256": "16d25ca7191cf147b9b3c512b66165725389c84bdf0bb2e20a738e0e3f1daf74"
+    },
+    {
+      "file": "character-art/pet-friends-v2/sources/owl.png",
+      "bytes": 1475903,
+      "sha256": "a1ba119f9453571fe0280936069e53584ecd9ae3d94684d40eb631f884dfdb61"
+    },
+    {
+      "file": "character-art/pet-friends-v2/sources/panda.png",
+      "bytes": 1519653,
+      "sha256": "f6cc507e28b10c70b822b99a0873f0feef674a27c0ee5f8fdff5e08bc4e29436"
+    },
+    {
+      "file": "character-art/pet-friends-v2/sources/parakeet.png",
+      "bytes": 1475488,
+      "sha256": "f58a9f082d5043169d6eb8aaac600266128cb1c71b2f42b59889ab24f0e458d2"
+    },
+    {
+      "file": "character-art/pet-friends-v2/sources/pebble-sprout.png",
+      "bytes": 1497560,
+      "sha256": "5ac8df030f33137d9af61c5f355c80a5ad853d48b54e0aa99a0d3b294c6a9377"
+    },
+    {
+      "file": "character-art/pet-friends-v2/sources/platypus.png",
+      "bytes": 1478961,
+      "sha256": "444b8028e45164408d0bacd869db2dcad9687f52050328ed98c7bfd485cfdb38"
+    },
+    {
+      "file": "character-art/pet-friends-v2/sources/pony.png",
+      "bytes": 1559341,
+      "sha256": "ffbbd40359b85d69b69ce6382dd2652ab98c4db090342fb4948a19f21784cce4"
+    },
+    {
+      "file": "character-art/pet-friends-v2/sources/raccoon.png",
+      "bytes": 1552988,
+      "sha256": "c7c70075b9246c02b5874f1902754d899733c649d075da027014b7d0057899d6"
+    },
+    {
+      "file": "character-art/pet-friends-v2/sources/rain-blob.png",
+      "bytes": 1435990,
+      "sha256": "cf70b65b348b15301c7af79ff43090b25d1c303b7336605cad6fca03616142ba"
+    },
+    {
+      "file": "character-art/pet-friends-v2/sources/sloth.png",
+      "bytes": 1508499,
+      "sha256": "29b77ea7cde4f47ffe42c4b7541867d5b76e4a8bb84ca834ee155887d4c350ae"
+    },
+    {
+      "file": "character-art/pet-friends-v2/sources/snow-sprite.png",
+      "bytes": 1441009,
+      "sha256": "77483d34979fdb5bc3a54e58737612b9d69474019d03785ee7d7b73cda0b6cf7"
+    },
+    {
+      "file": "character-art/pet-friends-v2/sources/squirrel.png",
+      "bytes": 1540578,
+      "sha256": "e390dd073c4394acf6304fce8ff5b4a46b6b45ed82c6e890172f0d03d9828bee"
+    },
+    {
+      "file": "character-art/pet-friends-v2/sources/star-mole.png",
+      "bytes": 1486857,
+      "sha256": "0731b76fc68b3614f576d76e557d0acb233ff2e2eddc3b2ba5a29572999afa24"
+    },
+    {
+      "file": "character-art/pet-friends-v2/sources/variants/axolotl-rejected-boundary.png",
+      "bytes": 1600925,
+      "sha256": "bac7cfddf8e36a20c07ef7b2c085e0dd5bad85cb3c92eb1a295549d8e90ce190"
+    },
+    {
+      "file": "character-art/pet-friends-v2/sources/variants/ferret-63a8ba8cb64e.png",
+      "bytes": 1534539,
+      "sha256": "63a8ba8cb64e091daaede7a54e26fda54edefeeb88258461d72df06f95829247"
+    },
+    {
+      "file": "character-art/pet-friends-v2/verify-assets.mjs",
+      "bytes": 7001,
+      "sha256": "34f8a617fb41f88f22331d3ea1306706c9ab775e59b364f84dd69b6127d2a135"
+    }
+  ]
+}

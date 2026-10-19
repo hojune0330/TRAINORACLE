@@ -557,6 +557,7 @@ function QuickSessionFormEditor({
         count: 0, phase: "enter", receipt: createSavedFactReceipt(savedEntry),
         storageStatus: savedStorage === "PENDING" ? "PENDING" : savedStorage === "CONFLICT" ? "CONFLICT" : "CONFIRMED",
         storageMessage: savedStorageMessage, reviewMessage: savedReviewMessage,
+        savedJournal: { id: savedEntry.id, date: savedEntry.date, kind: savedEntry.kind },
       }
     const finish = () => savedStorageMessage !== undefined
       ? onDone?.(savedEntry, savedReviewMessage, savedStorageMessage)

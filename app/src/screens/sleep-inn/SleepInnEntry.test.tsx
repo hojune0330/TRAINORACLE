@@ -2,18 +2,18 @@ import React from 'react'
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { initializeCanonicalJournalFixture } from '../../test/canonical-journal-fixture'
-import { deleteEntry, loadEntries, nextJournalSavedAt, saveEntry, updateEntry, type EveningEntry } from '../../domain/journal-store'
+import { deleteEntry, loadEntries, nextJournalSavedAt, saveEntry, updateEntry, type EveningEntry, type PostSessionEntry } from '../../domain/journal-store'
 import { setActiveLocalAccount } from '../../domain/account/local-journal-ownership'
 import { beginBrowserPopNavigation } from '../../navigation/browserNavigation'
 import { useTaskFlowBack } from '../../hooks/useTaskFlowBack'
 import type { SleepInnGameProps } from './types'
 
 vi.mock('./SleepInnGame', () => ({ SleepInnGame: ({ onBack }: SleepInnGameProps) => <button onClick={onBack}>게임 닫기</button> }))
-vi.mock('../pet-room/PetRoom', () => ({ PetRoom: ({ journal, onBack, onOpenJournal }: SleepInnGameProps) => {
+vi.mock('../pet-room/PetRoom', () => ({ PetRoom: ({ journal, onBack, onOpenJournal, journalLinkLabel }: SleepInnGameProps) => {
   const [turn, setTurn] = React.useState(0)
   return <section aria-label="게임 검사 화면"><p data-testid="sleep-context">{JSON.stringify(journal)}</p>
     <button onClick={() => setTurn(value => value + 1)}>게임 진행 {turn}</button>
-    <button onClick={onOpenJournal}>수면 일지 열기</button><button onClick={onBack}>게임 닫기</button></section>
+    <button onClick={onOpenJournal}>{journalLinkLabel ?? '수면 일지 열기'}</button><button onClick={onBack}>게임 닫기</button></section>
 } }))
 import { SleepInnEntry, SleepInnLoungeEntry } from './SleepInnEntry'
 import { EveningCheckin } from '../log-entry/EveningCheckin'
@@ -215,4 +215,80 @@ it('unmounts the previous scope instead of showing it under a new account', asyn
   act(() => setActiveLocalAccount('synthetic-other-owner'))
   await waitFor(() => expect(close).toHaveBeenCalled())
   expect(screen.queryByTestId('sleep-context')).toBeNull()
+})
+
+const source: PostSessionEntry = { id: 'exact-confirmed-session', kind: 'post-session', date,
+  savedAt: '2026-10-09T01:00:00Z', syncState: 'local', system: 'base', title: '저장한 합성 훈련',
+  memo: '', distanceKm: '', durationMin: '', avgPace: '', rpe: 0 }
+
+it.each(['button', 'escape', 'native Back'] as const)('returns from the exact saved read-only journal by %s without replacing the room or completion', async exit => {
+  expect(saveEntry(source).ok).toBe(true)
+  expect(saveEntry({ ...source, id: 'other-same-day-entry', title: '다른 같은 날 합성 훈련' }).ok).toBe(true)
+  const before = loadEntries()
+  const parentState = window.history.state
+  vi.spyOn(window.history, 'back').mockImplementation(() => undefined)
+  function Completion() {
+    const [open, setOpen] = React.useState(false)
+    return <div className="app-scroll-region"><label>보존할 작성 자리<input defaultValue="합성 입력 유지" /></label><button onClick={() => setOpen(true)}>친구 방 열기</button>
+      {open && <SleepInnEntry date={date} sourceJournal={{ entryId: source.id }} onBack={() => setOpen(false)} returnLabel="저장 완료로 돌아가기" />}</div>
+  }
+  render(<Completion />)
+  const opener = screen.getByRole('button', { name: '친구 방 열기' })
+  const region = opener.closest<HTMLElement>('.app-scroll-region')!
+  region.scrollTop = 143; opener.focus(); fireEvent.click(opener)
+  fireEvent.click(screen.getByRole('button', { name: '게임 진행 0' }))
+  const gameState = window.history.state
+  const book = screen.getByRole('button', { name: '저장한 일지 보기' })
+  const dialog = screen.getByRole('dialog', { name: '우리 집 친구들' })
+  dialog.scrollTop = 126; book.focus(); fireEvent.click(book)
+  const reader = await screen.findByRole('region', { name: '저장한 일지' })
+  await waitFor(() => expect(reader).toHaveTextContent(source.title))
+  expect(dialog.scrollTop).toBe(0)
+  expect(reader).not.toHaveTextContent('다른 같은 날 합성 훈련')
+  expect(reader.querySelector('[data-testid="journal-manage-toggle"]')).toBeNull()
+  expect(reader.querySelector('.journal-save-friends')).toBeNull()
+  expect(screen.queryByRole('textbox', { name: '수면 시간' })).toBeNull()
+  if (exit === 'button') fireEvent.click(screen.getByRole('button', { name: '친구 방으로 돌아가기' }))
+  else if (exit === 'escape') fireEvent(dialog, new Event('cancel', { cancelable: true }))
+  await popTo(gameState)
+  expect(screen.queryByRole('region', { name: '저장한 일지' })).toBeNull()
+  expect(screen.getByRole('button', { name: '게임 진행 1' })).toBeVisible()
+  await waitFor(() => expect(book).toHaveFocus())
+  expect(dialog.scrollTop).toBe(126)
+  fireEvent.click(screen.getByRole('button', { name: '게임 닫기' }))
+  await popTo(parentState)
+  expect(screen.getByRole('textbox', { name: '보존할 작성 자리' })).toHaveValue('합성 입력 유지')
+  expect(opener).toHaveFocus(); expect(region.scrollTop).toBe(143)
+  expect(loadEntries()).toEqual(before)
+})
+
+it('does not substitute another same-day journal if the exact source was removed', async () => {
+  expect(saveEntry({ ...source, id: 'remaining-source', title: '다른 같은 날 합성 훈련' }).ok).toBe(true)
+  render(<SleepInnEntry date={date} sourceJournal={{ entryId: 'removed-exact-source' }} onBack={vi.fn()} />)
+  fireEvent.click(screen.getByRole('button', { name: '저장한 일지 보기' }))
+  expect(await screen.findByRole('status')).toHaveTextContent('저장한 일지를 지금 찾을 수 없어요')
+  expect(screen.queryByText('다른 같은 날 합성 훈련')).toBeNull()
+})
+
+it('closes the saved-journal reader on an account change before displaying the next owner', async () => {
+  expect(saveEntry(source).ok).toBe(true)
+  const close = vi.fn()
+  render(<SleepInnEntry date={date} sourceJournal={{ entryId: source.id }} onBack={close} />)
+  fireEvent.click(screen.getByRole('button', { name: '저장한 일지 보기' }))
+  await screen.findByText(source.title)
+  act(() => setActiveLocalAccount('different-source-owner'))
+  await waitFor(() => expect(close).toHaveBeenCalled())
+  expect(screen.queryByRole('region', { name: '저장한 일지' })).toBeNull()
+})
+
+it('keeps an approved date-only entry as a date reader instead of choosing one same-day journal', async () => {
+  expect(saveEntry(source).ok).toBe(true)
+  expect(saveEntry({ ...source, id: 'second-date-source', title: '같은 날짜의 두 번째 합성 훈련' }).ok).toBe(true)
+  render(<SleepInnEntry date={date} sourceJournal={{}} onBack={vi.fn()} />)
+  fireEvent.click(screen.getByRole('button', { name: '이날 일지 보기' }))
+  const reader = await screen.findByRole('region', { name: '이날 일지' })
+  await waitFor(() => expect(reader).toHaveTextContent(source.title))
+  expect(reader).toHaveTextContent('같은 날짜의 두 번째 합성 훈련')
+  expect(reader.querySelector('[data-testid="journal-manage-toggle"]')).toBeNull()
+  expect(screen.queryByRole('textbox', { name: '수면 시간' })).toBeNull()
 })

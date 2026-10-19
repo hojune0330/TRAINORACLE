@@ -44,6 +44,8 @@ export type LogDetailProps = {
   readonly readerControls?: React.ReactNode
   readonly pageTopRef?: React.RefObject<HTMLDivElement>
   readonly initialEntryId?: string
+  /** A contained reader may own its entry position and visible return control. */
+  readonly alignInitialEntry?: boolean
   readonly readOnly?: boolean
   readonly entries?: readonly JournalEntry[]
   readonly decorationStudio?: { readonly onDone: () => void; readonly previewMonth?: string; readonly materialsFooter?: React.ReactNode }
@@ -229,7 +231,7 @@ function ReadOnlyJournalFrame({ date, children }: React.ComponentProps<typeof Jo
   return state ? <DecoratedJournalPageFrame date={date} state={state}>{children}</DecoratedJournalPageFrame> : <>{children}</>
 }
 
-function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, onJournalSaved, readerControls, pageTopRef, initialEntryId, decorationStudio, readOnly = false, entries: suppliedEntries }: LogDetailProps) {
+function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, onJournalSaved, readerControls, pageTopRef, initialEntryId, alignInitialEntry = true, decorationStudio, readOnly = false, entries: suppliedEntries }: LogDetailProps) {
   const PageFrame = readOnly ? ReadOnlyJournalFrame : JournalDecorationSurface
   const [rev, setRev] = React.useState(0)
   const [sleepInnOpen, setSleepInnOpen] = React.useState(false)
@@ -324,7 +326,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, onJournalSave
       ? document.getElementById(`journal-entry-panel-${targetIndex}`)?.closest<HTMLElement>(".journal-entry-section") ?? null : null
     if (entryTargetRef.current) entryTargetRef.current.tabIndex = -1
   }, [targetIndex, entrySignature])
-  useActiveContentScroll(targetKey ?? null, entryTargetRef, entryTargetRef)
+  useActiveContentScroll(alignInitialEntry ? targetKey ?? null : null, entryTargetRef, entryTargetRef)
   const allEntriesExpanded = entryKeys.length > 0 && entryKeys.every((key) => expandedEntryKeys.has(key))
   const toggleEntry = (key: string) => setExpandedEntryKeys((current) => {
     const next = new Set(current)
@@ -345,9 +347,10 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, onJournalSave
 
   return (
     <div className={`journal-detail-page${decorationStudio ? " paper-grid" : " journal-detail-page--reader"}`}>
-      {!readOnly && !decorationStudio && <button type="button" className="quick-log__secondary" style={{ minHeight: 44 }} onClick={() => setSleepInnOpen(true)}>펫과 함께 자기</button>}
-      {sleepInnOpen && <React.Suspense fallback={<p role="status">여관을 여는 중이에요.</p>}>
+      {!readOnly && !decorationStudio && <button type="button" className="quick-log__secondary" style={{ minHeight: 44 }} onClick={() => setSleepInnOpen(true)}>우리 집 친구들</button>}
+      {sleepInnOpen && <React.Suspense fallback={<p role="status">친구 방을 여는 중이에요.</p>}>
         <SleepInnEntry key={date} date={date} entryId={entries.find(entry => entry.id === initialEntryId && entry.kind === "evening")?.id}
+          sourceJournal={{ entryId: initialEntryId }}
           onBack={() => { setSleepInnOpen(false); setRev(value => value + 1) }} onJournalSaved={entry => { onJournalSaved?.(entry); setRev(value => value + 1) }} />
       </React.Suspense>}
       {!decorationStudio && (readerControls === undefined ? <TopBar2 onBack={onBack}>일지</TopBar2> : readerControls)}

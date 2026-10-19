@@ -169,6 +169,12 @@
 .journal-save-result__primary { flex: 1 1 160px; }
 .journal-save-result__secondary { flex: 0 1 auto; }
 
+/* One quiet completion shortcut; no second reward card or competing primary CTA. */
+.journal-save-friends { display: grid; gap: var(--space-1); min-width: 0; color: var(--ink-2); font-size: var(--fs-caption); }
+.journal-save-friends__actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.journal-save-friends__actions > button { display: inline-flex; align-items: center; gap: var(--space-1); border-color: transparent; padding: var(--space-2) 0; text-align: left; }
+.journal-save-friends details > summary { min-height: var(--app-touch-min, 44px); display: flex; align-items: center; cursor: pointer; }
+
 .plan-first-workout { display: grid; gap: var(--space-3); min-width: 0; margin-block: var(--space-4); }
 .plan-first-workout > p { margin: 0; }
 .plan-first-workout__facts { display: grid; gap: var(--space-3); margin: 0; }

@@ -1,4 +1,6 @@
-export const PET_IDS = ['otter', 'seal', 'red-panda', 'duck', 'hedgehog', 'mouse', 'rabbit', 'puppy', 'chinchilla', 'guinea-pig', 'penguin', 'tortoise'] as const
+import { NEW_PET_IDS, NEW_PETS } from './pet-new-friends'
+export const LEGACY_PET_IDS = ['otter', 'seal', 'red-panda', 'duck', 'hedgehog', 'mouse', 'rabbit', 'puppy', 'chinchilla', 'guinea-pig', 'penguin', 'tortoise'] as const
+export const PET_IDS = [...LEGACY_PET_IDS, ...NEW_PET_IDS] as const
 export type PetId = typeof PET_IDS[number]
 export const CARE_ACTIONS = ['pet', 'feed', 'play', 'bed'] as const
 export type CareAction = typeof CARE_ACTIONS[number]
@@ -27,6 +29,7 @@ export const PETS: readonly PetDefinition[] = [
   { id: 'guinea-pig', name: '모찌', animal: '기니피그', hello: '오물오물… 네 간식도 있어?', favorite: '작은 간식 한 입', accent: '#eed9ae', missions: [{ action: 'feed', days: 7 }, { action: 'pet', days: 5 }, { action: 'bed', days: 5 }] },
   { id: 'penguin', name: '몽실', animal: '펭귄', hello: '뒤뚱뒤뚱. 나도 같이 놀래!', favorite: '공 굴리며 뒤뚱걷기', accent: '#bfcedd', missions: [{ action: 'play', days: 7 }, { action: 'feed', days: 5 }, { action: 'bed', days: 7 }] },
   { id: 'tortoise', name: '느루', animal: '거북이', hello: '천천히 왔어. 오래 같이 있자.', favorite: '일찍 잠자리 펴기', accent: '#c1d7b1', missions: [{ action: 'bed', days: 7 }, { action: 'pet', days: 5 }, { action: 'feed', days: 5 }] },
+  ...NEW_PETS,
 ]
 export const petById = (id: PetId): PetDefinition => PETS.find(pet => pet.id === id)!
-export const petAsset = (id: PetId) => `${import.meta.env.BASE_URL}games/pet-room-v1/pets/${id}.webp`
+export const petAsset = (id: PetId) => `${import.meta.env.BASE_URL}games/${(LEGACY_PET_IDS as readonly string[]).includes(id) ? 'pet-room-v1' : 'pet-friends-v2'}/pets/${id}.webp`

@@ -1,7 +1,9 @@
 import type { PetId } from './pet-catalog'
+import { NEW_PLAY } from './pet-new-friends'
 
 export type PlayStyle = 'roll' | 'fetch' | 'hide'
 export const PET_PLAY: Record<PetId, { style: PlayStyle; motion: 'slide' | 'hop' | 'waddle'; travelMs: number; petting: string; invite: string }> = {
+  ...NEW_PLAY,
   otter: { style: 'roll', motion: 'slide', travelMs: 850, petting: '볼을 살살 쓸어 줘', invite: '공을 굴려 줘. 내가 다시 보낼게!' },
   seal: { style: 'roll', motion: 'slide', travelMs: 1100, petting: '등을 천천히 토닥여 줘', invite: '배로 공을 받아 볼게. 살살 굴려 줘.' },
   'red-panda': { style: 'roll', motion: 'hop', travelMs: 950, petting: '꼬리 옆을 쓱쓱 해 줘', invite: '내 꼬리 옆으로 공을 굴려 줘!' },
