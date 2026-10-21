@@ -12,7 +12,55 @@ runtime_authority_added: false
 canonical_promotion: false
 ```
 
-## 1. 서로 다른 세 가지 수
+## 0. 2026-10-22 현재 코드 범위와 채택 경로
+
+정적 대조 기준은 `872f82fe35d1bee3b8fe134f8546192f2ae1f4fd`다. 위 YAML은
+2026-09-06 정합성 결정의 원본 메타데이터이며, 아래 갱신이 새 처방 수치·과학적
+효능·런타임 권한·정본 승격을 승인하지 않는다. 코드 연결, 실행 검사, 서버 배포와
+실계정 저장 확인은 별도다. 이 요약의 근거는 정적 대조이며, 공개 최소 동선과 로컬
+변경의 실행 확인은 [10월 22일 전달 점검](reports/review/TRAINING_PLAN_DELIVERY_AUDIT_2026-10-22.md)에 구분했다.
+
+### 0.1 수를 셀 때의 기준
+
+| 대상 | 기준 SHA의 수와 의미 | 원본·구현 근거 |
+|---|---|---|
+| 일반 계획 입력 | 800·1500·3000·5000m·10km·하프·마라톤 7종목, 7·9·9.5·10일 프레임, A/B 두 후보 | [입력 검사](impl/src/plan-generator/input-values.ts#L294), [프레임 타입](impl/src/plan-generator/types.ts#L227), [후보 생성](impl/src/plan-generator/candidates.ts#L340) |
+| 기존 `PACE_TARGET` 승인 | 정확한 동일 종목 기록 기반 4개 템플릿. 아래 §2와 같은 별도 경로 | [템플릿 §16A](specs/active/TEMPLATE_LIBRARY_SPEC.md#16a-2026-08-24-beta-runtime-allowlist), [승인 매니페스트](app/src/domain/detailed-prescription-manifest.json) |
+| 계산 카탈로그 | 고유 구성 ID 126개, 휴식 1개 포함. BASE 16 / LT 20 / VO2 21 / ATP-PC 18 / GLY 13 / MIX 28 / REC 9 / OFF 1 | [카탈로그 v1.1.0](impl/src/prescription/all-workout-catalog.json), [계산·적격성 검사](impl/src/prescription/all-workout-calculator.ts#L118) |
+| 연구 구성 풀 | 기존 37개 + 확장 80개 = 117개는 9월 30일 원본 연구 풀. 현재 계산 카탈로그는 여기에 동일 종목 RP 9개를 추가 | [원 연구 풀](reports/review/EXPANDED_WORKOUT_CATALOG_V3.md), [RP 구조 채택](specs/reconstruct/SAME_EVENT_RACE_PACE_BINDING_CONTRACT.md#exact-structures) |
+| 동일 종목 RP 추가 | 10km·하프·마라톤 × INTRO/TIMED/DISTANCE = 9개 구성. 실제 기록과 명시적 목표를 구분 | [RP 연결 계약](specs/reconstruct/SAME_EVENT_RACE_PACE_BINDING_CONTRACT.md), [7종목 참고 계약](specs/reconstruct/MULTI_EVENT_PACE_REFERENCE_CONTRACT.md) |
+| 10km 목표 프로그램 | 60·50·45·40·30분의 5목표. 9.5일 × 3 = 28.5일, 57반일/29개 달력 날짜 | [프로그램 계약](specs/reconstruct/GOAL_THREE_MICROCYCLE_PROGRAM_CONTRACT.md), [달력 상수](app/src/domain/goal-program-calendar.ts#L4), [생성기](app/src/domain/goal-training-program.ts#L356) |
+
+126개는 독립 훈련법 수나 한 사용자에게 적용 가능한 수가 아니다. 카탈로그의 선언된
+`methodGroup` 문자열은 69종이지만, 실제 방법 탐색은 별칭과 구간 구조를 함께 묶는다.
+[방법군 식별](impl/src/prescription/catalog-method-selection.ts#L11)과 개인 적격성 계산 후의
+후보 수를 따로 읽는다. 새 5000m 거리 처방 패킷은 여전히
+[`PREPARED_AWAITING_OWNER_DECISION`](app/src/domain/distance-prescription-adoption.json#L3)이며,
+위 계산 카탈로그와 별개의 미채택 경로다.
+
+### 0.2 연결된 기능과 남은 범위
+
+| 기능 | 현재 연결 | 아직 완료로 표현하지 않는 범위 |
+|---|---|---|
+| 첫 상세 MAIN | [전체 계산 계약 §9](specs/reconstruct/ALL_WORKOUT_CALCULATION_AND_BINDING_CONTRACT.md#9-2026-10-01-오너-지시-첫-상세-main-우선-생성)에 따라 각 QUALITY에 적격 구성을 연결. [생성 연결](app/src/domain/plan-beta-flow.ts#L433), [방법별 적격 선택](impl/src/prescription/catalog-session-binding.ts#L82) | 모든 목적·경험·환경 조합의 상세 공급. 미확인 조건이나 미정 입력이 있으면 기존 안내를 유지하며 다른 목적을 몰래 대체하지 않음 |
+| 추천·설명 | 적격 방법 탐색·중복 변형 묶기·다른 방법 선택, [원본과 설명 버전 확인](app/src/domain/session-explanation.ts#L8) | [기존 추천 호출](app/src/screens/plan-beta/plan-template-options.ts#L132)의 목적·문맥 우선순위는 모두 0. 앞뒤 부하·회복·개인 효과를 계산한 최적 추천으로 설명하지 않음 |
+| 현재 계획 직접 수정 | [전체 계산 계약 §8](specs/reconstruct/ALL_WORKOUT_CALCULATION_AND_BINDING_CONTRACT.md#8-저장한-계획에서-앞으로-할-훈련의-명시적-교체), [편집 정책](app/src/domain/active-plan-edit-policy.ts#L17)의 시간·교환·카탈로그·페이스 참고 변경 | 임의 용량 생성, 이미 기록한 슬롯 변경, 동일 날 고강도 추가 승인 |
+| 수행 편차 후 남은 일정 | [재계획 계약 §18](specs/reconstruct/PLAN_EXECUTION_DEVIATION_AND_REPLAN_CONTRACT.md#18-rt6-오너-승인-남은-일정-변경의-첫-공개-범위), [정책](app/src/domain/execution-replan-policy.ts#L7)의 REDUCE/REPLACE/MOVE_LATER | 무제한 현재 주기·중주기 자동 재설계 |
+| 다음 주기 상세 구성 | [주기 응답 계약 §14](specs/reconstruct/PLAN_CYCLE_RESPONSE_AND_ADAPTATION_CONTRACT.md#14-owner-directed-detailed-successor-preview-2026-10-01), [상세 후속안](app/src/domain/catalog-cycle-successor.ts#L299): 같은 목적의 완전한 근거에서 높은 RPE 2회 이상이면 검토된 같은 방법군의 낮은 용량 제안 | 단일/누락/충돌/통증 관측으로 감량하거나 쉬웠다는 기록으로 자동 증량. 적격 낮은 구성이 없으면 유지와 검토 이유를 제시 |
+| 목표·장기 주기 | 10km 3마이크로사이클 묶음과 [18프레임 위치·계보](app/src/domain/periodization-lineage.ts#L4) | 목표별 달성 보장·개인 능력 추정·단계별 증량·자동 테이퍼. [목표 프로그램 후속 결정](specs/reconstruct/GOAL_THREE_MICROCYCLE_PROGRAM_CONTRACT.md#2026-10-11-후속-오너-결정)의 새 수치는 검토 대기 |
+| 안전·규칙 | D9 ACTIVE/UNKNOWN 실행 차단과 [활성화 불가 미리보기](impl/src/plan-generator/generator.ts#L156), 기존 노출·가용일 검사 | D1~D8 전체와 분류기 연결. 아래 §5의 미정 입력·임계값을 임의로 채우지 않음 |
+
+[현재 계획 편집 저장](app/src/domain/active-plan-edit-store.ts#L146)과
+[목표 프로그램 저장](app/src/domain/goal-training-program-store.ts#L66)에는 계정 분기와
+확인 관문이 있다. 이를 모두 미구현이라고 하거나, 코드 존재만으로 서버 배포·계정
+capability 활성화·실계정 저장 성공이라고 하지는 않는다. 계정 저장 비활성/미확인 상태의
+제한과 기기 저장 경로는 해당 구현이 구분한다. 기존 A/B 보조 상한 변환, 직접 편집,
+수행 편차 재계획, 상세 다음 주기 제안은 서로 다른 정책 경로다.
+
+## 1. 2026-09-06 기준 기록: 서로 다른 세 가지 수
+
+이 절의 `현재`와 후보당 상세 1개는 상단 YAML의 과거 SHA 범위다.
+후속 계산 카탈로그·RP·목표 프로그램을 포함한 현재 범위는 §0을 따른다.
 
 2026-10-06 오너 승인 후속: 통증·몸 이상·불확실 응답도 체크 후 일반 계획안을
 만들어 볼 수 있다. `PRODUCT_NORTH_STAR.md` §3.2의 읽기 전용 미리보기 예외다.
@@ -35,7 +83,10 @@ RPE 안내를 두 번째 상세 방법으로 세거나 반복 수만 바꿔 새 
 아래 현재 구현 설명은 위 base SHA의 정적 확인 범위이며, 후속 코드 완료나 현재
 공개 화면의 동작을 보증하지 않는다.
 
-## 2. 현재 채택 범위
+## 2. 2026-09-06 기준 기록: 기존 PACE_TARGET 채택 범위
+
+아래 네 정확한 정체성은 유지된다. 당시의 10km·하프·마라톤 미채택 표기는 이
+PACE_TARGET 경로의 기록이며, §0의 별도 카탈로그 RP 9개를 차단하는 근거가 아니다.
 
 | 종목 | 같은 종목 기록 기반 상세 템플릿 | 목적 | 대상 |
 |---|---|---|---|
@@ -52,7 +103,10 @@ RPE 안내를 두 번째 상세 방법으로 세거나 반복 수만 바꿔 새 
 허용 템플릿이어도 유효한 현재 기록·명시적 선택·안전·저장 검사를 생략하지 않는다.
 학교 부문·성별만으로 차단하거나 양을 가감하지 않는다. 미채택 대상의 상세 수치를 임의로 채우지도 않는다.
 
-## 3. 기록·주기·규칙 연결
+## 3. 2026-09-06 기준 기록: 기록·주기·규칙 연결
+
+아래 적응·방법 이력 설명은 당시 범위다. 이후 원본 보관은 §8, 상세 계산 연결은
+§10, 현재 편집·수행 기반 후속안의 구분은 §0.2를 함께 읽는다.
 
 - 일지: 정확한 계획 링크의 직접 입력 RPE 비교. 상세 페이스에 계획 RPE를 발명하지 않는다. 자기보고 완료 체크는 실제 거리·반복·회복의 준수 증거가 아니다.
 - 적응: 기존 A/B 보조 시간 상한 변환만. PB/SB 또는 명시적 요청의 조건과 안전 확인을 유지한다.
@@ -62,7 +116,10 @@ RPE 안내를 두 번째 상세 방법으로 세거나 반복 수만 바꿔 새 
 - 규칙: D9 신호와 기존 노출·가용일 검증은 연결됐다. D1~D8 전체와 세션 분류기 연결은 미완이다.
 - 분석: 최근 분석 수리는 출처·자료 수 정합성 개선이며 새 처방 입력의 채택이 아니다.
 
-## 4. 다음 작업과 차단 지점
+## 4. 2026-09-06 기준 기록: 다음 작업과 차단 지점
+
+당시 작업 순서와 미채택 원자료를 보존한다. 현재 완료·미완 판단은 §0.2와 각
+후속 채택 계약을 사용하며, 이 표만으로 이후 연결된 기능을 미구현으로 되돌리지 않는다.
 
 | 순서 | 작업 | 다음 작업자가 할 일 | 완료 주장 금지선 |
 |---|---|---|---|
@@ -188,6 +245,9 @@ V3/V4 요약은 원본으로 재구성하지 않는다. 일지에서 정확한 �
 한 번의 수행으로 에너지 능력 부족/우수를 진단하거나 다음 계획의 양을 자동으로 늘리지 않는다.
 
 ## 10. 2026-09-30 전체 계산 카탈로그 연결 후속
+
+이 절의 117개는 2026-09-30 연결 당시 수다. 2026-10-02 동일 종목 RP 9개가
+추가된 현재 126개 계산 구성과 승인 경로는 §0.1을 따른다. 아래 승인 기록은 유지한다.
 
 §9의 새 4개 준비 상태 이후 오너가 전체 훈련 연결을 지시했다. 이번 로컬 구현의 현재 범위는
 [전체 계산·연결 계약](specs/reconstruct/ALL_WORKOUT_CALCULATION_AND_BINDING_CONTRACT.md)을 따른다.

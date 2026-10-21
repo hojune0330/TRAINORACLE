@@ -17,6 +17,23 @@ registry_note: "Counts apply only to this registry document. Source SPEC issue c
 
 ## 0. Easy Start
 
+훈련 계획의 현재 정적 대조 기준은 **2026-10-22,
+`872f82fe35d1bee3b8fe134f8546192f2ae1f4fd`**다.
+[현재 범위 §0](TRAINING_PLAN_CURRENT_SCOPE.md#0-2026-10-22-현재-코드-범위와-채택-경로)에서
+기존 PACE_TARGET 4개, 계산 구성 126개, 원 연구 풀 117개, 10km 목표 5종을 구분한다.
+이 색인 갱신은 새 처방·과학적 효능·정본 승격·실행 검사·배포·실계정 저장 증거가 아니다.
+
+| 작업 대상 | 먼저 읽을 채택 경로 | 범위 경계 |
+|---|---|---|
+| 일반 상세 계산·MAIN 연결·직접 교체 | [전체 계산·연결 계약](specs/reconstruct/ALL_WORKOUT_CALCULATION_AND_BINDING_CONTRACT.md) §8~9 | 정확한 기존 구성과 개인 조건, 명시적 적용. 모든 사용자에게 126개를 배치하지 않음 |
+| 기록·목표의 페이스 참고 | [7종목 참고 계약](specs/reconstruct/MULTI_EVENT_PACE_REFERENCE_CONTRACT.md), [동일 종목 RP 계약](specs/reconstruct/SAME_EVENT_RACE_PACE_BINDING_CONTRACT.md) | 실제/목표 구분. 타 종목 비교값은 처방 권한이 아니며 적용 쌍 신규 승인은 0개 |
+| 10km 한 달 프로그램 | [3마이크로사이클 계약](specs/reconstruct/GOAL_THREE_MICROCYCLE_PROGRAM_CONTRACT.md) | 9.5일 × 3, 목표 5종. 새 증량·회복 수치와 자동 테이퍼는 채택하지 않음 |
+| 수행 편차·다음 주기 구성 | [남은 일정 재계획 계약](specs/reconstruct/PLAN_EXECUTION_DEVIATION_AND_REPLAN_CONTRACT.md) §18, [주기 응답 계약](specs/reconstruct/PLAN_CYCLE_RESPONSE_AND_ADAPTATION_CONTRACT.md) §14 | 명시적 제한 변경과 검토된 낮은 구성 제안. 전체 주기 자동 재설계와 구분 |
+
+`PLAN_GENERATOR_SPEC`의 초안 지위와 `TRAINING_PLAN_METHOD_DECISION`의
+`SUPERSEDED_PRODUCT_DIRECTION`을 유지한다. 초안 전체의 지위와 위 후속 조항의
+좁은 채택을 구분하며, 아래 날짜가 붙은 검토·구현 기록은 당시 증거로 읽는다.
+
 Oracle running profile: [러닝 프로필 계약](specs/reconstruct/RUNNING_PROFILE_CONTRACT.md)
 and [근거 검토·채택 범위](reports/research/RUNNING_PROFILE_EVIDENCE_2026-10-04.md).
 Self-reported preferences and descriptive records remain separate. No psychometric score,
@@ -40,10 +57,12 @@ Purpose-based workout supply, exact structures, source limits and contextual rev
 [`METHOD_PURPOSE_SUPPLY_REVIEW_V3.md`](reports/review/METHOD_PURPOSE_SUPPLY_REVIEW_V3.md).
 This is a reproducible review package, not an expanded runtime activation.
 
-Expanded workout inventory (existing 37 + new 80 = 117 configurations):
+Historical research inventory, 2026-09-30 (existing 37 + new 80 = 117 configurations):
 [`EXPANDED_WORKOUT_CATALOG_V3.md`](reports/review/EXPANDED_WORKOUT_CATALOG_V3.md).
 New entries cover 50 purpose/method groups; numerical variants are not new methods.
-Main-only structured drafts, source limits and deployment gaps are explicit. No new runtime activation.
+Main-only structured drafts, source limits and deployment gaps are explicit. This research
+inventory itself grants no runtime activation; later calculation and same-event RP adoption
+are linked in the current scope above. The current calculation catalog contains 126 IDs.
 
 If this repository feels too dense, start with [`SPEC_OVERVIEW_FOR_HOJUNE.md`](./SPEC_OVERVIEW_FOR_HOJUNE.md).
 
@@ -355,9 +374,10 @@ Important starting points:
 - `.omo/reports/github-publish-readiness.md`
 - `.omo/reports/github-main-publish-complete.md`
 
-## 11. Execution Review And Replanning Draft (2026-09-28)
+## 11. Execution Review And Replanning Draft (2026-09-28; 2026-10-22 경로 대조)
 
-- [계획과 실제 수행 비교 및 남은 훈련 재설계 계약](specs/reconstruct/PLAN_EXECUTION_DEVIATION_AND_REPLAN_CONTRACT.md): `DRAFT_FOR_REVIEW`, 로컬 사실 비교/홈 코칭 부분 구현. 현재 주기/중주기의 실제 재설계·계정 적용은 미구현이며 기존 next-frame 적응 권한을 확대하지 않는다.
+- [계획과 실제 수행 비교 및 남은 훈련 재설계 계약](specs/reconstruct/PLAN_EXECUTION_DEVIATION_AND_REPLAN_CONTRACT.md): `DRAFT_FOR_REVIEW` 지위는 유지하며, §18의 후속 승인으로 REDUCE/REPLACE/MOVE_LATER의 제한된 남은 일정 변경이 [정책 코드](app/src/domain/execution-replan-policy.ts)에 연결됐다. 직접 미래 세션 편집은 [별도 정책](app/src/domain/active-plan-edit-policy.ts), 수행 근거 기반 다음 주기 상세 감량 제안은 [주기 응답 §14](specs/reconstruct/PLAN_CYCLE_RESPONSE_AND_ADAPTATION_CONTRACT.md#14-owner-directed-detailed-successor-preview-2026-10-01)를 따른다. 전체 현재 주기·중주기 자동 재설계나 무제한 next-frame 적응으로 확대하지 않는다.
+- [현재 계획 편집 저장](app/src/domain/active-plan-edit-store.ts)에는 계정 확인·저장 분기가 있다. 코드 존재, 계정 capability 활성화, 서버 배포, 실계정 적용 성공은 서로 다른 상태이며 이 색인에서 운영 확인을 주장하지 않는다.
 - [개발 순서와 원본 대조](reports/plans/PLAN_EXECUTION_REVIEW_AND_REPLAN_IMPLEMENTATION_PLAN_2026-09-28.md): A~G 작업, 20개 검수 시나리오, 저장·UX·정책 경계. 문서 작성과 실제 런타임/배포 증거를 분리한다.
 - [홈·훈련 코칭 UX 구현안](reports/plans/PLAN_EXECUTION_HOME_AND_COACHING_UX_2026-09-28.md): 홈 상설 진입·공통 reader·일지 비교 부분 구현, 로컬 브라우저 확인. [구현 보고서](reports/implementation/PLAN_EXECUTION_COACHING_IMPLEMENTATION_2026-09-29.md)에 남은 교정·저장 범위를 별도 기록했다.
 
@@ -367,5 +387,8 @@ Important starting points:
 
 - [전체 훈련 계산·연결 계약](specs/reconstruct/ALL_WORKOUT_CALCULATION_AND_BINDING_CONTRACT.md): `OWNER_DIRECTED_IMPLEMENTATION`. 기존 37개와 확장 80개를 계산·계획·구간 기록에 연결한다. 계산 가능과 개인 적용 조건을 구분하며, 정본 승격이나 배포 완료 선언이 아니다.
 - [전체 연결 구현 및 검수 보고](reports/implementation/ALL_WORKOUT_CONNECTION_2026-09-30.md): 자동 계산 범위, 직접 확인할 값, 원본 보존, 저장 형식, 실행 결과와 배포 전 남은 작업.
+
+위 117개 연결은 2026-09-30 이력이다. 이후 동일 종목 RP 9개와 10km 목표 프로그램의
+채택 경로·현재 수는 §0 및 [현재 범위](TRAINING_PLAN_CURRENT_SCOPE.md#0-2026-10-22-현재-코드-범위와-채택-경로)를 따른다.
 
 [DRAFT_COMPLETE]

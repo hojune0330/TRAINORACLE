@@ -3,8 +3,10 @@ import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { PlanBeta } from "./PlanBeta"
 import * as recordSave from "../domain/account/instant-plan-record-save"
+import * as planBetaFlow from "../domain/plan-beta-flow"
 import { loadPlanBetaState } from "../domain/plan-beta-store"
 import type { InstantPlanEntry } from "../domain/instant-plan-contract"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 
 const currentEntry: InstantPlanEntry = { kind: "CURRENT_RECORD", eventDistanceM: 1500, performanceSeconds: 263.4, achievedOn: null }
 
@@ -88,6 +90,53 @@ describe("instant plan record submission recovery", () => {
     expect(prepare).toHaveBeenCalledTimes(2)
     expect(prepare.mock.calls[1]).toEqual(prepare.mock.calls[0])
     expect(screen.getByRole("button", { name: /빠른 훈련과 쉬운 훈련을 나눠 꾸준히 해왔어요/u })).toBeVisible()
+    expect(loadPlanBetaState()).toBeNull()
+  })
+
+  it("does not require pace confirmation for a current record without a bound detailed prescription", async () => {
+    await initializeCanonicalJournalFixture()
+    const generate = vi.spyOn(planBetaFlow, "generatePlanFromDraft")
+    render(<PlanBeta />)
+    const user = await enterRecord()
+    await user.click(screen.getByRole("button", { name: "기록 입력 완료" }))
+    await user.click(await screen.findByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/u }))
+    await user.click(screen.getByRole("button", { name: /^3일/u }))
+    await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
+
+    expect(generate).toHaveBeenCalledTimes(1)
+    expect(generate.mock.results[0]?.value).toMatchObject({
+      kind: "generated",
+      prescriptionBinding: { kind: "fallback" },
+    })
+    expect(await screen.findByRole("heading", { name: "계획이 준비됐어요" })).toBeVisible()
+    expect(screen.queryByText("기준 확인이 아직 끝나지 않았어요. 확인을 마치기 전에는 계획을 시작할 수 없어요."))
+      .not.toBeInTheDocument()
+    const start = screen.getByRole("button", { name: "이 일정으로 시작" })
+    expect(start).toBeEnabled()
+    expect(loadPlanBetaState()).toBeNull()
+    await user.click(start)
+    expect(loadPlanBetaState()).not.toBeNull()
+  })
+
+  it("keeps current-record confirmation required when a bound generation succeeds on retry", async () => {
+    await initializeCanonicalJournalFixture()
+    vi.useFakeTimers({ toFake: ["Date"] })
+    vi.setSystemTime(new Date(2026, 9, 22, 12))
+    const generate = vi.spyOn(planBetaFlow, "generatePlanFromDraft")
+      .mockImplementationOnce(() => { throw new Error("synthetic generation failure") })
+    render(<PlanBeta />)
+    const user = await enterRecord()
+    await user.click(screen.getByText("기록 날짜 추가"))
+    fireEvent.change(screen.getByLabelText("기록 달성일"), { target: { value: "2026-10-22" } })
+    await user.click(screen.getByRole("button", { name: "기록 입력 완료" }))
+    await user.click(await screen.findByRole("button", { name: /빠른 훈련과 쉬운 훈련을 나눠 꾸준히 해왔어요/u }))
+    await user.click(screen.getByRole("button", { name: /^3일/u }))
+    await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
+    await user.click(screen.getByRole("button", { name: "다시 시도" }))
+    expect(generate.mock.results[1]?.value).toMatchObject({
+      kind: "generated", prescriptionBinding: { kind: "bound" },
+    })
+    expect(screen.getByRole("button", { name: "기준 기록 확인하기" })).toBeVisible()
     expect(loadPlanBetaState()).toBeNull()
   })
 })

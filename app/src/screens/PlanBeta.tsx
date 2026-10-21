@@ -533,6 +533,7 @@ function LegacyPlanBeta({
   const [bodyRecheckRequested, setBodyRecheckRequested] = React.useState(false)
   const [currentCheck, setCurrentCheck] = React.useState<PlanCurrentCheck | null>(null)
   const [errorCode, setErrorCode] = React.useState<string | null>(null)
+  const generationRetry = React.useRef<(() => void) | null>(null)
   React.useEffect(() => {
     const pendingPredecessor = pendingNextReceipt.current
     if (pendingPredecessor === null || stored === null
@@ -575,6 +576,12 @@ function LegacyPlanBeta({
   const [comparisonRecordId, setComparisonRecordId] = React.useState<string | null>(null)
   const [recordConfirmationPending, setRecordConfirmationPending] = React.useState(false)
   const draftRevision = React.useRef(0)
+  const invalidateGenerationRetry = () => {
+    draftRevision.current += 1
+    generationRetry.current = null
+    setErrorCode(previous => previous === "PLAN_GENERATION_FAILED" ? null : previous)
+  }
+  React.useEffect(() => onLocalJournalScopeChange(invalidateGenerationRetry), [])
   const [, refreshInitialRevision] = React.useState(0)
   const [initialApplying, setInitialApplying] = React.useState(false)
   const [initialConfirmed, setInitialConfirmed] = React.useState<InitialMainCandidateReview["confirmed"]>(null)
@@ -607,6 +614,7 @@ function LegacyPlanBeta({
 
   const canGoBackInIntake = refining || step !== "goal" || instantEntry !== undefined
   const goBackInIntake = () => {
+    invalidateGenerationRetry()
     if (refining) {
       const previous = refinementReturn.current
       refinementReturn.current = null
@@ -720,34 +728,64 @@ function LegacyPlanBeta({
     raceDate?: string,
     sessionTarget: PlanSessionTarget | null = detailedSessionTarget,
     candidateTargets: CandidateSessionTargets = candidateSessionTargets,
-  ) => {
+    checkOverride?: PlanCurrentCheck,
+    confirmInstantRecord = false,
+  ): PlanDraftGeneration | undefined => {
     draftRevision.current += 1
     setInitialConfirmed(null)
     setRetrySelection(null)
-    if (currentCheck === null) {
-      setErrorCode(null)
+    setErrorCode(null)
+    const checkedState = checkOverride ?? currentCheck
+    // Any new generation attempt invalidates the previous selectable result. A
+    // rejected refresh must never leave an older candidate available to save.
+    setGenerated(null)
+    setGeneratedIntake(null)
+    setGeneratedEvidence(null)
+    setGate(null)
+    setRacePreview(null)
+    setCycleDraft(null)
+    setCycleSummary(null)
+    generationRetry.current = null
+    if (checkedState === null) {
       setStep("safety")
       return
     }
     const completed = withQuickDefaults(nextDraft)
-    const result = generatePlanFromDraft(
-      raceDate === undefined ? completed : { ...completed, targetRaceDate: raceDate },
-      currentCheck,
-      recordId === null ? undefined : { selectedRecordId: recordId },
-      sessionTarget ?? undefined,
-      candidateTargets,
-      nextPredecessor ?? undefined,
-    )
+    let result: PlanDraftGeneration
+    try {
+      result = generatePlanFromDraft(
+        raceDate === undefined ? completed : { ...completed, targetRaceDate: raceDate },
+        checkedState,
+        recordId === null ? undefined : { selectedRecordId: recordId },
+        sessionTarget ?? undefined,
+        candidateTargets,
+        nextPredecessor ?? undefined,
+      )
+    } catch {
+      result = { kind: "rejected", code: "PLAN_GENERATION_FAILED" }
+      const revision = draftRevision.current
+      const accountScope = localAccountScopeSnapshot()
+      const scopeGeneration = localJournalScopeGeneration()
+      generationRetry.current = () => {
+        if (draftRevision.current !== revision || !localAccountScopeIsCurrent(accountScope)
+            || localJournalScopeGeneration() !== scopeGeneration) {
+          invalidateGenerationRetry()
+          return
+        }
+        generateCandidates(nextDraft, recordId, raceDate, sessionTarget, candidateTargets, checkedState, confirmInstantRecord)
+      }
+    }
     switch (result.kind) {
       case "blocked":
         setErrorCode(null)
         setCurrentCheck(null)
         setBlocked(true)
-        return
+        return result
       case "rejected":
         setErrorCode(result.code)
-        return
+        return result
       case "generated":
+        generationRetry.current = null
         setRacePreview(null)
         setErrorCode(null)
         setGate(result.gate)
@@ -757,13 +795,13 @@ function LegacyPlanBeta({
         setCycleDraft(result.cycleDraft ?? null)
         setCycleSummary(result.cycleSummary ?? null)
         setPrescriptionBinding(result.prescriptionBinding)
-        return
+        if (confirmInstantRecord) setRecordConfirmationPending(result.prescriptionBinding.kind === "bound")
+        return result
       case "preview_only":
+        generationRetry.current = null
         setErrorCode(null)
-        setGenerated(null)
-        setGate(null)
         setRacePreview(result)
-        return
+        return result
     }
   }
 
@@ -1303,7 +1341,7 @@ function LegacyPlanBeta({
         refining={refining}
         canGoBack={canGoBackInIntake}
         onBack={goBackInIntake}
-        onJump={(target) => setStep(target)}
+        onJump={(target) => { invalidateGenerationRetry(); setStep(target) }}
         onGoal={(eventDistanceM) => {
           const eventGroup = eventGroupForDistance(eventDistanceM)
           setSelectedRecordId(null)
@@ -1362,7 +1400,7 @@ function LegacyPlanBeta({
         onTrainingTime={(trainingTimePreference: TrainingTimePreference) => continueAfterRefinement({ ...draft, trainingTimePreference })}
         onSecondSession={(secondSessionMode) => continueAfterRefinement({ ...draft, secondSessionMode })}
         targetRaceDate={targetRaceDate}
-        onTargetRaceDateChange={setTargetRaceDate}
+        onTargetRaceDateChange={(value) => { invalidateGenerationRetry(); setTargetRaceDate(value) }}
         onRaceDate={(raceDate) => {
           refinementReturn.current = null
           setRefining(false)
@@ -1374,6 +1412,7 @@ function LegacyPlanBeta({
         onSafety={(nextCurrentCheck) => {
           const safety = evaluatePlanSafety(nextCurrentCheck)
           if (safety.kind === "blocked") {
+            invalidateGenerationRetry()
             setErrorCode(null)
             setCurrentCheck(null)
             setBlocked(true)
@@ -1384,42 +1423,21 @@ function LegacyPlanBeta({
           // 네 번째 답과 함께 바로 계획을 만든다. 나머지 항목은 기본값, 결과에서 다듬는다.
           const completed = prepareInstantIntake(draft, instantEntry)
           setDraft(completed)
-          draftRevision.current += 1
           setRetrySelection(null)
-          const result = generatePlanFromDraft(completed, nextCurrentCheck,
-            instantEntry?.kind === "CURRENT_RECORD" && selectedRecordId !== null ? { selectedRecordId } : undefined,
-            undefined, undefined, nextPredecessor ?? undefined)
-          switch (result.kind) {
-            case "blocked":
-              setCurrentCheck(null)
-              setBlocked(true)
-              return
-            case "rejected":
-              setErrorCode(result.code)
-              return
-            case "generated":
-              setRacePreview(null)
-              setGate(result.gate)
-              setGenerated(result.generated)
-              setGeneratedIntake(result.intake)
-              setGeneratedEvidence(result.athleteEvidence)
-              setCycleDraft(result.cycleDraft ?? null)
-              setCycleSummary(result.cycleSummary ?? null)
-              setPrescriptionBinding(result.prescriptionBinding)
-              setRecordConfirmationPending(result.prescriptionBinding.kind === "bound" && instantEntry?.kind === "CURRENT_RECORD")
-              return
-            case "preview_only":
-              setGenerated(null)
-              setGate(null)
-              setRacePreview(result)
-              return
-          }
+          setRecordConfirmationPending(false)
+          generateCandidates(completed,
+            instantEntry?.kind === "CURRENT_RECORD" && selectedRecordId !== null ? selectedRecordId : null,
+            targetRaceDate || undefined, undefined, undefined, nextCurrentCheck,
+            instantEntry?.kind === "CURRENT_RECORD" && selectedRecordId !== null)
         }}
         onContinue={() => generateCandidates(draft, null, targetRaceDate || undefined)}
       />
       {errorCode !== null && (
         <div className="plan-inline-error" role="alert">
-          {planErrorMessage(errorCode)}
+          {errorCode === "PLAN_GENERATION_FAILED"
+            ? "계획안을 만들지 못했어요. 입력은 그대로예요. 다시 시도해 주세요."
+            : planErrorMessage(errorCode)}
+          {generationRetry.current !== null && <button type="button" onClick={() => generationRetry.current?.()}>다시 시도</button>}
         </div>
       )}
       {goalProgramEntry}

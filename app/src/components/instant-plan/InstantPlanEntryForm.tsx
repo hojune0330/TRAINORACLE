@@ -265,6 +265,9 @@ export function InstantPlanEntryForm({
             </h2>
             {!event && active && !disabled && !isSubmitting && !errors.event && <ContextualIllustration image="otter-explain" />}
           </div>
+          <p className="instant-plan__hint instant-plan__entry-context">
+            기록이 없어도 계획안을 미리 볼 수 있어요. 결과를 확인한 뒤 직접 골라야 계획이 저장돼요.
+          </p>
           <div className="instant-plan__step-choices app-choice-group" role="group" aria-labelledby={`${id}-event-heading`}
             aria-describedby={errors.event ? `${id}-event-error` : undefined}>
             {EVENTS.map((option, index) => (

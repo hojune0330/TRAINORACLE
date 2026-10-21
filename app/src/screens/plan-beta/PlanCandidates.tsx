@@ -283,6 +283,7 @@ export function PlanCandidates({
       )}
       {recommendation && <InstantPlanRecommendationView recommendation={recommendation}
         showSupportingDetails={false}
+        onShowAlternatives={() => reveal("options")}
         calendar={<PlanSchedulePreview
           presentation="prescription-calendar"
           startDate={startDate}
@@ -305,6 +306,7 @@ export function PlanCandidates({
           <p className="plan-duration-total">{recommendation.durationLabel}</p>
           <PlanPrescriptionBasis sessions={visibleDefaultSessions}
             confirmationPending={recordConfirmationPending || detailedEvidencePending} />
+          <p className="instant-plan__hint">아직 저장 전이에요. ‘이 일정으로 시작’을 누르면 저장돼요.</p>
         </>}
         recoveryRef={recoveryRef}
         blockedAction={canReviewMethodDraft

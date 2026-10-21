@@ -139,6 +139,11 @@ export function InstantPlanRecommendationView({
           the action; browsing every date is not another acceptance requirement. */}
       <div className="instant-plan__decision">
       {startAction}
+      {!showSupportingDetails && onShowAlternatives && <div className="instant-plan__actions">
+        <button className="instant-plan__secondary" type="button" disabled={waiting} onClick={onShowAlternatives}>
+          다른 계획안 비교하기
+        </button>
+      </div>}
       {onEditWorkout && <div className="instant-plan__actions">
         <button className="instant-plan__secondary" type="button" disabled={waiting} onClick={onEditWorkout}>
           훈련 조절

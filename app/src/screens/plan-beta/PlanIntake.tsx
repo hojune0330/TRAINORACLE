@@ -124,6 +124,8 @@ export function PlanIntake({
     : STEP_META[step]
   const isQuickStep = (QUICK_STEP_ORDER as readonly IntakeStep[]).includes(step)
   const showQuickAnswers = !refining && isQuickStep
+  const quickQuestionNumber = step === "experience" ? 1 : step === "days" ? 2 : step === "safety" ? 3 : null
+  const showQuickProgress = showQuickAnswers && draft.eventDistanceM !== undefined && quickQuestionNumber !== null
   const hasSingleChoiceQuestion = step !== "preview" && step !== "race-date"
   const summaryLabels = new Map<IntakeStep, string>(
     answeredSummary(draft)
@@ -151,7 +153,11 @@ export function PlanIntake({
         <h1 ref={questionRef} tabIndex={-1} className="active-content-scroll-target" id="plan-intake-title">{meta.title}</h1>
         {meta.helpTerm !== null && <TermHelp term={meta.helpTerm} />}
       </div>
+      {showQuickProgress && <p className="plan-intake__quick-progress" aria-live="polite" aria-atomic="true">
+        질문 {quickQuestionNumber}/3
+      </p>}
       {meta.copy && <p className="plan-copy">{meta.copy}</p>}
+      {step === "experience" && !refining && <p className="plan-copy">달려 본 경험에 맞는 훈련을 골라요.</p>}
       {step === "preview" && (
         <>
           <dl className="plan-shape-preview" aria-label="미리보기 기준">

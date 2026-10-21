@@ -68,6 +68,7 @@ describe("InstantPlanEntryForm", () => {
     const onSubmit = vi.fn()
     render(<InstantPlanEntryForm today={TODAY} onSubmit={onSubmit} />)
     expect(screen.getByRole("heading", { name: "어떤 종목을 준비하세요?" })).toHaveFocus()
+    expect(screen.getByText("기록이 없어도 계획안을 미리 볼 수 있어요. 결과를 확인한 뒤 직접 골라야 계획이 저장돼요.")).toBeVisible()
     expect(screen.queryByText("계획 준비 · 종목 선택")).toBeNull()
     expect(screen.getByRole("group", { name: "어떤 종목을 준비하세요?" }))
       .toBeVisible()
