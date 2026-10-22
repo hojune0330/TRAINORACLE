@@ -275,7 +275,7 @@ for (const persona of personas) test(`${persona.id} ${persona.name}`, async ({ p
         await page.getByText("기록 날짜 추가", { exact: true }).click()
         await page.getByLabel("기록 달성일", { exact: true }).fill(DATE)
       }
-      await page.getByRole("button", { name: persona.goal ? "목표 입력 완료" : "기록 입력 완료", exact: true }).click()
+      await page.getByRole("button", { name: persona.goal ? "목표 저장하고 계속" : "기록 저장하고 계속", exact: true }).click()
       await page.getByRole("button", { name: /빠른 훈련과 쉬운 훈련/ }).click()
       await page.getByRole("button", { name: /^3일/ }).click()
       await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/ }).click()

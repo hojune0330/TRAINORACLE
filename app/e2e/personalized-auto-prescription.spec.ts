@@ -173,7 +173,7 @@ for (const viewport of [
     })
 
     await openPlanOptions(page)
-    await page.getByRole("button", { name: "계획 A로 시작", exact: true }).click()
+    await page.getByRole("button", { name: "이 일정으로 시작", exact: true }).click()
     await expectActivePlanHeading(page)
     const storedSequence = await page.evaluate(() => {
       const state = JSON.parse(localStorage.getItem("trainoracle.plan-beta.v1")!)
@@ -286,13 +286,13 @@ test("requires reconfirmation after replacing the selected record", async ({ pag
   await expect(page.getByText(/5 × 1km · \d+(?:\.\d+)?초\/1km/u)).toHaveCount(0)
   await expect(page.getByText("새로 고른 기준 기록을 확인한 뒤 계획을 선택해 주세요.")).toBeVisible()
   await openPlanOptions(page)
-  await expect(page.getByRole("button", { name: "계획 A로 시작", exact: true })).toBeDisabled()
+  await expect(page.getByRole("button", { name: "A안 선택됨", exact: true })).toBeDisabled()
 
   await openWorkoutOptions(page)
   await picker.getByRole("button", { name: "이 기록으로 개인 페이스 적용" }).click()
   await expect(page.getByRole("heading", { name: "계획이 준비됐어요", exact: true })).toBeFocused()
   await openPlanOptions(page, true)
-  await expect(page.getByRole("button", { name: "계획 A로 시작", exact: true })).toBeEnabled()
+  await expect(page.getByRole("button", { name: "A안 선택됨", exact: true })).toBeEnabled()
   const schedule = page.getByRole("region", { name: "일정·운동 시간", exact: true })
   await schedule.getByText("기준 기록·훈련을 바꾸는 방법", { exact: true }).first().click()
   await expect(schedule.getByText(/기준 기록.*5000m.*19분.*2026-04-20/u).first()).toBeVisible()

@@ -71,7 +71,7 @@ test("plan native Back returns one question and preserves unsent record input", 
   await expect(page.getByRole("heading", { name: "1500m 기록이 있나요?" })).toBeFocused()
   await page.getByRole("button", { name: "내 기록", exact: true }).click()
   await expect(page.getByLabel("초", { exact: true })).toHaveValue("23.4")
-  await page.getByRole("button", { name: "기록 입력 완료", exact: true }).click()
+  await page.getByRole("button", { name: "기록 저장하고 계속", exact: true }).click()
   await page.getByRole("button", { name: /빠른 훈련과 쉬운 훈련을 나눠 꾸준히 해왔어요/ }).click()
   await expect(page.getByRole("heading", { name: "이번 9일 중 며칠 훈련할까요?" })).toBeFocused()
   await page.goBack()

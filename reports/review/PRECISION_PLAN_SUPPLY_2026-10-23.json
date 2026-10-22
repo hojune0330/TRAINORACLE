@@ -1,0 +1,5517 @@
+{
+  "schemaVersion": 2,
+  "date": "2026-10-23",
+  "mode": "synthetic_read_only_candidate_preview_coverage",
+  "interpretation": {
+    "generatedCandidatesArePreviewOnly": true,
+    "plansSaved": false,
+    "plansActivated": false,
+    "catalogBoundCountIsCandidateSlotRowsAcrossAlternatives": true,
+    "catalogBoundValidation": "calculator fingerprints and resolved catalog binding required by planPrescriptionSupply",
+    "flagCountsMayOverlap": true
+  },
+  "inputContext": {
+    "scenariosExpected": 147,
+    "eventDistancesM": [
+      800,
+      1500,
+      3000,
+      5000,
+      10000,
+      21097,
+      42195
+    ],
+    "experiences": [
+      "NEW_TO_RUNNING",
+      "DEVELOPING",
+      "EXPERIENCED"
+    ],
+    "focusValues": [
+      "BASE_INTENT",
+      "RECOVERY_INTENT",
+      "LT_INTENT",
+      "VO2_INTENT",
+      "GLY_INTENT",
+      "ATP_PC_INTENT",
+      "MIXED_INTENT"
+    ],
+    "hasAthleteRecord": false,
+    "selectedDetailedTemplateRef": null,
+    "confirmedEnvironmentRequirements": [],
+    "currentCheck": "NO_KNOWN_RISK",
+    "startDate": "2026-10-23",
+    "availableDayCount": 5,
+    "requestedFrameLength": 9,
+    "secondSessionMode": "SINGLE_SESSION_ONLY",
+    "trainingTimePreference": "VARIES",
+    "mutation": false
+  },
+  "outcomes": {
+    "generated": 147,
+    "preview_only": 0,
+    "rejected": 0
+  },
+  "candidatePreviewCatalogBoundSlots": 238,
+  "flagCounts": {
+    "detailed_applied": 238,
+    "time_rpe_guidance": 14,
+    "condition_needed": 70,
+    "input_needed": 28
+  },
+  "generatedSlotRows": 350,
+  "scenarios": [
+    {
+      "eventDistanceM": 800,
+      "experienceBand": "NEW_TO_RUNNING",
+      "trainingFocus": "BASE_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 0,
+          "states": []
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 0,
+          "states": []
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 800,
+      "experienceBand": "NEW_TO_RUNNING",
+      "trainingFocus": "RECOVERY_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 0,
+          "states": []
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 0,
+          "states": []
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 800,
+      "experienceBand": "NEW_TO_RUNNING",
+      "trainingFocus": "LT_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 800,
+      "experienceBand": "NEW_TO_RUNNING",
+      "trainingFocus": "VO2_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 800,
+      "experienceBand": "NEW_TO_RUNNING",
+      "trainingFocus": "GLY_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "time_rpe_guidance"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "time_rpe_guidance"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 800,
+      "experienceBand": "NEW_TO_RUNNING",
+      "trainingFocus": "ATP_PC_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 800,
+      "experienceBand": "NEW_TO_RUNNING",
+      "trainingFocus": "MIXED_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 800,
+      "experienceBand": "DEVELOPING",
+      "trainingFocus": "BASE_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 0,
+          "states": []
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 0,
+          "states": []
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 800,
+      "experienceBand": "DEVELOPING",
+      "trainingFocus": "RECOVERY_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 0,
+          "states": []
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 0,
+          "states": []
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 800,
+      "experienceBand": "DEVELOPING",
+      "trainingFocus": "LT_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 800,
+      "experienceBand": "DEVELOPING",
+      "trainingFocus": "VO2_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 800,
+      "experienceBand": "DEVELOPING",
+      "trainingFocus": "GLY_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "input_needed"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "input_needed"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "input_needed"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "input_needed"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 800,
+      "experienceBand": "DEVELOPING",
+      "trainingFocus": "ATP_PC_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 800,
+      "experienceBand": "DEVELOPING",
+      "trainingFocus": "MIXED_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 800,
+      "experienceBand": "EXPERIENCED",
+      "trainingFocus": "BASE_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 0,
+          "states": []
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 0,
+          "states": []
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 800,
+      "experienceBand": "EXPERIENCED",
+      "trainingFocus": "RECOVERY_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 0,
+          "states": []
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 0,
+          "states": []
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 800,
+      "experienceBand": "EXPERIENCED",
+      "trainingFocus": "LT_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 800,
+      "experienceBand": "EXPERIENCED",
+      "trainingFocus": "VO2_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 800,
+      "experienceBand": "EXPERIENCED",
+      "trainingFocus": "GLY_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 800,
+      "experienceBand": "EXPERIENCED",
+      "trainingFocus": "ATP_PC_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 800,
+      "experienceBand": "EXPERIENCED",
+      "trainingFocus": "MIXED_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 1500,
+      "experienceBand": "NEW_TO_RUNNING",
+      "trainingFocus": "BASE_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 0,
+          "states": []
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 0,
+          "states": []
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 1500,
+      "experienceBand": "NEW_TO_RUNNING",
+      "trainingFocus": "RECOVERY_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 0,
+          "states": []
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 0,
+          "states": []
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 1500,
+      "experienceBand": "NEW_TO_RUNNING",
+      "trainingFocus": "LT_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 1500,
+      "experienceBand": "NEW_TO_RUNNING",
+      "trainingFocus": "VO2_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 1500,
+      "experienceBand": "NEW_TO_RUNNING",
+      "trainingFocus": "GLY_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "time_rpe_guidance"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "time_rpe_guidance"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 1500,
+      "experienceBand": "NEW_TO_RUNNING",
+      "trainingFocus": "ATP_PC_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 1500,
+      "experienceBand": "NEW_TO_RUNNING",
+      "trainingFocus": "MIXED_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 1500,
+      "experienceBand": "DEVELOPING",
+      "trainingFocus": "BASE_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 0,
+          "states": []
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 0,
+          "states": []
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 1500,
+      "experienceBand": "DEVELOPING",
+      "trainingFocus": "RECOVERY_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 0,
+          "states": []
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 0,
+          "states": []
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 1500,
+      "experienceBand": "DEVELOPING",
+      "trainingFocus": "LT_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 1500,
+      "experienceBand": "DEVELOPING",
+      "trainingFocus": "VO2_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 1500,
+      "experienceBand": "DEVELOPING",
+      "trainingFocus": "GLY_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "input_needed"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "input_needed"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "input_needed"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "input_needed"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 1500,
+      "experienceBand": "DEVELOPING",
+      "trainingFocus": "ATP_PC_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 1500,
+      "experienceBand": "DEVELOPING",
+      "trainingFocus": "MIXED_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 1500,
+      "experienceBand": "EXPERIENCED",
+      "trainingFocus": "BASE_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 0,
+          "states": []
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 0,
+          "states": []
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 1500,
+      "experienceBand": "EXPERIENCED",
+      "trainingFocus": "RECOVERY_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 0,
+          "states": []
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 0,
+          "states": []
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 1500,
+      "experienceBand": "EXPERIENCED",
+      "trainingFocus": "LT_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 1500,
+      "experienceBand": "EXPERIENCED",
+      "trainingFocus": "VO2_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 1500,
+      "experienceBand": "EXPERIENCED",
+      "trainingFocus": "GLY_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 1500,
+      "experienceBand": "EXPERIENCED",
+      "trainingFocus": "ATP_PC_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 1500,
+      "experienceBand": "EXPERIENCED",
+      "trainingFocus": "MIXED_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 3000,
+      "experienceBand": "NEW_TO_RUNNING",
+      "trainingFocus": "BASE_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 0,
+          "states": []
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 0,
+          "states": []
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 3000,
+      "experienceBand": "NEW_TO_RUNNING",
+      "trainingFocus": "RECOVERY_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 0,
+          "states": []
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 0,
+          "states": []
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 3000,
+      "experienceBand": "NEW_TO_RUNNING",
+      "trainingFocus": "LT_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 3000,
+      "experienceBand": "NEW_TO_RUNNING",
+      "trainingFocus": "VO2_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 3000,
+      "experienceBand": "NEW_TO_RUNNING",
+      "trainingFocus": "GLY_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "time_rpe_guidance"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "time_rpe_guidance"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 3000,
+      "experienceBand": "NEW_TO_RUNNING",
+      "trainingFocus": "ATP_PC_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 3000,
+      "experienceBand": "NEW_TO_RUNNING",
+      "trainingFocus": "MIXED_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 3000,
+      "experienceBand": "DEVELOPING",
+      "trainingFocus": "BASE_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 0,
+          "states": []
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 0,
+          "states": []
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 3000,
+      "experienceBand": "DEVELOPING",
+      "trainingFocus": "RECOVERY_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 0,
+          "states": []
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 0,
+          "states": []
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 3000,
+      "experienceBand": "DEVELOPING",
+      "trainingFocus": "LT_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 3000,
+      "experienceBand": "DEVELOPING",
+      "trainingFocus": "VO2_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 3000,
+      "experienceBand": "DEVELOPING",
+      "trainingFocus": "GLY_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "input_needed"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "input_needed"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "input_needed"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "input_needed"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 3000,
+      "experienceBand": "DEVELOPING",
+      "trainingFocus": "ATP_PC_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 3000,
+      "experienceBand": "DEVELOPING",
+      "trainingFocus": "MIXED_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 3000,
+      "experienceBand": "EXPERIENCED",
+      "trainingFocus": "BASE_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 0,
+          "states": []
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 0,
+          "states": []
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 3000,
+      "experienceBand": "EXPERIENCED",
+      "trainingFocus": "RECOVERY_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 0,
+          "states": []
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 0,
+          "states": []
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 3000,
+      "experienceBand": "EXPERIENCED",
+      "trainingFocus": "LT_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 3000,
+      "experienceBand": "EXPERIENCED",
+      "trainingFocus": "VO2_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 3000,
+      "experienceBand": "EXPERIENCED",
+      "trainingFocus": "GLY_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 3000,
+      "experienceBand": "EXPERIENCED",
+      "trainingFocus": "ATP_PC_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 3000,
+      "experienceBand": "EXPERIENCED",
+      "trainingFocus": "MIXED_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 5000,
+      "experienceBand": "NEW_TO_RUNNING",
+      "trainingFocus": "BASE_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 0,
+          "states": []
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 0,
+          "states": []
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 5000,
+      "experienceBand": "NEW_TO_RUNNING",
+      "trainingFocus": "RECOVERY_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 0,
+          "states": []
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 0,
+          "states": []
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 5000,
+      "experienceBand": "NEW_TO_RUNNING",
+      "trainingFocus": "LT_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 5000,
+      "experienceBand": "NEW_TO_RUNNING",
+      "trainingFocus": "VO2_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 5000,
+      "experienceBand": "NEW_TO_RUNNING",
+      "trainingFocus": "GLY_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "time_rpe_guidance"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "time_rpe_guidance"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 5000,
+      "experienceBand": "NEW_TO_RUNNING",
+      "trainingFocus": "ATP_PC_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 5000,
+      "experienceBand": "NEW_TO_RUNNING",
+      "trainingFocus": "MIXED_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 5000,
+      "experienceBand": "DEVELOPING",
+      "trainingFocus": "BASE_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 0,
+          "states": []
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 0,
+          "states": []
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 5000,
+      "experienceBand": "DEVELOPING",
+      "trainingFocus": "RECOVERY_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 0,
+          "states": []
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 0,
+          "states": []
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 5000,
+      "experienceBand": "DEVELOPING",
+      "trainingFocus": "LT_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 5000,
+      "experienceBand": "DEVELOPING",
+      "trainingFocus": "VO2_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 5000,
+      "experienceBand": "DEVELOPING",
+      "trainingFocus": "GLY_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "input_needed"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "input_needed"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "input_needed"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "input_needed"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 5000,
+      "experienceBand": "DEVELOPING",
+      "trainingFocus": "ATP_PC_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 5000,
+      "experienceBand": "DEVELOPING",
+      "trainingFocus": "MIXED_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 5000,
+      "experienceBand": "EXPERIENCED",
+      "trainingFocus": "BASE_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 0,
+          "states": []
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 0,
+          "states": []
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 5000,
+      "experienceBand": "EXPERIENCED",
+      "trainingFocus": "RECOVERY_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 0,
+          "states": []
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 0,
+          "states": []
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 5000,
+      "experienceBand": "EXPERIENCED",
+      "trainingFocus": "LT_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 5000,
+      "experienceBand": "EXPERIENCED",
+      "trainingFocus": "VO2_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 5000,
+      "experienceBand": "EXPERIENCED",
+      "trainingFocus": "GLY_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 5000,
+      "experienceBand": "EXPERIENCED",
+      "trainingFocus": "ATP_PC_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 5000,
+      "experienceBand": "EXPERIENCED",
+      "trainingFocus": "MIXED_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 10000,
+      "experienceBand": "NEW_TO_RUNNING",
+      "trainingFocus": "BASE_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 0,
+          "states": []
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 0,
+          "states": []
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 10000,
+      "experienceBand": "NEW_TO_RUNNING",
+      "trainingFocus": "RECOVERY_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 0,
+          "states": []
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 0,
+          "states": []
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 10000,
+      "experienceBand": "NEW_TO_RUNNING",
+      "trainingFocus": "LT_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 10000,
+      "experienceBand": "NEW_TO_RUNNING",
+      "trainingFocus": "VO2_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 10000,
+      "experienceBand": "NEW_TO_RUNNING",
+      "trainingFocus": "GLY_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "time_rpe_guidance"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "time_rpe_guidance"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 10000,
+      "experienceBand": "NEW_TO_RUNNING",
+      "trainingFocus": "ATP_PC_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 10000,
+      "experienceBand": "NEW_TO_RUNNING",
+      "trainingFocus": "MIXED_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 10000,
+      "experienceBand": "DEVELOPING",
+      "trainingFocus": "BASE_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 0,
+          "states": []
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 0,
+          "states": []
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 10000,
+      "experienceBand": "DEVELOPING",
+      "trainingFocus": "RECOVERY_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 0,
+          "states": []
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 0,
+          "states": []
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 10000,
+      "experienceBand": "DEVELOPING",
+      "trainingFocus": "LT_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 10000,
+      "experienceBand": "DEVELOPING",
+      "trainingFocus": "VO2_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 10000,
+      "experienceBand": "DEVELOPING",
+      "trainingFocus": "GLY_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "input_needed"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "input_needed"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "input_needed"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "input_needed"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 10000,
+      "experienceBand": "DEVELOPING",
+      "trainingFocus": "ATP_PC_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 10000,
+      "experienceBand": "DEVELOPING",
+      "trainingFocus": "MIXED_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 10000,
+      "experienceBand": "EXPERIENCED",
+      "trainingFocus": "BASE_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 0,
+          "states": []
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 0,
+          "states": []
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 10000,
+      "experienceBand": "EXPERIENCED",
+      "trainingFocus": "RECOVERY_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 0,
+          "states": []
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 0,
+          "states": []
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 10000,
+      "experienceBand": "EXPERIENCED",
+      "trainingFocus": "LT_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 10000,
+      "experienceBand": "EXPERIENCED",
+      "trainingFocus": "VO2_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 10000,
+      "experienceBand": "EXPERIENCED",
+      "trainingFocus": "GLY_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 10000,
+      "experienceBand": "EXPERIENCED",
+      "trainingFocus": "ATP_PC_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 10000,
+      "experienceBand": "EXPERIENCED",
+      "trainingFocus": "MIXED_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 21097,
+      "experienceBand": "NEW_TO_RUNNING",
+      "trainingFocus": "BASE_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 0,
+          "states": []
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 0,
+          "states": []
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 21097,
+      "experienceBand": "NEW_TO_RUNNING",
+      "trainingFocus": "RECOVERY_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 0,
+          "states": []
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 0,
+          "states": []
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 21097,
+      "experienceBand": "NEW_TO_RUNNING",
+      "trainingFocus": "LT_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 21097,
+      "experienceBand": "NEW_TO_RUNNING",
+      "trainingFocus": "VO2_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 21097,
+      "experienceBand": "NEW_TO_RUNNING",
+      "trainingFocus": "GLY_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "time_rpe_guidance"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "time_rpe_guidance"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 21097,
+      "experienceBand": "NEW_TO_RUNNING",
+      "trainingFocus": "ATP_PC_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 21097,
+      "experienceBand": "NEW_TO_RUNNING",
+      "trainingFocus": "MIXED_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 21097,
+      "experienceBand": "DEVELOPING",
+      "trainingFocus": "BASE_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 0,
+          "states": []
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 0,
+          "states": []
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 21097,
+      "experienceBand": "DEVELOPING",
+      "trainingFocus": "RECOVERY_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 0,
+          "states": []
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 0,
+          "states": []
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 21097,
+      "experienceBand": "DEVELOPING",
+      "trainingFocus": "LT_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 21097,
+      "experienceBand": "DEVELOPING",
+      "trainingFocus": "VO2_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 21097,
+      "experienceBand": "DEVELOPING",
+      "trainingFocus": "GLY_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "input_needed"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "input_needed"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "input_needed"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "input_needed"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 21097,
+      "experienceBand": "DEVELOPING",
+      "trainingFocus": "ATP_PC_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 21097,
+      "experienceBand": "DEVELOPING",
+      "trainingFocus": "MIXED_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 21097,
+      "experienceBand": "EXPERIENCED",
+      "trainingFocus": "BASE_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 0,
+          "states": []
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 0,
+          "states": []
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 21097,
+      "experienceBand": "EXPERIENCED",
+      "trainingFocus": "RECOVERY_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 0,
+          "states": []
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 0,
+          "states": []
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 21097,
+      "experienceBand": "EXPERIENCED",
+      "trainingFocus": "LT_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 21097,
+      "experienceBand": "EXPERIENCED",
+      "trainingFocus": "VO2_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 21097,
+      "experienceBand": "EXPERIENCED",
+      "trainingFocus": "GLY_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 21097,
+      "experienceBand": "EXPERIENCED",
+      "trainingFocus": "ATP_PC_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 21097,
+      "experienceBand": "EXPERIENCED",
+      "trainingFocus": "MIXED_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 42195,
+      "experienceBand": "NEW_TO_RUNNING",
+      "trainingFocus": "BASE_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 0,
+          "states": []
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 0,
+          "states": []
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 42195,
+      "experienceBand": "NEW_TO_RUNNING",
+      "trainingFocus": "RECOVERY_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 0,
+          "states": []
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 0,
+          "states": []
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 42195,
+      "experienceBand": "NEW_TO_RUNNING",
+      "trainingFocus": "LT_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 42195,
+      "experienceBand": "NEW_TO_RUNNING",
+      "trainingFocus": "VO2_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 42195,
+      "experienceBand": "NEW_TO_RUNNING",
+      "trainingFocus": "GLY_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "time_rpe_guidance"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "time_rpe_guidance"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 42195,
+      "experienceBand": "NEW_TO_RUNNING",
+      "trainingFocus": "ATP_PC_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 42195,
+      "experienceBand": "NEW_TO_RUNNING",
+      "trainingFocus": "MIXED_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 1,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 42195,
+      "experienceBand": "DEVELOPING",
+      "trainingFocus": "BASE_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 0,
+          "states": []
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 0,
+          "states": []
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 42195,
+      "experienceBand": "DEVELOPING",
+      "trainingFocus": "RECOVERY_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 0,
+          "states": []
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 0,
+          "states": []
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 42195,
+      "experienceBand": "DEVELOPING",
+      "trainingFocus": "LT_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 42195,
+      "experienceBand": "DEVELOPING",
+      "trainingFocus": "VO2_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 42195,
+      "experienceBand": "DEVELOPING",
+      "trainingFocus": "GLY_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "input_needed"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "input_needed"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "input_needed"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "input_needed"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 42195,
+      "experienceBand": "DEVELOPING",
+      "trainingFocus": "ATP_PC_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 42195,
+      "experienceBand": "DEVELOPING",
+      "trainingFocus": "MIXED_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 42195,
+      "experienceBand": "EXPERIENCED",
+      "trainingFocus": "BASE_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 0,
+          "states": []
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 0,
+          "states": []
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 42195,
+      "experienceBand": "EXPERIENCED",
+      "trainingFocus": "RECOVERY_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 0,
+          "states": []
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 0,
+          "states": []
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 42195,
+      "experienceBand": "EXPERIENCED",
+      "trainingFocus": "LT_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 42195,
+      "experienceBand": "EXPERIENCED",
+      "trainingFocus": "VO2_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 42195,
+      "experienceBand": "EXPERIENCED",
+      "trainingFocus": "GLY_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 42195,
+      "experienceBand": "EXPERIENCED",
+      "trainingFocus": "ATP_PC_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "condition_needed"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "eventDistanceM": 42195,
+      "experienceBand": "EXPERIENCED",
+      "trainingFocus": "MIXED_INTENT",
+      "outcome": "generated",
+      "initialMainReview": "available",
+      "candidates": [
+        {
+          "candidateKind": "BALANCED",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        },
+        {
+          "candidateKind": "CONSERVATIVE",
+          "qualitySlotCount": 2,
+          "states": [
+            {
+              "day": 3,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "flags": [
+                "detailed_applied"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

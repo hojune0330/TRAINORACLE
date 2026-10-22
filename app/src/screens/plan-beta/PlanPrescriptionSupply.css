@@ -1,0 +1,24 @@
+.plan-prescription-supply {
+  margin-block: 24px;
+  color: var(--ink, #14120c);
+}
+.plan-prescription-supply h3 { margin: 0; font-size: 18px; line-height: 1.4; }
+.plan-prescription-supply__intro { margin: 6px 0 14px; color: var(--ink-3, #625f57); font-size: 14px; line-height: 1.5; }
+.plan-prescription-supply__list { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.plan-prescription-supply__item { min-width: 0; padding: 14px 16px; border: 1px solid var(--line, #dedbd3); border-radius: var(--r-task-surface, 16px); background: var(--surface, #fff); }
+.plan-prescription-supply__head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.plan-prescription-supply__head strong { font-size: 14px; }
+.plan-prescription-supply__head > span { font-size: 15px; font-weight: 650; overflow-wrap: anywhere; }
+.plan-prescription-supply__flags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+.plan-prescription-supply__flag { display: inline-flex; align-items: center; min-height: 26px; padding: 3px 9px; border-radius: 999px; background: var(--surface-2, #f3f1ed); color: var(--ink-2, #38352f); font-size: 12px; font-weight: 650; }
+.plan-prescription-supply__flag--detailed_applied { background: var(--ok-wash, #eaf4ee); color: var(--ok-text, #17613c); }
+.plan-prescription-supply__flag--confirmation_pending,
+.plan-prescription-supply__flag--condition_needed,
+.plan-prescription-supply__flag--input_needed { background: var(--warn-wash, #fff3df); color: var(--warn-text, #754500); }
+.plan-prescription-supply__flag--check_failed { background: var(--err-wash, #fff0ee); color: var(--err-text, #8c271d); }
+.plan-prescription-supply__item > p { margin: 8px 0 0; color: var(--ink-3, #625f57); font-size: 14px; line-height: 1.5; overflow-wrap: anywhere; }
+.plan-prescription-supply__details { margin-top: 10px; font-size: 14px; }
+.plan-prescription-supply__details summary { min-height: 44px; display: inline-flex; align-items: center; cursor: pointer; font-weight: 650; }
+.plan-prescription-supply__details ul { display: grid; gap: 8px; margin: 4px 0 0; padding-left: 20px; }
+.plan-prescription-supply__details li { line-height: 1.5; overflow-wrap: anywhere; }
+.plan-prescription-supply__details li strong { margin-right: 6px; }

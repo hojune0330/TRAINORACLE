@@ -103,7 +103,7 @@ test("moves the single expanded schedule between candidates and allows collapse"
   await refinePlan(page, "훈련 종류", /지속 페이스 훈련/u)
   await refinePlan(page, "시간대", /아침에 운동해요/u)
   await openPlanOptions(page, true)
-  const comparison = page.getByRole("region", { name: "일정·운동 시간", exact: true })
+  const comparison = page.getByRole("region", { name: "다른 계획 비교", exact: true })
 
   const candidateA = page.getByRole("button", { name: "계획안 A 일정 접기" })
   const candidateB = page.getByRole("button", { name: "계획안 B 일정 펼치기" })

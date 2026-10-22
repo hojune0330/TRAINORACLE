@@ -36,7 +36,8 @@ async function expectCanonicalPlanCandidates(page: Page): Promise<void> {
     name: "계획이 준비됐어요",
   })).toBeVisible()
   await expect(page.locator(".plan-candidate")).toHaveCount(2)
-  await expect(page.getByRole("button", { name: /계획 [AB]로 시작/u })).toHaveCount(2)
+  await expect(page.getByRole("button", { name: /^[AB]안 선택(?:됨)?$/u })).toHaveCount(2)
+  await expect(page.getByRole("button", { name: "이 일정으로 시작", exact: true })).toHaveCount(1)
   await expect(page.getByText(/9일/u).first()).toBeVisible()
   await expect.poll(async () => page.evaluate(
     () => window.localStorage.getItem("trainoracle.plan-beta.v1"),
@@ -171,7 +172,7 @@ test("keeps an evening two-a-day plan after selection and reload", async ({ page
   expect(selectedSteps[2]).toMatch(/반복 사이 \d+초 조깅/u)
 
   // When
-  await page.getByRole("button", { name: "계획 A로 시작", exact: true }).click()
+  await page.getByRole("button", { name: "이 일정으로 시작", exact: true }).click()
 
   // Then
   await expectActivePlanHeading(page)

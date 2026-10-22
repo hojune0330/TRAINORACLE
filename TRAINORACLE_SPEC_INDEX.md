@@ -25,6 +25,7 @@ registry_note: "Counts apply only to this registry document. Source SPEC issue c
 
 | 작업 대상 | 먼저 읽을 채택 경로 | 범위 경계 |
 |---|---|---|
+| 간편·정밀 계획 입력과 결과 비교 | [10월 23일 UI 계약](docs/implementation/PRECISION_PLAN_INTAKE_2026-10-23.md) | 카드 입력·실제 출처·공급 상태·명시적 시작. 새 처방 알고리즘·DB 변경 없음 |
 | 일반 상세 계산·MAIN 연결·직접 교체 | [전체 계산·연결 계약](specs/reconstruct/ALL_WORKOUT_CALCULATION_AND_BINDING_CONTRACT.md) §8~9 | 정확한 기존 구성과 개인 조건, 명시적 적용. 모든 사용자에게 126개를 배치하지 않음 |
 | 기록·목표의 페이스 참고 | [7종목 참고 계약](specs/reconstruct/MULTI_EVENT_PACE_REFERENCE_CONTRACT.md), [동일 종목 RP 계약](specs/reconstruct/SAME_EVENT_RACE_PACE_BINDING_CONTRACT.md) | 실제/목표 구분. 타 종목 비교값은 처방 권한이 아니며 적용 쌍 신규 승인은 0개 |
 | 10km 한 달 프로그램 | [3마이크로사이클 계약](specs/reconstruct/GOAL_THREE_MICROCYCLE_PROGRAM_CONTRACT.md) | 9.5일 × 3, 목표 5종. 새 증량·회복 수치와 자동 테이퍼는 채택하지 않음 |
