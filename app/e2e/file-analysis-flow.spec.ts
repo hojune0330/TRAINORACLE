@@ -5,7 +5,7 @@ import { createServer, type ViteDevServer } from "vite"
 import type { AccountJournalRecord } from "../src/domain/account/account-journal-record-schema"
 import type { AccountAthleteRecordDocument } from "../src/domain/account/account-athlete-record-schema"
 import { mockPlanCollectionServer } from "./fixtures/account-plan-collection-server"
-import { closeActiveDayReader, openActivePlanCards, openActiveSessionDetails } from "./active-plan-flow"
+import { closeActiveDayReader, expectActivePlanHeading, openActivePlanCards, openActiveSessionDetails } from "./active-plan-flow"
 import { completeQuickPlan, openPlanOptions, refinePlan } from "./plan-flow"
 
 const origin = "http://127.0.0.1:4497"
@@ -413,7 +413,7 @@ test("TCX account acknowledgement -> report -> pace plan saved/reopened -> confi
   await choose.click()
   await assertNoAutomaticPlanWrite()
   await page.getByRole("button", { name: "이 일정으로 시작", exact: true }).click()
-  await expect(page.getByRole("heading", { name: "오늘 훈련", exact: true })).toBeVisible()
+  await expectActivePlanHeading(page)
   await expect.poll(() => account.plan.calls.filter(call => call.request.action === "commit").length).toBe(1)
   expect(account.plan.indexes.get(owner)?.revision).toBe(1)
   const persisted = JSON.stringify([...account.plan.parts.values()])
@@ -433,12 +433,12 @@ test("TCX account acknowledgement -> report -> pace plan saved/reopened -> confi
     await next.goto("/?app=1")
     await expect.poll(() => confirmedCount(next)).toBe(1)
     await next.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련" }).click()
-    await expect(next.getByRole("heading", { name: "오늘 훈련", exact: true })).toBeVisible()
+    await expectActivePlanHeading(next)
     await expect.poll(() => confirmedPlan(next)).toEqual(selected)
     expect(account.plan.calls.filter(call => call.request.action === "readPart").length).toBeGreaterThanOrEqual(2)
     expect(account.plan.calls.filter(call => call.request.action === "commit")).toHaveLength(1)
     expect(JSON.stringify([...account.plan.parts.values()])).toBe(persisted)
-    await next.getByRole("heading", { name: "오늘 훈련", exact: true }).evaluate(node => node.scrollIntoView({ block: "start" }))
+    await next.getByRole("heading", { name: "9일 훈련 계획", exact: true }).scrollIntoViewIfNeeded()
     await next.screenshot({ path: testInfo.outputPath("account-plan-reopened.png") })
     await openActivePlanCards(next)
     // Compact workout notation rounds to one decimal; the canonical stored
