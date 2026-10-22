@@ -35,3 +35,16 @@
 | 날짜·저장 | 관련 UTC/KST·재시도·기록 확인·보관 경계 검사와 필수 릴리스 관문 |
 
 구현 상태는 요구사항별 코드/검사/배포로 나누며 스펙 전체의 임의 구현률은 제시하지 않는다. 관련 집중 검사 후 기존 필수 CI를 사용한다. 동일 증거의 불필요한 전체 재실행, 다른 PR 병합, 계정 공개, 저장 마이그레이션은 포함하지 않는다.
+
+## 구현 증거와 남은 릴리스 관문
+
+PR: https://github.com/hojune0330/TRAINORACLE/pull/372
+
+| 범위 | 구현 위치 | 확인한 증거 |
+|---|---|---|
+| PI-01~05 | `PlanBeta`, `PrecisionPlanIntake`, `PrecisionPlanSummary`, `precision-intake-state` | 정밀 입력 단위·컴포넌트 9개와 실제 화면 통합 3개 통과. 기존 기록·입력·저장 계약 검사에서 발견한 로딩 대기와 변경된 화면 선택자 문제는 해당 파일 재검사로 확인 |
+| PR-01~03 | `PlanCandidates`, `PlanCandidateOverview`, `CandidateSection` | 추천·선택 계약 11개, 지연 표시 계약 7개, 목적별 이동 계약 3개 통과. 독립 소스 검수에서 표시 후보와 저장 후보, 변경 대기와 시작 차단 연결 확인 |
+| PR-04~05 | `plan-prescription-supply`, `PlanPrescriptionSupply` | 공급 상태 분류 검사 5개 통과. 147개 가상 입력 모두 생성되었으며 상세 연결과 조건·입력 부족을 분리한 JSON 보고서와 명시적 실행용 재현 스크립트 제공 |
+| 모바일·날짜 | `precision-plan`, `calendar-concise-flow`, `calendar-month-navigation`, `category-navigation` E2E | 320px와 모바일 프로젝트에서 12개 통과. 글자 2배의 가로 넘침, 저장 전 미기록, 선택한 B안 저장, 달력 이동·오전/오후·과거 일지 날짜를 확인 |
+
+이 표는 로컬 검사와 소스 검수의 증거다. 최종 SHA의 UTC/KST·브라우저·계약 CI, 병합, 배포 영수증 일치는 릴리스 관문으로 남겨 둔다. 가상 입력과 게스트 브라우저 저장은 로그인한 실계정의 원격 저장 증거가 아니다.

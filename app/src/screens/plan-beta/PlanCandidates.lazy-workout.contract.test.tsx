@@ -38,11 +38,11 @@ function fixture(detailed = false): React.ComponentProps<typeof PlanCandidates> 
 const toggleWorkout = () => fireEvent.click(screen.getByRole("button", { name: "훈련 조절" }))
 
 describe("deferred workout editors on a candidate result", () => {
-  it("puts the first non-rest workout and its existing total-time notation ahead of the full calendar", () => {
+  it("puts the dated QUALITY workout and its existing total-time notation ahead of the full calendar", () => {
     const props = fixture()
     const sessions = defaultInstantCandidate(props.generated).sessions
     const rest = sessions.find(session => session.role === "REST")
-    const workout = sessions.find(session => session.role !== "REST")
+    const workout = sessions.find(session => session.role === "QUALITY")
     if (!rest || !workout) throw Error("Expected a rest and a workout in the generated fixture")
     // Display-only rearrangement of existing prescriptions; no new training dose.
     const firstWorkout = { ...workout, day: 3, slot: "PM" as const }
@@ -54,11 +54,12 @@ describe("deferred workout editors on a candidate result", () => {
       withDisplayedSessions(candidates[0]), withDisplayedSessions(candidates[1]),
     ] as const }
     render(<PlanCandidates {...props} generated={generated} startDateValue="2026-09-20" />)
-    const first = screen.getByRole("region", { name: "첫 훈련 구성" })
-    expect(first).toHaveTextContent("2026-09-22 오후")
+    const first = screen.getByRole("region", { name: "주요 훈련과 실제 처방" })
+    expect(first).toHaveTextContent("2026-09-22 · 오후")
     expect(first).not.toHaveTextContent("오늘")
     const total = projectInstantExecutionSteps(firstWorkout).find(step => step.role === "TOTAL_DURATION")
     if (!total) throw Error("Expected the existing total-time projection")
+    fireEvent.click(within(first).getByText("준비·정리·전체 시간"))
     expect(within(first).getByText(total.instruction)).toBeVisible()
     const calendar = screen.getByRole("region", { name: "이번 일정" })
     expect(first.compareDocumentPosition(calendar)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
@@ -76,10 +77,9 @@ describe("deferred workout editors on a candidate result", () => {
       withDisplayedSessions(candidates[0]), withDisplayedSessions(candidates[1]),
     ] as const }
     render(<PlanCandidates {...props} generated={generated} />)
-    const first = screen.getByRole("region", { name: "첫 훈련 구성" })
-    expect(first).toHaveTextContent("예정된 훈련 없음")
-    expect(within(first).queryByText("총 시간")).not.toBeInTheDocument()
-    expect(first.querySelector("dl")).toBeNull()
+    expect(screen.queryByRole("region", { name: "주요 훈련과 실제 처방" })).toBeNull()
+    const overview = screen.getByRole("region", { name: "선택한 계획 요약" })
+    expect(within(overview).getByText("훈련 횟수").nextElementSibling).toHaveTextContent("0회")
     expect(screen.getByRole("region", { name: "이번 일정" })).toBeVisible()
     expect(props.onSelect).not.toHaveBeenCalled()
   })

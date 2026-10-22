@@ -293,7 +293,7 @@ export function PrecisionPlanIntake(props: PrecisionPlanIntakeProps) {
   return <section className="precision-intake" aria-labelledby="plan-intake-title">
     <div className="precision-intake__question-nav">
       <button className="plan-back" type="button" disabled={disabled} onClick={() => setScreen({ kind: "chapters" })}><ArrowLeft aria-hidden="true" size={17} />설정 목차</button>
-      <span>{chapterName} {chapterPosition}/{chapterQuestions.length}</span>
+      <span>이번 단계 질문 {chapterPosition}/{chapterQuestions.length}</span>
     </div>
     <nav className="precision-intake__jumpbar" aria-label="정밀 설정 장 이동">
       {CHAPTERS.map((item, index) => <button key={item.id} type="button" className="plan-text-action"

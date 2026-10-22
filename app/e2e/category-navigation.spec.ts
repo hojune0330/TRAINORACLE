@@ -38,6 +38,7 @@ test("category cards open full workouts and visible editing without changing the
   await page.getByRole("button", { name: "이 일정으로 시작" }).click()
   await expect(page.getByRole("heading", { name: "9일 훈련 계획", exact: true })).toBeVisible()
   const before = await page.evaluate(() => localStorage.getItem("trainoracle.plan-beta.v1"))
+  await page.getByRole("radiogroup", { name: "계획 일정 보기", exact: true }).getByRole("radio", { name: "달력", exact: true }).click()
   const today = page.locator(".instant-plan--entry-cards")
   const card = today.getByRole("button", { name: /훈련 내용 보기/ }).first()
   await expect(card).toContainText(/총 \d+분/u)

@@ -124,7 +124,7 @@ export function CandidateSection({
         disabled={!canSelect || pendingTarget !== null} onClick={onAdjust}>
         <SlidersHorizontal size={18} aria-hidden="true" />훈련 구성 조정하기
       </button>}
-      <PlanPrescriptionBasis sessions={visibleSessions} />
+      {onChoose === undefined && <PlanPrescriptionBasis sessions={visibleSessions} />}
       {onChoose !== undefined ? (
         <button
           className="plan-candidate__choose app-choice-control"

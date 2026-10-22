@@ -164,11 +164,11 @@ test("the first workout precedes the calendar and editing isolates its close act
   await page.goto("/?app=1&uitest=1")
   await page.getByRole("button", { name: "훈련 계획 받기", exact: true }).click()
   await completeQuickPlan(page)
-  const first = page.getByRole("region", { name: "첫 훈련 구성" })
+  const summary = page.getByRole("region", { name: "선택한 계획 요약" })
   const calendar = page.getByRole("region", { name: "이번 일정" })
-  await expect(first).toBeVisible()
-  await expect(first.getByText("총 시간", { exact: true })).toBeVisible()
-  expect(await first.evaluate((node, selector) => {
+  await expect(summary).toBeVisible()
+  await expect(summary.getByText("총 훈련 시간", { exact: true })).toBeVisible()
+  expect(await summary.evaluate((node, selector) => {
     const schedule = document.querySelector(selector)
     return schedule !== null && node.compareDocumentPosition(schedule) === Node.DOCUMENT_POSITION_FOLLOWING
   }, '[aria-label="이번 일정"]')).toBe(true)

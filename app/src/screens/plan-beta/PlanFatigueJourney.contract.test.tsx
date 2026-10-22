@@ -6,6 +6,7 @@ import { PlanBeta } from "../PlanBeta"
 import { generatePlanFromDraft } from "../../domain/plan-beta-flow"
 import { loadPlanBetaState } from "../../domain/plan-beta-store"
 import { PlanCandidates } from "./PlanCandidates"
+import { planPrescriptionBasis } from "../../domain/plan-prescription-basis"
 
 beforeEach(async () => {
   localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture()
@@ -54,7 +55,10 @@ describe("batch2 purpose-first plan journey", () => {
     const props = candidateProps(), original = JSON.stringify(props.generated)
     render(<PlanCandidates {...props} />)
     const entries = within(screen.getByRole("group", { name: "계획 확인·변경" }))
-    const basis = screen.getByRole("button", { name: /페이스 안내/ })
+    const basis = within(screen.getByRole("region", { name: "선택한 계획 요약" })).getByText(
+      planPrescriptionBasis(props.generated.candidates.find(candidate => candidate.kind === "BALANCED")!.sessions).label,
+      { exact: true },
+    )
     expect(basis).toBeVisible()
     expect(basis.compareDocumentPosition(screen.getByRole("button", { name: "이 일정으로 시작" })) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
     expect(entries.getAllByRole("button").map(button => button.textContent)).toEqual(["일정·운동 시간", "훈련 조절", "추천 근거"])
@@ -71,7 +75,7 @@ describe("batch2 purpose-first plan journey", () => {
     }
     fireEvent.change(screen.getByLabelText("계획 시작 날짜"), { target: { value: "2026-10-08" } })
     expect(props.onStartDateChange).toHaveBeenCalledWith("2026-10-08")
-    expect(schedule.getByRole("button", { name: "계획안 A 일정 펼치기" })).toBeVisible()
+    expect(within(screen.getByRole("region", { name: "다른 계획 비교" })).getByRole("button", { name: "계획안 A 일정 펼치기" })).toBeVisible()
     fireEvent.click(entries.getByRole("button", { name: "훈련 조절" }))
     expect(screen.queryByRole("region", { name: "일정·운동 시간" })).toBeNull()
     const workout = within(screen.getByRole("region", { name: "훈련 조절" }))
@@ -82,8 +86,8 @@ describe("batch2 purpose-first plan journey", () => {
     fireEvent.click(workout.getByRole("button", { name: /^경험 바꾸기/ }))
     expect(props.onRefine).toHaveBeenCalledWith("experience")
     fireEvent.click(entries.getByRole("button", { name: "추천 근거" }))
-    expect(screen.getByRole("heading", { name: "전체 훈련 시간·목표" })).toBeVisible()
-    expect(screen.getByRole("button", { name: /페이스 안내/ })).toBeVisible()
+    expect(screen.getByRole("heading", { name: "추천 근거" })).toBeVisible()
+    expect(basis).toBeVisible()
     expect(screen.queryByText("무엇을 기준으로 만든 훈련인가요?", { selector: "summary" })).toBeNull()
     expect(JSON.stringify(props.generated)).toBe(original)
     expect(props.onSelect).not.toHaveBeenCalled()

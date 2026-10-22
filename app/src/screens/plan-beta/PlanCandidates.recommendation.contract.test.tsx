@@ -12,7 +12,7 @@ import { formatTrainingSeconds, prescriptionLabel, sessionLabel, sessionSlotLabe
 import { resolveCatalogBinding } from "@impl/prescription/catalog-session-binding"
 import { loadAthleteRecords } from "../../domain/athlete-records"
 import { listDetailedSessionTargets } from "../../domain/plan-session-target"
-import { RUNTIME_CASES, saveCurrentRecord, draftFor } from "../../domain/prescription-quality-matrix.test-fixtures"
+import { saveCurrentRecord } from "../../domain/prescription-quality-matrix.test-fixtures"
 
 beforeEach(async () => {
   localStorage.clear()
@@ -107,7 +107,8 @@ describe("candidate-owned optional recommendation preference", () => {
     const rerenderedQualityRow = rerenderedOverview.getByRole("heading", {
       name: `${startDate} · ${sessionSlotLabel(sessions[0]!.slot)} · ${sessionLabel(sessions[0]!)}`,
     }).closest("li")!
-    fireEvent.click(within(rerenderedQualityRow).getByText("준비·정리·전체 시간"))
+    const preparationDisclosure = within(rerenderedQualityRow).getByText("준비·정리·전체 시간")
+    if (!preparationDisclosure.closest("details")?.open) fireEvent.click(preparationDisclosure)
     expect(within(rerenderedQualityRow).getByText("준비")).toBeVisible()
     expect(within(rerenderedQualityRow).getByText("정리")).toBeVisible()
     expect(screen.getByRole("region", { name: "이번 일정" })).toBeVisible()
@@ -146,7 +147,7 @@ describe("candidate-owned optional recommendation preference", () => {
   it("blocks the global start action while a candidate target change is pending and restores it on cancel", () => {
     const { props } = setup()
     const recordId = saveCurrentRecord(5000, 1110)
-    const detailed = generatePlanFromDraft(props.intake, "NO_KNOWN_RISK", { selectedRecordId: recordId })
+    const detailed = generatePlanFromDraft({ ...props.intake, availableDayCount: "EVERY_DAY" }, "NO_KNOWN_RISK", { selectedRecordId: recordId })
     if (detailed.kind !== "generated") throw new Error("Expected a bound detailed candidate fixture")
     expect(detailed.prescriptionBinding.kind).toBe("bound")
     const targets = listDetailedSessionTargets(detailed.generated)
