@@ -126,7 +126,8 @@ for (const outcome of ["PARTIAL", "COMPLETED"] as const) test(`edited MAIN -> ${
 
 test("first numeric pace plan routes its primary action to explicit record confirmation", async ({ page }) => {
   await generate(page, "800", true)
-  await expect(page.getByRole("button", { name: /페이스 안내 내 기록으로 페이스 계산 · 훈련 1회/u })).toBeVisible()
+  await expect(page.getByRole("region", { name: "선택한 계획 요약", exact: true })
+    .getByText("내 기록으로 페이스 계산 · 훈련 1회", { exact: true })).toBeVisible()
   await expect(page.locator(".plan-prescription-basis__pending")).toContainText("기준 확인이 아직 끝나지 않았어요")
   await page.getByRole("button", { name: "기준 기록 확인하기", exact: true }).click()
   await expect(page.getByRole("region", { name: "개인 페이스 기준 기록" })).toBeVisible()

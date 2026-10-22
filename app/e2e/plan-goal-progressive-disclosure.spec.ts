@@ -34,7 +34,8 @@ test("creates a mobile marathon beta plan without inventing pace numbers", async
   await expect(page.getByText("마라톤").first()).toBeVisible()
   const candidateA = page.getByRole("article", { name: "계획 A" })
   await candidateA.getByText("계획안 A 세부 정보", { exact: true }).click()
-  await expect(candidateA.getByRole("button", { name: /페이스 안내 시간·힘든 정도로 훈련/u })).toBeVisible()
+  await expect(page.getByRole("region", { name: "선택한 계획 요약", exact: true })
+    .getByText("시간·힘든 정도로 훈련", { exact: true })).toBeVisible()
   await expect(page.getByText(/@(?:10km|하프|마라톤).*RP/u)).toHaveCount(0)
   await expect.poll(() => page.locator(".app-scroll-region").evaluate(
     (element) => element.scrollWidth <= element.clientWidth,

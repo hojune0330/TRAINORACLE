@@ -24,10 +24,13 @@ test("shows a dated AM and PM plan before selection and after reload", async ({ 
   await page.getByLabel("계획 시작 날짜").fill("2026-08-17")
 
   // When
-  // Scope to one candidate's day list; mobile also exposes its date summary.
-  const candidateDays = page.getByRole("list", { name: "날짜별 계획 미리보기", exact: true }).first()
+  // The selected plan owns the calendar/day reader; comparison cards also
+  // expose their own day lists, without the full prescription-reader controls.
+  const selectedSchedule = page.getByRole("region", { name: "이번 일정", exact: true })
+  const overview = selectedSchedule.getByLabel("9일 훈련 일정", { exact: true })
+  await overview.getByRole("radio", { name: "하루씩", exact: true }).click()
+  const candidateDays = selectedSchedule.getByRole("list", { name: "날짜별 계획 미리보기", exact: true })
   await expect(candidateDays.getByRole("group", { name: /훈련 2개/u })).toHaveCount(3)
-  const overview = page.getByLabel("9일 훈련 일정").first()
   await overview.getByRole("radio", { name: "달력", exact: true }).click()
   await expect(overview.getByRole("button", {
     name: /8월 25일 화요일/u,
