@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test"
+import { dismissInitialPetHome } from "./fixtures/game-lounge"
 
 /**
  * Runs only where a real WebGPU adapter exists (installed Chrome with --enable-unsafe-webgpu).
@@ -24,6 +25,7 @@ test("mounts the WebGPU sky with telemetry off, respects low effects, and makes 
   })))
   await page.getByRole("button", { name: "더보기", exact: true }).click()
   await page.getByRole("button", { name: "게임 라운지", exact: true }).click()
+  await dismissInitialPetHome(page)
   await page.getByRole("button", { name: "러닝 투어 게임 소개", exact: true }).click()
   await page.getByRole("button", { name: "도시 고르기", exact: true }).click()
   await expect(page.locator(".treadmill-game")).toHaveAttribute("data-sky", "canvas")

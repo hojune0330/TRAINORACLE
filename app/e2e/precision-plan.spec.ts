@@ -1,0 +1,52 @@
+import { expect, test } from "@playwright/test"
+import { enterPlanWithoutRecord } from "./plan-flow"
+import { expectActivePlanHeading } from "./active-plan-flow"
+
+test.use({ serviceWorkers: "block" })
+
+test("precision choices stay readable and save only after the chosen candidate starts", async ({ page }, info) => {
+  await page.goto("/?app=1&uitest=1")
+  await page.getByRole("button", { name: "훈련 계획 받기", exact: true }).click()
+  await page.getByRole("button", { name: "기록·일정까지 정밀하게 설정", exact: true }).click()
+  await enterPlanWithoutRecord(page)
+  const answer = async (name: string | RegExp) => {
+    const button = page.getByRole("button", { name, exact: typeof name === "string" })
+    await button.focus()
+    await button.press("Enter")
+  }
+  await expect(page.getByRole("navigation", { name: "정밀 설정 장 이동" })).toBeVisible()
+  await page.screenshot({ path: info.outputPath("precision-question.png"), fullPage: true })
+  await answer(/빠른 훈련과 쉬운 훈련을 나눠 꾸준히 해왔어요/u)
+  await answer("날짜 없이 계속")
+  await answer("오늘부터 · 기본값")
+  await answer(/^7일/u)
+  await answer(/^3일/u)
+  await answer(/저녁에 운동해요/u)
+  await answer("선택한 조건")
+  await expect(page.getByRole("heading", { name: "계획 기준 확인" })).toBeVisible()
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("trainoracle.plan-beta.v1"))).toBeNull()
+  await page.locator(".precision-intake").evaluate(element => {
+    const nodes = [element, ...element.querySelectorAll<HTMLElement>("*")].filter(node => !(node instanceof SVGElement))
+    const sizes = nodes.map(node => parseFloat(getComputedStyle(node).fontSize))
+    nodes.forEach((node, index) => (node as HTMLElement).style.setProperty("font-size", `${sizes[index]! * 2}px`, "important"))
+  })
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true)
+  await page.screenshot({ path: info.outputPath("precision-summary-double-text.png"), fullPage: true })
+  await answer(/몸 상태 확인으로/u)
+  await answer(/통증은 없고 몸 상태는 평소와 같아요/u)
+  await expect(page.getByRole("heading", { name: "계획이 준비됐어요" })).toBeVisible()
+  await expect(page.getByRole("region", { name: "선택한 계획 요약" })).toBeVisible()
+  const chooseB = page.getByRole("button", { name: "B안 선택", exact: true })
+  await chooseB.click()
+  await expect(page.getByRole("button", { name: "B안 선택됨", exact: true })).toHaveAttribute("aria-pressed", "true")
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("trainoracle.plan-beta.v1"))).toBeNull()
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true)
+  await page.getByRole("heading", { name: "계획이 준비됐어요" }).scrollIntoViewIfNeeded()
+  await page.screenshot({ path: info.outputPath("precision-result.png"), fullPage: true })
+  await page.locator(".plan-candidate-overview__quality").screenshot({ path: info.outputPath("precision-main-work.png") })
+  await page.getByRole("button", { name: "이 일정으로 시작", exact: true }).click()
+  await expectActivePlanHeading(page, 7)
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("trainoracle.plan-beta.v1")!))
+  expect(saved.intake).toMatchObject({ requestedFrameLength: 7, availableDayCount: 3, trainingTimePreference: "EVENING" })
+  expect(saved.activePlan.candidateKind).toBe("CONSERVATIVE")
+})

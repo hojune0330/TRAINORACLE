@@ -27,6 +27,24 @@ const recommendation: InstantPlanRecommendation = {
 }
 
 describe("InstantPlanRecommendationView", () => {
+  it("offers comparison before a long calendar without saving, and locks it while saving", () => {
+    const onStart = vi.fn()
+    const onShowAlternatives = vi.fn()
+    const props = { recommendation, onStart, onShowAlternatives, showSupportingDetails: false }
+    const { rerender } = render(<InstantPlanRecommendationView {...props} actionState={{ kind: "READY" }} />)
+    const compare = screen.getByRole("button", { name: "다른 계획안 비교하기" })
+    expect(compare.compareDocumentPosition(screen.getByRole("region", { name: "이번 일정" })))
+      .toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+    fireEvent.click(compare)
+    expect(onShowAlternatives).toHaveBeenCalledTimes(1)
+    expect(onStart).not.toHaveBeenCalled()
+    rerender(<InstantPlanRecommendationView {...props} actionState={{ kind: "SAVING" }} />)
+    expect(compare).toBeDisabled()
+    fireEvent.click(compare)
+    expect(onShowAlternatives).toHaveBeenCalledTimes(1)
+    expect(onStart).not.toHaveBeenCalled()
+  })
+
   it("puts the first workout and required execution summary before the full calendar", () => {
     render(<InstantPlanRecommendationView recommendation={recommendation} actionState={{ kind: "READY" }}
       onStart={vi.fn()} beforeStart={<p>합성 훈련의 총 시간 35분</p>} />)

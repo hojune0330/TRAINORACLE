@@ -35,7 +35,7 @@ function openScheduleQuestion(name: RegExp) {
 }
 
 describe("canceling a plan refinement question", () => {
-  it("preserves the applied MAIN and its confirmation when returning without a new answer", async () => {
+  it.each(["frame", "race"] as const)("preserves the applied MAIN and its confirmation when canceling %s without a new answer", async question => {
     const applied = vi.spyOn(initialMain, "applyInitialMainConditions")
     await reachCandidates()
     fireEvent.click(within(screen.getByRole("region", { name: "첫 주요 훈련 조건" })).getByRole("checkbox"))
@@ -44,7 +44,8 @@ describe("canceling a plan refinement question", () => {
     const expected = applied.mock.results[0]?.value?.generated.candidates[0].sessions
     expect(expected).toBeDefined()
 
-    openScheduleQuestion(/^달력 길이 바꾸기/u)
+    openScheduleQuestion(question === "frame" ? /^달력 길이 바꾸기/u : /^대회 날짜 바꾸기/u)
+    if (question === "race") fireEvent.change(screen.getByLabelText("목표 경기 날짜"), { target: { value: "2099-08-23" } })
     fireEvent.click(screen.getByRole("button", { name: "계획으로" }))
     expect(screen.getByRole("heading", { name: "계획이 준비됐어요" })).toHaveFocus()
     expect(screen.getByRole("button", { name: "이 일정으로 시작" })).toBeEnabled()
@@ -70,6 +71,27 @@ describe("canceling a plan refinement question", () => {
     await waitFor(() => expect(store.readPlanBetaStateFromStorage().kind).toBe("loaded"))
     expect(store.loadPlanBetaState()!.intake).toMatchObject(intake)
     expect(store.loadPlanBetaState()!.intake).not.toHaveProperty("targetRaceDate")
+  }, 20_000)
+
+  it("preserves the selected B plan when canceling a refinement and saves B", async () => {
+    const saveOriginal = selection.saveSelectedPlanCandidate
+    const save = vi.spyOn(selection, "saveSelectedPlanCandidate").mockImplementation((...args) => saveOriginal(...args))
+    await reachCandidates()
+    fireEvent.click(screen.getByRole("button", { name: "B안 선택" }))
+    expect(screen.getByRole("button", { name: "B안 선택됨" })).toHaveAttribute("aria-pressed", "true")
+
+    openScheduleQuestion(/^달력 길이 바꾸기/u)
+    fireEvent.click(screen.getByRole("button", { name: "계획으로" }))
+    expect(screen.getByRole("button", { name: "B안 선택됨" })).toHaveAttribute("aria-pressed", "true")
+    fireEvent.click(screen.getByRole("button", { name: "이 일정으로 시작" }))
+    await waitFor(() => expect(store.readPlanBetaStateFromStorage().kind).toBe("loaded"))
+
+    const saveCall = save.mock.calls[0]
+    if (saveCall === undefined) throw Error("Expected the selected B plan to be saved")
+    const [savedSelection, generated] = saveCall
+    const savedCandidate = generated.candidates.find(candidate => candidate.candidateId === savedSelection.candidateId)
+    expect(savedCandidate?.kind).toBe("CONSERVATIVE")
+    expect(store.loadPlanBetaState()!.activePlan.sessions).toEqual(savedCandidate?.sessions)
   }, 20_000)
 
   it("still opens the date preview after the user explicitly confirms the new date", async () => {

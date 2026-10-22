@@ -118,11 +118,15 @@ test("lays out ten-point scales as two ordered rows on narrow touch screens", as
   await openEntry(page, /자세히 기록.*운동별로 자세히/u)
   await page.getByRole("button", { name: "지금 입력 확인", exact: true }).click()
   await page.getByRole("button", { name: "운동 강도 수정", exact: true }).click()
-  const buttons = Array.from({ length: 10 }, (_, index) => page.getByRole("button", { name: String(index + 1), exact: true }))
-  const boxes = await Promise.all(buttons.map(async (button) => {
-    await expectMinimumTouchSize(button)
-    return button.boundingBox()
+  const buttons = page.getByRole("button", { name: /^(?:[1-9]|10)$/u })
+  await expect(buttons).toHaveCount(10)
+  // Read the complete grid in one frame. Separate boundingBox calls can sample
+  // different scroll/entry-animation frames and report a false row mismatch.
+  const boxes = await buttons.evaluateAll(nodes => nodes.map(node => {
+    const { x, y, width, height } = node.getBoundingClientRect()
+    return { x, y, width, height }
   }))
+  for (const box of boxes) expect(meetsTouchContract(box.width, box.height)).toBe(true)
 
   expect(boxes.slice(0, 5).every((box) => box?.y === boxes[0]?.y)).toBe(true)
   expect(boxes.slice(5).every((box) => box?.y === boxes[5]?.y)).toBe(true)

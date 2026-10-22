@@ -22,6 +22,8 @@ export type InstantPlanEntryFormProps = {
   readonly disabled?: boolean
   readonly sourceLabel?: string
   readonly onDraftChange?: (dirty: boolean) => void
+  /** The integrating flow persists an actual/goal record before showing a plan. */
+  readonly savesRecord?: boolean
 }
 
 const EVENTS: readonly { value: InstantPlanEntry["eventDistanceM"]; label: string }[] = [
@@ -83,7 +85,7 @@ function entryFromCurrentOrGoal(
 
 /** Collects facts only. Eligibility, safety, generation and storage belong to the caller. */
 export function InstantPlanEntryForm({
-  onSubmit, today, readToday, initialEntry, active = true, isSubmitting = false, disabled = false, sourceLabel, onDraftChange,
+  onSubmit, today, readToday, initialEntry, active = true, isSubmitting = false, disabled = false, sourceLabel, onDraftChange, savesRecord = false,
 }: InstantPlanEntryFormProps) {
   const id = useId()
   const [, refreshDateLimit] = useState(today)
@@ -265,6 +267,9 @@ export function InstantPlanEntryForm({
             </h2>
             {!event && active && !disabled && !isSubmitting && !errors.event && <ContextualIllustration image="otter-explain" />}
           </div>
+          <p className="instant-plan__hint instant-plan__entry-context">
+            기록이 없어도 계획안을 미리 볼 수 있어요. 결과를 확인한 뒤 직접 골라야 계획이 저장돼요.
+          </p>
           <div className="instant-plan__step-choices app-choice-group" role="group" aria-labelledby={`${id}-event-heading`}
             aria-describedby={errors.event ? `${id}-event-error` : undefined}>
             {EVENTS.map((option, index) => (
@@ -395,7 +400,9 @@ export function InstantPlanEntryForm({
           {kind === "GOAL_ONLY" && <p className="instant-plan__hint">목표는 현재 실력과 구분해서 사용해요.</p>}
           {!showGoalChoices && <div className="instant-plan__step-actions">
             <button className="instant-plan__button" type="submit" disabled={disabled}>
-              {isSubmitting ? "계획 준비 중…" : kind === "CURRENT_RECORD" ? "기록 입력 완료" : "목표 입력 완료"}
+              {isSubmitting ? "계획 준비 중…" : savesRecord
+                ? kind === "CURRENT_RECORD" ? "기록 저장하고 계속" : "목표 저장하고 계속"
+                : kind === "CURRENT_RECORD" ? "기록 입력 완료" : "목표 입력 완료"}
               <ArrowRight size={18} aria-hidden="true" />
             </button>
           </div>}

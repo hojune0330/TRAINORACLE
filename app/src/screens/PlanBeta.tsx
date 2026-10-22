@@ -45,6 +45,10 @@ import type { CatalogCycleDraftContext } from "../domain/catalog-cycle-draft"
 import type { CatalogCycleSuccessorSummary } from "../domain/catalog-cycle-successor"
 import { usePlanDraftNavigationGuard } from "./plan-beta/usePlanDraftNavigationGuard"
 import { PlanIntake } from "./plan-beta/PlanIntake"
+import { PrecisionPlanIntake, PrecisionPlanSummary } from "./plan-beta/PrecisionPlanIntake"
+import { completePrecisionOrigins, restoredPrecisionOrigins } from "./plan-beta/precision-plan-intake"
+import type { PrecisionPlanOrigins, PrecisionPlanField } from "./plan-beta/precision-plan-intake"
+import "./plan-beta/PlanIntakeMode.css"
 import type { IntakeStep } from "./plan-beta/PlanIntake"
 import { NotationReader } from "./plan-beta/NotationReader"
 import { RaceDatePreview } from "./plan-beta/RaceDatePreview"
@@ -505,6 +509,14 @@ function LegacyPlanBeta({
   const [draft, setDraft] = React.useState<Partial<PlanBetaIntake>>(
     previousIntake ?? {},
   )
+  const [intakeMode, setIntakeMode] = React.useState<"quick" | "precision">("quick")
+  const [precisionOpen, setPrecisionOpen] = React.useState(false)
+  const [inputOrigins, setInputOrigins] = React.useState<PrecisionPlanOrigins>(
+    () => ({ ...restoredPrecisionOrigins(previousIntake ?? {}), startDate: "DEFAULT", targetRaceDate: "DEFAULT" }),
+  )
+  const rememberChoices = (...fields: PrecisionPlanField[]) => setInputOrigins(previous => ({
+    ...previous, ...Object.fromEntries(fields.map(field => [field, "USER" as const])),
+  }))
   const [step, setStep] = React.useState<IntakeStep>(
     () => firstUnansweredQuickStep(previousIntake ?? {}),
   )
@@ -513,6 +525,10 @@ function LegacyPlanBeta({
   const [generated, setGenerated] = React.useState<PlanGenerationSuccess | null>(
     null,
   )
+  const [candidateKindSelection, setCandidateKindSelection] = React.useState<{
+    readonly pairId: string
+    readonly kind: PlanGenerationSuccess["candidates"][number]["kind"]
+  } | null>(null)
   const [generatedIntake, setGeneratedIntake] =
     React.useState<PlanBetaIntake | null>(null)
   const [gate, setGate] = React.useState<SafetyGateDecision | null>(null)
@@ -533,6 +549,7 @@ function LegacyPlanBeta({
   const [bodyRecheckRequested, setBodyRecheckRequested] = React.useState(false)
   const [currentCheck, setCurrentCheck] = React.useState<PlanCurrentCheck | null>(null)
   const [errorCode, setErrorCode] = React.useState<string | null>(null)
+  const generationRetry = React.useRef<(() => void) | null>(null)
   React.useEffect(() => {
     const pendingPredecessor = pendingNextReceipt.current
     if (pendingPredecessor === null || stored === null
@@ -575,6 +592,12 @@ function LegacyPlanBeta({
   const [comparisonRecordId, setComparisonRecordId] = React.useState<string | null>(null)
   const [recordConfirmationPending, setRecordConfirmationPending] = React.useState(false)
   const draftRevision = React.useRef(0)
+  const invalidateGenerationRetry = () => {
+    draftRevision.current += 1
+    generationRetry.current = null
+    setErrorCode(previous => previous === "PLAN_GENERATION_FAILED" ? null : previous)
+  }
+  React.useEffect(() => onLocalJournalScopeChange(invalidateGenerationRetry), [])
   const [, refreshInitialRevision] = React.useState(0)
   const [initialApplying, setInitialApplying] = React.useState(false)
   const [initialConfirmed, setInitialConfirmed] = React.useState<InitialMainCandidateReview["confirmed"]>(null)
@@ -603,10 +626,15 @@ function LegacyPlanBeta({
       ? "blocked"
       : generated !== null && gate !== null
         ? "candidates"
-        : instantEntryOpen ? "instant-entry" : `intake-${step}`
+        : instantEntryOpen ? "instant-entry" : precisionOpen ? "precision-intake" : `intake-${step}`
 
   const canGoBackInIntake = refining || step !== "goal" || instantEntry !== undefined
   const goBackInIntake = () => {
+    if (!refining && intakeMode === "precision" && step === "safety") {
+      invalidateGenerationRetry()
+      setPrecisionOpen(true)
+      return
+    }
     if (refining) {
       const previous = refinementReturn.current
       refinementReturn.current = null
@@ -620,6 +648,7 @@ function LegacyPlanBeta({
       }
       return
     }
+    invalidateGenerationRetry()
     if (instantEntry !== undefined && (step === "experience" || step === "goal")) {
       setInstantEntryOpen(true)
       return
@@ -630,7 +659,7 @@ function LegacyPlanBeta({
     busy: selectionSaving || instantRecordSaving || initialApplying, onBack: goBackInIntake })
 
   React.useLayoutEffect(() => {
-    if (viewKey.startsWith("intake-")) return
+    if (viewKey.startsWith("intake-") || viewKey === "precision-intake") return
     const scrollRegion = document.querySelector<HTMLElement>(".app-scroll-region")
     if (scrollRegion !== null) scrollRegion.scrollTop = 0
     const headingId = viewKey === "candidates" ? "plan-candidates-title"
@@ -720,34 +749,65 @@ function LegacyPlanBeta({
     raceDate?: string,
     sessionTarget: PlanSessionTarget | null = detailedSessionTarget,
     candidateTargets: CandidateSessionTargets = candidateSessionTargets,
-  ) => {
+    checkOverride?: PlanCurrentCheck,
+    confirmInstantRecord = false,
+  ): PlanDraftGeneration | undefined => {
     draftRevision.current += 1
     setInitialConfirmed(null)
     setRetrySelection(null)
-    if (currentCheck === null) {
-      setErrorCode(null)
+    setErrorCode(null)
+    const checkedState = checkOverride ?? currentCheck
+    // Any new generation attempt invalidates the previous selectable result. A
+    // rejected refresh must never leave an older candidate available to save.
+    setGenerated(null)
+    setGeneratedIntake(null)
+    setGeneratedEvidence(null)
+    setGate(null)
+    setRacePreview(null)
+    setCycleDraft(null)
+    setCycleSummary(null)
+    generationRetry.current = null
+    if (checkedState === null) {
       setStep("safety")
       return
     }
     const completed = withQuickDefaults(nextDraft)
-    const result = generatePlanFromDraft(
-      raceDate === undefined ? completed : { ...completed, targetRaceDate: raceDate },
-      currentCheck,
-      recordId === null ? undefined : { selectedRecordId: recordId },
-      sessionTarget ?? undefined,
-      candidateTargets,
-      nextPredecessor ?? undefined,
-    )
+    setInputOrigins(previous => completePrecisionOrigins(nextDraft, completed, previous))
+    let result: PlanDraftGeneration
+    try {
+      result = generatePlanFromDraft(
+        raceDate === undefined ? completed : { ...completed, targetRaceDate: raceDate },
+        checkedState,
+        recordId === null ? undefined : { selectedRecordId: recordId },
+        sessionTarget ?? undefined,
+        candidateTargets,
+        nextPredecessor ?? undefined,
+      )
+    } catch {
+      result = { kind: "rejected", code: "PLAN_GENERATION_FAILED" }
+      const revision = draftRevision.current
+      const accountScope = localAccountScopeSnapshot()
+      const scopeGeneration = localJournalScopeGeneration()
+      generationRetry.current = () => {
+        if (draftRevision.current !== revision || !localAccountScopeIsCurrent(accountScope)
+            || localJournalScopeGeneration() !== scopeGeneration) {
+          invalidateGenerationRetry()
+          return
+        }
+        generateCandidates(nextDraft, recordId, raceDate, sessionTarget, candidateTargets, checkedState, confirmInstantRecord)
+      }
+    }
     switch (result.kind) {
       case "blocked":
         setErrorCode(null)
         setCurrentCheck(null)
         setBlocked(true)
-        return
+        return result
       case "rejected":
         setErrorCode(result.code)
-        return
+        return result
       case "generated":
+        generationRetry.current = null
         setRacePreview(null)
         setErrorCode(null)
         setGate(result.gate)
@@ -757,13 +817,13 @@ function LegacyPlanBeta({
         setCycleDraft(result.cycleDraft ?? null)
         setCycleSummary(result.cycleSummary ?? null)
         setPrescriptionBinding(result.prescriptionBinding)
-        return
+        if (confirmInstantRecord) setRecordConfirmationPending(result.prescriptionBinding.kind === "bound")
+        return result
       case "preview_only":
+        generationRetry.current = null
         setErrorCode(null)
-        setGenerated(null)
-        setGate(null)
         setRacePreview(result)
-        return
+        return result
     }
   }
 
@@ -809,6 +869,7 @@ function LegacyPlanBeta({
 
   const changeMethod = (reference: PlanBetaIntake["selectedDetailedTemplateRef"]) => {
     if (generatedIntake === null) return
+    rememberChoices("selectedDetailedTemplateRef")
     const change = resolvePlanMethodChange(generatedIntake, reference)
     if (change.kind === "unchanged") return
     draftRevision.current += 1
@@ -957,9 +1018,9 @@ function LegacyPlanBeta({
 
   const withGoalEntry = (content: React.ReactNode) => <>{content}{goalProgramEntry}</>
   const renderContent = () => {
-  if (recordsOpen && !instantEntryOpen) return withGoalEntry(recordsView)
+  if (recordsOpen && !instantEntryOpen && !precisionOpen) return withGoalEntry(recordsView)
 
-  if (notationReaderOpen && !instantEntryOpen) {
+  if (notationReaderOpen && !instantEntryOpen && !precisionOpen) {
     return withGoalEntry(<NotationReader onBack={() => setNotationReaderOpen(false)} />)
   }
 
@@ -1005,6 +1066,8 @@ function LegacyPlanBeta({
           setCelebrateActivePlan(false)
           setNextPredecessor(predecessor)
           setDraft(predecessor.intake)
+          setInputOrigins({ ...restoredPrecisionOrigins(predecessor.intake), startDate: "DEFAULT", targetRaceDate: "DEFAULT" })
+          setIntakeMode("quick"); setPrecisionOpen(false)
           setInstantEntryOpen(false)
           setInstantEntry(undefined)
           setInstantEntryDirty(false)
@@ -1163,6 +1226,10 @@ function LegacyPlanBeta({
         {nextDraftHeader}
         <PlanCandidates
           generated={generated}
+          selectedCandidateKind={candidateKindSelection?.pairId === generated.pairId
+            ? candidateKindSelection.kind : undefined}
+          onSelectedCandidateKindChange={kind => setCandidateKindSelection({ pairId: generated.pairId, kind })}
+          safetyGate={gate}
           initialMain={initialMain}
           cycleSummary={cycleSummary}
           onRebuildCycle={() => generateCandidates(generatedIntake)}
@@ -1175,13 +1242,18 @@ function LegacyPlanBeta({
           comparisonRecordId={comparisonRecordId}
           prescriptionBinding={prescriptionBinding}
           instantEntry={instantEntry}
+          inputSummary={<details className="plan-input-summary">
+            <summary>선택한 조건·기본값</summary>
+            <PrecisionPlanSummary draft={generatedIntake} origins={inputOrigins}
+              startDate={candidateStartDate} targetRaceDate={targetRaceDate} instantEntry={instantEntry} />
+          </details>}
           saving={selectionSaving}
           saveError={errorCode === null ? null : planErrorMessage(errorCode)}
           saveCode={errorCode}
           onRetrySave={retrySelection === null ? undefined : () => { void saveCandidate(retrySelection, generated) }}
           recordConfirmationPending={recordConfirmationPending}
           startDateValue={candidateStartDate}
-          onStartDateChange={setCandidateStartDate}
+          onStartDateChange={value => { rememberChoices("startDate"); setCandidateStartDate(value) }}
           recordReturnCount={recordReturnCount}
           targetRaceDate={targetRaceDate}
           onManageRecords={() => {
@@ -1248,7 +1320,13 @@ function LegacyPlanBeta({
   if (instantEntryOpen) return <>
     {/* Keep unsent values and the current question while a supporting tool is open. */}
     <div className="plan-instant-entry" hidden={recordsOpen || notationReaderOpen}>
-    <InstantPlanEntryForm today={todayISO()} readToday={todayISO} initialEntry={instantEntry} active={!recordsOpen && !notationReaderOpen}
+    <div className="plan-intake-mode" role="group" aria-label="계획 입력 방식">
+      <button type="button" aria-pressed={intakeMode === "quick"} disabled={instantRecordSaving}
+        onClick={() => setIntakeMode("quick")}>간단히 계획 받기</button>
+      <button type="button" aria-pressed={intakeMode === "precision"} disabled={instantRecordSaving}
+        onClick={() => setIntakeMode("precision")}>기록·일정까지 정밀하게 설정</button>
+    </div>
+    <InstantPlanEntryForm today={todayISO()} readToday={todayISO} initialEntry={instantEntry} active={!recordsOpen && !notationReaderOpen} savesRecord
       disabled={instantRecordSaving} isSubmitting={instantRecordSaving} onDraftChange={setInstantEntryDirty} onSubmit={async value => {
       if (instantRecordSaveLock.current) return
       instantRecordSaveLock.current = true; setInstantRecordSaving(true)
@@ -1271,7 +1349,14 @@ function LegacyPlanBeta({
           eventGroup: eventGroupForDistance(prepared.entry.eventDistanceM) }
         delete nextDraft.selectedDetailedTemplateRef
         if (draft.eventDistanceM !== prepared.entry.eventDistanceM) delete nextDraft.trainingFocus
+        setInputOrigins(previous => {
+          const next = { ...previous, eventDistanceM: "USER" as const }
+          delete next.selectedDetailedTemplateRef
+          if (draft.eventDistanceM !== prepared.entry.eventDistanceM) delete next.trainingFocus
+          return next
+        })
         setDraft(nextDraft); setStep(firstUnansweredQuickStep(nextDraft)); setCurrentCheck(null)
+        setPrecisionOpen(intakeMode === "precision")
       } catch {
         setInstantEntryError("기록 준비를 마치지 못했어요. 입력은 그대로 남아 있어요. 다시 시도해 주세요.")
       } finally {
@@ -1290,9 +1375,37 @@ function LegacyPlanBeta({
     {!recordsOpen && !notationReaderOpen && planTools}
   </>
 
+  if (precisionOpen) return <>
+    {nextDraftHeader}
+    <div hidden={recordsOpen || notationReaderOpen}>
+      <PrecisionPlanIntake draft={draft} origins={inputOrigins}
+        instantEntry={instantEntry}
+        active={!recordsOpen && !notationReaderOpen}
+        startDate={candidateStartDate} targetRaceDate={targetRaceDate}
+        onStartDateChange={value => { invalidateGenerationRetry(); setCandidateStartDate(value) }}
+        onTargetRaceDateChange={value => { invalidateGenerationRetry(); setTargetRaceDate(value) }}
+        onDraftChange={(next, origins) => { invalidateGenerationRetry(); setDraft(next); setInputOrigins(origins); setCurrentCheck(null) }}
+        onEditEntry={() => { setPrecisionOpen(false); setInstantEntryOpen(true) }}
+        onManageRecords={() => setRecordsOpen(true)}
+        onOpenNotationReader={() => setNotationReaderOpen(true)}
+        onCancel={() => { setPrecisionOpen(false); setIntakeMode("quick"); setStep(firstUnansweredQuickStep(draft)) }}
+        onComplete={(next, origins) => {
+          invalidateGenerationRetry(); setDraft(next); setInputOrigins(origins)
+          setPrecisionOpen(false); setCurrentCheck(null); setStep("safety")
+        }} />
+    </div>
+    {recordsView}
+    {notationReaderOpen && <NotationReader onBack={() => setNotationReaderOpen(false)} />}
+  </>
+
   return (
     <>
       {nextDraftHeader}
+      {!refining && <button type="button" className="plan-text-action plan-precision-entry" onClick={() => {
+        invalidateGenerationRetry(); setIntakeMode("precision")
+        if (draft.eventDistanceM === undefined) setInstantEntryOpen(true)
+        else setPrecisionOpen(true)
+      }}>기록·일정까지 정밀하게 설정</button>}
       <PlanIntake
         key={step}
         step={step}
@@ -1303,8 +1416,9 @@ function LegacyPlanBeta({
         refining={refining}
         canGoBack={canGoBackInIntake}
         onBack={goBackInIntake}
-        onJump={(target) => setStep(target)}
+        onJump={(target) => { invalidateGenerationRetry(); setStep(target) }}
         onGoal={(eventDistanceM) => {
+          rememberChoices("eventDistanceM")
           const eventGroup = eventGroupForDistance(eventDistanceM)
           setSelectedRecordId(null)
           setComparisonRecordId(null)
@@ -1326,8 +1440,10 @@ function LegacyPlanBeta({
           setDraft(nextDraft)
           setStep(draft.experienceBand === undefined ? "experience" : firstUnansweredQuickStep(nextDraft))
         }}
-        onDivision={(competitionDivision) => continueAfterRefinement({ ...draft, competitionDivision })}
+        onDivision={(competitionDivision) => { rememberChoices("competitionDivision"); continueAfterRefinement({ ...draft, competitionDivision }) }}
         onExperience={(experienceBand) => {
+          rememberChoices("experienceBand")
+          if (experienceBand !== "EXPERIENCED") setInputOrigins(previous => ({ ...previous, selectedDetailedTemplateRef: "DEFAULT" }))
           const nextDraft = {
             ...draft,
             experienceBand,
@@ -1340,16 +1456,17 @@ function LegacyPlanBeta({
           setDraft(nextDraft)
           setStep(firstUnansweredQuickStep(nextDraft))
         }}
-        onFocus={(trainingFocus) => continueAfterRefinement({
+        onFocus={(trainingFocus) => { rememberChoices("trainingFocus"); setInputOrigins(previous => ({ ...previous, selectedDetailedTemplateRef: "DEFAULT" })); continueAfterRefinement({
           ...draft,
           trainingFocus,
           selectedDetailedTemplateRef: null,
-        })}
-        onTemplate={(selectedDetailedTemplateRef) => continueAfterRefinement({
+        }) }}
+        onTemplate={(selectedDetailedTemplateRef) => { rememberChoices("selectedDetailedTemplateRef"); continueAfterRefinement({
           ...draft,
           selectedDetailedTemplateRef,
-        })}
+        }) }}
         onDays={(availableDayCount) => {
+          rememberChoices("availableDayCount")
           const nextDraft = { ...draft, availableDayCount }
           if (refining) {
             continueAfterRefinement(nextDraft)
@@ -1358,12 +1475,19 @@ function LegacyPlanBeta({
           setDraft(nextDraft)
           setStep("safety")
         }}
-        onFrameLength={(requestedFrameLength) => continueAfterRefinement({ ...draft, requestedFrameLength })}
-        onTrainingTime={(trainingTimePreference: TrainingTimePreference) => continueAfterRefinement({ ...draft, trainingTimePreference })}
-        onSecondSession={(secondSessionMode) => continueAfterRefinement({ ...draft, secondSessionMode })}
+        onFrameLength={(requestedFrameLength) => { rememberChoices("requestedFrameLength"); continueAfterRefinement({ ...draft, requestedFrameLength }) }}
+        onTrainingTime={(trainingTimePreference: TrainingTimePreference) => { rememberChoices("trainingTimePreference"); continueAfterRefinement({ ...draft, trainingTimePreference }) }}
+        onSecondSession={(secondSessionMode) => { rememberChoices("secondSessionMode"); continueAfterRefinement({ ...draft, secondSessionMode }) }}
         targetRaceDate={targetRaceDate}
-        onTargetRaceDateChange={setTargetRaceDate}
+        onTargetRaceDateChange={(value) => {
+          // A date typed in a refinement is provisional until the next action.
+          // Cancel must retain the original plan's reviewed-condition revision.
+          if (!refining) { invalidateGenerationRetry(); rememberChoices("targetRaceDate") }
+          setTargetRaceDate(value)
+        }}
         onRaceDate={(raceDate) => {
+          if (raceDate !== undefined) rememberChoices("targetRaceDate")
+          else setInputOrigins(previous => ({ ...previous, targetRaceDate: "DEFAULT" }))
           refinementReturn.current = null
           setRefining(false)
           if (raceDate === undefined) setTargetRaceDate("")
@@ -1374,6 +1498,7 @@ function LegacyPlanBeta({
         onSafety={(nextCurrentCheck) => {
           const safety = evaluatePlanSafety(nextCurrentCheck)
           if (safety.kind === "blocked") {
+            invalidateGenerationRetry()
             setErrorCode(null)
             setCurrentCheck(null)
             setBlocked(true)
@@ -1383,43 +1508,23 @@ function LegacyPlanBeta({
           setCurrentCheck(nextCurrentCheck)
           // 네 번째 답과 함께 바로 계획을 만든다. 나머지 항목은 기본값, 결과에서 다듬는다.
           const completed = prepareInstantIntake(draft, instantEntry)
+          setInputOrigins(previous => completePrecisionOrigins(draft, completed, previous))
           setDraft(completed)
-          draftRevision.current += 1
           setRetrySelection(null)
-          const result = generatePlanFromDraft(completed, nextCurrentCheck,
-            instantEntry?.kind === "CURRENT_RECORD" && selectedRecordId !== null ? { selectedRecordId } : undefined,
-            undefined, undefined, nextPredecessor ?? undefined)
-          switch (result.kind) {
-            case "blocked":
-              setCurrentCheck(null)
-              setBlocked(true)
-              return
-            case "rejected":
-              setErrorCode(result.code)
-              return
-            case "generated":
-              setRacePreview(null)
-              setGate(result.gate)
-              setGenerated(result.generated)
-              setGeneratedIntake(result.intake)
-              setGeneratedEvidence(result.athleteEvidence)
-              setCycleDraft(result.cycleDraft ?? null)
-              setCycleSummary(result.cycleSummary ?? null)
-              setPrescriptionBinding(result.prescriptionBinding)
-              setRecordConfirmationPending(result.prescriptionBinding.kind === "bound" && instantEntry?.kind === "CURRENT_RECORD")
-              return
-            case "preview_only":
-              setGenerated(null)
-              setGate(null)
-              setRacePreview(result)
-              return
-          }
+          setRecordConfirmationPending(false)
+          generateCandidates(completed,
+            instantEntry?.kind === "CURRENT_RECORD" && selectedRecordId !== null ? selectedRecordId : null,
+            targetRaceDate || undefined, undefined, undefined, nextCurrentCheck,
+            instantEntry?.kind === "CURRENT_RECORD" && selectedRecordId !== null)
         }}
         onContinue={() => generateCandidates(draft, null, targetRaceDate || undefined)}
       />
       {errorCode !== null && (
         <div className="plan-inline-error" role="alert">
-          {planErrorMessage(errorCode)}
+          {errorCode === "PLAN_GENERATION_FAILED"
+            ? "계획안을 만들지 못했어요. 입력은 그대로예요. 다시 시도해 주세요."
+            : planErrorMessage(errorCode)}
+          {generationRetry.current !== null && <button type="button" onClick={() => generationRetry.current?.()}>다시 시도</button>}
         </div>
       )}
       {goalProgramEntry}

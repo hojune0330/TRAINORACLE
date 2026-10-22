@@ -19,7 +19,7 @@ async function confirmedPersonalPlan() {
   await user.type(screen.getByLabelText("초"), "23.4")
   await user.click(screen.getByText("기록 날짜 추가", { selector: "summary span" }))
   fireEvent.change(screen.getByLabelText("기록 달성일"), { target: { value: todayISO() } })
-  await user.click(screen.getByRole("button", { name: "기록 입력 완료" }))
+  await user.click(screen.getByRole("button", { name: "기록 저장하고 계속" }))
   await user.click(screen.getByRole("button", { name: /빠른 훈련과 쉬운 훈련을 나눠 꾸준히 해왔어요/u }))
   await user.click(screen.getByRole("button", { name: /^매일/u }))
   await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))

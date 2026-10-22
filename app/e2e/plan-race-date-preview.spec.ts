@@ -25,6 +25,7 @@ for (const viewport of [
     await expect(page.getByRole("heading", { name: "아직 경기 날짜를 계획에 적용할 수 없어요" })).toBeVisible()
     await expect(page.getByText(/계획안을 저장하거나 시작할 수 없고.*훈련 내용.*양.*강도도 바꾸지 않아요/u)).toBeVisible()
     await expect(page.getByRole("button", { name: /선택하기|계획 시작|계획 저장/u })).toHaveCount(0)
+    await expect(page.getByRole("button", { name: "이 일정으로 시작", exact: true })).toHaveCount(0)
     expect(await page.evaluate(() => {
       const local = Object.values(window.localStorage)
       const session = Object.values(window.sessionStorage)
@@ -43,7 +44,8 @@ for (const viewport of [
     await page.getByRole("button", { name: "날짜 없이 일반 계획 보기" }).click()
     await expect(page.getByRole("heading", { name: "계획이 준비됐어요" })).toBeVisible()
     await page.getByRole("group", { name: "계획 확인·변경" }).getByRole("button", { name: "추천 근거", exact: true }).click()
-    await expect(page.getByText("경기 날짜 없이 만든 일반 계획")).toBeVisible()
+    await expect(page.getByRole("status", { name: "목표 경기 반영 상태", exact: true })).toHaveCount(0)
+    expect(await page.evaluate(() => localStorage.getItem("trainoracle.plan-beta.v1"))).toBeNull()
   })
 }
 

@@ -73,7 +73,7 @@ export async function completeDetailedPlan(page: Page, options: {
   await completeQuickPlan(page, options)
   if (options.division) await refinePlan(page, "참가 부문", options.division)
   await refinePlan(page, "훈련 종류", options.focus ?? /지속 페이스 훈련/u)
-  if (options.template) await refinePlan(page, "안내 방식", options.template)
+  if (options.template) await refinePlan(page, "훈련 구성·페이스", options.template)
   if (options.frame) await refinePlan(page, "달력 길이", options.frame)
   if (options.time) await refinePlan(page, "시간대", options.time)
   if (options.twice) await refinePlan(page, "하루 두 번", /하루 두 번 운동할게요/u)
@@ -87,7 +87,7 @@ export async function openPlanOptions(page: Page, expandA = false): Promise<void
     if (await purposeEntry.getAttribute("aria-expanded") !== "true") await purposeEntry.click()
     const schedule = page.getByRole("region", { name: "일정·운동 시간", exact: true })
     await expect(schedule).toBeVisible()
-    const toggle = schedule.getByRole("button", { name: "계획안 A 일정 펼치기" })
+    const toggle = page.getByRole("region", { name: "다른 계획 비교", exact: true }).getByRole("button", { name: "계획안 A 일정 펼치기" })
     if (expandA && await toggle.count()) await toggle.click()
     return
   }

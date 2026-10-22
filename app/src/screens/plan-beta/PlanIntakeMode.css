@@ -1,0 +1,32 @@
+.plan-intake-mode {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-block: 0 var(--space-5);
+}
+.plan-intake-mode button {
+  min-height: 44px;
+  padding: 10px 14px;
+  border: var(--bw-line) solid var(--line);
+  border-radius: var(--r-action);
+  background: var(--surface);
+  color: var(--ink-2);
+  font: inherit;
+  line-height: 1.5;
+  text-align: left;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+.plan-intake-mode button[aria-pressed="true"] {
+  color: var(--ink);
+  border-color: var(--ink);
+  background: var(--surface-2);
+  font-weight: 700;
+}
+.plan-intake-mode button:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+.plan-precision-entry { margin-bottom: 16px; }
+.plan-input-summary { margin-block: 16px; }
+.plan-input-summary > summary { min-height: 44px; padding-block: 10px; cursor: pointer; }

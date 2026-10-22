@@ -1,0 +1,104 @@
+.plan-candidate-overview {
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.plan-candidate-overview__facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+}
+
+.plan-candidate-overview__support summary {
+  min-height: 44px;
+  padding-block: var(--space-2);
+  box-sizing: border-box;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+
+.plan-candidate-overview__facts > div {
+  min-width: 0;
+  padding-block: var(--space-2);
+  border-block-end: var(--bw-line) solid var(--line);
+}
+
+.plan-candidate-overview__facts dt {
+  color: var(--ink-3);
+  font-size: var(--fs-caption);
+}
+
+.plan-candidate-overview__facts dd {
+  margin: var(--space-1) 0 0;
+  font-size: var(--fs-body);
+  font-weight: var(--fw-app-heading);
+  overflow-wrap: anywhere;
+}
+
+.plan-candidate-overview__quality {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.plan-candidate-overview__quality h3 {
+  margin: 0;
+  font-size: var(--fs-app-section-title);
+}
+
+.plan-candidate-overview__quality > ol {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.plan-candidate-overview__quality > ol > li {
+  min-width: 0;
+  padding-block: var(--space-3);
+  border-block-start: var(--bw-line) solid var(--line);
+}
+
+.plan-candidate-overview__quality h4 {
+  margin: 0 0 var(--space-2);
+  font-size: var(--fs-body);
+}
+
+.plan-candidate-overview__quality dl {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.plan-candidate-overview__quality dl > div {
+  display: grid;
+  grid-template-columns: minmax(72px, auto) minmax(0, 1fr);
+  gap: var(--space-2);
+}
+
+.plan-candidate-overview__quality dt {
+  color: var(--ink-3);
+  font-size: var(--fs-caption);
+}
+
+.plan-candidate-overview__quality dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.plan-candidate__choose[aria-pressed="true"] {
+  border-color: var(--category-training);
+  background: var(--category-training-wash);
+  color: var(--category-training);
+}
+
+@media (max-width: 480px) {
+  .plan-candidate-overview__facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .plan-candidate-overview__facts > div:first-child,
+  .plan-candidate-overview__facts > div:last-child { grid-column: 1 / -1; }
+}

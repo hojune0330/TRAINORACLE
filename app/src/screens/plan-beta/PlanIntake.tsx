@@ -48,6 +48,8 @@ type PlanIntakeProps = {
   readonly canGoBack?: boolean
   /** true면 "다듬기"에서 열린 단일 질문 — 달력 미리보기를 숨기고 뒤로 가기 문구를 바꾼다. */
   readonly refining?: boolean
+  /** Precision cards collect the date before the shared final safety/generation step. */
+  readonly deferGeneration?: boolean
   readonly onBack: () => void
   readonly onGoal: (distanceM: PlanBetaIntake["eventDistanceM"]) => void
   readonly onDivision: (division: CompetitionDivision) => void
@@ -78,6 +80,7 @@ export function PlanIntake({
   questionRef,
   canGoBack = true,
   refining = false,
+  deferGeneration = false,
   onBack,
   onGoal,
   onDivision,
@@ -124,6 +127,8 @@ export function PlanIntake({
     : STEP_META[step]
   const isQuickStep = (QUICK_STEP_ORDER as readonly IntakeStep[]).includes(step)
   const showQuickAnswers = !refining && isQuickStep
+  const quickQuestionNumber = step === "experience" ? 1 : step === "days" ? 2 : step === "safety" ? 3 : null
+  const showQuickProgress = showQuickAnswers && draft.eventDistanceM !== undefined && quickQuestionNumber !== null
   const hasSingleChoiceQuestion = step !== "preview" && step !== "race-date"
   const summaryLabels = new Map<IntakeStep, string>(
     answeredSummary(draft)
@@ -151,7 +156,11 @@ export function PlanIntake({
         <h1 ref={questionRef} tabIndex={-1} className="active-content-scroll-target" id="plan-intake-title">{meta.title}</h1>
         {meta.helpTerm !== null && <TermHelp term={meta.helpTerm} />}
       </div>
+      {showQuickProgress && <p className="plan-intake__quick-progress" aria-live="polite" aria-atomic="true">
+        질문 {quickQuestionNumber}/3
+      </p>}
       {meta.copy && <p className="plan-copy">{meta.copy}</p>}
+      {step === "experience" && !refining && <p className="plan-copy">달려 본 경험에 맞는 훈련을 골라요.</p>}
       {step === "preview" && (
         <>
           <dl className="plan-shape-preview" aria-label="미리보기 기준">
@@ -264,8 +273,8 @@ export function PlanIntake({
             {detailedTemplates.length === 0 && (
               <p className="plan-choice-note" role="status">
                 {draft.experienceBand !== "EXPERIENCED"
-                  ? "이 경험 범위엔 상세 훈련표가 아직 없어요. 시간과 힘든 정도로 안내해요."
-                  : "이 종목·훈련 종류엔 상세 훈련표가 없어요. 시간과 힘든 정도로 안내해요."}
+                  ? "이 경험 범위에는 기록 페이스 훈련표를 직접 고르는 선택지가 없어요. 계획을 만든 뒤 적용된 상세 훈련을 확인할 수 있어요."
+                  : "이 종목·목적에는 기록 페이스 훈련표를 직접 고르는 선택지가 없어요. 계획을 만든 뒤 적용된 상세 훈련을 확인할 수 있어요."}
               </p>
             )}
           </>
@@ -327,6 +336,7 @@ export function PlanIntake({
         )}
         {step === "race-date" && (
           <RaceDateChoice
+            deferGeneration={deferGeneration}
             value={targetRaceDate}
             onChange={(value) => onTargetRaceDateChange?.(value)}
             onContinueWithoutDate={() => onRaceDate?.()}
@@ -437,11 +447,13 @@ function RaceDateChoice({
   onChange,
   onContinueWithoutDate,
   onPreview,
+  deferGeneration = false,
 }: {
   readonly value: string
   readonly onChange: (value: string) => void
   readonly onContinueWithoutDate: () => void
   readonly onPreview: () => void
+  readonly deferGeneration?: boolean
 }) {
   const today = todayISO()
   const validFutureDate = isValidIsoDate(value) && value > today
@@ -473,7 +485,7 @@ function RaceDateChoice({
       )}
       <div className="plan-race-date__actions">
         <button className="plan-select-action" type="button" onClick={onContinueWithoutDate}>
-          날짜 없이 계획안 보기
+          {deferGeneration ? "날짜 없이 계속" : "날짜 없이 계획안 보기"}
           <ChevronRight aria-hidden="true" size={18} />
         </button>
         <button
@@ -482,7 +494,7 @@ function RaceDateChoice({
           disabled={!validFutureDate}
           onClick={onPreview}
         >
-          이 날짜로 배치 미리보기
+          {deferGeneration ? "이 날짜로 계속" : "이 날짜로 배치 미리보기"}
         </button>
       </div>
     </div>

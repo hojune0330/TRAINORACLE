@@ -24,10 +24,13 @@ export function CandidateSection({
   expanded,
   onToggleSchedule,
   onSelect,
+  onChoose,
+  selectedCandidate = false,
   onAdjust,
   detailedTargets = [],
   detailedTarget = null,
   onChangeSessionTarget,
+  onTargetPendingChange,
 }: {
   readonly candidate: PlanGenerationSuccess["candidates"][number]
   readonly startDate: string
@@ -37,15 +40,23 @@ export function CandidateSection({
   readonly expanded: boolean
   readonly onToggleSchedule: () => void
   readonly onSelect: () => void
+  /** Controlled selection mode for the integrated A/B comparison. */
+  readonly onChoose?: () => void
+  readonly selectedCandidate?: boolean
   readonly onAdjust?: () => void
   readonly detailedTargets?: readonly PlanSessionTarget[]
   readonly detailedTarget?: PlanSessionTarget | null
   readonly onChangeSessionTarget?: (target: PlanSessionTarget) => void
+  readonly onTargetPendingChange?: (kind: PlanGenerationSuccess["candidates"][number]["kind"], pending: boolean) => void
 }) {
   const localId = useId()
   const [pendingTarget, setPendingTarget] = useState<PlanSessionTarget | null>(null)
   const currentTarget = detailedTarget ?? detailedTargets[0] ?? null
   useEffect(() => { setPendingTarget(null) }, [candidate, startDate, detailedTarget])
+  useEffect(() => {
+    onTargetPendingChange?.(candidate.kind, pendingTarget !== null)
+    return () => onTargetPendingChange?.(candidate.kind, false)
+  }, [candidate.kind, pendingTarget, onTargetPendingChange])
   const hasCatalog = candidate.sessions.some(s => s.prescription.kind === "RPE_TIME_RANGE" && s.prescription.catalogWorkout)
   const label = candidateLabel(candidate.kind, candidate.selectedEnergyIntent, hasCatalog)
   const optionLetter = candidate.kind === "BALANCED" ? "A" : "B"
@@ -113,16 +124,29 @@ export function CandidateSection({
         disabled={!canSelect || pendingTarget !== null} onClick={onAdjust}>
         <SlidersHorizontal size={18} aria-hidden="true" />훈련 구성 조정하기
       </button>}
-      <PlanPrescriptionBasis sessions={visibleSessions} />
-      <button
-        className="plan-select-action"
-        type="button"
-        disabled={!canSelect || pendingTarget !== null}
-        onClick={onSelect}
-      >
-        <Check aria-hidden="true" size={18} />
-        {`${label.title}로 시작`}
-      </button>
+      {onChoose === undefined && <PlanPrescriptionBasis sessions={visibleSessions} />}
+      {onChoose !== undefined ? (
+        <button
+          className="plan-candidate__choose app-choice-control"
+          type="button"
+          aria-pressed={selectedCandidate}
+          disabled={!canSelect || pendingTarget !== null}
+          onClick={onChoose}
+        >
+          <Check aria-hidden="true" size={18} />
+          {selectedCandidate ? `${optionLetter}안 선택됨` : `${optionLetter}안 선택`}
+        </button>
+      ) : (
+        <button
+          className="plan-select-action"
+          type="button"
+          disabled={!canSelect || pendingTarget !== null}
+          onClick={onSelect}
+        >
+          <Check aria-hidden="true" size={18} />
+          {`${label.title}로 시작`}
+        </button>
+      )}
     </article>
   )
 }

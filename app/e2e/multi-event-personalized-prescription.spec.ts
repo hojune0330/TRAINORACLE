@@ -92,7 +92,7 @@ async function reachExactEventCandidates(
   await completeDetailedPlan(page, { event: new RegExp(`^${eventDistanceM}m`, "u"),
     division: /일반부/u, experience: /빠른 훈련과 쉬운 훈련을 나눠 꾸준히 해왔어요/u,
     focus, time: /아침에 운동해요/u })
-  await openPlanRefinement(page, "안내 방식")
+  await openPlanRefinement(page, "훈련 구성·페이스")
   const detailChoice = page.getByRole("button", {
     name: new RegExp(`${eventDistanceM}m 경기 페이스 상세 훈련 포함`, "u"),
   })
@@ -151,8 +151,8 @@ for (const fixture of cases) {
       })
     }
     await openPlanOptions(page, true)
-    const schedule = page.getByRole("region", { name: "일정·운동 시간", exact: true })
-    await expect(schedule.getByText(fixture.notation).first()).toBeVisible()
+    const candidateA = page.getByRole("region", { name: "다른 계획 비교", exact: true }).locator(".plan-candidate").first()
+    await expect(candidateA.getByText(fixture.notation).first()).toBeVisible()
     await page.getByRole("button", { name: /이 일정으로 시작/u }).click()
     await expectActivePlanHeading(page)
     const storedPrescription = await page.evaluate(() => {

@@ -58,7 +58,7 @@ export function PlanRefinePanel({
     ...(detailedTemplateAvailable
       ? [{
           step: "template" as const,
-          label: "안내 방식",
+          label: "훈련 구성·페이스",
           value: intake.selectedDetailedTemplateRef === null ? "시간·힘든 정도" : "상세 훈련표",
           changed: changed.has("selectedDetailedTemplateRef"),
         }]

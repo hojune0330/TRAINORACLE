@@ -62,7 +62,11 @@ Design handoff added 2026-09-10: [design_handoff_plan_beta_extension/README.md](
 | `intensity-summary.ts`, `intensity-assessment.ts` | [`specs/active/SESSION_INTENSITY_ASSESSMENT_SPEC.md`](./specs/active/SESSION_INTENSITY_ASSESSMENT_SPEC.md) | ✅ 활성 |
 | `athlete-record-display.ts`, `athlete-records.ts` | [`WORK_ORDER_P1_ATHLETE_RECORDS.md`](./WORK_ORDER_P1_ATHLETE_RECORDS.md) (작업지시·구속력 있음), [`specs/active/ATHLETE_PROFILE_SPEC.md`](./specs/active/ATHLETE_PROFILE_SPEC.md) | ⚠️ 초안 |
 | `pace-target-evidence.ts`, `pace-target-plan.ts`, `plan-candidate-prescription.ts` | [`specs/active/TEMPLATE_LIBRARY_SPEC.md` §16A](./specs/active/TEMPLATE_LIBRARY_SPEC.md#16a-2026-08-24-beta-runtime-allowlist), [`specs/reconstruct/TRAINING_SESSION_PRESCRIPTION_CONTRACT.md`](./specs/reconstruct/TRAINING_SESSION_PRESCRIPTION_CONTRACT.md), [`TRAINING_PLAN_CURRENT_SCOPE.md`](./TRAINING_PLAN_CURRENT_SCOPE.md) | 제한적 채택: 현재 allowlist만. P3 지시서와 최초 결정 브리핑은 역사적 맥락 |
-| `plan-beta-*.ts`, `plan-proposals.ts`, `plan-session-schema.ts` | [`specs/active/PLAN_GENERATOR_SPEC.md`](./specs/active/PLAN_GENERATOR_SPEC.md), [`TRAINING_PLAN_METHOD_DECISION.md`](./TRAINING_PLAN_METHOD_DECISION.md) | ⚠️ 초안 |
+| `plan-beta-*.ts`, `plan-proposals.ts`, `plan-session-schema.ts`, `PlanBeta.tsx` | [`TRAINING_PLAN_CURRENT_SCOPE.md`](./TRAINING_PLAN_CURRENT_SCOPE.md)의 최신 범위·채택 계약부터 대조한 뒤 [`specs/active/PLAN_GENERATOR_SPEC.md`](./specs/active/PLAN_GENERATOR_SPEC.md) | 전체 생성기 스펙은 초안. METHOD_DECISION은 과거 방향이며 최신 제한 채택을 막는 근거가 아님 |
+| `all-workout-*`, `catalog-session-binding.ts`, `catalog-method-selection.ts` | [`전체 계산·연결 계약`](./specs/reconstruct/ALL_WORKOUT_CALCULATION_AND_BINDING_CONTRACT.md) | 명시된 구성·조건만 채택; 카탈로그 수는 모든 사용자에게 가능한 방법 수가 아님 |
+| `multi-event-pace-*`, 동일 종목 RP 연결 | [`7종목 페이스 참고 계약`](./specs/reconstruct/MULTI_EVENT_PACE_REFERENCE_CONTRACT.md), [`동일 종목 RP 계약`](./specs/reconstruct/SAME_EVENT_RACE_PACE_BINDING_CONTRACT.md) | 실제 기록·명시적 목표를 분리; 교차 종목 예측 채택 아님 |
+| `goal-training-program.ts`, `goal-program-calendar.ts` | [`10km 3마이크로사이클 계약`](./specs/reconstruct/GOAL_THREE_MICROCYCLE_PROGRAM_CONTRACT.md) | 5개 목표·28.5일 한정; 목표 달성 보장·자동 증량 아님 |
+| `catalog-cycle-successor.ts`, `plan-cycle-response.ts` | [`주기 응답·적응 계약 §14`](./specs/reconstruct/PLAN_CYCLE_RESPONSE_AND_ADAPTATION_CONTRACT.md#14-owner-directed-detailed-successor-preview-2026-10-01) | 제한된 수행 기반 감량 제안; 문서 전체 활성화 아님 |
 | `objective-fatigue-evidence.ts`, `fatigue-vector.ts` | [`specs/reconstruct/OBJECTIVE_FATIGUE_EVIDENCE_CONTRACT.md`](./specs/reconstruct/OBJECTIVE_FATIGUE_EVIDENCE_CONTRACT.md) | ⚠️ 비런타임 초안 |
 | 위험신호·안전 게이트 관련 무엇이든 | [`specs/active/RULE_SPEC_D1_D9.md`](./specs/active/RULE_SPEC_D1_D9.md) | 🟡 업로드 준비 |
 | `private-memo-vault.ts`, `journal-observation.ts` 등 일지 원문 | [`specs/reconstruct/NOTE_SAFETY_SIGNAL_AND_REVIEW_STATE_CONTRACT.md`](./specs/reconstruct/NOTE_SAFETY_SIGNAL_AND_REVIEW_STATE_CONTRACT.md), [`FORMATION_PRIVACY_GOVERNANCE_DECISION.md`](./FORMATION_PRIVACY_GOVERNANCE_DECISION.md) | ⚠️ 검토 대기 |
@@ -252,8 +256,10 @@ cd impl && ./node_modules/.bin/tsc --noEmit
   경우에만, 그리고 `DSB-INV-009`를 만족할 때만.
 - `DSB-INV-009` (신설, OD-SLOT-8) — 하루 2회 고강도 같은 특별한 날은 **화면에서
   그 사실을 알려주고, 사용자가 검토·수정할 수 있는 흐름이 있을 때만** 허용된다.
-  **현재 구현에는 그 흐름이 없다**(수정 화면 없음, `movePlanSession` 없음) →
-  백로그 `B-17`(OD-SLOT-6)이 나오기 전까지 같은 날 QUALITY 2회는 **열지 않는다.**
+  2026-10-22 대조: 미래 훈련의 직접 수정·날짜 교환·수행 편차 재계획 경로는 있다
+  (`active-plan-edit-policy.ts`, `execution-replan-policy.ts`). 이 기능만으로
+  같은 날 QUALITY 2회의 특별 검토 흐름이 충족된 것은 아니다. 해당 범위의
+  명시적 승인·구현 확인 전까지 같은 날 QUALITY 2회는 **열지 않는다.**
 - 그대로 유효: `DSB-INV-001`(명시 동의), `DSB-INV-004`(하루 2세션 상한),
   `DSB-INV-006`, `DSB-INV-007`(보충 금지), `DSB-INV-008`(RPE 전용).
 

@@ -21,7 +21,7 @@ async function generate(page: Page, event = "5000", experienced = false) {
   await page.getByLabel("초", { exact: true }).fill(event === "800" ? "1.5" : "31.5")
   await page.getByText("기록 날짜 추가", { exact: true }).click()
   await page.getByLabel("기록 달성일", { exact: true }).fill("2026-09-25")
-  await page.getByRole("button", { name: "기록 입력 완료", exact: true }).click()
+  await page.getByRole("button", { name: "기록 저장하고 계속", exact: true }).click()
   if (experienced) await page.getByRole("button", { name: /빠른 훈련과 쉬운 훈련/ }).click()
   else await page.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/ }).click()
   await page.getByRole("button", { name: /^3일/ }).click()
@@ -126,7 +126,8 @@ for (const outcome of ["PARTIAL", "COMPLETED"] as const) test(`edited MAIN -> ${
 
 test("first numeric pace plan routes its primary action to explicit record confirmation", async ({ page }) => {
   await generate(page, "800", true)
-  await expect(page.getByRole("button", { name: /페이스 안내 내 기록으로 페이스 계산 · 훈련 1회/u })).toBeVisible()
+  await expect(page.getByRole("region", { name: "선택한 계획 요약", exact: true })
+    .getByText("내 기록으로 페이스 계산 · 훈련 1회", { exact: true })).toBeVisible()
   await expect(page.locator(".plan-prescription-basis__pending")).toContainText("기준 확인이 아직 끝나지 않았어요")
   await page.getByRole("button", { name: "기준 기록 확인하기", exact: true }).click()
   await expect(page.getByRole("region", { name: "개인 페이스 기준 기록" })).toBeVisible()

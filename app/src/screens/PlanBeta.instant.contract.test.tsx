@@ -33,7 +33,7 @@ describe("integrated minimal entry to selected plan", () => {
       await user.type(screen.getByLabelText("초"), seconds!)
       await user.click(screen.getByText("기록 날짜 추가", { selector: "summary span" }))
       fireEvent.change(screen.getByLabelText("기록 달성일"), { target: { value: todayISO() } })
-      await user.click(screen.getByRole("button", { name: "기록 입력 완료" }))
+      await user.click(screen.getByRole("button", { name: "기록 저장하고 계속" }))
       await safetyAndExperience()
       expect(screen.queryByRole("button", { name: "이 일정으로 시작" })).toBeNull()
       expect(loadPlanBetaState()).toBeNull()
@@ -73,7 +73,7 @@ describe("integrated minimal entry to selected plan", () => {
       await user.click(screen.getByText("기록 날짜 추가", { selector: "summary span" }))
       fireEvent.change(screen.getByLabelText("기록 달성일"), { target: { value: achievedOn } })
     }
-    await user.click(screen.getByRole("button", { name: "기록 입력 완료" }))
+    await user.click(screen.getByRole("button", { name: "기록 저장하고 계속" }))
     await safetyAndExperience()
     const records = loadAthleteRecords()
     expect(records).toMatchObject([{ purpose: "RECENT_RESULT", eventDistanceM: 1500,
@@ -97,7 +97,7 @@ describe("integrated minimal entry to selected plan", () => {
     await user.click(screen.getByRole("button", { name: "목표만 있어요" }))
     await user.type(screen.getByLabelText("분"), "180")
     await user.type(screen.getByLabelText("초"), "0")
-    await user.click(screen.getByRole("button", { name: "목표 입력 완료" }))
+    await user.click(screen.getByRole("button", { name: "목표 저장하고 계속" }))
     await safetyAndExperience()
     expect(loadAthleteRecords()).toMatchObject([{ purpose: "RACE_GOAL", eventDistanceM: 42195,
       performanceSeconds: 10800, achievedOn: null }])

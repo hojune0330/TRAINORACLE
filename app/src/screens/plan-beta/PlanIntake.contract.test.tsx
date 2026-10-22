@@ -17,7 +17,7 @@ describe("question-first plan preparation", () => {
     onOpenNotationReader: vi.fn(), onSafety: vi.fn(), onContinue: vi.fn(),
   }
 
-  it("shows concise editable answers without implying overall plan progress", async () => {
+  it("shows concise editable answers without implying overall plan completion", async () => {
     const onJump = vi.fn()
     const { container } = render(<PlanIntake step="days" draft={{ ...stateFixture().intake, requestedFrameLength: 7 }}
       {...callbacks} onJump={onJump} />)
@@ -76,6 +76,27 @@ describe("question-first plan preparation", () => {
     expect(screen.queryByText(/구조화된/)).not.toBeInTheDocument()
     await userEvent.setup().click(screen.getByRole("button", { name: /빠른 훈련과 쉬운 훈련/ }))
     expect(callbacks.onExperience).toHaveBeenCalledWith("EXPERIENCED")
+  })
+
+  it("shows progress for only the three quick questions after the event is known", () => {
+    const { rerender } = render(<PlanIntake step="experience" draft={{ eventDistanceM: 5000 }} {...callbacks} />)
+    expect(screen.getByText("질문 1/3")).toBeVisible()
+    expect(screen.getByText("달려 본 경험에 맞는 훈련을 골라요.")).toBeVisible()
+
+    rerender(<PlanIntake step="days" draft={{ eventDistanceM: 5000, experienceBand: "NEW_TO_RUNNING" }} {...callbacks} />)
+    expect(screen.getByText("질문 2/3")).toBeVisible()
+
+    rerender(<PlanIntake step="safety" draft={stateFixture().intake} {...callbacks} />)
+    expect(screen.getByText("질문 3/3")).toBeVisible()
+    expect(screen.getByText("이 질문은 진단이나 의료 허가가 아니에요.")).toBeVisible()
+
+    rerender(<PlanIntake step="experience" draft={{ eventDistanceM: 5000 }} refining {...callbacks} />)
+    expect(screen.queryByText(/질문 \d\/3/u)).not.toBeInTheDocument()
+  })
+
+  it("does not show quick-flow progress before an event is selected", () => {
+    render(<PlanIntake step="experience" draft={{}} {...callbacks} />)
+    expect(screen.queryByText(/질문 \d\/3/u)).not.toBeInTheDocument()
   })
 })
 

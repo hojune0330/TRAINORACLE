@@ -62,8 +62,8 @@ export const STEP_META: Record<IntakeStep, {
     helpTerm: "energy-system",
   },
   template: {
-    eyebrow: "안내 방식",
-    title: "강도를 어떻게 알려줄까요?",
+    eyebrow: "훈련 구성·페이스",
+    title: "기록 페이스 훈련표를 고를까요?",
     copy: "",
     helpTerm: "rpe",
   },

@@ -1,5 +1,5 @@
 import React, { StrictMode } from 'react'
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { PetRoom } from './PetRoom'
 import { petLockFixture } from '../../test/pet-lock-fixture'
@@ -12,7 +12,7 @@ it('opens a single-tab room in StrictMode after the first mount cancels and rele
   const view = render(<StrictMode><PetRoom {...props} /></StrictMode>)
   expect(await screen.findByRole('button', { name: '우리 방' })).toBeVisible()
   expect(screen.queryByRole('alert')).toBeNull()
-  expect(localStorage.getItem(petHomeKey(props.persistenceScope))).not.toBeNull()
+  await waitFor(() => expect(localStorage.getItem(petHomeKey(props.persistenceScope))).not.toBeNull())
   view.unmount()
   render(<StrictMode><PetRoom {...props} /></StrictMode>)
   expect(await screen.findByRole('button', { name: '우리 방' })).toBeVisible()

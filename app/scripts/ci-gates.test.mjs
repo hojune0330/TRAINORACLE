@@ -20,10 +20,14 @@ test("CI distributes the complete fixed timezone and browser project inventories
   const unitStep = jobs["app-unit"].steps.find(step => step.env?.UNIT_TEST_SCRIPT)
   assert.equal(unitStep.env.TZ, "${{ matrix.tz }}")
   assert.equal(unitStep.run, 'npm run "$UNIT_TEST_SCRIPT"')
-  assert.deepEqual(jobs["app-browser-generic"].strategy.matrix.project, [...projects])
+  assert.deepEqual(jobs["app-browser-generic"].strategy.matrix, {
+    project: [...projects], lane: ["built-preview", "browser-fixtures"],
+  })
   assert.equal(jobs["app-browser-generic"].strategy["fail-fast"], false)
   assert.deepEqual(needs(jobs["app-browser-generic"]), ["app-quality"])
-  assert(commands(jobs["app-browser-generic"]).includes("node e2e/run-project-suite.mjs '${{ matrix.project }}'"))
+  assert(commands(jobs["app-browser-generic"]).includes("node e2e/run-project-lane-suite.mjs '${{ matrix.project }}' '${{ matrix.lane }}'"))
+  const evidence = jobs["app-browser-generic"].steps.find(step => step.uses?.startsWith("actions/upload-artifact@"))
+  assert(evidence.with.name.includes("${{ matrix.project }}-${{ matrix.lane }}"))
 })
 
 test("quality and dedicated checks keep the original complete command coverage", () => {
@@ -55,6 +59,8 @@ test("the real arena remains mandatory in every fixture project with a loopback 
   assert.match(fixtureConfig, /testMatch: browserFixtureTests/)
   assert.match(fixtureConfig, /\.\.\.generic/)
   assert(commands(jobs['app-browser-generic']).includes('npm ci --ignore-scripts'))
+  const arenaInstall = jobs['app-browser-generic'].steps.find(step => step['working-directory'] === 'game-server')
+  assert.equal(arenaInstall.if, "matrix.lane == 'browser-fixtures'")
   assert.match(setup, /envFile: false/)
   assert.match(setup, /ws:\/\/127\.0\.0\.1:/)
   assert.match(setup, /await arena\.terminate\(\)/)
@@ -146,6 +152,7 @@ test("CI preserves publication and avoids duplicate branch runs and browser buil
   const downloaded = jobs['app-browser-generic'].steps.find(step => step.uses?.startsWith('actions/download-artifact@'))
   assert.equal(downloaded.with.name, uploaded.with.name)
   assert.equal(downloaded.with.path, 'app/dist')
+  assert.equal(downloaded.if, "matrix.lane == 'built-preview'")
   const expected = Object.keys(jobs).filter(name => !['delivery-complete', 'deploy-pages'].includes(name))
   assert.deepEqual([...jobs['delivery-complete'].needs].sort(), expected.sort())
 })

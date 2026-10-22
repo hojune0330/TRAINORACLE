@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { dismissInitialPetHome } from './fixtures/game-lounge'
 
 test('two isolated browsers invite, push, repeatedly respawn, rank and rematch in the same room', async ({ browser, page }, info) => {
   // Match the existing dedicated arena budget: a real 90-second server round
@@ -8,6 +9,7 @@ test('two isolated browsers invite, push, repeatedly respawn, rank and rematch i
   await page.goto('./?app=1')
   await page.getByRole('button', { name: '더보기', exact: true }).click()
   await page.getByRole('button', { name: '게임 라운지', exact: true }).click()
+  await dismissInitialPetHome(page)
   await page.getByRole('button', {name:'밀어내기 게임 소개',exact:true}).click()
   await page.getByRole('radio', {name:/친구와 하기/}).check()
   await page.getByRole('button', {name:'친구 초대 준비하기',exact:true}).click()
@@ -92,6 +94,7 @@ test('survival selection reaches a real two-player room and invitations keep the
   await page.getByRole('button', { name: '더보기', exact: true }).click()
   await page.getByRole('button', { name: '게임 라운지', exact: true }).click()
   await expect(page.getByRole('heading', { name: '게임 라운지', exact: true })).toBeVisible()
+  await dismissInitialPetHome(page)
   await page.getByRole('button', { name: '장애물 생존 게임 소개', exact: true }).click()
   await page.getByRole('radio', { name: /친구와 하기/ }).check()
   await page.getByRole('button', { name: '친구 초대 준비하기', exact: true }).click()

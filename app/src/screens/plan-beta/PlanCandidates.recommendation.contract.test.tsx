@@ -8,8 +8,11 @@ import * as templateOptions from "./plan-template-options"
 import { defaultInstantCandidate } from "./instant-plan-projection"
 import { projectInstantExecutionSteps } from "./instant-plan-today"
 import { isoShift } from "../../domain/dates"
-import { formatTrainingSeconds, prescriptionLabel, sessionLabel } from "./labels"
+import { formatTrainingSeconds, prescriptionLabel, sessionLabel, sessionSlotLabel } from "./labels"
 import { resolveCatalogBinding } from "@impl/prescription/catalog-session-binding"
+import { loadAthleteRecords } from "../../domain/athlete-records"
+import { listDetailedSessionTargets } from "../../domain/plan-session-target"
+import { saveCurrentRecord } from "../../domain/prescription-quality-matrix.test-fixtures"
 
 beforeEach(async () => {
   localStorage.clear()
@@ -45,15 +48,16 @@ function setup() {
 }
 
 describe("candidate-owned optional recommendation preference", () => {
-  it("shows the actual candidate preparation and cooldown with dated prescription amounts without selecting silently", () => {
+  it("shows actual QUALITY prescription steps with date and amounts without selecting silently", () => {
     const { props } = setup()
     const candidate = defaultInstantCandidate(props.generated)
     const supportedWorkout = candidate.sessions.find(session => {
+      if (session.role !== "QUALITY") return false
       const roles = projectInstantExecutionSteps(session).map(step => step.role)
       return roles.includes("PREPARATION") && roles.includes("COOLDOWN")
     })
-    if (!supportedWorkout) throw Error("Expected an existing candidate prescription with preparation and cooldown")
-    // Reorder existing sessions only so this real prescription is the first workout; no new dose.
+    if (!supportedWorkout) throw Error("Expected an existing QUALITY prescription with preparation and cooldown")
+    // Reorder existing sessions only so this real QUALITY prescription is first; no new dose.
     const projectedDays = Math.ceil(candidate.frame.projectionLengthDays ?? candidate.frame.lengthDays)
     const sessions = [{ ...supportedWorkout, day: 1 }, ...candidate.sessions.filter(session =>
       session !== supportedWorkout && session.day > 1 && session.day <= projectedDays)]
@@ -66,10 +70,15 @@ describe("candidate-owned optional recommendation preference", () => {
     const startDate = "2026-09-05"
     const displayProps = { ...props, generated, intake: { ...props.intake, selectedDetailedTemplateRef: null }, startDateValue: startDate }
     const view = render(<PlanCandidates {...displayProps} />)
-    const first = screen.getByRole("region", { name: "첫 훈련 구성" })
+    const first = screen.getByRole("region", { name: "선택한 계획 요약" })
     const steps = projectInstantExecutionSteps(sessions[0]!)
+    const qualityRow = within(first).getByRole("heading", {
+      name: `${startDate} · ${sessionSlotLabel(sessions[0]!.slot)} · ${sessionLabel(sessions[0]!)}`,
+    }).closest("li")!
+    expect(qualityRow).toBeVisible()
+    fireEvent.click(within(qualityRow).getByText("준비·정리·전체 시간"))
     for (const step of steps) {
-      const label = within(first).getByText(step.label)
+      const label = within(qualityRow).getByText(step.label)
       expect(label).toBeVisible()
       expect(label.nextElementSibling).toBeVisible()
       expect(label.nextElementSibling?.textContent).toBe(step.instruction)
@@ -94,8 +103,14 @@ describe("candidate-owned optional recommendation preference", () => {
       saveError="기기에 저장하지 못했어요. 결과와 입력은 그대로 두었어요." onRetrySave={onRetrySave} />)
     expect(screen.getByRole("alert")).toHaveTextContent("결과와 입력은 그대로")
     expect(screen.getByRole("button", { name: "이 일정으로 시작" })).toBeDisabled()
-    expect(within(screen.getByRole("region", { name: "첫 훈련 구성" })).getByText("준비")).toBeVisible()
-    expect(within(screen.getByRole("region", { name: "첫 훈련 구성" })).getByText("정리")).toBeVisible()
+    const rerenderedOverview = within(screen.getByRole("region", { name: "선택한 계획 요약" }))
+    const rerenderedQualityRow = rerenderedOverview.getByRole("heading", {
+      name: `${startDate} · ${sessionSlotLabel(sessions[0]!.slot)} · ${sessionLabel(sessions[0]!)}`,
+    }).closest("li")!
+    const preparationDisclosure = within(rerenderedQualityRow).getByText("준비·정리·전체 시간")
+    if (!preparationDisclosure.closest("details")?.open) fireEvent.click(preparationDisclosure)
+    expect(within(rerenderedQualityRow).getByText("준비")).toBeVisible()
+    expect(within(rerenderedQualityRow).getByText("정리")).toBeVisible()
     expect(screen.getByRole("region", { name: "이번 일정" })).toBeVisible()
     expect(onRetrySave).not.toHaveBeenCalled()
     fireEvent.click(screen.getByRole("button", { name: "저장 다시 시도" }))
@@ -113,6 +128,47 @@ describe("candidate-owned optional recommendation preference", () => {
     expect(screen.getByRole("region", { name: "개인 페이스 기준 기록" })).toBeVisible()
     expect(props.onSelect).not.toHaveBeenCalled()
     expect(props.onConfirmRecord).not.toHaveBeenCalled()
+  })
+
+  it("keeps the selected candidate consistent across the overview, calendar, and single start action", () => {
+    const { props } = setup()
+    const eligibleProps = { ...props, intake: { ...props.intake, selectedDetailedTemplateRef: null } }
+    render(<PlanCandidates {...eligibleProps} startDateValue="2026-09-05" />)
+    const alternate = props.generated.candidates.find(candidate => candidate.kind !== "BALANCED")!
+    fireEvent.click(screen.getByRole("button", { name: "B안 선택" }))
+    expect(screen.getByRole("button", { name: "B안 선택됨" })).toHaveAttribute("aria-pressed", "true")
+    expect(screen.getByRole("region", { name: "선택한 계획 요약" })).toBeVisible()
+    expect(props.onSelect).not.toHaveBeenCalled()
+    expect(localStorage.getItem("trainoracle.plan-beta.v1")).toBeNull()
+    fireEvent.click(screen.getByRole("button", { name: "이 일정으로 시작" }))
+    expect(props.onSelect).toHaveBeenCalledWith({ candidateId: alternate.candidateId, startDate: "2026-09-05" })
+  })
+
+  it("blocks the global start action while a candidate target change is pending and restores it on cancel", () => {
+    const { props } = setup()
+    const recordId = saveCurrentRecord(5000, 1110)
+    const detailed = generatePlanFromDraft({ ...props.intake, availableDayCount: "EVERY_DAY" }, "NO_KNOWN_RISK", { selectedRecordId: recordId })
+    if (detailed.kind !== "generated") throw new Error("Expected a bound detailed candidate fixture")
+    expect(detailed.prescriptionBinding.kind).toBe("bound")
+    const targets = listDetailedSessionTargets(detailed.generated)
+    expect(targets.length).toBeGreaterThan(1)
+    const onChangeCandidateSessionTarget = vi.fn()
+    render(<PlanCandidates {...props} generated={detailed.generated} intake={detailed.intake}
+      athleteEvidence={detailed.athleteEvidence} prescriptionBinding={detailed.prescriptionBinding}
+      athleteRecords={loadAthleteRecords()} selectedRecordId={recordId} startDateValue="2026-09-05"
+      onChangeCandidateSessionTarget={onChangeCandidateSessionTarget} />)
+
+    fireEvent.click(screen.getByRole("button", { name: "계획안 A 일정 펼치기" }))
+    fireEvent.click(screen.getAllByRole("button", { name: "이 훈련을 개인 페이스로 받기" }).at(-1)!)
+    const start = screen.getByRole("button", { name: "이 일정으로 시작" })
+    expect(start).toBeDisabled()
+    expect(props.onSelect).not.toHaveBeenCalled()
+    expect(onChangeCandidateSessionTarget).not.toHaveBeenCalled()
+
+    fireEvent.click(screen.getByRole("button", { name: "변경 취소" }))
+    expect(start).toBeEnabled()
+    expect(props.onSelect).not.toHaveBeenCalled()
+    expect(onChangeCandidateSessionTarget).not.toHaveBeenCalled()
   })
 
   it("does not offer record confirmation while an account write is pending", () => {

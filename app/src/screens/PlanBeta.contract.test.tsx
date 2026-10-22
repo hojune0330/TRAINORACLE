@@ -11,6 +11,7 @@ import { loadPlanBetaState, loadPreviousIntake, savePlanBetaState } from "../dom
 import { stateFixture } from "../domain/plan-beta-store.test-fixture"
 import { createRecoveryCode } from "../domain/account/private-note-crypto"
 import { saveSessionRecoveryCode } from "../domain/account/private-note-sync"
+import * as planBetaFlow from "../domain/plan-beta-flow"
 import { PlanBeta } from "./PlanBeta"
 import { enterPlanWithoutRecord } from "./plan-beta/instant-plan.test-helper"
 import { hasPendingBrowserBackLayer } from "../navigation/browserNavigation"
@@ -194,8 +195,68 @@ describe("plan beta user flow", () => {
     expect(screen.getAllByText(/1500m.*7일/u)).not.toHaveLength(0)
   })
 
+  it("removes old selectable candidates when a refinement regeneration is rejected", async () => {
+    const user = userEvent.setup()
+    render(<PlanBeta />)
+    await answerQuickPlanQuestions("clear")
+    expectGeneratedCandidates()
+
+    const generate = vi.spyOn(planBetaFlow, "generatePlanFromDraft")
+      .mockImplementationOnce(() => ({ kind: "rejected", code: "STALE_BASE" }))
+    await openRefinement("달력 길이")
+    await user.click(screen.getByRole("button", { name: /7일만 먼저 받기/u }))
+
+    expect(generate).toHaveBeenCalledTimes(1)
+    expect(screen.queryByRole("heading", { name: "계획이 준비됐어요" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "이 일정으로 시작" })).not.toBeInTheDocument()
+    expect(screen.getByRole("alert")).toHaveTextContent("다른 화면에서 계획이 이미 바뀌었어요")
+    expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).toBeNull()
+  })
+
+  it("shows a non-sensitive generation error and retries the same intake after an unexpected throw", async () => {
+    const user = userEvent.setup()
+    const generate = vi.spyOn(planBetaFlow, "generatePlanFromDraft")
+      .mockImplementationOnce(() => { throw new Error("private generator detail") })
+    render(<PlanBeta />)
+
+    await answerQuickPlanQuestions("clear")
+
+    expect(screen.getByRole("alert")).toHaveTextContent("계획안을 만들지 못했어요. 입력은 그대로예요. 다시 시도해 주세요.")
+    expect(screen.getByRole("alert")).not.toHaveTextContent("private generator detail")
+    expect(screen.queryByRole("heading", { name: "계획이 준비됐어요" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "이 일정으로 시작" })).not.toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "다시 시도" })).toBeVisible()
+    expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).toBeNull()
+
+    await user.click(screen.getByRole("button", { name: "다시 시도" }))
+
+    expect(generate).toHaveBeenCalledTimes(2)
+    expectGeneratedCandidates()
+  })
+
+  it("invalidates a generation retry when the athlete navigates back to change an answer", async () => {
+    const user = userEvent.setup()
+    const generate = vi.spyOn(planBetaFlow, "generatePlanFromDraft")
+      .mockImplementationOnce(() => { throw new Error("private generator detail") })
+    render(<PlanBeta />)
+
+    await answerQuickPlanQuestions("clear")
+    expect(screen.getByRole("button", { name: "다시 시도" })).toBeVisible()
+
+    await user.click(screen.getByRole("button", { name: /^이전$/u }))
+    expect(screen.getByRole("heading", { name: "이번 9일 중 며칠 훈련할까요?" })).toBeVisible()
+    expect(screen.queryByRole("button", { name: "다시 시도" })).not.toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: /^4일/u }))
+    await user.click(screen.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
+
+    expect(generate).toHaveBeenCalledTimes(2)
+    expect(generate.mock.calls[1]?.[0]).toMatchObject({ availableDayCount: 4 })
+    expectGeneratedCandidates()
+  })
+
   it("keeps an optional target race date in preview memory only when refined after the plan", async () => {
     const user = userEvent.setup()
+    const generate = vi.spyOn(planBetaFlow, "generatePlanFromDraft")
     render(<PlanBeta />)
     await answerQuickPlanQuestions("clear")
 
@@ -222,7 +283,9 @@ describe("plan beta user flow", () => {
 
     await user.click(screen.getByRole("button", { name: "날짜 없이 일반 계획 보기" }))
     expectGeneratedCandidates()
-    expect(screen.getByText("경기 날짜 없이 만든 일반 계획")).toBeInTheDocument()
+    expect(screen.getByRole("region", { name: "선택한 계획 요약" })).toBeVisible()
+    expect(generate.mock.lastCall?.[0].targetRaceDate).toBeUndefined()
+    expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).toBeNull()
   })
 
   it("rechecks recent journal safety when a refinement regenerates the plan", async () => {

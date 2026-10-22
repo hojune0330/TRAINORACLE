@@ -14,7 +14,7 @@ test("missing-record journey resumes the same choices and explicitly binds a non
     experience: /빠른 훈련과 쉬운 훈련을 나눠 꾸준히 해왔어요/u, focus: /유산소 반복 훈련/u,
     template: /5000m 경기 페이스 상세 훈련 포함/u, time: /아침에 운동해요/u })
   await page.getByLabel("계획 시작 날짜").fill("2026-09-10")
-  await expect(page.getByRole("button", { name: "계획 A로 시작", exact: true })).toBeDisabled()
+  await expect(page.getByRole("button", { name: "A안 선택됨", exact: true })).toBeDisabled()
   await expect(page.getByRole("button", { name: "계획안 A 일정 접기" })).toBeEnabled()
   await page.getByRole("button", { name: "기준 기록 확인하기", exact: true }).click()
   await page.getByRole("button", { name: "경기 기록 추가·관리" }).click()

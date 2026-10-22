@@ -23,7 +23,7 @@ test("switches method in place and saves only the reconfirmed prescription", asy
   await completeDetailedPlan(page, { event: /^5000m/u, division: /고등부/u,
     experience: /빠른 훈련과 쉬운 훈련을 나눠 꾸준히 해왔어요/u, focus: /유산소 반복 훈련/u,
     time: /저녁에 운동해요/u, twice: true })
-  await openPlanRefinement(page, "안내 방식")
+  await openPlanRefinement(page, "훈련 구성·페이스")
   // The retired support-catalog component has its own contract tests; this
   // browser journey covers the live method picker and saved prescription.
   await page.getByRole("button", { name: /시간·힘든 정도로 받기/u }).click()
@@ -59,7 +59,7 @@ test("switches method in place and saves only the reconfirmed prescription", asy
   await openMethodChoices()
   await method.getByRole("radio", { name: /5 × 1km @ 5K RP/u }).click()
   await expect(method.getByRole("radio", { name: /5 × 1km @ 5K RP/u })).toBeChecked()
-  const save = page.getByRole("button", { name: "계획 A로 시작", exact: true })
+  const save = page.getByRole("button", { name: "A안 선택됨", exact: true })
   await showPurpose("일정·운동 시간")
   await expect(save).toBeDisabled()
   await showPurpose("훈련 조절")
@@ -93,7 +93,7 @@ test("switches method in place and saves only the reconfirmed prescription", asy
   await showPurpose("일정·운동 시간")
   await expect(save).toBeEnabled()
   await expect(date).toHaveValue("2026-09-10")
-  await showPurpose("추천 근거")
+  await showPurpose("일정·운동 시간")
   const mainComparison = page.locator(".plan-main-comparison")
   await mainComparison.locator("summary").click()
   await expect(mainComparison.getByText("같은 핵심 훈련을 날짜와 전체 일정만 다르게 배치한 계획이에요. 서로 다른 훈련 두 개가 아니에요.")).toBeVisible()
@@ -143,6 +143,7 @@ test("switches method in place and saves only the reconfirmed prescription", asy
   await expect(choices).not.toHaveAttribute("open")
   await showPurpose("일정·운동 시간")
   await save.click()
+  await page.getByRole("button", { name: "이 일정으로 시작", exact: true }).click()
   await expect(page.getByRole("heading", { name: /9일 훈련 계획/u })).toBeVisible()
   const stored = await page.evaluate(() => JSON.parse(localStorage.getItem("trainoracle.plan-beta.v1")!))
   expect(stored.intake.startDate).toBe("2026-09-10")

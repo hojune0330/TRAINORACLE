@@ -109,7 +109,7 @@ describe("plan entry supporting navigation", () => {
     expectBefore(screen.getByRole("button", { name: "10km 한 달 훈련표" }),
       screen.getByRole("button", { name: "개인 계획 파일 불러오기" }))
     const user = await fillEntry()
-    screen.getByRole("button", { name: "기록 입력 완료" }).focus()
+    screen.getByRole("button", { name: "기록 저장하고 계속" }).focus()
     await user.keyboard("{Enter}")
     const question = () => screen.getByRole("heading", { level: 1 })
     await waitFor(() => expect(question()).toHaveFocus())

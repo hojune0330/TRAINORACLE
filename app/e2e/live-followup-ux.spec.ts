@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test"
 import { completeQuickPlan } from "./plan-flow"
 
 for (const width of [320, 375]) {
-  test(`ready plan action stays reachable without scrolling at ${width}px`, async ({ page }, info) => {
+  test(`ready plan action follows prescription facts before the full calendar at ${width}px`, async ({ page }, info) => {
     await page.setViewportSize({ width, height: 740 })
     await page.clock.setFixedTime(new Date("2026-10-06T03:00:00Z"))
     await page.route("**/*", route => new URL(route.request().url()).hostname === "127.0.0.1" ? route.continue() : route.abort())
@@ -10,6 +10,12 @@ for (const width of [320, 375]) {
     await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련", exact: true }).click()
     await completeQuickPlan(page, { event: "800m" })
     const start = page.getByRole("button", { name: "이 일정으로 시작", exact: true })
+    const overview = page.getByRole("region", { name: "선택한 계획 요약", exact: true })
+    const calendar = page.getByRole("region", { name: "이번 일정", exact: true })
+    expect(await overview.evaluate(element => Boolean(element.compareDocumentPosition(document.querySelector(".instant-plan__start-action")!) & Node.DOCUMENT_POSITION_FOLLOWING))).toBe(true)
+    expect((await start.boundingBox())!.y).toBeLessThan((await calendar.boundingBox())!.y)
+    await expect(start).toHaveCount(1)
+    await start.scrollIntoViewIfNeeded()
     await expect(start).toBeInViewport()
     const navigation = page.getByRole("navigation", { name: "주 탭" })
     expect((await start.boundingBox())!.y + (await start.boundingBox())!.height).toBeLessThanOrEqual((await navigation.boundingBox())!.y)
@@ -24,6 +30,10 @@ for (const width of [320, 375]) {
     await page.screenshot({ path: info.outputPath("start-double-text.png") })
     await start.click()
     await expect(page.getByRole("heading", { name: "9일 훈련 계획", exact: true })).toBeVisible()
+    const scheduleView = page.locator(".active-plan").getByRole("radiogroup", { name: "계획 일정 보기", exact: true })
+    const calendarView = scheduleView.getByRole("radio", { name: "달력", exact: true })
+    if (await calendarView.getAttribute("aria-checked") !== "true") await calendarView.click()
+    await expect(calendarView).toHaveAttribute("aria-checked", "true")
     const today = page.getByRole("region", { name: "오늘 훈련", exact: true })
     const method = today.getByRole("button", { name: /^오전 훈련 내용 보기/u })
     await expect(method).toBeVisible()

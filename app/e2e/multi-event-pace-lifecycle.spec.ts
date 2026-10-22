@@ -218,7 +218,8 @@ async function assertBoundSuccessor(page: Page, persona: Persona, source: Athlet
     const main = rows.find(row => `${row.day}:${row.slot}` === address)!
     const date = new Date(startDate)
     date.setUTCDate(date.getUTCDate() + main.day - 1)
-    const overview = page.getByLabel(`${predecessor.intake.requestedFrameLength}일 훈련 일정`).first()
+    const overview = page.getByRole("region", { name: "이번 일정", exact: true })
+      .getByLabel(`${predecessor.intake.requestedFrameLength}일 훈련 일정`, { exact: true })
     await overview.getByRole("radio", { name: "달력", exact: true }).click()
     await overview.getByRole("button", { name: new RegExp(`${date.getUTCMonth() + 1}월 ${date.getUTCDate()}일`) }).click()
     await expect(page.getByRole("dialog")).toContainText(readerTargetText(persona.event, main.minimum))
@@ -275,7 +276,7 @@ for (const persona of personas) test(`${persona.id} ${persona.name}`, async ({ p
         await page.getByText("기록 날짜 추가", { exact: true }).click()
         await page.getByLabel("기록 달성일", { exact: true }).fill(DATE)
       }
-      await page.getByRole("button", { name: persona.goal ? "목표 입력 완료" : "기록 입력 완료", exact: true }).click()
+      await page.getByRole("button", { name: persona.goal ? "목표 저장하고 계속" : "기록 저장하고 계속", exact: true }).click()
       await page.getByRole("button", { name: /빠른 훈련과 쉬운 훈련/ }).click()
       await page.getByRole("button", { name: /^3일/ }).click()
       await page.getByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/ }).click()

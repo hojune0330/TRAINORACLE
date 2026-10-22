@@ -73,7 +73,8 @@ for (const mode of ["shared", "candidate-only", "candidate-B"] as const) test(`$
   await expect(evidence.getByRole("status")).toBeVisible()
   await expect(evidence.getByRole("status")).toHaveText("선택한 기록으로 상세 훈련 수치를 계산했어요.")
   await openPlanOptions(page)
-  await page.getByRole("button", { name: mode === "candidate-B" ? "계획 B로 시작" : "이 일정으로 시작", exact: true }).click()
+  if (mode === "candidate-B") await page.getByRole("button", { name: "B안 선택", exact: true }).click()
+  await page.getByRole("button", { name: "이 일정으로 시작", exact: true }).click()
   await expectActivePlanHeading(page)
   const read = () => page.evaluate(() => {
     const value = localStorage.getItem("trainoracle.plan-beta.v1")

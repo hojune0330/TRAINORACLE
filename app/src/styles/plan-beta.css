@@ -3837,6 +3837,14 @@
   margin-top: var(--space-2);
 }
 
+.plan-intake__quick-progress {
+  margin: var(--space-3) 0 0;
+  color: var(--ink-3);
+  font-size: var(--fs-body-sm);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
 .plan-intake[data-refining="true"] .plan-back {
   color: var(--brand);
 }
