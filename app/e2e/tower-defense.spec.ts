@@ -2,7 +2,19 @@ import {test,expect,type Page} from '@playwright/test'
 const root=(page:Page)=>page.locator('.tower-defense')
 const board=(page:Page)=>page.locator('.td-battlefield')
 const canvas=(page:Page)=>page.locator('canvas[data-defense-renderer]')
-async function open(page:Page,map:'forest'|'starlight'='forest'){await page.goto('./?app=1');await page.getByRole('button',{name:'더보기',exact:true}).click();await page.getByRole('button',{name:'게임 라운지',exact:true}).click();await page.getByRole('button',{name:'타워 디펜스 게임 소개',exact:true}).click();if(map==='forest')await page.getByRole('button',{name:/^기존 숲길 관문/}).click()}
+async function open(page:Page,map:'forest'|'starlight'='forest'){
+ await page.goto('./?app=1')
+ await page.getByRole('button',{name:'더보기',exact:true}).click()
+ await page.getByRole('button',{name:'게임 라운지',exact:true}).click()
+ // The lounge now opens the pet home first. Follow its visible exit before
+ // selecting a game; clicking the catalog behind the modal cannot succeed.
+ const petHome=page.getByRole('dialog',{name:'우리 집 친구들',exact:true})
+ await expect(petHome).toBeVisible()
+ await petHome.getByLabel('다른 게임 보기',{exact:true}).click()
+ await expect(petHome).not.toBeVisible()
+ await page.getByRole('button',{name:'타워 디펜스 게임 소개',exact:true}).click()
+ if(map==='forest')await page.getByRole('button',{name:/^기존 숲길 관문/}).click()
+}
 async function pauseClock(page:Page){await page.clock.pauseAt(await page.evaluate(()=>Date.now())+60_000)}
 async function freeze(page:Page){await page.clock.install();await pauseClock(page)}
 async function withoutWebGL(page:Page){
