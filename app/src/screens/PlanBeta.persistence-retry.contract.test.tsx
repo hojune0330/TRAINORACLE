@@ -121,6 +121,7 @@ describe("active plan persistence retry", () => {
       const user = userEvent.setup()
       const onStateChange = vi.fn()
       render(<PlanActiveState state={state} onStateChange={onStateChange} onPrepareNextFrame={vi.fn()} />)
+      await user.click(screen.getByRole("radio", { name: "달력" }))
       await user.click(screen.getByRole("button", { name: /년월과 날짜 이동/u }))
       fireEvent.change(screen.getByLabelText("년월 선택", { exact: true }), { target: { value: "2026-07" } })
       const calendar = screen.getByRole("grid", { name: "2026년 7월 달력" })

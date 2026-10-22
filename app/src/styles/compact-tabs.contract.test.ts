@@ -44,11 +44,12 @@ describe("compact tab density", () => {
     }
     // Journal sections remain pressed buttons; its view mode uses controlled radios.
     const journal = readFileSync("src/screens/JournalArchive.tsx", "utf8")
-    expect(journal).toContain("app-choice-group")
-    expect(journal).toContain("app-choice-control")
+    expect(journal).toContain('className="journal-archive__content-tabs journal-archive__navigation" role="group" aria-label="일지와 몸 기록"')
+    expect(journal).toContain('className="journal-archive__content-choice" data-category="journal" aria-pressed={activeSection === "JOURNAL"}')
+    expect(journal).toContain('className="journal-archive__content-choice" data-category="body" aria-pressed={activeSection === "BODY"}')
     expect(journal).toMatch(/<ViewSwitcher\s+label="일지 보기 방식"\s+category="journal"\s+value=\{activeMode\}\s+onValueChange=\{changeMode\}/u)
-    expect(journal).toContain('{ value: "CALENDAR", label: "월간 달력", icon: CalendarDays }')
-    expect(journal).toContain('{ value: "CYCLE", label: "기록 묶음", icon: Layers }')
+    expect(journal).toContain('{ value: "CALENDAR", label: "달력", ariaLabel: "월간 달력", icon: CalendarDays }')
+    expect(journal).toContain('{ value: "CYCLE", label: "묶음", ariaLabel: "기록 묶음", icon: Layers }')
 
     const changeMode = vi.fn()
     render(createElement(ViewSwitcher<"CALENDAR" | "CYCLE">, {

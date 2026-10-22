@@ -525,6 +525,10 @@ function LegacyPlanBeta({
   const [generated, setGenerated] = React.useState<PlanGenerationSuccess | null>(
     null,
   )
+  const [candidateKindSelection, setCandidateKindSelection] = React.useState<{
+    readonly pairId: string
+    readonly kind: PlanGenerationSuccess["candidates"][number]["kind"]
+  } | null>(null)
   const [generatedIntake, setGeneratedIntake] =
     React.useState<PlanBetaIntake | null>(null)
   const [gate, setGate] = React.useState<SafetyGateDecision | null>(null)
@@ -626,8 +630,8 @@ function LegacyPlanBeta({
 
   const canGoBackInIntake = refining || step !== "goal" || instantEntry !== undefined
   const goBackInIntake = () => {
-    invalidateGenerationRetry()
     if (!refining && intakeMode === "precision" && step === "safety") {
+      invalidateGenerationRetry()
       setPrecisionOpen(true)
       return
     }
@@ -644,6 +648,7 @@ function LegacyPlanBeta({
       }
       return
     }
+    invalidateGenerationRetry()
     if (instantEntry !== undefined && (step === "experience" || step === "goal")) {
       setInstantEntryOpen(true)
       return
@@ -1221,6 +1226,9 @@ function LegacyPlanBeta({
         {nextDraftHeader}
         <PlanCandidates
           generated={generated}
+          selectedCandidateKind={candidateKindSelection?.pairId === generated.pairId
+            ? candidateKindSelection.kind : undefined}
+          onSelectedCandidateKindChange={kind => setCandidateKindSelection({ pairId: generated.pairId, kind })}
           safetyGate={gate}
           initialMain={initialMain}
           cycleSummary={cycleSummary}
@@ -1471,8 +1479,15 @@ function LegacyPlanBeta({
         onTrainingTime={(trainingTimePreference: TrainingTimePreference) => { rememberChoices("trainingTimePreference"); continueAfterRefinement({ ...draft, trainingTimePreference }) }}
         onSecondSession={(secondSessionMode) => { rememberChoices("secondSessionMode"); continueAfterRefinement({ ...draft, secondSessionMode }) }}
         targetRaceDate={targetRaceDate}
-        onTargetRaceDateChange={(value) => { invalidateGenerationRetry(); rememberChoices("targetRaceDate"); setTargetRaceDate(value) }}
+        onTargetRaceDateChange={(value) => {
+          // A date typed in a refinement is provisional until the next action.
+          // Cancel must retain the original plan's reviewed-condition revision.
+          if (!refining) { invalidateGenerationRetry(); rememberChoices("targetRaceDate") }
+          setTargetRaceDate(value)
+        }}
         onRaceDate={(raceDate) => {
+          if (raceDate !== undefined) rememberChoices("targetRaceDate")
+          else setInputOrigins(previous => ({ ...previous, targetRaceDate: "DEFAULT" }))
           refinementReturn.current = null
           setRefining(false)
           if (raceDate === undefined) setTargetRaceDate("")

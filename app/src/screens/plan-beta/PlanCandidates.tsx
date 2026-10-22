@@ -109,6 +109,8 @@ export function PlanCandidates({
   initialMain,
   inputSummary,
   safetyGate,
+  selectedCandidateKind: selectedCandidateKindProp,
+  onSelectedCandidateKindChange,
 }: {
   readonly generated: PlanGenerationSuccess
   readonly intake: PlanBetaIntake
@@ -148,12 +150,22 @@ export function PlanCandidates({
   readonly initialMain?: InitialMainCandidateReview
   readonly inputSummary?: React.ReactNode
   readonly safetyGate?: SafetyGateDecision
+  /** Optional controlled selection for parents that temporarily unmount this result view. */
+  readonly selectedCandidateKind?: PlanGenerationSuccess["candidates"][number]["kind"]
+  readonly onSelectedCandidateKindChange?: (kind: PlanGenerationSuccess["candidates"][number]["kind"]) => void
 }) {
   const [purpose, setPurpose] = React.useState<CandidatePurpose | null>(null)
   const [workoutOpened, setWorkoutOpened] = React.useState(false)
   const defaultCandidate = defaultInstantCandidate(generated)
-  const [selectedCandidateKind, setSelectedCandidateKind] = React.useState<PlanGenerationSuccess["candidates"][number]["kind"]>(defaultCandidate.kind)
-  React.useEffect(() => { setSelectedCandidateKind(defaultCandidate.kind) }, [generated.pairId, defaultCandidate.kind])
+  const [localSelectedCandidateKind, setLocalSelectedCandidateKind] = React.useState<PlanGenerationSuccess["candidates"][number]["kind"]>(defaultCandidate.kind)
+  React.useEffect(() => { setLocalSelectedCandidateKind(defaultCandidate.kind) }, [generated.pairId, defaultCandidate.kind])
+  const selectedCandidateKind = onSelectedCandidateKindChange !== undefined
+    ? selectedCandidateKindProp ?? defaultCandidate.kind
+    : localSelectedCandidateKind
+  const chooseCandidateKind = (kind: PlanGenerationSuccess["candidates"][number]["kind"]) => {
+    if (onSelectedCandidateKindChange) onSelectedCandidateKindChange(kind)
+    else setLocalSelectedCandidateKind(kind)
+  }
   const purposeId = React.useId()
   const resultRef = React.useRef<HTMLElement>(null)
   const headingRef = React.useRef<HTMLHeadingElement>(null)
@@ -424,7 +436,7 @@ export function PlanCandidates({
         canSelect={canSelect} recommended={candidate.kind === "BALANCED"} expanded={expandedCandidateKind === candidate.kind}
         onToggleSchedule={() => setExpandedCandidateKind(current => current === candidate.kind ? null : candidate.kind)}
         onSelect={() => { if (canSelect && localAccountScopeIsCurrent(accountScope)) onSelect({ candidateId: candidate.candidateId, startDate }) }}
-        onChoose={() => setSelectedCandidateKind(candidate.kind)} selectedCandidate={candidate.kind === selectedCandidateKind}
+        onChoose={() => chooseCandidateKind(candidate.kind)} selectedCandidate={candidate.kind === selectedCandidateKind}
         onAdjust={adjustmentActions[candidate.candidateId] === undefined ? undefined : () => {
           if (canSelect && localAccountScopeIsCurrent(accountScope)) adjustmentActions[candidate.candidateId]?.()
         }} />)}

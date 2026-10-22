@@ -121,7 +121,7 @@ test("opens a day from the monthly calendar with provenance-safe summaries and r
   await expect(archive.getByText(secret, { exact: false })).toHaveCount(0)
   // The calendar is now the default; it lists records without presenting imported
   // objective values as an eligible training total.
-  await expect(archive).toContainText("이 달 4일 · 5개 기록")
+  await expect(archive.locator(".month-calendar__summary")).toHaveText("4일 · 5개 기록")
   await expect(archive).not.toContainText("10 km")
   await expect(archive).not.toContainText("50분")
   expect((await archive.ariaSnapshot()).includes(secret)).toBe(false)
