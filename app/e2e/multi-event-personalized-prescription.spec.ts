@@ -151,8 +151,8 @@ for (const fixture of cases) {
       })
     }
     await openPlanOptions(page, true)
-    const schedule = page.getByRole("region", { name: "일정·운동 시간", exact: true })
-    await expect(schedule.getByText(fixture.notation).first()).toBeVisible()
+    const candidateA = page.getByRole("region", { name: "다른 계획 비교", exact: true }).locator(".plan-candidate").first()
+    await expect(candidateA.getByText(fixture.notation).first()).toBeVisible()
     await page.getByRole("button", { name: /이 일정으로 시작/u }).click()
     await expectActivePlanHeading(page)
     const storedPrescription = await page.evaluate(() => {

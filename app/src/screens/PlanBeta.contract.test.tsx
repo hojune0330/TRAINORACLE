@@ -256,6 +256,7 @@ describe("plan beta user flow", () => {
 
   it("keeps an optional target race date in preview memory only when refined after the plan", async () => {
     const user = userEvent.setup()
+    const generate = vi.spyOn(planBetaFlow, "generatePlanFromDraft")
     render(<PlanBeta />)
     await answerQuickPlanQuestions("clear")
 
@@ -282,7 +283,9 @@ describe("plan beta user flow", () => {
 
     await user.click(screen.getByRole("button", { name: "날짜 없이 일반 계획 보기" }))
     expectGeneratedCandidates()
-    expect(screen.getByText("경기 날짜 없이 만든 일반 계획")).toBeInTheDocument()
+    expect(screen.getByRole("region", { name: "선택한 계획 요약" })).toBeVisible()
+    expect(generate.mock.lastCall?.[0].targetRaceDate).toBeUndefined()
+    expect(window.localStorage.getItem("trainoracle.plan-beta.v1")).toBeNull()
   })
 
   it("rechecks recent journal safety when a refinement regenerates the plan", async () => {
