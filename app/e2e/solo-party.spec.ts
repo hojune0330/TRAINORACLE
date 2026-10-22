@@ -3,6 +3,7 @@ import type { SoloDefense } from '../src/domain/minigame/solo-defense'
 import { newSoloDefense } from '../src/domain/minigame/solo-defense'
 import { advanceSoloPush, newSoloPush, pushSeriesPoints, startSoloPush, type SoloPush } from '../src/domain/minigame/solo-push'
 import { SOLO_CHECKPOINT_KEY, SOLO_RECORDS_KEY, saveSoloCheckpoint } from '../src/domain/minigame/solo-party-storage'
+import { dismissInitialPetHome } from './fixtures/game-lounge'
 
 async function seedLegacyDefense(page: Page) {
   let value = ''
@@ -36,6 +37,7 @@ async function openParty(page: Page, legacy = false) {
   await page.goto('./?app=1')
   await page.getByRole('button', { name: '더보기', exact: true }).click()
   await page.getByRole('button', { name: '게임 라운지', exact: true }).click()
+  await dismissInitialPetHome(page)
   if (legacy) { await page.getByText('이전 버전 저장', {exact:true}).click(); await page.getByRole('button', {name:'이전 러닝 디펜스 열기',exact:true}).click() }
 }
 async function freeze(page: Page) {
@@ -44,14 +46,29 @@ async function freeze(page: Page) {
 }
 async function freezeFullSeries(page: Page) {
   await freeze(page)
+  await reduceFullSeriesRendering(page)
+}
+async function reduceFullSeriesRendering(page: Page) {
   // runFor yields to a real timer after every RAF. A 100ms render cadence keeps
   // both full 90s rounds and SoloParty's accumulated 1/60s physics steps, without
   // paying for ~12,000 canvas renders/timer yields. Do not fastForward whole rounds:
   // SoloParty caps each frame's elapsed time at 100ms, so that would skip simulation.
   // Short input/visual tests below retain the default RAF cadence.
   await page.evaluate(() => {
-    window.requestAnimationFrame = callback => window.setTimeout(() => callback(performance.now()), 100)
-    window.cancelAnimationFrame = handle => window.clearTimeout(handle)
+    const originalCancel = window.cancelAnimationFrame.bind(window)
+    const pending = new Set<number>()
+    window.requestAnimationFrame = callback => {
+      const handle = window.setTimeout(() => {
+        pending.delete(handle)
+        callback(performance.now())
+      }, 100)
+      pending.add(handle)
+      return handle
+    }
+    window.cancelAnimationFrame = handle => {
+      if (pending.delete(handle)) window.clearTimeout(handle)
+      else originalCancel(handle)
+    }
   })
 }
 const field = (page: Page) => page.locator('.solo-party canvas')
@@ -118,6 +135,9 @@ test('legacy saved defense builds, handles continuous touch and pause, resumes a
   const before = (await state(page) as SoloDefense).time
   await page.clock.runFor(3000)
   expect((await state(page) as SoloDefense).time).toBe(before)
+  // Pointer/touch and pause checks above retain normal frames. Only the long,
+  // unattended waves use fewer renders with the same fixed simulation steps.
+  await reduceFullSeriesRendering(page)
   await page.getByRole('button', { name: '돌아가기', exact: true }).click()
   await page.clock.runFor(17000)
   expect((await state(page) as SoloDefense).runner.falls).toBeGreaterThan(0)
@@ -134,6 +154,8 @@ test('legacy saved defense builds, handles continuous touch and pause, resumes a
   const checkpoint = await page.evaluate(key => JSON.parse(localStorage.getItem(key)!), SOLO_CHECKPOINT_KEY)
   expect(checkpoint.wave).toBe(2); expect(checkpoint.facilities[1].kind).toBe('fan')
   await page.reload(); await openParty(page, true)
+  // Reload creates a new window, so restore the test-only render cadence.
+  await reduceFullSeriesRendering(page)
   await page.getByRole('button', { name: '이전 러닝 디펜스 2웨이브 이어하기' }).click()
   await expect(page.getByText(`남은 예산 ${checkpoint.budget}개`, { exact: true })).toBeVisible()
   await expect(page.getByLabel('웨이브별 결과')).toContainText('이어하기 전 웨이브는 합계만 남아 있어요')

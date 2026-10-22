@@ -2,6 +2,7 @@ import { test, expect, type Page } from "@playwright/test"
 import { advanceTreadmill, nearestHazard, newTreadmillRun, treadmillCommand, treadmillAidStop, TREADMILL_STAGES } from "../src/domain/minigame/treadmill"
 import type { TreadmillStage, TreadmillState } from "../src/domain/minigame/treadmill"
 import { tourCity, tourStages } from "../src/domain/minigame/tour"
+import { dismissInitialPetHome } from "./fixtures/game-lounge"
 
 async function openGame(page: Page, course: "practice" | "seoul" = "practice", blockToriArt = false, blockSceneArt = false) {
   await page.route("**/*", route => {
@@ -13,6 +14,7 @@ async function openGame(page: Page, course: "practice" | "seoul" = "practice", b
   await page.goto("/?app=1")
   await page.getByRole("button", { name: "더보기", exact: true }).click()
   await page.getByRole("button", { name: "게임 라운지", exact: true }).click()
+  await dismissInitialPetHome(page)
   await page.getByRole("button", { name: "러닝 투어 게임 소개", exact: true }).click()
   await page.getByRole("button", { name: "도시 고르기", exact: true }).click()
   await expect(page.getByRole("heading", { name: "러닝 투어", exact: true })).toBeVisible()
@@ -240,6 +242,7 @@ test("home launch banner opens the game, returns home and stays acknowledged aft
   await page.screenshot({ path: info.outputPath("home-launch-banner.png"), fullPage: true })
   await banner.getByRole("button", { name: "게임 라운지 열기" }).click()
   await expect(page.getByRole("heading", { name: "게임 라운지", exact: true })).toBeVisible()
+  await dismissInitialPetHome(page)
   await page.getByRole("button", { name: "홈으로 돌아가기" }).click()
   await expect(page.getByRole("button", { name: "오늘 운동 기록 쓰기", exact: true })).toBeVisible()
   await expect(banner).toHaveCount(0)
@@ -248,6 +251,7 @@ test("home launch banner opens the game, returns home and stays acknowledged aft
   await expect(banner).toHaveCount(0)
   await page.getByRole("button", { name: "더보기", exact: true }).click()
   await page.getByRole("button", { name: "게임 라운지", exact: true }).click()
+  await dismissInitialPetHome(page)
   await page.getByRole("button", { name: "러닝 투어 게임 소개", exact: true }).click()
   await page.getByRole("button", { name: "게임 목록으로", exact: true }).click()
   await page.getByRole("button", { name: "더보기로 돌아가기" }).click()
@@ -414,6 +418,7 @@ test("explains the rules before play, falls on inaction and restarts with pointe
   await expect(page.getByRole("heading", { name: "더보기", exact: true })).toBeVisible()
   await page.clock.runFor(10000)
   await page.getByRole("button", { name: "게임 라운지", exact: true }).click()
+  await dismissInitialPetHome(page)
   await page.getByRole("button", { name: "러닝 투어 게임 소개", exact: true }).click()
   await page.getByRole("button", { name: "도시 고르기", exact: true }).click()
   await page.getByRole("button", { name: "러닝머신 연습" }).click()
@@ -627,6 +632,7 @@ test("tours Seoul in 2.5D, saves stars on this device, unlocks the next city and
   await page.reload()
   await page.getByRole("button", { name: "더보기", exact: true }).click()
   await page.getByRole("button", { name: "게임 라운지", exact: true }).click()
+  await dismissInitialPetHome(page)
   await page.getByRole("button", { name: "러닝 투어 게임 소개", exact: true }).click()
   await page.getByRole("button", { name: "도시 고르기", exact: true }).click()
   await expect(page.getByRole("button", { name: /^대전 · / })).toBeEnabled()
@@ -700,6 +706,7 @@ test("navigation saves a paused run, restores it after reload and confirms a fre
   await page.reload()
   await page.getByRole("button", { name: "더보기", exact: true }).click()
   await page.getByRole("button", { name: "게임 라운지", exact: true }).click()
+  await dismissInitialPetHome(page)
   await page.getByRole("button", { name: "러닝 투어 게임 소개", exact: true }).click()
   await page.getByRole("button", { name: "도시 고르기", exact: true }).click()
   await page.getByRole("button", { name: "저장한 판 이어하기" }).click()
@@ -783,6 +790,7 @@ test("navigation keeps the chosen upgrade when saving and resuming a later stage
   await page.reload()
   await page.getByRole("button", { name: "더보기", exact: true }).click()
   await page.getByRole("button", { name: "게임 라운지", exact: true }).click()
+  await dismissInitialPetHome(page)
   await page.getByRole("button", { name: "러닝 투어 게임 소개", exact: true }).click()
   await page.getByRole("button", { name: "도시 고르기", exact: true }).click()
   await page.getByRole("button", { name: "저장한 판 이어하기" }).click()
