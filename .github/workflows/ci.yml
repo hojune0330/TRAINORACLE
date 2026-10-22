@@ -231,6 +231,9 @@ jobs:
           - mobile-chromium
           - touch-narrow
           - reduced-motion
+        lane:
+          - built-preview
+          - browser-fixtures
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -251,24 +254,26 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Restore the tested generic browser bundle
+        if: matrix.lane == 'built-preview'
         uses: actions/download-artifact@v4
         with:
           name: browser-bundle-${{ github.run_id }}-${{ github.run_attempt }}
           path: app/dist
 
       - name: Install loopback arena fixture dependencies
+        if: matrix.lane == 'browser-fixtures'
         working-directory: game-server
         run: npm ci --ignore-scripts
 
-      - name: Run both browser lanes for the project
+      - name: Run the complete browser lane for the project
         working-directory: app
-        run: node e2e/run-project-suite.mjs '${{ matrix.project }}'
+        run: node e2e/run-project-lane-suite.mjs '${{ matrix.project }}' '${{ matrix.lane }}'
 
       - name: Retain synthetic browser failure evidence
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: browser-failure-${{ matrix.project }}-${{ github.run_id }}-${{ github.run_attempt }}
+          name: browser-failure-${{ matrix.project }}-${{ matrix.lane }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: app/test-results/full-browser
           if-no-files-found: ignore
           retention-days: 3

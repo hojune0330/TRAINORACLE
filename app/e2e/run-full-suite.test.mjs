@@ -3,7 +3,8 @@ import { EventEmitter } from "node:events"
 import { PassThrough, Writable } from "node:stream"
 import { test } from "node:test"
 import path from "node:path"
-import { fixtureEnvironment, projects, runFullSuite, runProjectSuite } from "./run-full-suite.mjs"
+import { fixtureEnvironment, laneNames, projects, runFullSuite, runProjectLaneSuite, runProjectSuite } from "./run-full-suite.mjs"
+import { parseProjectLane } from "./run-project-lane-suite.mjs"
 import { parseProject } from "./run-project-suite.mjs"
 
 function fixture(options = {}) {
@@ -184,6 +185,33 @@ test("each configured project shard requires both lanes without reporting a full
   assert.equal(new Set(coverage).size, 8)
 })
 
+test("the fixed project and lane inventory produces exactly eight isolated lane shards", async () => {
+  assert.deepEqual(laneNames, ["built-preview", "browser-fixtures"])
+  assert.equal(Object.isFrozen(laneNames), true)
+  const configs = {
+    "built-preview": "playwright.config.ts",
+    "browser-fixtures": "playwright.browser-fixtures.config.ts",
+  }
+  const coverage = []
+  for (const project of projects) {
+    for (const lane of laneNames) {
+      const value = fixture(), result = await runProjectLaneSuite(project, lane, value)
+      assert.deepEqual(result, { code: 0, completedProjects: 1, completedLanes: 1, cleanedServers: 1 })
+      const calls = children(value)
+      assert.equal(calls.length, 1)
+      assert(calls[0].args.includes(`--project=${project}`))
+      assert(calls[0].args.includes(`--config=${configs[lane]}`))
+      assert(calls[0].args.includes("--workers=1"))
+      assert.equal(value.stopped.length, 1)
+      assert(value.messages.some(message => message.includes("[project-lane-e2e] SUCCESS lanes=1/1 projects=1/1")))
+      assert.equal(value.messages.some(message => message.includes("[full-e2e] SUCCESS") || message.includes("[project-e2e] SUCCESS")), false)
+      coverage.push(`${project}:${lane}`)
+    }
+  }
+  assert.equal(new Set(coverage).size, projects.length * laneNames.length)
+  assert.equal(coverage.length, 8)
+})
+
 test("project entry refuses unknown, missing, extra and narrowing arguments", async () => {
   for (const argv of [[], ["unknown"], [projects[0], "--grep=one"], [projects[0], "--pass-with-no-tests"]]) {
     assert.throws(() => parseProject(argv), /exactly one configured/u)
@@ -193,6 +221,37 @@ test("project entry refuses unknown, missing, extra and narrowing arguments", as
   assert.throws(() => runProjectSuite("unknown", value), /Unknown browser project/u)
   await assert.rejects(runProjectSuite(projects[0], { ...value, argv: ["--grep=one"] }), /does not accept narrowing/u)
   assert.equal(value.calls.length, 0)
+})
+
+test("project lane entry accepts only the fixed pair and rejects every narrowing argument", async () => {
+  for (const project of projects) {
+    for (const lane of laneNames) assert.deepEqual(parseProjectLane([project, lane]), { project, lane })
+  }
+  for (const argv of [[], [projects[0]], ["unknown", laneNames[0]], [projects[0], "unknown"],
+    [projects[0], laneNames[0], "--grep=one"], [projects[0], laneNames[0], "one.spec.ts"],
+    [projects[0], laneNames[0], "--timeout=999999"], [projects[0], laneNames[0], "--retries=9"]]) {
+    assert.throws(() => parseProjectLane(argv), /exactly one configured project and one configured lane/u)
+  }
+  assert.throws(() => runProjectLaneSuite("unknown", laneNames[0]), /Unknown browser project/u)
+  assert.throws(() => runProjectLaneSuite(projects[0], "unknown"), /Unknown browser lane/u)
+  const value = fixture()
+  await assert.rejects(runProjectLaneSuite(projects[0], laneNames[0], { ...value, argv: ["--grep=one"] }), /does not accept narrowing/u)
+  assert.equal(value.calls.length, 0)
+})
+
+test("a single lane failure is nonzero and cleans its owned server", async () => {
+  for (const lane of laneNames) {
+    const failed = fixture({ failAt: 1 }), failedResult = await runProjectLaneSuite(projects[0], lane, failed)
+    assert.deepEqual(failedResult, { code: 1, completedProjects: 0, completedLanes: 0, cleanedServers: 1 })
+    assert.equal(children(failed).length, 1)
+    assert.equal(failed.stopped.length, 1)
+    assert.equal(failed.messages.some(message => message.includes("[project-lane-e2e] SUCCESS")), false)
+
+    const startup = fixture({ startFailureAt: 1 }), startupResult = await runProjectLaneSuite(projects[0], lane, startup)
+    assert.deepEqual(startupResult, { code: 1, completedProjects: 0, completedLanes: 0, cleanedServers: 1 })
+    assert.equal(children(startup).length, 0)
+    assert.equal(startup.stopped.length, 1)
+  }
 })
 
 test("project shard refuses either lane failure, missing fixture and interrupted success", async () => {

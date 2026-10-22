@@ -16,6 +16,7 @@ const lanes = Object.freeze([
   { name: "built-preview", config: "playwright.config.ts" },
   { name: "browser-fixtures", config: "playwright.browser-fixtures.config.ts" },
 ])
+export const laneNames = Object.freeze(lanes.map((lane) => lane.name))
 
 // The fixture server needs only the OS runtime environment, never deployment
 // values, credentials, VITE flags or .env files. Playwright retains its normal CI
@@ -30,15 +31,23 @@ export function fixtureEnvironment(environment, port) {
 }
 
 export function runFullSuite(options = {}) {
-  return runBrowserSuite(options, projects, "full-e2e")
+  return runBrowserSuite(options, projects, lanes, "full-e2e")
 }
 
 // CI distributes the fixed project inventory across independent runners. Each
-// shard still owns and completes both lanes; only the workflow aggregate is a
-// full gate. This entry point cannot select a test file, grep or one lane.
+// project shard still owns and completes both lanes. The lane shard entry point
+// below selects one member of the same fixed inventory; neither entry point can
+// select a test file, grep, timeout or retry override.
 export function runProjectSuite(project, options = {}) {
   if (!projects.includes(project)) throw Error("Unknown browser project")
-  return runBrowserSuite(options, [project], "project-e2e")
+  return runBrowserSuite(options, [project], lanes, "project-e2e")
+}
+
+export function runProjectLaneSuite(project, lane, options = {}) {
+  if (!projects.includes(project)) throw Error("Unknown browser project")
+  const selectedLane = lanes.find((candidate) => candidate.name === lane)
+  if (selectedLane === undefined) throw Error("Unknown browser lane")
+  return runBrowserSuite(options, [project], [selectedLane], "project-lane-e2e")
 }
 
 async function runBrowserSuite({
@@ -47,7 +56,7 @@ async function runBrowserSuite({
   spawnChild = spawn, selectPort = reservePort, waitForServer = waitForPreview,
   stopServer = stopPreview, signals = process,
   stdout = process.stdout, stderr = process.stderr,
-} = {}, requiredProjects, runLabel) {
+} = {}, requiredProjects, requiredLanes, runLabel) {
   if (argv.length !== 0) throw Error("The full browser gate does not accept narrowing arguments; run installed Playwright directly for focused checks")
   const vitePath = path.join(appDirectory, "node_modules", "vite", "bin", "vite.js")
   const playwrightPath = path.join(appDirectory, "node_modules", "@playwright", "test", "cli.js")
@@ -66,7 +75,7 @@ async function runBrowserSuite({
     return [signal, handler]
   }))
   try {
-    for (const lane of lanes) {
+    for (const lane of requiredLanes) {
       if (interruptedSignal !== null) throw Error("Interrupted before lane start")
       const port = await selectPort()
       const baseUrl = `http://127.0.0.1:${port}`
@@ -120,9 +129,10 @@ async function runBrowserSuite({
         cleanedServers += 1
       }
     }
-    // A removed, skipped or partially completed lane is never a full-suite pass.
-    if (completedLanes !== 2 || cleanedServers !== 2 || completedProjects !== requiredProjects.length * 2) {
-      throw Error("Both browser lanes and every required project must complete and clean up")
+    // A removed, skipped or partially completed required lane is never a pass.
+    const expectedProjects = requiredProjects.length * requiredLanes.length
+    if (completedLanes !== requiredLanes.length || cleanedServers !== requiredLanes.length || completedProjects !== expectedProjects) {
+      throw Error("Every required browser lane and project must complete and clean up")
     }
   } catch (error) {
     failure = error
@@ -134,11 +144,12 @@ async function runBrowserSuite({
   }
   const code = failure === null && interruptedSignal === null ? 0
     : interruptedSignal === "SIGINT" ? 130 : interruptedSignal === "SIGTERM" ? 143 : 1
+  const expectedProjects = requiredProjects.length * requiredLanes.length
   if (code === 0) {
-    stdout.write(`[${runLabel}] SUCCESS lanes=${completedLanes}/2 projects=${completedProjects}/${requiredProjects.length * 2} serverCleanup=PASS\n`)
+    stdout.write(`[${runLabel}] SUCCESS lanes=${completedLanes}/${requiredLanes.length} projects=${completedProjects}/${expectedProjects} serverCleanup=PASS\n`)
   } else {
     const reason = interruptedSignal === null ? failure instanceof Error ? failure.message : String(failure) : `Interrupted by ${interruptedSignal}`
-    stderr.write(`[${runLabel}] FAILURE lanes=${completedLanes}/2 projects=${completedProjects}/${requiredProjects.length * 2} serverCleanup=${cleanedServers}/2 reason=${reason}\n`)
+    stderr.write(`[${runLabel}] FAILURE lanes=${completedLanes}/${requiredLanes.length} projects=${completedProjects}/${expectedProjects} serverCleanup=${cleanedServers}/${requiredLanes.length} reason=${reason}\n`)
   }
   return { code, completedProjects, completedLanes, cleanedServers }
 }
