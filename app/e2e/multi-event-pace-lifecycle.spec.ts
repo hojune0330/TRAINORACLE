@@ -218,7 +218,8 @@ async function assertBoundSuccessor(page: Page, persona: Persona, source: Athlet
     const main = rows.find(row => `${row.day}:${row.slot}` === address)!
     const date = new Date(startDate)
     date.setUTCDate(date.getUTCDate() + main.day - 1)
-    const overview = page.getByLabel(`${predecessor.intake.requestedFrameLength}일 훈련 일정`).first()
+    const overview = page.getByRole("region", { name: "이번 일정", exact: true })
+      .getByLabel(`${predecessor.intake.requestedFrameLength}일 훈련 일정`, { exact: true })
     await overview.getByRole("radio", { name: "달력", exact: true }).click()
     await overview.getByRole("button", { name: new RegExp(`${date.getUTCMonth() + 1}월 ${date.getUTCDate()}일`) }).click()
     await expect(page.getByRole("dialog")).toContainText(readerTargetText(persona.event, main.minimum))
