@@ -23,7 +23,7 @@ test("audits empty home and chooser touch actions", async ({ page }, testInfo) =
     { name: "empty-home.create-plan", locator: page.getByRole("button", { name: "훈련 계획 받기" }), heightOnly: true },
     { name: "empty-home.learn", locator: services.getByRole("button", { name: "훈련법 읽기" }), heightOnly: true },
     { name: "empty-home.decorate", locator: services.getByRole("button", { name: "일지 꾸미기" }), heightOnly: true },
-    { name: "empty-home.more", locator: page.getByRole("button", { name: "더보기" }) },
+    { name: "empty-home.more", locator: page.getByRole("button", { name: "더보기", exact: true }) },
   ])
   await expect(page.getByRole("navigation", { name: "주 탭" })).toBeVisible()
   await expectNoHorizontalOverflow(page)
@@ -57,7 +57,7 @@ test("audits populated home, detail, and trends actions", async ({ page }, testI
     { name: "populated-home.entries", locator: entries, count: 1, heightOnly: true },
     { name: "populated-home.tabs", locator: page.getByRole("navigation", { name: "주 탭" }).getByRole("button"), count: 5 },
   ])
-  await page.getByRole("button", { name: "더보기" }).click()
+  await page.getByRole("button", { name: "더보기", exact: true }).click()
   await page.getByRole("button", { name: "백업·복원·휴지통" }).click()
   await auditTouchTargets(page, [
     { name: "more.export", locator: page.getByRole("button", { name: /내 일지 데이터 내려받기/u }), heightOnly: true },

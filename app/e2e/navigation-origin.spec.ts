@@ -46,7 +46,7 @@ test("returns every audited child screen to the screen that opened it", async ({
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "홈", exact: true }).click()
   expect(discardedPlanDraft).toBe(true)
   await expect(page.getByRole("heading", { name: "운동 분석과 훈련 계획", exact: true })).toBeVisible()
-  await page.getByRole("button", { name: "더보기" }).click()
+  await page.getByRole("button", { name: "더보기", exact: true }).click()
   await page.getByRole("button", { name: "훈련법 읽기" }).click()
   await expect(page.getByRole("heading", { name: "어떤 훈련이 궁금한가요?" })).toBeVisible()
   await page.getByRole("button", { name: "이전 화면" }).click()

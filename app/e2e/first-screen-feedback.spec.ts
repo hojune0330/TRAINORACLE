@@ -11,7 +11,7 @@ test.beforeEach(async ({ page, baseURL }) => {
 test("explains the first free beta places without implying that account sync is open", async ({ page }) => {
   // Given: a new athlete is using the public local-journal app.
   await page.goto("/")
-  await page.getByRole("button", { name: "더보기" }).click()
+  await page.getByRole("button", { name: "더보기", exact: true }).click()
   await expect(page.getByRole("heading", { name: "배우기", exact: true })).toBeVisible()
 
   // When: the athlete opens the plain-language FAQ and expands the free-beta answer.
@@ -135,7 +135,7 @@ test("shows a truthful closed feedback screen when its release switch is off", a
 test("opens the closed feedback state from the More entry", async ({ page }) => {
   await page.goto("/")
 
-  await page.getByRole("button", { name: "더보기" }).click()
+  await page.getByRole("button", { name: "더보기", exact: true }).click()
   await page.getByRole("button", { name: "앱 정보·개인정보·문의" }).click()
   await expect(page.getByRole("button", { name: "문의 게시판", exact: true })).toContainText("준비 중")
 
