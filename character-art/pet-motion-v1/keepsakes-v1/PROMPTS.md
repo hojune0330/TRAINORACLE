@@ -1,0 +1,15 @@
+# 방에 놓는 추억 소품 · 2026-10-23
+
+Tool: built-in image_gen. Seed: not returned. Transparent background requested. Three original generated PNG files are retained in originals/. Runtime WebP copies preserve alpha; no retouching, recoloring or AI upscaling. The toy basket reuses the existing care-props-v2.webp asset.
+
+## paw-frame
+
+Create one production-ready 2D illustrated prop for a cozy pet-care mobile game. Simple warm brown outlines (#69503a), rounded chunky shapes, restrained flat pastel fills with at most one soft shading tone, very little detail, visually legible at 60px. Match an illustrated cream room with light oak furniture and sage curtains. Slight front three-quarter view from above, centered in a square composition, entire object visible with 12% empty margin all around. Truly transparent background, no floor, no cast shadow outside the object, no text, no letters, no watermark, no UI, no extra objects. This is a finished separate prop, not a concept sheet. A small freestanding light-oak picture frame with rounded corners, standing on a little rear support. Inside the cream paper is ONE simple coral paw print with a rounded central pad and four round toes. Quietly cute keepsake, no face on the frame. The broad frame and paw print are the only details.
+
+## sprout-pot
+
+Create one production-ready 2D illustrated prop for a cozy pet-care mobile game. Simple warm brown outlines (#69503a), rounded chunky shapes, restrained flat pastel fills with at most one soft shading tone, very little detail, visually legible at 60px. Match an illustrated cream room with light oak furniture and sage curtains. Slight front three-quarter view from above, centered in a square composition, entire object visible with 12% empty margin all around. Truly transparent background, no floor, no cast shadow outside the object, no text, no letters, no watermark, no UI, no extra objects. This is a finished separate prop, not a concept sheet. A small rounded sage-green ceramic flowerpot containing one fresh sprout with exactly two broad round leaves. Cream saucer. A tiny simple cream heart on the pot. Friendly rounded silhouette, no eyes or face, no soil texture. One self-contained prop.
+
+## moon-cushion
+
+Create one production-ready 2D illustrated prop for a cozy pet-care mobile game. Simple warm brown outlines (#69503a), rounded chunky shapes, restrained flat pastel fills with at most one soft shading tone, very little detail, visually legible at 60px. Match an illustrated cream room with light oak furniture and sage curtains. Slight front three-quarter view from above, centered in a square composition, entire object visible with 12% empty margin all around. Truly transparent background, no floor, no cast shadow outside the object, no text, no letters, no watermark, no UI, no extra objects. This is a finished separate prop, not a concept sheet. One plump soft crescent-moon pillow in pale buttery yellow, lying upright at a slight angle. Rounded moon tips, a single curved sleepy eye near the upper tip and a tiny peach cheek. Two or three minimal seam marks only. No stars or clouds around it. One self-contained soft pillow.

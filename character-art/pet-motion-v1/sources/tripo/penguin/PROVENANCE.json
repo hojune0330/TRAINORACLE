@@ -1,0 +1,114 @@
+{
+  "date": "2026-10-23",
+  "tool": "Tripo Studio Pro + Blender 4.5.14 LTS",
+  "modelId": "66c96971-9681-4f1a-8f37-1f867593d7c8",
+  "sourceUrl": "https://studio.tripo3d.ai/ko/workspace/generate/66c96971-9681-4f1a-8f37-1f867593d7c8",
+  "visibility": "private",
+  "seed": null,
+  "route": "text-to-model",
+  "referenceWasUploaded": false,
+  "reference": "references/penguin-master.png",
+  "promptRecord": "expansion-generation.json",
+  "creditsIncludingRejectedAttempts": 120,
+  "exports": [
+    {
+      "file": "original-textured.glb",
+      "sha256": "3df526d027c8d30399e231e0d34086a3e390d576b45be928683517a4eecd5875",
+      "bytes": 2047112
+    }
+  ],
+  "editableMasters": [
+    {
+      "path": "masters/penguin/penguin-motion-v1.blend",
+      "sha256": "e7fcf7fac93ca89ad61cea3b11961cfc85876f3725b4ac980bab47c2c0785240",
+      "bytes": 4639903
+    }
+  ],
+  "gameClips": [
+    {
+      "motion": "idle",
+      "sheet": "penguin-idle.webp",
+      "frames": 48,
+      "bytes": 292564,
+      "sha256": "5e4b37560f63772426d2e44dd0669a2be55a01b382bb849e97c3b45654870e57",
+      "source": "penguin-motion-v1.blend"
+    },
+    {
+      "motion": "pet",
+      "sheet": "penguin-pet.webp",
+      "frames": 30,
+      "bytes": 190298,
+      "sha256": "99826c6b6752daf340c9d4d4e949db1dcdbc8950f090d3ca2805851f58c030aa",
+      "source": "penguin-motion-v1.blend"
+    },
+    {
+      "motion": "lie-down",
+      "sheet": "penguin-lie-down.webp",
+      "frames": 30,
+      "bytes": 189254,
+      "sha256": "61aec1ca36c6f9915fb082b58b76eb1361c5bb9963e954840e525b31166eda78",
+      "source": "penguin-motion-v1.blend"
+    },
+    {
+      "motion": "sleep",
+      "sheet": "penguin-sleep.webp",
+      "frames": 36,
+      "bytes": 207478,
+      "sha256": "40c454c59c29b51e7ef87897d053459c81f80145901d47d5d0ae91589b2adebc",
+      "source": "penguin-motion-v1.blend"
+    },
+    {
+      "motion": "wake",
+      "sheet": "penguin-wake.webp",
+      "frames": 30,
+      "bytes": 183076,
+      "sha256": "a836d4b54e16ec55406f2eb63c9cd74e52c5b5f0dc686f6ca0cb50df128e6dcb",
+      "source": "penguin-motion-v1.blend"
+    },
+    {
+      "motion": "eat",
+      "sheet": "penguin-eat.webp",
+      "frames": 30,
+      "bytes": 175648,
+      "sha256": "086efa1335e4d9e478878f33131444f47dacd79c1977faa0096819769b97c764",
+      "source": "penguin-motion-v1.blend"
+    },
+    {
+      "motion": "play",
+      "sheet": "penguin-play.webp",
+      "frames": 30,
+      "bytes": 199820,
+      "sha256": "152fce7143a19394e292be0adeede1dbd8dbb3a6e794c2487ab3239e494fc919",
+      "source": "penguin-motion-v1.blend"
+    },
+    {
+      "motion": "hello",
+      "sheet": "penguin-hello.webp",
+      "frames": 30,
+      "bytes": 199488,
+      "sha256": "cfc13c38f6740e820d2ec040ac64fdc3a576b4bea2985c78afd54ac618b7d499",
+      "source": "penguin-motion-v1.blend"
+    },
+    {
+      "motion": "walk-left",
+      "sheet": "penguin-walk-left.webp",
+      "frames": 30,
+      "bytes": 177416,
+      "sha256": "5befa568fe23ba5ebfc0748588a8b28c66f0dadda5e8526779d14d94235ca60a",
+      "source": "penguin-motion-v1.blend"
+    },
+    {
+      "motion": "walk-right",
+      "sheet": "penguin-walk-right.webp",
+      "frames": 30,
+      "bytes": 177872,
+      "sha256": "3b2a109dc160a145a83c24a59caacbb83dc6d38a18d725f2bf3369a771300cc6",
+      "source": "penguin-motion-v1.blend"
+    }
+  ],
+  "runtimeStatus": "registered in source; not published by this task",
+  "sourcePolicy": "Original GLB exports retained unchanged. Mesh repairs, flat materials and rig authored in separate Blender derivatives.",
+  "motionSource": "Locally authored species-specific rig and nine actions, rendered as ten clips with two walking views. No paid rig or stock humanoid animation.",
+  "licenseEvidence": "Created under the observed Pro plan/private setting; provider evidence is recorded in PRODUCTION.md.",
+  "renderMethod": "Orthographic flat colors and inverted hull outline; 512px PNG to fixed 256px WebP cells."
+}

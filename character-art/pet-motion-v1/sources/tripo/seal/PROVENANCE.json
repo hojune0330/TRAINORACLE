@@ -1,0 +1,113 @@
+{
+  "date": "2026-10-22",
+  "tool": "Tripo Studio Pro + Blender 4.5.14 LTS",
+  "modelId": "f03c6947-36f4-4415-95ce-f0203ca20bdc",
+  "sourceUrl": "https://studio.tripo3d.ai/ko/workspace/generate/f03c6947-36f4-4415-95ce-f0203ca20bdc",
+  "visibility": "private",
+  "seed": null,
+  "route": "Studio-image-to-model",
+  "referenceWasUploaded": false,
+  "reference": "references/seal-master.png",
+  "promptRecord": "PROMPTS.md",
+  "creditsIncludingRejectedAttempts": 120,
+  "exports": [
+    {
+      "file": "original-export.zip",
+      "sha256": "9f25200255ece5b444bd72102e18b22df1b51f1880d81f0bb4202a95dd24ee66",
+      "bytes": 438967
+    }
+  ],
+  "editableMasters": [
+    {
+      "path": "masters/seal/seal-motion-v3.blend",
+      "sha256": "aabf22eade0d3b07f9457ba20de331bcc4ac76c5ab72fa07bed39ea854797afd",
+      "bytes": 2836474
+    }
+  ],
+  "gameClips": [
+    {
+      "motion": "idle",
+      "sheet": "seal-idle.webp",
+      "frames": 48,
+      "bytes": 259100,
+      "sha256": "dd33a45727613b336dc747b47cfec5c05ac63914756ffa6dcb3efb4eb219b116",
+      "source": "seal-motion-v3.blend"
+    },
+    {
+      "motion": "pet",
+      "sheet": "seal-pet.webp",
+      "frames": 30,
+      "bytes": 172722,
+      "sha256": "710abe489435585b2d44ea4ce0a892dcfa1044fc87048f6218dc5afb662f9a70",
+      "source": "seal-motion-v3.blend"
+    },
+    {
+      "motion": "lie-down",
+      "sheet": "seal-lie-down.webp",
+      "frames": 30,
+      "bytes": 178426,
+      "sha256": "c947b04db0b5da4dc7df8879959fe0f2a2bb229d386eef9395439d0e49a118da",
+      "source": "seal-motion-v3.blend"
+    },
+    {
+      "motion": "sleep",
+      "sheet": "seal-sleep.webp",
+      "frames": 36,
+      "bytes": 197502,
+      "sha256": "469e110e93c38906e61d188d84d799e1cbaed8fb9ea9eaa69a9d0e1984ad8c53",
+      "source": "seal-motion-v3.blend"
+    },
+    {
+      "motion": "wake",
+      "sheet": "seal-wake.webp",
+      "frames": 30,
+      "bytes": 171842,
+      "sha256": "e58521e176f311eff9dae16fb17a9a5bc9f9e0bbdd1cff646076312748cb10a6",
+      "source": "seal-motion-v3.blend"
+    },
+    {
+      "motion": "eat",
+      "sheet": "seal-eat.webp",
+      "frames": 30,
+      "bytes": 162842,
+      "sha256": "161cfa4327359729132a3a0a49ade5c31efc00ae84efa822d88b05dd176051f9",
+      "source": "seal-motion-v3.blend"
+    },
+    {
+      "motion": "play",
+      "sheet": "seal-play.webp",
+      "frames": 30,
+      "bytes": 171598,
+      "sha256": "99567bd62d0980d25c974f6c18bd9887c59a6c41ca08dd986ad4d09579d38ecf",
+      "source": "seal-motion-v3.blend"
+    },
+    {
+      "motion": "hello",
+      "sheet": "seal-hello.webp",
+      "frames": 30,
+      "bytes": 170476,
+      "sha256": "ad069c7835eeb396bec2d06aa7930458d41de7bd00d198dbad34bf652b77840d",
+      "source": "seal-motion-v3.blend"
+    },
+    {
+      "motion": "walk-left",
+      "sheet": "seal-walk-left.webp",
+      "frames": 30,
+      "bytes": 195014,
+      "sha256": "baffbc066447c7f9fff41fc5b1edbea381c92e6356e758013cbfd9d62b580aa5",
+      "source": "seal-motion-v3.blend"
+    },
+    {
+      "motion": "walk-right",
+      "sheet": "seal-walk-right.webp",
+      "frames": 30,
+      "bytes": 198104,
+      "sha256": "df9e365178f8b1a58e7d31414b21d7c3fd9403d030bb27209e8ca20721e67908",
+      "source": "seal-motion-v3.blend"
+    }
+  ],
+  "runtimeStatus": "registered in source; not published by this task",
+  "sourcePolicy": "Original exports retained unchanged; Blender derivatives and rendered clips stored separately.",
+  "licenseEvidence": "Created under observed Pro plan/private setting; provider pricing/license research in PRODUCTION.md. Local motion scripts are original work.",
+  "motionSource": "Species-specific locally authored rig and actions; no stock humanoid motion"
+}

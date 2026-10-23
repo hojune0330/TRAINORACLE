@@ -1,0 +1,113 @@
+{
+  "date": "2026-10-22",
+  "tool": "Tripo Studio Pro + Blender 4.5.14 LTS",
+  "modelId": "348d2f5b-acf6-4228-91e5-478da1113f8b",
+  "sourceUrl": "https://studio.tripo3d.ai/ko/workspace/generate/348d2f5b-acf6-4228-91e5-478da1113f8b",
+  "visibility": "private",
+  "seed": null,
+  "route": "Studio-image-to-model",
+  "referenceWasUploaded": false,
+  "reference": "references/rabbit-master.png",
+  "promptRecord": "PROMPTS.md",
+  "creditsIncludingRejectedAttempts": 340,
+  "exports": [
+    {
+      "file": "rigged-walk-export.zip",
+      "sha256": "18c29298e6bdf5f5949da6720bf5fd59d9109e0d07c8430071d6e20b0dfdbf19",
+      "bytes": 620249
+    }
+  ],
+  "editableMasters": [
+    {
+      "path": "masters/rabbit/rabbit-motion-v2.blend",
+      "sha256": "322a8e69497a9df6e2cb6b7c20a119c3396631622edd87b0f20e2c5e647b28f8",
+      "bytes": 3538336
+    }
+  ],
+  "gameClips": [
+    {
+      "motion": "idle",
+      "sheet": "rabbit-idle.webp",
+      "frames": 48,
+      "bytes": 300686,
+      "sha256": "20fe67ce4d42e97258890b6e5e053ca2f2170b2cdf46b2f3a66f5ccc19aea23c",
+      "source": "rabbit-motion-v2.blend"
+    },
+    {
+      "motion": "pet",
+      "sheet": "rabbit-pet.webp",
+      "frames": 30,
+      "bytes": 195084,
+      "sha256": "06605459a0a82638061e9c491b2d3003f3e1a00facc2a6c213e0fc79f343df41",
+      "source": "rabbit-motion-v2.blend"
+    },
+    {
+      "motion": "lie-down",
+      "sheet": "rabbit-lie-down.webp",
+      "frames": 30,
+      "bytes": 201030,
+      "sha256": "30df7e9454fbe3ec2fd3fa51e862d124d5828d029d47ec1f6df20bd215b36f4d",
+      "source": "rabbit-motion-v2.blend"
+    },
+    {
+      "motion": "sleep",
+      "sheet": "rabbit-sleep.webp",
+      "frames": 36,
+      "bytes": 227074,
+      "sha256": "1eeac3aae78fd1bec0b26581ffbdf3950be63c053e73e38df71f4bf9a18c5db0",
+      "source": "rabbit-motion-v2.blend"
+    },
+    {
+      "motion": "wake",
+      "sheet": "rabbit-wake.webp",
+      "frames": 30,
+      "bytes": 195808,
+      "sha256": "271968e7ab560716f5e8504e25e79b5a72ca5ad126ead8dbf23a20115da3d872",
+      "source": "rabbit-motion-v2.blend"
+    },
+    {
+      "motion": "eat",
+      "sheet": "rabbit-eat.webp",
+      "frames": 30,
+      "bytes": 193104,
+      "sha256": "3d0303dcfafe61a3c53bd69b5c36021529829b3f9b74630412276b4ece674615",
+      "source": "rabbit-motion-v2.blend"
+    },
+    {
+      "motion": "play",
+      "sheet": "rabbit-play.webp",
+      "frames": 30,
+      "bytes": 194288,
+      "sha256": "ded3d01463acdd3c97fb6e75b6d267b01988de609277ffac0d3ebc7082fe8e9b",
+      "source": "rabbit-motion-v2.blend"
+    },
+    {
+      "motion": "hello",
+      "sheet": "rabbit-hello.webp",
+      "frames": 30,
+      "bytes": 194076,
+      "sha256": "6148c1762eb7e39e165af0c7c913ac7918c74ddaad51cb1944c9971bb420c91b",
+      "source": "rabbit-motion-v2.blend"
+    },
+    {
+      "motion": "walk-left",
+      "sheet": "rabbit-walk-left.webp",
+      "frames": 30,
+      "bytes": 209702,
+      "sha256": "690d60a4d5f7263acdec0ae4cadd5eebdd7347dd700b0f331e571f8ac8ba3d2d",
+      "source": "rabbit-motion-v2.blend"
+    },
+    {
+      "motion": "walk-right",
+      "sheet": "rabbit-walk-right.webp",
+      "frames": 30,
+      "bytes": 210232,
+      "sha256": "24bd5b1292a037be8b13322dcad459802a7effd27404576a1653cd1a77d210c6",
+      "source": "rabbit-motion-v2.blend"
+    }
+  ],
+  "runtimeStatus": "registered in source; not published by this task",
+  "sourcePolicy": "Original exports retained unchanged; Blender derivatives and rendered clips stored separately.",
+  "licenseEvidence": "Created under observed Pro plan/private setting; provider pricing/license research in PRODUCTION.md. Local motion scripts are original work.",
+  "motionSource": "Species-specific locally authored rig and actions; no stock humanoid motion"
+}

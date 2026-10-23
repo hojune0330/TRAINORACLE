@@ -1,0 +1,61 @@
+{
+  "generated": "2026-10-23",
+  "tool": "image_gen built-in",
+  "runtimeSize": [
+    512,
+    512
+  ],
+  "assets": [
+    {
+      "id": "moon-cushion",
+      "sourceSize": [
+        1254,
+        1254
+      ],
+      "visibleAlphaBounds": [
+        162,
+        128,
+        1125,
+        1131
+      ],
+      "sourceSha256": "7592a920cd7289226d2fa90604b0a47553c11f5104c002dabf2097e09afcffff",
+      "runtime": "app/public/games/pet-room-v1/keepsakes-v1/moon-cushion.webp",
+      "bytes": 25928,
+      "runtimeSha256": "2089812b27c297d9e759f302c92b7496140e6d60f622cfee6f3b7a3d0284c545"
+    },
+    {
+      "id": "paw-frame",
+      "sourceSize": [
+        1254,
+        1254
+      ],
+      "visibleAlphaBounds": [
+        167,
+        155,
+        1094,
+        1105
+      ],
+      "sourceSha256": "2ed4235af3834e4581047dae76a130b773813deb884500dc3f78460a1f492d8e",
+      "runtime": "app/public/games/pet-room-v1/keepsakes-v1/paw-frame.webp",
+      "bytes": 28276,
+      "runtimeSha256": "8e6c97e75db6ea93434e726371203fe67406513fd441ac43a5921eb7f6d3a101"
+    },
+    {
+      "id": "sprout-pot",
+      "sourceSize": [
+        1254,
+        1254
+      ],
+      "visibleAlphaBounds": [
+        284,
+        203,
+        974,
+        1081
+      ],
+      "sourceSha256": "b33eb4515d890cc34113aa76b9d8a47c2f81fb53d8f55d27b419421147a9a1ec",
+      "runtime": "app/public/games/pet-room-v1/keepsakes-v1/sprout-pot.webp",
+      "bytes": 27814,
+      "runtimeSha256": "3d2fab11fa4a6c587655ddd9c90963d1f6898038a71c28b80d9119ab12a9b3e9"
+    }
+  ]
+}

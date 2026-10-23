@@ -99,7 +99,8 @@ it('reads completion progress without initializing, migrating or resetting unava
 it('projects only committed owner-scoped counts and hides them after a generation change', async () => {
   const ticket = capturePetJournalScope()
   await recordConfirmedPetJournalSave(ref(), ticket)
-  expect(readPetJournalProgress(ticket)).toEqual({ status: 'READY', days: 1, credits: 0, canMeet: false, recordedToday: true })
+  const savedFriend = JSON.parse(localStorage.getItem(petHomeKey(ticket.owner))!).selected
+  expect(readPetJournalProgress(ticket)).toEqual({ status: 'READY', days: 1, credits: 0, canMeet: false, recordedToday: true, friend: { id: savedFriend, pose: 'happy' } })
   setActiveLocalAccount('read-other'); setActiveLocalAccount(null)
   expect(readPetJournalProgress(ticket)).toEqual({ status: 'STALE' })
 })

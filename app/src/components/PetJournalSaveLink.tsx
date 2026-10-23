@@ -4,6 +4,8 @@ import { ChevronRight } from 'lucide-react'
 import { onLocalJournalScopeChange } from '../domain/account/local-journal-ownership'
 import { capturePetJournalScope, PET_JOURNAL_EVENT, pendingPetJournalError, readPetJournalProgress, retryPetJournalSave, type SavedPetJournalRef } from '../domain/pet-journal-progress'
 import { careDay, petHomeKey } from '../screens/pet-room/pet-engine'
+import { PetSprite } from '../screens/pet-room/PetArt'
+import { petById } from '../screens/pet-room/pet-catalog'
 
 const SleepInnEntry = React.lazy(() => import('../screens/sleep-inn/SleepInnEntry').then(module => ({ default: module.SleepInnEntry })))
 
@@ -51,6 +53,10 @@ export function PetJournalSaveLink({ journal }: { readonly journal: SavedPetJour
   }
   return <>
     <div className="journal-save-friends" aria-label="일지와 친구들">
+      {ready && !error && <div className="journal-save-friends__pet">
+        <PetSprite id={progress.friend.id} pose={progress.friend.pose} motion={progress.friend.pose === 'sleeping' ? 'sleep' : 'hello'} replay={journal.id} active={!opened} />
+        <span>{petById(progress.friend.id).name}{progress.friend.pose === 'sleeping' ? '도 새근새근 자고 있어요.' : '도 방에서 기다리고 있어요.'}</span>
+      </div>}
       <p aria-live="polite">{summary}</p>
       <div className="journal-save-friends__actions">
         {error && <button type="button" disabled={retrying} onClick={() => { void retry() }}>{retrying ? '친구 진행 확인 중' : '친구 진행 다시 확인'}</button>}

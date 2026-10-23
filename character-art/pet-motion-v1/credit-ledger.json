@@ -1,0 +1,323 @@
+{
+  "provider": "Tripo Studio",
+  "checkedOn": "2026-10-23",
+  "lastObservedBalance": 1060,
+  "lastObservedPlan": "Pro",
+  "spentThisBatch": 1000,
+  "tasks": [
+    {
+      "taskId": "3a2ff544-bec3-4e93-8da7-e3e6b0b0dbe6",
+      "pet": "cat",
+      "operation": "text-to-model",
+      "model": "P2.0 trial",
+      "visibility": "private",
+      "quotedCredits": 0,
+      "observedBalanceAfterSubmission": 2060,
+      "state": "mesh-completed",
+      "input": "PRODUCTION.md single-cat text prompt"
+    },
+    {
+      "taskId": "3a2ff544-bec3-4e93-8da7-e3e6b0b0dbe6",
+      "pet": "cat",
+      "operation": "texture",
+      "quotedCredits": 20,
+      "observedCharge": 20,
+      "state": "completed",
+      "note": "Studio reuses the same model URL for the texture operation."
+    },
+    {
+      "taskId": "3a2ff544-bec3-4e93-8da7-e3e6b0b0dbe6",
+      "pet": "cat",
+      "operation": "rig-other-animal",
+      "quotedCredits": 20,
+      "observedCharge": 20,
+      "state": "completed"
+    },
+    {
+      "taskId": "3a2ff544-bec3-4e93-8da7-e3e6b0b0dbe6",
+      "pet": "cat",
+      "operation": "walk-preset",
+      "quotedCredits": null,
+      "observedCharge": 0,
+      "state": "completed-exported",
+      "note": "No cost was displayed. Exported rigged FBX has 23 bones and the quadruped walk action; balance remained 2020."
+    },
+    {
+      "taskId": "8aed8caa-3362-4cd5-a9b4-9bfac59d6fdb",
+      "pet": "puppy",
+      "operation": "text-to-model",
+      "model": "P2.0 trial",
+      "visibility": "private",
+      "quotedCredits": 0,
+      "observedCharge": 0,
+      "state": "mesh-completed",
+      "mesh": {
+        "quadFaces": 5598,
+        "vertices": 5211
+      }
+    },
+    {
+      "taskId": "8aed8caa-3362-4cd5-a9b4-9bfac59d6fdb",
+      "pet": "puppy",
+      "operation": "texture",
+      "quotedCredits": 20,
+      "observedCharge": 20,
+      "state": "completed-exported"
+    },
+    {
+      "taskId": "8aed8caa-3362-4cd5-a9b4-9bfac59d6fdb",
+      "pet": "puppy",
+      "operation": "rig-other-animal",
+      "quotedCredits": 20,
+      "observedCharge": 20,
+      "state": "completed-exported"
+    },
+    {
+      "taskId": "8aed8caa-3362-4cd5-a9b4-9bfac59d6fdb",
+      "pet": "puppy",
+      "operation": "walk-preset",
+      "observedCharge": 0,
+      "state": "completed-exported",
+      "note": "21-bone FBX with walk action downloaded; no additional charge observed."
+    },
+    {
+      "taskId": "f225b83c-e71a-4208-9ac8-99d093df21a8",
+      "pet": "rabbit",
+      "operation": "text-to-model",
+      "quotedCredits": 100,
+      "observedCharge": 100,
+      "visibility": "private",
+      "state": "rejected",
+      "reason": "Upright biped body differs from approved pet rabbit. No texture or rig purchased."
+    },
+    {
+      "taskId": "6aabdd74-359e-4632-b386-6b5ae796fe08",
+      "pet": "rabbit",
+      "operation": "text-to-model",
+      "quotedCredits": 100,
+      "observedCharge": 100,
+      "visibility": "private",
+      "state": "rejected",
+      "reason": "Second text-only result still has upright body. Changed construction route to image-first."
+    },
+    {
+      "pet": "rabbit",
+      "operation": "native-reference-image",
+      "model": "Nano Banana",
+      "quotedCredits": 0,
+      "observedCharge": 0,
+      "state": "completed",
+      "note": "Included free image 1/100; reviewed four-paw lop rabbit."
+    },
+    {
+      "taskId": "348d2f5b-acf6-4228-91e5-478da1113f8b",
+      "pet": "rabbit",
+      "operation": "image-to-model",
+      "model": "P2.0",
+      "quotedCredits": 100,
+      "observedCharge": 100,
+      "visibility": "private",
+      "state": "mesh-completed",
+      "mesh": {
+        "quadFaces": 5628,
+        "vertices": 5373
+      }
+    },
+    {
+      "taskId": "348d2f5b-acf6-4228-91e5-478da1113f8b",
+      "pet": "rabbit",
+      "operation": "texture",
+      "quotedCredits": 20,
+      "observedCharge": 20,
+      "state": "completed-exported"
+    },
+    {
+      "taskId": "348d2f5b-acf6-4228-91e5-478da1113f8b",
+      "pet": "rabbit",
+      "operation": "rig-other-animal",
+      "quotedCredits": 20,
+      "observedCharge": 20,
+      "state": "completed-exported",
+      "note": "Original rig/walk preserved; local ear/paw rig replaces unsuitable automatic bone mapping in derivative."
+    },
+    {
+      "taskId": "348d2f5b-acf6-4228-91e5-478da1113f8b",
+      "pet": "rabbit",
+      "operation": "walk-preset",
+      "observedCharge": 0,
+      "state": "completed-exported"
+    },
+    {
+      "pet": "duck",
+      "operation": "native-reference-image",
+      "quotedCredits": 0,
+      "observedCharge": 0,
+      "state": "failed-no-charge",
+      "note": "Studio returned a content-guideline message for a benign duckling request. No image was produced. Model was created directly from the same duckling description."
+    },
+    {
+      "taskId": "70e57354-2740-4308-aceb-07b9a867737a",
+      "pet": "duck",
+      "operation": "text-to-model",
+      "model": "P2.0",
+      "quotedCredits": 100,
+      "observedCharge": 100,
+      "visibility": "private",
+      "state": "completed-exported",
+      "mesh": {
+        "quadFaces": 5740,
+        "vertices": 5380
+      }
+    },
+    {
+      "taskId": "70e57354-2740-4308-aceb-07b9a867737a",
+      "pet": "duck",
+      "operation": "texture",
+      "quotedCredits": 20,
+      "observedCharge": 20,
+      "state": "completed-exported"
+    },
+    {
+      "taskId": "70e57354-2740-4308-aceb-07b9a867737a",
+      "pet": "duck",
+      "operation": "local-Blender-rig-actions",
+      "observedCharge": 0,
+      "state": "authored",
+      "note": "No paid automatic rig or API call used for this species."
+    },
+    {
+      "pet": "seal",
+      "operation": "native-reference-image",
+      "model": "Nano Banana",
+      "quotedCredits": 0,
+      "observedCharge": 0,
+      "state": "completed",
+      "note": "Included Studio image, not a local image upload."
+    },
+    {
+      "taskId": "f03c6947-36f4-4415-95ce-f0203ca20bdc",
+      "pet": "seal",
+      "operation": "image-to-model",
+      "model": "P2.0",
+      "quotedCredits": 100,
+      "observedCharge": 100,
+      "visibility": "private",
+      "state": "completed-exported",
+      "mesh": {
+        "quadFaces": 5731,
+        "vertices": 5224
+      }
+    },
+    {
+      "taskId": "f03c6947-36f4-4415-95ce-f0203ca20bdc",
+      "pet": "seal",
+      "operation": "texture",
+      "quotedCredits": 20,
+      "observedCharge": 20,
+      "state": "completed-exported"
+    },
+    {
+      "taskId": "f03c6947-36f4-4415-95ce-f0203ca20bdc",
+      "pet": "seal",
+      "operation": "local-Blender-rig-actions",
+      "observedCharge": 0,
+      "state": "authored",
+      "note": "No paid automatic rig or API call used for this species."
+    },
+    {
+      "pet": "otter",
+      "operation": "native-reference-image",
+      "model": "Nano Banana",
+      "quotedCredits": 0,
+      "observedCharge": 0,
+      "state": "completed",
+      "note": "Included Studio image, not a local image upload."
+    },
+    {
+      "taskId": "4babf375-ac66-4b2f-ad9a-ad157e425941",
+      "pet": "otter",
+      "operation": "image-to-model",
+      "model": "P2.0",
+      "quotedCredits": 100,
+      "observedCharge": 100,
+      "visibility": "private",
+      "state": "completed-exported",
+      "mesh": {
+        "quadFaces": 5494,
+        "vertices": 5251
+      }
+    },
+    {
+      "taskId": "4babf375-ac66-4b2f-ad9a-ad157e425941",
+      "pet": "otter",
+      "operation": "texture",
+      "quotedCredits": 20,
+      "observedCharge": 20,
+      "state": "completed-exported"
+    },
+    {
+      "taskId": "4babf375-ac66-4b2f-ad9a-ad157e425941",
+      "pet": "otter",
+      "operation": "local-Blender-rig-actions",
+      "observedCharge": 0,
+      "state": "authored",
+      "note": "No paid automatic rig or API call used for this species."
+    },
+    {
+      "taskId": "66c96971-9681-4f1a-8f37-1f867593d7c8",
+      "pet": "penguin",
+      "operation": "text-to-model",
+      "model": "P2.0",
+      "visibility": "private",
+      "date": "2026-10-23",
+      "quotedCredits": 100,
+      "observedCharge": 100,
+      "observedBalanceAfterSubmission": 1180,
+      "state": "completed-exported",
+      "input": "expansion-generation.json"
+    },
+    {
+      "taskId": "604753e7-5478-49aa-96bc-806cf4888737",
+      "pet": "hedgehog",
+      "operation": "text-to-model",
+      "model": "P2.0",
+      "visibility": "private",
+      "date": "2026-10-23",
+      "quotedCredits": 100,
+      "observedCharge": 100,
+      "observedBalanceAfterSubmission": 1080,
+      "state": "completed-exported",
+      "input": "expansion-generation.json"
+    },
+    {
+      "taskId": "66c96971-9681-4f1a-8f37-1f867593d7c8",
+      "pet": "penguin",
+      "operation": "texture",
+      "model": "P2.0",
+      "visibility": "private",
+      "date": "2026-10-23",
+      "quotedCredits": 20,
+      "observedCharge": 20,
+      "observedBalanceAfterSubmission": 1060,
+      "state": "completed-exported",
+      "input": "expansion-generation.json"
+    }
+  ],
+  "status": "eight-models-exported-80-reviewed-game-sheets-registered",
+  "visibility": "private",
+  "visibilityApproval": "User explicitly approved private visibility on 2026-10-22; selected and verified in both HD and Smart Mesh creation modes.",
+  "quote": {
+    "model": "P2.0 trial",
+    "count": 1,
+    "displayedCredits": 0
+  },
+  "note": "1,000 credits used across both batches, including 200 for rejected rabbit meshes. Latest expansion used 220; observed balance 1,060. Eight species with ten unique sheets each are source-integrated. No new subscription, API purchase or production publication.",
+  "startingObservedBalance": 2060,
+  "latestExpansionSpent": 220,
+  "latestQuote": {
+    "model": "P2.0",
+    "count": 1,
+    "displayedCredits": 100,
+    "visibility": "private"
+  }
+}

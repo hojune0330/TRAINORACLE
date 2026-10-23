@@ -1,0 +1,62 @@
+{
+  "date": "2026-10-22",
+  "generator": "built-in image_gen",
+  "assets": [
+    {
+      "source": "character-art/pet-motion-v1/props-v3/originals/blanket.png",
+      "output": "app/public/games/pet-room-v1/blanket-v3.webp",
+      "sourceSha256": "7b6b6685d62f8e9e4950f220c56d7f32fef97e7967e79be51797623caf9c7fd1",
+      "sha256": "5b36941d0259c83fcc6b2b5ff92d48a32f1b338dcb93345516b9c24612c02086",
+      "bytes": 14200,
+      "sourceSize": [
+        1254,
+        1254
+      ],
+      "sourceAlphaBounds": [
+        0,
+        168,
+        1192,
+        1156
+      ],
+      "visibleAlphaBounds": [
+        69,
+        419,
+        1184,
+        903
+      ],
+      "visibleAlphaThreshold": 16,
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "source": "character-art/pet-motion-v1/props-v3/originals/bowl-empty.png",
+      "output": "app/public/games/pet-room-v1/bowl-empty-v3.webp",
+      "sourceSha256": "8f3f9441642e9b7050fa2160d60d064927f0148b9377e8756e607b7edbdef30a",
+      "sha256": "eabe9c83dde0663f3ba68d531344d61947e2c9b1a5f08a2ee7a102af88161f33",
+      "bytes": 16788,
+      "sourceSize": [
+        1254,
+        1254
+      ],
+      "sourceAlphaBounds": [
+        0,
+        37,
+        1140,
+        1019
+      ],
+      "visibleAlphaBounds": [
+        108,
+        359,
+        1138,
+        940
+      ],
+      "visibleAlphaThreshold": 16,
+      "size": [
+        512,
+        512
+      ]
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+.pet-sprite { display: block; position: relative; aspect-ratio: 1; background-size: 300% 200%; background-repeat: no-repeat; flex-shrink: 0; pointer-events: none; }
+.pet-sprite__motion { display: block; position: absolute; inset: 0; background-repeat: no-repeat; pointer-events: none; }
+/* Art already contains body movement; never also wobble or stretch the sheet. */
+.pet-home .pet-sprite[data-pet-motion], .pet-activity .pet-sprite[data-pet-motion] { animation: none; }

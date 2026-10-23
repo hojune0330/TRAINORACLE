@@ -1,0 +1,43 @@
+{
+  "date": "2026-10-23",
+  "url": "http://127.0.0.1:4308/pet-motion-preview.html",
+  "viewport": {
+    "width": 375,
+    "height": 844
+  },
+  "components": [
+    "PetSprite",
+    "PetCareScene",
+    "PetBedtimeScene"
+  ],
+  "penguin": [
+    "normal and 64px sprite readable",
+    "petting completed once in nonpersistent preview",
+    "continued petting replayed the reaction"
+  ],
+  "hedgehog": [
+    "blanket then curtain then lights-out completed",
+    "actual hedgehog-sleep.webp background loaded with sleep motion",
+    "preview completion count increased once"
+  ],
+  "consoleErrors": [],
+  "typecheck": {
+    "command": "node node_modules/typescript/bin/tsc --noEmit",
+    "exitCode": 0
+  },
+  "assetChecks": {
+    "newUniqueSheets": 20,
+    "newFrames": 648,
+    "dimensionBoundsAndHashes": "passed"
+  },
+  "screenshots": [
+    "game-preview-penguin-small.png",
+    "game-preview-penguin-care.png",
+    "game-preview-hedgehog-bed.png"
+  ],
+  "limits": [
+    "Local developer entry uses real game components but does not save account records.",
+    "No production deployment or middle-school user study performed.",
+    "Other 40 species retain existing static art."
+  ]
+}

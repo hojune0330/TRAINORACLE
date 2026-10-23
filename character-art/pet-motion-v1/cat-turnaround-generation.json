@@ -1,0 +1,10 @@
+{
+  "date": "2026-10-22",
+  "tool": "built-in image_gen",
+  "species": "cat",
+  "purpose": "three-view modeling reference; not a game sprite",
+  "input": "references/cat-master.png",
+  "output": "references/cat-turnaround.png",
+  "prompt": "Create a precise CHARACTER TURNAROUND BOARD for the SAME original cream and caramel kitten in the attached main reference. This is an animation and 3D modeling production reference, not a poster. Exactly THREE equally-sized views arranged horizontally: straight front, left side profile (cat facing left), straight rear. Same neutral standing pose with FOUR separate short legs and tail lifted away from the body, same head size/body length in all three views, common ground baseline and orthographic camera. Preserve the big rounded head, tiny dark brown oval eyes, tiny pink nose, small simple smiling mouth, pink cheeks and triangular pink-inner ears. Preserve the caramel patch on the cat's RIGHT forehead and right ear (viewer left from front), caramel flank patch and thick curved caramel tail with cream tip; carry those patches consistently around the same body. This is a non-anthropomorphic four-legged kitten, no clothing, no human pose. Very simple smooth matte shapes, low-detail feet, no fur strands or whiskers, no claws, no accessories, no printed text or view labels, no shadows cast onto a floor, no background. Generous blank space separating all views. Transparent background. Match the supplied image's proportions exactly; do not redesign the character.",
+  "seed": null
+}

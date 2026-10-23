@@ -1,0 +1,810 @@
+{
+  "cat": {
+    "eat": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": false,
+      "restFrame": 29,
+      "rows": 4,
+      "sheet": "cat-eat.webp"
+    },
+    "hello": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": false,
+      "restFrame": 29,
+      "rows": 4,
+      "sheet": "cat-hello.webp"
+    },
+    "idle": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 48,
+      "loop": true,
+      "restFrame": 0,
+      "rows": 6,
+      "sheet": "cat-idle.webp"
+    },
+    "lie-down": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": false,
+      "restFrame": 29,
+      "rows": 4,
+      "sheet": "cat-lie-down.webp"
+    },
+    "pet": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": false,
+      "restFrame": 29,
+      "rows": 4,
+      "sheet": "cat-pet.webp"
+    },
+    "play": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": false,
+      "restFrame": 29,
+      "rows": 4,
+      "sheet": "cat-play.webp"
+    },
+    "sleep": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 36,
+      "loop": true,
+      "restFrame": 0,
+      "rows": 5,
+      "sheet": "cat-sleep.webp"
+    },
+    "wake": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": false,
+      "restFrame": 29,
+      "rows": 4,
+      "sheet": "cat-wake.webp"
+    },
+    "walk": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": true,
+      "restFrame": 0,
+      "rows": 4,
+      "sheet": "cat-walk-right.webp"
+    },
+    "walk-left": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": true,
+      "restFrame": 0,
+      "rows": 4,
+      "sheet": "cat-walk-left.webp"
+    },
+    "walk-right": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": true,
+      "restFrame": 0,
+      "rows": 4,
+      "sheet": "cat-walk-right.webp"
+    }
+  },
+  "duck": {
+    "eat": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": false,
+      "restFrame": 29,
+      "rows": 4,
+      "sheet": "duck-eat.webp"
+    },
+    "hello": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": false,
+      "restFrame": 29,
+      "rows": 4,
+      "sheet": "duck-hello.webp"
+    },
+    "idle": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 48,
+      "loop": true,
+      "restFrame": 0,
+      "rows": 6,
+      "sheet": "duck-idle.webp"
+    },
+    "lie-down": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": false,
+      "restFrame": 29,
+      "rows": 4,
+      "sheet": "duck-lie-down.webp"
+    },
+    "pet": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": false,
+      "restFrame": 29,
+      "rows": 4,
+      "sheet": "duck-pet.webp"
+    },
+    "play": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": false,
+      "restFrame": 29,
+      "rows": 4,
+      "sheet": "duck-play.webp"
+    },
+    "sleep": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 36,
+      "loop": true,
+      "restFrame": 0,
+      "rows": 5,
+      "sheet": "duck-sleep.webp"
+    },
+    "wake": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": false,
+      "restFrame": 29,
+      "rows": 4,
+      "sheet": "duck-wake.webp"
+    },
+    "walk": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": true,
+      "restFrame": 0,
+      "rows": 4,
+      "sheet": "duck-walk-right.webp"
+    },
+    "walk-left": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": true,
+      "restFrame": 0,
+      "rows": 4,
+      "sheet": "duck-walk-left.webp"
+    },
+    "walk-right": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": true,
+      "restFrame": 0,
+      "rows": 4,
+      "sheet": "duck-walk-right.webp"
+    }
+  },
+  "hedgehog": {
+    "eat": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": false,
+      "restFrame": 29,
+      "rows": 4,
+      "sheet": "hedgehog-eat.webp"
+    },
+    "hello": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": false,
+      "restFrame": 29,
+      "rows": 4,
+      "sheet": "hedgehog-hello.webp"
+    },
+    "idle": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 48,
+      "loop": true,
+      "restFrame": 0,
+      "rows": 6,
+      "sheet": "hedgehog-idle.webp"
+    },
+    "lie-down": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": false,
+      "restFrame": 29,
+      "rows": 4,
+      "sheet": "hedgehog-lie-down.webp"
+    },
+    "pet": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": false,
+      "restFrame": 29,
+      "rows": 4,
+      "sheet": "hedgehog-pet.webp"
+    },
+    "play": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": false,
+      "restFrame": 29,
+      "rows": 4,
+      "sheet": "hedgehog-play.webp"
+    },
+    "sleep": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 36,
+      "loop": true,
+      "restFrame": 0,
+      "rows": 5,
+      "sheet": "hedgehog-sleep.webp"
+    },
+    "wake": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": false,
+      "restFrame": 29,
+      "rows": 4,
+      "sheet": "hedgehog-wake.webp"
+    },
+    "walk-left": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": true,
+      "restFrame": 0,
+      "rows": 4,
+      "sheet": "hedgehog-walk-left.webp"
+    },
+    "walk-right": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": true,
+      "restFrame": 0,
+      "rows": 4,
+      "sheet": "hedgehog-walk-right.webp"
+    },
+    "walk": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": true,
+      "restFrame": 0,
+      "rows": 4,
+      "sheet": "hedgehog-walk-right.webp"
+    }
+  },
+  "otter": {
+    "eat": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": false,
+      "restFrame": 29,
+      "rows": 4,
+      "sheet": "otter-eat.webp"
+    },
+    "hello": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": false,
+      "restFrame": 29,
+      "rows": 4,
+      "sheet": "otter-hello.webp"
+    },
+    "idle": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 48,
+      "loop": true,
+      "restFrame": 0,
+      "rows": 6,
+      "sheet": "otter-idle.webp"
+    },
+    "lie-down": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": false,
+      "restFrame": 29,
+      "rows": 4,
+      "sheet": "otter-lie-down.webp"
+    },
+    "pet": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": false,
+      "restFrame": 29,
+      "rows": 4,
+      "sheet": "otter-pet.webp"
+    },
+    "play": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": false,
+      "restFrame": 29,
+      "rows": 4,
+      "sheet": "otter-play.webp"
+    },
+    "sleep": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 36,
+      "loop": true,
+      "restFrame": 0,
+      "rows": 5,
+      "sheet": "otter-sleep.webp"
+    },
+    "wake": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": false,
+      "restFrame": 29,
+      "rows": 4,
+      "sheet": "otter-wake.webp"
+    },
+    "walk": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": true,
+      "restFrame": 0,
+      "rows": 4,
+      "sheet": "otter-walk-right.webp"
+    },
+    "walk-left": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": true,
+      "restFrame": 0,
+      "rows": 4,
+      "sheet": "otter-walk-left.webp"
+    },
+    "walk-right": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": true,
+      "restFrame": 0,
+      "rows": 4,
+      "sheet": "otter-walk-right.webp"
+    }
+  },
+  "penguin": {
+    "eat": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": false,
+      "restFrame": 29,
+      "rows": 4,
+      "sheet": "penguin-eat.webp"
+    },
+    "hello": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": false,
+      "restFrame": 29,
+      "rows": 4,
+      "sheet": "penguin-hello.webp"
+    },
+    "idle": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 48,
+      "loop": true,
+      "restFrame": 0,
+      "rows": 6,
+      "sheet": "penguin-idle.webp"
+    },
+    "lie-down": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": false,
+      "restFrame": 29,
+      "rows": 4,
+      "sheet": "penguin-lie-down.webp"
+    },
+    "pet": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": false,
+      "restFrame": 29,
+      "rows": 4,
+      "sheet": "penguin-pet.webp"
+    },
+    "play": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": false,
+      "restFrame": 29,
+      "rows": 4,
+      "sheet": "penguin-play.webp"
+    },
+    "sleep": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 36,
+      "loop": true,
+      "restFrame": 0,
+      "rows": 5,
+      "sheet": "penguin-sleep.webp"
+    },
+    "wake": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": false,
+      "restFrame": 29,
+      "rows": 4,
+      "sheet": "penguin-wake.webp"
+    },
+    "walk-left": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": true,
+      "restFrame": 0,
+      "rows": 4,
+      "sheet": "penguin-walk-left.webp"
+    },
+    "walk-right": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": true,
+      "restFrame": 0,
+      "rows": 4,
+      "sheet": "penguin-walk-right.webp"
+    },
+    "walk": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": true,
+      "restFrame": 0,
+      "rows": 4,
+      "sheet": "penguin-walk-right.webp"
+    }
+  },
+  "puppy": {
+    "eat": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": false,
+      "restFrame": 29,
+      "rows": 4,
+      "sheet": "puppy-eat.webp"
+    },
+    "hello": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": false,
+      "restFrame": 29,
+      "rows": 4,
+      "sheet": "puppy-hello.webp"
+    },
+    "idle": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 48,
+      "loop": true,
+      "restFrame": 0,
+      "rows": 6,
+      "sheet": "puppy-idle.webp"
+    },
+    "lie-down": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": false,
+      "restFrame": 29,
+      "rows": 4,
+      "sheet": "puppy-lie-down.webp"
+    },
+    "pet": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": false,
+      "restFrame": 29,
+      "rows": 4,
+      "sheet": "puppy-pet.webp"
+    },
+    "play": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": false,
+      "restFrame": 29,
+      "rows": 4,
+      "sheet": "puppy-play.webp"
+    },
+    "sleep": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 36,
+      "loop": true,
+      "restFrame": 0,
+      "rows": 5,
+      "sheet": "puppy-sleep.webp"
+    },
+    "wake": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": false,
+      "restFrame": 29,
+      "rows": 4,
+      "sheet": "puppy-wake.webp"
+    },
+    "walk": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": true,
+      "restFrame": 0,
+      "rows": 4,
+      "sheet": "puppy-walk-right.webp"
+    },
+    "walk-left": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": true,
+      "restFrame": 0,
+      "rows": 4,
+      "sheet": "puppy-walk-left.webp"
+    },
+    "walk-right": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": true,
+      "restFrame": 0,
+      "rows": 4,
+      "sheet": "puppy-walk-right.webp"
+    }
+  },
+  "rabbit": {
+    "eat": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": false,
+      "restFrame": 29,
+      "rows": 4,
+      "sheet": "rabbit-eat.webp"
+    },
+    "hello": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": false,
+      "restFrame": 29,
+      "rows": 4,
+      "sheet": "rabbit-hello.webp"
+    },
+    "idle": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 48,
+      "loop": true,
+      "restFrame": 0,
+      "rows": 6,
+      "sheet": "rabbit-idle.webp"
+    },
+    "lie-down": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": false,
+      "restFrame": 29,
+      "rows": 4,
+      "sheet": "rabbit-lie-down.webp"
+    },
+    "pet": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": false,
+      "restFrame": 29,
+      "rows": 4,
+      "sheet": "rabbit-pet.webp"
+    },
+    "play": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": false,
+      "restFrame": 29,
+      "rows": 4,
+      "sheet": "rabbit-play.webp"
+    },
+    "sleep": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 36,
+      "loop": true,
+      "restFrame": 0,
+      "rows": 5,
+      "sheet": "rabbit-sleep.webp"
+    },
+    "wake": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": false,
+      "restFrame": 29,
+      "rows": 4,
+      "sheet": "rabbit-wake.webp"
+    },
+    "walk": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": true,
+      "restFrame": 0,
+      "rows": 4,
+      "sheet": "rabbit-walk-right.webp"
+    },
+    "walk-left": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": true,
+      "restFrame": 0,
+      "rows": 4,
+      "sheet": "rabbit-walk-left.webp"
+    },
+    "walk-right": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": true,
+      "restFrame": 0,
+      "rows": 4,
+      "sheet": "rabbit-walk-right.webp"
+    }
+  },
+  "seal": {
+    "eat": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": false,
+      "restFrame": 29,
+      "rows": 4,
+      "sheet": "seal-eat.webp"
+    },
+    "hello": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": false,
+      "restFrame": 29,
+      "rows": 4,
+      "sheet": "seal-hello.webp"
+    },
+    "idle": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 48,
+      "loop": true,
+      "restFrame": 0,
+      "rows": 6,
+      "sheet": "seal-idle.webp"
+    },
+    "lie-down": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": false,
+      "restFrame": 29,
+      "rows": 4,
+      "sheet": "seal-lie-down.webp"
+    },
+    "pet": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": false,
+      "restFrame": 29,
+      "rows": 4,
+      "sheet": "seal-pet.webp"
+    },
+    "play": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": false,
+      "restFrame": 29,
+      "rows": 4,
+      "sheet": "seal-play.webp"
+    },
+    "sleep": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 36,
+      "loop": true,
+      "restFrame": 0,
+      "rows": 5,
+      "sheet": "seal-sleep.webp"
+    },
+    "wake": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": false,
+      "restFrame": 29,
+      "rows": 4,
+      "sheet": "seal-wake.webp"
+    },
+    "walk": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": true,
+      "restFrame": 0,
+      "rows": 4,
+      "sheet": "seal-walk-right.webp"
+    },
+    "walk-left": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": true,
+      "restFrame": 0,
+      "rows": 4,
+      "sheet": "seal-walk-left.webp"
+    },
+    "walk-right": {
+      "columns": 8,
+      "fps": 12,
+      "frames": 30,
+      "loop": true,
+      "restFrame": 0,
+      "rows": 4,
+      "sheet": "seal-walk-right.webp"
+    }
+  }
+}

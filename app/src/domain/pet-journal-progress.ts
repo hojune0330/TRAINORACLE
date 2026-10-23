@@ -1,7 +1,7 @@
 import { activeLocalAccount, localJournalScopeGeneration } from './account/local-journal-ownership'
 import { careDay, confirmJournalDay, journalFriendCredits, loadHome, parseHome, petHomeKey, persistHome, type HomeStorage } from '../screens/pet-room/pet-engine'
 import { withPetHomeWrite } from './pet-home-lock'
-import { PET_IDS } from '../screens/pet-room/pet-catalog'
+import { PET_IDS, type PetId, type PetPose } from '../screens/pet-room/pet-catalog'
 
 export const PET_JOURNAL_EVENT = 'trainoracle:pet-journal-progress'
 export type PetJournalScope = { readonly owner: string; readonly generation: number }
@@ -10,7 +10,7 @@ type PendingDay = { ref: ConfirmedDay; ticket: PetJournalScope; error: string }
 /** Navigation metadata from an acknowledged journal save, never reward evidence. */
 export type SavedPetJournalRef = { readonly id: string; readonly date: string; readonly kind: string }
 export type PetJournalProgressRead =
-  | { readonly status: 'READY'; readonly days: number; readonly credits: number; readonly canMeet: boolean; readonly recordedToday: boolean }
+  | { readonly status: 'READY'; readonly days: number; readonly credits: number; readonly canMeet: boolean; readonly recordedToday: boolean; readonly friend: { readonly id: PetId; readonly pose: PetPose } }
   | { readonly status: 'MISSING' | 'UNAVAILABLE' | 'STALE' }
 // Only failed, already-confirmed receipts live here. They contain no entry ID,
 // journal text or health field. They cannot survive an application reload.
@@ -31,7 +31,8 @@ export function readPetJournalProgress(ticket: PetJournalScope, options: { stora
     if (!home || home.scope !== ticket.owner || home.day > today || home.journal.days.some(day => day > today)) return { status: 'UNAVAILABLE' }
     if (!currentScope(ticket)) return { status: 'STALE' }
     const credits = journalFriendCredits(home)
-    return { status: 'READY', days: home.journal.days.length, credits, canMeet: credits > 0 && !home.sleeping && !home.morning && PET_IDS.some(id => !home.pets[id]?.adoptedOn), recordedToday: home.journal.days.includes(today) }
+    return { status: 'READY', days: home.journal.days.length, credits, canMeet: credits > 0 && !home.sleeping && !home.morning && PET_IDS.some(id => !home.pets[id]?.adoptedOn), recordedToday: home.journal.days.includes(today),
+      friend: { id: home.selected, pose: home.sleeping ? 'sleeping' : home.morning ? 'waking' : 'happy' } }
   } catch { return { status: 'UNAVAILABLE' } }
 }
 export const pendingPetJournalError = (scope: string) => {

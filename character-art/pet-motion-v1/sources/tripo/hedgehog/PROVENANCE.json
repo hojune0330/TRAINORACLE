@@ -1,0 +1,114 @@
+{
+  "date": "2026-10-23",
+  "tool": "Tripo Studio Pro + Blender 4.5.14 LTS",
+  "modelId": "604753e7-5478-49aa-96bc-806cf4888737",
+  "sourceUrl": "https://studio.tripo3d.ai/ko/workspace/generate/604753e7-5478-49aa-96bc-806cf4888737",
+  "visibility": "private",
+  "seed": null,
+  "route": "text-to-model",
+  "referenceWasUploaded": false,
+  "reference": "references/hedgehog-master.png",
+  "promptRecord": "expansion-generation.json",
+  "creditsIncludingRejectedAttempts": 100,
+  "exports": [
+    {
+      "file": "original-mesh.glb",
+      "sha256": "e453fcd15b987044cfb57adf87a685832d291e0d59222e5155a296ba8a740c5c",
+      "bytes": 258188
+    }
+  ],
+  "editableMasters": [
+    {
+      "path": "masters/hedgehog/hedgehog-motion-v1.blend",
+      "sha256": "04341c8782b74ec2e1a2badcc5386b7a309f7fc0a9a11426e202099af3255bcd",
+      "bytes": 2709079
+    }
+  ],
+  "gameClips": [
+    {
+      "motion": "idle",
+      "sheet": "hedgehog-idle.webp",
+      "frames": 48,
+      "bytes": 305490,
+      "sha256": "a390858629290e21f33b3c59ad4654c130eeca105a245c55d230a6e7de1cc6a9",
+      "source": "hedgehog-motion-v1.blend"
+    },
+    {
+      "motion": "pet",
+      "sheet": "hedgehog-pet.webp",
+      "frames": 30,
+      "bytes": 195684,
+      "sha256": "0e98a832a036596b1bc001c50adca7460c40b0235423502093bde905406400bb",
+      "source": "hedgehog-motion-v1.blend"
+    },
+    {
+      "motion": "lie-down",
+      "sheet": "hedgehog-lie-down.webp",
+      "frames": 30,
+      "bytes": 218392,
+      "sha256": "6bbcf8bbe3c963679c7ab6bad8a04d95a403664d73511ccd7ad484f46a322d66",
+      "source": "hedgehog-motion-v1.blend"
+    },
+    {
+      "motion": "sleep",
+      "sheet": "hedgehog-sleep.webp",
+      "frames": 36,
+      "bytes": 256334,
+      "sha256": "577b98a647dc7215e9faf1ed607388f21422d37d54a00227fb35fb2eaaa5c86f",
+      "source": "hedgehog-motion-v1.blend"
+    },
+    {
+      "motion": "wake",
+      "sheet": "hedgehog-wake.webp",
+      "frames": 30,
+      "bytes": 211068,
+      "sha256": "b89386bc533fcd409a8d1bdb894227944bb35fe2307607d07d0019bb0d4bfb38",
+      "source": "hedgehog-motion-v1.blend"
+    },
+    {
+      "motion": "eat",
+      "sheet": "hedgehog-eat.webp",
+      "frames": 30,
+      "bytes": 198206,
+      "sha256": "c6a24986a401442faa0f5b466cee18595335944860ca9539f5c488740f9a4e99",
+      "source": "hedgehog-motion-v1.blend"
+    },
+    {
+      "motion": "play",
+      "sheet": "hedgehog-play.webp",
+      "frames": 30,
+      "bytes": 199950,
+      "sha256": "177031fc170ae2e2b21ddc8a3c6a753c21a5b84430ea979812d30f0fee0a419b",
+      "source": "hedgehog-motion-v1.blend"
+    },
+    {
+      "motion": "hello",
+      "sheet": "hedgehog-hello.webp",
+      "frames": 30,
+      "bytes": 199790,
+      "sha256": "1bac38ec89865d19c6fd04834e889788b5202537539e6e0dd48a48d451e21dcb",
+      "source": "hedgehog-motion-v1.blend"
+    },
+    {
+      "motion": "walk-left",
+      "sheet": "hedgehog-walk-left.webp",
+      "frames": 30,
+      "bytes": 228532,
+      "sha256": "18e272b8e35d875ab372d341f2b13e342586917edba7e36780486c88e7a0c1f0",
+      "source": "hedgehog-motion-v1.blend"
+    },
+    {
+      "motion": "walk-right",
+      "sheet": "hedgehog-walk-right.webp",
+      "frames": 30,
+      "bytes": 228816,
+      "sha256": "27fc3b08b81979b863046276af93201145a0a546dfacd4456e61c13e9f02c4a4",
+      "source": "hedgehog-motion-v1.blend"
+    }
+  ],
+  "runtimeStatus": "registered in source; not published by this task",
+  "sourcePolicy": "Original GLB exports retained unchanged. Mesh repairs, flat materials and rig authored in separate Blender derivatives.",
+  "motionSource": "Locally authored species-specific rig and nine actions, rendered as ten clips with two walking views. No paid rig or stock humanoid animation.",
+  "licenseEvidence": "Created under the observed Pro plan/private setting; provider evidence is recorded in PRODUCTION.md.",
+  "renderMethod": "Orthographic flat colors and inverted hull outline; 512px PNG to fixed 256px WebP cells."
+}

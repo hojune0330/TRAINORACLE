@@ -26,17 +26,21 @@
 .pet-care-world__pet > span:last-child:not(.pet-sprite) { position: absolute; bottom: 4%; left: 50%; transform: translateX(-50%); background: var(--pet-paper); padding: 3px 10px; border-radius: 12px; font-size: 12px; }
 .pet-care-world__pet--touch { width: 68%; touch-action: none !important; cursor: grab; }
 .pet-home .pet-care-world__pet:not(:disabled):active, .pet-home .pet-care-prop:not(:disabled):active, .pet-home .pet-drop-target:not(:disabled):active { transform: translate(-50%, -50%); }
-.pet-care-world--hop .pet-care-world__pet .pet-sprite { animation: pet-play-hop 440ms ease-in-out infinite; }
-.pet-care-world--waddle .pet-care-world__pet .pet-sprite { animation: pet-play-waddle 440ms ease-in-out infinite; }
+.pet-care-world--hop .pet-care-world__pet .pet-sprite:not([data-pet-motion]) { animation: pet-play-hop 440ms ease-in-out infinite; }
+.pet-care-world--waddle .pet-care-world__pet .pet-sprite:not([data-pet-motion]) { animation: pet-play-waddle 440ms ease-in-out infinite; }
 .pet-care-prop { position: absolute; z-index: 6; width: 29%; min-width: 64px; transform: translate(-50%, -50%); background: none; padding: 0; border: 0; touch-action: none !important; }
 .pet-care-prop[aria-pressed=true] { outline: 2px dashed var(--pet-green); border-radius: 20px; }
 .pet-care-prop--ball { width: 20%; transition: left var(--pet-travel) ease-in-out, top var(--pet-travel) ease-in-out; }
 .pet-care-prop--drag { cursor: grab; }
+.pet-served-bowl [data-pet-prop=bowl-empty] { position: absolute; inset: 0; opacity: 0; }
+.pet-served-bowl--empty [data-pet-prop=bowl] { opacity: 0; }
+.pet-served-bowl--empty [data-pet-prop=bowl-empty] { opacity: 1; }
 .pet-drop-target { position: absolute; z-index: 3; min-width: 70px; max-width: 38%; min-height: 48px; padding: 10px; border: 2px dashed var(--pet-green); border-radius: 20px; transform: translate(-50%, -50%); background: var(--pet-paper); font-size: 13px !important; }
 .pet-drop-target--ready { border-style: solid; outline: 3px solid var(--pet-paper); }
 .pet-throw-choices .pet-drop-target, .pet-home .pet-care-world .pet-throw-choices .pet-drop-target:not(:disabled):active { transform: translate(-50%, -130%); }
 .pet-throw-choices .pet-drop-target::after { content: '↓'; position: absolute; left: 50%; top: 100%; transform: translateX(-50%); color: var(--pet-green); font-size: 22px; pointer-events: none; }
 .pet-stroke-guide { position: absolute; left: 21%; right: 15%; top: 29%; text-align: center; font-size: 36px; color: var(--pet-green); pointer-events: none; }
+.pet-stroke-response { position: absolute; z-index: 4; left: 65%; top: 39%; color: var(--pet-green); pointer-events: none; animation: pet-stroke-heart 800ms ease-out both; }
 .pet-hide-cushions { position: absolute; z-index: 4; left: 5%; right: 5%; bottom: 5%; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .pet-hide-cushions button { position: relative; min-width: 44px; min-height: 64px; border: 0; padding: 0; background: transparent; }
 .pet-hide-cushions button:not(:disabled) { outline: 1px dashed var(--pet-green); border-radius: 18px; }
@@ -49,6 +53,7 @@
 .pet-bedtime-friend .pet-sprite { position: relative; z-index: 1; }
 .pet-bedtime-friend > span:last-child:not(.pet-sprite) { display: block; text-align: center; font-size: 12px; }
 .pet-bedtime-mat { position: absolute; width: 116%; left: -8%; bottom: -4%; }
+.pet-bedtime-friend:has([data-pet-motion]) .pet-bedtime-mat { bottom: -12%; }
 .pet-bedtime-place { left: 50%; top: 84%; }
 .pet-room-hotspot { position: absolute; z-index: 3; min-height: 50px; min-width: 64px; padding: 10px; background: var(--pet-paper); border: 2px solid var(--pet-green); border-radius: 16px; font-size: 14px !important; }
 .pet-room-hotspot--curtain { left: 38%; top: 15%; }
@@ -78,6 +83,7 @@
 @keyframes pet-play-hop { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
 @keyframes pet-play-waddle { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
 @keyframes pet-story-arrive { from { transform: translateX(-22px); opacity: .3; } to { transform: translateX(0); opacity: 1; } }
+@keyframes pet-stroke-heart { 0% { opacity: 0; transform: translateY(0) scale(.85); } 20% { opacity: 1; } 100% { opacity: 0; transform: translateY(-8px) scale(1); } }
 @media (min-width: 640px) { .pet-activity-backdrop { padding: 20px; } .pet-activity { min-height: 0; border-radius: 24px; overflow: hidden; } }
 @media (prefers-reduced-motion: reduce) { .pet-activity *, .pet-activity *::before, .pet-activity *::after { animation: none !important; transition: none !important; } }
 .pet-activity-backdrop--contained { align-items: stretch; overflow: hidden; }

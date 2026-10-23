@@ -1,0 +1,10 @@
+{
+  "date": "2026-10-22",
+  "tool": "built-in image_gen",
+  "species": "seal",
+  "purpose": "single mesh reference preserving the existing pet identity; no Tripo generation yet",
+  "input": "app/public/games/pet-room-v1/pets/seal.webp",
+  "output": "references/seal-master.png",
+  "prompt": "Use the attached original 6-pose pet sprite sheet ONLY as the character identity reference, not as a composition to reproduce. Create exactly ONE full-body neutral 3D modeling reference of that SAME animal. Large rounded head, small simple dark brown oval eyes, tiny simple smile, pale pink cheeks, the same exact color markings and silhouette as the supplied pet. Keep the style extremely simple: smooth matte forms, restrained soft volume, no fur strands, no fine toe lines, no whiskers, no elaborate surface details. Camera level, orthographic, front three-quarter with only about 20 degrees of body turn so the face is almost straight toward us. All extremities must be visible, separated enough to rig, within the frame, with generous clear margins. Transparent background, no floor or ground shadows, no pedestal, no props, bowl, ball, clothes, accessories, text, multiple views, or additional animals. This is a reusable mesh-generation input for an existing cute 2D game, NOT a redesign or finished game sprite. Preserve the original BLUE-GRAY baby seal, not a white seal: very round domed head blending into a plump low tapered body, broad cream muzzle/chin patch, dark brown eyes and tiny rounded triangular nose, pink cheeks. It rests naturally on its belly, with TWO broad rounded FRONT FLIPPERS spread out and clearly separated on either side, and TWO short rear flippers as a simple two-lobed fan visible beyond the torso. No external ears, no fur, no feet, no legs, no whisker strands. Face almost front-facing; body gently angled so its long low body and rear flippers are visible. Low calm neutral pose, not a sitting dog.",
+  "seed": null
+}

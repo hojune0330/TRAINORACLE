@@ -171,6 +171,8 @@
 
 /* One quiet completion shortcut; no second reward card or competing primary CTA. */
 .journal-save-friends { display: grid; gap: var(--space-1); min-width: 0; color: var(--ink-2); font-size: var(--fs-caption); }
+.journal-save-friends__pet { display: flex; align-items: center; gap: var(--space-2); }
+.journal-save-friends__pet .pet-sprite { width: 44px; }
 .journal-save-friends__actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .journal-save-friends__actions > button { display: inline-flex; align-items: center; gap: var(--space-1); border-color: transparent; padding: var(--space-2) 0; text-align: left; }
 .journal-save-friends details > summary { min-height: var(--app-touch-min, 44px); display: flex; align-items: center; cursor: pointer; }

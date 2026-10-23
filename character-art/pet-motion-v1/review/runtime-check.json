@@ -1,0 +1,17 @@
+{
+  "date": "2026-10-22",
+  "environment": "local development fixture using real PetCareScene, PetBedtimeScene and PetSprite",
+  "url": "http://127.0.0.1:4308/pet-motion-preview.html",
+  "persistedUserRecords": false,
+  "checks": [
+    "cat petting and lying core flow inspected in preceding work",
+    "puppy fetch left, return, catch, completion count 1",
+    "seal blanket, curtains, lights out, completion count 1; visible lie-down image on blanket",
+    "rabbit/duck/otter sleep sheets load with opacity 1 in real sprite player",
+    "otter sleep background-position changed from 0% 0% to 0% 75%"
+  ],
+  "mobileContentWidth": 375,
+  "mobileHeight": 844,
+  "screenshot": "game-preview-seal-bed.png",
+  "publication": "not deployed"
+}

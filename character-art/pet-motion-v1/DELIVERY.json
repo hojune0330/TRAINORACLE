@@ -1,0 +1,730 @@
+{
+  "date": "2026-10-23",
+  "baseSourceSha": "872f82fe35d1bee3b8fe134f8546192f2ae1f4fd",
+  "status": "eight-pets-integrated-in-source",
+  "published": false,
+  "pets": {
+    "cat": {
+      "latestMaster": "masters/cat/nareun-motion-master.blend",
+      "clips": [
+        {
+          "motion": "idle",
+          "sheet": "cat-idle.webp",
+          "frames": 48,
+          "bytes": 376580,
+          "sha256": "b489a108c87b9d31c38e42b6f6d21d45e3404c7c97d550f8254ea5a6a5481b89",
+          "source": "nareun-authored-v4.blend"
+        },
+        {
+          "motion": "pet",
+          "sheet": "cat-pet.webp",
+          "frames": 30,
+          "bytes": 244108,
+          "sha256": "f45f659e82ca86271017e2c13bc0dbeb1b82ab74f6a53a5184592b2e465404c0",
+          "source": "nareun-authored-v4.blend"
+        },
+        {
+          "motion": "lie-down",
+          "sheet": "cat-lie-down.webp",
+          "frames": 30,
+          "bytes": 230650,
+          "sha256": "24c2da71ad976190a437322ccc2d1819b4d2264c28ee2917fc1e7944391c6c1a",
+          "source": "nareun-authored-v4.blend"
+        },
+        {
+          "motion": "sleep",
+          "sheet": "cat-sleep.webp",
+          "frames": 36,
+          "bytes": 218514,
+          "sha256": "5b760bb02153510e4ef4ad5e6227d18f204c510355b158abbcecc4d4fc757e1c",
+          "source": "nareun-authored-v4.blend"
+        },
+        {
+          "motion": "wake",
+          "sheet": "cat-wake.webp",
+          "frames": 30,
+          "bytes": 232330,
+          "sha256": "3ad1cdeffc1308b2deaa869eaa4669f6ecb3ff9a44f05aba696662370a6dc53f",
+          "source": "nareun-authored-v4.blend"
+        },
+        {
+          "motion": "eat",
+          "sheet": "cat-eat.webp",
+          "frames": 30,
+          "bytes": 238512,
+          "sha256": "cce2a4c00e7f9e52b7b8091568765a222f868227de030eb627dd70f1b3ed15a1",
+          "source": "nareun-authored-v4.blend"
+        },
+        {
+          "motion": "play",
+          "sheet": "cat-play.webp",
+          "frames": 30,
+          "bytes": 245266,
+          "sha256": "f40f1103b9d42146357c91730f97e3d85fcedf72fbd7c427384275321c00f3c5",
+          "source": "nareun-motion-master.blend"
+        },
+        {
+          "motion": "hello",
+          "sheet": "cat-hello.webp",
+          "frames": 30,
+          "bytes": 244694,
+          "sha256": "b0ca2203e7fa26b66266cabea4f1df7a728c6087de4b8ef53383fd7632550b26",
+          "source": "nareun-motion-master.blend"
+        },
+        {
+          "motion": "walk-left",
+          "sheet": "cat-walk-left.webp",
+          "frames": 30,
+          "bytes": 280264,
+          "sha256": "13d2b01dba82103f7abfe19f0ce7182ee4211c9f048a2ae633bfc990b3ddca0a",
+          "source": "nareun.blend"
+        },
+        {
+          "motion": "walk-right",
+          "sheet": "cat-walk-right.webp",
+          "frames": 30,
+          "bytes": 268618,
+          "sha256": "5bc5d209a7afd5b11cf675f7805355815205a8bd8b2727919a4c609daec4fcac",
+          "source": "nareun.blend"
+        }
+      ],
+      "credits": 40
+    },
+    "puppy": {
+      "latestMaster": "masters/puppy/dubu-motion-v2.blend",
+      "clips": [
+        {
+          "motion": "idle",
+          "sheet": "puppy-idle.webp",
+          "frames": 48,
+          "bytes": 340714,
+          "sha256": "b1e11359af0c81a63648fb19323dbaaa0f45e719d3e5178386a498300c6d901e",
+          "source": "dubu-motion-v2.blend"
+        },
+        {
+          "motion": "pet",
+          "sheet": "puppy-pet.webp",
+          "frames": 30,
+          "bytes": 242218,
+          "sha256": "c92dd81f10f472ea7db8a404b6b8de3e91056bf2aefe6a7088882d15ac81f4d3",
+          "source": "dubu-motion-v2.blend"
+        },
+        {
+          "motion": "lie-down",
+          "sheet": "puppy-lie-down.webp",
+          "frames": 30,
+          "bytes": 235260,
+          "sha256": "c1bcba03ee8005e460b76e8c221ad0ade067114af2a5f96eee83ab3e18e4c08a",
+          "source": "dubu-motion-v2.blend"
+        },
+        {
+          "motion": "sleep",
+          "sheet": "puppy-sleep.webp",
+          "frames": 36,
+          "bytes": 235240,
+          "sha256": "948d378feeaaec90ec0c8ad55f96e8a55751951cffe1f6c4ac5d51f2dc34d34f",
+          "source": "dubu-motion-v2.blend"
+        },
+        {
+          "motion": "wake",
+          "sheet": "puppy-wake.webp",
+          "frames": 30,
+          "bytes": 227430,
+          "sha256": "cc5e2026b910ecceb30a6de38b61046ea784748d1ab976dac29b62e97f1d860b",
+          "source": "dubu-motion-v2.blend"
+        },
+        {
+          "motion": "eat",
+          "sheet": "puppy-eat.webp",
+          "frames": 30,
+          "bytes": 242730,
+          "sha256": "1cbd835689aef39349a29503a4420f4025a5952790432253dbf21e7483bccb98",
+          "source": "dubu-motion-v2.blend"
+        },
+        {
+          "motion": "play",
+          "sheet": "puppy-play.webp",
+          "frames": 30,
+          "bytes": 238798,
+          "sha256": "f1b6c3619badc415069d6e665b3fc569899f43fcb8e21ebd2b39d0818670312d",
+          "source": "dubu-motion-v2.blend"
+        },
+        {
+          "motion": "hello",
+          "sheet": "puppy-hello.webp",
+          "frames": 30,
+          "bytes": 234984,
+          "sha256": "b49a55d506abcc0d033a8a563b015141cf3450e68c4b54f50b6b4bd329bd2b53",
+          "source": "dubu-motion-v2.blend"
+        },
+        {
+          "motion": "walk-left",
+          "sheet": "puppy-walk-left.webp",
+          "frames": 30,
+          "bytes": 242556,
+          "sha256": "de3fff06c58d60ee2c2964964225ff9b11dc272774657e2be9a0525d908787a0",
+          "source": "dubu-motion-v2.blend"
+        },
+        {
+          "motion": "walk-right",
+          "sheet": "puppy-walk-right.webp",
+          "frames": 30,
+          "bytes": 251078,
+          "sha256": "def08fa8402e0ca1d6ef7675239e6e89fe0cd09ed939dae3f200a97a5d1afa77",
+          "source": "dubu-motion-v2.blend"
+        }
+      ],
+      "credits": 40
+    },
+    "rabbit": {
+      "latestMaster": "masters/rabbit/rabbit-motion-v2.blend",
+      "clips": [
+        {
+          "motion": "idle",
+          "sheet": "rabbit-idle.webp",
+          "frames": 48,
+          "bytes": 300686,
+          "sha256": "20fe67ce4d42e97258890b6e5e053ca2f2170b2cdf46b2f3a66f5ccc19aea23c",
+          "source": "rabbit-motion-v2.blend"
+        },
+        {
+          "motion": "pet",
+          "sheet": "rabbit-pet.webp",
+          "frames": 30,
+          "bytes": 195084,
+          "sha256": "06605459a0a82638061e9c491b2d3003f3e1a00facc2a6c213e0fc79f343df41",
+          "source": "rabbit-motion-v2.blend"
+        },
+        {
+          "motion": "lie-down",
+          "sheet": "rabbit-lie-down.webp",
+          "frames": 30,
+          "bytes": 201030,
+          "sha256": "30df7e9454fbe3ec2fd3fa51e862d124d5828d029d47ec1f6df20bd215b36f4d",
+          "source": "rabbit-motion-v2.blend"
+        },
+        {
+          "motion": "sleep",
+          "sheet": "rabbit-sleep.webp",
+          "frames": 36,
+          "bytes": 227074,
+          "sha256": "1eeac3aae78fd1bec0b26581ffbdf3950be63c053e73e38df71f4bf9a18c5db0",
+          "source": "rabbit-motion-v2.blend"
+        },
+        {
+          "motion": "wake",
+          "sheet": "rabbit-wake.webp",
+          "frames": 30,
+          "bytes": 195808,
+          "sha256": "271968e7ab560716f5e8504e25e79b5a72ca5ad126ead8dbf23a20115da3d872",
+          "source": "rabbit-motion-v2.blend"
+        },
+        {
+          "motion": "eat",
+          "sheet": "rabbit-eat.webp",
+          "frames": 30,
+          "bytes": 193104,
+          "sha256": "3d0303dcfafe61a3c53bd69b5c36021529829b3f9b74630412276b4ece674615",
+          "source": "rabbit-motion-v2.blend"
+        },
+        {
+          "motion": "play",
+          "sheet": "rabbit-play.webp",
+          "frames": 30,
+          "bytes": 194288,
+          "sha256": "ded3d01463acdd3c97fb6e75b6d267b01988de609277ffac0d3ebc7082fe8e9b",
+          "source": "rabbit-motion-v2.blend"
+        },
+        {
+          "motion": "hello",
+          "sheet": "rabbit-hello.webp",
+          "frames": 30,
+          "bytes": 194076,
+          "sha256": "6148c1762eb7e39e165af0c7c913ac7918c74ddaad51cb1944c9971bb420c91b",
+          "source": "rabbit-motion-v2.blend"
+        },
+        {
+          "motion": "walk-left",
+          "sheet": "rabbit-walk-left.webp",
+          "frames": 30,
+          "bytes": 209702,
+          "sha256": "690d60a4d5f7263acdec0ae4cadd5eebdd7347dd700b0f331e571f8ac8ba3d2d",
+          "source": "rabbit-motion-v2.blend"
+        },
+        {
+          "motion": "walk-right",
+          "sheet": "rabbit-walk-right.webp",
+          "frames": 30,
+          "bytes": 210232,
+          "sha256": "24bd5b1292a037be8b13322dcad459802a7effd27404576a1653cd1a77d210c6",
+          "source": "rabbit-motion-v2.blend"
+        }
+      ],
+      "credits": 340
+    },
+    "duck": {
+      "latestMaster": "masters/duck/duck-motion-v2.blend",
+      "clips": [
+        {
+          "motion": "idle",
+          "sheet": "duck-idle.webp",
+          "frames": 48,
+          "bytes": 307078,
+          "sha256": "ef41a1f5abb253cab7cad5070d7eeae07197f78e208f083338456fa0b2590a2f",
+          "source": "duck-motion-v2.blend"
+        },
+        {
+          "motion": "pet",
+          "sheet": "duck-pet.webp",
+          "frames": 30,
+          "bytes": 202994,
+          "sha256": "0d47e489b5ce42c7f0596c9e7dafbf713b084d1422d40825f1fd877612d40a1b",
+          "source": "duck-motion-v2.blend"
+        },
+        {
+          "motion": "lie-down",
+          "sheet": "duck-lie-down.webp",
+          "frames": 30,
+          "bytes": 188152,
+          "sha256": "641145c06d79c656e7f1ff85a6d00e3409e2c67298e763f6efdc02dbac3d9bef",
+          "source": "duck-motion-v2.blend"
+        },
+        {
+          "motion": "sleep",
+          "sheet": "duck-sleep.webp",
+          "frames": 36,
+          "bytes": 177864,
+          "sha256": "87f4fc6ed31266fbc3ba2d0804c8208a7517ffe1fd172341a4a0a40a5d3523fd",
+          "source": "duck-motion-v2.blend"
+        },
+        {
+          "motion": "wake",
+          "sheet": "duck-wake.webp",
+          "frames": 30,
+          "bytes": 184800,
+          "sha256": "1cdcefc56e0f98cffb698f09dc247c808c07c5995ed835ce95df899b36f172d7",
+          "source": "duck-motion-v2.blend"
+        },
+        {
+          "motion": "eat",
+          "sheet": "duck-eat.webp",
+          "frames": 30,
+          "bytes": 187118,
+          "sha256": "1512b83c931cf98a6d24041e673086d4a4085d49b19e49649ce9dd6ac9f11d7f",
+          "source": "duck-motion-v2.blend"
+        },
+        {
+          "motion": "play",
+          "sheet": "duck-play.webp",
+          "frames": 30,
+          "bytes": 201256,
+          "sha256": "2c95780e3132083e9093b6cf38edf82843f58d1487716ba6eea97623cc580c6f",
+          "source": "duck-motion-v2.blend"
+        },
+        {
+          "motion": "hello",
+          "sheet": "duck-hello.webp",
+          "frames": 30,
+          "bytes": 200698,
+          "sha256": "5885d4dff8a2a6015fb582a2e7c910d1ce359dca4eb5080d0af2b35c963df3f9",
+          "source": "duck-motion-v2.blend"
+        },
+        {
+          "motion": "walk-left",
+          "sheet": "duck-walk-left.webp",
+          "frames": 30,
+          "bytes": 219234,
+          "sha256": "e66d27a8b500b05df0b68cfbb1fd7d8796b09b6d6fc4130deaba616f15c699c8",
+          "source": "duck-motion-v2.blend"
+        },
+        {
+          "motion": "walk-right",
+          "sheet": "duck-walk-right.webp",
+          "frames": 30,
+          "bytes": 213172,
+          "sha256": "eaf3eeb739ccbde48357e2673176f97b743810fc6b79c77be5f9a1a3037d795e",
+          "source": "duck-motion-v2.blend"
+        }
+      ],
+      "credits": 120
+    },
+    "seal": {
+      "latestMaster": "masters/seal/seal-motion-v3.blend",
+      "clips": [
+        {
+          "motion": "idle",
+          "sheet": "seal-idle.webp",
+          "frames": 48,
+          "bytes": 259100,
+          "sha256": "dd33a45727613b336dc747b47cfec5c05ac63914756ffa6dcb3efb4eb219b116",
+          "source": "seal-motion-v3.blend"
+        },
+        {
+          "motion": "pet",
+          "sheet": "seal-pet.webp",
+          "frames": 30,
+          "bytes": 172722,
+          "sha256": "710abe489435585b2d44ea4ce0a892dcfa1044fc87048f6218dc5afb662f9a70",
+          "source": "seal-motion-v3.blend"
+        },
+        {
+          "motion": "lie-down",
+          "sheet": "seal-lie-down.webp",
+          "frames": 30,
+          "bytes": 178426,
+          "sha256": "c947b04db0b5da4dc7df8879959fe0f2a2bb229d386eef9395439d0e49a118da",
+          "source": "seal-motion-v3.blend"
+        },
+        {
+          "motion": "sleep",
+          "sheet": "seal-sleep.webp",
+          "frames": 36,
+          "bytes": 197502,
+          "sha256": "469e110e93c38906e61d188d84d799e1cbaed8fb9ea9eaa69a9d0e1984ad8c53",
+          "source": "seal-motion-v3.blend"
+        },
+        {
+          "motion": "wake",
+          "sheet": "seal-wake.webp",
+          "frames": 30,
+          "bytes": 171842,
+          "sha256": "e58521e176f311eff9dae16fb17a9a5bc9f9e0bbdd1cff646076312748cb10a6",
+          "source": "seal-motion-v3.blend"
+        },
+        {
+          "motion": "eat",
+          "sheet": "seal-eat.webp",
+          "frames": 30,
+          "bytes": 162842,
+          "sha256": "161cfa4327359729132a3a0a49ade5c31efc00ae84efa822d88b05dd176051f9",
+          "source": "seal-motion-v3.blend"
+        },
+        {
+          "motion": "play",
+          "sheet": "seal-play.webp",
+          "frames": 30,
+          "bytes": 171598,
+          "sha256": "99567bd62d0980d25c974f6c18bd9887c59a6c41ca08dd986ad4d09579d38ecf",
+          "source": "seal-motion-v3.blend"
+        },
+        {
+          "motion": "hello",
+          "sheet": "seal-hello.webp",
+          "frames": 30,
+          "bytes": 170476,
+          "sha256": "ad069c7835eeb396bec2d06aa7930458d41de7bd00d198dbad34bf652b77840d",
+          "source": "seal-motion-v3.blend"
+        },
+        {
+          "motion": "walk-left",
+          "sheet": "seal-walk-left.webp",
+          "frames": 30,
+          "bytes": 195014,
+          "sha256": "baffbc066447c7f9fff41fc5b1edbea381c92e6356e758013cbfd9d62b580aa5",
+          "source": "seal-motion-v3.blend"
+        },
+        {
+          "motion": "walk-right",
+          "sheet": "seal-walk-right.webp",
+          "frames": 30,
+          "bytes": 198104,
+          "sha256": "df9e365178f8b1a58e7d31414b21d7c3fd9403d030bb27209e8ca20721e67908",
+          "source": "seal-motion-v3.blend"
+        }
+      ],
+      "credits": 120
+    },
+    "otter": {
+      "latestMaster": "masters/otter/otter-motion-v2.blend",
+      "clips": [
+        {
+          "motion": "idle",
+          "sheet": "otter-idle.webp",
+          "frames": 48,
+          "bytes": 229524,
+          "sha256": "2ce6bfc08d60aee03da5c5d8466752d5181acb0267305b40b999d4b111088afb",
+          "source": "otter-motion-v2.blend"
+        },
+        {
+          "motion": "pet",
+          "sheet": "otter-pet.webp",
+          "frames": 30,
+          "bytes": 152154,
+          "sha256": "a04a72c4c2c2f7c8b8a75a7b1368ccb8a386fd65c44057b74501bf515492d887",
+          "source": "otter-motion-v2.blend"
+        },
+        {
+          "motion": "lie-down",
+          "sheet": "otter-lie-down.webp",
+          "frames": 30,
+          "bytes": 159796,
+          "sha256": "2104376f2553280a1b82943da291b56d70a63152518c15538435440c81403341",
+          "source": "otter-motion-v2.blend"
+        },
+        {
+          "motion": "sleep",
+          "sheet": "otter-sleep.webp",
+          "frames": 36,
+          "bytes": 170350,
+          "sha256": "bb5d10fbb18221ddc107cb8a99684a8a18fbc85d0d136d4c1e1bac08e14143aa",
+          "source": "otter-motion-v2.blend"
+        },
+        {
+          "motion": "wake",
+          "sheet": "otter-wake.webp",
+          "frames": 30,
+          "bytes": 152686,
+          "sha256": "8d1c9a78770ab36a7b0ba619aef20dc9d5ee0cd8e9845ff0dbb1a0c7ddbced37",
+          "source": "otter-motion-v2.blend"
+        },
+        {
+          "motion": "eat",
+          "sheet": "otter-eat.webp",
+          "frames": 30,
+          "bytes": 146352,
+          "sha256": "8c41ffff37eb1dc7c9f1f3b25fc00afa2750a5ece1e49cc383b63c3ff2986ed3",
+          "source": "otter-motion-v2.blend"
+        },
+        {
+          "motion": "play",
+          "sheet": "otter-play.webp",
+          "frames": 30,
+          "bytes": 154950,
+          "sha256": "fc6e41cf20787119295fef38c4ae9bc1039be7c2954fc4659d1d54a9f42395b0",
+          "source": "otter-motion-v2.blend"
+        },
+        {
+          "motion": "hello",
+          "sheet": "otter-hello.webp",
+          "frames": 30,
+          "bytes": 153988,
+          "sha256": "7b7669bea3f653fcb2fe03014e0fb13662b3f200acfe0e0ab8415bcd16b93240",
+          "source": "otter-motion-v2.blend"
+        },
+        {
+          "motion": "walk-left",
+          "sheet": "otter-walk-left.webp",
+          "frames": 30,
+          "bytes": 204558,
+          "sha256": "a9f3e230979d77b1681cd300463ae06b4fcec42c9f4a1b005d301384b51a3ea2",
+          "source": "otter-motion-v2.blend"
+        },
+        {
+          "motion": "walk-right",
+          "sheet": "otter-walk-right.webp",
+          "frames": 30,
+          "bytes": 202504,
+          "sha256": "52de990a934b53d1fb4ed0c905d857bacda0d243d40b77a6a8db8d250841be81",
+          "source": "otter-motion-v2.blend"
+        }
+      ],
+      "credits": 120
+    },
+    "penguin": {
+      "latestMaster": "masters/penguin/penguin-motion-v1.blend",
+      "clips": [
+        {
+          "motion": "idle",
+          "sheet": "penguin-idle.webp",
+          "frames": 48,
+          "bytes": 292564,
+          "sha256": "5e4b37560f63772426d2e44dd0669a2be55a01b382bb849e97c3b45654870e57",
+          "source": "penguin-motion-v1.blend"
+        },
+        {
+          "motion": "pet",
+          "sheet": "penguin-pet.webp",
+          "frames": 30,
+          "bytes": 190298,
+          "sha256": "99826c6b6752daf340c9d4d4e949db1dcdbc8950f090d3ca2805851f58c030aa",
+          "source": "penguin-motion-v1.blend"
+        },
+        {
+          "motion": "lie-down",
+          "sheet": "penguin-lie-down.webp",
+          "frames": 30,
+          "bytes": 189254,
+          "sha256": "61aec1ca36c6f9915fb082b58b76eb1361c5bb9963e954840e525b31166eda78",
+          "source": "penguin-motion-v1.blend"
+        },
+        {
+          "motion": "sleep",
+          "sheet": "penguin-sleep.webp",
+          "frames": 36,
+          "bytes": 207478,
+          "sha256": "40c454c59c29b51e7ef87897d053459c81f80145901d47d5d0ae91589b2adebc",
+          "source": "penguin-motion-v1.blend"
+        },
+        {
+          "motion": "wake",
+          "sheet": "penguin-wake.webp",
+          "frames": 30,
+          "bytes": 183076,
+          "sha256": "a836d4b54e16ec55406f2eb63c9cd74e52c5b5f0dc686f6ca0cb50df128e6dcb",
+          "source": "penguin-motion-v1.blend"
+        },
+        {
+          "motion": "eat",
+          "sheet": "penguin-eat.webp",
+          "frames": 30,
+          "bytes": 175648,
+          "sha256": "086efa1335e4d9e478878f33131444f47dacd79c1977faa0096819769b97c764",
+          "source": "penguin-motion-v1.blend"
+        },
+        {
+          "motion": "play",
+          "sheet": "penguin-play.webp",
+          "frames": 30,
+          "bytes": 199820,
+          "sha256": "152fce7143a19394e292be0adeede1dbd8dbb3a6e794c2487ab3239e494fc919",
+          "source": "penguin-motion-v1.blend"
+        },
+        {
+          "motion": "hello",
+          "sheet": "penguin-hello.webp",
+          "frames": 30,
+          "bytes": 199488,
+          "sha256": "cfc13c38f6740e820d2ec040ac64fdc3a576b4bea2985c78afd54ac618b7d499",
+          "source": "penguin-motion-v1.blend"
+        },
+        {
+          "motion": "walk-left",
+          "sheet": "penguin-walk-left.webp",
+          "frames": 30,
+          "bytes": 177416,
+          "sha256": "5befa568fe23ba5ebfc0748588a8b28c66f0dadda5e8526779d14d94235ca60a",
+          "source": "penguin-motion-v1.blend"
+        },
+        {
+          "motion": "walk-right",
+          "sheet": "penguin-walk-right.webp",
+          "frames": 30,
+          "bytes": 177872,
+          "sha256": "3b2a109dc160a145a83c24a59caacbb83dc6d38a18d725f2bf3369a771300cc6",
+          "source": "penguin-motion-v1.blend"
+        }
+      ],
+      "credits": 120
+    },
+    "hedgehog": {
+      "latestMaster": "masters/hedgehog/hedgehog-motion-v1.blend",
+      "clips": [
+        {
+          "motion": "idle",
+          "sheet": "hedgehog-idle.webp",
+          "frames": 48,
+          "bytes": 305490,
+          "sha256": "a390858629290e21f33b3c59ad4654c130eeca105a245c55d230a6e7de1cc6a9",
+          "source": "hedgehog-motion-v1.blend"
+        },
+        {
+          "motion": "pet",
+          "sheet": "hedgehog-pet.webp",
+          "frames": 30,
+          "bytes": 195684,
+          "sha256": "0e98a832a036596b1bc001c50adca7460c40b0235423502093bde905406400bb",
+          "source": "hedgehog-motion-v1.blend"
+        },
+        {
+          "motion": "lie-down",
+          "sheet": "hedgehog-lie-down.webp",
+          "frames": 30,
+          "bytes": 218392,
+          "sha256": "6bbcf8bbe3c963679c7ab6bad8a04d95a403664d73511ccd7ad484f46a322d66",
+          "source": "hedgehog-motion-v1.blend"
+        },
+        {
+          "motion": "sleep",
+          "sheet": "hedgehog-sleep.webp",
+          "frames": 36,
+          "bytes": 256334,
+          "sha256": "577b98a647dc7215e9faf1ed607388f21422d37d54a00227fb35fb2eaaa5c86f",
+          "source": "hedgehog-motion-v1.blend"
+        },
+        {
+          "motion": "wake",
+          "sheet": "hedgehog-wake.webp",
+          "frames": 30,
+          "bytes": 211068,
+          "sha256": "b89386bc533fcd409a8d1bdb894227944bb35fe2307607d07d0019bb0d4bfb38",
+          "source": "hedgehog-motion-v1.blend"
+        },
+        {
+          "motion": "eat",
+          "sheet": "hedgehog-eat.webp",
+          "frames": 30,
+          "bytes": 198206,
+          "sha256": "c6a24986a401442faa0f5b466cee18595335944860ca9539f5c488740f9a4e99",
+          "source": "hedgehog-motion-v1.blend"
+        },
+        {
+          "motion": "play",
+          "sheet": "hedgehog-play.webp",
+          "frames": 30,
+          "bytes": 199950,
+          "sha256": "177031fc170ae2e2b21ddc8a3c6a753c21a5b84430ea979812d30f0fee0a419b",
+          "source": "hedgehog-motion-v1.blend"
+        },
+        {
+          "motion": "hello",
+          "sheet": "hedgehog-hello.webp",
+          "frames": 30,
+          "bytes": 199790,
+          "sha256": "1bac38ec89865d19c6fd04834e889788b5202537539e6e0dd48a48d451e21dcb",
+          "source": "hedgehog-motion-v1.blend"
+        },
+        {
+          "motion": "walk-left",
+          "sheet": "hedgehog-walk-left.webp",
+          "frames": 30,
+          "bytes": 228532,
+          "sha256": "18e272b8e35d875ab372d341f2b13e342586917edba7e36780486c88e7a0c1f0",
+          "source": "hedgehog-motion-v1.blend"
+        },
+        {
+          "motion": "walk-right",
+          "sheet": "hedgehog-walk-right.webp",
+          "frames": 30,
+          "bytes": 228816,
+          "sha256": "27fc3b08b81979b863046276af93201145a0a546dfacd4456e61c13e9f02c4a4",
+          "source": "hedgehog-motion-v1.blend"
+        }
+      ],
+      "credits": 100
+    }
+  },
+  "checks": {
+    "assetIntegrity": "passed: reviewed hashes, dimensions, distinct frames and render masters",
+    "artReview": "new petting, settling, feeding, greeting and walking key poses reviewed before registration",
+    "typecheck": "passed: app TypeScript --noEmit, exit 0 on 2026-10-23",
+    "browserReview": "passed: 375x844 real PetCareScene penguin petting and repeat reaction; real PetBedtimeScene hedgehog blanket, curtains, lights out; sleep sheet loaded; no browser console errors",
+    "previousTestScope": "Earlier batch tests are preserved separately and are not a fresh test run."
+  },
+  "limits": [
+    "40 other catalog pets still use their existing static art.",
+    "This receipt does not prove production deployment or real-account persistence.",
+    "Blender masters contain authored procedural materials. Future realtime 3D export needs material baking."
+  ],
+  "uniqueSheets": 80,
+  "frames": 2592,
+  "sheetBytes": 17113658,
+  "previousBatchChecks": {
+    "date": "2026-10-22",
+    "typecheck": "passed",
+    "focusedTests": {
+      "files": 4,
+      "passed": 24
+    },
+    "artReview": "species-specific petting, settling, walk and greeting key poses; fixed-cell packing checks every output frame"
+  },
+  "expansion": {
+    "pets": [
+      "penguin",
+      "hedgehog"
+    ],
+    "uniqueSheets": 20,
+    "frames": 648,
+    "spentCredits": 220,
+    "observedBalance": 1060
+  }
+}

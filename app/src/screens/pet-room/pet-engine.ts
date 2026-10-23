@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { CARE_ACTIONS, LEGACY_PET_IDS, PET_IDS, petById, type CareAction, type PetId } from './pet-catalog'
+import { ROOM_DECOR_IDS, roomKeepsakes, type RoomDecorId } from './pet-decor'
 
 const daySchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(value => {
   const date = new Date(`${value}T12:00:00Z`)
@@ -28,6 +29,7 @@ const schema = legacySchema.extend({
   sleeping: z.object({ day: daySchema, pets: z.array(z.enum(PET_IDS)).min(1).max(PET_IDS.length) }).strict().nullable(),
   morning: z.object({ day: daySchema, bedDay: daySchema, pets: z.array(z.enum(PET_IDS)).min(1).max(PET_IDS.length) }).strict().nullable().default(null),
   journal: z.object({ days: daysSchema, claimed: z.number().int().nonnegative(), pending: z.object({ ordinal: z.number().int().positive(), id: z.enum(PET_IDS) }).strict().nullable() }).strict(),
+  roomDecoration: z.enum(ROOM_DECOR_IDS).nullable().default(null),
 }).strict()
 export type PetHome = z.infer<typeof schema>
 export type PetBond = z.infer<typeof petSchema>
@@ -49,7 +51,7 @@ function visitorsFor(home: PetHome, day: string): PetId[] {
 }
 export function createHome(day: string, seed: number, scope = 'guest'): PetHome {
   daySchema.parse(day)
-  const home: PetHome = { version: 2, scope, journal: { days: [], claimed: 0, pending: null }, revision: 0, seed: Math.max(1, seed >>> 0), day, visitors: [], invited: null, selected: 'otter', pets: {}, sleeping: null, morning: null }
+  const home: PetHome = { version: 2, scope, journal: { days: [], claimed: 0, pending: null }, roomDecoration: null, revision: 0, seed: Math.max(1, seed >>> 0), day, visitors: [], invited: null, selected: 'otter', pets: {}, sleeping: null, morning: null }
   home.visitors = visitorsFor(home, day)
   home.selected = home.visitors[0]!
   for (const id of home.visitors) home.pets[id] = freshBond(day)
@@ -60,6 +62,7 @@ export function parseHome(raw: string): PetHome | null {
     const parsed = schema.safeParse(JSON.parse(raw))
     if (!parsed.success) return null
     const home = parsed.data
+    if (home.roomDecoration && !roomKeepsakes(home).some(item => item.id === home.roomDecoration)) return null
     const earned = Math.floor(home.journal.days.length / 7)
     if (home.journal.claimed > earned || home.journal.pending && (home.journal.pending.ordinal !== home.journal.claimed + 1 || earned <= home.journal.claimed || home.pets[home.journal.pending.id]?.adoptedOn)) return null
     if (!home.pets[home.selected] || home.visitors.some(id => !home.pets[id]) || home.invited && !home.pets[home.invited]
@@ -97,6 +100,11 @@ export function careFor(home: PetHome, id: PetId, action: CareAction, day: strin
   const actions = appendDay(bond.actions[action], day)
   if (days === bond.caredDays && actions === bond.actions[action]) return home
   return { ...home, pets: { ...home.pets, [id]: { ...bond, caredDays: days, actions: { ...bond.actions, [action]: actions } } } }
+}
+/** An explicit cosmetic choice; never grants care, adoption or journal progress. */
+export function placeRoomDecoration(home: PetHome, id: RoomDecorId | null): PetHome {
+  if (home.roomDecoration === id || id !== null && !roomKeepsakes(home).some(item => item.id === id)) return home
+  return { ...home, roomDecoration: id }
 }
 export function invitePet(home: PetHome, id: PetId): PetHome {
   if (home.sleeping || home.morning || !home.pets[id]) return home

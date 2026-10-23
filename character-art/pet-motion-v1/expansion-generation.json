@@ -1,0 +1,34 @@
+{
+  "date": "2026-10-23",
+  "provider": "Tripo Studio",
+  "visibility": "private",
+  "model": "P2.0",
+  "startingObservedBalance": 1280,
+  "lastObservedBalance": 1060,
+  "spent": 220,
+  "newPayment": false,
+  "referenceWasUploaded": false,
+  "referenceMethod": "Existing in-game drawings were inspected, described in text, then used to guide local Blender materials and proportions.",
+  "tasks": [
+    {
+      "pet": "penguin",
+      "modelId": "66c96971-9681-4f1a-8f37-1f867593d7c8",
+      "prompt": "One original cute baby penguin for a cozy pet game. Full body, three-quarter front view, standing upright. Huge round slate blue-gray head and tiny plump body, cream-white heart-shaped face patch connecting to cream chest and belly, two tiny dark brown oval eyes, small orange short beak, pale pink cheeks. Two short rounded flippers held slightly apart from the body, two separate flat orange feet on one ground plane, tiny tail. Head more than half the height. Simple smooth rounded geometry, flat matte colors. No feather strands, no fur, no sharp points, no clothing, no accessories, no scenery, no pedestal, no letters. Keep both flippers and feet distinct for animation. Friendly soft toy silhouette, light gray background.",
+      "operations": [
+        {"name": "text-to-model", "quotedCredits": 100, "observedCharge": 100, "balanceAfter": 1180},
+        {"name": "texture", "quotedCredits": 20, "observedCharge": 20, "balanceAfter": 1060}
+      ],
+      "source": "sources/tripo/penguin/original-textured.glb",
+      "seed": null
+    },
+    {
+      "pet": "hedgehog",
+      "modelId": "604753e7-5478-49aa-96bc-806cf4888737",
+      "prompt": "One original very simple cute baby hedgehog for a cozy pet game. Full body three-quarter front view. LOW HORIZONTAL oval body on FOUR short separated brown animal paws. Large cream rounded face with two tiny dark brown oval eyes, small brown nose, simple smiling mouth and pale pink cheeks. Warm caramel-brown domed back, a SMALL number of big soft rounded scallops along the back silhouette like a cloud. No sharp spikes, no individual quills, no fur strands. Cream belly. Tiny rounded ears. No long tail. Very short legs, big head, plump squat proportions. All four paws touch the same ground plane. Smooth matte flat colors, very simple clean forms. No clothes, no accessories, no pedestal, no scene, no letters. Do not make an upright humanoid or teddy bear. Plain light gray background. Separate face, back shell and paws clearly so they can be animated.",
+      "operations": [{"name": "text-to-model", "quotedCredits": 100, "observedCharge": 100, "balanceAfter": 1080}],
+      "source": "sources/tripo/hedgehog/original-mesh.glb",
+      "seed": null,
+      "localRepair": "Remove unsupported pedestal and small individual quills, shorten legs, restore simple warm palette, author animal-specific rig. No paid texture or automatic rig purchased."
+    }
+  ]
+}

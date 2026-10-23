@@ -1,0 +1,15 @@
+# Repeatable local output and rejected/editing iterations remain on disk.
+renders/
+working/
+review/*
+!review/approved/
+!review/approved/**
+!review/game-preview-*.png
+!review/six-pets-preview.webp
+!review/runtime-check.json
+!review/expansion-runtime-check.json
+# Examined CC0 candidates were not used in the final Tripo-derived motions.
+sources/mesh2motion/
+sources/mesh2motion-export/
+*.blend1
+__pycache__/

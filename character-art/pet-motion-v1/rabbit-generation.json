@@ -1,0 +1,10 @@
+{
+  "date": "2026-10-22",
+  "tool": "built-in image_gen",
+  "species": "rabbit",
+  "purpose": "single mesh reference preserving the existing pet identity; no Tripo generation yet",
+  "input": "app/public/games/pet-room-v1/pets/rabbit.webp",
+  "output": "references/rabbit-master.png",
+  "prompt": "Use the attached original 6-pose pet sprite sheet ONLY as the character identity reference, not as a composition to reproduce. Create exactly ONE full-body neutral 3D modeling reference of that SAME animal. Large rounded head, small simple dark brown oval eyes, tiny simple smile, pale pink cheeks, the same exact color markings and silhouette as the supplied pet. Keep the style extremely simple: smooth matte forms, restrained soft volume, no fur strands, no fine toe lines, no whiskers, no elaborate surface details. Camera level, orthographic, front three-quarter with only about 20 degrees of body turn so the face is almost straight toward us. All extremities must be visible, separated enough to rig, within the frame, with generous clear margins. Transparent background, no floor or ground shadows, no pedestal, no props, bowl, ball, clothes, accessories, text, multiple views, or additional animals. This is a reusable mesh-generation input for an existing cute 2D game, NOT a redesign or finished game sprite. Preserve the original warm gray-taupe LOP-EARED rabbit. Both very long ears hang down beside the cheeks with pink inner faces, NOT upright ears. Cream rounded muzzle, cream chest/belly and four cream paws; gray-taupe round short body, small round cotton tail. Use a relaxed low FOUR-LEGGED standing pose with the two short front paws and two wider longer hind feet separately visible. Let the long floppy ears hang a little away from the shoulders so they can bend independently. Do not turn it into a dog, do not add a long tail.",
+  "seed": null
+}

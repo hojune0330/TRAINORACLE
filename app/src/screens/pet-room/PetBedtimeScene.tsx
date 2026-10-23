@@ -4,9 +4,12 @@ import { petById, type PetId } from './pet-catalog'
 import { PetSprite, PropArt, petRoomAsset } from './PetArt'
 import { PetOverlay } from './PetOverlay'
 import { inDropZone, type RoomPoint } from './pet-play'
+import { DecorArt } from './PetRoomDecor'
+import type { RoomDecorId } from './pet-decor'
 
-export function PetBedtimeScene({ companions, onFinish, onClose, error, onReload }: {
+export function PetBedtimeScene({ companions, onFinish, onClose, error, onReload, decoration }: {
   companions: PetId[]; onFinish: () => void; onClose: () => void; error: string | null; onReload: () => void
+  decoration?: RoomDecorId | null
 }) {
   const [step, setStep] = useState(0)
   const [held, setHeld] = useState(false)
@@ -14,8 +17,10 @@ export function PetBedtimeScene({ companions, onFinish, onClose, error, onReload
   const pointer = useRef<{ id: number; start: RoomPoint; moved: boolean } | null>(null)
   const suppressClick = useRef(false)
   const room = useRef<HTMLDivElement>(null)
-  const targets = [{ x: 50, y: 71 }, { x: 24, y: 63 }, { x: 78, y: 63 }]
-  const place = (index: number) => ({ ...targets[index]!, width: 34 })
+  const visibleFriends = companions.slice(0, 3)
+  const places = visibleFriends.length === 1 ? [{ x: 50, y: 64, width: 60 }]
+    : visibleFriends.length === 2 ? [{ x: 29, y: 66, width: 46 }, { x: 75, y: 62, width: 42 }]
+      : [{ x: 50, y: 72, width: 44 }, { x: 22, y: 51, width: 34 }, { x: 78, y: 51, width: 34 }]
   function point(event: PointerEvent<HTMLButtonElement>) {
     const rect = room.current!.getBoundingClientRect()
     return { x: Math.max(5, Math.min(95, (event.clientX - rect.left) / rect.width * 100)), y: Math.max(10, Math.min(92, (event.clientY - rect.top) / rect.height * 100)) }
@@ -23,12 +28,13 @@ export function PetBedtimeScene({ companions, onFinish, onClose, error, onReload
   function spread() { if (!error) { setStep(1); setHeld(false); setDrag(null) } }
   return <PetOverlay title="같이 잘 준비" onClose={onClose} night={step > 1}>
     <ol className="pet-bedtime-steps" aria-label="잠자리 준비 순서">{['이불 펴기', '커튼 닫기', '불 끄기'].map((name, index) => <li key={name} aria-current={step === index ? 'step' : undefined} data-done={step > index}>{step > index ? '✓' : index + 1} {name}</li>)}</ol>
-    <p className="pet-activity__instruction" aria-live="polite">{step === 0 ? '폭신한 이불을 친구들 아래에 펴 줘.' : step === 1 ? '이불은 준비됐어. 커튼도 닫을까?' : '이제 불을 끄고 우리도 쉬자.'}</p>
+    <p className="pet-activity__instruction" aria-live="polite">{step === 0 ? '폭신한 이불을 펴 줘.' : step === 1 ? '편히 쉬게 커튼도 닫아 주자.' : '이제 불을 끄고 우리도 쉬자.'}</p>
     <div ref={room} className="pet-care-world pet-bedtime-world" onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') suppressClick.current = false }}>
       <img className="pet-care-world__background" src={petRoomAsset('room.webp')} alt="" draggable={false} />
       <img className={`pet-care-world__background pet-night-layer${step >= 2 ? ' pet-night-layer--visible' : ''}`} src={petRoomAsset('room-curtains-v2.webp')} alt="" draggable={false} />
-      {companions.slice(0, 3).map((id, index) => <div className="pet-bedtime-friend" key={id} style={{ left: `${place(index).x}%`, top: `${place(index).y}%`, width: `${place(index).width}%` }}>
-        {step > 0 && <PropArt item="blanket" className="pet-bedtime-mat" />}<PetSprite id={id} pose={step > 0 ? 'happy' : 'awake'} /><span>{petById(id).name}</span>
+      {decoration && <DecorArt id={decoration} className="pet-bedtime-keepsake" />}
+      {visibleFriends.map((id, index) => <div className="pet-bedtime-friend" key={id} style={{ left: `${places[index]!.x}%`, top: `${places[index]!.y}%`, width: `${places[index]!.width}%`, zIndex: visibleFriends.length - index }}>
+        {step > 0 && <PropArt item="blanket" className="pet-bedtime-mat" />}<PetSprite id={id} pose={step > 0 ? 'sleeping' : 'awake'} motion={step > 0 ? 'lie-down' : 'idle'} settleTo="sleep" /><span>{petById(id).name}</span>
       </div>)}
       {step === 0 ? <>
         <button type="button" className={`pet-drop-target pet-bedtime-place${held ? ' pet-drop-target--ready' : ''}`} disabled={!!error} onClick={spread}>이불 펼 자리</button>
@@ -43,7 +49,7 @@ export function PetBedtimeScene({ companions, onFinish, onClose, error, onReload
     </div>
     {error && <div role="alert" className="pet-home__error"><p>{error}</p><button type="button" onClick={onReload}>다시 불러오기</button></div>}
     <div className="pet-activity__controls">
-      <p>{companions.length}명 모두 함께 쉬어요. {companions.slice(0, 3).map(id => petById(id).name).join(' · ')}{companions.length > 3 ? ' 외 친구들' : ''}</p>
+      <p>{companions.slice(0, 3).map(id => petById(id).name).join(' · ')}{companions.length > 3 ? ` 외 ${companions.length - 3}명` : ''}<br />{companions.length === 1 ? '친구 옆에서 함께 쉬어요.' : `${companions.length}명이 함께 쉬어요.`}</p>
       {companions.length > 3 && <details><summary>함께 쉬는 친구 {companions.length}명 보기</summary><p>{companions.map(id => petById(id).name).join(' · ')}</p></details>}
       <button type="button" className="pet-primary" disabled={!!error} onClick={() => step === 0 ? spread() : step === 1 ? setStep(2) : onFinish()}>{step === 0 ? '친구들 이불 펴 주기' : step === 1 ? '커튼 닫아 주기' : '불 끄고 같이 자기'}</button>
       <p>마지막에 불을 끄면 잠자리 준비가 저장돼요.</p>

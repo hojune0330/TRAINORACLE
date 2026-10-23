@@ -1,0 +1,128 @@
+{
+  "date": "2026-10-22",
+  "tool": "Tripo Studio Pro + Blender 4.5.14 LTS",
+  "modelId": "3a2ff544-bec3-4e93-8da7-e3e6b0b0dbe6",
+  "sourceUrl": "https://studio.tripo3d.ai/ko/workspace/generate/3a2ff544-bec3-4e93-8da7-e3e6b0b0dbe6",
+  "visibility": "private",
+  "seed": null,
+  "route": "text-to-model",
+  "referenceWasUploaded": false,
+  "reference": "references/cat-master.png",
+  "promptRecord": "PROMPTS.md",
+  "creditsIncludingRejectedAttempts": 40,
+  "exports": [
+    {
+      "file": "original-export.zip",
+      "sha256": "7189ffa33725420736228a4eb42e1061f29b8e10dfed3a3c4af210b5f661a1c0",
+      "bytes": 448836
+    },
+    {
+      "file": "rigged-walk-export.zip",
+      "sha256": "798d1c54b5c5fe4c456fc53947644f55068e4f6384a651ee4f58c4e056c8e83e",
+      "bytes": 611626
+    }
+  ],
+  "editableMasters": [
+    {
+      "path": "masters/cat/nareun-authored-v4.blend",
+      "sha256": "21f08094a75426f264575d9ee92bc32cefb216475f594cd67c08c8ae739b930b",
+      "bytes": 5527692
+    },
+    {
+      "path": "masters/cat/nareun-motion-master.blend",
+      "sha256": "26f0f88007676c1c0bfc4a8d479117395d9beedf15c1d09b32d50229d72deaaa",
+      "bytes": 7780665
+    },
+    {
+      "path": "masters/cat/nareun.blend",
+      "sha256": "473ee706daecf4d6454518521468d22d688616bca22393daafef3a2f7f0a7a20",
+      "bytes": 7314843
+    }
+  ],
+  "gameClips": [
+    {
+      "motion": "idle",
+      "sheet": "cat-idle.webp",
+      "frames": 48,
+      "bytes": 376580,
+      "sha256": "b489a108c87b9d31c38e42b6f6d21d45e3404c7c97d550f8254ea5a6a5481b89",
+      "source": "nareun-authored-v4.blend"
+    },
+    {
+      "motion": "pet",
+      "sheet": "cat-pet.webp",
+      "frames": 30,
+      "bytes": 244108,
+      "sha256": "f45f659e82ca86271017e2c13bc0dbeb1b82ab74f6a53a5184592b2e465404c0",
+      "source": "nareun-authored-v4.blend"
+    },
+    {
+      "motion": "lie-down",
+      "sheet": "cat-lie-down.webp",
+      "frames": 30,
+      "bytes": 230650,
+      "sha256": "24c2da71ad976190a437322ccc2d1819b4d2264c28ee2917fc1e7944391c6c1a",
+      "source": "nareun-authored-v4.blend"
+    },
+    {
+      "motion": "sleep",
+      "sheet": "cat-sleep.webp",
+      "frames": 36,
+      "bytes": 218514,
+      "sha256": "5b760bb02153510e4ef4ad5e6227d18f204c510355b158abbcecc4d4fc757e1c",
+      "source": "nareun-authored-v4.blend"
+    },
+    {
+      "motion": "wake",
+      "sheet": "cat-wake.webp",
+      "frames": 30,
+      "bytes": 232330,
+      "sha256": "3ad1cdeffc1308b2deaa869eaa4669f6ecb3ff9a44f05aba696662370a6dc53f",
+      "source": "nareun-authored-v4.blend"
+    },
+    {
+      "motion": "eat",
+      "sheet": "cat-eat.webp",
+      "frames": 30,
+      "bytes": 238512,
+      "sha256": "cce2a4c00e7f9e52b7b8091568765a222f868227de030eb627dd70f1b3ed15a1",
+      "source": "nareun-authored-v4.blend"
+    },
+    {
+      "motion": "play",
+      "sheet": "cat-play.webp",
+      "frames": 30,
+      "bytes": 245266,
+      "sha256": "f40f1103b9d42146357c91730f97e3d85fcedf72fbd7c427384275321c00f3c5",
+      "source": "nareun-motion-master.blend"
+    },
+    {
+      "motion": "hello",
+      "sheet": "cat-hello.webp",
+      "frames": 30,
+      "bytes": 244694,
+      "sha256": "b0ca2203e7fa26b66266cabea4f1df7a728c6087de4b8ef53383fd7632550b26",
+      "source": "nareun-motion-master.blend"
+    },
+    {
+      "motion": "walk-left",
+      "sheet": "cat-walk-left.webp",
+      "frames": 30,
+      "bytes": 280264,
+      "sha256": "13d2b01dba82103f7abfe19f0ce7182ee4211c9f048a2ae633bfc990b3ddca0a",
+      "source": "nareun.blend"
+    },
+    {
+      "motion": "walk-right",
+      "sheet": "cat-walk-right.webp",
+      "frames": 30,
+      "bytes": 268618,
+      "sha256": "5bc5d209a7afd5b11cf675f7805355815205a8bd8b2727919a4c609daec4fcac",
+      "source": "nareun.blend"
+    }
+  ],
+  "runtimeStatus": "registered in source; not published by this task",
+  "sourcePolicy": "Original exports retained unchanged; Blender derivatives and rendered clips stored separately.",
+  "licenseEvidence": "Created under observed Pro plan/private setting; provider pricing/license research in PRODUCTION.md. Local motion scripts are original work.",
+  "motionSource": "Adapted Tripo quadruped walk plus locally authored reactions"
+}

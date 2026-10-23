@@ -1,0 +1,113 @@
+{
+  "date": "2026-10-22",
+  "tool": "Tripo Studio Pro + Blender 4.5.14 LTS",
+  "modelId": "8aed8caa-3362-4cd5-a9b4-9bfac59d6fdb",
+  "sourceUrl": "https://studio.tripo3d.ai/ko/workspace/generate/8aed8caa-3362-4cd5-a9b4-9bfac59d6fdb",
+  "visibility": "private",
+  "seed": null,
+  "route": "text-to-model",
+  "referenceWasUploaded": false,
+  "reference": "references/puppy-master.png",
+  "promptRecord": "PROMPTS.md",
+  "creditsIncludingRejectedAttempts": 40,
+  "exports": [
+    {
+      "file": "rigged-walk-export.zip",
+      "sha256": "3159d2535f4c2ebda52331e93d54610ef1feb4228664a4fa2a2bf6536b9878b0",
+      "bytes": 594245
+    }
+  ],
+  "editableMasters": [
+    {
+      "path": "masters/puppy/dubu-motion-v2.blend",
+      "sha256": "0998fbb0994e14eb1e1b5a3df64f4ea2514c7f005eab355013c9ce2e77151f42",
+      "bytes": 7086459
+    }
+  ],
+  "gameClips": [
+    {
+      "motion": "idle",
+      "sheet": "puppy-idle.webp",
+      "frames": 48,
+      "bytes": 340714,
+      "sha256": "b1e11359af0c81a63648fb19323dbaaa0f45e719d3e5178386a498300c6d901e",
+      "source": "dubu-motion-v2.blend"
+    },
+    {
+      "motion": "pet",
+      "sheet": "puppy-pet.webp",
+      "frames": 30,
+      "bytes": 242218,
+      "sha256": "c92dd81f10f472ea7db8a404b6b8de3e91056bf2aefe6a7088882d15ac81f4d3",
+      "source": "dubu-motion-v2.blend"
+    },
+    {
+      "motion": "lie-down",
+      "sheet": "puppy-lie-down.webp",
+      "frames": 30,
+      "bytes": 235260,
+      "sha256": "c1bcba03ee8005e460b76e8c221ad0ade067114af2a5f96eee83ab3e18e4c08a",
+      "source": "dubu-motion-v2.blend"
+    },
+    {
+      "motion": "sleep",
+      "sheet": "puppy-sleep.webp",
+      "frames": 36,
+      "bytes": 235240,
+      "sha256": "948d378feeaaec90ec0c8ad55f96e8a55751951cffe1f6c4ac5d51f2dc34d34f",
+      "source": "dubu-motion-v2.blend"
+    },
+    {
+      "motion": "wake",
+      "sheet": "puppy-wake.webp",
+      "frames": 30,
+      "bytes": 227430,
+      "sha256": "cc5e2026b910ecceb30a6de38b61046ea784748d1ab976dac29b62e97f1d860b",
+      "source": "dubu-motion-v2.blend"
+    },
+    {
+      "motion": "eat",
+      "sheet": "puppy-eat.webp",
+      "frames": 30,
+      "bytes": 242730,
+      "sha256": "1cbd835689aef39349a29503a4420f4025a5952790432253dbf21e7483bccb98",
+      "source": "dubu-motion-v2.blend"
+    },
+    {
+      "motion": "play",
+      "sheet": "puppy-play.webp",
+      "frames": 30,
+      "bytes": 238798,
+      "sha256": "f1b6c3619badc415069d6e665b3fc569899f43fcb8e21ebd2b39d0818670312d",
+      "source": "dubu-motion-v2.blend"
+    },
+    {
+      "motion": "hello",
+      "sheet": "puppy-hello.webp",
+      "frames": 30,
+      "bytes": 234984,
+      "sha256": "b49a55d506abcc0d033a8a563b015141cf3450e68c4b54f50b6b4bd329bd2b53",
+      "source": "dubu-motion-v2.blend"
+    },
+    {
+      "motion": "walk-left",
+      "sheet": "puppy-walk-left.webp",
+      "frames": 30,
+      "bytes": 242556,
+      "sha256": "de3fff06c58d60ee2c2964964225ff9b11dc272774657e2be9a0525d908787a0",
+      "source": "dubu-motion-v2.blend"
+    },
+    {
+      "motion": "walk-right",
+      "sheet": "puppy-walk-right.webp",
+      "frames": 30,
+      "bytes": 251078,
+      "sha256": "def08fa8402e0ca1d6ef7675239e6e89fe0cd09ed939dae3f200a97a5d1afa77",
+      "source": "dubu-motion-v2.blend"
+    }
+  ],
+  "runtimeStatus": "registered in source; not published by this task",
+  "sourcePolicy": "Original exports retained unchanged; Blender derivatives and rendered clips stored separately.",
+  "licenseEvidence": "Created under observed Pro plan/private setting; provider pricing/license research in PRODUCTION.md. Local motion scripts are original work.",
+  "motionSource": "Adapted Tripo quadruped walk plus locally authored reactions"
+}

@@ -78,6 +78,12 @@ it('ignores short jitter and repeated motion in the same direction while strokin
   expect(props.onComplete).not.toHaveBeenCalled()
   pointer(pet, 'pointermove', 58, 60)
   expect(props.onComplete).toHaveBeenCalledTimes(1)
+  expect(pet).not.toBeDisabled()
+  pointer(pet, 'pointermove', 35, 60)
+  pointer(pet, 'pointermove', 58, 60)
+  pointer(pet, 'pointerup', 58, 60)
+  fireEvent.click(pet)
+  expect(props.onComplete).toHaveBeenCalledTimes(1)
 })
 it('never awards a wrong cushion guess and completes only after finding the shown ball', () => {
   const props = { ...makeProps(), id: 'mouse' as const }

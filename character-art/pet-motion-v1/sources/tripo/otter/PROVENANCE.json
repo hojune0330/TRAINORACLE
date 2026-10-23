@@ -1,0 +1,113 @@
+{
+  "date": "2026-10-22",
+  "tool": "Tripo Studio Pro + Blender 4.5.14 LTS",
+  "modelId": "4babf375-ac66-4b2f-ad9a-ad157e425941",
+  "sourceUrl": "https://studio.tripo3d.ai/ko/workspace/generate/4babf375-ac66-4b2f-ad9a-ad157e425941",
+  "visibility": "private",
+  "seed": null,
+  "route": "Studio-image-to-model",
+  "referenceWasUploaded": false,
+  "reference": "references/otter-master.png",
+  "promptRecord": "PROMPTS.md",
+  "creditsIncludingRejectedAttempts": 120,
+  "exports": [
+    {
+      "file": "original-export.zip",
+      "sha256": "b7c558297cd0c6c665b3f6fb27789788b98193921877519c1d34eab94bf71f9c",
+      "bytes": 459774
+    }
+  ],
+  "editableMasters": [
+    {
+      "path": "masters/otter/otter-motion-v2.blend",
+      "sha256": "f44d1d0cb109e4d04ce2b9b7dd47a4bcaa6c5089c60cc93befa75a906d291653",
+      "bytes": 3234901
+    }
+  ],
+  "gameClips": [
+    {
+      "motion": "idle",
+      "sheet": "otter-idle.webp",
+      "frames": 48,
+      "bytes": 229524,
+      "sha256": "2ce6bfc08d60aee03da5c5d8466752d5181acb0267305b40b999d4b111088afb",
+      "source": "otter-motion-v2.blend"
+    },
+    {
+      "motion": "pet",
+      "sheet": "otter-pet.webp",
+      "frames": 30,
+      "bytes": 152154,
+      "sha256": "a04a72c4c2c2f7c8b8a75a7b1368ccb8a386fd65c44057b74501bf515492d887",
+      "source": "otter-motion-v2.blend"
+    },
+    {
+      "motion": "lie-down",
+      "sheet": "otter-lie-down.webp",
+      "frames": 30,
+      "bytes": 159796,
+      "sha256": "2104376f2553280a1b82943da291b56d70a63152518c15538435440c81403341",
+      "source": "otter-motion-v2.blend"
+    },
+    {
+      "motion": "sleep",
+      "sheet": "otter-sleep.webp",
+      "frames": 36,
+      "bytes": 170350,
+      "sha256": "bb5d10fbb18221ddc107cb8a99684a8a18fbc85d0d136d4c1e1bac08e14143aa",
+      "source": "otter-motion-v2.blend"
+    },
+    {
+      "motion": "wake",
+      "sheet": "otter-wake.webp",
+      "frames": 30,
+      "bytes": 152686,
+      "sha256": "8d1c9a78770ab36a7b0ba619aef20dc9d5ee0cd8e9845ff0dbb1a0c7ddbced37",
+      "source": "otter-motion-v2.blend"
+    },
+    {
+      "motion": "eat",
+      "sheet": "otter-eat.webp",
+      "frames": 30,
+      "bytes": 146352,
+      "sha256": "8c41ffff37eb1dc7c9f1f3b25fc00afa2750a5ece1e49cc383b63c3ff2986ed3",
+      "source": "otter-motion-v2.blend"
+    },
+    {
+      "motion": "play",
+      "sheet": "otter-play.webp",
+      "frames": 30,
+      "bytes": 154950,
+      "sha256": "fc6e41cf20787119295fef38c4ae9bc1039be7c2954fc4659d1d54a9f42395b0",
+      "source": "otter-motion-v2.blend"
+    },
+    {
+      "motion": "hello",
+      "sheet": "otter-hello.webp",
+      "frames": 30,
+      "bytes": 153988,
+      "sha256": "7b7669bea3f653fcb2fe03014e0fb13662b3f200acfe0e0ab8415bcd16b93240",
+      "source": "otter-motion-v2.blend"
+    },
+    {
+      "motion": "walk-left",
+      "sheet": "otter-walk-left.webp",
+      "frames": 30,
+      "bytes": 204558,
+      "sha256": "a9f3e230979d77b1681cd300463ae06b4fcec42c9f4a1b005d301384b51a3ea2",
+      "source": "otter-motion-v2.blend"
+    },
+    {
+      "motion": "walk-right",
+      "sheet": "otter-walk-right.webp",
+      "frames": 30,
+      "bytes": 202504,
+      "sha256": "52de990a934b53d1fb4ed0c905d857bacda0d243d40b77a6a8db8d250841be81",
+      "source": "otter-motion-v2.blend"
+    }
+  ],
+  "runtimeStatus": "registered in source; not published by this task",
+  "sourcePolicy": "Original exports retained unchanged; Blender derivatives and rendered clips stored separately.",
+  "licenseEvidence": "Created under observed Pro plan/private setting; provider pricing/license research in PRODUCTION.md. Local motion scripts are original work.",
+  "motionSource": "Species-specific locally authored rig and actions; no stock humanoid motion"
+}

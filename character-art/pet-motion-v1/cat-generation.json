@@ -1,0 +1,10 @@
+{
+  "date": "2026-10-22",
+  "tool": "built-in image_gen",
+  "species": "cat",
+  "purpose": "mesh reference",
+  "input": "app/public/games/pet-friends-v2/pets/cat.webp",
+  "output": "references/cat-master.png",
+  "prompt": "Create ONE clean front three-quarter reference image for turning the supplied original pet into an editable 3D animal model. The attached image is a 6-state character identity reference, not a layout to copy. Depict exactly ONE cat, whole body, standing neutrally on FOUR short clearly separated legs, all four paws discernible. Preserve the exact cute cream and caramel kitten identity: very large rounded head, small triangular pink-inner ears, two tiny dark brown oval eyes, tiny salmon nose and simple smiling mouth, pale pink cheeks; caramel patch over the cat's RIGHT forehead/ear (viewer's left when front facing), one caramel patch on its flank, thick upward curved caramel tail with cream tip. Round short torso, smooth rounded paws, no claws or separate fingers. Turn body only about 20 degrees so its face is almost front-facing and its full back/side silhouette is clear; tail held away from body so it can be rigged separately. Soft matte clay-like volume with very restrained shading and simple flat palette, staying faithful to the 2D drawing, not realistic fur. Brown line treatment minimal, no fine detail, no whisker strands, no toys, bowl, floor, pedestal, text, props, collage or additional characters. Transparent background. Centre the entire cat with generous clear margins, camera level and orthographic, paws on one horizontal baseline. This will be the MAIN mesh-generation input; prioritize clean separated limbs and faithful proportions.",
+  "seed": null
+}
