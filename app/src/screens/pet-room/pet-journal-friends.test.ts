@@ -17,8 +17,12 @@ function earned(days = 7): PetHome {
   return home
 }
 function legacyRaw() {
-  const { scope: _scope, journal: _journal, ...home } = createHome(day, 72)
-  return JSON.stringify({ ...home, version: 1, visitors: ['otter'], selected: 'otter', pets: { otter: { metOn: day, caredDays: [day], actions: { pet: [day], feed: [], play: [], bed: [] }, adoptedOn: day } } })
+  // Freeze the v1 wire format: deriving it from createHome leaks future v2 fields
+  // into the strict legacy reader and stops testing real older saved records.
+  return JSON.stringify({ version: 1, revision: 0, seed: 72, day,
+    visitors: ['otter'], invited: null, selected: 'otter',
+    pets: { otter: { metOn: day, caredDays: [day], actions: { pet: [day], feed: [], play: [], bed: [] }, adoptedOn: day } },
+    sleeping: null, morning: null })
 }
 describe('journal day friend opportunities', () => {
   it('earns one opportunity at seven nonconsecutive saved calendar days, equally for every journal kind', () => {
@@ -108,6 +112,7 @@ describe('authoritative v2 home and preservation', () => {
     expect(loaded.home.version).toBe(2)
     expect(loaded.home.pets.otter?.adoptedOn).toBe(day)
     expect(loaded.home.journal.days).toEqual([])
+    expect(loaded.home.roomDecoration).toBeNull()
     expect(store.getItem(legacyPetHomeKey('guest'))).toBe(source)
     store.setItem(legacyPetHomeKey('guest'), '{old-client-now-broken')
     expect(loadHome(store, 'guest', day, 3)).toEqual(loaded)
