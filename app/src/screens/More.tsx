@@ -100,25 +100,26 @@ export function More({
 
       <div className={`more-screen__list${activeView === "tools" ? " more-screen__list--tools" : ""}`}>
         {activeView === "tools" && <>
-        {(onOpenPaceCalculator || onOpenImport || onOpenRecords) && <MenuGroup title="훈련 도구">
-          {onOpenPaceCalculator && <MenuAction category="training" icon={Calculator} label="페이스 계산" illustration="pace-calculator-announcement" onClick={onOpenPaceCalculator} />}
-          {onOpenRecords && <MenuAction category="record" icon={Flag} label="경기 기록 추가·수정" onClick={onOpenRecords} />}
-          {onOpenImport && <MenuAction category="record" icon={Watch} label="워치 파일 가져오기" onClick={onOpenImport} />}
+        {(onOpenMinigame || onOpenPaceCalculator) && <MenuGroup title="게임·페이스">
+          {onOpenMinigame && <MenuAction icon={Gamepad2} label="게임 라운지" illustration="running-game-announcement" onClick={onOpenMinigame} />}
+          {onOpenPaceCalculator && <MenuAction category="training" icon={Calculator} label="페이스 계산기" detail="거리와 기록으로 페이스·구간 시간 계산" illustration="pace-calculator-announcement" onClick={onOpenPaceCalculator} />}
         </MenuGroup>}
-        {(onOpenRunningProfile || onOpenRecordReading || onOpenOracleLibrary) && <MenuGroup title="오라클">
+        {(onOpenRunningProfile || onOpenRecordReading || onOpenOracleLibrary || onOpenRewards) && <MenuGroup title="취향·꾸미기">
           {onOpenRunningProfile && <MenuAction category="oracle" icon={Heart} label="러닝 취향" onClick={onOpenRunningProfile} />}
           {onOpenRecordReading && <MenuAction category="oracle" icon={ChartNoAxesCombined} label="최고기록으로 풀이하기" onClick={onOpenRecordReading} />}
+          {onOpenRewards && <MenuAction category="journal" icon={NotebookPen} label="일지 꾸미기" onClick={onOpenRewards} />}
           {onOpenOracleLibrary && <MenuAction category="oracle" icon={BookOpen} label="오라클 읽을거리" onClick={onOpenOracleLibrary} />}
+        </MenuGroup>}
+        <InstallShortcutMenuEntry />
+        {(onOpenImport || onOpenRecords) && <MenuGroup title="기록 도구">
+          {onOpenRecords && <MenuAction category="record" icon={Flag} label="경기 기록 추가·수정" onClick={onOpenRecords} />}
+          {onOpenImport && <MenuAction category="record" icon={Watch} label="워치 파일 가져오기" onClick={onOpenImport} />}
         </MenuGroup>}
         <MenuGroup title="배우기">
           <MenuAction category="journal" icon={BookOpen} label="일지 예시 보기" onClick={onOpenMinji} />
           <MenuAction category="training" icon={CircleHelp} label="훈련 용어집·도움말" onClick={onOpenGuide} />
           {onOpenContent && <MenuAction category="training" icon={BookOpen} label="훈련법 읽기" onClick={onOpenContent} />}
         </MenuGroup>
-        {(onOpenRewards || onOpenMinigame) && <MenuGroup title="꾸미기·게임">
-          {onOpenRewards && <MenuAction category="journal" icon={NotebookPen} label="일지 꾸미기" onClick={onOpenRewards} />}
-          {onOpenMinigame && <MenuAction icon={Gamepad2} label="게임 라운지" illustration="running-game-announcement" onClick={onOpenMinigame} />}
-        </MenuGroup>}
         <MenuGroup title="관리">
           <MenuAction icon={Compass} label={VIEW_TITLES.introduction} onClick={() => changeView("introduction")} />
           <MenuAction icon={CircleUserRound} label={VIEW_TITLES.account} onClick={() => changeView("account")} />

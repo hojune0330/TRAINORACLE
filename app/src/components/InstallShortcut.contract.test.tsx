@@ -2,6 +2,7 @@ import React from "react"
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { More } from "../screens/More"
 import {
   InstallShortcutMenuEntry,
   InstallShortcutProvider,
@@ -122,6 +123,17 @@ afterEach(() => {
 })
 
 describe("InstallShortcut context boundary", () => {
+  it("opens the guide directly in More and returns focus without entering account settings", async () => {
+    const user = userEvent.setup()
+    render(<InstallShortcutProvider><More onBack={vi.fn()} onOpenGuide={vi.fn()} onOpenMinji={vi.fn()} /></InstallShortcutProvider>)
+    const entry = screen.getByTestId("install-shortcut-menu")
+    await user.click(entry)
+    expect(screen.getByTestId("install-shortcut-dialog")).toBeVisible()
+    fireEvent(screen.getByTestId("install-shortcut-dialog"), new Event("cancel", { cancelable: true }))
+    expect(screen.queryByTestId("install-shortcut-dialog")).toBeNull()
+    expect(entry).toHaveFocus()
+  })
+
   it("opens the compact home action only after an explicit click", async () => {
     const user = userEvent.setup()
     render(<InstallShortcutProvider><InstallShortcutSuggestion eligible compact /></InstallShortcutProvider>)

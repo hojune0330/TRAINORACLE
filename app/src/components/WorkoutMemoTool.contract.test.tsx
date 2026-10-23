@@ -114,7 +114,7 @@ describe("workout memo read-only actions", () => {
   it("opens the existing pace calculator from More", () => {
     const onOpenPaceCalculator = vi.fn()
     render(<More onBack={vi.fn()} onOpenMinji={vi.fn()} onOpenGuide={vi.fn()} onOpenPaceCalculator={onOpenPaceCalculator} />)
-    fireEvent.click(screen.getByRole("button", { name: "페이스 계산" }))
+    fireEvent.click(screen.getByRole("button", { name: "페이스 계산기" }))
     expect(onOpenPaceCalculator).toHaveBeenCalledOnce()
   })
   it("switches between full and compact without hiding recovery, preparation or safety", async () => {

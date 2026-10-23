@@ -45,7 +45,7 @@ it("does not repeat a destination name as a heading or supporting description", 
 
 it("shows learning and decoration destinations directly in More", () => {
   const entries = [
-    ["페이스 계산", "onOpenPaceCalculator"],
+    ["페이스 계산기", "onOpenPaceCalculator"],
     ["경기 기록 추가·수정", "onOpenRecords"],
     ["워치 파일 가져오기", "onOpenImport"],
     ["러닝 취향", "onOpenRunningProfile"],
@@ -68,8 +68,10 @@ it("shows learning and decoration destinations directly in More", () => {
   }
   expect(within(screen.getByRole("region", { name: "배우기" })).getByRole("button", { name: "일지 예시 보기" })).toBeVisible()
   expect(within(screen.getByRole("region", { name: "배우기" })).queryByRole("button", { name: "게임 라운지" })).toBeNull()
-  expect(within(screen.getByRole("region", { name: "꾸미기·게임" })).getByRole("button", { name: "일지 꾸미기" })).toBeVisible()
-  expect(within(screen.getByRole("region", { name: "꾸미기·게임" })).getByRole("button", { name: "게임 라운지" })).toBeVisible()
+  expect(within(screen.getByRole("region", { name: "취향·꾸미기" })).getByRole("button", { name: "일지 꾸미기" })).toBeVisible()
+  expect(within(screen.getByRole("region", { name: "게임·페이스" })).getAllByRole("button").map(button => button.getAttribute("aria-label"))).toEqual(["게임 라운지", "페이스 계산기"])
+  expect(screen.getAllByRole("region")[0]).toHaveAccessibleName("게임·페이스")
+  expect(screen.getAllByRole("region")[1]).toHaveAccessibleName("취향·꾸미기")
   for (const name of ["러닝 취향", "최고기록으로 풀이하기", "게임 라운지"]) {
     expect(screen.getByRole("button", { name })).toHaveTextContent(new RegExp(`^${name}$`))
     expect(screen.getByRole("button", { name })).not.toHaveAccessibleDescription()

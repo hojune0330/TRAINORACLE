@@ -6,6 +6,7 @@ import { setAccountAuthState } from "../../domain/account/account-auth-state"
 import { markCurrentConfirmedAccountJournalProjection, putAccountJournalProjection,
   resetAccountJournalProjection, setAccountJournalProjectionStatus } from "../../domain/account/account-journal-projection"
 import { Home } from "../Home"
+import { InstallShortcutProvider } from "../../components/InstallShortcut"
 import { JOURNAL_STORAGE_KEY } from "../../domain/journal-storage-keys"
 import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 
@@ -36,6 +37,20 @@ afterEach(() => {
 })
 
 describe("Home uses the existing owner-scoped calendar readiness", () => {
+  it("offers the install guide to a confirmed new guest, but respects dismissal and unreadable records", () => {
+    render(<InstallShortcutProvider><Home /></InstallShortcutProvider>)
+    expect(screen.getByTestId("install-shortcut-suggestion")).toBeVisible()
+    expect(screen.getByTestId("install-shortcut-suggestion")).not.toHaveClass("install-shortcut-suggestion--compact")
+    expect(screen.queryByRole("dialog")).toBeNull()
+    localStorage.setItem(STORAGE_KEY, "{")
+    act(() => { window.dispatchEvent(new Event("storage")) })
+    expect(screen.queryByTestId("install-shortcut-suggestion")).toBeNull()
+    localStorage.removeItem(STORAGE_KEY)
+    act(() => { window.dispatchEvent(new Event("storage")) })
+    fireEvent.click(screen.getByTestId("install-shortcut-dismiss"))
+    expect(screen.queryByTestId("install-shortcut-suggestion")).toBeNull()
+  })
+
   it("keeps confirmed empty record-start distinct from unreadable local data in the actual Home", () => {
     const write = vi.fn(), archive = vi.fn()
     render(<Home onWriteLog={write} onOpenArchive={archive} onOpenImport={vi.fn()} />)

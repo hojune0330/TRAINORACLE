@@ -10,9 +10,9 @@ for (const width of [320, 375]) {
       await page.route("**/*", route => new URL(route.request().url()).hostname === "127.0.0.1" ? route.continue() : route.abort())
       await page.goto("/?app=1&uitest=1")
       await page.getByRole("button", { name: "더보기", exact: true }).click()
-      await expect(page.getByRole("button", { name: "페이스 계산", exact: true })).toBeVisible()
+      await expect(page.getByRole("button", { name: "페이스 계산기", exact: true })).toBeVisible()
       await page.screenshot({ path: info.outputPath("more-tools.png"), fullPage: true })
-      for (const name of ["페이스 계산", "경기 기록 추가·수정", "워치 파일 가져오기", "러닝 취향", "최고기록으로 풀이하기", "오라클 읽을거리", "일지 예시 보기", "훈련 용어집·도움말", "훈련법 읽기", "일지 꾸미기"]) {
+      for (const name of ["페이스 계산기", "경기 기록 추가·수정", "워치 파일 가져오기", "러닝 취향", "최고기록으로 풀이하기", "오라클 읽을거리", "일지 예시 보기", "훈련 용어집·도움말", "훈련법 읽기", "일지 꾸미기"]) {
         const entry = page.getByRole("button", { name, exact: true })
         await expect(entry).toBeVisible()
         expect(await entry.evaluate(node => node.closest("details") === null)).toBe(true)

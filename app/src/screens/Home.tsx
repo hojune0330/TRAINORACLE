@@ -4,7 +4,6 @@ import { useAthleteRecordsSnapshot } from "../hooks/useAthleteRecordsSnapshot"
 import { ACCOUNT_PLAN_EVENT, accountPlanService, accountPlansEnabled } from "../domain/account/account-plan-service"
 import { TermHelp } from "../components/TermHelp"
 import { InstallShortcutSuggestion } from "../components/InstallShortcut"
-import { accountAuthState } from "../domain/account/account-auth-state"
 import { buildTrainingHomeViewModel, type HomeSession } from "../domain/home-view-model"
 import { useCalendarSnapshot } from "../hooks/useCalendarEntries"
 import { useLocalToday } from "../hooks/useLocalToday"
@@ -42,6 +41,7 @@ export type HomeProps = {
   readonly oraclePreviewLabel?: string
   readonly onOpenMore?: () => void
   readonly onOpenMinigame?: () => void
+  readonly onOpenPaceCalculator?: () => void
   readonly onOpenAccount?: () => void
   readonly onOpenContent?: () => void
   readonly onOpenRewards?: () => void
@@ -51,7 +51,7 @@ export type HomeProps = {
 
 export function Home({
   onWriteLog, onOpenDay, onOpenArchive, onOpenGuide, onOpenPlan,
-  onOpenNextTraining, onOpenTrends, onOpenImport, onOpenRecords, onOpenOracle, oraclePreview, oraclePreviewLabel, onOpenMore, onOpenMinigame, onOpenAccount, onOpenContent, onOpenRewards,
+  onOpenNextTraining, onOpenTrends, onOpenImport, onOpenRecords, onOpenOracle, oraclePreview, oraclePreviewLabel, onOpenMore, onOpenMinigame, onOpenPaceCalculator, onOpenAccount, onOpenContent, onOpenRewards,
   introductionAllowed = true,
 }: HomeProps) {
   const [, setRevision] = React.useState(0)
@@ -175,10 +175,14 @@ export function Home({
         onOpenOracle={onOpenOracle}
         onOpenTrends={onOpenTrends}
         onOpenMore={onOpenMore}
+        onOpenMinigame={onOpenMinigame}
+        onOpenPaceCalculator={onOpenPaceCalculator}
         onOpenContent={onOpenContent}
         onOpenRewards={onOpenRewards}
         accountEntry={<AccountEntryButton onOpenAccount={onOpenAccount} />}
-        installSuggestion={<InstallShortcutSuggestion compact eligible={entries.length > 0 || homePlan !== null || accountCurrent !== null || accountAuthState() === "ACCOUNT"} returnFocusTo={() => document.querySelector<HTMLElement>('[data-install-shortcut-return="home"]')} />}
+        installSuggestion={<InstallShortcutSuggestion compact={model.homeMode !== "WELCOME"}
+          eligible={introductionAllowed && journalSnapshot.status === "READY" && safetyNotice === undefined}
+          returnFocusTo={() => document.querySelector<HTMLElement>('[data-install-shortcut-return="home"]')} />}
         recentJournal={<LatestJournalDay entries={entries} today={today} storage={{
           readiness: journalSnapshot.status, owner: journalSnapshot.owner, accountStatus: storageStatus,
           accountStoredVersions: new Map(readAccountJournalProjection().map(entry => [entry.id, { savedAt: entry.savedAt, date: entry.date, kind: entry.kind }])),

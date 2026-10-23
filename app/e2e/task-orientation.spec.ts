@@ -30,7 +30,7 @@ test("analysis has a clear reading start and meaningful choices on a narrow phon
 test("pace title and event actions fit at 320px and input keeps its original value on Back", async ({ page }, info) => {
   await page.setViewportSize({ width: 320, height: 740 })
   await page.getByRole("button", { name: "더보기", exact: true }).click()
-  await page.getByRole("button", { name: "페이스 계산", exact: true }).click()
+  await page.getByRole("button", { name: "페이스 계산기", exact: true }).click()
   const title = page.getByRole("heading", { name: "어떤 종목의 기록인가요?", exact: true })
   await expect(title).toBeFocused()
   await expect(title).toHaveCSS("font-size", "24px")

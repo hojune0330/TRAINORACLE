@@ -1,12 +1,14 @@
 import type { LucideIcon } from "lucide-react"
 import type { CSSProperties } from "react"
 import { CategoryIcon, type AppCategory } from "./CategoryCard"
+import { ContextualIllustration, type ContextualIllustrationName } from "./ContextualIllustration"
 import "../styles/category-shortcuts.css"
 
 export type CategoryShortcutItem = {
   readonly id: string
   readonly category: AppCategory
   readonly icon?: LucideIcon
+  readonly illustration?: ContextualIllustrationName
   readonly label: string
   readonly accessibleLabel: string
   readonly onClick: () => void
@@ -23,7 +25,7 @@ export function CategoryShortcuts({ label, items, className = "" }: {
     style={{ "--shortcut-columns": Math.min(items.length, 4) } as CSSProperties}>
     {items.map(item => <button key={item.id} type="button" className="category-shortcut"
       data-category={item.category} aria-label={item.accessibleLabel} onClick={item.onClick}>
-      <CategoryIcon category={item.category} icon={item.icon} />
+      {item.illustration ? <ContextualIllustration image={item.illustration} className="category-shortcut__illustration" /> : <CategoryIcon category={item.category} icon={item.icon} />}
       <span className="category-shortcut__label">{item.label}</span>
     </button>)}
   </nav>

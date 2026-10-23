@@ -1,4 +1,4 @@
-import { BookOpen, CalendarDays, ChartColumn, CheckCircle2, ChevronRight, Ellipsis, NotebookPen, PencilLine } from "lucide-react"
+import { BookOpen, CalendarDays, ChartColumn, CheckCircle2, ChevronRight, LayoutGrid, NotebookPen, PencilLine } from "lucide-react"
 import { useId, useRef, type ReactNode } from "react"
 import { CategoryCard, type AppCategory } from "../../components/CategoryCard"
 import { CategoryShortcuts, type CategoryShortcutItem } from "../../components/CategoryShortcuts"
@@ -28,6 +28,8 @@ type TrainingHomeProps = {
   readonly onOpenTrends?: () => void
   readonly onOpenOracle?: (topic: OracleTopicId) => void
   readonly onOpenMore?: () => void
+  readonly onOpenMinigame?: () => void
+  readonly onOpenPaceCalculator?: () => void
   readonly onOpenContent?: () => void
   readonly onOpenRewards?: () => void
   readonly onOpenNextTraining?: () => void
@@ -46,7 +48,7 @@ type TrainingHomeProps = {
 
 export function TrainingHome({
   model, onWriteLog, onOpenArchive, onOpenToday, onOpenGuide, onOpenPlan, onOpenTrends,
-  onOpenOracle, onOpenMore, onOpenContent, onOpenRewards, onOpenNextTraining,
+  onOpenOracle, onOpenMore, onOpenMinigame, onOpenPaceCalculator, onOpenContent, onOpenRewards, onOpenNextTraining,
   safetyNotice, announcement, oraclePreview, recordStart, accountEntry, recentJournal, installSuggestion,
   journalReadiness = "READY", introductionAllowed = true, introductionReady = true,
 }: TrainingHomeProps) {
@@ -60,6 +62,10 @@ export function TrainingHome({
   const analysisEntry = oraclePreview ? oraclePreview
     : onOpenOracle && <section className="home-hub__oracle"><CategoryCard category="oracle" title="오라클 결과 보기" onClick={() => onOpenOracle("level")} /></section>
   const shortcuts: CategoryShortcutItem[] = []
+  const featuredShortcuts: CategoryShortcutItem[] = []
+  if (onOpenMinigame) featuredShortcuts.push({ id: "games", category: "home", illustration: "running-game-announcement", label: "게임", accessibleLabel: "게임 라운지", onClick: onOpenMinigame })
+  if (onOpenPaceCalculator) featuredShortcuts.push({ id: "pace", category: "training", illustration: "pace-calculator-announcement", label: "페이스 계산기", accessibleLabel: "페이스 계산기", onClick: onOpenPaceCalculator })
+  if (onOpenMore) featuredShortcuts.push({ id: "more", category: "home", icon: LayoutGrid, label: "더보기", accessibleLabel: "더보기 전체 메뉴", onClick: onOpenMore })
   if (onOpenTrends) shortcuts.push({ id: "trends", category: "oracle", icon: ChartColumn, label: "훈련량", accessibleLabel: "훈련량·변화 보기", onClick: onOpenTrends })
   if (onOpenGuide) shortcuts.push({ id: "example", category: "journal", label: "일지 예시", accessibleLabel: "일지 예시 보기", onClick: onOpenGuide })
   if (onOpenContent) shortcuts.push({ id: "training-guide", category: "training", icon: BookOpen, label: "훈련법", accessibleLabel: "훈련법 읽기", onClick: onOpenContent })
@@ -76,7 +82,7 @@ export function TrainingHome({
         <div className="home-hub__header-actions">
           {accountEntry}
           <button className="home-hub__more" data-install-shortcut-return="home" type="button" onClick={onOpenMore} aria-label="더보기" title="전체 메뉴">
-            <span>더보기</span><Ellipsis aria-hidden="true" size={20} />
+            <LayoutGrid aria-hidden="true" size={18} /><span>더보기</span>
           </button>
         </div>
       </header>
@@ -90,6 +96,9 @@ export function TrainingHome({
         {next !== null && <NextTrainingCard next={next} onOpen={nextAction} />}
         <TodaySection model={model} readiness={journalReadiness} onWriteLog={onWriteLog} onOpenToday={onOpenToday} />
       </>}
+
+      <CategoryShortcuts className="home-hub__featured" label="게임·계산기·더보기" items={featuredShortcuts} />
+      {installSuggestion}
 
       {introduction.expanded && <HomeIntroduction onDismiss={() => {
         introduction.dismiss()
@@ -110,8 +119,6 @@ export function TrainingHome({
       {recordStart && journalReadiness === "READY" && recordStart}
 
       <CategoryShortcuts className="home-hub__shortcuts" label="홈 바로가기" items={shortcuts} />
-
-      {installSuggestion}
 
       {announcement && <div className="home-hub__announcement">{announcement}</div>}
 

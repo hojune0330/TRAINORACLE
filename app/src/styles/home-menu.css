@@ -44,5 +44,7 @@
 @media (min-width: 900px) {
   .more-screen__list--tools { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); align-items:start; gap:var(--space-6); }
   .more-screen__list--tools .more-screen__group { margin-block:var(--space-4); }
+  .more-screen__list--tools > .install-shortcut-menu,
+  .more-screen__list--tools > .install-shortcut-restore { grid-column:1 / -1; }
 }
 .journal-rewards-screen .decoration-shop { margin-top: 20px; }

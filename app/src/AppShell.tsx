@@ -1132,6 +1132,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
           onOpenTrends={() => goTab("trends", { section: "distance" })}
           onOpenOracle={openOracle}
           onOpenMore={() => runViewTransition("push", () => setUtilityView("more"))}
+          onOpenPaceCalculator={() => openPaceCalculator()}
           onOpenMinigame={() => runViewTransition("push", () => { acknowledgeAnnouncement(MINIGAME_ANNOUNCEMENT); setUtilityOrigin("home"); setUtilityView("minigame") })}
           onOpenAccount={accountEnabled ? () => runViewTransition("push", () => setV(s => ({ ...s, accountOpen: true }))) : undefined}
           onOpenContent={openTrainingReading}

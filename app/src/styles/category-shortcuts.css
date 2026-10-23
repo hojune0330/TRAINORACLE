@@ -32,6 +32,7 @@ button.category-shortcut {
   word-break: keep-all;
   overflow-wrap: anywhere;
 }
+.category-shortcut > .category-shortcut__illustration { width: 40px; height: 40px; }
 button.category-shortcut:focus-visible { outline: 2px solid var(--category-ink); outline-offset: 2px; }
 button.category-shortcut:active { background: var(--category-wash); }
 @media (hover: hover) and (pointer: fine) {
