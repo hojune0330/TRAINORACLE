@@ -241,6 +241,24 @@ afterEach(() => {
 })
 
 describe("GoalTrainingProgramFlow", () => {
+  it("changes frequency without saving, retains goal and dates, and keeps a failed edit retryable", async () => {
+    const user = userEvent.setup()
+    renderFlow()
+    await chooseGoalDateAndExperience(user)
+    await user.click(screen.getByRole("button", { name: "훈련 횟수 바꾸기" }))
+    expect(screen.getByLabelText("9.5일마다 훈련할 날")).toBeVisible()
+    await user.selectOptions(screen.getByLabelText("9.5일마다 훈련할 날"), "4")
+    mocks.createPreview.mockReturnValueOnce({ kind: "invalid", code: "TEST_FAILURE" })
+    await user.click(screen.getByRole("button", { name: "이 조건으로 다시 보기" }))
+    expect(screen.getByRole("button", { name: "이 조건으로 다시 보기" })).toBeVisible()
+    await user.click(screen.getByRole("button", { name: "이 조건으로 다시 보기" }))
+    expect(mocks.createPreview).toHaveBeenLastCalledWith(expect.objectContaining({
+      goalMinutes: 45, availableDayCount: 4, experienceBand: "EXPERIENCED", goalPaceConfirmed: false,
+      dateChoice: { kind: "START", startDate: "2026-10-18" },
+    }))
+    expect(mocks.save).not.toHaveBeenCalled()
+    expect(mocks.apply).not.toHaveBeenCalled()
+  })
   it("builds a goal-and-date preview from the selected experience without saving or applying it", async () => {
     const user = userEvent.setup()
     renderFlow()
