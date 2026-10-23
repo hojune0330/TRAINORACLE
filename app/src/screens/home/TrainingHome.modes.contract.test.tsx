@@ -96,7 +96,7 @@ describe("training home presentation", () => {
     expect(learn).toHaveBeenCalledOnce(); expect(decorate).toHaveBeenCalledOnce()
     expect(guide).toHaveBeenCalledOnce()
   })
-  it("groups four short home shortcuts in destination order before the separate install action", () => {
+  it("groups four short home shortcuts in destination order after the separate install suggestion", () => {
     const trends = vi.fn(), guide = vi.fn(), learn = vi.fn(), decorate = vi.fn()
     render(<TrainingHome model={TRAINING} onOpenTrends={trends} onOpenGuide={guide}
       onOpenContent={learn} onOpenRewards={decorate} installSuggestion={<button>앱 추가</button>} />)
@@ -104,7 +104,7 @@ describe("training home presentation", () => {
     const buttons = within(navigation).getAllByRole("button")
     expect(buttons.map(button => button.textContent)).toEqual(["훈련량", "일지 예시", "훈련법", "꾸미기"])
     expect(buttons.map(button => button.getAttribute("data-category"))).toEqual(["oracle", "journal", "training", "journal"])
-    expect(navigation.compareDocumentPosition(screen.getByRole("button", { name: "앱 추가" })) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
+    expect(navigation.compareDocumentPosition(screen.getByRole("button", { name: "앱 추가" })) & Node.DOCUMENT_POSITION_PRECEDING).not.toBe(0)
     const callbacks = [trends, guide, learn, decorate]
     for (const [index, button] of buttons.entries()) {
       expect(button.querySelector(".category-icon")).toHaveAttribute("aria-hidden", "true")

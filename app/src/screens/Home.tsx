@@ -41,7 +41,6 @@ export type HomeProps = {
   readonly oraclePreviewLabel?: string
   readonly onOpenMore?: () => void
   readonly onOpenMinigame?: () => void
-  readonly onOpenPaceCalculator?: () => void
   readonly onOpenAccount?: () => void
   readonly onOpenContent?: () => void
   readonly onOpenRewards?: () => void
@@ -51,7 +50,7 @@ export type HomeProps = {
 
 export function Home({
   onWriteLog, onOpenDay, onOpenArchive, onOpenGuide, onOpenPlan,
-  onOpenNextTraining, onOpenTrends, onOpenImport, onOpenRecords, onOpenOracle, oraclePreview, oraclePreviewLabel, onOpenMore, onOpenMinigame, onOpenPaceCalculator, onOpenAccount, onOpenContent, onOpenRewards,
+  onOpenNextTraining, onOpenTrends, onOpenImport, onOpenRecords, onOpenOracle, oraclePreview, oraclePreviewLabel, onOpenMore, onOpenMinigame, onOpenAccount, onOpenContent, onOpenRewards,
   introductionAllowed = true,
 }: HomeProps) {
   const [, setRevision] = React.useState(0)
@@ -175,8 +174,6 @@ export function Home({
         onOpenOracle={onOpenOracle}
         onOpenTrends={onOpenTrends}
         onOpenMore={onOpenMore}
-        onOpenMinigame={onOpenMinigame}
-        onOpenPaceCalculator={onOpenPaceCalculator}
         onOpenContent={onOpenContent}
         onOpenRewards={onOpenRewards}
         accountEntry={<AccountEntryButton onOpenAccount={onOpenAccount} />}
