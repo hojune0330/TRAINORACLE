@@ -26,7 +26,10 @@ test("compact questions, named disclosures and preview-first flows remain usable
   await capture("quick-outcome")
   await page.getByRole("button", {name: "운동을 마쳤어요"}).click()
   await expect(page.getByRole("button", {name: "운동을 마쳤어요"})).toHaveCount(0)
-  await page.getByRole("button", {name: "오후", exact: true}).click()
+  // At 320px, the next answer can land at the previous click's coordinates.
+  // Use a deliberate keyboard answer so this layout check does not send the
+  // same-position double tap that the form intentionally rejects.
+  await page.getByRole("button", {name: "오후", exact: true}).press("Enter")
   await expect(page.getByRole("button", {name: "오전", exact: true})).toHaveCount(0)
   await capture("quick-effort")
   await page.getByRole("button", {name: /^힘든 정도 6\/10,/}).click()
