@@ -17,7 +17,7 @@
   border-radius: var(--r-action);
   transition: background-color 160ms ease-out, color 160ms ease-out;
 }
-.app-navigation-dock .app-tab-bar__button > svg { flex: 0 0 22px; }
+.app-navigation-dock .app-tab-bar__button > svg { flex: 0 0 22px; width: 22px; height: 22px; }
 .app-navigation-dock .app-tab-bar__button span {
   font-family: var(--sans);
   font-size: var(--fs-caption);

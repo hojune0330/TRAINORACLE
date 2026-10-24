@@ -11,11 +11,11 @@ test("keeps compact navigation visible without shrinking its touch target", asyn
   const icon = home.locator("svg")
 
   await expect(navigation).toBeVisible()
-  await expect(home).toHaveCSS("min-height", "44px")
-  await expect(icon).toHaveCSS("width", "20px")
-  await expect(icon).toHaveCSS("height", "20px")
+  await expect(home).toHaveCSS("min-height", "64px")
+  await expect(icon).toHaveCSS("width", "22px")
+  await expect(icon).toHaveCSS("height", "22px")
   const activeFace = await home.evaluate(element => {
-    const style = getComputedStyle(element, "::before")
+    const style = getComputedStyle(element)
     return { radius: style.borderRadius, background: style.backgroundColor }
   })
   expect(activeFace.radius).toBe("12px")
@@ -59,8 +59,12 @@ test("shared choices keep selection, keyboard operation and enlarged labels acro
   await page.getByRole("radio", { name: "월간 달력", exact: true }).click()
   await expect(cycle).toHaveAttribute("aria-checked", "false")
 
+  await page.getByRole("navigation", { name: "일지 메뉴" }).getByRole("button", { name: "일지 나가기" }).click()
   await navigation.getByRole("button", { name: "오라클", exact: true }).click()
-  const choices = page.getByRole("navigation", { name: "오라클 항목" }).getByRole("button")
+  const oracleMenu = page.getByRole("navigation", { name: "오라클 메뉴" })
+  const choices = oracleMenu.getByRole("button")
+  await expect(choices).toHaveCount(4)
+  await expect(navigation).toHaveCount(0)
   for (const choice of await choices.all()) {
     await expect(choice).toHaveCSS("border-radius", "12px")
     expect((await choice.boundingBox())!.height).toBeGreaterThanOrEqual(44)
@@ -70,12 +74,13 @@ test("shared choices keep selection, keyboard operation and enlarged labels acro
   await expect(choices.first()).toBeVisible()
   await page.screenshot({ path: info.outputPath("rounded-oracle-default.png"), fullPage: true })
   // A larger user font must grow the face, not clip a fixed-height label.
-  await page.addStyleTag({ content: '.app-choice-control, .app-compact-tab, .oracle-section-nav__item { font-size: 28px !important; }' })
+  await page.addStyleTag({ content: '.app-choice-control, .app-compact-tab, .app-navigation-dock .app-tab-bar__button span { font-size: 28px !important; }' })
   await expectNoHorizontalOverflow(page)
   for (const choice of await choices.all()) {
     expect(await choice.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true)
   }
   await page.screenshot({ path: info.outputPath("rounded-oracle-large-text.png"), fullPage: true })
+  await oracleMenu.getByRole("button", { name: "오라클 나가기" }).click()
   await navigation.getByRole("button", { name: "홈", exact: true }).click()
   await page.getByRole("button", { name: "더보기", exact: true }).click()
   const learning = page.getByRole("button", { name: "훈련법 읽기", exact: true })

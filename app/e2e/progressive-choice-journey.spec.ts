@@ -34,47 +34,48 @@ for (const persona of personas) {
       await expect(page.getByRole("heading", { name: "내 훈련 살펴보기", exact: true })).toBeVisible()
       await expect(page.getByRole("button", { name: "훈련량", exact: true })).toBeVisible()
       await page.screenshot({ path: info.outputPath("oracle-first.png") })
-      const sections = () => page.getByRole("navigation", { name: "오라클 항목" })
-      await click(sections().getByRole("button", { name: "내 훈련", exact: true }))
+      const sections = () => page.getByRole("navigation", { name: "오라클 메뉴" })
+      await click(sections().getByRole("button", { name: "분석", exact: true }))
       await noHorizontalOverflow(page)
 
-      await click(sections().getByRole("button", { name: "러닝 취향", exact: true }))
+      await click(sections().getByRole("button", { name: "취향", exact: true }))
       await expect(page.getByRole("heading", { name: "나는 어떤 달리기를 좋아할까요?", exact: true })).toBeVisible()
-      await expect(page.getByRole("button", { name: "오라클로 돌아가기", exact: true })).toBeVisible()
+      await expect(sections().getByRole("button", { name: "오라클 나가기", exact: true })).toBeVisible()
       await noHorizontalOverflow(page)
-      await click(page.getByRole("button", { name: "오라클로 돌아가기", exact: true }))
+      await click(sections().getByRole("button", { name: "분석", exact: true }))
       await expect(sections()).toBeVisible()
 
       await click(sections().getByRole("button", { name: "읽을거리", exact: true }))
       await expect(page.getByRole("heading", { name: "주제 골라 읽기" })).toBeVisible()
       await noHorizontalOverflow(page)
-      await click(page.getByRole("button", { name: "오라클로 돌아가기", exact: true }))
+      await click(sections().getByRole("button", { name: "분석", exact: true }))
       await expect(sections()).toBeVisible()
 
       let seed: number = persona.seed
-      const choices = ["러닝 취향", "읽을거리", "내 훈련"]
+      const choices = ["취향", "읽을거리", "분석"]
       for (let n = 0; n < 6; n++) {
         seed = (seed * 16807) % 2147483647
         const choice = choices[seed % choices.length]
         await click(sections().getByRole("button", { name: choice, exact: true }))
         await noHorizontalOverflow(page)
-        if (choice !== "내 훈련") {
-          await click(page.getByRole("button", { name: "오라클로 돌아가기", exact: true }))
+        if (choice !== "분석") {
+          await click(sections().getByRole("button", { name: "분석", exact: true }))
           await expect(sections()).toBeVisible()
         }
       }
-      await click(sections().getByRole("button", { name: "내 훈련", exact: true }))
+      await click(sections().getByRole("button", { name: "분석", exact: true }))
       await click(page.getByRole("button", { name: "훈련량", exact: true }))
       await expect(page.getByRole("button", { name: "훈련량", exact: true })).toHaveAttribute("aria-pressed", "true")
       await click(page.getByRole("button", { name: "훈련 요약", exact: true }))
-      await click(page.getByRole("navigation", { name: "오라클 항목" })
+      await click(sections()
         .getByRole("button", { name: "읽을거리", exact: true }))
       await expect(page.getByRole("radiogroup", { name: "읽을거리 주제" })).toBeVisible()
       await click(page.getByRole("radiogroup", { name: "읽을거리 주제" }).getByRole("radio", { name: "경기 기록", exact: true }))
       await expect(page.getByRole("button", { name: "최근 경기와 최고기록", exact: true })).toBeVisible()
-      await click(page.getByRole("button", { name: "오라클로 돌아가기", exact: true }))
+      await click(sections().getByRole("button", { name: "오라클 나가기", exact: true }))
       await click(nav.getByRole("button", { name: "일지", exact: true }))
       await expect(page.getByRole("heading", { name: "지난 일지", exact: true })).toBeVisible()
+      await click(page.getByRole("navigation", { name: "일지 메뉴" }).getByRole("button", { name: "일지 나가기", exact: true }))
       await click(nav.getByRole("button", { name: "홈", exact: true }))
       await expect(page.getByRole("button", { name: "오늘 운동 기록 쓰기" })).toBeVisible()
       await noHorizontalOverflow(page)

@@ -243,7 +243,7 @@ test("home launch banner opens the game, returns home and stays acknowledged aft
   await banner.getByRole("button", { name: "게임 라운지 열기" }).click()
   await expect(page.getByRole("heading", { name: "게임 라운지", exact: true })).toBeVisible()
   await dismissInitialPetHome(page)
-  await page.getByRole("button", { name: "홈으로 돌아가기" }).click()
+  await page.getByRole("navigation", { name: "게임 라운지 메뉴" }).getByRole("button", { name: "게임 라운지 나가기" }).click()
   await expect(page.getByRole("button", { name: "오늘 운동 기록 쓰기", exact: true })).toBeVisible()
   await expect(banner).toHaveCount(0)
   await page.reload()
@@ -254,7 +254,7 @@ test("home launch banner opens the game, returns home and stays acknowledged aft
   await dismissInitialPetHome(page)
   await page.getByRole("button", { name: "러닝 투어 게임 소개", exact: true }).click()
   await page.getByRole("button", { name: "게임 목록으로", exact: true }).click()
-  await page.getByRole("button", { name: "더보기로 돌아가기" }).click()
+  await page.getByRole("navigation", { name: "게임 라운지 메뉴" }).getByRole("button", { name: "게임 라운지 나가기" }).click()
   await expect(page.getByRole("heading", { name: "더보기", exact: true })).toBeVisible()
 })
 

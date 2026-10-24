@@ -6,8 +6,9 @@ async function open(page:Page,map:'forest'|'starlight'='forest'){
  await page.goto('./?app=1')
  await page.getByRole('button',{name:'더보기',exact:true}).click()
  await page.getByRole('button',{name:'게임 라운지',exact:true}).click()
- // The lounge now opens the pet home first. Follow its visible exit before
- // selecting a game; clicking the catalog behind the modal cannot succeed.
+ // The managed lounge starts at its catalog. Enter the pet home explicitly,
+ // then follow its visible exit before selecting a game.
+ await page.getByRole('button',{name:/^우리 집 친구들/}).click()
  const petHome=page.getByRole('dialog',{name:'우리 집 친구들',exact:true})
  await expect(petHome).toBeVisible()
  await petHome.getByLabel('다른 게임 보기',{exact:true}).click()

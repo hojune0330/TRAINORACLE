@@ -84,6 +84,8 @@ test(`uses the diary flow with ${hasEarnedHistory ? "previously earned" : "no ba
   await page.getByRole("button", { name: "이전 주기" }).click()
   await expect(cycleRange).not.toHaveText(previousRange ?? "")
 
+  await page.getByRole("navigation", { name: "일지 메뉴" }).getByRole("button", { name: "일지 나가기" }).click()
+  await expect(page.getByRole("heading", { name: "내 기록", exact: true })).toBeVisible()
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "홈" }).click()
   await page.getByRole("button", { name: "더보기", exact: true }).click()
   await expect(page.getByRole("heading", { name: "배우기", exact: true })).toBeVisible()

@@ -4,7 +4,9 @@ async function lounge(page: Page) {
   await page.goto('./?app=1')
   await page.getByRole('button', { name: '더보기', exact: true }).click()
   await page.getByRole('button', { name: '게임 라운지', exact: true }).click()
-  await page.getByRole('button', { name: '다른 게임 보기', exact: true }).first().click()
+  await expect(page.getByRole('heading', { name: '게임 라운지', exact: true })).toBeVisible()
+  await page.getByRole('button', { name: /^우리 집 친구들/ }).click()
+  await page.getByRole('dialog', { name: '우리 집 친구들', exact: true }).getByLabel('다른 게임 보기', { exact: true }).click()
   await expect(page.getByRole('heading', { name: '게임 라운지', exact: true })).toBeVisible()
 }
 const gameCard = (page: Page, name: string) => page.getByRole('button', { name: `${name} 게임 소개`, exact: true })
@@ -12,10 +14,13 @@ const overflow = (page: Page) => page.evaluate(() => document.documentElement.sc
 
 test('shared lounge link opens the catalog directly and returns home', async ({ page }) => {
   await page.goto('./?app=1&games=lounge')
+  await expect(page.getByRole('heading', { name: '게임 라운지', exact: true })).toBeVisible()
+  await expect(page.getByRole('dialog', { name: '우리 집 친구들', exact: true })).toHaveCount(0)
+  await page.getByRole('button', { name: /^우리 집 친구들/ }).click()
   await expect(page.getByRole('heading', { name: '우리 집 친구들', exact: true })).toBeVisible()
   await page.getByRole('button', { name: '다른 게임 보기', exact: true }).first().click()
   await expect(page.getByRole('heading', { name: '게임 라운지', exact: true })).toBeVisible()
-  await page.getByRole('button', { name: '홈으로 돌아가기', exact: true }).click()
+  await page.getByRole('navigation', { name: '게임 라운지 메뉴' }).getByRole('button', { name: '홈', exact: true }).click()
   await expect(page.getByRole('button', { name: '오늘 운동 기록 쓰기', exact: true })).toBeVisible()
 })
 
