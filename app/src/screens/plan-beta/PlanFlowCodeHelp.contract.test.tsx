@@ -1,4 +1,5 @@
-import { cleanup, render, screen, within } from "@testing-library/react"
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react"
+import type { CSSProperties } from "react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, describe, expect, it } from "vitest"
 import { GLOSSARY } from "../../domain/glossary"
@@ -8,6 +9,32 @@ import { AppOverlayNavigationProvider } from "../../components/AppOverlayNavigat
 afterEach(cleanup)
 
 describe("plan flow code help", () => {
+  it("copies and updates the shell footer reservation into its body portal", async () => {
+    const user = userEvent.setup()
+    const { container } = render(<div className="app-shell" style={{ "--app-shell-tab-bar-height": "86px" } as CSSProperties}>
+      <nav className="app-tab-bar" />
+      <PlanFlowCodeHelp primary="MAIN" kind="main" />
+    </div>)
+    await user.click(screen.getByRole("button", { name: "주요 훈련 MAIN 훈련 설명 보기" }))
+    const explanation = screen.getByRole("note", { name: "주요 훈련 MAIN 훈련 설명" })
+    const shell = container.querySelector<HTMLElement>(".app-shell")!
+    expect(explanation.parentElement).toBe(document.body)
+    expect(explanation.style.getPropertyValue("--app-shell-tab-bar-height")).toBe("86px")
+    shell.style.setProperty("--app-shell-tab-bar-height", "132px")
+    await waitFor(() => expect(explanation.style.getPropertyValue("--app-shell-tab-bar-height")).toBe("132px"))
+    await user.keyboard("{Escape}")
+    expect(screen.queryByRole("note")).not.toBeInTheDocument()
+  })
+
+  it("does not reserve a hidden footer in the body portal", async () => {
+    const user = userEvent.setup()
+    render(<div className="app-shell" style={{ "--app-shell-tab-bar-height": "86px" } as CSSProperties}>
+      <PlanFlowCodeHelp primary="MAIN" kind="main" />
+    </div>)
+    await user.click(screen.getByRole("button", { name: "주요 훈련 MAIN 훈련 설명 보기" }))
+    expect(screen.getByRole("note").style.getPropertyValue("--app-shell-tab-bar-height")).toBe("0px")
+  })
+
   it("explains the primary schedule code and secondary energy code together", async () => {
     const user = userEvent.setup()
     render(<PlanFlowCodeHelp primary="MAIN" secondary="LT" kind="main" />)

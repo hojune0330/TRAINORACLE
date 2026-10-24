@@ -592,7 +592,7 @@
   position: fixed;
   z-index: 80;
   left: 50%;
-  bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+  bottom: calc(var(--app-shell-tab-bar-height, 68px) + 8px + env(safe-area-inset-bottom, 0px));
   width: min(420px, calc(100vw - 32px));
   max-height: calc(100dvh - 112px);
   overflow-y: auto;

@@ -41,6 +41,7 @@ beforeEach(() => {
     paddingBottom: "8px",
     borderTopWidth: "1px",
     borderBottomWidth: "1px",
+    getPropertyValue: (name: string) => name === "--app-shell-tab-bar-safe-area" ? "8px" : "",
   } as CSSStyleDeclaration)
 })
 
@@ -51,6 +52,18 @@ afterEach(() => {
 })
 
 describe("TabBar measured shell height", () => {
+  it("reserves padding, borders and the floating gap while excluding the safe area exactly once", () => {
+    tabHeight.value = 82
+    vi.mocked(window.getComputedStyle).mockReturnValue({
+      paddingTop: "4px", paddingBottom: "12px", borderTopWidth: "1px", borderBottomWidth: "1px", marginTop: "0px", marginBottom: "12px",
+      getPropertyValue: (name: string) => name === "--app-shell-tab-bar-safe-area" ? "8px" : "",
+    } as CSSStyleDeclaration)
+    const { container } = render(<div className="app-shell"><TabBar tab="home" onTab={vi.fn()} onStartRecording={vi.fn()} /></div>)
+    const shell = container.querySelector<HTMLElement>(".app-shell")!
+    const reserved = Number.parseFloat(shell.style.getPropertyValue("--app-shell-tab-bar-height"))
+    expect(reserved).toBe(86)
+    expect(reserved + 8).toBe(tabHeight.value + 12)
+  })
   it("updates from ResizeObserver and restores the previous inline value", () => {
     tabHeight.value = 70
     const { container, unmount } = render(
@@ -61,13 +74,13 @@ describe("TabBar measured shell height", () => {
     const nav = container.querySelector(".app-tab-bar") as HTMLElement
     const shell = nav.closest(".app-shell") as HTMLElement
 
-    expect(shell.style.getPropertyValue("--app-shell-tab-bar-height")).toBe("60px")
+    expect(shell.style.getPropertyValue("--app-shell-tab-bar-height")).toBe("62px")
     expect(observers).toHaveLength(1)
     expect(observers[0]?.observe).toHaveBeenCalledWith(nav)
 
     tabHeight.value = 82
     observers[0]?.update()
-    expect(shell.style.getPropertyValue("--app-shell-tab-bar-height")).toBe("72px")
+    expect(shell.style.getPropertyValue("--app-shell-tab-bar-height")).toBe("74px")
 
     unmount()
     expect(observers[0]?.disconnect).toHaveBeenCalledTimes(1)
@@ -81,7 +94,7 @@ describe("TabBar measured shell height", () => {
 
     tabHeight.value = 54
     observers[0]?.update()
-    expect(shell.style.getPropertyValue("--app-shell-tab-bar-height")).toBe("44px")
+    expect(shell.style.getPropertyValue("--app-shell-tab-bar-height")).toBe("46px")
 
     unmount()
     expect(shell.style.getPropertyValue("--app-shell-tab-bar-height")).toBe("")
@@ -93,7 +106,7 @@ describe("TabBar measured shell height", () => {
     const { container, unmount } = render(<div className="app-shell"><TabBar tab="home" onTab={vi.fn()} onStartRecording={vi.fn()} /></div>)
     const shell = (container.querySelector(".app-tab-bar") as HTMLElement).closest(".app-shell") as HTMLElement
 
-    expect(shell.style.getPropertyValue("--app-shell-tab-bar-height")).toBe("44px")
+    expect(shell.style.getPropertyValue("--app-shell-tab-bar-height")).toBe("46px")
     expect(observers).toHaveLength(0)
     unmount()
     expect(shell.style.getPropertyValue("--app-shell-tab-bar-height")).toBe("")

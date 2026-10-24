@@ -49,10 +49,11 @@ export function useMeasuredTabBarHeight() {
       const boundsHeight = nav.getBoundingClientRect().height
       if (boundsHeight <= 0) return
       const style = window.getComputedStyle(nav)
-      const subtract = [style.paddingBottom, style.borderTopWidth, style.borderBottomWidth]
-        .reduce((total, value) => total + (Number.parseFloat(value) || 0), 0)
-      const contentHeight = boundsHeight - subtract + (Number.parseFloat(style.marginBottom) || 0)
-      if (contentHeight > 0) shell.style.setProperty(APP_SHELL_TAB_BAR_HEIGHT, `${contentHeight}px`)
+      // Consumers add the OS safe area once. Keep every other part of the
+      // footer's flex footprint, including its padding, borders and outer gap.
+      const safeArea = Number.parseFloat(style.getPropertyValue("--app-shell-tab-bar-safe-area")) || 0
+      const footprint = boundsHeight - safeArea + (Number.parseFloat(style.marginTop) || 0) + (Number.parseFloat(style.marginBottom) || 0)
+      if (footprint > 0) shell.style.setProperty(APP_SHELL_TAB_BAR_HEIGHT, `${footprint}px`)
     }
 
     measure()

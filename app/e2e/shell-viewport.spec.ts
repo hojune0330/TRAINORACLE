@@ -11,14 +11,24 @@ async function expectFrameAligned(page: Page, tabs = true) {
     const shell = document.querySelector(".app-shell")!
     const bounds = shell.getBoundingClientRect()
     const main = document.querySelector(".app-scroll-region")!
-    const nav = document.querySelector(".app-tab-bar")?.getBoundingClientRect()
+    const navElement = document.querySelector(".app-tab-bar")
+    const nav = navElement?.getBoundingClientRect()
+    const style = navElement === null ? null : getComputedStyle(navElement)
+    const marginTop = parseFloat(style?.marginTop ?? "0") || 0
+    const marginBottom = parseFloat(style?.marginBottom ?? "0") || 0
+    const safeArea = parseFloat(style?.getPropertyValue("--app-shell-tab-bar-safe-area") ?? "0") || 0
+    const reserved = parseFloat(getComputedStyle(shell).getPropertyValue("--app-shell-tab-bar-height"))
     return Math.abs(bounds.top) < 1 && Math.abs(bounds.bottom - innerHeight) < 1
       && bounds.left >= 0 && bounds.right <= innerWidth + 1
       && scrollY === 0 && scrollX === 0
       && main.scrollWidth <= main.clientWidth + 1
-      && (!expectTabs || (nav !== undefined && Math.abs(nav.bottom - innerHeight) < 1
-        && Math.abs(main.getBoundingClientRect().bottom - nav.top) < 1))
-  }, tabs), { message: "shell stays inside the viewport with no gap below tabs or horizontal overflow" }).toBe(true)
+      && (expectTabs ? (nav !== undefined && document.querySelectorAll(".app-tab-bar").length === 1
+        && Math.abs(marginBottom - 12) < 1
+        && Math.abs(nav.bottom + marginBottom - innerHeight) < 1
+        && Math.abs(main.getBoundingClientRect().bottom - nav.top + marginTop) < 1
+        && Math.abs(nav.height + marginTop + marginBottom - safeArea - reserved) < 1)
+        : (nav === undefined && Math.abs(main.getBoundingClientRect().bottom - bounds.bottom) < 1))
+  }, tabs), { message: "shell and the floating dock outer edge stay aligned without content coverage or horizontal overflow" }).toBe(true)
 }
 
 test("all five tab entries keep the frame anchored while only their content scrolls", async ({ page }, testInfo) => {
@@ -26,15 +36,17 @@ test("all five tab entries keep the frame anchored while only their content scro
   const nav = page.getByRole("navigation", { name: "주 탭" })
   await expect(nav).toBeVisible()
   for (const name of ["홈", "일지", "기록하기", "훈련", "오라클"]) {
+    const origin = (await nav.locator('[aria-current="page"] span').innerText()).trim()
     await nav.getByRole("button", { name, exact: true }).click()
+    const hasDock = name !== "기록하기"
     await expect(page.locator(".app-scroll-region .app-loading-state")).toHaveCount(0)
     await expect(page.locator(".app-scroll-region").getByRole("heading").first()).toBeVisible()
-    await expectFrameAligned(page)
+    await expectFrameAligned(page, hasDock)
     // Model the old large-layout-vh root without depending on browser toolbars.
     // Each fresh context is synthetic and contains no user/account records.
     const style = await page.addStyleTag({ content: "#root { min-height: calc(100dvh + 240px); }" })
     await page.evaluate(() => window.scrollTo(0, 240))
-    await expectFrameAligned(page)
+    await expectFrameAligned(page, hasDock)
     await style.evaluate(el => { el.parentNode?.removeChild(el) })
     await page.screenshot({ path: testInfo.outputPath(`tab-${name}.png`), animations: "disabled" })
     await page.locator(".app-scroll-region").evaluate(el => {
@@ -47,8 +59,15 @@ test("all five tab entries keep the frame anchored while only their content scro
     })
     const end = page.locator("[data-viewport-end]")
     await end.click() // verifies the bottom action is not covered by the tab bar
-    await expectFrameAligned(page)
+    await expectFrameAligned(page, hasDock)
     await end.evaluate(el => el.remove())
+    if (name === "일지" || name === "오라클") {
+      await page.getByRole("navigation", { name: `${name} 메뉴`, exact: true }).getByRole("button", { name: `${name} 나가기`, exact: true }).click()
+      await expect(nav.getByRole("button", { name: origin, exact: true })).toHaveAttribute("aria-current", "page")
+    } else if (name === "기록하기") {
+      await page.getByRole("button", { name: "← 뒤로", exact: true }).click()
+      await expect(nav.getByRole("button", { name: origin, exact: true })).toHaveAttribute("aria-current", "page")
+    }
   }
 })
 

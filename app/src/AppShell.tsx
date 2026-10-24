@@ -89,6 +89,7 @@ const TOAST_EXIT_MS = 150
 const OVERLAY_HISTORY_KEY = "trainoracleOverlay"
 const MORE_HISTORY_KEY = "trainoracleMore"
 const ORACLE_PLAN_HISTORY_KEY = "trainoracleOraclePlan"
+const ORACLE_LOG_HISTORY_KEY = "trainoracleOracleLog"
 const ORACLE_INVITATION_RETURN_KEY = "trainoracle.oracle-v2.invitation-return"
 const DOMAIN_HISTORY_KEY = "trainoracleDomain"
 
@@ -539,10 +540,21 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
         }
         oraclePlanForwardRef.current = null
       }
+      // A closed journal child is not a resumable draft. Forward must consume
+      // that expired entry and keep its parent result, without saving again or
+      // replacing the parent's history. Account/domain ownership still applies.
+      if (typeof event.state?.[ORACLE_LOG_HISTORY_KEY] === "string" && oracleInputRef.current === null
+        && visit?.domain === "oracle" && visit.scope === localJournalScopeGeneration()
+        && visit.origin.owner === activeLocalAccount() && event.state?.[DOMAIN_HISTORY_KEY] === visit.token) {
+        window.history.back()
+        return
+      }
       const intent = oracleInputRef.current
       const leavingOraclePlan = intent?.inputKind === "plan" && intent.historyToken !== undefined
         && event.state?.[ORACLE_PLAN_HISTORY_KEY] !== intent.historyToken
-      if ((intent?.inputKind === "log" || leavingOraclePlan) && overlayRef.current === null && intent.owner === activeLocalAccount()) {
+      const leavingOracleLog = intent?.inputKind === "log" && intent.historyToken !== undefined
+        && event.state?.[ORACLE_LOG_HISTORY_KEY] !== intent.historyToken
+      if ((leavingOracleLog || leavingOraclePlan) && overlayRef.current === null && intent.owner === activeLocalAccount()) {
         const restored: AppOverlay = { kind: "oracle", topic: intent.topic, mode: intent.mode, scrollTop: intent.scrollTop }
         const allowed = runDraftSafeNavigation(() => {
           oraclePlanForwardRef.current = leavingOraclePlan && hasStoredOraclePlan()
@@ -556,7 +568,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
         })
         if (!allowed) {
           const { [OVERLAY_HISTORY_KEY]: _overlay, ...rest } = window.history.state ?? {}
-          window.history.pushState(leavingOraclePlan ? { ...rest, [ORACLE_PLAN_HISTORY_KEY]: intent.historyToken } : {}, "", window.location.href)
+          window.history.pushState({ ...rest, [leavingOraclePlan ? ORACLE_PLAN_HISTORY_KEY : ORACLE_LOG_HISTORY_KEY]: intent.historyToken }, "", window.location.href)
         }
         return
       }
@@ -715,11 +727,14 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
       setSavedToast({ count: localOnlyCount(), phase: "enter", receipt, reviewMessage, storageMessage,
         storageStatus: "CONFIRMED", savedJournal: { id: savedEntry.id, date: savedEntry.date, kind: savedEntry.kind }, rewardMessage, rewardRetry, completionAlreadyShown })
       const intent = oracleInputRef.current
-      if (intent?.inputKind === "log") oracleInputRef.current = null
       if (reviewMessage === undefined && intent?.inputKind === "log" && intent.owner === activeLocalAccount()) {
-        setV(intent.view)
-        openOverlay({ kind: "oracle", topic: intent.topic, mode: "personal" })
-      }
+        if (intent.historyToken && window.history.state?.[ORACLE_LOG_HISTORY_KEY] === intent.historyToken) window.history.back()
+        else {
+          oracleInputRef.current = null
+          setV(intent.view)
+          openOverlay({ kind: "oracle", topic: intent.topic, mode: "personal" })
+        }
+      } else if (intent?.inputKind === "log") oracleInputRef.current = null
     })
   }
 
@@ -861,6 +876,11 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
   }
   const returnFromOracleInput = () => runViewTransition("pop", () => {
     const intent = oracleInputRef.current
+    if (intent?.inputKind === "log" && intent.owner === activeLocalAccount()
+      && intent.historyToken && window.history.state?.[ORACLE_LOG_HISTORY_KEY] === intent.historyToken) {
+      window.history.back()
+      return
+    }
     oracleInputRef.current = null
     if (!intent || intent.owner !== activeLocalAccount()) { setV(INITIAL_VIEW_STATE); return }
     setV(intent.view)
@@ -873,7 +893,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
       const topic = overlayRef.current?.kind === "oracle" ? overlayRef.current.topic : null
       oracleInputRef.current = topic && (action === "records" || action === "log" || action === "plan")
         ? { topic, owner: activeLocalAccount(), inputKind: action,
-          ...(action === "plan" ? { historyToken: `oracle-plan-${Date.now()}-${Math.random().toString(36).slice(2)}` } : {}),
+          ...(action === "plan" || action === "log" ? { historyToken: `oracle-${action}-${Date.now()}-${Math.random().toString(36).slice(2)}` } : {}),
           mode: overlayRef.current?.kind === "oracle" ? overlayRef.current.mode ?? "personal" : "personal", scrollTop: scrollRegionRef.current?.scrollTop ?? 0, view: v } : null
       if (action === "records") {
         dismissOracle()
@@ -881,11 +901,11 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
         setV(viewForTab("plan"))
         setAthleteRecordsOpen(true)
       } else {
-        if (action === "plan" && oracleInputRef.current?.historyToken) {
-          // A plan opened from this result can return to it. Reader entries inherit
-          // the token, so closing a plan date does not discard the enclosing input.
+        if ((action === "plan" || action === "log") && oracleInputRef.current?.historyToken) {
+          // Preserve the result's domain entry beneath its child input. Plan
+          // readers inherit their token; journal close/save consumes its child.
           const { [OVERLAY_HISTORY_KEY]: _overlay, ...rest } = window.history.state ?? {}
-          window.history.pushState({ ...rest, [ORACLE_PLAN_HISTORY_KEY]: oracleInputRef.current.historyToken }, "", window.location.href)
+          window.history.pushState({ ...rest, [action === "plan" ? ORACLE_PLAN_HISTORY_KEY : ORACLE_LOG_HISTORY_KEY]: oracleInputRef.current.historyToken }, "", window.location.href)
           applyOverlay(null)
           // This opens a new input screen, rather than returning to the view
           // beneath the explanation. Do not restore its old scroll or focus.

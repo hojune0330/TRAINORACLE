@@ -22,7 +22,9 @@ describe("EraseLocalData recovery surface", () => {
   it("offers a real backup action and explains the deletion scope before confirmation", () => {
     render(<EraseLocalData />)
 
-    expect(screen.getByRole("button", { name: /일지 데이터 내려받기/u })).toBeVisible()
+    const backup = screen.getByRole("button", { name: /^일지 백업$/u })
+    expect(backup).toBeVisible()
+    expect(backup).toHaveAccessibleDescription(/메모 원문·목적을 제외한 JSON/u)
     expect(screen.getByText(/일지.*계획.*포인트.*로그인/u)).toBeVisible()
   })
 

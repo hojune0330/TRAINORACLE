@@ -414,7 +414,7 @@ test("explains the rules before play, falls on inaction and restarts with pointe
   await page.getByRole("button", { name: "저장 없이 나가기" }).click()
   await page.getByRole("button", { name: "게임 소개로", exact: true }).click()
   await page.getByRole("button", { name: "게임 목록으로", exact: true }).click()
-  await page.getByRole("button", { name: "더보기로 돌아가기" }).click()
+  await page.getByRole("navigation", { name: "게임 라운지 메뉴", exact: true }).getByRole("button", { name: "게임 라운지 나가기", exact: true }).click()
   await expect(page.getByRole("heading", { name: "더보기", exact: true })).toBeVisible()
   await page.clock.runFor(10000)
   await page.getByRole("button", { name: "게임 라운지", exact: true }).click()
@@ -726,7 +726,7 @@ test("navigation saves a paused run, restores it after reload and confirms a fre
   await page.getByRole("button", { name: "저장 없이 나가기" }).click()
   await expect(page.getByRole("heading", { name: "러닝 투어", exact: true })).toBeVisible()
   await page.getByRole("button", { name: "게임 목록으로", exact: true }).click()
-  await page.getByRole("button", { name: "더보기로 돌아가기", exact: true }).click()
+  await page.getByRole("navigation", { name: "게임 라운지 메뉴", exact: true }).getByRole("button", { name: "게임 라운지 나가기", exact: true }).click()
   await expect(page.getByRole("heading", { name: "더보기", exact: true })).toBeVisible()
 })
 

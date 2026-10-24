@@ -1,4 +1,5 @@
 import { createPortal } from "react-dom"
+import { useLayoutEffect } from "react"
 import { GLOSSARY, type TermId } from "../../domain/glossary"
 import { PopCard, usePopover } from "../../components/Popover"
 import { useAppOverlayNavigation } from "../../components/AppOverlayNavigation"
@@ -38,6 +39,22 @@ export function PlanFlowCodeHelp({
 }) {
   const { open, toggle, close, wrapRef, portalRef } = usePopover()
   const appNavigation = useAppOverlayNavigation()
+  useLayoutEffect(() => {
+    if (!open || variant !== "badge") return
+    const portal = portalRef.current
+    const shell = wrapRef.current?.closest(".app-shell") ?? document.querySelector(".app-shell")
+    if (portal === null || shell === null) return
+    // The body portal cannot inherit the shell's measured footer reservation.
+    const updateFooterHeight = () => {
+      const height = shell.querySelector(".app-tab-bar") === null ? "0px"
+        : window.getComputedStyle(shell).getPropertyValue("--app-shell-tab-bar-height").trim() || "68px"
+      portal.style.setProperty("--app-shell-tab-bar-height", height)
+    }
+    updateFooterHeight()
+    const observer = new MutationObserver(updateFooterHeight)
+    observer.observe(shell, { attributes: true, attributeFilter: ["style"] })
+    return () => observer.disconnect()
+  }, [open, variant, portalRef, wrapRef])
   const primaryTerm = PRIMARY_TERM[primary]
   const secondaryTerm = secondary === undefined ? undefined : SECONDARY_TERM[secondary]
   const primaryEntry = GLOSSARY[primaryTerm]

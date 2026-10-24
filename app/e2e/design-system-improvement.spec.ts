@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test"
 import { openEntry } from "./touch-audit"
+import { completeQuickPlan, openPlanOptions } from "./plan-flow"
 
 test("enlarged navigation labels stay inside their buttons and update the reserved height", async ({ page }) => {
   await page.goto("/?app=1&uitest=1")
@@ -16,11 +17,49 @@ test("enlarged navigation labels stay inside their buttons and update the reserv
   }))).toBe(true)
   await expect.poll(() => navigation.evaluate(element => {
     const style = getComputedStyle(element)
-    const actual = element.getBoundingClientRect().height - parseFloat(style.paddingBottom) - parseFloat(style.borderTopWidth) - parseFloat(style.borderBottomWidth)
+    const safeArea = parseFloat(style.getPropertyValue("--app-shell-tab-bar-safe-area")) || 0
+    const actual = element.getBoundingClientRect().height + (parseFloat(style.marginTop) || 0) + (parseFloat(style.marginBottom) || 0) - safeArea
     const reserved = parseFloat(getComputedStyle(element.closest(".app-shell")!).getPropertyValue("--app-shell-tab-bar-height"))
     return Math.abs(actual - reserved) < 1
   })).toBe(true)
+  await expect.poll(() => navigation.evaluate(element => {
+    const shell = element.closest(".app-shell")!
+    const content = shell.querySelector(".app-scroll-region")!
+    const reserved = parseFloat(getComputedStyle(shell).getPropertyValue("--app-shell-tab-bar-height"))
+    const safeArea = parseFloat(getComputedStyle(element).getPropertyValue("--app-shell-tab-bar-safe-area")) || 0
+    return Math.abs(shell.getBoundingClientRect().bottom - content.getBoundingClientRect().bottom - reserved - safeArea) < 1
+  }), { message: "The measured footer must match the actual space below the scrolling content" }).toBe(true)
   await page.screenshot({ path: test.info().outputPath("tabs-text-200.png") })
+})
+
+test("the portalled plan code explanation stays above the measured navigation at normal and enlarged text", async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 800 })
+  await page.goto("/?app=1&uitest=1")
+  const navigation = page.getByRole("navigation", { name: "주 탭", exact: true })
+  await navigation.getByRole("button", { name: "훈련", exact: true }).click()
+  await completeQuickPlan(page)
+  await openPlanOptions(page, true)
+  const before = await page.evaluate(() => localStorage.getItem("trainoracle.plan-beta.v1"))
+  const trigger = page.locator('.plan-candidate [data-variant="badge"] button').first()
+  await trigger.click()
+  const explanation = page.locator("body > .plan-flow-code-help__floating-card")
+  await expect(explanation).toBeVisible()
+  await page.screenshot({ path: test.info().outputPath("plan-code-explanation-375.png") })
+  const gap = () => explanation.evaluate(element => {
+    const footer = document.querySelector(".app-shell .app-tab-bar")!
+    return footer.getBoundingClientRect().top - element.getBoundingClientRect().bottom
+  })
+  await expect.poll(async () => Math.abs(await gap() - 8), { message: "The body portal must clear the entire measured footer by 8px" }).toBeLessThan(1)
+  await navigation.locator("span").evaluateAll(labels => {
+    const sizes = labels.map(label => [label, parseFloat(getComputedStyle(label).fontSize)] as const)
+    for (const [label, size] of sizes) (label as HTMLElement).style.fontSize = `${size * 2}px`
+  })
+  await expect.poll(async () => Math.abs(await gap() - 8), { message: "The open portal must follow navigation height changes" }).toBeLessThan(1)
+  await page.screenshot({ path: test.info().outputPath("plan-code-explanation-text200-375.png") })
+  await page.keyboard.press("Escape")
+  await expect(explanation).toHaveCount(0)
+  await expect(trigger).toBeFocused()
+  expect(await page.evaluate(() => localStorage.getItem("trainoracle.plan-beta.v1"))).toBe(before)
 })
 
 test("narrow comparison CSS stacks both synthetic method columns without an implicit second column", async ({ page }) => {

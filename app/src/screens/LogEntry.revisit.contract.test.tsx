@@ -266,10 +266,15 @@ describe("past journal revisit forms", () => {
 
   it("describes a historical race as belonging to the selected date", () => {
     // When
-    render(<LogEntry entryType="race" targetDate={DATE} />)
+    const { container } = render(<LogEntry entryType="race" targetDate={DATE} />)
 
     // Then
-    expect(screen.getByText("이 날짜의 경기")).toBeVisible()
+    expect(screen.getByRole("heading", { name: "경기 전 점검" })).toBeVisible()
+    const selectedDate = container.querySelector(`time[datetime="${DATE}"]`)
+    expect(selectedDate).toBeVisible()
+    expect(selectedDate).toHaveTextContent("2026·07·20 MON")
+    expect(selectedDate).not.toHaveTextContent("오늘")
+    expect(screen.getByRole("button", { name: "경기 직전" })).toHaveAttribute("aria-pressed", "true")
     expect(screen.queryByText("오늘의 경기")).not.toBeInTheDocument()
   })
 })

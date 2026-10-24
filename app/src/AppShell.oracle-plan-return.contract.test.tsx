@@ -41,6 +41,8 @@ vi.mock("./DeferredMobileScreens", async () => {
   return { DeferredMobileScreens: {
     PlanBeta: Plan,
     PlanProposalInbox: () => null,
+    // Opening a topic now enters the Oracle domain before showing its reader.
+    Trends: () => <h1>오라클 분석 홈</h1>,
     OracleExplore: ({ topicId, initialMode, onPersonalAction, onBack }: {
       topicId: OracleTopicId; initialMode?: "example" | "personal"
       onPersonalAction: (action: "plan") => void; onBack: () => void

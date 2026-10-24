@@ -54,6 +54,7 @@ test("keeps decoration and oracle motion brief, directional, and optional", asyn
   }
 
   /* 홈의 통합 꾸미기 진입은 오늘 일지 편집기를 바로 열고 일지를 기본 대상으로 둔다. */
+  await page.getByRole("navigation", { name: "오라클 메뉴" }).getByRole("button", { name: "오라클 나가기", exact: true }).click()
   await mainTabs.getByRole("button", { name: "홈" }).click()
   await page.getByRole("button", { name: "일지 꾸미기", exact: true }).click()
   const editor = page.getByRole("dialog", { name: "일지 꾸미기", exact: true })

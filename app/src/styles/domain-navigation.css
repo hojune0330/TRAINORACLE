@@ -1,9 +1,10 @@
 .app-tab-bar.app-navigation-dock {
+  --app-shell-tab-bar-safe-area: env(safe-area-inset-bottom, 0px);
   box-sizing: border-box;
   width: calc(100% - 24px);
   max-width: calc(var(--app-shell-max-width) - 24px);
   margin: 0 12px 12px;
-  padding: 4px 4px calc(4px + env(safe-area-inset-bottom, 0px));
+  padding: 4px 4px calc(4px + var(--app-shell-tab-bar-safe-area));
   grid-template-columns: repeat(var(--dock-columns, 5), minmax(0, 1fr));
   border: var(--bw-line) solid var(--hair);
   border-radius: var(--r-task-surface);

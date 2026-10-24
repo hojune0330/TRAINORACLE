@@ -210,15 +210,19 @@ describe("shared visual system", () => {
     expect(css).toMatch(/var\(--game-/u)
   })
 
-  it("centers the analysis chrome between equal flexible tracks while keeping both tools touch-safe", () => {
+  it("keeps the Oracle title and recording action touch-safe with domain navigation", () => {
     const trends = readFileSync("src/components/OracleSectionNavigation.tsx", "utf8")
     const css = readFileSync("src/styles/oracle-section-navigation.css", "utf8")
 
     expect(trends).toContain('className="oracle-section-header"')
     expect(trends).toContain('className="app-chrome-title">오라클</Title>')
-    expect(css).toContain("grid-template-columns: minmax(64px, 1fr) auto minmax(64px, 1fr)")
+    expect(css).toContain("grid-template-columns: minmax(0, 1fr) auto")
+    expect(css).toContain(".oracle-section-header:has(.oracle-section-header__back) { grid-template-columns: auto minmax(0, 1fr) auto; }")
+    expect(css).toContain("min-width: 44px")
     expect(css).toContain("min-height: var(--app-touch-min)")
     expect(css).toContain(".oracle-section-header__back span { white-space: nowrap; }")
-    expect(css).toContain(".oracle-section-header .oracle-section-header__pace { justify-self: end; }")
+    expect(css).toContain(".oracle-section-header .oracle-section-header__record { justify-self: end; }")
+    expect(trends).toContain("!navigation.managed && onBack")
+    expect(trends).not.toContain("oracle-section-header__pace")
   })
 })

@@ -50,13 +50,13 @@ test("makes a memo-inclusive backup only after confirmation without sending the 
 
   await page.getByRole("button", { name: "더보기", exact: true }).click()
   await page.getByRole("button", { name: "백업·복원·휴지통" }).click()
-  await page.getByRole("button", { name: /\uBA54\uBAA8 \uD3EC\uD568 \uD30C\uC77C \uB0B4\uBCF4\uB0B4\uAE30/u }).click()
+  await page.getByRole("button", { name: "메모까지 백업", exact: true }).click()
   await expect(page.getByRole("dialog")).toBeVisible()
   await page.getByRole("button", { name: "\uCDE8\uC18C" }).click()
   await expect(page.getByRole("dialog")).toHaveCount(0)
   expect(downloads).toEqual([])
 
-  await page.getByRole("button", { name: /\uBA54\uBAA8 \uD3EC\uD568 \uD30C\uC77C \uB0B4\uBCF4\uB0B4\uAE30/u }).click()
+  await page.getByRole("button", { name: "메모까지 백업", exact: true }).click()
   const downloadPromise = page.waitForEvent("download")
   await page.getByRole("button", { name: "\uD30C\uC77C \uB9CC\uB4E4\uAE30" }).click()
   const download = await downloadPromise

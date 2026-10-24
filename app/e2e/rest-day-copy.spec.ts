@@ -42,6 +42,10 @@ test("offers a rest-day path without pressuring the athlete to log more", async 
   await expect(page.getByRole("heading", { name: "무엇을 남길까요?" })).toBeVisible()
   await page.getByRole("button", { name: "← 뒤로", exact: true }).click()
   await expect(page.getByRole("button", { name: /컨디션·메모.*수면·몸 상태·기분·메모/u })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "무엇을 기록할까요?", exact: true })).toBeVisible()
+  await expect(page.locator(".app-tab-bar")).toHaveCount(0)
+  await page.getByRole("button", { name: "← 뒤로", exact: true }).click()
+  await expect(page.getByText("오늘 남긴 기록 1개", { exact: true })).toBeVisible()
 
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "오라클" }).click()
   const distance = page.getByRole("region", { name: "누적 거리와 변화" })

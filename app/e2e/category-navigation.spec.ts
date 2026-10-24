@@ -98,6 +98,13 @@ test("category cards open full workouts and visible editing without changing the
   await expect(page.locator(".app-scroll-region .app-loading-state")).toHaveCount(0)
   await captureLayouts(page, info, "journal")
   await journalMenu.getByRole("button", { name: "일지 나가기", exact: true }).click()
+  // The Home workout link's return context is the same plan day reader.
+  await expect(tabs.getByRole("button", { name: "훈련", exact: true })).toHaveAttribute("aria-current", "page")
+  await expect(reader).toBeVisible()
+  await expect(reader.getByRole("term").filter({ hasText: /^본운동$/u })).toBeVisible()
+  await reader.getByRole("button", { name: /^(?:달력|하루씩)으로 돌아가기$/u, exact: true }).click()
+  await expect(reader).not.toBeVisible()
+  expect(await page.evaluate(() => localStorage.getItem("trainoracle.plan-beta.v1"))).toBe(before)
   await tabs.getByRole("button", { name: "오라클", exact: true }).click()
   const oracleMenu = page.getByRole("navigation", { name: "오라클 메뉴", exact: true })
   const myTraining = oracleMenu.getByRole("button", { name: "분석", exact: true })
@@ -108,6 +115,12 @@ test("category cards open full workouts and visible editing without changing the
   await expect(tabs).toHaveCount(0)
   await captureLayouts(page, info, "oracle")
   await oracleMenu.getByRole("button", { name: "오라클 나가기", exact: true }).click()
+  await expect(tabs.getByRole("button", { name: "훈련", exact: true })).toHaveAttribute("aria-current", "page")
+  await expect(reader).toBeVisible()
+  await expect(reader.getByRole("term").filter({ hasText: /^본운동$/u })).toBeVisible()
+  await reader.getByRole("button", { name: /^(?:달력|하루씩)으로 돌아가기$/u, exact: true }).click()
+  await expect(reader).not.toBeVisible()
+  expect(await page.evaluate(() => localStorage.getItem("trainoracle.plan-beta.v1"))).toBe(before)
   for (const [name, category] of [["훈련", "training"], ["일지", "journal"], ["오라클", "oracle"]] as const) {
     await expect(tabs.getByRole("button", { name, exact: true })).toHaveAttribute("data-category", category)
   }
