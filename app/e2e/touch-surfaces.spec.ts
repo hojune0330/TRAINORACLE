@@ -46,8 +46,10 @@ test("audits empty home and chooser touch actions", async ({ page }, testInfo) =
   await expectNoHorizontalOverflow(page)
 })
 
-test("audits populated home, detail, and trends actions", async ({ page }, testInfo) => {
+test("audits populated home, detail, and trends actions", async ({ page, baseURL }, testInfo) => {
   requireTouchProject(testInfo.project.name)
+  const origin = new URL(baseURL!).origin
+  await page.route("**/*", route => new URL(route.request().url()).origin === origin ? route.continue() : route.abort())
   await seedTouchAuditEntries(page)
   await page.goto("/?app=1")
   const entries = page.getByRole("region", { name: "최근 하루 기록" }).getByRole("button", { name: /기록 2개 보기/u })
@@ -105,20 +107,27 @@ test("audits populated home, detail, and trends actions", async ({ page }, testI
   ])
   await expectNoHorizontalOverflow(page)
   await page.getByRole("button", { name: "홈으로 돌아가기" }).click()
-  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "오라클" }).click()
+  const oracleEntry = page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "오라클" })
+  const homeScrollTop = await page.locator("main.app-scroll-region").evaluate(element => element.scrollTop)
+  await oracleEntry.click()
   await page.getByRole("group", { name: "훈련 분석 자세히 보기" }).getByRole("button", { name: "월별 변화", exact: true }).click()
   const metricButtons = page
     .getByRole("region", { name: "최근 4개월 추이" })
     .getByRole("group", { name: "추이 항목" })
     .getByRole("button")
   await auditTouchTargets(page, [
-    { name: "trends.back", locator: page.getByRole("button", { name: "뒤로", exact: true }) },
+    { name: "trends.exit", locator: page.getByRole("navigation", { name: "오라클 메뉴" }).getByRole("button", { name: "오라클 나가기", exact: true }) },
     { name: "trends.metrics", locator: metricButtons, count: 4 },
   ])
   await expectNoHorizontalOverflow(page)
   if (testInfo.project.name === "touch-narrow") {
     await page.screenshot({ path: testInfo.outputPath("touch-targets-320.png") })
   }
+  await page.getByRole("navigation", { name: "오라클 메뉴" }).getByRole("button", { name: "오라클 나가기", exact: true }).click()
+  await expect(page.getByRole("button", { name: "오늘 기록 보기" })).toBeVisible()
+  await expect(oracleEntry).toBeFocused()
+  await expect(page.getByRole("navigation", { name: "오라클 메뉴" })).toHaveCount(0)
+  await expect.poll(() => page.locator("main.app-scroll-region").evaluate(element => element.scrollTop)).toBe(homeScrollTop)
 })
 
 test("saves post-session and evening entries through the mobile shell", async ({ page }, testInfo) => {
