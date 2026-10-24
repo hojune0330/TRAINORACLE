@@ -8,7 +8,7 @@ import * as templateOptions from "./plan-template-options"
 import { defaultInstantCandidate } from "./instant-plan-projection"
 import { projectInstantExecutionSteps } from "./instant-plan-today"
 import { isoShift } from "../../domain/dates"
-import { formatTrainingSeconds, prescriptionLabel, sessionLabel, sessionSlotLabel } from "./labels"
+import { formatTrainingSeconds, prescriptionLabel, sessionExecutionSteps, sessionLabel, sessionSlotLabel } from "./labels"
 import { resolveCatalogBinding } from "@impl/prescription/catalog-session-binding"
 import { loadAthleteRecords } from "../../domain/athlete-records"
 import { listDetailedSessionTargets } from "../../domain/plan-session-target"
@@ -71,17 +71,25 @@ describe("candidate-owned optional recommendation preference", () => {
     const displayProps = { ...props, generated, intake: { ...props.intake, selectedDetailedTemplateRef: null }, startDateValue: startDate }
     const view = render(<PlanCandidates {...displayProps} />)
     const first = screen.getByRole("region", { name: "선택한 계획 요약" })
-    const steps = projectInstantExecutionSteps(sessions[0]!)
+    const firstSession = sessions[0]!
+    const calculation = firstSession.prescription.kind === "RPE_TIME_RANGE" && firstSession.prescription.catalogWorkout
+      ? resolveCatalogBinding(firstSession.prescription.catalogWorkout) : null
+    const steps = calculation ? sessionExecutionSteps(firstSession, true).map(step => ({ role: step.role, label: step.title, instruction: step.detail }))
+      : projectInstantExecutionSteps(firstSession)
     const qualityRow = within(first).getByRole("heading", {
       name: `${startDate} · ${sessionSlotLabel(sessions[0]!.slot)} · ${sessionLabel(sessions[0]!)}`,
     }).closest("li")!
     expect(qualityRow).toBeVisible()
-    fireEvent.click(within(qualityRow).getByText("준비·정리·전체 시간"))
+    fireEvent.click(within(qualityRow).getByText("준비·정리 방법"))
     for (const step of steps) {
       const label = within(qualityRow).getByText(step.label)
       expect(label).toBeVisible()
       expect(label.nextElementSibling).toBeVisible()
-      expect(label.nextElementSibling?.textContent).toBe(step.instruction)
+      const total = calculation?.totals.seconds
+      const expected = step.role === "TOTAL_DURATION" && total
+        ? `전체 구간 합계 ${formatTrainingSeconds(total.minimum)}${total.minimum === total.maximum ? "" : `~${formatTrainingSeconds(total.maximum)}`}`
+        : step.instruction
+      expect(label.nextElementSibling?.textContent).toBe(expected)
     }
     const calendar = screen.getByRole("region", { name: "이번 일정" })
     expect(within(calendar).getAllByRole("grid")).toHaveLength(1)
@@ -107,7 +115,7 @@ describe("candidate-owned optional recommendation preference", () => {
     const rerenderedQualityRow = rerenderedOverview.getByRole("heading", {
       name: `${startDate} · ${sessionSlotLabel(sessions[0]!.slot)} · ${sessionLabel(sessions[0]!)}`,
     }).closest("li")!
-    const preparationDisclosure = within(rerenderedQualityRow).getByText("준비·정리·전체 시간")
+    const preparationDisclosure = within(rerenderedQualityRow).getByText("준비·정리 방법")
     if (!preparationDisclosure.closest("details")?.open) fireEvent.click(preparationDisclosure)
     expect(within(rerenderedQualityRow).getByText("준비")).toBeVisible()
     expect(within(rerenderedQualityRow).getByText("정리")).toBeVisible()

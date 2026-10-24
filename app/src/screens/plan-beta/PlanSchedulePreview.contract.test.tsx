@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen, within, waitFor } from "@testing-library/react"
-import { StrictMode } from "react"
+import { StrictMode, useState } from "react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { PlanSession } from "@impl/plan-generator/types"
@@ -8,7 +8,7 @@ import { ALL_WORKOUT_CATALOG, type WorkoutCalculationInputs } from "@impl/prescr
 import { formatPaceSeconds } from "@impl/prescription/record-pace"
 import { formatTrainingSeconds, prescriptionLabel } from "./labels"
 import { catalogWorkoutReader } from "../../domain/catalog-workout-reader"
-import { PlanSchedulePreview } from "./PlanSchedulePreview"
+import { PlanSchedulePreview, type PlanScheduleDay } from "./PlanSchedulePreview"
 
 const sessions: readonly PlanSession[] = [
   {
@@ -54,6 +54,79 @@ afterEach(() => {
 afterEach(() => vi.useRealTimers())
 
 describe("plan schedule preview", () => {
+  it("shares a controlled date across the calendar and daily rail with one inline detail, including rest", async () => {
+    const user = userEvent.setup()
+    const changed = vi.fn()
+    function Preview() {
+      const [selectedDate, selectDate] = useState("2026-08-17")
+      const [view, setView] = useState<"calendar" | "list">("calendar")
+      return <PlanSchedulePreview startDate="2026-08-17" frameLengthDays={7} sessions={sessions}
+        presentation="prescription-calendar" embedded showRpeGuide={false} detailsExpanded={false}
+        selectedDate={selectedDate} onSelectedDateChange={date => { changed(date); selectDate(date) }}
+        scheduleView={view} onScheduleViewChange={setView}
+        renderSelectedDay={day => <section aria-label="날짜 상세"><time>{day.date}</time>
+          <span>{day.sessions.map(session => session.role).join(" · ") || "훈련 예정 없음"}</span>
+        </section>} />
+    }
+    const result = render(<Preview />)
+    expect(screen.getAllByRole("region", { name: "날짜 상세" })).toHaveLength(1)
+    expect(screen.getByRole("region", { name: "날짜 상세" })).toHaveTextContent("QUALITY · EASY")
+    expect(screen.queryByText("7일 훈련 일정")).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "선택한 날짜 처방 보기" })).not.toBeInTheDocument()
+    await user.click(result.container.querySelector<HTMLButtonElement>('button[data-date="2026-08-18"]')!)
+    expect(changed).toHaveBeenLastCalledWith("2026-08-18")
+    expect(screen.getByRole("region", { name: "날짜 상세" })).toHaveTextContent("REST")
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+    expect(screen.queryByRole("list", { name: "날짜별 계획 미리보기" })).not.toBeInTheDocument()
+    await user.click(screen.getByRole("radio", { name: "하루씩" }))
+    expect(screen.getByRole("button", { name: "8월 18일 화요일 선택" })).toHaveAttribute("aria-pressed", "true")
+    await user.click(screen.getByRole("button", { name: "다음 날짜" }))
+    expect(screen.getByRole("region", { name: "날짜 상세" })).toHaveTextContent("2026-08-19훈련 예정 없음")
+    await user.click(screen.getByRole("radio", { name: "달력" }))
+    expect(result.container.querySelector('button[data-date="2026-08-19"]')).toHaveAttribute("data-selected", "true")
+    expect(screen.getAllByRole("region", { name: "날짜 상세" })).toHaveLength(1)
+  })
+
+  it("does not reset an inline detail or scroll again when the selected date is tapped again", async () => {
+    const user = userEvent.setup()
+    const changed = vi.fn()
+    function Detail() {
+      const [expanded, setExpanded] = useState(false)
+      return <button type="button" aria-expanded={expanded} onClick={() => setExpanded(!expanded)}>구간 확인</button>
+    }
+    render(<PlanSchedulePreview startDate="2026-08-17" frameLengthDays={7} sessions={sessions}
+      presentation="prescription-calendar" embedded showRpeGuide={false}
+      selectedDate="2026-08-17" onSelectedDateChange={changed}
+      scheduleView="list" onScheduleViewChange={vi.fn()} renderSelectedDay={() => <Detail />} />)
+    const rail = screen.getByRole("group", { name: "훈련 날짜 선택" })
+    const scroll = vi.fn()
+    Object.defineProperty(rail, "scrollTo", { configurable: true, value: scroll })
+    await user.click(screen.getByRole("button", { name: "구간 확인" }))
+    await user.click(screen.getByRole("button", { name: "8월 17일 월요일 선택" }))
+    expect(changed).not.toHaveBeenCalled()
+    expect(scroll).not.toHaveBeenCalled()
+    expect(screen.getByRole("button", { name: "구간 확인" })).toHaveAttribute("aria-expanded", "true")
+  })
+
+  it("follows external date changes without substituting another date outside the plan", () => {
+    const onChange = vi.fn()
+    const detail = vi.fn((day: PlanScheduleDay) => <section aria-label="날짜 상세">{day.date}</section>)
+    const props = { startDate: "2026-08-29", frameLengthDays: 7 as const, sessions,
+      presentation: "prescription-calendar" as const, embedded: true, showRpeGuide: false,
+      onSelectedDateChange: onChange, renderSelectedDay: detail,
+      scheduleView: "calendar" as const, onScheduleViewChange: vi.fn() }
+    const view = render(<PlanSchedulePreview {...props} selectedDate="2026-08-29" />)
+    view.rerender(<PlanSchedulePreview {...props} selectedDate="2026-09-01" />)
+    expect(screen.getByRole("grid", { name: "2026년 9월 달력" })).toBeInTheDocument()
+    expect(screen.getByRole("region", { name: "날짜 상세" })).toHaveTextContent("2026-09-01")
+    detail.mockClear()
+    view.rerender(<PlanSchedulePreview {...props} selectedDate="2026-09-05" />)
+    expect(detail).not.toHaveBeenCalled()
+    expect(screen.queryByRole("region", { name: "날짜 상세" })).not.toBeInTheDocument()
+    expect(screen.getByRole("status")).toHaveTextContent("9월 5일 토요일에는 이 계획의 일정이 없어요.")
+    expect(onChange).not.toHaveBeenCalled()
+  })
+
   it("reveals the existing selected rail date on an explicit Today action, not a data rerender", () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date("2026-08-17T12:00:00"))

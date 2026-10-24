@@ -55,11 +55,12 @@ export type PlanReaderRequest = Pick<PlanSession, "day" | "slot"> & {
 }
 const PROGRESS_ICONS = { COMPLETED: Check, RESTED: CircleMinus, SKIPPED: SkipForward, PAIN_CHECKIN: HeartPulse } as const
 
-type ScheduleDay = {
+export type PlanScheduleDay = {
   readonly date: string
   readonly day: number
   readonly sessions: readonly PlanSession[]
 }
+type ScheduleDay = PlanScheduleDay
 
 function prescriptionCalendarAmount(session: PlanSession): string {
   const prescription = session.prescription
@@ -166,6 +167,9 @@ export function PlanSchedulePreview({
   allowMemoExport = true,
   scheduleView: controlledScheduleView,
   onScheduleViewChange,
+  selectedDate: controlledSelectedDate,
+  onSelectedDateChange,
+  renderSelectedDay,
 }: {
   readonly startDate: string
   readonly frameLengthDays?: FrameLengthDays
@@ -193,8 +197,12 @@ export function PlanSchedulePreview({
   readonly readerRequest?: PlanReaderRequest
   readonly sessionProgress?: (session: PlanSession) => PlanProgressState | undefined
   readonly allowMemoExport?: boolean
+  /** Replace the standard cards and modal with one inline detail for the selected date. */
+  readonly renderSelectedDay?: (day: PlanScheduleDay) => ReactNode
 } & ({ readonly scheduleView?: undefined; readonly onScheduleViewChange?: undefined }
-  | { readonly scheduleView: ScheduleView; readonly onScheduleViewChange: (view: ScheduleView) => void })) {
+  | { readonly scheduleView: ScheduleView; readonly onScheduleViewChange: (view: ScheduleView) => void })
+  & ({ readonly selectedDate?: undefined; readonly onSelectedDateChange?: undefined }
+  | { readonly selectedDate: string; readonly onSelectedDateChange: (date: string) => void })) {
   const validStartDate = isValidIsoDate(startDate)
   const dayCount = programProjection?.kind === "THREE_CYCLE_PROGRAM" ? 29 : Math.ceil(frameLengthDays)
   const scheduleTitle = programProjection ? "한 달 훈련표 · 9.5일 × 3" : `${frameLengthDays}일 훈련 일정`
@@ -208,9 +216,19 @@ export function PlanSchedulePreview({
   const calendarIdentity = `plan:${explanationContext?.kind ?? "SAVED"}:${explanationContext?.plan.candidateId ?? detailsId ?? localCalendarId}:${startDate}:${dayCount}`
   const nav = useCalendarPosition(calendarIdentity, days[focusedDayIndex]?.date ?? planCalendarDate(startDate, dayCount, today, explanationContext?.kind === "CANDIDATE"))
   const initialDayIndex = Math.max(0, days.findIndex(day => day.date === nav.date))
-  const [activeDayIndex, setActiveDayIndex] = React.useState(initialDayIndex)
-  const selectedDate = nav.date
-  const setSelectedDate = nav.selectDate
+  const [uncontrolledDayIndex, setActiveDayIndex] = React.useState(initialDayIndex)
+  const selectedDate = controlledSelectedDate ?? nav.date
+  const selectedDayIndex = days.findIndex(day => day.date === selectedDate)
+  const activeDayIndex = controlledSelectedDate !== undefined || renderSelectedDay !== undefined
+    ? selectedDayIndex : uncontrolledDayIndex
+  const setSelectedDate = React.useCallback((date: string) => {
+    if (date === selectedDate || !isValidIsoDate(date)) return
+    if (onSelectedDateChange) onSelectedDateChange(date)
+    else nav.selectDate(date)
+  }, [selectedDate, onSelectedDateChange, nav.selectDate])
+  React.useEffect(() => {
+    if (controlledSelectedDate !== undefined && controlledSelectedDate !== nav.date) nav.selectDate(controlledSelectedDate)
+  }, [controlledSelectedDate, nav.date, nav.selectDate])
   const [calendarDetailsOpen, setCalendarDetailsOpen] = React.useState(false)
   const rememberedView = usePlanScheduleView(`${calendarIdentity}:${explanationContext?.generatedAt ?? ""}`, controlledScheduleView === undefined)
   const scheduleView = controlledScheduleView ?? rememberedView.view
@@ -221,9 +239,9 @@ export function PlanSchedulePreview({
   const [readerJournalDate, setReaderJournalDate] = React.useState<string | null>(null)
   const readerIndex = days.findIndex(day => day.date === reader?.date)
   const readerDay = days[readerIndex]
-  const selectedInPlan = days.some(day => day.date === selectedDate)
+  const selectedInPlan = selectedDayIndex >= 0
   const prescriptionCalendar = presentation === "prescription-calendar"
-  const showDetails = prescriptionCalendar
+  const showDetails = renderSelectedDay ? selectedInPlan : prescriptionCalendar
     ? scheduleView === "list" || ((detailsExpanded || calendarDetailsOpen) && selectedInPlan)
     : (detailsExpanded || calendarDetailsOpen) && selectedInPlan
   const visibleDays = prescriptionCalendar && scheduleView === "calendar"
@@ -304,6 +322,7 @@ export function PlanSchedulePreview({
       setSelectedDate(day.date)
       setActiveDayIndex(index)
     }
+    if (renderSelectedDay) return
     setReader({ date: day.date, slot: readerRequest.slot, section: readerRequest.section })
     setReaderJournalDate(journalEntries.some(entry => entry.date === day.date) ? day.date : null)
   }, [readerRequest, days, journalEntries])
@@ -314,10 +333,11 @@ export function PlanSchedulePreview({
 
   const moveToDay = React.useCallback((nextIndex: number) => {
     const boundedIndex = Math.min(Math.max(nextIndex, 0), days.length - 1)
+    const date = days[boundedIndex]?.date
+    if ((renderSelectedDay || controlledSelectedDate !== undefined) && date === selectedDate) return
     alignDateRail(boundedIndex, true)
     pendingSlideIndex.current = previewDisplayMode === "swipe" ? boundedIndex : null
     setActiveDayIndex(boundedIndex)
-    const date = days[boundedIndex]?.date
     if (date !== undefined) setSelectedDate(date)
     const list = scheduleRef.current
     const target = list?.children.item(boundedIndex) as HTMLElement | null
@@ -331,7 +351,7 @@ export function PlanSchedulePreview({
     }
     const reduceMotion = calendarReducedMotion()
     target.scrollIntoView?.({ behavior: reduceMotion ? "auto" : "smooth", block: "start" })
-  }, [days, previewDisplayMode, setSelectedDate, alignDateRail])
+  }, [days, previewDisplayMode, setSelectedDate, alignDateRail, renderSelectedDay, controlledSelectedDate, selectedDate])
 
   React.useLayoutEffect(() => {
     const list = scheduleRef.current
@@ -344,6 +364,14 @@ export function PlanSchedulePreview({
     if ((previewDisplayMode === "swipe" || prescriptionCalendar) && focusedDayIndex >= 0) scheduleRef.current?.querySelector<HTMLElement>("[data-returned-session='true']")
       ?.scrollIntoView?.({ behavior: "auto", block: "center", inline: "nearest" })
   }, [showDetails, startDate, previewDisplayMode, prescriptionCalendar, focusedDayIndex, focusSession?.slot])
+
+  React.useLayoutEffect(() => {
+    if (controlledSelectedDate === undefined || previewDisplayMode !== "swipe" || !showDetails) return
+    const list = scheduleRef.current
+    const first = list?.children.item(0) as HTMLElement | null
+    const selected = list?.children.item(selectedDayIndex) as HTMLElement | null
+    if (list && first && selected) list.scrollLeft = selected.offsetLeft - first.offsetLeft
+  }, [controlledSelectedDate, selectedDayIndex, previewDisplayMode, showDetails])
 
   const appliedFocus = React.useRef<string>()
   React.useEffect(() => {
@@ -374,7 +402,7 @@ export function PlanSchedulePreview({
     setActiveDayIndex(nearest)
     const date = days[nearest]?.date
     if (date !== undefined) setSelectedDate(date)
-  }, [days, previewDisplayMode])
+  }, [days, previewDisplayMode, setSelectedDate])
 
   const openDayReader = (index: number, slot?: PlanSession["slot"], origin: "calendar" | "other" | "preserve" = "other") => {
     const day = days[index]
@@ -386,6 +414,7 @@ export function PlanSchedulePreview({
     }
     setSelectedDate(day.date)
     setActiveDayIndex(index)
+    if (renderSelectedDay) return
     setReader({ date: day.date, slot })
     setReaderJournalDate(journalEntries.some(entry => entry.date === day.date) ? day.date : null)
   }
@@ -419,10 +448,10 @@ export function PlanSchedulePreview({
       오늘
     </button>}
     {previewDisplayMode === "swipe" && <div className="plan-day-deck__controls">
-      <button type="button" onClick={() => moveToDay(activeDayIndex - 1)} disabled={activeDayIndex === 0} aria-label="이전 날짜">
+      <button type="button" onClick={() => moveToDay(activeDayIndex - 1)} disabled={activeDayIndex <= 0} aria-label="이전 날짜">
         <ChevronLeft aria-hidden="true" size={19} />
       </button>
-      <output aria-live="polite" aria-label="현재 날짜 위치">{activeDayIndex + 1}/{dayCount}</output>
+      <output aria-live="polite" aria-label="현재 날짜 위치">{activeDayIndex < 0 ? "—" : activeDayIndex + 1}/{dayCount}</output>
       <button type="button" onClick={() => moveToDay(activeDayIndex + 1)} disabled={activeDayIndex === dayCount - 1} aria-label="다음 날짜">
         <ChevronRight aria-hidden="true" size={19} />
       </button>
@@ -448,14 +477,20 @@ export function PlanSchedulePreview({
         scheduleView={scheduleView}
         onScheduleViewChange={setScheduleView}
         onToday={date => {
-          setSelectedDate(date)
           const index = days.findIndex(day => day.date === date)
           if (index >= 0) moveToDay(index)
+          else setSelectedDate(date)
         }}
         onSelectDate={date => {
-          setSelectedDate(date)
+          if (renderSelectedDay) {
+            const index = days.findIndex(day => day.date === date)
+            if (index >= 0) moveToDay(index)
+            else setSelectedDate(date)
+            return
+          }
           const index = days.findIndex(day => day.date === date)
           if (index < 0) {
+            setSelectedDate(date)
             readerRequestOrigin.current = null
             readerOpenedFromCalendar.current = true
             readerPreservesSelection.current = false
@@ -464,8 +499,8 @@ export function PlanSchedulePreview({
           openDayReader(index, undefined, "calendar")
         }}
       />
-      {!selectedInPlan && (!prescriptionCalendar || scheduleView === "calendar") && <p className="month-calendar__empty" role="status">{calendarDateLabel(selectedDate)}에는 이 계획의 일정이 없어요.</p>}
-      {!detailsExpanded && selectedInPlan && !(prescriptionCalendar && scheduleView === "list") && <button type="button" className="calendar-range-return"
+      {!selectedInPlan && (renderSelectedDay || !prescriptionCalendar || scheduleView === "calendar") && <p className="month-calendar__empty" role="status">{calendarDateLabel(selectedDate)}에는 이 계획의 일정이 없어요.</p>}
+      {!renderSelectedDay && !detailsExpanded && selectedInPlan && !(prescriptionCalendar && scheduleView === "list") && <button type="button" className="calendar-range-return"
         aria-expanded={calendarDetailsOpen} aria-controls={detailsId ?? `${scheduleId}-cards`}
         onClick={() => setCalendarDetailsOpen(open => !open)}>
         {prescriptionCalendar
@@ -475,7 +510,7 @@ export function PlanSchedulePreview({
       <section
         id={detailsId ?? `${scheduleId}-cards`}
         className="plan-day-deck"
-        hidden={!showDetails}
+        hidden={renderSelectedDay ? false : !showDetails}
         data-display-mode={previewDisplayMode}
         data-prescription-calendar-view={prescriptionCalendar ? scheduleView : undefined}
         aria-label={prescriptionCalendar
@@ -500,7 +535,7 @@ export function PlanSchedulePreview({
             <small>{date === today ? "오늘" : day === 1 || date.endsWith("-01") ? `${isoToDate(date).getMonth() + 1}월` : ""}</small>
           </button>)}
         </div>}
-        <ol
+        {renderSelectedDay ? selectedInPlan && renderSelectedDay(days[selectedDayIndex]!) : <ol
           ref={scheduleRef}
           className="plan-schedule-preview"
           data-display-mode={previewDisplayMode}
@@ -595,10 +630,10 @@ export function PlanSchedulePreview({
               </li>
             )
           })}
-        </ol>
+        </ol>}
       </section>
       {embeddedDailyView && <PlanSessionGuidance prescriptionCalendar sessionProgress={sessionProgress} />}
-      {reader !== null && <PlanDayReader date={reader.date} sessions={readerDay?.sessions ?? []}
+      {!renderSelectedDay && reader !== null && <PlanDayReader date={reader.date} sessions={readerDay?.sessions ?? []}
         initialSlot={reader.slot} initialSection={reader.section} canPrevious canNext
         backLabel={prescriptionCalendar && scheduleView === "list" ? "하루씩으로 돌아가기" : undefined}
         returnFocusTo={readerRequestOrigin.current !== null || readerOpenedFromCalendar.current || reader.section === "records"

@@ -18,7 +18,9 @@ import { localJournalScopeGeneration } from "../../domain/account/local-journal-
 import { useTaskFlowBack } from "../../hooks/useTaskFlowBack"
 import { usePlanDraftNavigationGuard } from "./usePlanDraftNavigationGuard"
 import { EXPERIENCE_LABELS, formatTrainingSeconds } from "./labels"
-import { GoalProgramPreviewOverview } from "./GoalProgramPreviewOverview"
+import { GoalProgramPreviewOverview, GoalProgramSession, type ScheduleOrigin } from "./GoalProgramPreviewOverview"
+import { usePlanScheduleView } from "../../hooks/usePlanScheduleView"
+import { rememberCalendarDate, useCalendarPosition } from "../../hooks/useCalendarPosition"
 import { PlanSchedulePreview } from "./PlanSchedulePreview"
 import "./goal-training-program.css"
 
@@ -55,6 +57,12 @@ export function GoalTrainingProgramFlow({ onClose, onOpenActive }: {
   const [experience, setExperience] = React.useState<ExperienceBand>()
   const [days, setDays] = React.useState<3 | 4 | 5 | 6>(3)
   const [editingSchedule, setEditingSchedule] = React.useState(false)
+  const [scheduleOrigin, setScheduleOrigin] = React.useState<ScheduleOrigin>("DEFAULT")
+  const [editSnapshot, setEditSnapshot] = React.useState<{ request: GoalProgramPreviewRequest | undefined; experience: ExperienceBand | undefined; days: 3 | 4 | 5 | 6; time: TrainingTimePreference; basis: boolean; origin: ScheduleOrigin } | null>(null)
+  const [draftDate, setDraftDate] = React.useState("")
+  const [stepByDate, setStepByDate] = React.useState<Record<string, number>>({})
+  const returnTo = React.useRef<{ field: "schedule" | "basis" | "entry"; scroll: HTMLElement | null; top: number } | null>(null)
+  const restorePosition = React.useRef(false)
   const [time, setTime] = React.useState<TrainingTimePreference>("VARIES")
   const [goalPaceConfirmed, setGoalPaceConfirmed] = React.useState(false)
   const [longerDurationConfirmed, setLongerDurationConfirmed] = React.useState(false)
@@ -81,6 +89,14 @@ export function GoalTrainingProgramFlow({ onClose, onOpenActive }: {
   const heading = React.useRef<HTMLHeadingElement>(null)
   const safetyHeading = React.useRef<HTMLHeadingElement>(null)
   const programSource = preview ?? (read.kind === "loaded" ? read.document.program : undefined)
+  const storedProgram = read.kind === "loaded" ? read.document.program : undefined
+  const storedPosition = useCalendarPosition(`goal-program:${storedProgram?.programId ?? "unavailable"}`,
+    storedProgram?.days.some(day => day.date === todayISO()) ? todayISO()
+      : storedProgram?.days.find(day => day.session.role !== "REST")?.date ?? storedProgram?.window.startDate ?? todayISO(),
+    storedProgram !== undefined && !preview)
+  const selectedDate = preview ? draftDate : storedPosition.date
+  const setSelectedDate = (date: string) => { if (date !== selectedDate) { if (preview) setDraftDate(date); else storedPosition.selectDate(date) } }
+  const scheduleView = usePlanScheduleView(`goal:${read.kind === "loaded" ? read.document.program.programId : "draft"}`)
   const durationReview = React.useMemo(() => programSource ? goalTrainingProgramDurationReview(programSource) : null, [programSource])
   const current = () => mounted.current && localAccountScopeIsCurrent(scope.current.owner)
     && scope.current.generation === localJournalScopeGeneration()
@@ -106,19 +122,44 @@ export function GoalTrainingProgramFlow({ onClose, onOpenActive }: {
     setExpiredPendingReview(null)
   }), [])
   React.useLayoutEffect(() => {
+    if (stage === "result" && restorePosition.current && returnTo.current) {
+      restorePosition.current = false
+      const target = returnTo.current
+      const button = heading.current?.parentElement?.querySelector<HTMLElement>(`[data-goal-edit="${target.field}"]`)
+      button?.focus({ preventScroll: true })
+      if (target.scroll) target.scroll.scrollTop = target.top
+      return
+    }
     if (safetyFor !== null) safetyHeading.current?.focus()
     else if (stage !== "entry") heading.current?.focus()
   }, [stage, safetyFor])
   const dirty = preview !== null || stage !== "result" && (entryDirty || request !== undefined)
   usePlanDraftNavigationGuard(dirty, "아직 저장하지 않은 훈련표가 있어요. 만들기를 그만두고 이동할까요?", busy)
 
+  const edit = (field: "schedule" | "basis" | "entry") => {
+    const scroll = heading.current?.closest<HTMLElement>(".app-scroll-region") ?? null
+    returnTo.current = { field, scroll, top: scroll?.scrollTop ?? 0 }
+    setEditSnapshot({ request, experience, days, time, basis: goalPaceConfirmed, origin: scheduleOrigin })
+    setEditingSchedule(field === "schedule"); setStage(field === "schedule" ? "experience" : field); setError(null)
+  }
+  const cancelEdit = () => {
+    if (editSnapshot) {
+      setRequest(editSnapshot.request)
+      setExperience(editSnapshot.experience); setDays(editSnapshot.days); setTime(editSnapshot.time)
+      setGoalPaceConfirmed(editSnapshot.basis); setScheduleOrigin(editSnapshot.origin)
+    }
+    setEditSnapshot(null); setEditingSchedule(false); setError(null); setDateExpired(false)
+    restorePosition.current = true; setStage("result")
+  }
+
   const back = () => {
     if (pending.current) return
     if (safetyFor !== null) { setSafetyFor(null); return }
     if (archiveReview) { setArchiveReview(false); return }
+    if (editSnapshot) { cancelEdit(); return }
     if (stage === "basis") { setStage("experience"); return }
     if (stage === "experience") { setStage("entry"); return }
-    if (preview) { setPreview(null); setStage("basis"); return }
+    if (preview) { edit("basis"); return }
     onClose()
   }
   useTaskFlowBack({ enabled: stage !== "entry", busy, onBack: back })
@@ -143,7 +184,11 @@ export function GoalTrainingProgramFlow({ onClose, onOpenActive }: {
       setError(result.kind === "start-in-past" ? "시작일이 지났어요. 날짜를 바꾸거나 오늘부터 다시 볼 수 있어요."
         : failureMessage("code" in result ? result.code : "INVALID_DATE")); return
     }
-    setPreview(result.preview); setEditingSchedule(false); setLongerDurationConfirmed(false); setStage("result"); setSafetyFor(null); setReviewOnly(false); setError(null)
+    const stillSelected = result.preview.days.some(day => day.date === selectedDate)
+    setDraftDate(stillSelected ? selectedDate : result.preview.days.find(day => day.session.role !== "REST")?.date ?? result.preview.window.startDate)
+    setStepByDate({})
+    if (editSnapshot) restorePosition.current = true
+    setPreview(result.preview); setEditSnapshot(null); setEditingSchedule(false); setLongerDurationConfirmed(false); setStage("result"); setSafetyFor(null); setReviewOnly(false); setError(null)
   }
 
   const start = () => { void run(async () => {
@@ -166,6 +211,7 @@ export function GoalTrainingProgramFlow({ onClose, onOpenActive }: {
       if (!current()) return
       if (saved.kind !== "saved") { setError(failureMessage(saved.code)); return }
       document = saved.document; cycle = 1
+      rememberCalendarDate(`goal-program:${document.program.programId}`, selectedDate)
       setPreview(null); setEntryDirty(false); setRequest(undefined); setReplaceConfirmed(false); setExpiredPendingReview(null); setRead(readGoalTrainingProgram())
     } else if (typeof safetyFor === "number" && document) cycle = safetyFor
     else return
@@ -284,17 +330,46 @@ export function GoalTrainingProgramFlow({ onClose, onOpenActive }: {
   </details>
 
   if (stage === "entry") return <section className="goal-program" aria-label="한 달 훈련표 만들기">
+    {editSnapshot && <button type="button" className="plan-text-action" disabled={busy} onClick={cancelEdit}><ArrowLeft size={18} aria-hidden="true" />변경 취소</button>}
     <GoalProgramEntry key={expiredPendingReview ? `pending-date:${expiredPendingReview.sequence}` : "ordinary"}
       today={todayISO()} readToday={todayISO} initialRequest={request} disabled={busy}
       onDraftChange={setEntryDirty} onBack={() => {
+        if (editSnapshot) { cancelEdit(); return }
         if (dirty && !window.confirm("입력한 목표와 날짜를 지우고 나갈까요?")) return
         if (read.kind === "loaded") {
           setPreview(null); setRequest(undefined); setEntryDirty(false); setReplaceConfirmed(false)
           setSafetyFor(null); setExpiredPendingReview(null); setError(null); setStage("result")
         } else onClose()
       }}
-      onPreview={value => { setRequest(value); setEditingSchedule(false); setStage("experience"); setError(null); setDateExpired(false) }} />
+      onPreview={value => {
+        setRequest(value); setEditingSchedule(false); setError(null); setDateExpired(false)
+        if (editSnapshot) makePreview(experience, goalPaceConfirmed, value)
+        else setStage("experience")
+      }} />
     {error && <p role="alert">{error}</p>}{notice && <p role="status">{notice}</p>}{storageFeedback}{backupTools}
+  </section>
+
+  if (stage === "experience" && editingSchedule) return <section className="goal-program">
+    <button type="button" className="plan-text-action" disabled={busy} onClick={cancelEdit}><ArrowLeft size={18} aria-hidden="true" />변경 취소</button>
+    <h2 tabIndex={-1} ref={heading}>얼마나 자주 달릴까요?</h2>
+    <div className="goal-program__edit-fields">
+      <fieldset className="goal-program__frequency"><legend>9.5일마다 훈련할 날</legend>
+        {[3, 4, 5, 6].map(value => <label key={value}><input type="radio" name="goal-training-days" value={value} checked={days === value}
+          onChange={() => { setDays(value as 3 | 4 | 5 | 6); setScheduleOrigin("USER") }} /><span>{value}일</span></label>)}
+      </fieldset>
+      <p>한 달에 {days * 3}회 훈련해요. 나머지 날은 휴식이에요.</p>
+      <label>주로 훈련할 시간<select value={time} onChange={event => setTime(event.target.value as TrainingTimePreference)}>
+        <option value="VARIES">날마다 달라요</option><option value="MORNING">오전</option><option value="EVENING">오후·저녁</option>
+      </select></label>
+      <details className="goal-program__details"><summary>달리기 경험 · {experience ? EXPERIENCE_LABELS[experience].title : "선택 필요"}</summary>
+        <div className="app-choice-group goal-program__choices" role="group" aria-label="달리기 경험">
+          {EXPERIENCE.map(value => <button type="button" className="app-choice-control" key={value} aria-pressed={experience === value}
+            onClick={() => setExperience(value)}>{EXPERIENCE_LABELS[value].title}</button>)}
+        </div>
+      </details>
+      <button type="button" className="instant-plan__button" disabled={busy || !experience} onClick={() => makePreview()}>이 조건으로 다시 보기</button>
+      {error && <p role="alert">{error}</p>}
+    </div>
   </section>
 
   if (stage === "experience") return <section className="goal-program">
@@ -305,7 +380,7 @@ export function GoalTrainingProgramFlow({ onClose, onOpenActive }: {
         aria-pressed={experience === value} onClick={() => { setExperience(value); if (!editingSchedule) setStage("basis"); setError(null) }}>{EXPERIENCE_LABELS[value].title}</button>)}
     </div>
     <details className="goal-program__details" open={editingSchedule || undefined}><summary>훈련 횟수·시간대 바꾸기</summary>
-      <label>9.5일마다 훈련할 날<select value={days} onChange={event => setDays(Number(event.target.value) as 3 | 4 | 5 | 6)}>
+      <label>9.5일마다 훈련할 날<select value={days} onChange={event => { setDays(Number(event.target.value) as 3 | 4 | 5 | 6); setScheduleOrigin("USER") }}>
         {[3, 4, 5, 6].map(value => <option key={value} value={value}>{value}일 · 나머지는 휴식</option>)}</select></label>
       <label>주로 훈련할 시간<select value={time} onChange={event => setTime(event.target.value as TrainingTimePreference)}>
         <option value="VARIES">날마다 달라요</option><option value="MORNING">오전</option><option value="EVENING">오후·저녁</option>
@@ -317,7 +392,7 @@ export function GoalTrainingProgramFlow({ onClose, onOpenActive }: {
   </section>
 
   if (stage === "basis") return <section className="goal-program">
-    <button type="button" className="plan-text-action" disabled={busy} onClick={back}><ArrowLeft size={18} aria-hidden="true" />경험·훈련 횟수 바꾸기</button>
+    <button type="button" className="plan-text-action" disabled={busy} onClick={back}><ArrowLeft size={18} aria-hidden="true" />{editSnapshot ? "변경 취소" : "경험·훈련 횟수 바꾸기"}</button>
     <h2 tabIndex={-1} ref={heading}>어떤 방식으로 훈련할까요?</h2>
     <div className="app-choice-group goal-program__choices" role="group" aria-label="훈련 방식">
       <button type="button" className="app-choice-control app-choice-control--answer" disabled={busy}
@@ -354,7 +429,6 @@ export function GoalTrainingProgramFlow({ onClose, onOpenActive }: {
     else { sourceDays = []; projectionInvalid = true }
   }
   const sessions: readonly PlanSession[] = sourceDays.map((day, index) => ({ ...day.session, day: index + 1 }))
-  const workouts = sourceDays.filter(day => day.session.role !== "REST").length
   const activeCycle = stored?.application?.currentCycleIndex
   const canUseActive = read.kind === "loaded" && read.currentCycleStatus === "CURRENT"
   const annotations: Record<string, string> = {}
@@ -365,7 +439,7 @@ export function GoalTrainingProgramFlow({ onClose, onOpenActive }: {
   if (source?.window.deadline) annotations[source.window.deadline] = "대회 날짜"
 
   return <section className="goal-program" aria-label="한 달 훈련표" aria-busy={busy}>
-    <button type="button" className="plan-text-action" disabled={busy} onClick={back}><ArrowLeft size={18} aria-hidden="true" />{preview ? "조건 바꾸기" : "뒤로"}</button>
+    <button type="button" className="plan-text-action" data-goal-edit="entry" disabled={busy || safetyFor !== null} onClick={preview ? () => edit("entry") : back}><ArrowLeft size={18} aria-hidden="true" />{preview ? "목표·날짜 바꾸기" : "뒤로"}</button>
     <h2 tabIndex={-1} ref={heading}>{source ? `10km ${source.goalMinutes}분 목표` : "한 달 훈련표"}</h2>
     {error && <p role="alert">{error}</p>}{notice && <p role="status">{notice}</p>}{storageFeedback}
     {!source ? <>
@@ -375,25 +449,45 @@ export function GoalTrainingProgramFlow({ onClose, onOpenActive }: {
         if (next.kind === "missing" || next.kind === "account_unsupported") setStage("entry")
       }}>다시 확인</button>
     </> : <>
-      {preview ? <GoalProgramPreviewOverview source={preview} disabled={busy || safetyFor !== null}
-        onEditSchedule={() => { setPreview(null); setEditingSchedule(true); setStage("experience"); setLongerDurationConfirmed(false); setError(null) }}
-        onEditBasis={() => { setPreview(null); setStage("basis"); setLongerDurationConfirmed(false); setError(null) }} /> : <>
-      <p className="goal-program__summary">{source.window.startDate} ~ {source.window.endDate}<br />{!projectionInvalid && <>훈련 {workouts}회 · 휴식 {29 - workouts}일 · 하루 최대 1회</>}</p>
-      <p>한 달 기본 훈련 · 9.5일 × 3</p>
-      {source.window.deadline && <p>대회 날짜 · {source.window.deadline}<br />대회 전 훈련량은 자동으로 줄이지 않아요.</p>}
-      <p className="goal-program__muted">{preview ? "미리보기 · 아직 시작하지 않았어요" : storageStatus === "DEVICE" ? "이 기기에 보관된 훈련표" : "계정에서 확인한 훈련표"}</p>
-      <p>{source.inputs.goalPaceConfirmed ? `목표 속도 · 1km에 ${tenKGoalPaceLabel(source.goalMinutes).replace("/km", "")} · 속도가 적힌 구간에서만 따라요` : "시간 기준 훈련표 · 각 날짜의 시간·힘든 정도를 따라요."}</p>
-      <p className="goal-program__muted">목표 기록은 현재 실력이나 달성 보장이 아니에요.</p>
-      </>}
+      {!projectionInvalid && <GoalProgramPreviewOverview source={{ ...source, days: sourceDays }} disabled={busy || safetyFor !== null}
+        scheduleOrigin={preview ? scheduleOrigin : "RESTORED_ORIGIN_UNKNOWN"}
+        status={preview ? "미리보기 · 아직 시작하지 않았어요" : storageStatus === "DEVICE" ? "이 기기에 보관된 훈련표" : "계정에서 확인한 훈련표"}
+        onEditSchedule={preview ? () => edit("schedule") : undefined} onEditBasis={preview ? () => edit("basis") : undefined} />}
       {projectionInvalid && <p role="alert">수정된 훈련표의 날짜를 확인하지 못했어요. 원본으로 바꿔 표시하지 않았어요. 현재 계획을 확인해 주세요.</p>}
       {reviewOnly && <p role="alert">몸 상태 확인 필요 · 이 훈련표로 훈련을 시작하지 마세요.</p>}
+      {!projectionInvalid && <PlanSchedulePreview startDate={source.window.startDate} sessions={sessions}
+        detailsId={`goal-program-${stored?.program.programId ?? "draft"}`} embedded
+        presentation="prescription-calendar" programProjection={{ kind: "THREE_CYCLE_PROGRAM", calendarDayCount: 29 }}
+        dayAnnotations={annotations} showRpeGuide={false} allowMemoExport={false}
+        sessionProgress={preview ? undefined : session => {
+          const actual = sourceDays[session.day - 1]
+          return actual && stored?.cycles.find(cycle => cycle.cycle === actual.cycle)?.latestPlan
+            ?.progress.find(item => item.sessionDay === actual.session.day && item.sessionSlot === session.slot)?.state
+        }}
+        scheduleView={scheduleView.view} onScheduleViewChange={scheduleView.selectView}
+        selectedDate={selectedDate || (!preview && sourceDays.some(day => day.date === todayISO()) ? todayISO() : sourceDays.find(day => day.session.role !== "REST")?.date ?? source.window.startDate)}
+        onSelectedDateChange={setSelectedDate}
+        renderSelectedDay={day => <>{day.sessions.map(session => {
+          const actual = sourceDays.find(item => item.date === day.date && item.session.slot === session.slot)
+          const first = sourceDays.find(item => item.session.role !== "REST")
+          const position = `${day.date}:${session.slot}`
+          const progress = !preview && actual && stored?.cycles.find(cycle => cycle.cycle === actual.cycle)?.latestPlan
+            ?.progress.find(item => item.sessionDay === actual.session.day && item.sessionSlot === session.slot)?.state
+          return <React.Fragment key={position}><GoalProgramSession session={session} date={day.date}
+            label={preview && first?.date === day.date ? "첫 훈련" : session.role === "QUALITY" ? "주요 훈련" : "쉬운 훈련"}
+            disabled={busy || safetyFor !== null} stepIndex={stepByDate[position] ?? 0}
+            onStepChange={index => setStepByDate(previous => ({ ...previous, [position]: index }))} />
+            {progress && <p className="goal-program__start-hint">진행 표시 · {progress === "COMPLETED" ? "완료로 표시했어요. 실제 수행 내용은 훈련 기록에서 확인해요." : progress === "SKIPPED" ? "건너뜀" : progress === "RESTED" ? "휴식" : "몸 상태 확인"}</p>}
+          </React.Fragment>
+        })}{day.sessions.length === 0 && <p>이 날짜에는 표시할 훈련이 없어요.</p>}</>}
+      />}
       {safetyFor !== null ? <section className="goal-program__safety" aria-label="시작 전 몸 상태 확인">
         <h3 ref={safetyHeading} tabIndex={-1}>지금 몸 상태는 어떤가요?</h3>
         <div className="app-choice-group goal-program__choices">
-          <button type="button" className="app-choice-control" disabled={busy || !(safetyFor === "new" ? newProgramWritable : writable)} onClick={start}>{busy ? "시작하는 중…" : "통증 없고 평소와 같아요 · 시작"}</button>
+          <button type="button" className="app-choice-control" disabled={busy || !(safetyFor === "new" ? newProgramWritable : writable)} onClick={start}>{busy ? "시작하는 중…" : "통증 없고 평소와 같아요 · 확인하고 계획 시작"}</button>
           <button type="button" className="app-choice-control" disabled={busy} onClick={() => { setReviewOnly(true); setSafetyFor(null) }}>통증·몸 이상이 있거나 잘 모르겠어요</button>
         </div><button type="button" disabled={busy} onClick={() => setSafetyFor(null)}>미리보기로 돌아가기</button>
-      </section> : preview ? <>
+      </section> : preview ? <section className="goal-program__start" aria-label="계획 시작">
         {durationReview?.required && durationReview.maximumSeconds !== null && <label className="goal-program__check">
           <input type="checkbox" checked={longerDurationConfirmed} disabled={busy}
             onChange={event => setLongerDurationConfirmed(event.target.checked)} />
@@ -403,8 +497,10 @@ export function GoalTrainingProgramFlow({ onClose, onOpenActive }: {
           onChange={event => setReplaceConfirmed(event.target.checked)} />이전 훈련표를 보관하고 새 훈련표로 바꿀게요</label>}
         <button type="button" className="instant-plan__button" disabled={busy || !newProgramWritable || !!stored && !replaceConfirmed
           || durationReview?.required && !longerDurationConfirmed}
-          onClick={() => setSafetyFor("new")}>{reviewOnly ? "몸 상태 다시 확인" : "이 계획 시작"}</button>
-      </> : <>
+          onClick={() => setSafetyFor("new")}>{reviewOnly ? "몸 상태 다시 확인" : "계획 시작하기"}</button>
+        <p className="goal-program__start-hint">몸 상태를 확인한 뒤 계획을 보관하고 첫 9.5일을 연결해요. 운동 타이머는 시작하지 않아요.</p>
+        {!newProgramWritable && <p className="goal-program__start-hint">{accountStorageLabel ?? "저장 상태를 확인한 뒤 시작할 수 있어요."}</p>}
+      </section> : <>
         {canUseActive && <button type="button" className="instant-plan__button" disabled={busy} onClick={onOpenActive}>이번 9.5일 보기·수정</button>}
         {read.kind === "loaded" && read.currentCycleStatus === "PAUSED" && <p role="status">복원한 훈련표예요. 몸 상태를 확인한 뒤 진행하던 9.5일 훈련을 다시 연결할 수 있어요.</p>}
         {read.kind === "loaded" && ["DETACHED", "UNAVAILABLE"].includes(read.currentCycleStatus) && <p role="alert">현재 계획과 연결되지 않은 훈련표예요. 다른 계획을 덮어쓰지 않았어요.</p>}
@@ -438,16 +534,6 @@ export function GoalTrainingProgramFlow({ onClose, onOpenActive }: {
         {stored && <button type="button" className="plan-text-action" disabled={busy}
           onClick={() => { setReplaceConfirmed(false); setExpiredPendingReview(null); setStage("entry"); setRequest(undefined); setEntryDirty(false) }}>목표·날짜를 바꿔 새로 만들기</button>}
       </>}
-      {!projectionInvalid && <>
-      <PlanSchedulePreview key={stored?.program.programId ?? preview?.generatedAt} startDate={source.window.startDate}
-        sessions={sessions} presentation="prescription-calendar" programProjection={{ kind: "THREE_CYCLE_PROGRAM", calendarDayCount: 29 }}
-        dayAnnotations={annotations}
-        sessionProgress={!preview && stored ? session => {
-          const day = sourceDays[session.day - 1]
-          const state = day && stored.cycles[day.cycle - 1]?.latestPlan
-          return state?.progress.find(item => item.sessionDay === day?.session.day && item.sessionSlot === day?.session.slot)?.state
-        } : undefined}
-        showRpeGuide={false} detailsExpanded={false} allowMemoExport={false} /></>}
       {!preview && backupTools}
     </>}
   </section>

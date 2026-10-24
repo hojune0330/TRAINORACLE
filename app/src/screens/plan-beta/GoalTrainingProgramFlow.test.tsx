@@ -24,6 +24,7 @@ const mocks = vi.hoisted(() => ({
   exportBackup: vi.fn(),
   restore: vi.fn(),
   evaluateSafety: vi.fn(),
+  scheduleProbe: false,
   owner: null as string | null,
   today: "2026-10-11",
 }))
@@ -57,10 +58,15 @@ vi.mock("../../domain/account/local-account-scope", () => ({
   localAccountScopeSnapshot: () => mocks.owner,
   localAccountScopeIsCurrent: (owner: string | null) => owner === mocks.owner,
 }))
-vi.mock("../../domain/account/local-journal-ownership", () => ({ localJournalScopeGeneration: () => 1 }))
+vi.mock("../../domain/account/local-journal-ownership", () => ({ localJournalScopeGeneration: () => 1,
+  activeLocalAccount: () => mocks.owner, onLocalJournalScopeChange: () => () => undefined }))
 vi.mock("../../hooks/useTaskFlowBack", () => ({ useTaskFlowBack: () => undefined }))
+vi.mock("../../hooks/usePlanScheduleView", () => ({ usePlanScheduleView: () => ({ view: "list", selectView: vi.fn() }) }))
 vi.mock("./usePlanDraftNavigationGuard", () => ({ usePlanDraftNavigationGuard: () => undefined }))
-vi.mock("./PlanSchedulePreview", () => ({ PlanSchedulePreview: () => null }))
+vi.mock("./PlanSchedulePreview", () => ({ PlanSchedulePreview: ({ selectedDate, onSelectedDateChange }: {
+  selectedDate: string; onSelectedDateChange: (date: string) => void
+}) => mocks.scheduleProbe ? <input aria-label="일정 선택 날짜" type="date" value={selectedDate}
+  onChange={event => onSelectedDateChange(event.target.value)} /> : null }))
 
 const START = "2026-10-11"
 const GATE = { kind: "PASSED" }
@@ -182,6 +188,7 @@ async function chooseGoalDate(user: ReturnType<typeof userEvent.setup>, goal = 4
 
 beforeEach(() => {
   currentDocument = null
+  mocks.scheduleProbe = false
   forcedRead = "normal"
   forcedStatus = null
   latestPreview = previewFor({
@@ -241,13 +248,78 @@ afterEach(() => {
 })
 
 describe("GoalTrainingProgramFlow", () => {
+  it("restores the selected date when the same stored program is reopened without saving progress", () => {
+    mocks.scheduleProbe = true
+    currentDocument = makeStoredDocument({ ...programFor(latestPreview), programId: "date-return-program" })
+    const before = JSON.stringify(currentDocument)
+    const first = renderFlow()
+    expect(screen.getByLabelText("일정 선택 날짜")).toHaveValue(START)
+    fireEvent.change(screen.getByLabelText("일정 선택 날짜"), { target: { value: "2026-10-16" } })
+    expect(screen.getByLabelText("일정 선택 날짜")).toHaveValue("2026-10-16")
+    first.unmount()
+    renderFlow()
+    expect(screen.getByLabelText("일정 선택 날짜")).toHaveValue("2026-10-16")
+    expect(JSON.stringify(currentDocument)).toBe(before)
+    expect(mocks.save).not.toHaveBeenCalled()
+    expect(mocks.apply).not.toHaveBeenCalled()
+  })
+
+  it("uses each program's own default instead of carrying another program's selected date", () => {
+    mocks.scheduleProbe = true
+    currentDocument = makeStoredDocument({ ...programFor(latestPreview), programId: "date-source-program" })
+    const first = renderFlow()
+    fireEvent.change(screen.getByLabelText("일정 선택 날짜"), { target: { value: "2026-10-19" } })
+    first.unmount()
+    currentDocument = makeStoredDocument({ ...programFor(latestPreview), programId: "date-other-program" })
+    const other = renderFlow()
+    expect(screen.getByLabelText("일정 선택 날짜")).toHaveValue(START)
+    other.unmount()
+    currentDocument = makeStoredDocument({ ...programFor(latestPreview), programId: "date-source-program" })
+    renderFlow()
+    expect(screen.getByLabelText("일정 선택 날짜")).toHaveValue("2026-10-19")
+    expect(mocks.save).not.toHaveBeenCalled()
+    expect(mocks.apply).not.toHaveBeenCalled()
+  })
+
+  it("cancels a failed frequency edit without replacing the preview or its original inputs", async () => {
+    const user = userEvent.setup()
+    renderFlow()
+    await chooseGoalDateAndExperience(user)
+    await user.click(screen.getByRole("button", { name: "훈련 횟수 바꾸기" }))
+    await user.click(screen.getByRole("radio", { name: "5일" }))
+    mocks.createPreview.mockReturnValueOnce({ kind: "invalid", code: "TEST_FAILURE" })
+    await user.click(screen.getByRole("button", { name: "이 조건으로 다시 보기" }))
+    expect(screen.getByRole("alert")).toBeVisible()
+    await user.click(screen.getByRole("button", { name: "변경 취소" }))
+    expect(screen.getByText("훈련일 기본값")).toBeVisible()
+    expect(screen.getByRole("button", { name: "훈련 횟수 바꾸기" })).toHaveFocus()
+    await user.click(screen.getByRole("button", { name: "훈련 횟수 바꾸기" }))
+    expect(screen.getByRole("radio", { name: "3일" })).toBeChecked()
+    expect(mocks.createPreview).toHaveBeenCalledTimes(2)
+    expect(mocks.save).not.toHaveBeenCalled()
+    expect(mocks.apply).not.toHaveBeenCalled()
+  })
+  it("rebuilds edited dates with the existing experience and basis rather than asking again", async () => {
+    const user = userEvent.setup()
+    renderFlow()
+    await chooseGoalDateAndExperience(user)
+    await user.click(screen.getByRole("button", { name: "목표·날짜 바꾸기" }))
+    fireEvent.change(screen.getByLabelText("시작일"), { target: { value: "2026-10-20" } })
+    await user.click(screen.getByRole("button", { name: "다음" }))
+    expect(screen.getByRole("heading", { name: "10km 45분 목표" })).toBeVisible()
+    expect(mocks.createPreview).toHaveBeenLastCalledWith(expect.objectContaining({
+      experienceBand: "EXPERIENCED", availableDayCount: 3, goalPaceConfirmed: false,
+      dateChoice: { kind: "START", startDate: "2026-10-20" },
+    }))
+    expect(mocks.save).not.toHaveBeenCalled()
+  })
   it("changes frequency without saving, retains goal and dates, and keeps a failed edit retryable", async () => {
     const user = userEvent.setup()
     renderFlow()
     await chooseGoalDateAndExperience(user)
     await user.click(screen.getByRole("button", { name: "훈련 횟수 바꾸기" }))
-    expect(screen.getByLabelText("9.5일마다 훈련할 날")).toBeVisible()
-    await user.selectOptions(screen.getByLabelText("9.5일마다 훈련할 날"), "4")
+    expect(screen.getByRole("group", { name: "9.5일마다 훈련할 날" })).toBeVisible()
+    await user.click(screen.getByRole("radio", { name: "4일" }))
     mocks.createPreview.mockReturnValueOnce({ kind: "invalid", code: "TEST_FAILURE" })
     await user.click(screen.getByRole("button", { name: "이 조건으로 다시 보기" }))
     expect(screen.getByRole("button", { name: "이 조건으로 다시 보기" })).toBeVisible()
@@ -273,7 +345,7 @@ describe("GoalTrainingProgramFlow", () => {
       goalPaceConfirmed: false,
     }))
     expect(screen.getByText("미리보기 · 아직 시작하지 않았어요")).toBeVisible()
-    expect(screen.getByText("한 달 기본 훈련 · 9.5일 × 3")).toBeVisible()
+    expect(screen.getByText("훈련일 기본값")).toBeVisible()
     expect(mocks.generate).not.toHaveBeenCalled()
     expect(mocks.save).not.toHaveBeenCalled()
     expect(mocks.apply).not.toHaveBeenCalled()
@@ -297,11 +369,11 @@ describe("GoalTrainingProgramFlow", () => {
     const user = userEvent.setup()
     renderFlow()
     await chooseGoalDateAndExperience(user)
-    await user.click(screen.getByRole("button", { name: "이 계획 시작" }))
+    await user.click(screen.getByRole("button", { name: "계획 시작하기" }))
 
     expect(mocks.save).not.toHaveBeenCalled()
     expect(mocks.apply).not.toHaveBeenCalled()
-    await user.click(screen.getByRole("button", { name: "통증 없고 평소와 같아요 · 시작" }))
+    await user.click(screen.getByRole("button", { name: "통증 없고 평소와 같아요 · 확인하고 계획 시작" }))
 
     await waitFor(() => expect(mocks.apply).toHaveBeenCalledOnce())
     expect(mocks.evaluateSafety).toHaveBeenCalledWith("NO_KNOWN_RISK")
@@ -329,7 +401,7 @@ describe("GoalTrainingProgramFlow", () => {
     renderFlow()
     await chooseGoalDateAndExperience(user)
 
-    const startButton = screen.getByRole("button", { name: "이 계획 시작" })
+    const startButton = screen.getByRole("button", { name: "계획 시작하기" })
     expect(startButton).toBeDisabled()
     expect(mocks.evaluateSafety).not.toHaveBeenCalled()
     expect(mocks.generate).not.toHaveBeenCalled()
@@ -345,7 +417,7 @@ describe("GoalTrainingProgramFlow", () => {
     await user.click(startButton)
     expect(mocks.evaluateSafety).not.toHaveBeenCalled()
     expect(mocks.generate).not.toHaveBeenCalled()
-    await user.click(screen.getByRole("button", { name: "통증 없고 평소와 같아요 · 시작" }))
+    await user.click(screen.getByRole("button", { name: "통증 없고 평소와 같아요 · 확인하고 계획 시작" }))
 
     await waitFor(() => expect(mocks.generate).toHaveBeenCalledWith(expect.objectContaining({
       longerDurationConfirmed: true,
@@ -360,8 +432,8 @@ describe("GoalTrainingProgramFlow", () => {
     mocks.apply.mockResolvedValue({ kind: "rejected", code: "ACTIVE_PROGRAM_EXISTS" })
     renderFlow()
     await chooseGoalDateAndExperience(user)
-    await user.click(screen.getByRole("button", { name: "이 계획 시작" }))
-    await user.click(screen.getByRole("button", { name: "통증 없고 평소와 같아요 · 시작" }))
+    await user.click(screen.getByRole("button", { name: "계획 시작하기" }))
+    await user.click(screen.getByRole("button", { name: "통증 없고 평소와 같아요 · 확인하고 계획 시작" }))
 
     expect(await screen.findByRole("status")).toHaveTextContent("한 달 훈련표는 보관했지만 이번 9.5일 훈련은 시작하지 않았어요")
     expect(screen.getByRole("alert")).toHaveTextContent("진행 중인 계획을 먼저 확인해 주세요")
@@ -375,7 +447,7 @@ describe("GoalTrainingProgramFlow", () => {
     const user = userEvent.setup()
     renderFlow()
     await chooseGoalDateAndExperience(user)
-    await user.click(screen.getByRole("button", { name: "이 계획 시작" }))
+    await user.click(screen.getByRole("button", { name: "계획 시작하기" }))
     await user.click(screen.getByRole("button", { name: "통증·몸 이상이 있거나 잘 모르겠어요" }))
 
     expect(screen.getByRole("alert")).toHaveTextContent("몸 상태 확인 필요")
@@ -383,19 +455,19 @@ describe("GoalTrainingProgramFlow", () => {
     expect(mocks.generate).not.toHaveBeenCalled()
     expect(mocks.save).not.toHaveBeenCalled()
     expect(mocks.apply).not.toHaveBeenCalled()
-    expect(screen.queryByRole("button", { name: "이 계획 시작" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "계획 시작하기" })).not.toBeInTheDocument()
     await user.click(screen.getByRole("button", { name: "몸 상태 다시 확인" }))
     expect(screen.getByRole("heading", { name: "지금 몸 상태는 어떤가요?" })).toHaveFocus()
     expect(mocks.evaluateSafety).not.toHaveBeenCalled()
     mocks.evaluateSafety.mockReturnValueOnce({ kind: "blocked" })
-    await user.click(screen.getByRole("button", { name: "통증 없고 평소와 같아요 · 시작" }))
+    await user.click(screen.getByRole("button", { name: "통증 없고 평소와 같아요 · 확인하고 계획 시작" }))
     await waitFor(() => expect(screen.getByRole("button", { name: "몸 상태 다시 확인" })).toBeEnabled())
     expect(mocks.evaluateSafety).toHaveBeenCalledExactlyOnceWith("NO_KNOWN_RISK")
     expect(mocks.generate).not.toHaveBeenCalled()
     expect(mocks.save).not.toHaveBeenCalled()
     expect(mocks.apply).not.toHaveBeenCalled()
     await user.click(screen.getByRole("button", { name: "몸 상태 다시 확인" }))
-    await user.click(screen.getByRole("button", { name: "통증 없고 평소와 같아요 · 시작" }))
+    await user.click(screen.getByRole("button", { name: "통증 없고 평소와 같아요 · 확인하고 계획 시작" }))
     await waitFor(() => expect(mocks.apply).toHaveBeenCalledOnce())
     expect(mocks.evaluateSafety).toHaveBeenCalledTimes(2)
     expect(screen.queryByText("몸 상태 확인 필요 · 이 훈련표로 훈련을 시작하지 마세요.")).not.toBeInTheDocument()
@@ -408,7 +480,7 @@ describe("GoalTrainingProgramFlow", () => {
     await chooseGoalDateAndExperience(user)
 
     expect(screen.getByRole("status")).toHaveTextContent("계정 저장이 아직 지원되지 않아요")
-    expect(screen.getByRole("button", { name: "이 계획 시작" })).toBeDisabled()
+    expect(screen.getByRole("button", { name: "계획 시작하기" })).toBeDisabled()
     expect(mocks.save).not.toHaveBeenCalled()
     expect(mocks.apply).not.toHaveBeenCalled()
   })
@@ -417,8 +489,6 @@ describe("GoalTrainingProgramFlow", () => {
     const user = userEvent.setup()
     renderFlow()
     await chooseGoalDateAndExperience(user, 45, "2026-10-18")
-    await user.click(screen.getByRole("button", { name: "조건 바꾸기" }))
-    await user.click(screen.getByRole("button", { name: "경험·훈련 횟수 바꾸기" }))
     await user.click(screen.getByRole("button", { name: "목표·날짜 바꾸기" }))
 
     expect(screen.getByLabelText("시작일")).toHaveValue("2026-10-18")
@@ -428,6 +498,10 @@ describe("GoalTrainingProgramFlow", () => {
 
     expect(screen.getByLabelText("시작일")).toHaveValue("2026-10-18")
     expect(screen.getByText("10km 40분 목표 · 한 달 · 9.5일 × 3")).toBeVisible()
+    await user.click(screen.getByRole("button", { name: "변경 취소" }))
+    expect(screen.getByRole("heading", { name: "10km 45분 목표" })).toBeVisible()
+    expect(mocks.createPreview).toHaveBeenCalledTimes(1)
+    expect(mocks.save).not.toHaveBeenCalled()
   })
 
   it("passes the visible goal-speed choice through preview and generated-plan inputs", async () => {
@@ -442,9 +516,9 @@ describe("GoalTrainingProgramFlow", () => {
     await user.click(screen.getByRole("button", { name: /목표 속도로 연습/u }))
 
     expect(mocks.createPreview).toHaveBeenCalledWith(expect.objectContaining({ goalPaceConfirmed: true }))
-    expect(screen.getByText("목표 속도 · 1km에 4분 30초 · 속도가 적힌 구간에서만 따라요")).toBeVisible()
-    await user.click(screen.getByRole("button", { name: "이 계획 시작" }))
-    await user.click(screen.getByRole("button", { name: "통증 없고 평소와 같아요 · 시작" }))
+    expect(screen.getByText("목표 속도 · 1km 4분 30초")).toBeVisible()
+    await user.click(screen.getByRole("button", { name: "계획 시작하기" }))
+    await user.click(screen.getByRole("button", { name: "통증 없고 평소와 같아요 · 확인하고 계획 시작" }))
 
     expect(mocks.generate).toHaveBeenCalledWith(expect.objectContaining({ goalPaceConfirmed: true }))
   })
@@ -459,7 +533,7 @@ describe("GoalTrainingProgramFlow", () => {
 
     expect(screen.getByRole("status")).toHaveTextContent("복원한 훈련표예요")
     await user.click(screen.getByRole("button", { name: "이번 훈련 다시 연결" }))
-    await user.click(screen.getByRole("button", { name: "통증 없고 평소와 같아요 · 시작" }))
+    await user.click(screen.getByRole("button", { name: "통증 없고 평소와 같아요 · 확인하고 계획 시작" }))
 
     await waitFor(() => expect(mocks.apply).toHaveBeenCalledWith(expect.objectContaining({
       programId: "goal-program-fixture",
@@ -479,14 +553,14 @@ describe("GoalTrainingProgramFlow", () => {
     await user.click(screen.getByRole("button", { name: "목표·날짜를 바꿔 새로 만들기" }))
     await chooseGoalDateAndExperience(user)
 
-    const startButton = screen.getByRole("button", { name: "이 계획 시작" })
+    const startButton = screen.getByRole("button", { name: "계획 시작하기" })
     expect(startButton).toBeDisabled()
     expect(mocks.save).not.toHaveBeenCalled()
     await user.click(screen.getByLabelText("이전 훈련표를 보관하고 새 훈련표로 바꿀게요"))
     expect(startButton).toBeEnabled()
     await user.click(startButton)
     expect(mocks.save).not.toHaveBeenCalled()
-    await user.click(screen.getByRole("button", { name: "통증 없고 평소와 같아요 · 시작" }))
+    await user.click(screen.getByRole("button", { name: "통증 없고 평소와 같아요 · 확인하고 계획 시작" }))
 
     await waitFor(() => expect(mocks.save).toHaveBeenCalledWith(expect.objectContaining({ programId: "goal-program-fixture" }), expect.objectContaining({
       expectedRevision: 1,
@@ -515,14 +589,14 @@ describe("GoalTrainingProgramFlow", () => {
     await user.click(screen.getByRole("button", { name: "목표·날짜를 바꿔 새로 만들기" }))
     await chooseGoalDateAndExperience(user)
     await user.click(screen.getByLabelText("이전 훈련표를 보관하고 새 훈련표로 바꿀게요"))
-    await user.click(screen.getByRole("button", { name: "이 계획 시작" }))
-    expect(screen.getByRole("button", { name: "통증 없고 평소와 같아요 · 시작" })).toBeVisible()
+    await user.click(screen.getByRole("button", { name: "계획 시작하기" }))
+    expect(screen.getByRole("button", { name: "통증 없고 평소와 같아요 · 확인하고 계획 시작" })).toBeVisible()
 
     currentDocument = { ...currentDocument!, revision: 2 }
     act(() => mocks.subscribe.mock.calls.at(-1)?.[0]())
 
-    expect(screen.queryByRole("button", { name: "통증 없고 평소와 같아요 · 시작" })).not.toBeInTheDocument()
-    expect(screen.getByRole("button", { name: "이 계획 시작" })).toBeDisabled()
+    expect(screen.queryByRole("button", { name: "통증 없고 평소와 같아요 · 확인하고 계획 시작" })).not.toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "계획 시작하기" })).toBeDisabled()
     expect(screen.getByLabelText("이전 훈련표를 보관하고 새 훈련표로 바꿀게요")).not.toBeChecked()
     expect(screen.getByText("10km 45분 목표")).toBeVisible()
     expect(mocks.save).not.toHaveBeenCalled()
@@ -550,8 +624,8 @@ describe("GoalTrainingProgramFlow", () => {
     const user = userEvent.setup()
     renderFlow()
     await chooseGoalDateAndExperience(user)
-    await user.click(screen.getByRole("button", { name: "이 계획 시작" }))
-    await user.click(screen.getByRole("button", { name: "통증 없고 평소와 같아요 · 시작" }))
+    await user.click(screen.getByRole("button", { name: "계획 시작하기" }))
+    await user.click(screen.getByRole("button", { name: "통증 없고 평소와 같아요 · 확인하고 계획 시작" }))
     expect(mocks.refresh).toHaveBeenCalled()
     expect(mocks.save).toHaveBeenCalledOnce()
     expect(mocks.apply).toHaveBeenCalledOnce()
@@ -569,11 +643,11 @@ describe("GoalTrainingProgramFlow", () => {
     const user = userEvent.setup()
     renderFlow()
     await chooseGoalDateAndExperience(user)
-    await user.click(screen.getByRole("button", { name: "이 계획 시작" }))
-    await user.click(screen.getByRole("button", { name: "통증 없고 평소와 같아요 · 시작" }))
+    await user.click(screen.getByRole("button", { name: "계획 시작하기" }))
+    await user.click(screen.getByRole("button", { name: "통증 없고 평소와 같아요 · 확인하고 계획 시작" }))
     expect(await screen.findByRole("status")).toHaveTextContent("동기화 대기 중")
     expect(screen.getByText("미리보기 · 아직 시작하지 않았어요")).toBeVisible()
-    expect(screen.getByRole("button", { name: "통증 없고 평소와 같아요 · 시작" })).toBeDisabled()
+    expect(screen.getByRole("button", { name: "통증 없고 평소와 같아요 · 확인하고 계획 시작" })).toBeDisabled()
     expect(mocks.apply).not.toHaveBeenCalled()
   })
 
@@ -591,12 +665,12 @@ describe("GoalTrainingProgramFlow", () => {
     expect(review.pendingDocument.program.window.startDate).toBe(START)
     expect(mocks.save).not.toHaveBeenCalled(); expect(mocks.apply).not.toHaveBeenCalled()
     if (hasConfirmed) {
-      expect(screen.getByRole("button", { name: "이 계획 시작" })).toBeDisabled()
+      expect(screen.getByRole("button", { name: "계획 시작하기" })).toBeDisabled()
       await user.click(screen.getByLabelText("이전 훈련표를 보관하고 새 훈련표로 바꿀게요"))
     }
-    await user.click(screen.getByRole("button", { name: "이 계획 시작" }))
+    await user.click(screen.getByRole("button", { name: "계획 시작하기" }))
     expect(mocks.save).not.toHaveBeenCalled(); expect(mocks.apply).not.toHaveBeenCalled()
-    await user.click(screen.getByRole("button", { name: "통증 없고 평소와 같아요 · 시작" }))
+    await user.click(screen.getByRole("button", { name: "통증 없고 평소와 같아요 · 확인하고 계획 시작" }))
     expect(mocks.save).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ window: expect.objectContaining({ startDate: "2026-10-18" }) }),
       expect.objectContaining({ expectedRevision: original?.revision ?? null, currentCheck: "NO_KNOWN_RISK", replaceExisting: hasConfirmed,
         replaceExpiredPending: true, expectedPendingReview: review }))
@@ -609,7 +683,7 @@ describe("GoalTrainingProgramFlow", () => {
     expiredPendingDateReview()
     const user = userEvent.setup(); renderFlow()
     await chooseGoalDateAndExperience(user)
-    expect(screen.getByRole("button", { name: "이 계획 시작" })).toBeDisabled()
+    expect(screen.getByRole("button", { name: "계획 시작하기" })).toBeDisabled()
     expect(mocks.save).not.toHaveBeenCalled(); expect(mocks.apply).not.toHaveBeenCalled()
   })
 
@@ -621,7 +695,7 @@ describe("GoalTrainingProgramFlow", () => {
     const user = userEvent.setup(); renderFlow()
     expect(screen.queryByRole("button", { name: "날짜를 다시 골라 보관하기" })).not.toBeInTheDocument()
     await chooseGoalDateAndExperience(user)
-    expect(screen.getByRole("button", { name: "이 계획 시작" })).toBeDisabled()
+    expect(screen.getByRole("button", { name: "계획 시작하기" })).toBeDisabled()
     expect(mocks.save).not.toHaveBeenCalled(); expect(mocks.apply).not.toHaveBeenCalled()
   })
 
@@ -629,10 +703,10 @@ describe("GoalTrainingProgramFlow", () => {
     const review = expiredPendingDateReview(), pending = structuredClone(review.pendingDocument)
     const user = userEvent.setup(); renderFlow()
     await chooseNewPendingDate(user)
-    await user.click(screen.getByRole("button", { name: "이 계획 시작" }))
+    await user.click(screen.getByRole("button", { name: "계획 시작하기" }))
     mocks.today = "2026-10-19"
     mocks.generate.mockReturnValueOnce({ kind: "start-in-past", requiredStartDate: "2026-10-18", suggestedStartDate: mocks.today })
-    await user.click(screen.getByRole("button", { name: "통증 없고 평소와 같아요 · 시작" }))
+    await user.click(screen.getByRole("button", { name: "통증 없고 평소와 같아요 · 확인하고 계획 시작" }))
     expect(screen.getByRole("alert")).toHaveTextContent("날짜")
     expect(mocks.save).not.toHaveBeenCalled(); expect(mocks.apply).not.toHaveBeenCalled()
     expect(review.pendingDocument).toEqual(pending)
@@ -644,7 +718,7 @@ describe("GoalTrainingProgramFlow", () => {
     await chooseNewPendingDate(user)
     mocks.accountSnapshot.mockReturnValue({ ...review, sequence: 3 })
     act(() => mocks.subscribe.mock.calls.at(-1)?.[0]())
-    expect(screen.getByRole("button", { name: "이 계획 시작" })).toBeDisabled()
+    expect(screen.getByRole("button", { name: "계획 시작하기" })).toBeDisabled()
     expect(mocks.save).not.toHaveBeenCalled(); expect(mocks.apply).not.toHaveBeenCalled()
   })
 

@@ -13,6 +13,8 @@ import { resolveDetailedPlanTemplateOptions } from "./plan-template-options"
 import { setActiveLocalAccount } from "../../domain/account/local-journal-ownership"
 import { defaultInstantCandidate } from "./instant-plan-projection"
 import { projectInstantExecutionSteps } from "./instant-plan-today"
+import { resolveCatalogBinding } from "@impl/prescription/catalog-session-binding"
+import { formatTrainingSeconds } from "./labels"
 
 beforeEach(async () => {
   localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture(); setActiveLocalAccount(null)
@@ -54,13 +56,20 @@ describe("deferred workout editors on a candidate result", () => {
       withDisplayedSessions(candidates[0]), withDisplayedSessions(candidates[1]),
     ] as const }
     render(<PlanCandidates {...props} generated={generated} startDateValue="2026-09-20" />)
-    const first = screen.getByRole("region", { name: "주요 훈련과 실제 처방" })
+    const first = screen.getByRole("region", { name: "주요 훈련 구성" })
     expect(first).toHaveTextContent("2026-09-22 · 오후")
     expect(first).not.toHaveTextContent("오늘")
     const total = projectInstantExecutionSteps(firstWorkout).find(step => step.role === "TOTAL_DURATION")
     if (!total) throw Error("Expected the existing total-time projection")
-    fireEvent.click(within(first).getByText("준비·정리·전체 시간"))
-    expect(within(first).getByText(total.instruction)).toBeVisible()
+    const calculation = firstWorkout.prescription.kind === "RPE_TIME_RANGE" && firstWorkout.prescription.catalogWorkout
+      ? resolveCatalogBinding(firstWorkout.prescription.catalogWorkout) : null
+    const seconds = calculation?.totals.seconds
+    const expectedTotal = seconds
+      ? `전체 구간 합계 ${formatTrainingSeconds(seconds.minimum)}${seconds.minimum === seconds.maximum ? "" : `~${formatTrainingSeconds(seconds.maximum)}`}`
+      : total.instruction
+    const visibleTotal = within(first).getByText(expectedTotal)
+    expect(visibleTotal).toBeVisible()
+    expect(visibleTotal.closest("details")).toBeNull()
     const calendar = screen.getByRole("region", { name: "이번 일정" })
     expect(first.compareDocumentPosition(calendar)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
     expect(calendar.querySelectorAll('[data-in-range="true"] button[data-date]')).toHaveLength(9)
@@ -77,7 +86,7 @@ describe("deferred workout editors on a candidate result", () => {
       withDisplayedSessions(candidates[0]), withDisplayedSessions(candidates[1]),
     ] as const }
     render(<PlanCandidates {...props} generated={generated} />)
-    expect(screen.queryByRole("region", { name: "주요 훈련과 실제 처방" })).toBeNull()
+    expect(screen.queryByRole("region", { name: "주요 훈련 구성" })).toBeNull()
     const overview = screen.getByRole("region", { name: "선택한 계획 요약" })
     expect(within(overview).getByText("훈련 횟수").nextElementSibling).toHaveTextContent("0회")
     expect(screen.getByRole("region", { name: "이번 일정" })).toBeVisible()

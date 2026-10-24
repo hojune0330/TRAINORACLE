@@ -89,6 +89,24 @@
   overflow-wrap: anywhere;
 }
 
+.plan-candidate-overview__quality .plan-candidate-overview__duration {
+  margin-block-start: var(--space-3);
+  padding-block-start: var(--space-2);
+  border-block-start: var(--bw-line) solid var(--line);
+  color: var(--ink-2);
+}
+
+.plan-candidate-overview__notice {
+  margin: 0 0 var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--r-action);
+  background: var(--surface-2);
+  color: var(--ink-2);
+  font-size: var(--fs-caption);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
 .plan-candidate__choose[aria-pressed="true"] {
   border-color: var(--category-training);
   background: var(--category-training-wash);
