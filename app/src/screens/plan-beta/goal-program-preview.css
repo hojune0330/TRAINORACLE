@@ -48,6 +48,7 @@
 /* The program owns its heading and spacing; nested schedule margins should not
    postpone the actual workout below another full screen of controls. */
 .goal-program .plan-training-flow[data-embedded] { margin-top: 0; padding-block: 0; }
+.goal-program .plan-training-flow[data-presentation="prescription-calendar"] > .month-calendar { margin-inline: 0; max-width: 100%; }
 .goal-program .plan-training-flow .prescription-calendar__view-toggle { margin-top: 0; }
 .goal-program .plan-day-deck { margin-top: 0; }
 .goal-program .plan-date-rail { padding-inline: 0; margin-block: 0 12px; grid-auto-columns: minmax(44px, 1fr); }
