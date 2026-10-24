@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 import { MonthCalendar, shiftCalendarMonth } from "./MonthCalendar"
 import { useLocalToday } from "../hooks/useLocalToday"
 
-afterEach(() => { cleanup(); vi.useRealTimers() })
+afterEach(() => { cleanup(); vi.useRealTimers(); vi.unstubAllEnvs() })
 
 function CalendarHarness({ initial = "2026-09", live = false }: { initial?: string; live?: boolean }) {
   const [month, setMonth] = useState(initial)
@@ -16,6 +16,25 @@ function CalendarHarness({ initial = "2026-09", live = false }: { initial?: stri
 }
 
 describe("shared civil-date calendar", () => {
+  it.each([
+    ["./", "https://example.test/", "/illustrations/journal-calendar-paper-v1.webp"],
+    ["./", "https://example.test/TRAINORACLE/#journal", "/TRAINORACLE/illustrations/journal-calendar-paper-v1.webp"],
+    ["/TRAINORACLE/", "https://example.test/TRAINORACLE/", "/TRAINORACLE/illustrations/journal-calendar-paper-v1.webp"],
+    ["/", "https://example.test/TRAINORACLE/", "/illustrations/journal-calendar-paper-v1.webp"],
+  ])("resolves archive paper against document base %s at %s before external CSS consumes it", (base, documentBase, expectedPath) => {
+    vi.stubEnv("BASE_URL", base)
+    vi.spyOn(document, "baseURI", "get").mockReturnValue(documentBase)
+    const view = render(<MonthCalendar month="2026-10" today="2026-10-18"
+      onMonthChange={vi.fn()} onSelectDate={vi.fn()} dayDescription={() => ""} renderDay={() => null}
+      category="journal" presentation="journal-archive" />)
+    const paper = view.container.querySelector<HTMLElement>(".month-calendar")!.style.getPropertyValue("--journal-calendar-paper")
+    const reference = /^url\("(.+)"\)$/u.exec(paper)?.[1]
+    expect(reference).toBeDefined()
+    // Relative custom-property URLs are resolved where var() is consumed: the built stylesheet.
+    const stylesheet = new URL("assets/index-test.css", documentBase)
+    expect(new URL(reference!, stylesheet).href).toBe(`https://example.test${expectedPath}`)
+  })
+
   it("reveals Today only for that action and does not retain the intent for later month or data changes", () => {
     const view = render(<CalendarHarness />)
     const viewport = view.container.querySelector<HTMLElement>(".month-calendar__viewport")!

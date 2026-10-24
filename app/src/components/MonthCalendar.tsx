@@ -78,7 +78,7 @@ export function MonthCalendar({ month, today, selectedDate, onMonthChange, onSel
   const monthDate = isoToDate(`${month}-01`)
   const label = `${monthDate.getFullYear()}년 ${monthDate.getMonth() + 1}월`
   const paperStyle = presentation === "journal-archive" ? {
-    "--journal-calendar-paper": `url("${import.meta.env.BASE_URL}illustrations/journal-calendar-paper-v1.webp")`,
+    "--journal-calendar-paper": `url("${new URL(`${import.meta.env.BASE_URL}illustrations/journal-calendar-paper-v1.webp`, document.baseURI).href}")`,
   } as CSSProperties : undefined
   const tabDate = focusedDate?.startsWith(month) ? focusedDate
     : selectedDate?.startsWith(month) ? selectedDate : today.startsWith(month) ? today : `${month}-01`
