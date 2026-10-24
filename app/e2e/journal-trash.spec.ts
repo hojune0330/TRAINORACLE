@@ -230,7 +230,7 @@ test("메모만 쓴 일지가 안전 백업에서 빠진다는 안내가 뜬다"
   await expect(notice).toContainText("2개")
   await expect(notice).toContainText("1개 포함")
   await expect(notice).toContainText("전체 3개")
-  await expect(notice).toContainText("메모 포함 파일 내보내기")
+  await expect(notice).toContainText("메모까지 백업")
 })
 
 test("빠지는 일지가 없으면 안내를 띄우지 않는다", async ({ page }) => {

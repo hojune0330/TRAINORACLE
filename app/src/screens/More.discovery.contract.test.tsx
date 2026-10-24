@@ -4,6 +4,15 @@ import { More } from "./More"
 
 afterEach(cleanup)
 
+it("names storage without advertising an unavailable account destination", () => {
+  render(<More onBack={vi.fn()} onOpenMinji={vi.fn()} onOpenGuide={vi.fn()} />)
+  expect(screen.queryByRole("button", { name: "계정·기록 보관" })).toBeNull()
+  fireEvent.click(screen.getByRole("button", { name: "기록 보관" }))
+  expect(screen.getByRole("heading", { name: "기록 보관", level: 1 })).toBeVisible()
+  expect(screen.queryByRole("button", { name: "계정 저장 상태 확인" })).toBeNull()
+  expect(screen.getByRole("region", { name: "앱 보관 안내" })).toBeVisible()
+})
+
 it("replays the app introduction and returns to its exact opener and reader scroll", async () => {
   const plan = vi.fn(), analysis = vi.fn()
   render(<div className="app-scroll-region"><More onBack={vi.fn()} onOpenMinji={vi.fn()} onOpenGuide={vi.fn()}
@@ -77,7 +86,7 @@ it("shows learning and decoration destinations directly in More", () => {
     expect(screen.getByRole("button", { name })).not.toHaveAccessibleDescription()
   }
   fireEvent.click(screen.getByRole("button", { name: "백업·복원·휴지통" }))
-  expect(screen.getByRole("button", { name: "내려받은 백업 되돌리기" })).toBeVisible()
+  expect(screen.getByRole("button", { name: "백업 복원" })).toBeVisible()
 })
 
 it("does not advertise tools whose callbacks are unavailable", () => {
@@ -96,13 +105,13 @@ it("returns each management view to More without leaving the screen", () => {
   const onOpenRestore = vi.fn()
   render(<More onBack={onBack} onOpenMinji={vi.fn()} onOpenGuide={vi.fn()}
     onOpenAccount={onOpenAccount} onOpenRestore={onOpenRestore} />)
-  expect(screen.queryByRole("button", { name: "내려받은 백업 되돌리기" })).toBeNull()
+  expect(screen.queryByRole("button", { name: "백업 복원" })).toBeNull()
   expect(screen.queryByRole("link", { name: /^개인정보처리방침/ })).toBeNull()
   for (const name of ["계정·기록 보관", "백업·복원·휴지통", "앱 정보·개인정보·문의"]) {
     fireEvent.click(screen.getByRole("button", { name }))
     expect(screen.getByRole("heading", { level: 1, name })).toHaveFocus()
     if (name === "백업·복원·휴지통") {
-      fireEvent.click(screen.getByRole("button", { name: "내려받은 백업 되돌리기" }))
+      fireEvent.click(screen.getByRole("button", { name: "백업 복원" }))
       expect(onOpenRestore).toHaveBeenCalledOnce()
       expect(screen.getByText(/휴지통 ·/)).toBeVisible()
     }

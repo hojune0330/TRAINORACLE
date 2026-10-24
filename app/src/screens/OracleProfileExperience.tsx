@@ -30,6 +30,8 @@ export type OracleReadingDisplay = {
 }
 export type OracleProfileExperienceProps = {
   initialView?: "result" | "library"
+  navigationState?: OracleProfileNavigationState
+  onNavigationStateChange?: (state: OracleProfileNavigationState) => void
   backLabel?: string
   answers: OracleResponses
   draftAnswers?: OracleResponses
@@ -49,12 +51,14 @@ export type OracleProfileExperienceProps = {
   onRetry: () => void
   onBack: () => void
   onOpenTraining?: () => void
+  onOpenLibrary?: () => void
   onNavigate: (destination: OracleDestination) => void
   onContext?: () => void
   responsesDisabled?: boolean
   hasPendingScore?: boolean
   draftState?: "EDITING" | "SUBMITTING" | null
 }
+export type OracleProfileNavigationState = { readonly group: string; readonly view: "result" | "saved" }
 const groups = [{ id: "A", label: "취향" }, { id: "B", label: "경기 기록" }, { id: "C", label: "훈련" },
   { id: "D", label: "훈련법" }, { id: "E", label: "함께" }, { id: "F", label: "대회" },
   { id: "G", label: "돌아보기" }, { id: "H", label: "배우기" }] as const
@@ -122,8 +126,16 @@ export function OracleProfileExperience(props: OracleProfileExperienceProps) {
   const [storyAxis, setStoryAxis] = React.useState<OracleAxisId | null>(null)
   const [learning, setLearning] = React.useState<OracleLearningDestination | null>(null)
   const [settingsOpen, setSettingsOpen] = React.useState(false)
-  const [group, setGroup] = React.useState<OracleContentGroup>("A")
-  const [view, setView] = React.useState<"result" | "library" | "saved">(() => props.initialView ?? "result")
+  const [group, setGroup] = React.useState<OracleContentGroup>(() => groups.find(item => item.id === props.navigationState?.group)?.id ?? "A")
+  const [view, setView] = React.useState<"result" | "library" | "saved">(() => props.initialView === "library" ? "library" : props.navigationState?.view ?? "result")
+  const profileView = React.useRef<"result" | "saved">(props.navigationState?.view ?? "result")
+  React.useEffect(() => {
+    if (view !== "library") profileView.current = view
+    props.onNavigationStateChange?.({ group, view: profileView.current })
+  }, [group, view, props.onNavigationStateChange])
+  React.useEffect(() => {
+    setView(current => props.initialView === "library" ? "library" : current === "library" ? profileView.current : current)
+  }, [props.initialView])
   const [confirmDelete, setConfirmDelete] = React.useState(false)
   const [busy, setBusy] = React.useState(false)
   const [localMessage, setLocalMessage] = React.useState("")
@@ -301,27 +313,24 @@ export function OracleProfileExperience(props: OracleProfileExperienceProps) {
       {activeView === "saved" && <><AppHeading variant="screen" accent>보관한 풀이</AppHeading><div className="oracle-v2__topics">{props.readings.map(item => <CategoryCard category="oracle" icon={Bookmark} variant="row" title={`${item.source.answeredAt.slice(0, 10)} · 당시 응답`} key={item.source.revision} onClick={() => setSavedReading(item)} />)}</div></>}
     </div>
     {settingsOpen && <Reader title="프로필 설정" onClose={() => setSettingsOpen(false)}>{(_close, leave) => <>
-        <aside className="oracle-v2__manager" aria-label="더 읽어보기">
-          <AppHeading as="h2" variant="section">더 읽어보기</AppHeading>
-          <div className="oracle-v2__manager-actions">
-            <button type="button" onClick={() => leave(() => setTopicId("C02"))}>내 훈련 해설<ChevronRight size={16} /></button>
-            <button type="button" onClick={() => leave(() => setTopicId("B02"))}>내 기록 해설<ChevronRight size={16} /></button>
-            <button type="button" onClick={() => leave(() => setTopicId("C07"))}>계획·수행 비교<ChevronRight size={16} /></button>
-          </div>
-        </aside>
-        <section className="oracle-v2__axis-picker">
-          <AppHeading as="h2" variant="section">다른 항목 선택</AppHeading>
-          <div className="oracle-v2__axis-list app-choice-group" role="group" aria-label="다른 항목 선택">
-            {ORACLE_AXES.map(axis => <button className="app-choice-control" type="button" key={axis.id} disabled={blocked || dirty.current || props.hasPendingScore}
-              onClick={() => leave(() => openQuestions(axis.id))}><span>{axis.label}</span><ChevronRight size={16} /></button>)}
+        <section className="oracle-v2__settings-section">
+          <AppHeading as="h2" variant="section">추가 취향</AppHeading>
+          <div className="oracle-v2__settings-rows" role="group" aria-label="추가 취향">
+            {ORACLE_AXES.map(axis => <CategoryCard category="oracle" icon={Pencil} variant="row" title={axis.label} key={axis.id} disabled={blocked || dirty.current || props.hasPendingScore}
+              onClick={() => leave(() => openQuestions(axis.id))} />)}
           </div>
         </section>
         {props.onContext && !props.responsesDisabled && <button className="oracle-v2__context-action" type="button" disabled={busy || accountBlocked} onClick={() => leave(() => props.onContext?.())}>
           <span>훈련·대회 정보 추가<small>달릴 시간 · 장소 · 보조 운동 · 대회</small></span><ChevronRight size={16} />
         </button>}
-        <section className="oracle-v2__manager-actions" aria-label="내 응답 관리">
+        <section className="oracle-v2__settings-section oracle-v2__manager-actions" aria-label="내 응답 관리">
+          <AppHeading as="h2" variant="section">응답 관리</AppHeading>
           {confirmDelete ? <><p>응답과 보관한 프로필 풀이를 삭제할까요?</p><button type="button" disabled={busy} onClick={async () => { setBusy(true); try { if (await props.onDelete()) { dirty.current = false; const empty = startOracleQuestionFlow(); flowRef.current = empty; setFlow(empty); setCharacter(null); setConfirmDelete(false) } else setLocalMessage("delete") } catch { setLocalMessage("delete") } finally { setBusy(false) } }}>삭제하기</button><button type="button" onClick={() => setConfirmDelete(false)}>취소</button></> : <button type="button" disabled={blocked} onClick={() => setConfirmDelete(true)}><Trash2 size={16} />응답 삭제</button>}
         </section>
+        <aside className="oracle-v2__settings-section" aria-label="읽을거리">
+          <CategoryCard category="oracle" icon={BookOpen} variant="row" title="읽을거리 살펴보기"
+            onClick={() => leave(() => props.onOpenLibrary ? props.onOpenLibrary() : setView("library"))} />
+        </aside>
         {localMessage && <p role="alert">변경을 저장하지 못했어요. 입력한 답은 그대로 남아 있어요.</p>}
     </>}</Reader>}
     {story && <Reader title="응답 해설" onClose={() => setStoryAxis(null)} action={!blocked && storyAxis ? { label: "내 답 수정", run: () => reviewAnswers(storyAxis) } : undefined}><p className="oracle-v2__eyebrow">내 응답 기준</p><AppHeading variant="screen" accent>{story.title}</AppHeading><p>{story.reading}</p><p>{story.example}</p><AppHeading as="h2" variant="section">이렇게 활용해 볼 수 있어요</AppHeading><p>{story.use}</p><InfoDisclosure title="응답 근거와 해석 범위"><AppHeading as="h2" variant="section">함께 생각할 점</AppHeading><p>{story.watchFor}</p><AppHeading as="h2" variant="section">내가 답한 내용</AppHeading>{story.facts.map((fact, i) => <p key={i}>{fact.question}<br />{typeof fact.response === "number" ? `${fact.response}/5` : fact.response === "SKIPPED" ? "건너뜀" : nonNumeric.find(([value]) => value === fact.response)?.[1]}</p>)}<AppHeading as="h2" variant="section">아직 알 수 없는 것</AppHeading><p>{story.boundary}</p><p>{story.scope}</p></InfoDisclosure></Reader>}

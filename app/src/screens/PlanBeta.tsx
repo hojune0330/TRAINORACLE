@@ -1322,9 +1322,9 @@ function LegacyPlanBeta({
     <div className="plan-instant-entry" hidden={recordsOpen || notationReaderOpen}>
     <div className="plan-intake-mode" role="group" aria-label="계획 입력 방식">
       <button type="button" aria-pressed={intakeMode === "quick"} disabled={instantRecordSaving}
-        onClick={() => setIntakeMode("quick")}>간단히 계획 받기</button>
+        onClick={() => setIntakeMode("quick")}>간단히</button>
       <button type="button" aria-pressed={intakeMode === "precision"} disabled={instantRecordSaving}
-        onClick={() => setIntakeMode("precision")}>기록·일정까지 정밀하게 설정</button>
+        onClick={() => setIntakeMode("precision")}>직접 설정</button>
     </div>
     <InstantPlanEntryForm today={todayISO()} readToday={todayISO} initialEntry={instantEntry} active={!recordsOpen && !notationReaderOpen} savesRecord
       disabled={instantRecordSaving} isSubmitting={instantRecordSaving} onDraftChange={setInstantEntryDirty} onSubmit={async value => {
@@ -1405,7 +1405,7 @@ function LegacyPlanBeta({
         invalidateGenerationRetry(); setIntakeMode("precision")
         if (draft.eventDistanceM === undefined) setInstantEntryOpen(true)
         else setPrecisionOpen(true)
-      }}>기록·일정까지 정밀하게 설정</button>}
+      }}>직접 설정</button>}
       <PlanIntake
         key={step}
         step={step}

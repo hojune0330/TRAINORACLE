@@ -82,6 +82,7 @@ afterEach(cleanup)
 function mainTabs() {
   return within(screen.getByRole("navigation", { name: "주 탭" }))
 }
+function oracleTabs() { return within(screen.getByRole("navigation", { name: "오라클 메뉴" })) }
 
 function storageSnapshot(storage: Storage) {
   return Object.fromEntries(Array.from({ length: storage.length }, (_, index) => {
@@ -119,7 +120,7 @@ describe("AppShell oracle exploration navigation", () => {
     const tabLabel = origin === "분석" ? "오라클" : origin
     render(<AppShell />)
     if (origin === "분석") await user.click(mainTabs().getByRole("button", { name: "오라클" }))
-    await user.type(screen.getByRole("textbox", { name: `${origin} 화면 선택` }), "선택 유지")
+    if (origin === "분석") await user.type(screen.getByRole("textbox", { name: `${origin} 화면 선택` }), "선택 유지")
 
     await user.click(screen.getByRole("button", { name: openLabel }))
 
@@ -127,10 +128,10 @@ describe("AppShell oracle exploration navigation", () => {
     expect(screen.getByText("내 기록을 분석한 결과가 아니에요")).toBeVisible()
     expect(screen.queryByRole("heading", { name: heading })).not.toBeInTheDocument()
     expect(window.location.search).toBe("?app=1")
-    expect(mainTabs().getAllByRole("button").map(button => button.textContent)).toEqual([
-      "홈", "일지", "기록", "훈련", "오라클",
+    expect(oracleTabs().getAllByRole("button").map(button => button.textContent)).toEqual([
+      "나가기", "분석", "취향", "읽을거리",
     ])
-    expect(mainTabs().getByRole("button", { name: tabLabel })).toHaveAttribute("aria-current", "page")
+    expect(oracleTabs().getByRole("button", { name: "분석" })).toHaveAttribute("aria-current", "page")
 
     await user.selectOptions(screen.getByRole("combobox", { name: "살펴볼 주제" }), next)
     expect(screen.getByRole("heading", { name: getOracleTopic(next).example.headline })).toBeVisible()
@@ -141,9 +142,10 @@ describe("AppShell oracle exploration navigation", () => {
 
     act(() => window.history.back())
     await waitFor(() => expect(screen.getByRole("heading", { name: heading })).toBeVisible())
-    expect(screen.getByRole("textbox", { name: `${origin} 화면 선택` })).toHaveValue("선택 유지")
+    if (origin === "분석") expect(screen.getByRole("textbox", { name: `${origin} 화면 선택` })).toHaveValue("선택 유지")
+    else await waitFor(() => expect(screen.getByRole("button", { name: openLabel })).toHaveFocus())
     expect(screen.queryByRole("combobox", { name: "살펴볼 주제" })).not.toBeInTheDocument()
-    expect(mainTabs().getByRole("button", { name: tabLabel })).toHaveAttribute("aria-current", "page")
+    expect((origin === "분석" ? oracleTabs() : mainTabs()).getByRole("button", { name: origin === "분석" ? "분석" : tabLabel })).toHaveAttribute("aria-current", "page")
   })
 
   it.each([
@@ -166,19 +168,21 @@ describe("AppShell oracle exploration navigation", () => {
     expect(screen.getByRole("heading", { name: heading })).toBeVisible()
     expect(screen.queryByRole("combobox", { name: "살펴볼 주제" })).not.toBeInTheDocument()
     expect(screen.queryByRole("heading", { name: "새 일지 작성" })).not.toBeInTheDocument()
-    expect(mainTabs().getByRole("button", { name: tab })).toHaveAttribute("aria-current", "page")
+    const destinationNav = tab === "일지" ? within(screen.getByRole("navigation", { name: "일지 메뉴" })) : tab === "오라클" ? oracleTabs() : mainTabs()
+    expect(destinationNav.getByRole("button", { name: tab === "오라클" ? "분석" : tab })).toHaveAttribute("aria-current", "page")
   })
 
-  it("keeps bottom tabs usable and dismisses the example when switching tabs", async () => {
+  it("keeps active domain reselect a no-op and exits a directly targeted example to Home", async () => {
     const user = userEvent.setup()
     render(<AppShell />)
     await user.click(screen.getByRole("button", { name: "홈 현재 수준 예시" }))
 
-    await user.click(mainTabs().getByRole("button", { name: "오라클" }))
-
-    expect(screen.getByRole("heading", { name: "분석 출발 화면" })).toBeVisible()
+    await user.click(oracleTabs().getByRole("button", { name: "분석" }))
+    expect(screen.getByRole("combobox", { name: "살펴볼 주제" })).toBeVisible()
+    await user.click(oracleTabs().getByRole("button", { name: "오라클 나가기" }))
+    await waitFor(() => expect(screen.getByRole("heading", { name: "홈 출발 화면" })).toBeVisible())
     expect(screen.queryByRole("combobox", { name: "살펴볼 주제" })).not.toBeInTheDocument()
-    expect(mainTabs().getByRole("button", { name: "오라클" })).toHaveAttribute("aria-current", "page")
+    expect(mainTabs().getByRole("button", { name: "홈" })).toHaveAttribute("aria-current", "page")
   })
 
   it("returns to the original topic after athlete-records save", async () => {
@@ -218,8 +222,10 @@ describe("AppShell oracle exploration navigation", () => {
     render(<AppShell />)
     await user.click(screen.getByRole("button", { name: "홈 현재 수준 예시" }))
     await user.selectOptions(screen.getByRole("combobox", { name: "살펴볼 주제" }), "focus")
-    await user.click(mainTabs().getByRole("button", { name: "오라클" }))
-    expect(screen.getByRole("heading", { name: "분석 출발 화면" })).toBeVisible()
+    await user.click(oracleTabs().getByRole("button", { name: "오라클 나가기" }))
+    await screen.findByRole("heading", { name: "홈 출발 화면" })
+    await user.click(mainTabs().getByRole("button", { name: "훈련" }))
+    expect(screen.getByRole("heading", { name: "내 훈련 계획" })).toBeVisible()
 
     const popped = new Promise<void>(resolve => {
       window.addEventListener("popstate", () => resolve(), { once: true })
@@ -229,7 +235,7 @@ describe("AppShell oracle exploration navigation", () => {
       await popped
     })
 
-    expect(screen.getByRole("heading", { name: "분석 출발 화면" })).toBeVisible()
+    expect(screen.getByRole("heading", { name: "내 훈련 계획" })).toBeVisible()
     expect(screen.queryByRole("combobox", { name: "살펴볼 주제" })).not.toBeInTheDocument()
   })
 
@@ -253,9 +259,9 @@ describe("AppShell oracle exploration navigation", () => {
     const lastTopic = ORACLE_TOPICS[ORACLE_TOPICS.length - 1]!
     await user.click(screen.getByRole("button", { name: new RegExp(lastTopic.nextLabel) }))
     expect(screen.getByRole("combobox", { name: "살펴볼 주제" })).toHaveValue(lastTopic.nextId)
-    await user.click(mainTabs().getByRole("button", { name: "홈" }))
+    await user.click(oracleTabs().getByRole("button", { name: "오라클 나가기" }))
 
-    expect(screen.getByRole("heading", { name: "홈 출발 화면" })).toBeVisible()
+    expect(await screen.findByRole("heading", { name: "홈 출발 화면" })).toBeVisible()
     expect(write.mock.calls.filter(([key]) => key !== "__to_probe__")).toHaveLength(0)
     expect(remove.mock.calls.filter(([key]) => key !== "__to_probe__")).toHaveLength(0)
     expect(clear).not.toHaveBeenCalled()

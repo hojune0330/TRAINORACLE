@@ -29,7 +29,12 @@ export function useNavigationReturnFrame() {
 
   React.useEffect(() => {
     const unsubscribe = onLocalJournalScopeChange(invalidate)
-    return () => { unsubscribe(); invalidate() }
+    const events = ["wheel", "touchstart", "pointerdown", "keydown"] as const
+    for (const event of events) window.addEventListener(event, invalidate, { capture: true, passive: true })
+    return () => {
+      unsubscribe(); invalidate()
+      for (const event of events) window.removeEventListener(event, invalidate, true)
+    }
   }, [invalidate])
 
   return { schedule, invalidate }

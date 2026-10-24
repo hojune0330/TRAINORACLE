@@ -18,8 +18,8 @@ it("opens the game directly from home and returns home", async () => {
   render(<AppShell />)
   await user.click(screen.getByRole("button", { name: "게임하기" }))
   expect(screen.getByRole("heading", { name: "멈추면 밀려나는 트랙" })).toBeVisible()
-  await user.click(screen.getByRole("button", { name: "홈으로 돌아가기" }))
-  expect(screen.getByRole("heading", { name: "홈" })).toBeVisible()
+  await user.click(screen.getByRole("button", { name: "게임 라운지 나가기" }))
+  expect(await screen.findByRole("heading", { name: "홈" })).toBeVisible()
 })
 
 it("opens the minigame from More and returns to the same utility surface", async () => {
@@ -28,6 +28,6 @@ it("opens the minigame from More and returns to the same utility surface", async
   await user.click(screen.getByRole("button", { name: "더보기" }))
   await user.click(screen.getByRole("button", { name: "미니게임" }))
   expect(screen.getByRole("heading", { name: "멈추면 밀려나는 트랙" })).toBeVisible()
-  await user.click(screen.getByRole("button", { name: "더보기로 돌아가기" }))
-  expect(screen.getByRole("heading", { name: "더보기" })).toBeVisible()
+  await user.click(screen.getByRole("button", { name: "게임 라운지 나가기" }))
+  expect(await screen.findByRole("heading", { name: "더보기" })).toBeVisible()
 })

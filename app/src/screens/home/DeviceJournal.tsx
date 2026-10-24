@@ -1,4 +1,6 @@
 import React from "react"
+import { Download, FileDown, FolderOpen } from "lucide-react"
+import { MenuAction } from "../../components/MenuAction"
 import { SectionLb } from "../../components/JournalPrimitives"
 import {
   BackupJsonExportLimitError,
@@ -118,7 +120,6 @@ export function DeviceJournal({ onOpenDay, onOpenArchive }: DeviceJournalProps) 
   )
 }
 
-const EXPORT_DESCRIPTION_ID = "safe-journal-export-description"
 const FULL_BACKUP_DECORATION_REFRESH_ATTEMPTS = 2
 
 export function SafeJournalExport({ onOpenRestore }: {
@@ -132,48 +133,27 @@ export function SafeJournalExport({ onOpenRestore }: {
   const summary = React.useMemo(() => safeExportSummary(), [])
 
   return (
-    <div style={{ padding: "28px 20px 0" }}>
-      <button type="button" onClick={downloadSafeJournalExport} aria-describedby={EXPORT_DESCRIPTION_ID} style={{
-        background: "transparent", border: 0, cursor: "pointer", padding: 0,
-        minHeight: 44,
-        fontFamily: "var(--mono)", fontSize: "var(--fs-mono-xs)", color: "var(--ink-4)",
-        letterSpacing: "0.08em", textDecoration: "underline", textUnderlineOffset: 3,
-      }}>내 일지 데이터 내려받기 (JSON)</button>
-      <div id={EXPORT_DESCRIPTION_ID} style={{ marginTop: 4, fontFamily: "var(--mono)", fontSize: "var(--fs-mono-xs)", color: "var(--ink-4)", lineHeight: 1.5 }}>
-        메모 원문과 메모 목적은 제외해요 · 파일은 이 기기에만 저장되고 어디로도 전송되지 않아요
-      </div>
+    <div className="safe-journal-export" role="group" aria-label="일지 파일 백업과 복원" style={{ display: "grid", gap: "var(--space-3)" }}>
+      <MenuAction category="journal" icon={Download} label="일지 백업" onClick={downloadSafeJournalExport}
+        detail="메모 원문·목적을 제외한 JSON · 파일은 이 기기에만 저장되고 어디로도 전송되지 않아요" />
       {summary.skipped > 0 && (
         <div data-testid="safe-export-skipped" style={{
           marginTop: 8, padding: "8px 10px",
           border: "1px solid var(--line)", background: "transparent",
-          fontFamily: "var(--mono)", fontSize: "var(--fs-mono-xs)", color: "var(--ink-2)", lineHeight: 1.65,
+          fontFamily: "var(--sans)", fontSize: "var(--fs-body-sm)", color: "var(--ink-2)", lineHeight: 1.65,
         }}>
           수치 없이 메모만 쓴 일지 {summary.skipped}개는 이 파일에 들어가지 않아요.
           메모를 빼면 남는 내용이 없기 때문이에요.
           <br />
-          전부 남기려면 아래 <span style={{ color: "var(--ink)" }}>메모 포함 파일 내보내기</span>를 써 주세요.
+          전부 남기려면 아래 <span style={{ color: "var(--ink)" }}>메모까지 백업</span>을 써 주세요.
           {" "}({summary.included}개 포함 / 전체 {summary.total}개)
         </div>
       )}
-      <button type="button" onClick={() => setIsFullExportDialogOpen(true)} style={{
-        background: "transparent", border: 0, cursor: "pointer", padding: "8px 0 0",
-        minHeight: 44,
-        fontFamily: "var(--mono)", fontSize: "var(--fs-mono-xs)", color: "var(--ink-4)",
-        letterSpacing: "0.08em", textDecoration: "underline", textUnderlineOffset: 3,
-      }}>메모 포함 파일 내보내기 (JSON)</button>
+      <MenuAction category="journal" icon={FileDown} label="메모까지 백업"
+        detail="메모 원문·목적을 포함한 JSON · 파일을 만들기 전에 포함 범위를 확인해요" onClick={() => setIsFullExportDialogOpen(true)} />
       {onOpenRestore && (
-        <>
-          <button type="button" data-testid="open-restore" onClick={onOpenRestore} style={{
-            display: "block",
-            background: "transparent", border: 0, cursor: "pointer", padding: "8px 0 0",
-            minHeight: 44,
-            fontFamily: "var(--mono)", fontSize: "var(--fs-mono-xs)", color: "var(--ink-4)",
-            letterSpacing: "0.08em", textDecoration: "underline", textUnderlineOffset: 3,
-          }}>내려받은 백업 되돌리기</button>
-          <div style={{ marginTop: 4, fontFamily: "var(--mono)", fontSize: "var(--fs-mono-xs)", color: "var(--ink-4)", lineHeight: 1.5 }}>
-            지금 있는 일지는 그대로 두고 백업에 있는 것만 더해요 · 파일은 이 기기에서만 읽어요
-          </div>
-        </>
+        <MenuAction category="journal" icon={FolderOpen} label="백업 복원" onClick={onOpenRestore}
+          detail="지금 있는 일지는 그대로 두고 백업에 있는 것만 더해요 · 파일은 이 기기에서만 읽어요" />
       )}
       {isFullExportDialogOpen && (
         <FullExportDialog

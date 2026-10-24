@@ -35,6 +35,10 @@
 .oracle-v2__manager-actions { display: grid; gap: var(--space-2); margin-top: var(--space-3); }
 .oracle-v2__manager-actions button { width: 100%; justify-content: space-between; text-align: left; }
 .oracle-v2__manager-actions p { margin: 0; }
+.oracle-v2__settings-section { margin-block: var(--space-5); }
+.oracle-v2__settings-section > .app-heading--section { margin: 0 0 var(--space-2); }
+.oracle-v2__settings-rows { display: grid; }
+.oracle-v2__settings-rows .category-card + .category-card { border-top-color: var(--hair); }
 .oracle-v2__axis-picker { margin-block: var(--space-4); }
 .oracle-v2__axis-picker > .app-heading--section { margin: 0; }
 .oracle-v2__context-disclosure { margin-block: var(--space-4); }

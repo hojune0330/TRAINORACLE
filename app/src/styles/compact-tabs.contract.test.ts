@@ -42,11 +42,14 @@ describe("compact tab density", () => {
       expect(source, path).toContain("app-compact-tabs")
       expect(source, path).toContain("app-compact-tab")
     }
-    // Journal sections remain pressed buttons; its view mode uses controlled radios.
+    // Journal destinations use the shell dock; its view mode keeps controlled radios.
     const journal = readFileSync("src/screens/JournalArchive.tsx", "utf8")
-    expect(journal).toContain('className="journal-archive__content-tabs journal-archive__navigation" role="group" aria-label="일지와 몸 기록"')
-    expect(journal).toContain('className="journal-archive__content-choice" data-category="journal" aria-pressed={activeSection === "JOURNAL"}')
-    expect(journal).toContain('className="journal-archive__content-choice" data-category="body" aria-pressed={activeSection === "BODY"}')
+    expect(journal).toContain('useDomainNavigation({ domain: "journal", current: activeSection')
+    expect(journal).not.toContain('aria-label="일지와 몸 기록"')
+    const dock = readFileSync("src/components/DomainNavigation.tsx", "utf8")
+    expect(dock).toContain('label: "일지", icon: BookOpen, category: "journal"')
+    expect(dock).toContain('label: "몸 기록", icon: HeartPulse, category: "body"')
+    expect(dock).toContain('aria-current={state.current === id ? "page" : undefined}')
     expect(journal).toMatch(/<ViewSwitcher\s+label="일지 보기 방식"\s+category="journal"\s+value=\{activeMode\}\s+onValueChange=\{changeMode\}/u)
     expect(journal).toContain('{ value: "CALENDAR", label: "달력", ariaLabel: "월간 달력", icon: CalendarDays }')
     expect(journal).toContain('{ value: "CYCLE", label: "묶음", ariaLabel: "기록 묶음", icon: Layers }')

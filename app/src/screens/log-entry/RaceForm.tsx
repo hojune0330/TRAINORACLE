@@ -3,9 +3,8 @@ import { JournalWritingDecorationPreview } from "../journal/JournalDecorationPre
 import { FormInputDraftBoundary, useFormInputDraft, useRecoveredFormInput } from "./useFormInputDraft"
 import { accountJournalRecordsEnabled } from "../../domain/account/account-journal-record-service"
 import { FormFinalizationRecovery, useFormFinalization } from "./useFormFinalization"
-import { Stamp } from "../../components/JournalPrimitives"
 import { TermHelp } from "../../components/TermHelp"
-import { compactDate, dowOf, nowClock } from "../../domain/dates"
+import { compactDate, dowOf } from "../../domain/dates"
 import { explicitOrMissing } from "../../domain/field-provenance"
 import { parseTargetPaceInput } from "../../domain/journal-schema"
 import {
@@ -225,10 +224,9 @@ function RaceFormEditor({ onBack, onExit, onDone, targetDate, initialEntry }: En
       <TopBar onBack={goBackFlow} onExit={navigation.exit}>경기 · 빠른 점검</TopBar>
       {navigation.dialog}
       <FormFinalizationRecovery recovery={finalization} onBack={draft.back(onBack)} />
-      <RaceHeader date={entryDate} isToday={entryDate === todayISO()} />
-
       <TaskFlowStep stepKey={flowStep}
-        title={flowStep === "info" ? "경기 정보를 적어요" : flowStep === "memo" ? "경기 메모" : "입력 확인"}
+        title={flowStep === "info" ? stage === "pre" ? "경기 전 점검" : "경기 후 기록" : flowStep === "memo" ? "경기 메모" : "입력 확인"}
+        headingAccessory={<RaceHeader date={entryDate} isToday={entryDate === todayISO()} />}
         busy={saving} onBack={isFirstStep ? undefined : goBackFlow}
         actions={flowStep === "review" ? <StickyBar onSave={persist} error={saveError && !accountEnabled}
           label={saving ? "저장 중" : isEditing ? "수정 저장" : undefined} /> : (
@@ -318,18 +316,9 @@ function RaceHeader({
   readonly isToday: boolean
 }) {
   return (
-    <div style={{ padding: "14px 20px 0" }}>
-      <div style={{ border: "2px solid var(--ink-blue)", padding: "12px 14px", background: "var(--paper)", display: "grid", gridTemplateColumns: "1fr auto", gap: 12, alignItems: "baseline" }}>
-        <div>
-          <div style={{ fontFamily: "var(--mono)", fontSize: "var(--fs-body-sm)", fontWeight: 600, color: "var(--ink-blue)" }}>RACE DAY</div>
-          <div style={{ fontFamily: "var(--sans)", fontSize: 16, fontWeight: 500, marginTop: 4, color: "var(--ink)" }}>
-            {isToday ? "오늘의 경기" : "이 날짜의 경기"}
-          </div>
-          <div style={{ fontFamily: "var(--mono)", fontSize: "var(--fs-body-sm)", color: "var(--ink-3)", lineHeight: 1.5, marginTop: "var(--space-1)" }}>{compactDate(date)} {dowOf(date)} · {nowClock()}</div>
-        </div>
-        <Stamp kind="brand">D-0</Stamp>
-      </div>
-    </div>
+    <time dateTime={date} style={{ fontFamily: "var(--sans)", fontSize: "var(--fs-body-sm)", color: "var(--ink-2)", lineHeight: 1.5 }}>
+      {compactDate(date)} {dowOf(date)}{isToday ? " · 오늘" : ""}
+    </time>
   )
 }
 

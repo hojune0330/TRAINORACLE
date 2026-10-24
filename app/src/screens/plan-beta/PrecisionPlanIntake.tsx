@@ -196,7 +196,7 @@ export function PrecisionPlanIntake(props: PrecisionPlanIntakeProps) {
           <ArrowLeft aria-hidden="true" size={17} />간편 입력으로
         </button>
         <div className="precision-intake__title-row">
-          <AppHeading as="h1" variant="screen" id="precision-intake-title">정밀 설정</AppHeading>
+          <AppHeading as="h1" variant="screen" id="precision-intake-title">기록·일정 직접 설정</AppHeading>
           <SlidersHorizontal aria-hidden="true" size={19} />
         </div>
         <p>필요한 카드만 열어 한 장씩 고르세요. 건너뛴 항목은 기본 설정으로 둘 수 있어요.</p>
@@ -211,7 +211,7 @@ export function PrecisionPlanIntake(props: PrecisionPlanIntakeProps) {
           <button type="button" className="plan-text-action" disabled={disabled} onClick={props.onOpenNotationReader}>훈련표 표기 읽기</button>
         </div>
       </section>
-      <div className="precision-intake__chapters" role="group" aria-label="정밀 설정 장">
+      <div className="precision-intake__chapters" role="group" aria-label="직접 설정 목차">
         {CHAPTERS.map((chapter, index) => <button key={chapter.id} type="button" className="precision-intake__chapter"
           disabled={disabled} aria-label={`${chapter.title} 설정 열기`} onClick={() => jumpToChapter(chapter.id)}>
           <span className="precision-intake__chapter-index">{index + 1}</span>
@@ -258,13 +258,13 @@ export function PrecisionPlanIntake(props: PrecisionPlanIntakeProps) {
           : question === "focus" ? draft.trainingFocus : question === "template" ? draft.selectedDetailedTemplateRef : undefined
   const canKeep = question === "start-date" ? isValidIsoDate(props.startDate) && props.startDate >= today
     : question === "race-date" ? true : existingValue !== undefined
-  const chapterName = CHAPTERS.find(item => item.id === chapter)?.title ?? "정밀 설정"
+  const chapterName = CHAPTERS.find(item => item.id === chapter)?.title ?? "직접 설정"
 
   if (question === "start-date") {
     const valid = isValidIsoDate(props.startDate) && props.startDate >= today
     return <section className="precision-intake" aria-labelledby="precision-question-title">
       <button className="plan-back" type="button" disabled={disabled} onClick={() => setScreen({ kind: "chapters" })}><ArrowLeft aria-hidden="true" size={17} />설정 목차</button>
-      <nav className="precision-intake__jumpbar" aria-label="정밀 설정 장 이동">
+      <nav className="precision-intake__jumpbar" aria-label="직접 설정 목차 이동">
         {CHAPTERS.map((item, index) => <button key={item.id} type="button" className="plan-text-action"
           aria-current={item.id === chapter ? "step" : undefined} disabled={disabled} onClick={() => jumpToChapter(item.id)}>
           {item.title} {index + 1}/{CHAPTERS.length}
@@ -295,7 +295,7 @@ export function PrecisionPlanIntake(props: PrecisionPlanIntakeProps) {
       <button className="plan-back" type="button" disabled={disabled} onClick={() => setScreen({ kind: "chapters" })}><ArrowLeft aria-hidden="true" size={17} />설정 목차</button>
       <span>이번 단계 질문 {chapterPosition}/{chapterQuestions.length}</span>
     </div>
-    <nav className="precision-intake__jumpbar" aria-label="정밀 설정 장 이동">
+    <nav className="precision-intake__jumpbar" aria-label="직접 설정 목차 이동">
       {CHAPTERS.map((item, index) => <button key={item.id} type="button" className="plan-text-action"
         aria-current={item.id === chapter ? "step" : undefined} disabled={disabled} onClick={() => jumpToChapter(item.id)}>
         {item.title} {index + 1}/{CHAPTERS.length}

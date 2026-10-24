@@ -1,6 +1,6 @@
 import React from 'react'
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { afterEach, beforeEach, expect, it, vi } from 'vitest'
+import { afterEach, beforeAll, beforeEach, expect, it, vi } from 'vitest'
 import { initializeCanonicalJournalFixture } from '../../test/canonical-journal-fixture'
 import { deleteEntry, loadEntries, nextJournalSavedAt, saveEntry, updateEntry, type EveningEntry, type PostSessionEntry } from '../../domain/journal-store'
 import { setActiveLocalAccount } from '../../domain/account/local-journal-ownership'
@@ -17,6 +17,9 @@ vi.mock('../pet-room/PetRoom', () => ({ PetRoom: ({ journal, onBack, onOpenJourn
 } }))
 import { SleepInnEntry, SleepInnLoungeEntry } from './SleepInnEntry'
 import { EveningCheckin } from '../log-entry/EveningCheckin'
+
+// Wait for the real lazy reader once, rather than treating cold transformation as a product timeout.
+beforeAll(async () => { await import('../LogDetail') }, 60000)
 
 const date = '2026-10-09'
 const original: EveningEntry = { id: 'same-sleep-id', kind: 'evening', date, savedAt: '2026-10-09T01:00:00Z', syncState: 'local',

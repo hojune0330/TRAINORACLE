@@ -1,14 +1,23 @@
 import { expect, test } from "@playwright/test"
 import { undersizedInteractiveTargets } from "./touch-audit"
 
-async function openMore(page: import("@playwright/test").Page) {
+test.beforeEach(async ({ page, baseURL }) => {
+  const origin = new URL(baseURL!).origin
+  await page.route("**/*", route => new URL(route.request().url()).origin === origin ? route.continue() : route.abort())
+})
+
+async function openStorage(page: import("@playwright/test").Page) {
   await page.getByRole("button", { name: "더보기", exact: true }).click()
-  await page.getByRole("button", { name: "계정·기록 보관", exact: true }).click()
+  await page.getByRole("button", { name: /^(?:계정·)?기록 보관$/u }).click()
+}
+
+async function openMore(page: import("@playwright/test").Page) {
+  await openStorage(page)
   await page.getByTestId("install-shortcut-menu").click()
   await expect(page.getByTestId("install-shortcut-dialog")).toBeVisible()
 }
 
-test("shortcut is optional after a real quick save and dismissal survives reload", async ({ page }) => {
+test("shortcut stays optional after a real quick save and hiding its More entry survives reload", async ({ page }) => {
   await page.goto("/?app=1&uitest=1")
   await expect(page.getByTestId("install-shortcut-suggestion")).toHaveCount(0)
   await page.getByRole("button", { name: "오늘 운동 기록 쓰기" }).click()
@@ -17,13 +26,23 @@ test("shortcut is optional after a real quick save and dismissal survives reload
   await page.getByRole("button", { name: "이대로 저장", exact: true }).click()
   await expect(page.getByRole("heading", { name: "오늘 기록을 남겼어요." })).toBeVisible()
   await page.getByRole("button", { name: "완료", exact: true }).click()
-  await expect(page.getByTestId("install-shortcut-suggestion")).toBeVisible()
-  await expect(page.getByTestId("install-shortcut-dialog")).toHaveCount(0)
-  await page.getByTestId("install-shortcut-dismiss").click()
   await expect(page.getByTestId("install-shortcut-suggestion")).toHaveCount(0)
+  await expect(page.getByTestId("install-shortcut-dialog")).toHaveCount(0)
+  await openMore(page)
+  await page.getByRole("button", { name: "이미 추가했어요", exact: true }).click()
+  await expect(page.getByTestId("install-shortcut-dialog")).toHaveCount(0)
+  await expect(page.getByTestId("install-shortcut-menu")).toHaveCount(0)
+  await expect(page.getByTestId("install-shortcut-restore")).toBeVisible()
+  await expect(page.getByRole("button", { name: "더보기로 돌아가기", exact: true })).toBeFocused()
   await page.reload()
   await expect(page.getByTestId("install-shortcut-suggestion")).toHaveCount(0)
-  await openMore(page)
+  await openStorage(page)
+  await expect(page.getByTestId("install-shortcut-dialog")).toHaveCount(0)
+  await expect(page.getByTestId("install-shortcut-menu")).toHaveCount(0)
+  await page.getByTestId("install-shortcut-restore").click()
+  await expect(page.getByTestId("install-shortcut-dialog")).toHaveCount(0)
+  await page.getByTestId("install-shortcut-menu").click()
+  await expect(page.getByTestId("install-shortcut-dialog")).toBeVisible()
   await page.keyboard.press("Escape")
   await expect(page.getByTestId("install-shortcut-dialog")).not.toBeVisible()
   await expect(page.getByTestId("install-shortcut-menu")).toBeFocused()
@@ -31,8 +50,7 @@ test("shortcut is optional after a real quick save and dismissal survives reload
 
 test("native install capability is called only by the user's install click", async ({ page }, info) => {
   await page.goto("/?app=1&uitest=1")
-  await page.getByRole("button", { name: "더보기", exact: true }).click()
-  await page.getByRole("button", { name: "계정·기록 보관", exact: true }).click()
+  await openStorage(page)
   await page.evaluate(() => {
     const state = { calls: 0 }
     Object.assign(window, { shortcutProbe: state })
@@ -82,19 +100,19 @@ test("iPhone manual instructions fit narrow enlarged text without stealing the i
   await expect(page.getByTestId("install-shortcut-menu")).toBeFocused()
 })
 
-test("closing after installation restores focus when the suggestion disappears", async ({ page }) => {
+test("closing after installation restores focus when the More install entry disappears", async ({ page }) => {
   await page.goto("/?app=1&uitest=1")
   await page.getByRole("button", { name: "오늘 운동 기록 쓰기" }).click()
   await page.getByRole("button", { name: "오늘은 쉬었어요" }).click()
   await expect(page.getByRole("heading", { name: "이 내용으로 남길까요?" })).toBeVisible()
   await page.getByRole("button", { name: "이대로 저장", exact: true }).click()
   await page.getByRole("button", { name: "완료", exact: true }).click()
-  await expect(page.getByTestId("install-shortcut-suggestion")).toBeVisible()
-  await page.getByTestId("install-shortcut-suggestion").getByRole("button", { name: /^앱 추가 · (홈 화면에 추가|앱 바로가기 만들기)$/u }).click()
-  await expect(page.getByTestId("install-shortcut-dialog")).toBeVisible()
-  await page.evaluate(() => window.dispatchEvent(new Event("appinstalled")))
   await expect(page.getByTestId("install-shortcut-suggestion")).toHaveCount(0)
+  await openMore(page)
+  await page.evaluate(() => window.dispatchEvent(new Event("appinstalled")))
+  await expect(page.getByTestId("install-shortcut-menu")).toHaveCount(0)
+  await expect(page.getByTestId("install-shortcut-dialog")).toContainText("바로가기 아이콘을 이미 사용 중이에요")
   await page.keyboard.press("Escape")
   await expect(page.getByTestId("install-shortcut-dialog")).not.toBeVisible()
-  await expect(page.locator('[data-install-shortcut-return="home"]')).toBeFocused()
+  await expect(page.getByRole("button", { name: "더보기로 돌아가기", exact: true })).toBeFocused()
 })

@@ -1,8 +1,9 @@
 import React from "react"
-import { ArrowRight, ChartColumn, Check, Layers, CalendarDays, FileChartColumn, TrendingUp } from "lucide-react"
+import { ArrowRight, Calculator, ChartColumn, Check, Layers, CalendarDays, FileChartColumn, TrendingUp } from "lucide-react"
 import { OracleSectionNavigation, type OracleHubSection } from "../components/OracleSectionNavigation"
 export type { OracleHubSection } from "../components/OracleSectionNavigation"
 import { CategoryCard, CategoryDisclosure, CategoryIcon } from "../components/CategoryCard"
+import { CategoryShortcuts } from "../components/CategoryShortcuts"
 import { useAppOverlayNavigation } from "../components/AppOverlayNavigation"
 import { projectStructuredJournalObservations } from "../domain/journal-observation"
 import { analysisExclusionSummary, loadEntries, loadEntriesForPlanSafety } from "../domain/journal-store"
@@ -149,6 +150,8 @@ export function Trends({ onBack, onWriteLog, onOpenImport, onOpenRecords, onWrit
         setSection(target); onOracleSectionChange?.(target)
       }} />
       <div className="trends-motion-stage">
+        {section === "training" && detail === "summary" && navigation?.openPaceCalculator && <CategoryShortcuts label="분석 도구"
+          items={[{ id: "pace", category: "record", label: "페이스 계산", accessibleLabel: "페이스 계산", icon: Calculator, onClick: () => navigation.openPaceCalculator?.() }]} />}
         {showGuide && <TaskGuide className="trends-hub__guide" title={guideTitle}
           illustration={section === "training" && readComplete && detail === "summary" && !hasSummary ? "analysis-lens" : undefined} />}
         {section === "training" && !readComplete && <p className="trends-hub__saved-context" role="status">기록을 아직 모두 확인하지 못했어요. 저장한 일지 수와 분석 결과는 확인이 끝난 뒤 표시해요.</p>}

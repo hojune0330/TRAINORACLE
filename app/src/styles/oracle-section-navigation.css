@@ -3,7 +3,7 @@
 .app-scroll-region:has(.oracle-section-shell) { scrollbar-gutter: stable; }
 .oracle-section-header {
   display: grid;
-  grid-template-columns: minmax(64px, 1fr) auto minmax(64px, 1fr);
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-3) var(--space-4);
@@ -17,7 +17,8 @@
 }
 .oracle-section-header .oracle-section-header__back { justify-self: start; }
 .oracle-section-header__back span { white-space: nowrap; }
-.oracle-section-header .oracle-section-header__pace { justify-self: end; }
+.oracle-section-header .oracle-section-header__record { justify-self: end; }
+.oracle-section-header:has(.oracle-section-header__back) { grid-template-columns: auto minmax(0, 1fr) auto; }
 .oracle-section-header svg { flex-shrink: 0; }
 .oracle-section-header .app-chrome-title { margin: 0; }
 .oracle-section-nav {

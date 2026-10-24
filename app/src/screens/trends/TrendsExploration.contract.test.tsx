@@ -1,4 +1,4 @@
-import { cleanup, render, screen, within } from "@testing-library/react"
+import { cleanup, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { JournalEntry } from "../../domain/journal-store"
@@ -10,6 +10,7 @@ import { ORACLE_TOPICS, type OracleTopicId } from "../../domain/oracle-explorati
 import { JOURNAL_STORAGE_KEY } from "../../domain/journal-storage-keys"
 import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { Trends } from "../Trends"
+import { renderWithDomainNavigation as render } from "../../test/DomainNavigationTestFrame"
 
 const STORAGE_KEY = JOURNAL_STORAGE_KEY
 const OWNER_ID = "trends-exploration-owner"
@@ -97,8 +98,8 @@ describe("Trends exploration hub", () => {
     render(<Trends onOpenOracle={onOpenOracle} />)
 
     expect(screen.getByRole("heading", { name: "오라클", level: 1 })).toBeVisible()
-    expect(screen.getByRole("navigation", { name: "오라클 항목" })).toBeVisible()
-    expect(screen.getAllByRole("button", { name: /^(내 훈련|러닝 취향|읽을거리)$/u })).toHaveLength(3)
+    expect(screen.getByRole("navigation", { name: "오라클 메뉴" })).toBeVisible()
+    expect(screen.getAllByRole("button", { name: /^(분석|취향|읽을거리)$/u })).toHaveLength(3)
     expect(screen.getByText("예시 · 내 기록 분석이 아니에요")).toBeVisible()
 
     expect(screen.queryAllByRole("button", { name: / · 결과 보기$/u })).toHaveLength(0)
@@ -165,14 +166,14 @@ describe("Trends exploration hub", () => {
     const onOracleSectionChange = vi.fn()
     render(<Trends oracleV2Enabled onOpenRunningProfile={onOpenRunningProfile} onOpenOracleLibrary={onOpenOracleLibrary} onOracleSectionChange={onOracleSectionChange} />)
 
-    await user.click(screen.getByRole("button", { name: "러닝 취향" }))
+    await user.click(screen.getByRole("button", { name: "취향" }))
     expect(onOpenRunningProfile).toHaveBeenCalledOnce()
     expect(screen.queryByRole("button", { name: "러닝 취향 보기" })).toBeNull()
 
     await user.click(screen.getByRole("button", { name: "읽을거리" }))
     expect(onOpenOracleLibrary).toHaveBeenCalledOnce()
     expect(onOracleSectionChange).not.toHaveBeenCalled()
-    expect(screen.getByRole("button", { name: "내 훈련" })).toHaveAttribute("aria-current", "page")
+    expect(screen.getByRole("button", { name: "분석" })).toHaveAttribute("aria-current", "page")
   })
 
   it("keeps the V1 reading section useful without claiming the V2 library is available", async () => {
@@ -202,7 +203,7 @@ describe("Trends exploration hub", () => {
     const onContextChange = vi.fn()
     render(<Trends initialOracleSection="training" initialContext={{ section: "monthly", metric: "MOOD", savedDate: "2026-10-05" }} onContextChange={onContextChange} />)
 
-    expect(screen.getByRole("button", { name: "내 훈련" })).toHaveAttribute("aria-current", "page")
+    expect(screen.getByRole("button", { name: "분석" })).toHaveAttribute("aria-current", "page")
     await chooseDetail(user, "월별 변화")
     expect(onContextChange).toHaveBeenLastCalledWith({ section: "monthly", metric: "MOOD", savedDate: "2026-10-05" })
     expect(screen.getByText("2026-10-05에 저장한 기분을 월별 기록과 함께 볼 수 있어요.")).toBeVisible()

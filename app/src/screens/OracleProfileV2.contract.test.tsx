@@ -1,5 +1,6 @@
 import React from "react"
-import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
+import { renderWithDomainNavigation as render } from "../test/DomainNavigationTestFrame"
+import { act, cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { OracleProfileV2 } from "./OracleProfileV2"
 import { createOracleV2Service, oracleV2EditToken, type OracleV2Store } from "../domain/account/account-oracle-v2-service"
@@ -160,7 +161,7 @@ it("keeps all interest axes directly selectable in settings", () => {
   const fixture = mount(ready(scored()))
   fireEvent.click(screen.getByRole("button", { name: "프로필 설정·추가 정보" }))
   const settings = screen.getByRole("dialog", { name: "프로필 설정" })
-  const axes = within(settings).getByRole("group", { name: "다른 항목 선택" })
+  const axes = within(settings).getByRole("group", { name: "추가 취향" })
   expect(within(axes).getAllByRole("button")).toHaveLength(ORACLE_AXES.length)
 
   const social = ORACLE_AXES.find(axis => axis.id === "SOCIAL")!
@@ -298,7 +299,7 @@ it.each([OWNER_B, null])("hides prior account readings and open editors immediat
   act(() => fixture.publish(ready(scored())))
   expect(screen.queryByRole("button", { name: "2026-10-01 · 당시 응답" })).toBeNull()
   if (nextOwner) act(() => waiting.publish(ready()))
-  fireEvent.click(screen.getByRole("button", { name: "러닝 취향" }))
+  fireEvent.click(screen.getByRole("button", { name: "취향" }))
   expect(resultScore(fixture.container)).toBeNull()
   expect(screen.queryByRole("button", { name: "작성하던 답 이어가기" })).toBeNull()
   fireEvent.click(contextButton())
@@ -397,7 +398,7 @@ it("resumes question two after a same-value first edit and reload, without clear
   const social = ORACLE_AXES.find(axis => axis.id === "SOCIAL")!
   fireEvent.click(screen.getByRole("button", { name: "프로필 설정·추가 정보" }))
   const settings = screen.getByRole("dialog", { name: "프로필 설정" })
-  const axes = within(settings).getByRole("group", { name: "다른 항목 선택" })
+  const axes = within(settings).getByRole("group", { name: "추가 취향" })
   expect(axes).toBeVisible()
   expect(within(axes).getByRole("button", { name: social.label })).toBeDisabled()
   fireEvent.click(screen.getByRole("button", { name: social.label }))
@@ -449,7 +450,7 @@ it("clears results, readings and context on deletion and restarts only through t
   fireEvent.click(screen.getByRole("button", { name: "빈 프로필로 새로 시작" }))
   await waitFor(() => expect(fixture.service.restartProfile).toHaveBeenCalledWith(tombstoneToken, "START_NEW_ORACLE_V2"))
   expect(fixture.service.snapshot().confirmedDocument).toEqual(emptyOracleV2Document())
-  fireEvent.click(screen.getByRole("button", { name: "러닝 취향" }))
+  fireEvent.click(screen.getByRole("button", { name: "취향" }))
   expect(screen.getByRole("button", { name: "내 훈련 방식 알아보기 · 질문 3개" })).toBeEnabled()
   expect(resultScore(fixture.container)).toBeNull()
   fireEvent.click(contextButton())

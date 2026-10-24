@@ -3,7 +3,6 @@ import type { ReactNode } from "react"
 import { useAthleteRecordsSnapshot } from "../hooks/useAthleteRecordsSnapshot"
 import { ACCOUNT_PLAN_EVENT, accountPlanService, accountPlansEnabled } from "../domain/account/account-plan-service"
 import { TermHelp } from "../components/TermHelp"
-import { InstallShortcutSuggestion } from "../components/InstallShortcut"
 import { buildTrainingHomeViewModel, type HomeSession } from "../domain/home-view-model"
 import { useCalendarSnapshot } from "../hooks/useCalendarEntries"
 import { useLocalToday } from "../hooks/useLocalToday"
@@ -177,9 +176,6 @@ export function Home({
         onOpenContent={onOpenContent}
         onOpenRewards={onOpenRewards}
         accountEntry={<AccountEntryButton onOpenAccount={onOpenAccount} />}
-        installSuggestion={<InstallShortcutSuggestion compact={model.homeMode !== "WELCOME"}
-          eligible={introductionAllowed && journalSnapshot.status === "READY" && safetyNotice === undefined}
-          returnFocusTo={() => document.querySelector<HTMLElement>('[data-install-shortcut-return="home"]')} />}
         recentJournal={<LatestJournalDay entries={entries} today={today} storage={{
           readiness: journalSnapshot.status, owner: journalSnapshot.owner, accountStatus: storageStatus,
           accountStoredVersions: new Map(readAccountJournalProjection().map(entry => [entry.id, { savedAt: entry.savedAt, date: entry.date, kind: entry.kind }])),

@@ -67,6 +67,7 @@ export function More({
 }: MoreProps) {
   const [internalView, setInternalView] = React.useState<MoreView>("tools")
   const activeView = view ?? internalView
+  const accountTitle = onOpenAccount ? VIEW_TITLES.account : "기록 보관"
   const heading = React.useRef<HTMLHeadingElement>(null)
   const previousView = React.useRef<MoreView | null>(null)
   const menuReturn = React.useRef<ReaderPosition | null>(null)
@@ -94,7 +95,7 @@ export function More({
           <ArrowLeft aria-hidden="true" size={19} />
         </button>
         <div>
-          <AppHeading as="h1" ref={heading} tabIndex={-1}>{VIEW_TITLES[activeView]}</AppHeading>
+          <AppHeading as="h1" ref={heading} tabIndex={-1}>{activeView === "account" ? accountTitle : VIEW_TITLES[activeView]}</AppHeading>
         </div>
       </header>
 
@@ -122,7 +123,7 @@ export function More({
         </MenuGroup>
         <MenuGroup title="관리">
           <MenuAction icon={Compass} label={VIEW_TITLES.introduction} onClick={() => changeView("introduction")} />
-          <MenuAction icon={CircleUserRound} label={VIEW_TITLES.account} onClick={() => changeView("account")} />
+          <MenuAction icon={CircleUserRound} label={accountTitle} onClick={() => changeView("account")} />
           <MenuAction icon={DatabaseBackup} label={VIEW_TITLES.backup} onClick={() => changeView("backup")} />
           <MenuAction icon={Info} label={VIEW_TITLES.about} onClick={() => changeView("about")} />
         </MenuGroup>
@@ -147,7 +148,7 @@ export function More({
         </MenuGroup>}
         </>}
         {activeView === "account" && <>
-        <MenuGroup title="계정과 앱">
+        <MenuGroup title={onOpenAccount ? "계정과 앱" : "앱 보관 안내"}>
           {onOpenAccount && <MenuAction icon={CircleUserRound} label="계정 저장 상태 확인" onClick={onOpenAccount} />}
           <InstallShortcutMenuEntry />
         </MenuGroup>

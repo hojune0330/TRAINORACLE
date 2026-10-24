@@ -34,7 +34,7 @@ const TAB_ITEMS: readonly TabItem[] = [
 
 const APP_SHELL_TAB_BAR_HEIGHT = "--app-shell-tab-bar-height"
 
-function useMeasuredTabBarHeight() {
+export function useMeasuredTabBarHeight() {
   const navRef = useRef<HTMLElement>(null)
 
   useLayoutEffect(() => {
@@ -51,7 +51,7 @@ function useMeasuredTabBarHeight() {
       const style = window.getComputedStyle(nav)
       const subtract = [style.paddingBottom, style.borderTopWidth, style.borderBottomWidth]
         .reduce((total, value) => total + (Number.parseFloat(value) || 0), 0)
-      const contentHeight = boundsHeight - subtract
+      const contentHeight = boundsHeight - subtract + (Number.parseFloat(style.marginBottom) || 0)
       if (contentHeight > 0) shell.style.setProperty(APP_SHELL_TAB_BAR_HEIGHT, `${contentHeight}px`)
     }
 
@@ -77,7 +77,7 @@ export function TabBar({ tab, onTab, onStartRecording }: {
   const navRef = useMeasuredTabBarHeight()
 
   return (
-    <nav ref={navRef} className="app-tab-bar" aria-label="주 탭">
+    <nav ref={navRef} className="app-tab-bar app-navigation-dock" aria-label="주 탭">
       {TAB_ITEMS.flatMap(({ id, label, icon: Icon }, index) => {
         const active = tab === id
         const destination = (
@@ -90,12 +90,12 @@ export function TabBar({ tab, onTab, onStartRecording }: {
             data-active={active ? "true" : "false"}
             data-category={id === "plan" ? "training" : id === "trends" ? "oracle" : id}
           >
-            <Icon aria-hidden="true" size={20} />
+            <Icon aria-hidden="true" size={22} />
             <span>{label}</span>
           </button>
         )
         return index === 1 ? [destination, <button key="record-action" className="app-tab-bar__button app-tab-bar__record" data-category="record" type="button" aria-label="기록하기" onClick={onStartRecording}>
-          <Plus aria-hidden="true" size={20} /><span>기록</span>
+          <Plus aria-hidden="true" size={22} /><span>기록</span>
         </button>] : [destination]
       })}
     </nav>

@@ -18,13 +18,18 @@ import { useMinigameProgress } from '../../domain/minigame/progress-store'
 import { TOUR_CITIES } from '../../domain/minigame/tour'
 import { useSavedRun } from './useSavedRun'
 import { useTaskFlowBack } from '../../hooks/useTaskFlowBack'
+import { useDomainNavigation } from '../../components/DomainNavigation'
+import { useNavigationReturnFrame } from '../../hooks/useNavigationReturnFrame'
+import { captureReaderPosition, restoreReaderPosition, type ReaderPosition } from '../../navigation/readerPosition'
 import './game-lounge.css'
 
 const SleepInnLoungeEntry = React.lazy(() => import('../sleep-inn/SleepInnEntry').then(module => ({ default: module.SleepInnLoungeEntry })))
 
 type Route = 'lounge' | 'tour' | 'solo' | 'friends' | 'defense' | 'legacy'
+export type GameLoungeNavigationState = { readonly query: string; readonly filter: 'all' | 'solo' | 'friends'; readonly positions?: Partial<Record<'games' | 'records', ReaderPosition>> }
 type Props = { onBack: () => void; backLabel: string; renderTour: (back: () => void, cityId?:string, onDefense?:()=>void) => React.ReactNode;
-  onJournalSaved?: ((entry: import('../../domain/journal-store').JournalEntry) => void) | undefined }
+  onJournalSaved?: ((entry: import('../../domain/journal-store').JournalEntry) => void) | undefined;
+  navigationState?: GameLoungeNavigationState; onNavigationStateChange?: (state: GameLoungeNavigationState) => void }
 
 /** Existing licensed/generated game art, with text always carrying the destination. */
 function GameArt({ id, large = false }: { id: LoungeGameId; large?: boolean }) {
@@ -35,14 +40,15 @@ function GameArt({ id, large = false }: { id: LoungeGameId; large?: boolean }) {
   </span>
 }
 
-export function GameLounge({ onBack, backLabel, renderTour, onJournalSaved }: Props) {
+export function GameLounge({ onBack, backLabel, renderTour, onJournalSaved, navigationState, onNavigationStateChange }: Props) {
   const [route, setRoute] = React.useState<Route>(() => arenaInvitation() ? 'friends' : 'lounge')
   const [selected, setSelected] = React.useState<LoungeGameId | null>(null)
   const [play, setPlay] = React.useState<LoungePlay>('solo')
   const [tab, setTab] = React.useState<'games' | 'records'>('games')
-  const [filter, setFilter] = React.useState<'all' | 'solo' | 'friends'>('all')
-  const [query, setQuery] = React.useState('')
+  const [filter, setFilter] = React.useState<'all' | 'solo' | 'friends'>(navigationState?.filter ?? 'all')
+  const [query, setQuery] = React.useState(navigationState?.query ?? '')
   const [petHomeOpened, setPetHomeOpened] = React.useState(false)
+  const [petHomeVisible, setPetHomeVisible] = React.useState(false)
   const markPetHomeOpened = React.useCallback(() => setPetHomeOpened(true), [])
   const [tdMap,setTdMap]=React.useState<TDMapId>('starlight')
   const [tourEntry,setTourEntry]=React.useState<string|undefined>()
@@ -58,6 +64,20 @@ export function GameLounge({ onBack, backLabel, renderTour, onJournalSaved }: Pr
   const surface = React.useRef<HTMLElement>(null)
   const title = React.useRef<HTMLHeadingElement>(null)
   const listScroll = React.useRef<{ node: HTMLElement; top: number }[]>([])
+  const tabPositions = React.useRef<Partial<Record<'games' | 'records', ReaderPosition>>>(navigationState?.positions ?? {})
+  React.useEffect(() => onNavigationStateChange?.({ query, filter, positions: { ...tabPositions.current } }), [query, filter, tab, onNavigationStateChange])
+  const { schedule: scheduleReturn } = useNavigationReturnFrame()
+  const navigation = useDomainNavigation({ domain: 'games', current: tab, hidden: route !== 'lounge' || petHomeVisible, onSelect: next => {
+    if (next !== 'games' && next !== 'records' || next === tab) return
+    const region = surface.current?.closest<HTMLElement>('.app-scroll-region') ?? null
+    tabPositions.current[tab] = captureReaderPosition(region)
+    releaseDetailBack()
+    setSelected(null); setTab(next)
+    scheduleReturn(() => {
+      if (tabPositions.current[next]) restoreReaderPosition(region, tabPositions.current[next]!)
+      else { if (region) region.scrollTop = 0; title.current?.focus({ preventScroll: true }) }
+    })
+  } })
   const game = selected ? loungeGame(selected) : null
   const games = GAME_CATALOG.filter(item => (filter !== 'friends' || item.friends) && `${item.name} ${item.category} ${item.goal}`.includes(query.trim()))
   const showSleepInn = filter !== 'friends' && (!query.trim() || '우리 집 친구들 펫 동물 입양 돌보기 수면 일지 꿈손님 여관'.includes(query.trim()))
@@ -66,7 +86,7 @@ export function GameLounge({ onBack, backLabel, renderTour, onJournalSaved }: Pr
     surface.current?.querySelector<HTMLButtonElement>(`[data-game-open="${returnFocus.current}"]`)?.focus({ preventScroll: true })
     for (const { node, top } of listScroll.current) node.scrollTop = top
   }) }
-  useTaskFlowBack({ enabled: route === 'lounge', onBack: () => selected ? closeDetail() : tab === 'records' ? setTab('games') : onBack() })
+  const releaseDetailBack = useTaskFlowBack({ enabled: navigation.active && route === 'lounge' && (!navigation.managed || selected !== null), onBack: () => selected ? closeDetail() : tab === 'records' ? setTab('games') : onBack() })
   React.useEffect(() => {
     if (route !== 'lounge') return
     savedRun.refresh()
@@ -109,16 +129,12 @@ export function GameLounge({ onBack, backLabel, renderTour, onJournalSaved }: Pr
   const completedCities = TOUR_CITIES.filter(city => (store.progress.cities[city.id]?.stars ?? 0) > 0)
   return <section ref={surface} className="game-lounge" data-view={selected ?? tab} data-reduced={store.progress.settings.motion === 'reduce'}>
     <header className="game-lounge__header">
-      <button type="button" className="game-lounge__back" aria-label={selected ? '게임 목록으로' : backLabel} onClick={selected ? closeDetail : onBack}><ArrowLeft size={22} /></button>
+      {(selected || !navigation.managed) && <button type="button" className="game-lounge__back" aria-label={selected ? '게임 목록으로' : backLabel} onClick={selected ? closeDetail : onBack}><ArrowLeft size={22} /></button>}
       <span>{selected ? '게임 소개' : 'TRAINORACLE'}</span>
       {selected && <span className="game-lounge__eyebrow">{game!.category}</span>}
     </header>
     {!game ? <>
       <div className="game-lounge__intro"><div><h1 ref={title} tabIndex={-1}>게임 라운지</h1><p>쉬는 시간, 가볍게 한 판</p></div><PartyIcon id="reward-victory-medal" size={76} fallback={<Trophy size={52} />} /></div>
-      <nav className="game-lounge__tabs" aria-label="게임 라운지 메뉴">
-        <button type="button" aria-current={tab === 'games' ? 'page' : undefined} onClick={() => setTab('games')}><PartyIcon id="track-island" size={32} fallback={<Gamepad2 size={24} />} />게임</button>
-        <button type="button" aria-current={tab === 'records' ? 'page' : undefined} onClick={() => setTab('records')}><PartyIcon id="reward-star" size={32} fallback={<Trophy size={24} />} />내 기록</button>
-      </nav>
       {errors.map(error => <p key={error} className="game-lounge__error" role="alert">{error}</p>)}
       {tab === 'games' ? <>
         {(tdCheckpoints.length>0 || savedRun.slot.kind === 'saved') && <section className="game-lounge__resume" aria-label="저장한 게임"><h2>이어서 할 수 있어요</h2>
@@ -126,7 +142,7 @@ export function GameLounge({ onBack, backLabel, renderTour, onJournalSaved }: Pr
           {tdCheckpoints.map(checkpoint=><button key={getTDMap(checkpoint.state).id} onClick={() => {setTdMap(getTDMap(checkpoint.state).id);setSelected('defense');setTdEntry('resume');setRoute('defense')}}><GameArt id="defense"/><span><strong>타워 디펜스 · {getTDMap(checkpoint.state).name}</strong><small>{checkpoint.state.wave+1}웨이브 준비 · 기지 체력 {checkpoint.state.lives}</small></span><ChevronRight size={18}/></button>)}
         </section>}
         <div className="game-lounge__section-heading"><h2>어떤 게임을 할까요?</h2></div>
-        {showSleepInn && <React.Suspense fallback={null}><SleepInnLoungeEntry onJournalSaved={onJournalSaved} initialOpen={!petHomeOpened} onOpened={markPetHomeOpened} /></React.Suspense>}
+        {showSleepInn && <React.Suspense fallback={null}><SleepInnLoungeEntry onJournalSaved={onJournalSaved} initialOpen={!navigation.managed && !petHomeOpened} onOpened={markPetHomeOpened} onVisibilityChange={setPetHomeVisible} /></React.Suspense>}
         <label className="game-lounge__search"><span className="sr-only">게임 검색</span><input type="search" placeholder="게임 이름이나 종류로 찾기" value={query} onChange={e => setQuery(e.target.value)} /></label>
         <div className="game-lounge__filters" role="group" aria-label="참가 방식으로 게임 찾기">{(['all', 'solo', 'friends'] as const).map(value => <button key={value} aria-pressed={filter === value} onClick={() => setFilter(value)}>{value === 'all' ? '전체' : value === 'solo' ? '혼자' : '친구와'}</button>)}</div>
         <div className="game-lounge__catalog">{games.map(item => <button key={item.id} className="game-lounge__game" data-game-open={item.id} onClick={e => open(item.id, e.currentTarget)} aria-label={`${item.name} 게임 소개`}>

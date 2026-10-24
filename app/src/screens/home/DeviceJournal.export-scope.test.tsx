@@ -46,11 +46,27 @@ beforeEach(() => {
 })
 afterEach(() => { cleanup(); setActiveLocalAccount(null); vi.restoreAllMocks(); vi.unstubAllGlobals() })
 
+it("separates backup and restore rows with explicit file and memo scope before any export", () => {
+  const restore = vi.fn()
+  render(<SafeJournalExport onOpenRestore={restore} />)
+  const safe = screen.getByRole("button", { name: "일지 백업" })
+  const full = screen.getByRole("button", { name: "메모까지 백업" })
+  const recover = screen.getByRole("button", { name: "백업 복원" })
+  for (const row of [safe, full, recover]) expect(row).toHaveClass("menu-action")
+  expect(safe).toHaveAccessibleDescription(/메모 원문·목적을 제외한 JSON/)
+  expect(full).toHaveAccessibleDescription(/메모 원문·목적을 포함한 JSON/)
+  expect(recover).toHaveAccessibleDescription(/지금 있는 일지는 그대로/)
+  expect(exportEntriesJSON).not.toHaveBeenCalled()
+  fireEvent.click(recover)
+  expect(restore).toHaveBeenCalledOnce()
+  expect(exportEntriesJSON).not.toHaveBeenCalled()
+})
+
 it.each(["B", "logout", "ABA", "stable"])("checks export authority after private hydration: %s", async mode => {
   let finish!: () => void
   vi.mocked(loadEntriesWithPrivateMemos).mockImplementationOnce(() => new Promise(resolve => { finish = () => resolve([]) }))
   render(<SafeJournalExport />)
-  fireEvent.click(screen.getByRole("button", { name: "메모 포함 파일 내보내기 (JSON)" }))
+  fireEvent.click(screen.getByRole("button", { name: "메모까지 백업" }))
   fireEvent.click(screen.getByRole("button", { name: "파일 만들기" }))
   await vi.waitFor(() => expect(loadEntriesWithPrivateMemos).toHaveBeenCalledOnce())
   await act(async () => {
@@ -67,7 +83,7 @@ it.each(["B", "logout", "ABA", "stable"])("checks export authority after private
 
 it("revokes an open full-export confirmation on an account switch", () => {
   render(<SafeJournalExport />)
-  fireEvent.click(screen.getByRole("button", { name: "메모 포함 파일 내보내기 (JSON)" }))
+  fireEvent.click(screen.getByRole("button", { name: "메모까지 백업" }))
   act(() => { setActiveLocalAccount("B"); setActiveLocalAccount("A") })
   expect(screen.queryByRole("dialog")).toBeNull()
   expect(loadEntriesWithPrivateMemos).not.toHaveBeenCalled()
@@ -78,9 +94,9 @@ it.each(["safe", "full"] as const)("explains why %s export cannot create a file 
   const alert = vi.spyOn(window, "alert").mockImplementation(() => {})
   render(<SafeJournalExport />)
   if (mode === "safe") {
-    fireEvent.click(screen.getByRole("button", { name: "내 일지 데이터 내려받기 (JSON)" }))
+    fireEvent.click(screen.getByRole("button", { name: "일지 백업" }))
   } else {
-    fireEvent.click(screen.getByRole("button", { name: "메모 포함 파일 내보내기 (JSON)" }))
+    fireEvent.click(screen.getByRole("button", { name: "메모까지 백업" }))
     fireEvent.click(screen.getByRole("button", { name: "파일 만들기" }))
   }
   await act(async () => {})
@@ -98,9 +114,9 @@ it.each(["safe", "full"] as const)("requires a fresh account list for every %s e
   render(<SafeJournalExport />)
 
   const clickExport = () => {
-    if (mode === "safe") fireEvent.click(screen.getByRole("button", { name: "내 일지 데이터 내려받기 (JSON)" }))
+    if (mode === "safe") fireEvent.click(screen.getByRole("button", { name: "일지 백업" }))
     else {
-      fireEvent.click(screen.getByRole("button", { name: "메모 포함 파일 내보내기 (JSON)" }))
+      fireEvent.click(screen.getByRole("button", { name: "메모까지 백업" }))
       fireEvent.click(screen.getByRole("button", { name: "파일 만들기" }))
     }
   }
@@ -123,7 +139,7 @@ it.each(["decorations", "calendar"] as const)("fails a full backup closed when f
   else vi.mocked(refreshAccountCalendarDecorationsForExport).mockResolvedValueOnce(false)
   const alert = vi.spyOn(window, "alert").mockImplementation(() => {})
   render(<SafeJournalExport />)
-  fireEvent.click(screen.getByRole("button", { name: "메모 포함 파일 내보내기 (JSON)" }))
+  fireEvent.click(screen.getByRole("button", { name: "메모까지 백업" }))
   fireEvent.click(screen.getByRole("button", { name: "파일 만들기" }))
   await act(async () => {})
 
@@ -138,7 +154,7 @@ it("retries the decoration-calendar pair once when the first fresh pair is not o
     .mockReturnValueOnce(false)
     .mockReturnValue(true)
   render(<SafeJournalExport />)
-  fireEvent.click(screen.getByRole("button", { name: "메모 포함 파일 내보내기 (JSON)" }))
+  fireEvent.click(screen.getByRole("button", { name: "메모까지 백업" }))
   fireEvent.click(screen.getByRole("button", { name: "파일 만들기" }))
   await act(async () => {})
 
@@ -153,7 +169,7 @@ it("fails closed after one retry when fresh decoration-calendar pairs remain inc
   vi.mocked(accountCalendarDecorationExportReady).mockReturnValue(false)
   const alert = vi.spyOn(window, "alert").mockImplementation(() => {})
   render(<SafeJournalExport />)
-  fireEvent.click(screen.getByRole("button", { name: "메모 포함 파일 내보내기 (JSON)" }))
+  fireEvent.click(screen.getByRole("button", { name: "메모까지 백업" }))
   fireEvent.click(screen.getByRole("button", { name: "파일 만들기" }))
   await act(async () => {})
 
@@ -172,7 +188,7 @@ it("fails closed if the validated pair becomes inconsistent while private memos 
     .mockReturnValueOnce(false)
   const alert = vi.spyOn(window, "alert").mockImplementation(() => {})
   render(<SafeJournalExport />)
-  fireEvent.click(screen.getByRole("button", { name: "메모 포함 파일 내보내기 (JSON)" }))
+  fireEvent.click(screen.getByRole("button", { name: "메모까지 백업" }))
   fireEvent.click(screen.getByRole("button", { name: "파일 만들기" }))
   await act(async () => {})
 
@@ -192,10 +208,10 @@ it.each(["safe", "full"] as const)("explains when a %s export exceeds the matchi
   render(<SafeJournalExport />)
 
   if (mode === "full") {
-    fireEvent.click(screen.getByRole("button", { name: "메모 포함 파일 내보내기 (JSON)" }))
+    fireEvent.click(screen.getByRole("button", { name: "메모까지 백업" }))
     fireEvent.click(screen.getByRole("button", { name: "파일 만들기" }))
   } else {
-    fireEvent.click(screen.getByRole("button", { name: "내 일지 데이터 내려받기 (JSON)" }))
+    fireEvent.click(screen.getByRole("button", { name: "일지 백업" }))
   }
   await act(async () => {})
 
@@ -207,9 +223,9 @@ it.each(["safe", "full"] as const)("fails closed when the fresh %s export list c
   vi.mocked(refreshAccountJournalRecordsForExport).mockResolvedValueOnce(false)
   const alert = vi.spyOn(window, "alert").mockImplementation(() => {})
   render(<SafeJournalExport />)
-  if (mode === "safe") fireEvent.click(screen.getByRole("button", { name: "내 일지 데이터 내려받기 (JSON)" }))
+  if (mode === "safe") fireEvent.click(screen.getByRole("button", { name: "일지 백업" }))
   else {
-    fireEvent.click(screen.getByRole("button", { name: "메모 포함 파일 내보내기 (JSON)" }))
+    fireEvent.click(screen.getByRole("button", { name: "메모까지 백업" }))
     fireEvent.click(screen.getByRole("button", { name: "파일 만들기" }))
   }
   await act(async () => {})
@@ -226,9 +242,9 @@ it.each(["safe", "full"] as const)("revokes a pending fresh %s export after an A
     finish = () => resolve(true)
   }))
   render(<SafeJournalExport />)
-  if (mode === "safe") fireEvent.click(screen.getByRole("button", { name: "내 일지 데이터 내려받기 (JSON)" }))
+  if (mode === "safe") fireEvent.click(screen.getByRole("button", { name: "일지 백업" }))
   else {
-    fireEvent.click(screen.getByRole("button", { name: "메모 포함 파일 내보내기 (JSON)" }))
+    fireEvent.click(screen.getByRole("button", { name: "메모까지 백업" }))
     fireEvent.click(screen.getByRole("button", { name: "파일 만들기" }))
   }
   await vi.waitFor(() => expect(refreshAccountJournalRecordsForExport).toHaveBeenCalledOnce())

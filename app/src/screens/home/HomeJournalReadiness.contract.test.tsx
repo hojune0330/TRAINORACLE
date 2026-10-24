@@ -37,18 +37,21 @@ afterEach(() => {
 })
 
 describe("Home uses the existing owner-scoped calendar readiness", () => {
-  it("offers the install guide to a confirmed new guest, but respects dismissal and unreadable records", () => {
-    render(<InstallShortcutProvider><Home /></InstallShortcutProvider>)
-    expect(screen.getByTestId("install-shortcut-suggestion")).toBeVisible()
-    expect(screen.getByTestId("install-shortcut-suggestion")).not.toHaveClass("install-shortcut-suggestion--compact")
+  it("keeps optional install guidance in More across ready and unreadable Home states", () => {
+    const more = vi.fn()
+    render(<InstallShortcutProvider><Home onOpenMore={more} /></InstallShortcutProvider>)
+    expect(screen.queryByTestId("install-shortcut-suggestion")).toBeNull()
     expect(screen.queryByRole("dialog")).toBeNull()
+    fireEvent.click(screen.getByRole("button", { name: /^더보기$/u }))
+    expect(more).toHaveBeenCalledOnce()
     localStorage.setItem(STORAGE_KEY, "{")
     act(() => { window.dispatchEvent(new Event("storage")) })
     expect(screen.queryByTestId("install-shortcut-suggestion")).toBeNull()
+    expect(screen.getByText("기록을 읽지 못했어요. 기록이 없는 상태와는 달라요.")).toBeVisible()
     localStorage.removeItem(STORAGE_KEY)
     act(() => { window.dispatchEvent(new Event("storage")) })
-    fireEvent.click(screen.getByTestId("install-shortcut-dismiss"))
     expect(screen.queryByTestId("install-shortcut-suggestion")).toBeNull()
+    expect(screen.queryByText("기록을 읽지 못했어요. 기록이 없는 상태와는 달라요.")).toBeNull()
   })
 
   it("keeps confirmed empty record-start distinct from unreadable local data in the actual Home", () => {

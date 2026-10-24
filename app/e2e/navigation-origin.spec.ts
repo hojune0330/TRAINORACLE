@@ -53,7 +53,7 @@ test("returns every audited child screen to the screen that opened it", async ({
   await expect(page.getByRole("heading", { name: "더보기", exact: true })).toBeVisible()
 
   await page.getByRole("button", { name: "백업·복원·휴지통" }).click()
-  await page.getByRole("button", { name: "내려받은 백업 되돌리기" }).click()
+  await page.getByRole("button", { name: "백업 복원" }).click()
   await expect(page.getByRole("heading", { name: "내려받은 백업 되돌리기" })).toBeVisible()
   await page.getByRole("button", { name: "뒤로" }).click()
   await expect(page.getByRole("heading", { name: "백업·복원·휴지통" })).toBeVisible()

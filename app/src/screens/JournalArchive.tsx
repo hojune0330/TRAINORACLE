@@ -1,5 +1,6 @@
 import React from "react"
-import { ArrowLeft, BookOpen, CalendarDays, HeartPulse, Layers, PencilLine, RefreshCw } from "lucide-react"
+import { ArrowLeft, CalendarDays, Layers, Plus, RefreshCw } from "lucide-react"
+import { useDomainNavigation } from "../components/DomainNavigation"
 import { ViewSwitcher } from "../components/ViewSwitcher"
 import {
   projectJournalArchive,
@@ -88,10 +89,15 @@ export function JournalArchive({
   const activeBodyPartId = onBodyPartChange ? bodyPartId ?? null : internalBodyPartId
   const changeBodyPart = onBodyPartChange ?? setInternalBodyPartId
   const activeSection = onSectionChange ? section : internalSection
+  const navigation = useDomainNavigation({ domain: "journal", current: activeSection, onSelect: next => {
+    if (next !== "JOURNAL" && next !== "BODY" || next === activeSection) return
+    releaseBodyBack()
+    changeSection(next)
+  } })
   const bodyScope = localJournalScopeGeneration()
   const bodyEntries = React.useMemo(() => filterOwnerBodyEntries(entries), [entries, bodyScope])
   const changeSection = onSectionChange ?? setInternalSection
-  const releaseBodyBack = useTaskFlowBack({ enabled: activeSection === "BODY", onBack: () => {
+  const releaseBodyBack = useTaskFlowBack({ enabled: navigation.active && activeSection === "BODY" && (!navigation.managed || activeBodyPartId !== null), onBack: () => {
     if (activeBodyPartId) changeBodyPart(null)
     else changeSection("JOURNAL")
   } })
@@ -178,7 +184,9 @@ export function JournalArchive({
     : selectedMonth !== null
       ? monthLabel(displayedMonth)
       : "지난 일지"
-  const showWriteEntry = Boolean(onWriteLog && activeSection === "JOURNAL" && activeMode === "CALENDAR" && !exampleVisible)
+  const showWriteEntry = Boolean(onWriteLog)
+  const showHeaderBack = !navigation.managed || activeBodyPartId !== null || activeMode === "CYCLE" && activeSection === "JOURNAL"
+    || selectedWeek !== null || selection.selectedMonth !== null
 
   return (
     <div ref={calendarRoot} className="journal-archive" data-testid="journal-archive"
@@ -186,7 +194,7 @@ export function JournalArchive({
       onTouchMove={activeMode === "CALENDAR" ? nav.markManual : undefined}
       onKeyDown={event => { if (activeMode === "CALENDAR" && ["PageUp", "PageDown", "Home", "End", " "].includes(event.key)) nav.markManual() }}>
       <header className={`journal-archive__header${showWriteEntry ? " journal-archive__header--with-write" : ""}`}>
-        <button
+        {showHeaderBack && <button
           type="button"
           onClick={goBack}
           aria-label={activeSection === "BODY" ? activeBodyPartId ? "몸 기록 목록으로" : "일지로" : activeMode === "CYCLE" || selectedWeek !== null || selection.selectedMonth !== null ? "월간 달력으로" : "홈으로"}
@@ -194,24 +202,17 @@ export function JournalArchive({
           className="journal-archive__back"
         >
           <ArrowLeft aria-hidden="true" size={18} />
-        </button>
+        </button>}
         <div className="journal-archive__heading">
           <AppHeading as="h1" variant="screen" className="journal-archive__title">
             {activeSection === "BODY" ? "몸 기록" : heading}
           </AppHeading>
         </div>
         {showWriteEntry && <button type="button" className="journal-archive__header-write"
-          aria-label="새 일지 작성" title="새 일지 작성" onClick={onWriteLog}>
-          <PencilLine size={18} aria-hidden="true" />
+          aria-label="기록하기" title="기록하기" onClick={onWriteLog}>
+          <Plus size={22} aria-hidden="true" /><span>기록</span>
         </button>}
       </header>
-
-      <div className="journal-archive__content-tabs journal-archive__navigation" role="group" aria-label="일지와 몸 기록">
-        <button type="button" className="journal-archive__content-choice" data-category="journal" aria-pressed={activeSection === "JOURNAL"}
-          onClick={() => changeSection("JOURNAL")}><BookOpen size={18} aria-hidden="true" /><span>일지</span></button>
-        <button type="button" className="journal-archive__content-choice" data-category="body" aria-pressed={activeSection === "BODY"}
-          onClick={() => changeSection("BODY")}><HeartPulse size={18} aria-hidden="true" /><span>몸 기록</span></button>
-      </div>
 
       {readiness !== "READY" && <div className="calendar-guidance">
         <p role={readiness === "ERROR" ? "alert" : "status"}>{readMessage}</p>
@@ -224,7 +225,7 @@ export function JournalArchive({
         entries={bodyEntries} scopeKey={String(bodyScope)} showHeading={false} manageBrowserBack={false}
         selectedPartId={activeBodyPartId} onSelectedPartChange={changeBodyPart}
         onOpenEntry={(id, date) => {
-          if (releaseBodyBack()) { setBodyNavigationPending(false); onOpenDay(date, id) }
+          if ((!activeBodyPartId && navigation.managed) || releaseBodyBack()) { setBodyNavigationPending(false); onOpenDay(date, id) }
           else setBodyNavigationPending(true)
         }} onRecord={onWriteBody ?? (() => onWriteLog?.())} />}
       {activeSection === "BODY" && bodyNavigationPending && <p role="status" className="calendar-guidance">

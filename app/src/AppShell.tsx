@@ -14,6 +14,8 @@ import { captureReaderPosition, captureCalendarReaderPosition, restoreReaderPosi
   type JournalCalendarReturn, type ReaderPosition } from "./navigation/readerPosition"
 import type { AppTab } from "./components/AppChrome"
 import { AppShellFrame } from "./components/AppShellFrame"
+import { DomainNavigationProvider, DomainNavigationScope } from "./components/DomainNavigation"
+import type { DomainDockState, NavigationDomain } from "./components/DomainNavigation"
 import { ErrorBoundary } from "./components/ErrorBoundary"
 import { clearRecoveryTab, readRecoveryTab } from "./domain/screen-recovery"
 import type { ShellToastState } from "./components/AppShellFrame"
@@ -21,6 +23,8 @@ import { Home } from "./screens/Home"
 import type { MoreView } from "./screens/More"
 import { HomeOraclePreview } from "./screens/home/HomeOraclePreview"
 import type { GuestOracleSession } from "./screens/OracleProfileV2"
+import type { OracleProfileNavigationState } from "./screens/OracleProfileExperience"
+import type { GameLoungeNavigationState } from "./screens/treadmill/GameLounge"
 import { LogEntry } from "./screens/LogEntry"
 import { DeferredMobileScreens } from "./DeferredMobileScreens"
 import { accountFeatureEnabled } from "./domain/account/config"
@@ -86,6 +90,7 @@ const OVERLAY_HISTORY_KEY = "trainoracleOverlay"
 const MORE_HISTORY_KEY = "trainoracleMore"
 const ORACLE_PLAN_HISTORY_KEY = "trainoracleOraclePlan"
 const ORACLE_INVITATION_RETURN_KEY = "trainoracle.oracle-v2.invitation-return"
+const DOMAIN_HISTORY_KEY = "trainoracleDomain"
 
 function oracleV2Enabled(): boolean {
   return oracleV2FeatureEnabled(import.meta.env)
@@ -144,6 +149,22 @@ type RecordingOrigin = ShellReturnPoint & {
   readonly screen: React.ReactNode
   readonly screenKey: string
   readonly token: string
+}
+
+type DomainVisit = {
+  readonly domain: NavigationDomain
+  readonly token: string
+  readonly scope: number
+  readonly direct: boolean
+  historyOwner: string
+  readonly origin: ShellReturnPoint & {
+    readonly owner: string | null
+    readonly position: ReaderPosition
+    readonly analysis: AnalysisNavigation | undefined
+    readonly overlay: AppOverlay | null
+    readonly domainToken: string | null
+    readonly historyOwner: string
+  }
 }
 
 function overlayHistoryMarker(state: unknown, owner: string): AppOverlay | null {
@@ -209,7 +230,21 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
   const analysisReturnContext = React.useRef<AnalysisNavigation | undefined>()
   const [oracleHubSection, setOracleHubSection] = React.useState<"training" | "profile" | "library">("training")
   const [guestOracleSession, setGuestOracleSession] = React.useState<GuestOracleSession | null>(null)
+  const [profileNavigationState, setProfileNavigationState] = React.useState<OracleProfileNavigationState>()
+  const [gameNavigationState, setGameNavigationState] = React.useState<GameLoungeNavigationState>()
   const recordingOrigin = React.useRef<RecordingOrigin | null>(null)
+  const domainVisit = React.useRef<DomainVisit | null>(null)
+  const domainVisits = React.useRef(new Map<string, DomainVisit>())
+  const pendingDomainExit = React.useRef<string | null>(null)
+  const domainPopDecision = React.useRef<{ visit: DomainVisit; scope: number; epoch: number; compensating: boolean; sourceToken: string | null } | null>(null)
+  const restoreDomainRef = React.useRef<(visit: DomainVisit) => void>(() => undefined)
+  const resumeDomainRef = React.useRef<(visit: DomainVisit, state: unknown) => void>(() => undefined)
+  const enterOracleRef = React.useRef<(next: Extract<AppOverlay, { kind: "running-profile" }>) => void>(() => undefined)
+  const domainPositions = React.useRef(new Map<string, ReaderPosition>())
+  const [publishedDock, setPublishedDock] = React.useState<{ token: symbol; state: DomainDockState } | null>(null)
+  const publishDock = React.useCallback((token: symbol, state: DomainDockState | null) => {
+    setPublishedDock(current => state ? { token, state } : current?.token === token ? null : current)
+  }, [])
   const coachingDayOrigin = React.useRef<RecordingOrigin | null>(null)
   const trainingContentOrigin = React.useRef<RecordingOrigin | null>(null)
   const guideOrigin = React.useRef<RecordingOrigin | null>(null)
@@ -224,6 +259,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
   const calendarDraftReturn = React.useRef<{ token: string; owner: string | null; view: typeof v } | null>(null)
   const calendarOriginalReturn = React.useRef<{ token: string; owner: string | null; view: typeof v;
     calendarReturn: JournalCalendarReturn | null; position: ReaderPosition } | null>(null)
+  const pendingJournalSection = React.useRef<{ section: "JOURNAL" | "BODY"; scope: number } | null>(null)
   const [calendarReaderReturn, setCalendarReaderReturn] = React.useState<JournalCalendarReturn | null>(null)
   const calendarSnapshotRef = React.useRef(calendarSnapshot)
   calendarSnapshotRef.current = calendarSnapshot
@@ -286,6 +322,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
     const expectedScope = localJournalScopeGeneration()
     const expectedNavigation = getBrowserNavigationEpoch()
     runDraftSafeNavigation(() => {
+      domainPopDecision.current = null
       invalidateReturnFrame()
       pendingScreenMotionRef.current = motion
       setSavedToast(current => current?.reviewMessage === undefined ? null : current)
@@ -310,7 +347,11 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
     })
   }, [scheduleReturnFrame])
 
-  const openOverlay = React.useCallback((next: AppOverlay) => {
+  const openOverlay = React.useCallback((next: AppOverlay, replaceCurrent = false) => {
+    if (next.kind === "running-profile" && oracleV2Enabled() && domainVisit.current?.domain !== "oracle") {
+      enterOracleRef.current(next)
+      return
+    }
     if (overlayRef.current === null) {
       overlayScrollTopRef.current = scrollRegionRef.current?.scrollTop ?? 0
       overlayReturnPosition.current = captureReaderPosition(scrollRegionRef.current)
@@ -331,7 +372,10 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
     const addsProfileHistory = overlayRef.current?.kind === "running-profile"
       && (next.kind !== "running-profile" || overlayRef.current.stage !== next.stage
         && !(resultStages.includes(overlayRef.current.stage) && resultStages.includes(next.stage)))
-    const method = overlayRef.current === null || addsTermHistory || addsOracleHistory || addsReadingHistory || addsProfileHistory || addsPaceHistory ? "pushState" : "replaceState"
+    const oracleSibling = next.kind === "running-profile" && next.stage === "overview" && oracleV2Enabled()
+      && domainVisit.current?.domain === "oracle" && (overlayRef.current === null
+        || overlayRef.current.kind === "running-profile" && overlayRef.current.stage === "overview")
+    const method = replaceCurrent || oracleSibling ? "replaceState" : overlayRef.current === null || addsTermHistory || addsOracleHistory || addsReadingHistory || addsProfileHistory || addsPaceHistory ? "pushState" : "replaceState"
     if ((addsOracleHistory && overlayRef.current?.kind === "oracle") || (addsPaceHistory && overlayRef.current !== null)) {
       window.history.replaceState({ ...currentState, [OVERLAY_HISTORY_KEY]: {
         ...overlayRef.current, owner: overlayHistoryOwnerRef.current, version: 1,
@@ -396,7 +440,18 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
     const onPopState = (event: PopStateEvent) => {
       beginBrowserPopNavigation()
       invalidateReturnFrame()
-      if (consumeBrowserBackLayer(event)) return
+      if (consumeBrowserBackLayer(event)) {
+        if (pendingDomainExit.current && event.state?.[DOMAIN_HISTORY_KEY] === pendingDomainExit.current) {
+          window.requestAnimationFrame(() => { if (pendingDomainExit.current) window.history.back() })
+        }
+        return
+      }
+      const pendingDecision = domainPopDecision.current
+      if (pendingDecision?.compensating && (event.state?.[DOMAIN_HISTORY_KEY] ?? null) === pendingDecision.sourceToken) {
+        pendingDecision.epoch = getBrowserNavigationEpoch()
+        pendingDecision.compensating = false
+        return
+      }
       const recording = recordingOrigin.current
       if (recording && event.state?.recordingDraft !== recording.token) {
         const allowed = runDraftSafeNavigation(() => {
@@ -420,10 +475,50 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
       if (originalOrigin && event.state?.calendarOriginalPage !== originalOrigin.token) {
         const allowed = runDraftSafeNavigation(() => {
           restoreCalendarOriginal(originalOrigin)
+          const destination = pendingJournalSection.current
+          pendingJournalSection.current = null
+          if (destination?.scope === localJournalScopeGeneration()) setV(current => ({ ...current, journalSection: destination.section }))
+          if (destination?.scope === localJournalScopeGeneration()) {
+            const position = domainPositions.current.get(`journal:${destination.section}`)
+            scheduleReturnFrame(() => {
+              if (position) restoreReaderPosition(scrollRegionRef.current, position)
+              else if (scrollRegionRef.current) scrollRegionRef.current.scrollTop = 0
+            })
+          }
         })
         if (!allowed) window.history.pushState({ ...window.history.state, calendarOriginalPage: originalOrigin.token }, "", window.location.href)
         return
       }
+      const visit = domainVisit.current
+      const arriving = domainVisits.current.get(event.state?.[DOMAIN_HISTORY_KEY] as string)
+      if (arriving && arriving !== visit && arriving.scope === localJournalScopeGeneration()
+        && (!visit || arriving.origin.domainToken === visit.token) && pendingDomainExit.current === null) {
+        const decision = { visit: arriving, scope: localJournalScopeGeneration(), epoch: getBrowserNavigationEpoch(), compensating: false, sourceToken: visit?.token ?? null }
+        domainPopDecision.current = decision
+        const allowed = runDraftSafeNavigation(() => {
+          domainPopDecision.current = null
+          if (window.history.state?.[DOMAIN_HISTORY_KEY] === arriving.token) resumeDomainRef.current(arriving, event.state)
+          else window.history.forward()
+        }, false, () => domainPopDecision.current === decision && decision.scope === localJournalScopeGeneration()
+          && decision.epoch === getBrowserNavigationEpoch())
+        if (!allowed) { decision.compensating = true; window.history.back() }
+        return
+      }
+      if (visit && event.state?.[DOMAIN_HISTORY_KEY] !== visit.token) {
+        const decision = { visit, scope: localJournalScopeGeneration(), epoch: getBrowserNavigationEpoch(), compensating: false, sourceToken: visit.token }
+        domainPopDecision.current = decision
+        const allowed = runDraftSafeNavigation(() => {
+          domainPopDecision.current = null
+          if (window.history.state?.[DOMAIN_HISTORY_KEY] === visit.token) {
+            pendingDomainExit.current = visit.token
+            window.history.back()
+          } else restoreDomainRef.current(visit)
+        }, false, () => domainPopDecision.current === decision && domainVisit.current === visit
+          && decision.scope === localJournalScopeGeneration() && decision.epoch === getBrowserNavigationEpoch())
+        if (!allowed) { pendingDomainExit.current = null; decision.compensating = true; window.history.forward() }
+        return
+      }
+      if (visit && pendingDomainExit.current === visit.token) { window.history.back(); return }
       const forward = oraclePlanForwardRef.current
       if (forward && event.state?.[ORACLE_PLAN_HISTORY_KEY] === forward.intent.historyToken) {
         const isCurrent = () => oraclePlanForwardRef.current === forward
@@ -512,6 +607,8 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
       if (summary) pendingReward.current = null
     }
     const scope = () => {
+      domainVisit.current = null; domainVisits.current.clear(); pendingDomainExit.current = null; domainPopDecision.current = null; domainPositions.current.clear()
+      setPublishedDock(null)
       if (recordingOrigin.current) { setV(INITIAL_VIEW_STATE); setUtilityView(null) }
       recordingOrigin.current = null
       coachingDayOrigin.current = null
@@ -521,6 +618,9 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
       moreReturnPosition.current = null
       importReturnRef.current = null
       setGuestOracleSession(null)
+      setProfileNavigationState(undefined)
+      setGameNavigationState(undefined)
+      pendingJournalSection.current = null
       analysisReturnContext.current = undefined
       setOracleHubSection("training")
       pendingReward.current = null; confirmedSaveEffects.current = null; oracleInputRef.current = null; decorationReturn.current = null; setDecorationInitialDate(undefined); setSavedToast(null); setAnalysisContext(undefined)
@@ -568,6 +668,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
 
   const goHome = () => {
     runViewTransition("pop", () => {
+      forgetDomain()
       oracleInputRef.current = null
       oraclePlanForwardRef.current = null
       recordingOrigin.current = null
@@ -671,20 +772,25 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
   ])
   const goTab = (tab: AppTab, analysis?: AnalysisNavigation) => {
     if (tab === "log") { startRecording(); return }
+    if (tab === "journal" || tab === "trends") {
+      if (v.tab === tab && utilityView === null && overlayRef.current === null && v.detailDate === null) return
+      runViewTransition(tabMotion(v.tab, tab), () => enterDomain(tab === "journal" ? "journal" : "oracle", undefined, analysis), false)
+      return
+    }
     if (!shouldResetTabView(v, tab, utilityView !== null || athleteRecordsOpen || overlayRef.current !== null)) return
     runViewTransition(tabMotion(v.tab, tab), () => {
+      forgetDomain()
       dismissOracle()
       oracleInputRef.current = null
       recordingOrigin.current = null
       setAthleteRecordsOpen(false)
       setUtilityView(null)
-      setAnalysisContext(tab === "trends" ? analysis : undefined)
-      if (tab === "trends" && analysis) setOracleHubSection("training")
-      analysisReturnContext.current = tab === "trends" ? analysis : undefined
+      setAnalysisContext(undefined)
+      analysisReturnContext.current = undefined
       calendarOriginalReturn.current = null
       setCalendarReaderReturn(null)
       coachingDayOrigin.current = null
-      setV(tab === "journal" && lastJournalView.current?.owner === activeLocalAccount() ? lastJournalView.current.view : viewForTab(tab))
+      setV(viewForTab(tab))
       trainingContentOrigin.current = null
       guideOrigin.current = null
       moreReturnPosition.current = null
@@ -693,13 +799,9 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
   const goTrendsFromReceipt = () => {
     const context = savedToast ? analysisNavigationForReceipt(savedToast.receipt ?? { kind: "generic" }) : null
     runViewTransition(tabMotion(v.tab, "trends"), () => {
-      dismissOracle()
       recordingOrigin.current = null
       setSavedToast(null)
-      setAthleteRecordsOpen(false)
-      setUtilityView(null)
-      setAnalysisContext(context ?? undefined)
-      setV(viewForTab("trends"))
+      enterDomain("oracle", undefined, context ?? undefined)
     }, false)
   }
   const openDecorationStudio = (date?: string) => runViewTransition("push", () => {
@@ -729,6 +831,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
     // Leaving the exploration invalidates its older history entries too.
     // Otherwise Back could reopen a sample over a different destination tab.
     overlayHistoryOwnerRef.current = `shell-${Date.now()}-${Math.random().toString(36).slice(2)}`
+    if (domainVisit.current) domainVisit.current.historyOwner = overlayHistoryOwnerRef.current
     oraclePlanForwardRef.current = null
     paceRequestRef.current = null
     if (overlayRef.current?.kind !== "oracle" && overlayRef.current?.kind !== "record-reading" && overlayRef.current?.kind !== "running-profile" && overlayRef.current?.kind !== "pace") return
@@ -741,7 +844,11 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
     setOverlay(null)
     if (scrollRegionRef.current !== null) scrollRegionRef.current.scrollTop = 0
   }
-  const openOracle = (topic: OracleTopicId, mode?: "example" | "personal") => runDraftSafeNavigation(() => openOverlay({ kind: "oracle", topic, ...(mode ? { mode } : {}) }))
+  const openOracle = (topic: OracleTopicId, mode?: "example" | "personal") => runViewTransition("push", () => {
+    const directTarget = domainVisit.current?.domain !== "oracle"
+    if (directTarget) enterDomain("oracle")
+    openOverlay({ kind: "oracle", topic, ...(mode ? { mode } : {}) }, directTarget)
+  })
   const changeOracleMode = (mode: "example" | "personal") => {
     const current = overlayRef.current
     if (current?.kind !== "oracle") return
@@ -761,6 +868,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
   })
   const openOraclePersonal = (action: "records" | "journal" | "trends" | "plan" | "log", section?: AnalysisSection, metric?: "DISTANCE_KM" | "RPE") => {
     runViewTransition("push", () => {
+      if (action === "journal") { enterDomain("journal"); return }
       oraclePlanForwardRef.current = null
       const topic = overlayRef.current?.kind === "oracle" ? overlayRef.current.topic : null
       oracleInputRef.current = topic && (action === "records" || action === "log" || action === "plan")
@@ -885,7 +993,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
       focusLabel: active?.getAttribute("aria-label") ?? null, focusText: active?.textContent?.trim() ?? null, direct,
       screen, screenKey, token: `record-${Date.now()}-${Math.random().toString(36).slice(2)}` }
   }
-  const restoreRecordingOrigin = (origin: RecordingOrigin) => {
+  const restoreRecordingOrigin = (origin: RecordingOrigin, restoreOverlayHistory = true) => {
     if (window.history.state?.recordingDraft === origin.token) {
       const { recordingDraft: _recordingDraft, ...state } = window.history.state
       window.history.replaceState(state, "", window.location.href)
@@ -893,7 +1001,10 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
     restoreReturnPoint(origin)
     setAnalysisContext(origin.analysis)
     analysisReturnContext.current = origin.analysis
-    if (origin.overlay) openOverlay(origin.overlay)
+    if (origin.overlay) {
+      if (restoreOverlayHistory) openOverlay(origin.overlay)
+      else applyOverlay(origin.overlay)
+    }
     scheduleReturnFrame(() => {
       if (origin.owner !== activeLocalAccount()) return
       if (scrollRegionRef.current) scrollRegionRef.current.scrollTop = origin.scroll
@@ -905,6 +1016,150 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
         : buttons.find(button => button.textContent?.trim() === origin.focusText)
       target?.focus({ preventScroll: true })
     })
+  }
+  function captureDomainOrigin(domainToken: string | null, recording?: RecordingOrigin): DomainVisit["origin"] {
+    const point: ShellReturnPoint = recording ? { view: recording.view, utilityView: recording.utilityView,
+      utilityOrigin: recording.utilityOrigin, moreView: recording.moreView, athleteRecordsOpen: recording.athleteRecordsOpen } : captureReturnPoint()
+    const { journalDraft: _draft, bodyInputPartId: _bodyInput, ...view } = point.view
+    const active = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    return { ...point, view, owner: activeLocalAccount(),
+      position: recording ? { scope: localJournalScopeGeneration(), scroll: recording.scroll, focusId: null, focusDate: null,
+        focusLabel: recording.focusLabel, focusText: recording.focusText } : { ...captureReaderPosition(scrollRegionRef.current),
+        focusLabel: active?.getAttribute("aria-label") ?? null, focusText: active?.matches("button, a, select") ? active.textContent?.trim() ?? null : null },
+      analysis: recording ? recording.analysis : analysisReturnContext.current ?? analysisContext, overlay: recording ? recording.overlay : overlayRef.current,
+      domainToken, historyOwner: overlayHistoryOwnerRef.current }
+  }
+  function forgetDomain() {
+    domainVisit.current = null
+    domainVisits.current.clear()
+    pendingDomainExit.current = null
+    const { [DOMAIN_HISTORY_KEY]: _domain, ...state } = window.history.state ?? {}
+    window.history.replaceState(state, "", window.location.href)
+  }
+  function enterDomain(domain: NavigationDomain, target?: Extract<AppOverlay, { kind: "running-profile" }>, analysis?: AnalysisNavigation, originOverride?: DomainVisit["origin"]) {
+    if (domainVisit.current?.domain !== domain) {
+      const origin = originOverride ?? captureDomainOrigin(typeof window.history.state?.[DOMAIN_HISTORY_KEY] === "string" ? window.history.state[DOMAIN_HISTORY_KEY] as string : null)
+      const token = `domain-${Date.now()}-${Math.random().toString(36).slice(2)}`
+      domainVisit.current = { domain, token, scope: localJournalScopeGeneration(), direct: domain === "oracle" && oracleEntry.requested, historyOwner: overlayHistoryOwnerRef.current, origin }
+      domainVisits.current.set(token, domainVisit.current)
+      const { [OVERLAY_HISTORY_KEY]: _overlay, ...state } = window.history.state ?? {}
+      window.history.pushState({ ...state, [DOMAIN_HISTORY_KEY]: token }, "", window.location.href)
+    }
+    dismissOracle()
+    recordingOrigin.current = null
+    setAthleteRecordsOpen(false)
+    setCalendarReaderReturn(null)
+    setUtilityView(domain === "games" ? "minigame" : null)
+    if (domain === "journal") {
+      const remembered = lastJournalView.current?.owner === activeLocalAccount() ? lastJournalView.current.view : viewForTab("journal")
+      setV({ ...remembered, journalSection: "JOURNAL", detailDate: null, detailEntryId: undefined })
+    } else if (domain === "oracle") {
+      setV(viewForTab("trends"))
+      setAnalysisContext(analysis)
+      analysisReturnContext.current = analysis
+      const section = target ? target.initialView === "library" ? "library" : "profile" : "training"
+      setOracleHubSection(section)
+      if (target) openOverlay(target)
+    } else {
+      acknowledgeAnnouncement(MINIGAME_ANNOUNCEMENT)
+      setV(viewForTab("home"))
+    }
+    const position = domainPositions.current.get(`${domain}:${domain === "journal" ? "JOURNAL" : domain === "games" ? "games" : "training"}`)
+      ?? (domain === "games" ? gameNavigationState?.positions?.games : undefined)
+    if (!target && position) scheduleReturnFrame(() => restoreReaderPosition(scrollRegionRef.current, position))
+  }
+  enterOracleRef.current = next => runViewTransition("push", () => enterDomain("oracle", next), false)
+  restoreDomainRef.current = visit => {
+    if (visit.scope !== localJournalScopeGeneration() || visit.origin.owner !== activeLocalAccount()) {
+      domainVisit.current = null; overlayRef.current = null; setOverlay(null); restoreReturnPoint(null); return
+    }
+    domainPositions.current.set(`${visit.domain}:${visit.domain === "oracle" ? oracleHubSection : visit.domain === "journal" ? v.journalSection ?? "JOURNAL" : publishedDock?.state.current ?? "games"}`, captureReaderPosition(scrollRegionRef.current))
+    if (visit.domain === "journal") coachingDayOrigin.current = null
+    pendingDomainExit.current = null
+    domainVisit.current = visit.origin.domainToken ? domainVisits.current.get(visit.origin.domainToken) ?? null : null
+    overlayRef.current = null; setOverlay(null)
+    overlayHistoryOwnerRef.current = visit.origin.historyOwner
+    restoreReturnPoint(visit.origin)
+    setAnalysisContext(visit.origin.analysis)
+    analysisReturnContext.current = visit.origin.analysis
+    if (visit.origin.overlay) applyOverlay(visit.origin.overlay)
+    setOracleHubSection(visit.origin.overlay?.kind === "running-profile" ? visit.origin.overlay.initialView === "library" ? "library" : "profile" : "training")
+    scheduleReturnFrame(() => {
+      restoreReaderPosition(scrollRegionRef.current, visit.origin.position)
+      const position = visit.origin.position
+      const buttons = [...document.querySelectorAll<HTMLElement>(".app-tab-bar button")]
+      const target = position.focusLabel ? buttons.find(button => button.getAttribute("aria-label") === position.focusLabel)
+        : buttons.find(button => button.textContent?.trim() === position.focusText)
+      target?.focus({ preventScroll: true })
+    })
+  }
+  const exitDomain = () => runViewTransition("pop", () => {
+    const visit = domainVisit.current
+    if (visit) domainPositions.current.set(`${visit.domain}:${visit.domain === "oracle" ? oracleHubSection : visit.domain === "journal" ? v.journalSection ?? "JOURNAL" : publishedDock?.state.current ?? "games"}`, captureReaderPosition(scrollRegionRef.current))
+    if (!visit) { dismissOracle(); forgetDomain(); setUtilityView(null); setV(INITIAL_VIEW_STATE); return }
+    if (window.history.state?.[DOMAIN_HISTORY_KEY] === visit.token) {
+      pendingDomainExit.current = visit.token
+      window.history.back()
+    }
+    else restoreDomainRef.current(visit)
+  }, false)
+  const switchOracleSection = (section: "training" | "profile" | "library") => {
+    if (section === oracleHubSection && (section === "training" || overlayRef.current?.kind === "running-profile")) return
+    if (!oracleV2Enabled() && section === "library") { openTrainingReading(); return }
+    runViewTransition("replace", () => {
+      domainPositions.current.set(`oracle:${oracleHubSection}`, captureReaderPosition(scrollRegionRef.current))
+      setOracleHubSection(section)
+      if (section === "training") {
+        const { [OVERLAY_HISTORY_KEY]: _overlay, ...state } = window.history.state ?? {}
+        window.history.replaceState(state, "", window.location.href)
+        applyOverlay(null)
+      } else openOverlay({ kind: "running-profile", stage: "overview", initialView: section === "library" ? "library" : "result" })
+      const position = domainPositions.current.get(`oracle:${section}`)
+      scheduleReturnFrame(() => {
+        if (position) restoreReaderPosition(scrollRegionRef.current, position)
+        else if (scrollRegionRef.current) scrollRegionRef.current.scrollTop = 0
+      })
+    }, true)
+  }
+  const switchJournalSection = (section: "JOURNAL" | "BODY") => {
+    if (v.detailDate === null && section === (v.journalSection ?? "JOURNAL")) return
+    runViewTransition("replace", () => {
+      if (v.detailDate !== null) coachingDayOrigin.current = null
+      domainPositions.current.set(`journal:${v.journalSection ?? "JOURNAL"}`, captureReaderPosition(scrollRegionRef.current))
+      const original = calendarOriginalReturn.current
+      if (v.detailDate !== null && original && window.history.state?.calendarOriginalPage === original.token) {
+        pendingJournalSection.current = { section, scope: localJournalScopeGeneration() }
+        window.history.back()
+        return
+      }
+      if (v.detailDate === null && publishedDock?.state.domain === "journal") publishedDock.state.onSelect(section)
+      else setV(current => ({ ...current, tab: "journal", detailDate: null, detailEntryId: undefined, journalSection: section }))
+      const position = domainPositions.current.get(`journal:${section}`)
+      scheduleReturnFrame(() => {
+        if (position) restoreReaderPosition(scrollRegionRef.current, position)
+        else if (scrollRegionRef.current) scrollRegionRef.current.scrollTop = 0
+      })
+    }, true)
+  }
+  resumeDomainRef.current = (visit, state) => {
+    if (visit.scope !== localJournalScopeGeneration() || visit.origin.owner !== activeLocalAccount()) return
+    // The parent entry may have replaced a sibling while this child was closed.
+    // Forward's return belongs to that actual parent, not its older snapshot.
+    visit = { ...visit, origin: captureDomainOrigin(domainVisit.current?.token ?? null) }
+    domainVisits.current.set(visit.token, visit)
+    domainVisit.current = visit
+    overlayHistoryOwnerRef.current = visit.historyOwner
+    setAthleteRecordsOpen(false)
+    setUtilityView(visit.domain === "games" ? "minigame" : null)
+    const next = overlayHistoryMarker(state, visit.historyOwner)
+    applyOverlay(next)
+    setOracleHubSection(next?.kind === "running-profile" ? next.initialView === "library" ? "library" : "profile" : "training")
+    if (visit.domain === "journal") setV(lastJournalView.current?.owner === activeLocalAccount() ? lastJournalView.current.view : viewForTab("journal"))
+    else setV(viewForTab(visit.domain === "oracle" ? "trends" : "home"))
+    const section = visit.domain === "oracle" ? next?.kind === "running-profile" ? next.initialView === "library" ? "library" : "profile" : "training"
+      : visit.domain === "journal" ? lastJournalView.current?.view.journalSection ?? "JOURNAL" : "games"
+    const position = domainPositions.current.get(`${visit.domain}:${section}`)
+    if (position) scheduleReturnFrame(() => restoreReaderPosition(scrollRegionRef.current, position))
   }
   const startRecording = (entryType: import("./screens/LogEntry").EntryType = "choose", plannedView?: typeof v) => {
     if (v.tab === "log" && entryType === "choose" && v.entryType === "choose") return
@@ -1065,7 +1320,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
         onOpenMinji={() => openGuide("minji")}
         onOpenGuide={() => openGuide("guide")}
         onOpenContent={openTrainingReading}
-        onOpenMinigame={() => runViewTransition("push", () => { acknowledgeAnnouncement(MINIGAME_ANNOUNCEMENT); setUtilityOrigin("more"); setUtilityView("minigame") })}
+        onOpenMinigame={() => runViewTransition("push", () => enterDomain("games"), false)}
         onOpenRewards={() => openDecorationStudio()}
         onOpenPaceCalculator={() => openPaceCalculator()}
         onOpenRunningProfile={() => openOverlay({ kind: "running-profile", stage: "overview" })}
@@ -1081,7 +1336,8 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
       />
     )
   } else if (v.tab === "home" && utilityView === "minigame") {
-    screen = <DeferredMobileScreens.TreadmillGame backLabel={utilityOrigin === "home" ? "홈으로 돌아가기" : "더보기로 돌아가기"} onBack={() => runViewTransition("pop", () => setUtilityView(utilityOrigin === "home" ? null : "more"))} onJournalSaved={confirmSavedJournalEffects} />
+    screen = <DeferredMobileScreens.TreadmillGame backLabel={domainVisit.current ? "게임 라운지 나가기" : "홈"} onBack={exitDomain} onJournalSaved={confirmSavedJournalEffects}
+      navigationState={gameNavigationState} onNavigationStateChange={setGameNavigationState} />
   } else if (v.tab === "home" && utilityView === "content") {
     screen = <DeferredMobileScreens.TrainingContent onBack={() => runViewTransition("pop", () => {
       const origin = trainingContentOrigin.current
@@ -1124,15 +1380,16 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
             setV(s => ({ ...s, detailDate: date, detailEntryId: entryId }))
           })}
           onDecorateToday={() => openDecorationStudio()}
-          onOpenArchive={() => {
-            runViewTransition("tab-forward", () => setV({ ...viewForTab("journal"), journalMode: "CALENDAR" }))
-          }}
+          onOpenArchive={() => runViewTransition("push", () => {
+            enterDomain("journal")
+            setV(current => ({ ...current, journalMode: "CALENDAR" }))
+          }, false)}
           onOpenGuide={() => openGuide("minji")}
           onOpenPlan={() => goTab("plan")}
           onOpenTrends={() => goTab("trends", { section: "distance" })}
           onOpenOracle={openOracle}
           onOpenMore={() => runViewTransition("push", () => setUtilityView("more"))}
-          onOpenMinigame={() => runViewTransition("push", () => { acknowledgeAnnouncement(MINIGAME_ANNOUNCEMENT); setUtilityOrigin("home"); setUtilityView("minigame") })}
+          onOpenMinigame={() => runViewTransition("push", () => enterDomain("games"), false)}
           onOpenAccount={accountEnabled ? () => runViewTransition("push", () => setV(s => ({ ...s, accountOpen: true }))) : undefined}
           onOpenContent={openTrainingReading}
           onOpenRewards={() => openDecorationStudio()}
@@ -1149,6 +1406,11 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
       ? detailScreen(() => {
         const coachingOrigin = coachingDayOrigin.current
         if (coachingOrigin) {
+          if (domainVisit.current?.domain === "journal") {
+            coachingDayOrigin.current = null
+            exitDomain()
+            return
+          }
           runViewTransition("pop", () => {
             coachingDayOrigin.current = null
             if (coachingOrigin.owner === activeLocalAccount()) restoreRecordingOrigin(coachingOrigin)
@@ -1295,6 +1557,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
         onContextChange={context => { analysisReturnContext.current = context }}
         onOpenCoachingDay={(date, entryId) => runViewTransition("push", () => {
           coachingDayOrigin.current = captureRecordingOrigin(false)
+          enterDomain("journal")
           setV({ ...viewForTab("journal"), detailDate: date, detailEntryId: entryId })
         })}
         onBack={goHome}
@@ -1305,8 +1568,8 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
         onOpenPlan={() => goTab("plan")}
         onOpenOracle={openOracle}
         onOpenRecordReading={() => openOverlay({ kind: "record-reading", stage: "own-event" })}
-        onOpenRunningProfile={() => openOverlay({ kind: "running-profile", stage: "overview" })}
-        onOpenOracleLibrary={oracleV2Enabled() ? () => openOverlay({ kind: "running-profile", stage: "overview", initialView: "library" }) : undefined}
+        onOpenRunningProfile={() => switchOracleSection("profile")}
+        onOpenOracleLibrary={oracleV2Enabled() ? () => switchOracleSection("library") : undefined}
         onOpenTrainingContent={openTrainingReading}
       />
     )
@@ -1322,8 +1585,22 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
   const preservedRecording = v.tab === "log" ? recordingOrigin.current : null
   const baseScreenKey = preservedRecording?.screenKey ?? screenKey
   const oracleSectionOpen = overlay?.kind === "running-profile" && oracleV2Enabled()
+  const activeDomain: NavigationDomain | null = oracleSectionOpen || v.tab === "trends" ? "oracle"
+    : v.tab === "journal" ? "journal" : v.tab === "home" && utilityView === "minigame" ? "games" : null
+  const fallbackDock: DomainDockState | null = activeDomain === "oracle" ? {
+    domain: "oracle", current: oracleSectionOpen ? oracleHubSection : "training", onSelect: section => {
+      if (section === "training" || section === "profile" || section === "library") switchOracleSection(section)
+    },
+  } : activeDomain === "journal" ? {
+    domain: "journal", current: v.journalSection ?? "JOURNAL", onSelect: section => {
+      if (section === "JOURNAL" || section === "BODY") switchJournalSection(section)
+    },
+  } : activeDomain === "games" ? { domain: "games", current: "games", onSelect: () => undefined } : null
+  const currentDock = fallbackDock?.domain === "oracle" || fallbackDock?.domain === "journal" ? fallbackDock
+    : publishedDock?.state.domain === activeDomain ? publishedDock.state : fallbackDock
   return (
     <MultiPlanEvidenceContext.Provider value={multiPlanRuntime?.readMultiAdjustedEvidenceV3}>
+    <DomainNavigationProvider publish={publishDock} onRecord={() => startRecording()}>
     <AppOverlayNavigationProvider
       openPaceCalculator={openPaceCalculator}
       openTrainingTerm={(term) => openOverlay({ kind: "term", term })}
@@ -1342,7 +1619,15 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
         const date = savedToast?.receipt.savedDate
         if (!date || !loadEntries().some(entry => entry.date === date)) return
         runViewTransition("push", () => {
+          const recording = recordingOrigin.current
+          const origin = recording && recording.owner === activeLocalAccount()
+            ? captureDomainOrigin(domainVisit.current?.token ?? null, recording) : undefined
+          if (origin && recording && window.history.state?.recordingDraft === recording.token) {
+            const { recordingDraft: _recording, ...state } = window.history.state
+            window.history.replaceState(state, "", window.location.href)
+          }
           setSavedToast(null)
+          enterDomain("journal", undefined, undefined, origin)
           setV({ ...viewForTab("journal"), detailDate: date })
         })
       }}
@@ -1352,14 +1637,16 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
       }}
       onTab={goTab}
       onStartRecording={() => startRecording()}
-      hideTabBar={(overlay !== null ? overlay.kind !== "oracle" && !oracleSectionOpen : v.tab === "log" && v.entryType !== "choose")
-        || (v.tab === "home" && utilityView === "minigame")}
+      domainDock={currentDock ? { state: currentDock, hasOrigin: domainVisit.current !== null && !domainVisit.current.direct, onExit: exitDomain } : undefined}
+      hideTabBar={v.tab === "log" || (overlay !== null && overlay.kind !== "oracle" && !oracleSectionOpen)
+        || currentDock?.hidden === true}
       wideTask={overlay === null && (v.tab === "log" || v.tab === "plan")}
       wideResults={overlay === null ? v.tab === "trends" || (v.tab === "home" && utilityView === "more" && !v.accountOpen && !v.restoreOpen)
         : overlay.kind === "running-profile" || overlay.kind === "oracle"
           || (overlay.kind === "record-reading" && (overlay.stage === "self-result" || overlay.stage === "pair-result"))}
     >
       <React.Suspense fallback={<AppLoadingState />}>
+        <DomainNavigationScope active={overlay === null && preservedRecording === null}>
         <div
           key={`${baseScreenKey}:account-scope-${accountScopeRevision}`}
           className="app-flow-stage"
@@ -1370,6 +1657,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
             {preservedRecording?.screen ?? screen}
           </ErrorBoundary>
         </div>
+        </DomainNavigationScope>
         {preservedRecording !== null && (
           <div key={`${screenKey}:recording:${accountScopeRevision}`} className="app-flow-stage" data-motion={currentScreenMotion} hidden={overlay !== null}>
             <ErrorBoundary key={`${screenKey}:recording:${accountScopeRevision}`} region recoveryTab={tabForChrome(v)}>{screen}</ErrorBoundary>
@@ -1416,10 +1704,9 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
           <div className="app-flow-stage" data-overlay="running-profile">
             {oracleV2Enabled() ?
               <DeferredMobileScreens.OracleProfileV2 key={`oracle-v2-${accountScopeRevision}-${oracleEntryRevision}`} today={todayISO()} onBack={closeOverlay}
-                onOpenTraining={() => runDraftSafeNavigation(() => {
-                  if (v.tab === "trends" && utilityView === null) closeOverlay()
-                  else goTab("trends", analysisContext)
-                })}
+                navigationState={profileNavigationState} onNavigationStateChange={setProfileNavigationState}
+                onOpenTraining={() => switchOracleSection("training")}
+                onOpenLibrary={() => switchOracleSection("library")}
                 initialView={overlay.initialView}
                 backLabel={utilityView === "more" ? "더보기로 돌아가기" : v.tab === "trends" ? "오라클로 돌아가기" : v.tab === "plan" ? "훈련으로 돌아가기" : v.tab === "journal" ? "일지로 돌아가기" : "홈으로 돌아가기"}
                 guestSession={activeLocalAccount() === null ? guestOracleSession : undefined}
@@ -1478,6 +1765,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
       </React.Suspense>
     </AppShellFrame>
     </AppOverlayNavigationProvider>
+    </DomainNavigationProvider>
     </MultiPlanEvidenceContext.Provider>
   )
 }

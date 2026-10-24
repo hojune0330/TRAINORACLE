@@ -70,4 +70,12 @@ describe("navigation return frame lifetime", () => {
     act(() => frames.get(1)?.(0))
     expect(restore).not.toHaveBeenCalled()
   })
+  it.each(["wheel", "touchstart", "pointerdown", "keydown"])("lets a user's %s cancel a pending return", event => {
+    const restore = vi.fn()
+    const { result } = renderHook(useNavigationReturnFrame)
+    act(() => result.current.schedule(restore))
+    act(() => window.dispatchEvent(new Event(event)))
+    act(() => frames.get(1)?.(0))
+    expect(restore).not.toHaveBeenCalled()
+  })
 })

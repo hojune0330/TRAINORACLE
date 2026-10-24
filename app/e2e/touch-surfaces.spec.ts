@@ -60,10 +60,10 @@ test("audits populated home, detail, and trends actions", async ({ page }, testI
   await page.getByRole("button", { name: "더보기", exact: true }).click()
   await page.getByRole("button", { name: "백업·복원·휴지통" }).click()
   await auditTouchTargets(page, [
-    { name: "more.export", locator: page.getByRole("button", { name: /내 일지 데이터 내려받기/u }), heightOnly: true },
-    { name: "more.full-export", locator: page.getByRole("button", { name: /메모 포함 파일 내보내기/u }), heightOnly: true },
+    { name: "more.export", locator: page.getByRole("button", { name: /일지 백업/u }), heightOnly: true },
+    { name: "more.full-export", locator: page.getByRole("button", { name: /메모까지 백업/u }), heightOnly: true },
   ])
-  await page.getByRole("button", { name: /메모 포함 파일 내보내기/u }).click()
+  await page.getByRole("button", { name: /메모까지 백업/u }).click()
   await auditTouchTargets(page, [
     { name: "full-export.cancel", locator: page.getByRole("button", { name: "취소" }) },
     { name: "full-export.confirm", locator: page.getByRole("button", { name: "파일 만들기" }) },

@@ -1,6 +1,7 @@
 import React from "react"
 import { AppHeading } from "../components/AppHeading"
 import { OracleProfileExperience, OracleProfileReader } from "./OracleProfileExperience"
+import type { OracleProfileNavigationState } from "./OracleProfileExperience"
 import { createOracleV2Service, oracleV2EditToken, type OracleV2Store } from "../domain/account/account-oracle-v2-service"
 import { activeLocalAccount } from "../domain/account/local-journal-ownership"
 import { makeOracleProfileRevision, saveOracleProfileReading } from "../domain/oracle-profile-snapshot"
@@ -35,22 +36,28 @@ export type GuestOracleSession = {
   readonly context?: OracleProfileContext
 }
 
-export function OracleProfileV2({ today, onBack, onOpenTraining, onNavigate, initialView = "result", backLabel, guestSession, onGuestSessionChange }: {
+export function OracleProfileV2({ today, onBack, onOpenTraining, onOpenLibrary, onNavigate, initialView = "result", backLabel, guestSession, onGuestSessionChange, navigationState, onNavigationStateChange }: {
   today: string; onBack: () => void; onNavigate: (destination: OracleDestination) => void
   initialView?: "result" | "library"
   backLabel?: string
   onOpenTraining?: () => void
+  onOpenLibrary?: () => void
   guestSession?: GuestOracleSession | null
   onGuestSessionChange?: (session: GuestOracleSession | null) => void
+  navigationState?: OracleProfileNavigationState
+  onNavigationStateChange?: (state: OracleProfileNavigationState) => void
 }) {
   const owner = activeLocalAccount()
-  return <OracleProfileV2ForOwner key={owner ?? "guest"} owner={owner} today={today} onBack={onBack} onOpenTraining={onOpenTraining} onNavigate={onNavigate} initialView={initialView} backLabel={backLabel} guestSession={guestSession} onGuestSessionChange={onGuestSessionChange} />
+  return <OracleProfileV2ForOwner key={owner ?? "guest"} owner={owner} today={today} onBack={onBack} onOpenTraining={onOpenTraining} onOpenLibrary={onOpenLibrary} onNavigate={onNavigate} initialView={initialView} backLabel={backLabel} guestSession={guestSession} onGuestSessionChange={onGuestSessionChange} navigationState={navigationState} onNavigationStateChange={onNavigationStateChange} />
 }
 
-function OracleProfileV2ForOwner({ owner, today, onBack, onOpenTraining, onNavigate, initialView, backLabel, guestSession, onGuestSessionChange }: {
+function OracleProfileV2ForOwner({ owner, today, onBack, onOpenTraining, onOpenLibrary, onNavigate, initialView, backLabel, guestSession, onGuestSessionChange, navigationState, onNavigationStateChange }: {
   owner: string | null; today: string; onBack: () => void; onNavigate: (destination: OracleDestination) => void
   initialView: "result" | "library"; backLabel?: string; guestSession?: GuestOracleSession | null; onGuestSessionChange?: (session: GuestOracleSession | null) => void
   onOpenTraining?: () => void
+  onOpenLibrary?: () => void
+  navigationState?: OracleProfileNavigationState
+  onNavigationStateChange?: (state: OracleProfileNavigationState) => void
 }) {
   const [store, setStore] = React.useState(initial)
   const [resetVersion, setResetVersion] = React.useState(0)
@@ -162,7 +169,7 @@ function OracleProfileV2ForOwner({ owner, today, onBack, onOpenTraining, onNavig
     {store.status === "CONFLICT" && <section><p role="alert">다른 곳에서 응답이 바뀌었어요. 어떤 응답을 사용할까요?</p><button type="button" onClick={() => { void resolveConflict("REMOTE") }}>계정의 응답 사용</button><button type="button" onClick={() => { void resolveConflict("LOCAL") }}>이 화면의 응답 사용</button></section>}
   </>
   return <>
-    <OracleProfileExperience key={resetVersion} initialView={initialView} backLabel={backLabel} onOpenTraining={onOpenTraining} answers={owner ? current?.answers ?? {} : guest}
+    <OracleProfileExperience key={resetVersion} initialView={initialView} navigationState={navigationState} onNavigationStateChange={onNavigationStateChange} backLabel={backLabel} onOpenTraining={onOpenTraining} onOpenLibrary={onOpenLibrary} answers={owner ? current?.answers ?? {} : guest}
       accountActions={accountActions}
       draftAnswers={owner ? store.draftDocument?.data.current?.answers : undefined}
       selectedCharacter={owner ? current?.selectedCharacter ?? null : guestCharacter}

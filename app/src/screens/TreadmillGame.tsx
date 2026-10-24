@@ -29,6 +29,7 @@ import { loadFantasyArt } from "./treadmill/fantasy-art"
 import { loadPartyArt } from "./treadmill/party-art"
 import { PartyEffect } from "./treadmill/PartyEffect"
 import { GameLounge } from "./treadmill/GameLounge"
+import type { GameLoungeNavigationState } from "./treadmill/GameLounge"
 import { ActionFeedback, useActionFeedback } from "./treadmill/ActionFeedback"
 import { actionFeedback } from "./treadmill/action-feedback"
 import type { GamePalette, RunnerCharacter } from "./treadmill/sprites"
@@ -101,8 +102,8 @@ function unlocksBetween(before: MinigameProgress, after: MinigameProgress): stri
   return out
 }
 
-export function TreadmillGame({ onBack, backLabel = "더보기로 돌아가기", onJournalSaved }: { readonly onBack: () => void; readonly backLabel?: string; readonly onJournalSaved?: ((entry: import("../domain/journal-store").JournalEntry) => void) | undefined }) {
-  return <GameLounge onBack={onBack} backLabel={backLabel} onJournalSaved={onJournalSaved} renderTour={(back, cityId, onDefense) => <SoloTreadmillGame onBack={back} backLabel="게임 소개로" initialCityId={cityId} onDefense={onDefense} />} />
+export function TreadmillGame({ onBack, backLabel = "더보기로 돌아가기", onJournalSaved, navigationState, onNavigationStateChange }: { readonly onBack: () => void; readonly backLabel?: string; readonly onJournalSaved?: ((entry: import("../domain/journal-store").JournalEntry) => void) | undefined; readonly navigationState?: GameLoungeNavigationState; readonly onNavigationStateChange?: (state: GameLoungeNavigationState) => void }) {
+  return <GameLounge onBack={onBack} backLabel={backLabel} onJournalSaved={onJournalSaved} navigationState={navigationState} onNavigationStateChange={onNavigationStateChange} renderTour={(back, cityId, onDefense) => <SoloTreadmillGame onBack={back} backLabel="게임 소개로" initialCityId={cityId} onDefense={onDefense} />} />
 }
 
 function SoloTreadmillGame({ onBack, backLabel, initialCityId, onDefense }: { readonly onBack: () => void; readonly backLabel: string; readonly initialCityId?: string; readonly onDefense?: () => void }) {

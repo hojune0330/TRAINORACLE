@@ -1,5 +1,6 @@
 import React from "react"
-import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
+import { act, cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react"
+import { renderWithDomainNavigation as render } from "../test/DomainNavigationTestFrame"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { OracleProfileExperience, type OracleProfileExperienceProps } from "./OracleProfileExperience"
 import { ORACLE_CONTENT_CATALOG } from "../domain/oracle-content-catalog"
@@ -32,15 +33,24 @@ afterEach(() => {
   fireEvent(window, new StorageEvent("storage", { key: motionKey }))
 })
 const dialog = () => screen.getByRole("dialog", { hidden: true })
-const openSettings = () => fireEvent.click(screen.getByRole("button", { name: "프로필 설정·추가 정보" }))
+const openSettings = () => {
+  if (!screen.queryByRole("button", { name: "프로필 설정·추가 정보" })) fireEvent.click(screen.getByRole("button", { name: "취향" }))
+  fireEvent.click(screen.getByRole("button", { name: "프로필 설정·추가 정보" }))
+}
 const openTopics = () => screen.getByRole("radiogroup", { name: "읽을거리 주제" })
-it("moves the current-section check between reading and preferences without losing the topic or draft", () => {
+function openManagerReading(id: string) {
+  fireEvent.click(within(screen.getByRole("complementary", { name: "읽을거리" })).getByRole("button", { name: "읽을거리 살펴보기" }))
+  const topic = ORACLE_CONTENT_CATALOG.find(item => item.id === id)!
+  fireEvent.click(within(openTopics()).getByRole("radio", { name: topic.group === "B" ? "경기 기록" : "훈련" }))
+  fireEvent.click(screen.getByRole("button", { name: topic.title }))
+}
+it("moves the current domain destination between reading and preferences without losing the topic or draft", () => {
   const onOpenTraining = vi.fn()
   const p = props({ draftAnswers: { STRUCTURE_1: 4 }, draftState: "EDITING", onOpenTraining })
   render(<OracleProfileExperience {...p} />)
-  const nav = screen.getByRole("navigation", { name: "오라클 항목" })
+  const nav = screen.getByRole("navigation", { name: "오라클 메뉴" })
   const buttons = within(nav).getAllByRole("button")
-  const preferences = within(nav).getByRole("button", { name: "러닝 취향" })
+  const preferences = within(nav).getByRole("button", { name: "취향" })
   const library = within(nav).getByRole("button", { name: "읽을거리" })
   expect(preferences).toHaveAttribute("aria-current", "page")
   fireEvent.click(library)
@@ -54,7 +64,7 @@ it("moves the current-section check between reading and preferences without losi
   fireEvent.click(library)
   expect(within(openTopics()).getByRole("radio", { name: "경기 기록" })).toHaveAttribute("aria-checked", "true")
   expect(within(nav).getAllByRole("button")).toEqual(buttons)
-  fireEvent.click(within(nav).getByRole("button", { name: "내 훈련" }))
+  fireEvent.click(within(nav).getByRole("button", { name: "분석" }))
   expect(onOpenTraining).toHaveBeenCalledOnce()
   expect(p.onDraft).not.toHaveBeenCalled()
   expect(p.onCommit).not.toHaveBeenCalled()
@@ -89,7 +99,7 @@ it("returns from direct reading to the same unfinished answers without saving or
   const p = props({ draftAnswers: { STRUCTURE_1: 4 }, draftState: "EDITING" })
   render(<OracleProfileExperience {...p} />)
   fireEvent.click(screen.getByRole("button", { name: "읽을거리" }))
-  fireEvent.click(screen.getByRole("button", { name: "러닝 취향" }))
+  fireEvent.click(screen.getByRole("button", { name: "취향" }))
   fireEvent.click(screen.getByRole("button", { name: "작성하던 답 이어가기" }))
   expect(within(dialog()).getByRole("heading", { name: ORACLE_QUESTIONS.find(q => q.id === "STRUCTURE_2")!.text })).toBeVisible()
   expect(within(dialog()).getByRole("button", { name: "이전 답 그런 편이에요" })).toBeVisible()
@@ -116,6 +126,15 @@ it("offers friend comparison directly without opening profile settings", () => {
   fireEvent.click(screen.getByRole("button", { name: "친구와 취향 비교" }))
   expect(p.onNavigate).toHaveBeenCalledWith("FRIENDS")
   expect(screen.queryByRole("dialog")).toBeNull()
+})
+it("delegates the settings reading entry to the existing managed library destination without saving", () => {
+  const onOpenLibrary = vi.fn(), p = props({ onOpenLibrary })
+  render(<OracleProfileExperience {...p} />)
+  openSettings()
+  fireEvent.click(screen.getByRole("button", { name: "읽을거리 살펴보기" }))
+  expect(onOpenLibrary).toHaveBeenCalledOnce()
+  expect(p.onDraft).not.toHaveBeenCalled()
+  expect(p.onCommit).not.toHaveBeenCalled()
 })
 it("resets the question reader scroll when moving to another question of the same axis", () => {
   render(<OracleProfileExperience {...props()} />)
@@ -182,7 +201,7 @@ it("makes the user's preference result the subject before optional guidance and 
   expect(character).toBeVisible()
   expect(character.compareDocumentPosition(chart) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
   expect(within(self).getByText("점수가 높을수록 그 항목에 동의했어요. 실력 점수는 아니에요.")).toBeVisible()
-  expect(screen.queryByRole("complementary", { name: "더 읽어보기" })).toBeNull()
+  expect(screen.queryByRole("complementary", { name: "읽을거리" })).toBeNull()
 })
 it("keeps optional guide art separate from the direct answer and reading actions", () => {
   const { rerender } = render(<OracleProfileExperience {...props()} />)
@@ -193,7 +212,7 @@ it("keeps optional guide art separate from the direct answer and reading actions
   expect(companion).toBeVisible()
   expect(title.compareDocumentPosition(companion) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
   openSettings()
-  expect(screen.getByRole("complementary", { name: "더 읽어보기" })).toBeVisible()
+  expect(screen.getByRole("complementary", { name: "읽을거리" })).toBeVisible()
   expect(screen.queryByText("마리의 안내")).toBeNull()
   fireEvent.click(within(dialog()).getByRole("button", { name: "닫기" }))
   for (const axis of ["STRUCTURE", "SOCIAL", "REFRESH"] as const) {
@@ -227,7 +246,7 @@ it("opens the requested library view with a contextual return label", () => {
   expect(openTopics()).toBeVisible()
   expect(screen.getByRole("button", { name: "내가 달리는 이유" })).toBeVisible()
   expect(screen.queryByRole("article", { name: "먼저 읽을 글" })).toBeNull()
-  expect(screen.getByRole("button", { name: "읽을거리로 돌아가기" })).toBeVisible()
+  expect(screen.getByRole("button", { name: "오라클 나가기" })).toBeVisible()
   expect(screen.getByRole("button", { name: "읽을거리" })).toHaveAttribute("aria-current", "page")
 })
 it("shows the topic list before reading and returns to the same selected group", () => {
@@ -297,15 +316,12 @@ it("prioritizes the first survey, exposes comparison and preserves manager actio
   expect(screen.queryByRole("navigation", { name: "러닝 취향 보기" })).toBeNull()
   expect(screen.getByRole("button", { name: "친구와 취향 비교" })).toBeVisible()
   openSettings()
-  for (const name of ["내 훈련 해설"]) {
-    const button = screen.getByRole("button", { name })
-    expect(button).toBeVisible()
-    expect(button.closest("details")).toBeNull()
-  }
-  expect(screen.getByRole("button", { name: "내 기록 해설" })).toBeVisible()
-  expect(screen.getByRole("button", { name: "계획·수행 비교" })).toBeVisible()
-  expect(screen.getByRole("button", { name: "내 기록 해설" }).closest("details")).toBeNull()
-  expect(screen.getByRole("button", { name: "계획·수행 비교" }).closest("details")).toBeNull()
+  const settings = within(dialog())
+  expect(settings.getByRole("heading", { name: "추가 취향" })).toBeVisible()
+  expect(settings.getByRole("heading", { name: "응답 관리" })).toBeVisible()
+  expect(settings.getByRole("group", { name: "추가 취향" }).querySelectorAll("[aria-pressed], [aria-checked]")).toHaveLength(0)
+  expect(settings.getByRole("button", { name: "읽을거리 살펴보기" })).toBeVisible()
+  expect(settings.queryByRole("button", { name: /내 훈련 해설|내 기록 해설|계획·수행 비교/ })).toBeNull()
   fireEvent.click(within(dialog()).getByRole("button", { name: "닫기" }))
   fireEvent.click(screen.getByRole("button", { name: "친구와 취향 비교" }))
   expect(p.onNavigate).toHaveBeenCalledWith("FRIENDS")
@@ -314,21 +330,19 @@ it("opens real record and plan readings from the manager and returns to the same
   const readTopic = vi.fn((id: string) => ({ state: "READY" as const, facts: [{ label: "확인한 자료", value: id === "B02" ? "800m · 2:08" : id === "C02" ? "기록된 훈련 · 3회" : "당시 목표 · 200m 32초", source: "합성 시험 자료" }], paragraphs: [], limitations: [] }))
   render(<OracleProfileExperience {...props({ readTopic, answers: { STRUCTURE_1: 5, STRUCTURE_2: 5, STRUCTURE_3: 5 }, selectedCharacter: "STRUCTURE" })} />)
   openSettings()
-  let manager = within(screen.getByRole("complementary", { name: "더 읽어보기" }))
-  fireEvent.click(manager.getByRole("button", { name: "내 기록 해설" }))
+  openManagerReading("B02")
   expect(readTopic).toHaveBeenLastCalledWith("B02", { STRUCTURE_1: 5, STRUCTURE_2: 5, STRUCTURE_3: 5 })
   expect(within(dialog()).getByText("800m · 2:08")).toBeInTheDocument()
   fireEvent.click(within(dialog()).getByRole("button", { name: "닫기", hidden: true }))
+  fireEvent.click(screen.getByRole("button", { name: "취향" }))
   expect(screen.getByRole("heading", { name: "계획을 즐기는 러너" })).toBeVisible()
   openSettings()
-  manager = within(screen.getByRole("complementary", { name: "더 읽어보기" }))
-  fireEvent.click(manager.getByRole("button", { name: "계획·수행 비교" }))
+  openManagerReading("C07")
   expect(readTopic).toHaveBeenLastCalledWith("C07", { STRUCTURE_1: 5, STRUCTURE_2: 5, STRUCTURE_3: 5 })
   expect(within(dialog()).getByText("당시 목표 · 200m 32초")).toBeInTheDocument()
   fireEvent.click(within(dialog()).getByRole("button", { name: "닫기", hidden: true }))
   openSettings()
-  manager = within(screen.getByRole("complementary", { name: "더 읽어보기" }))
-  fireEvent.click(manager.getByRole("button", { name: "내 훈련 해설" }))
+  openManagerReading("C02")
   expect(readTopic).toHaveBeenLastCalledWith("C02", { STRUCTURE_1: 5, STRUCTURE_2: 5, STRUCTURE_3: 5 })
   expect(within(dialog()).getByText("기록된 훈련 · 3회")).toBeInTheDocument()
 })
@@ -337,8 +351,7 @@ it("does not invent a personal training analysis for an empty or loading profile
   expect(screen.getByRole("button", { name: "내 훈련 방식 알아보기 · 질문 3개" })).toBeVisible()
   expect(screen.queryByRole("meter")).toBeNull()
   openSettings()
-  const manager = within(screen.getByRole("complementary", { name: "더 읽어보기" }))
-  fireEvent.click(manager.getByRole("button", { name: "계획·수행 비교" }))
+  openManagerReading("C07")
   expect(within(dialog()).getByText("입력한 자료가 없어요.")).toBeInTheDocument()
   expect(within(dialog()).queryByText(/체력|능력.*점|회복력/)).toBeNull()
   fireEvent.click(within(dialog()).getByRole("button", { name: "닫기", hidden: true }))
@@ -385,7 +398,7 @@ it("describes a loading account without hiding its status", () => {
   render(<OracleProfileExperience {...props({ account: true, status: "LOADING" })} />)
   expect(screen.getByText("계정에서 불러오는 중").closest("details")).toBeNull()
   openSettings()
-  expect(screen.getByRole("complementary", { name: "더 읽어보기" })).toBeVisible()
+  expect(screen.getByRole("complementary", { name: "읽을거리" })).toBeVisible()
   expect(screen.getByText("계정에서 불러오는 중")).toBeVisible()
 })
 it("keeps the response-based result and its answer evidence together", () => {

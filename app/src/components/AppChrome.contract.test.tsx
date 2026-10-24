@@ -32,7 +32,7 @@ describe("AppChrome tab labels", () => {
     expect(onTab).not.toHaveBeenCalled()
     expect(record).not.toHaveAttribute("aria-current")
     expect(within(tabBar).getByRole("button", { name: "홈" })).toHaveAttribute("aria-current", "page")
-    expect(within(tabBar).getByRole("button", { name: "홈" }).querySelector("svg")).toHaveAttribute("width", "20")
+    expect(within(tabBar).getByRole("button", { name: "홈" }).querySelector("svg")).toHaveAttribute("width", "22")
   })
 })
 

@@ -7,14 +7,14 @@ test.use({ serviceWorkers: "block" })
 test("precision choices stay readable and save only after the chosen candidate starts", async ({ page }, info) => {
   await page.goto("/?app=1&uitest=1")
   await page.getByRole("button", { name: "훈련 계획 받기", exact: true }).click()
-  await page.getByRole("button", { name: "기록·일정까지 정밀하게 설정", exact: true }).click()
+  await page.getByRole("button", { name: "직접 설정", exact: true }).click()
   await enterPlanWithoutRecord(page)
   const answer = async (name: string | RegExp) => {
     const button = page.getByRole("button", { name, exact: typeof name === "string" })
     await button.focus()
     await button.press("Enter")
   }
-  await expect(page.getByRole("navigation", { name: "정밀 설정 장 이동" })).toBeVisible()
+  await expect(page.getByRole("navigation", { name: "직접 설정 목차 이동" })).toBeVisible()
   await page.screenshot({ path: info.outputPath("precision-question.png"), fullPage: true })
   await answer(/빠른 훈련과 쉬운 훈련을 나눠 꾸준히 해왔어요/u)
   await answer("날짜 없이 계속")

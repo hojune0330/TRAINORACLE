@@ -6,6 +6,8 @@ import { ShellToastHostProvider, ShellToastOutlet } from "./ShellToastHost"
 import { JournalSaveResult } from "./JournalSaveResult"
 import { useCalendarMotion } from "../hooks/useCalendarMotion"
 import type { SavedPetJournalRef } from "../domain/pet-journal-progress"
+import { DomainDock } from "./DomainNavigation"
+import type { DomainDockState } from "./DomainNavigation"
 
 export type ShellToastState = {
   readonly count: number
@@ -67,6 +69,7 @@ export function AppShellFrame({
   onTab,
   onStartRecording,
   hideTabBar = false,
+  domainDock,
   wideTask = false,
   wideResults = false,
 }: {
@@ -84,6 +87,7 @@ export function AppShellFrame({
   readonly onTab: (tab: AppTab) => void
   readonly onStartRecording?: () => void
   readonly hideTabBar?: boolean
+  readonly domainDock?: { readonly state: DomainDockState; readonly hasOrigin: boolean; readonly onExit: () => void }
   readonly wideTask?: boolean
   readonly wideResults?: boolean
 }) {
@@ -148,7 +152,9 @@ export function AppShellFrame({
             />
           </ShellToastOutlet>
         )}
-        {!hideTabBar && !showResult && <TabBar tab={tab} onTab={onTab} onStartRecording={onStartRecording ?? (() => onTab("log"))} />}
+        {!hideTabBar && !showResult && (domainDock
+          ? <DomainDock {...domainDock} />
+          : <TabBar tab={tab} onTab={onTab} onStartRecording={onStartRecording ?? (() => onTab("log"))} />)}
       </div>
       </InlineJournalSaveResultContext.Provider>
     </ShellToastHostProvider>

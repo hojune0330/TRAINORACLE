@@ -116,7 +116,7 @@ describe("AppShell journal archive routing", () => {
 
     await user.click(within(screen.getByRole("navigation", { name: "주 탭" })).getByRole("button", { name: "일지" }))
     await user.click(await screen.findByRole("button", { name: /^2026년 7월 훈련 후/u }))
-    await user.click(within(screen.getByRole("navigation", { name: "주 탭" })).getByRole("button", { name: "일지" }))
+    await user.click(within(screen.getByRole("navigation", { name: "일지 메뉴" })).getByRole("button", { name: "일지" }))
 
     expect(await screen.findByRole("heading", { name: "2026년 7월", level: 1 })).toBeVisible()
     expect(screen.getByRole("grid", { name: "2026년 7월 달력" })).toBeVisible()
@@ -214,12 +214,12 @@ describe("AppShell journal archive routing", () => {
     await user.click(screen.getByRole("button", { name: "더보기" }))
     await user.click(await screen.findByRole("button", { name: "백업·복원·휴지통" }))
     const exportButton = await screen.findByRole("button", {
-      name: /내 일지 데이터 내려받기/u,
+      name: /일지 백업/u,
       description: /메모 원문.*제외/u,
     })
     expect(exportButton).toBeVisible()
 
-    await user.click(await screen.findByRole("button", { name: /메모 포함 파일 내보내기/u }))
+    await user.click(await screen.findByRole("button", { name: /메모까지 백업/u }))
     expect(await screen.findByRole("dialog", { name: "메모까지 포함할까요?" })).toBeVisible()
   })
 

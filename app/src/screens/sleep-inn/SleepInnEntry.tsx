@@ -229,12 +229,17 @@ function PetSourceJournalReader({ date, entryId, onBack, exitRef }: {
 }
 
 /** Mount-time date selection: midnight never silently moves an already opened game. */
-export function SleepInnLoungeEntry({ onJournalSaved, initialOpen = false, onOpened }: {
+export function SleepInnLoungeEntry({ onJournalSaved, initialOpen = false, onOpened, onVisibilityChange }: {
   onJournalSaved?: ((entry: JournalEntry) => void) | undefined
   initialOpen?: boolean
   onOpened?: (() => void) | undefined
+  onVisibilityChange?: ((visible: boolean) => void) | undefined
 }) {
   const [date, setDate] = React.useState<string | null>(() => hasSleepInnInviteFragment() || initialOpen ? todayISO() : null)
+  React.useLayoutEffect(() => {
+    onVisibilityChange?.(date !== null)
+    return () => onVisibilityChange?.(false)
+  }, [date, onVisibilityChange])
   React.useEffect(() => { if (date) onOpened?.() }, [date, onOpened])
   return <>
     <button type="button" className="game-lounge__game" onClick={() => setDate(todayISO())}>

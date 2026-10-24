@@ -62,7 +62,8 @@ afterEach(() => { cleanup(); setActiveLocalAccount(null); vi.unstubAllEnvs(); vi
 
 async function openProfile() {
   const user = userEvent.setup()
-  await user.click(screen.getByRole("button", { name: "오라클" }))
+  const globalEntry = screen.queryByRole("button", { name: "오라클" })
+  if (globalEntry) await user.click(globalEntry)
   await user.click(await screen.findByRole("button", { name: "Open profile" }))
 }
 it.each(["?app=1&oracleV2=1", "?app=1&account=1", "?app=1#return"])("keeps the home introduction out of direct entry %s", query => {

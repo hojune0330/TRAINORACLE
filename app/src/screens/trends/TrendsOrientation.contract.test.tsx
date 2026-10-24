@@ -1,17 +1,18 @@
 import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
+import { cleanup, fireEvent, screen, within } from "@testing-library/react"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { Trends } from "../Trends"
+import { renderWithDomainNavigation as render } from "../../test/DomainNavigationTestFrame"
 
 beforeEach(async () => { localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture() })
 afterEach(() => { cleanup(); vi.unstubAllEnvs() })
 
-it("keeps the section navigation ahead of state-specific content without inventing a first-visit result", () => {
+it("keeps domain navigation separate from state-specific content without inventing a first-visit result", () => {
   const write = vi.fn()
   const { container } = render(<Trends onWriteLog={write} />)
   const title = screen.getByRole("heading", { name: "내 훈련 살펴보기", level: 2 })
-  const navigation = screen.getByRole("navigation", { name: "오라클 항목" })
-  expect(navigation.compareDocumentPosition(title) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
+  const navigation = screen.getByRole("navigation", { name: "오라클 메뉴" })
+  expect(title.compareDocumentPosition(navigation) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
   expect(container.querySelectorAll(".trends-hub__guide img")).toHaveLength(1)
   expect(container.querySelector(".trends-hub__guide img")).toHaveAttribute("alt", "")
   expect(container.querySelector(".trends-hub__guide img")).toHaveAttribute("src", expect.stringContaining("analysis-lens-v2.webp"))
@@ -20,12 +21,12 @@ it("keeps the section navigation ahead of state-specific content without inventi
   expect(write).toHaveBeenCalledOnce()
 })
 
-it("keeps a fixed check slot on Oracle destinations and analysis choices", () => {
+it("omits checks on navigation while preserving checked analysis choices", () => {
   render(<Trends />)
-  const destinations = screen.getByRole("navigation", { name: "오라클 항목" })
-  expect(within(destinations).getAllByRole("button")).toHaveLength(3)
+  const destinations = screen.getByRole("navigation", { name: "오라클 메뉴" })
+  expect(within(destinations).getAllByRole("button")).toHaveLength(4)
   for (const button of within(destinations).getAllByRole("button")) {
-    expect(button.querySelector(":scope > .oracle-section-nav__check")).toBeInTheDocument()
+    expect(button.querySelector(".lucide-check")).toBeNull()
   }
   const reading = within(destinations).getByRole("button", { name: "읽을거리" })
   expect(reading).toHaveTextContent("읽을거리")
@@ -83,7 +84,7 @@ it("keeps unfinished reads visible without inviting users into imaginary results
 
 it("gives legacy in-page destinations their own title instead of leaving an analysis heading over them", () => {
   render(<Trends onOpenOracle={vi.fn()} onOpenRecordReading={vi.fn()} />)
-  fireEvent.click(screen.getByRole("button", { name: "러닝 취향" }))
+  fireEvent.click(screen.getByRole("button", { name: "취향" }))
   expect(screen.getByRole("heading", { name: "최고기록 살펴보기", level: 2 })).toBeVisible()
   expect(screen.queryByRole("heading", { name: "내 훈련 살펴보기" })).toBeNull()
   fireEvent.click(screen.getByRole("button", { name: "읽을거리" }))

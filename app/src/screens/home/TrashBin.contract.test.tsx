@@ -162,7 +162,7 @@ describe("안전 백업 누락 안내 (F-3)", () => {
   it("전부 남기는 방법(메모 포함 파일)을 같은 자리에서 안내한다", () => {
     store(memoOnly("m1"))
     render(<SafeJournalExport />)
-    expect(screen.getByTestId("safe-export-skipped").textContent).toContain("메모 포함 파일 내보내기")
+    expect(screen.getByTestId("safe-export-skipped").textContent).toContain("메모까지 백업")
   })
 
   it("포함/전체 개수를 함께 보여준다 — 숫자가 실제와 맞는다", () => {

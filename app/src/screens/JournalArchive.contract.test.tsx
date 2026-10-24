@@ -1,5 +1,6 @@
 import React from "react"
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, screen } from "@testing-library/react"
+import { renderWithDomainNavigation as render } from "../test/DomainNavigationTestFrame"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { JournalEntry } from "../domain/journal-schema"
@@ -193,7 +194,7 @@ describe("journal archive surface", () => {
       fireEvent.click(screen.getByRole("button", { name: "일지 다시 불러오기" }))
       expect(retry).toHaveBeenCalledOnce()
     }
-    fireEvent.click(screen.getByRole("button", { name: "홈으로" }))
+    fireEvent.click(screen.getByRole("button", { name: "일지 나가기" }))
     expect(back).toHaveBeenCalledOnce()
   })
 
@@ -262,22 +263,22 @@ describe("journal archive surface", () => {
     render(<JournalArchive entries={ENTRIES} selection={{ selectedMonth: null, selectedWeekStart: null }}
       onSelectionChange={vi.fn()} onOpenDay={vi.fn()} onBack={vi.fn()} onWriteLog={onWriteLog} />)
 
-    const contentChoices = screen.getByRole("group", { name: "일지와 몸 기록" })
+    const contentChoices = screen.getByRole("navigation", { name: "일지 메뉴" })
     expect(contentChoices.querySelectorAll(".category-choice__check")).toHaveLength(0)
-    expect(screen.getByRole("button", { name: "일지" })).toHaveAttribute("aria-pressed", "true")
-    expect(screen.getByRole("button", { name: "몸 기록" })).toHaveAttribute("aria-pressed", "false")
+    expect(screen.getByRole("button", { name: "일지" })).toHaveAttribute("aria-current", "page")
+    expect(screen.getByRole("button", { name: "몸 기록" })).not.toHaveAttribute("aria-current")
     expect(screen.getByRole("radiogroup", { name: "일지 보기 방식" })).toBeVisible()
     expect(screen.getByRole("radio", { name: "월간 달력" })).toHaveAttribute("data-state", "checked")
     expect(screen.getByRole("radio", { name: "월간 달력" })).toHaveTextContent("달력")
     expect(screen.getByRole("radio", { name: "월간 달력" })).not.toHaveTextContent("월간")
     expect(screen.getByRole("radio", { name: "기록 묶음" })).toHaveTextContent("묶음")
-    expect(screen.getByRole("button", { name: "새 일지 작성" })).toBeVisible()
+    expect(screen.getByRole("button", { name: "기록하기" })).toBeVisible()
 
     await user.click(screen.getByRole("radio", { name: "기록 묶음" }))
     expect(screen.getByRole("radio", { name: "기록 묶음" })).toHaveAttribute("data-state", "checked")
-    expect(screen.queryByRole("button", { name: "새 일지 작성" })).toBeNull()
+    expect(screen.getByRole("button", { name: "기록하기" })).toBeVisible()
     await user.click(screen.getByRole("button", { name: "월간 달력으로" }))
-    await user.click(screen.getByRole("button", { name: "새 일지 작성" }))
+    await user.click(screen.getByRole("button", { name: "기록하기" }))
     expect(onWriteLog).toHaveBeenCalledOnce()
   })
 

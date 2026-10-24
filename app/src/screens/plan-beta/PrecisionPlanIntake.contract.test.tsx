@@ -24,6 +24,7 @@ describe("precision plan intake", () => {
 
     expect(screen.getByRole("heading", { name: "지금까지 어떻게 달려왔나요?" })).toBeVisible()
     await user.click(screen.getByRole("button", { name: "설정 목차" }))
+    expect(screen.getByRole("heading", { name: "기록·일정 직접 설정" })).toBeVisible()
     await user.click(screen.getByRole("button", { name: "훈련 구성 설정 열기" }))
     await user.click(screen.getByRole("button", { name: /혼합 훈련 기본값/u }))
     expect(onDraftChange).toHaveBeenCalledWith(

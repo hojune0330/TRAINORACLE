@@ -12,8 +12,10 @@
 }
 
 .journal-archive__header--with-write {
-  grid-template-columns: var(--app-touch-min) minmax(0, 1fr) var(--app-touch-min);
+  grid-template-columns: minmax(0, 1fr) auto;
 }
+.journal-archive__header:has(.journal-archive__back) { grid-template-columns: auto minmax(0, 1fr) auto; }
+.journal-archive .journal-archive__header-write { width: auto; min-width: var(--app-touch-min); min-height: var(--app-touch-min); height: auto; padding: var(--space-2); display: inline-flex; gap: var(--space-1); justify-content: center; font: 500 var(--fs-caption) / 1.5 var(--sans); justify-self: end; }
 
 .journal-archive__back,
 .journal-archive__header-write {

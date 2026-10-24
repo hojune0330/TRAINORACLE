@@ -24,11 +24,20 @@ afterEach(() => {
 })
 
 describe("race form staged flow", () => {
+  it("anchors the compact header to the selected date and actual before/after mode", () => {
+    render(<RaceForm targetDate="2026-09-13" />)
+    expect(screen.getByRole("heading", { name: "경기 전 점검" })).toBeVisible()
+    expect(document.querySelector('time[datetime="2026-09-13"]')).toHaveTextContent("2026·09·13 SUN")
+    expect(screen.queryByText(/D-0|RACE DAY|오늘의 경기|이 날짜의 경기|\d{2}:\d{2}/)).toBeNull()
+    fireEvent.click(screen.getByRole("button", { name: "경기 직후" }))
+    expect(screen.getByRole("heading", { name: "경기 후 기록" })).toBeVisible()
+    expect(document.querySelector('time[datetime="2026-09-13"]')).toHaveTextContent("2026·09·13 SUN")
+  })
   it("moves new race details to a review, preserves both stages, and saves only from review", async () => {
     const onDone = vi.fn()
     render(<RaceForm targetDate="2026-09-13" onDone={onDone} />)
 
-    expect(screen.getByRole("heading", { name: "경기 정보를 적어요" })).toBeVisible()
+    expect(screen.getByRole("heading", { name: "경기 전 점검" })).toBeVisible()
     expect(screen.queryByLabelText("경기 메모")).toBeNull()
     fireEvent.click(screen.getByRole("button", { name: "지금 입력 확인" }))
     expect(screen.getByRole("region", { name: "저장 전 입력 확인" })).toHaveTextContent("경기 직전")
@@ -107,7 +116,7 @@ describe("race form staged flow", () => {
     fireEvent.click(screen.getByRole("button", { name: "지금 입력 확인" }))
     fireEvent.click(screen.getByRole("button", { name: /^저장/u }))
 
-    expect(screen.getByRole("heading", { name: "경기 정보를 적어요" })).toBeVisible()
+    expect(screen.getByRole("heading", { name: "경기 전 점검" })).toBeVisible()
     expect(screen.getByRole("button", { name: "경기 직전" })).toHaveAttribute("aria-pressed", "true")
     expect(screen.getByRole("alert")).toHaveTextContent("초는 0부터 59까지")
     expect(onDone).not.toHaveBeenCalled()

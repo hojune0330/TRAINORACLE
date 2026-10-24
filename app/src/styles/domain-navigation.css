@@ -1,0 +1,33 @@
+.app-tab-bar.app-navigation-dock {
+  box-sizing: border-box;
+  width: calc(100% - 24px);
+  max-width: calc(var(--app-shell-max-width) - 24px);
+  margin: 0 12px 12px;
+  padding: 4px 4px calc(4px + env(safe-area-inset-bottom, 0px));
+  grid-template-columns: repeat(var(--dock-columns, 5), minmax(0, 1fr));
+  border: var(--bw-line) solid var(--hair);
+  border-radius: var(--r-task-surface);
+  background: var(--surface);
+  gap: 4px;
+}
+.app-navigation-dock .app-tab-bar__button {
+  min-width: 44px;
+  min-height: 64px;
+  padding: 8px 4px;
+  border-radius: var(--r-action);
+  transition: background-color 160ms ease-out, color 160ms ease-out;
+}
+.app-navigation-dock .app-tab-bar__button > svg { flex: 0 0 22px; }
+.app-navigation-dock .app-tab-bar__button span {
+  font-family: var(--sans);
+  font-size: var(--fs-caption);
+  line-height: 1.4;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+.app-navigation-dock .app-tab-bar__button[data-active="true"] { background: var(--category-wash, var(--surface-2)); }
+.app-navigation-dock .app-tab-bar__button[data-active="true"]::before { content: none; }
+.app-navigation-dock .app-tab-bar__button[data-active="true"] svg { animation: none; }
+.app-navigation-dock .app-navigation-dock__exit { color: var(--ink-2); }
+.app-shell[data-reduced-motion="true"] .app-navigation-dock .app-tab-bar__button { transition: none; }
+@media (prefers-reduced-motion: reduce) { .app-navigation-dock .app-tab-bar__button { transition: none; } }
