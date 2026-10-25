@@ -1362,6 +1362,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
         onOpenRecords={() => openOverlay({ kind: "athlete-records" })}
         onOpenImport={openImport}
         onOpenPlan={() => goTab("plan")}
+        onOpenJournal={() => startRecording("quick-session")}
         onOpenAnalysis={() => goTab("trends")}
         onOpenFeedback={() => openOverlay({ kind: "feedback" })}
         onOpenAccount={accountEnabled ? () => runViewTransition("push", () => setV(s => ({ ...s, accountOpen: true }))) : undefined}

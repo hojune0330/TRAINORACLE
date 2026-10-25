@@ -1,5 +1,5 @@
 import React from "react"
-import { ArrowLeft, BookOpen, Calculator, CalendarDays, ChartNoAxesCombined, CircleHelp, CircleUserRound, Compass, DatabaseBackup, Flag, Gamepad2, Heart, Info, LibraryBig, MessageSquareText, NotebookPen, ScrollText, ShieldCheck, Sticker, Trash2, Watch } from "lucide-react"
+import { ArrowLeft, BookOpen, Calculator, ChartNoAxesCombined, CircleHelp, CircleUserRound, Compass, DatabaseBackup, Flag, Gamepad2, Heart, Info, LibraryBig, MessageSquareText, NotebookPen, ScrollText, ShieldCheck, Sticker, Trash2, Watch } from "lucide-react"
 import { AppHeading } from "../components/AppHeading"
 import { MenuAction } from "../components/MenuAction"
 import { DataSafetyNotice } from "../components/DataSafetyNotice"
@@ -11,7 +11,7 @@ import { loadTrash } from "../domain/journal-trash"
 import "../styles/home-menu.css"
 import { captureReaderPosition, restoreReaderPosition, type ReaderPosition } from "../navigation/readerPosition"
 import { useNavigationReturnFrame } from "../hooks/useNavigationReturnFrame"
-import { HomeIdentityArtwork } from "./home/HomeIntroduction"
+import { AppIntroduction } from "./AppIntroduction"
 
 export type MoreView = "tools" | "learning" | "account" | "backup" | "about" | "introduction"
 
@@ -40,6 +40,7 @@ export type MoreProps = {
   readonly onOpenRecords?: () => void
   readonly onOpenImport?: () => void
   readonly onOpenPlan?: () => void
+  readonly onOpenJournal?: () => void
   readonly onOpenAnalysis?: () => void
 }
 
@@ -63,6 +64,7 @@ export function More({
   onOpenRecords,
   onOpenImport,
   onOpenPlan,
+  onOpenJournal,
   onOpenAnalysis,
 }: MoreProps) {
   const [internalView, setInternalView] = React.useState<MoreView>("tools")
@@ -74,9 +76,13 @@ export function More({
   const { schedule } = useNavigationReturnFrame()
   const readerRegion = () => heading.current?.closest<HTMLElement>(".app-scroll-region") ?? heading.current?.closest<HTMLElement>(".more-screen") ?? null
   const changeView = (next: MoreView) => {
-    if (activeView === "tools" && next !== "tools") menuReturn.current = captureReaderPosition(readerRegion())
+    const region = readerRegion()
+    if (activeView === "tools" && next !== "tools") menuReturn.current = captureReaderPosition(region)
     setInternalView(next)
     onViewChange?.(next)
+    // Both menu and shell must capture the opener before a new introduction starts at the top.
+    // Returning from a destination does not call this entry action, so it keeps the reader's place.
+    if (activeView === "tools" && next === "introduction" && region) region.scrollTop = 0
   }
   React.useEffect(() => {
     if (previousView.current === activeView) return
@@ -128,14 +134,11 @@ export function More({
           <MenuAction icon={Info} label={VIEW_TITLES.about} onClick={() => changeView("about")} />
         </MenuGroup>
         </>}
-        {activeView === "introduction" && <section className="more-screen__introduction" aria-labelledby="app-introduction-purpose">
-          <HomeIdentityArtwork size={64} />
-          <AppHeading as="h2" variant="section" id="app-introduction-purpose">운동을 분석하고 <br />훈련 계획을 세워요</AppHeading>
-          <nav aria-label="앱의 주요 기능">
-            {onOpenPlan && <MenuAction category="training" icon={CalendarDays} label="훈련 계획 보기" onClick={onOpenPlan} />}
-            {onOpenAnalysis && <MenuAction category="oracle" icon={ChartNoAxesCombined} label="운동 분석 보기" onClick={onOpenAnalysis} />}
-          </nav>
-        </section>}
+        {activeView === "introduction" && <AppIntroduction
+          onOpenPlan={onOpenPlan} onOpenJournal={onOpenJournal} onOpenRewards={onOpenRewards}
+          onOpenAnalysis={onOpenAnalysis} onOpenPaceCalculator={onOpenPaceCalculator}
+          onOpenMinigame={onOpenMinigame}
+        />}
         {activeView === "learning" && <>
         <MenuGroup title="예시와 읽을거리">
           <MenuAction category="journal" icon={BookOpen} label="일지 예시 보기" onClick={onOpenMinji} />

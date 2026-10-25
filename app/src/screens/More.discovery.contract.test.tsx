@@ -14,24 +14,49 @@ it("names storage without advertising an unavailable account destination", () =>
 })
 
 it("replays the app introduction and returns to its exact opener and reader scroll", async () => {
-  const plan = vi.fn(), analysis = vi.fn()
+  const plan = vi.fn(), journal = vi.fn(), analysis = vi.fn(), decoration = vi.fn()
   render(<div className="app-scroll-region"><More onBack={vi.fn()} onOpenMinji={vi.fn()} onOpenGuide={vi.fn()}
-    onOpenPlan={plan} onOpenAnalysis={analysis} /></div>)
+    onOpenPlan={plan} onOpenJournal={journal} onOpenAnalysis={analysis} onOpenRewards={decoration} /></div>)
   const region = document.querySelector<HTMLElement>(".app-scroll-region")!
   region.scrollTop = 430
   fireEvent.click(screen.getByRole("button", { name: "앱 소개" }))
+  expect(region.scrollTop).toBe(0)
   expect(screen.getByRole("heading", { level: 1, name: "앱 소개" })).toHaveFocus()
-  expect(screen.getByRole("heading", { level: 2, name: "운동을 분석하고 훈련 계획을 세워요" })).toBeVisible()
+  expect(screen.getByRole("heading", { level: 2, name: "훈련 계획을 받아보고, 러닝 일지를 꾸며요" })).toBeVisible()
   expect(screen.queryByText(/내 기록 결과/)).toBeNull()
-  fireEvent.click(screen.getByRole("button", { name: "훈련 계획 보기" }))
-  fireEvent.click(screen.getByRole("button", { name: "운동 분석 보기" }))
-  expect(plan).toHaveBeenCalledOnce(); expect(analysis).toHaveBeenCalledOnce()
+  fireEvent.click(screen.getByRole("button", { name: "훈련 계획 받아보기" }))
+  expect(screen.getByRole("button", { name: "훈련 계획 받아보기" })).toHaveFocus()
+  fireEvent.click(screen.getByRole("button", { name: "러닝 일지 쓰기" }))
+  expect(screen.getByRole("button", { name: "러닝 일지 쓰기" })).toHaveFocus()
+  fireEvent.click(screen.getByRole("button", { name: "꾸미기 둘러보기" }))
+  fireEvent.click(screen.getByRole("button", { name: "운동 분석" }))
+  expect(plan).toHaveBeenCalledOnce(); expect(journal).toHaveBeenCalledOnce()
+  expect(analysis).toHaveBeenCalledOnce(); expect(decoration).toHaveBeenCalledOnce()
   region.scrollTop = 0
   fireEvent.click(screen.getByRole("button", { name: "더보기로 돌아가기" }))
   await waitFor(() => expect(screen.getByRole("button", { name: "앱 소개" })).toHaveFocus())
   expect(region.scrollTop).toBe(430)
   fireEvent.click(screen.getByRole("button", { name: "앱 소개" }))
   expect(screen.getByRole("heading", { name: "앱 소개", level: 1 })).toBeVisible()
+})
+
+it("keeps the introduction useful when optional destinations or artwork are unavailable", () => {
+  const pace = vi.fn(), game = vi.fn()
+  const { container } = render(<More view="introduction" onBack={vi.fn()}
+    onOpenMinji={vi.fn()} onOpenGuide={vi.fn()} onOpenPaceCalculator={pace} onOpenMinigame={game} />)
+  for (const name of ["훈련 계획 받아보기", "러닝 일지 쓰기", "꾸미기 둘러보기", "운동 분석"]) {
+    expect(screen.queryByRole("button", { name })).toBeNull()
+  }
+  expect(screen.queryByRole("navigation", { name: "앱의 주요 기능" })).toBeNull()
+  fireEvent.click(screen.getByRole("button", { name: "페이스 계산기" }))
+  fireEvent.click(screen.getByRole("button", { name: "게임 라운지" }))
+  expect(pace).toHaveBeenCalledOnce(); expect(game).toHaveBeenCalledOnce()
+  const artwork = container.querySelector(".app-introduction__art")!
+  expect(artwork).toHaveAttribute("alt", "")
+  fireEvent.error(artwork)
+  expect(container.querySelector(".app-introduction__art")).toBeNull()
+  expect(screen.getByRole("heading", { name: "일지도 내 취향대로" })).toBeVisible()
+  expect(screen.getByRole("button", { name: "게임 라운지" })).toBeVisible()
 })
 
 it("restores the management opener and scroll when returning to More", async () => {

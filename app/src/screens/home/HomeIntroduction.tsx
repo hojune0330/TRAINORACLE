@@ -41,7 +41,7 @@ export function HomeIdentityArtwork({ size = 48 }: { readonly size?: 48 | 64 }) 
 /** A one-time, optional line after today's actions, never an opening gate or result. */
 export function HomeIntroduction({ onDismiss }: { readonly onDismiss: () => void }) {
   return <section className="home-hub__introduction" aria-label="앱 소개">
-    <p>운동 기록을 분석하고 훈련 계획을 세우는 앱이에요.</p>
+    <p>훈련 계획을 받아보고, 러닝 일지를 꾸며요.</p>
     <button type="button" onClick={onDismiss} aria-label="앱 소개 닫기" title="소개 닫기"><X size={18} aria-hidden="true" /></button>
   </section>
 }
