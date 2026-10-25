@@ -34,8 +34,9 @@ test("creates a mobile marathon beta plan without inventing pace numbers", async
   await expect(page.getByText("마라톤").first()).toBeVisible()
   const candidateA = page.getByRole("article", { name: "계획 A" })
   await candidateA.getByText("계획안 A 세부 정보", { exact: true }).click()
-  await expect(page.getByRole("region", { name: "선택한 계획 요약", exact: true })
-    .getByText("시간·힘든 정도로 훈련", { exact: true })).toBeVisible()
+  const summary = page.getByRole("region", { name: "선택한 계획 요약", exact: true })
+  await expect(summary.getByText("주요 훈련 없음 · 훈련 5회", { exact: true })).toBeVisible()
+  await expect(summary.getByRole("heading", { name: "첫 주요 훈련", exact: true })).toHaveCount(0)
   await expect(page.getByText(/@(?:10km|하프|마라톤).*RP/u)).toHaveCount(0)
   await expect.poll(() => page.locator(".app-scroll-region").evaluate(
     (element) => element.scrollWidth <= element.clientWidth,
@@ -45,6 +46,7 @@ test("creates a mobile marathon beta plan without inventing pace numbers", async
   await page.getByRole("button", { name: "훈련 방법과 이유", exact: true }).first().click()
   const reader = page.locator(".session-explanation[open]")
   await reader.getByRole("tab", { name: "이유·근거" }).click()
+  await reader.getByText("이번 주기에서 맡는 역할", { exact: true }).click()
   await expect(reader.getByRole("paragraph").filter({ hasText: /대상 종목은 42195m/u })).toBeAttached()
   await reader.getByText("사용한 기록과 출처", { exact: true }).click()
   await expect(reader.getByText("선택한 목적·경험 수준과 훈련 구성을 사용했어요. 개인 경기 기록으로 페이스를 계산하지는 않았어요.", { exact: true })).toBeVisible()

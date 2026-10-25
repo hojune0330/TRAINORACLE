@@ -90,6 +90,7 @@ for (const legacy of [false, true]) {
     expect(await reader.locator(".session-explanation__metric").textContent()).toBe(metric)
     await reader.getByRole("tab", { name: "이유·근거" }).click()
     await expect(reader.getByText(legacy ? /복원한 것은 아니에요/u : "저장된 처방과 설명 버전이 일치해요.")).toBeVisible()
+    await reader.locator("summary").filter({ hasText: /^구성·회복의 이유와 근거$/u }).click()
     for (const heading of ["훈련 목적", "몸이 에너지를 공급하는 방식", "거리·시간·강도·반복을 이렇게 정한 이유", "회복을 이렇게 넣은 이유", "이번 주기에서 맡는 역할", "기대하는 변화와 한계", "실제로 사용한 내 정보", "연구·코칭 근거"]) {
       await expect(reader.getByRole("heading", { name: heading, exact: true })).toBeAttached()
     }

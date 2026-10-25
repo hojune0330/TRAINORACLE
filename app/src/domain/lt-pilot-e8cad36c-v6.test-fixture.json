@@ -1,0 +1,1414 @@
+{
+  "sourceCommit": "e8cad36c372cdb9588fb62109efee1e8accc5990",
+  "sourceTest": "app/src/domain/lt-pilot-runtime-v3.contract.test.tsx",
+  "state": {
+    "version": 6,
+    "selection": {
+      "kind": "SELECTED_MULTI_ADJUSTED_PLAN",
+      "schemaVersion": 3,
+      "intake": {
+        "eventGroup": "FIVE_K",
+        "eventDistanceM": 5000,
+        "competitionDivision": "NOT_PROVIDED",
+        "experienceBand": "EXPERIENCED",
+        "availableDayCount": 3,
+        "requestedFrameLength": 9,
+        "trainingFocus": "LT_INTENT",
+        "secondSessionMode": "SINGLE_SESSION_ONLY",
+        "trainingTimePreference": "VARIES",
+        "selectedDetailedTemplateRef": null,
+        "startDate": "2026-09-28"
+      },
+      "generatedAt": "2026-09-28T12:00:00.000Z",
+      "athleteEvidence": {
+        "storedRecordCount": 0,
+        "goalRecordCount": 0,
+        "recentJournalSessionCount": 0
+      },
+      "periodization": {
+        "schemaVersion": 1,
+        "programLineageId": "sha256:febb6af04043ec14f8c2a239c48fa299c08728507d5877691df2b98de6c63e40",
+        "macrocycleOrdinal": 1,
+        "frameOrdinal": 1,
+        "mesocycleOrdinal": 1,
+        "phase": "BASE",
+        "frameLengthDays": 9.5,
+        "targetFrameCount": 18,
+        "startedAt": "2026-09-28T12:00:00.000Z",
+        "frameStartedAt": "2026-09-28T12:00:00.000Z",
+        "source": "NEW_PLAN"
+      },
+      "activePlan": {
+        "kind": "BETA_ACTIVE_PLAN_SNAPSHOT",
+        "activationState": "SELECTED_BETA_SNAPSHOT",
+        "candidateId": "multi-adjusted-plan:v3:8630909a2e7b2395011a0bb2b93ef30b94ad4ee7ef9c180e3e2b3c6c78805f9a",
+        "candidateKind": "BALANCED",
+        "eventDistanceM": 5000,
+        "selectionActor": "SELF",
+        "sourceMode": "PROFILE_ONLY",
+        "selectedEnergyIntent": "LT_INTENT",
+        "frame": {
+          "formationKind": "LOCAL_CIVIL_9_5",
+          "lengthDays": 9.5,
+          "slotCount": 19,
+          "projectionLengthDays": 9,
+          "continuity": {
+            "kind": "STANDARD_FRAME"
+          }
+        },
+        "sessions": [
+          {
+            "day": 1,
+            "slot": "AM",
+            "role": "EASY",
+            "plannedEnergyIntent": "BASE_INTENT",
+            "prescription": {
+              "kind": "RPE_TIME_RANGE",
+              "rpe": {
+                "minimum": 3,
+                "maximum": 4
+              },
+              "durationMinutes": {
+                "minimum": 35,
+                "maximum": 60
+              }
+            }
+          },
+          {
+            "day": 2,
+            "slot": "AM",
+            "role": "REST",
+            "plannedEnergyIntent": "RECOVERY_INTENT",
+            "prescription": {
+              "kind": "REST"
+            }
+          },
+          {
+            "day": 3,
+            "slot": "AM",
+            "role": "REST",
+            "plannedEnergyIntent": "RECOVERY_INTENT",
+            "prescription": {
+              "kind": "REST"
+            }
+          },
+          {
+            "day": 4,
+            "slot": "AM",
+            "role": "REST",
+            "plannedEnergyIntent": "RECOVERY_INTENT",
+            "prescription": {
+              "kind": "REST"
+            }
+          },
+          {
+            "day": 5,
+            "slot": "AM",
+            "role": "QUALITY",
+            "plannedEnergyIntent": "LT_INTENT",
+            "prescription": {
+              "kind": "ADJUSTED_METHOD_V3",
+              "snapshot": {
+                "kind": "ADJUSTED_METHOD_SNAPSHOT",
+                "schemaVersion": 3,
+                "capturedAtMs": 1790596800000,
+                "scope": {
+                  "candidateLineageId": "sha256:da4df8a19a49ce820bef9bed92800803fc8fbba0edce56bf2ac6b16811f16c2e",
+                  "mainSlotId": "sha256:42010b82760898af2a26292b367a0c8c96a5eb6ce905f74117748ac8e63e5ee1"
+                },
+                "original": {
+                  "configuration": {
+                    "familyId": "TO-LT-PILOT-INTERNAL",
+                    "configurationId": "BASELINE",
+                    "version": "1.0.0",
+                    "contentIdentity": "sha256:69acb9a8c219f6c2a147eaf3501d2df1e6da5832b5360dab0d6f67228a7cec11"
+                  },
+                  "sequence": {
+                    "kind": "PRESCRIPTION_SEQUENCE",
+                    "version": 3,
+                    "id": "TO-LT-PILOT-INTERNAL-BASELINE",
+                    "label": "기존 시간·RPE 범위",
+                    "warmup": [
+                      {
+                        "kind": "segment",
+                        "id": "warmup-0",
+                        "label": "편안한 준비 조깅",
+                        "repeatCount": 1,
+                        "recoveryBetweenRepeats": [],
+                        "recoveryAfter": [],
+                        "role": "PREPARATION",
+                        "work": {
+                          "kind": "duration",
+                          "distanceM": null,
+                          "durationSeconds": 900
+                        },
+                        "target": {
+                          "kind": "EFFORT_GUIDANCE",
+                          "cue": "RPE 2-3"
+                        }
+                      },
+                      {
+                        "kind": "segment",
+                        "id": "warmup-1",
+                        "label": "점진적 가속",
+                        "repeatCount": 1,
+                        "recoveryBetweenRepeats": [],
+                        "recoveryAfter": [
+                          {
+                            "mode": "WALK",
+                            "seconds": 40
+                          }
+                        ],
+                        "role": "BUILDUP",
+                        "work": {
+                          "kind": "duration",
+                          "distanceM": null,
+                          "durationSeconds": 20
+                        },
+                        "target": {
+                          "kind": "EFFORT_GUIDANCE",
+                          "cue": "점진적으로 속도를 올리되 전력질주하지 않기"
+                        }
+                      },
+                      {
+                        "kind": "segment",
+                        "id": "warmup-3",
+                        "label": "점진적 가속",
+                        "repeatCount": 1,
+                        "recoveryBetweenRepeats": [],
+                        "recoveryAfter": [
+                          {
+                            "mode": "WALK",
+                            "seconds": 40
+                          }
+                        ],
+                        "role": "BUILDUP",
+                        "work": {
+                          "kind": "duration",
+                          "distanceM": null,
+                          "durationSeconds": 20
+                        },
+                        "target": {
+                          "kind": "EFFORT_GUIDANCE",
+                          "cue": "점진적으로 속도를 올리되 전력질주하지 않기"
+                        }
+                      },
+                      {
+                        "kind": "segment",
+                        "id": "warmup-5",
+                        "label": "점진적 가속",
+                        "repeatCount": 1,
+                        "recoveryBetweenRepeats": [],
+                        "recoveryAfter": [
+                          {
+                            "mode": "WALK",
+                            "seconds": 40
+                          }
+                        ],
+                        "role": "BUILDUP",
+                        "work": {
+                          "kind": "duration",
+                          "distanceM": null,
+                          "durationSeconds": 20
+                        },
+                        "target": {
+                          "kind": "EFFORT_GUIDANCE",
+                          "cue": "점진적으로 속도를 올리되 전력질주하지 않기"
+                        }
+                      },
+                      {
+                        "kind": "segment",
+                        "id": "warmup-7",
+                        "label": "점진적 가속",
+                        "repeatCount": 1,
+                        "recoveryBetweenRepeats": [],
+                        "recoveryAfter": [
+                          {
+                            "mode": "WALK",
+                            "seconds": 60
+                          }
+                        ],
+                        "role": "BUILDUP",
+                        "work": {
+                          "kind": "duration",
+                          "distanceM": null,
+                          "durationSeconds": 20
+                        },
+                        "target": {
+                          "kind": "EFFORT_GUIDANCE",
+                          "cue": "점진적으로 속도를 올리되 전력질주하지 않기"
+                        }
+                      }
+                    ],
+                    "main": [
+                      {
+                        "kind": "segment",
+                        "id": "baseline-main",
+                        "label": null,
+                        "repeatCount": 1,
+                        "recoveryBetweenRepeats": [],
+                        "recoveryAfter": [],
+                        "role": "WORK",
+                        "work": {
+                          "kind": "duration",
+                          "distanceM": null,
+                          "durationSeconds": 1800
+                        },
+                        "target": {
+                          "kind": "EFFORT_GUIDANCE",
+                          "cue": "기존 계획 안내 RPE 5~6"
+                        }
+                      }
+                    ],
+                    "cooldown": [
+                      {
+                        "kind": "segment",
+                        "id": "cooldown-0",
+                        "label": "편안한 정리 조깅",
+                        "repeatCount": 1,
+                        "recoveryBetweenRepeats": [],
+                        "recoveryAfter": [],
+                        "role": "PREPARATION",
+                        "work": {
+                          "kind": "duration",
+                          "distanceM": null,
+                          "durationSeconds": 600
+                        },
+                        "target": {
+                          "kind": "EFFORT_GUIDANCE",
+                          "cue": "RPE 1-2"
+                        }
+                      }
+                    ]
+                  }
+                },
+                "contextKey": "sha256:ca2cd5bc7f915e86f4ce3ef442ccfc9c4285823835e7aa744662f6567202491c",
+                "receipt": {
+                  "schemaVersion": 3,
+                  "action": "USER_EXPLICIT",
+                  "appliedAtMs": 1790564400000,
+                  "contextKey": "sha256:ca2cd5bc7f915e86f4ce3ef442ccfc9c4285823835e7aa744662f6567202491c",
+                  "policy": {
+                    "policyId": "unanchored:TO-LT-PILOT-OWNER-ADOPTION",
+                    "version": "1.0.0",
+                    "contentIdentity": "sha256:138ae8e85f64a959f551eb704cdc36ff848c06cfb1586fe66c8c011191787345"
+                  },
+                  "before": {
+                    "configuration": {
+                      "familyId": "TO-LT-PILOT-INTERNAL",
+                      "configurationId": "BASELINE",
+                      "version": "1.0.0",
+                      "contentIdentity": "sha256:69acb9a8c219f6c2a147eaf3501d2df1e6da5832b5360dab0d6f67228a7cec11"
+                    },
+                    "sequence": {
+                      "kind": "PRESCRIPTION_SEQUENCE",
+                      "version": 3,
+                      "id": "TO-LT-PILOT-INTERNAL-BASELINE",
+                      "label": "기존 시간·RPE 범위",
+                      "warmup": [
+                        {
+                          "kind": "segment",
+                          "id": "warmup-0",
+                          "label": "편안한 준비 조깅",
+                          "repeatCount": 1,
+                          "recoveryBetweenRepeats": [],
+                          "recoveryAfter": [],
+                          "role": "PREPARATION",
+                          "work": {
+                            "kind": "duration",
+                            "distanceM": null,
+                            "durationSeconds": 900
+                          },
+                          "target": {
+                            "kind": "EFFORT_GUIDANCE",
+                            "cue": "RPE 2-3"
+                          }
+                        },
+                        {
+                          "kind": "segment",
+                          "id": "warmup-1",
+                          "label": "점진적 가속",
+                          "repeatCount": 1,
+                          "recoveryBetweenRepeats": [],
+                          "recoveryAfter": [
+                            {
+                              "mode": "WALK",
+                              "seconds": 40
+                            }
+                          ],
+                          "role": "BUILDUP",
+                          "work": {
+                            "kind": "duration",
+                            "distanceM": null,
+                            "durationSeconds": 20
+                          },
+                          "target": {
+                            "kind": "EFFORT_GUIDANCE",
+                            "cue": "점진적으로 속도를 올리되 전력질주하지 않기"
+                          }
+                        },
+                        {
+                          "kind": "segment",
+                          "id": "warmup-3",
+                          "label": "점진적 가속",
+                          "repeatCount": 1,
+                          "recoveryBetweenRepeats": [],
+                          "recoveryAfter": [
+                            {
+                              "mode": "WALK",
+                              "seconds": 40
+                            }
+                          ],
+                          "role": "BUILDUP",
+                          "work": {
+                            "kind": "duration",
+                            "distanceM": null,
+                            "durationSeconds": 20
+                          },
+                          "target": {
+                            "kind": "EFFORT_GUIDANCE",
+                            "cue": "점진적으로 속도를 올리되 전력질주하지 않기"
+                          }
+                        },
+                        {
+                          "kind": "segment",
+                          "id": "warmup-5",
+                          "label": "점진적 가속",
+                          "repeatCount": 1,
+                          "recoveryBetweenRepeats": [],
+                          "recoveryAfter": [
+                            {
+                              "mode": "WALK",
+                              "seconds": 40
+                            }
+                          ],
+                          "role": "BUILDUP",
+                          "work": {
+                            "kind": "duration",
+                            "distanceM": null,
+                            "durationSeconds": 20
+                          },
+                          "target": {
+                            "kind": "EFFORT_GUIDANCE",
+                            "cue": "점진적으로 속도를 올리되 전력질주하지 않기"
+                          }
+                        },
+                        {
+                          "kind": "segment",
+                          "id": "warmup-7",
+                          "label": "점진적 가속",
+                          "repeatCount": 1,
+                          "recoveryBetweenRepeats": [],
+                          "recoveryAfter": [
+                            {
+                              "mode": "WALK",
+                              "seconds": 60
+                            }
+                          ],
+                          "role": "BUILDUP",
+                          "work": {
+                            "kind": "duration",
+                            "distanceM": null,
+                            "durationSeconds": 20
+                          },
+                          "target": {
+                            "kind": "EFFORT_GUIDANCE",
+                            "cue": "점진적으로 속도를 올리되 전력질주하지 않기"
+                          }
+                        }
+                      ],
+                      "main": [
+                        {
+                          "kind": "segment",
+                          "id": "baseline-main",
+                          "label": null,
+                          "repeatCount": 1,
+                          "recoveryBetweenRepeats": [],
+                          "recoveryAfter": [],
+                          "role": "WORK",
+                          "work": {
+                            "kind": "duration",
+                            "distanceM": null,
+                            "durationSeconds": 1800
+                          },
+                          "target": {
+                            "kind": "EFFORT_GUIDANCE",
+                            "cue": "기존 계획 안내 RPE 5~6"
+                          }
+                        }
+                      ],
+                      "cooldown": [
+                        {
+                          "kind": "segment",
+                          "id": "cooldown-0",
+                          "label": "편안한 정리 조깅",
+                          "repeatCount": 1,
+                          "recoveryBetweenRepeats": [],
+                          "recoveryAfter": [],
+                          "role": "PREPARATION",
+                          "work": {
+                            "kind": "duration",
+                            "distanceM": null,
+                            "durationSeconds": 600
+                          },
+                          "target": {
+                            "kind": "EFFORT_GUIDANCE",
+                            "cue": "RPE 1-2"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "after": {
+                    "configuration": {
+                      "familyId": "TO-LT-CONTINUOUS",
+                      "configurationId": "P-LT-C",
+                      "version": "1.0.0",
+                      "contentIdentity": "sha256:56f7291e8b59718326290e022807d1024793ea6b1c3bc411df1038179c30fda4"
+                    },
+                    "sequence": {
+                      "kind": "PRESCRIPTION_SEQUENCE",
+                      "version": 3,
+                      "id": "P-LT-C",
+                      "label": "20분 연속",
+                      "warmup": [
+                        {
+                          "kind": "segment",
+                          "id": "warmup-0",
+                          "label": "편안한 준비 조깅",
+                          "repeatCount": 1,
+                          "recoveryBetweenRepeats": [],
+                          "recoveryAfter": [],
+                          "role": "PREPARATION",
+                          "work": {
+                            "kind": "duration",
+                            "distanceM": null,
+                            "durationSeconds": 900
+                          },
+                          "target": {
+                            "kind": "EFFORT_GUIDANCE",
+                            "cue": "RPE 2-3"
+                          }
+                        },
+                        {
+                          "kind": "segment",
+                          "id": "warmup-1",
+                          "label": "점진적 가속",
+                          "repeatCount": 1,
+                          "recoveryBetweenRepeats": [],
+                          "recoveryAfter": [
+                            {
+                              "mode": "WALK",
+                              "seconds": 40
+                            }
+                          ],
+                          "role": "BUILDUP",
+                          "work": {
+                            "kind": "duration",
+                            "distanceM": null,
+                            "durationSeconds": 20
+                          },
+                          "target": {
+                            "kind": "EFFORT_GUIDANCE",
+                            "cue": "점진적으로 속도를 올리되 전력질주하지 않기"
+                          }
+                        },
+                        {
+                          "kind": "segment",
+                          "id": "warmup-3",
+                          "label": "점진적 가속",
+                          "repeatCount": 1,
+                          "recoveryBetweenRepeats": [],
+                          "recoveryAfter": [
+                            {
+                              "mode": "WALK",
+                              "seconds": 40
+                            }
+                          ],
+                          "role": "BUILDUP",
+                          "work": {
+                            "kind": "duration",
+                            "distanceM": null,
+                            "durationSeconds": 20
+                          },
+                          "target": {
+                            "kind": "EFFORT_GUIDANCE",
+                            "cue": "점진적으로 속도를 올리되 전력질주하지 않기"
+                          }
+                        },
+                        {
+                          "kind": "segment",
+                          "id": "warmup-5",
+                          "label": "점진적 가속",
+                          "repeatCount": 1,
+                          "recoveryBetweenRepeats": [],
+                          "recoveryAfter": [
+                            {
+                              "mode": "WALK",
+                              "seconds": 40
+                            }
+                          ],
+                          "role": "BUILDUP",
+                          "work": {
+                            "kind": "duration",
+                            "distanceM": null,
+                            "durationSeconds": 20
+                          },
+                          "target": {
+                            "kind": "EFFORT_GUIDANCE",
+                            "cue": "점진적으로 속도를 올리되 전력질주하지 않기"
+                          }
+                        },
+                        {
+                          "kind": "segment",
+                          "id": "warmup-7",
+                          "label": "점진적 가속",
+                          "repeatCount": 1,
+                          "recoveryBetweenRepeats": [],
+                          "recoveryAfter": [
+                            {
+                              "mode": "WALK",
+                              "seconds": 60
+                            }
+                          ],
+                          "role": "BUILDUP",
+                          "work": {
+                            "kind": "duration",
+                            "distanceM": null,
+                            "durationSeconds": 20
+                          },
+                          "target": {
+                            "kind": "EFFORT_GUIDANCE",
+                            "cue": "점진적으로 속도를 올리되 전력질주하지 않기"
+                          }
+                        }
+                      ],
+                      "main": [
+                        {
+                          "kind": "group",
+                          "id": "repetitions",
+                          "label": null,
+                          "repeatCount": 1,
+                          "recoveryBetweenRepeats": [],
+                          "recoveryAfter": [],
+                          "repeatUnit": "REPETITION",
+                          "children": [
+                            {
+                              "kind": "segment",
+                              "id": "part-0",
+                              "label": null,
+                              "repeatCount": 1,
+                              "recoveryBetweenRepeats": [],
+                              "recoveryAfter": [],
+                              "role": "WORK",
+                              "work": {
+                                "kind": "duration",
+                                "distanceM": null,
+                                "durationSeconds": 1200
+                              },
+                              "target": {
+                                "kind": "EFFORT_GUIDANCE",
+                                "cue": "힘들지만 정해진 구간 동안 고르게 유지하는 노력 · 본운동 체감 제안 RPE 6~7"
+                              }
+                            }
+                          ]
+                        }
+                      ],
+                      "cooldown": [
+                        {
+                          "kind": "segment",
+                          "id": "cooldown-0",
+                          "label": "편안한 정리 조깅",
+                          "repeatCount": 1,
+                          "recoveryBetweenRepeats": [],
+                          "recoveryAfter": [],
+                          "role": "PREPARATION",
+                          "work": {
+                            "kind": "duration",
+                            "distanceM": null,
+                            "durationSeconds": 600
+                          },
+                          "target": {
+                            "kind": "EFFORT_GUIDANCE",
+                            "cue": "RPE 1-2"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "beforeTotals": {
+                    "warmup": {
+                      "repetitionBlocks": 0,
+                      "workSegments": 0,
+                      "recoverySteps": 4,
+                      "workDistanceM": 0,
+                      "buildupDistanceM": null,
+                      "preparationDistanceM": null,
+                      "workSeconds": 0,
+                      "buildupSeconds": 80,
+                      "preparationSeconds": 900,
+                      "recoverySeconds": 180,
+                      "recoveryDistanceM": null,
+                      "knownRecoverySeconds": 180,
+                      "knownRecoveryDistanceM": 0,
+                      "totalSeconds": 1160,
+                      "totalDistanceM": null
+                    },
+                    "main": {
+                      "repetitionBlocks": 1,
+                      "workSegments": 1,
+                      "recoverySteps": 0,
+                      "workDistanceM": null,
+                      "buildupDistanceM": 0,
+                      "preparationDistanceM": 0,
+                      "workSeconds": 1800,
+                      "buildupSeconds": 0,
+                      "preparationSeconds": 0,
+                      "recoverySeconds": 0,
+                      "recoveryDistanceM": 0,
+                      "knownRecoverySeconds": 0,
+                      "knownRecoveryDistanceM": 0,
+                      "totalSeconds": 1800,
+                      "totalDistanceM": null
+                    },
+                    "cooldown": {
+                      "repetitionBlocks": 0,
+                      "workSegments": 0,
+                      "recoverySteps": 0,
+                      "workDistanceM": 0,
+                      "buildupDistanceM": 0,
+                      "preparationDistanceM": null,
+                      "workSeconds": 0,
+                      "buildupSeconds": 0,
+                      "preparationSeconds": 600,
+                      "recoverySeconds": 0,
+                      "recoveryDistanceM": 0,
+                      "knownRecoverySeconds": 0,
+                      "knownRecoveryDistanceM": 0,
+                      "totalSeconds": 600,
+                      "totalDistanceM": null
+                    }
+                  },
+                  "afterTotals": {
+                    "warmup": {
+                      "repetitionBlocks": 0,
+                      "workSegments": 0,
+                      "recoverySteps": 4,
+                      "workDistanceM": 0,
+                      "buildupDistanceM": null,
+                      "preparationDistanceM": null,
+                      "workSeconds": 0,
+                      "buildupSeconds": 80,
+                      "preparationSeconds": 900,
+                      "recoverySeconds": 180,
+                      "recoveryDistanceM": null,
+                      "knownRecoverySeconds": 180,
+                      "knownRecoveryDistanceM": 0,
+                      "totalSeconds": 1160,
+                      "totalDistanceM": null
+                    },
+                    "main": {
+                      "repetitionBlocks": 1,
+                      "workSegments": 1,
+                      "recoverySteps": 0,
+                      "workDistanceM": null,
+                      "buildupDistanceM": 0,
+                      "preparationDistanceM": 0,
+                      "workSeconds": 1200,
+                      "buildupSeconds": 0,
+                      "preparationSeconds": 0,
+                      "recoverySeconds": 0,
+                      "recoveryDistanceM": 0,
+                      "knownRecoverySeconds": 0,
+                      "knownRecoveryDistanceM": 0,
+                      "totalSeconds": 1200,
+                      "totalDistanceM": null
+                    },
+                    "cooldown": {
+                      "repetitionBlocks": 0,
+                      "workSegments": 0,
+                      "recoverySteps": 0,
+                      "workDistanceM": 0,
+                      "buildupDistanceM": 0,
+                      "preparationDistanceM": null,
+                      "workSeconds": 0,
+                      "buildupSeconds": 0,
+                      "preparationSeconds": 600,
+                      "recoverySeconds": 0,
+                      "recoveryDistanceM": 0,
+                      "knownRecoverySeconds": 0,
+                      "knownRecoveryDistanceM": 0,
+                      "totalSeconds": 600,
+                      "totalDistanceM": null
+                    }
+                  },
+                  "delta": {
+                    "warmup": {
+                      "repetitionBlocks": 0,
+                      "workSegments": 0,
+                      "recoverySteps": 0,
+                      "workDistanceM": 0,
+                      "buildupDistanceM": null,
+                      "preparationDistanceM": null,
+                      "workSeconds": 0,
+                      "buildupSeconds": 0,
+                      "preparationSeconds": 0,
+                      "recoverySeconds": 0,
+                      "recoveryDistanceM": null,
+                      "knownRecoverySeconds": 0,
+                      "knownRecoveryDistanceM": 0,
+                      "totalSeconds": 0,
+                      "totalDistanceM": null
+                    },
+                    "main": {
+                      "repetitionBlocks": 0,
+                      "workSegments": 0,
+                      "recoverySteps": 0,
+                      "workDistanceM": null,
+                      "buildupDistanceM": 0,
+                      "preparationDistanceM": 0,
+                      "workSeconds": -600,
+                      "buildupSeconds": 0,
+                      "preparationSeconds": 0,
+                      "recoverySeconds": 0,
+                      "recoveryDistanceM": 0,
+                      "knownRecoverySeconds": 0,
+                      "knownRecoveryDistanceM": 0,
+                      "totalSeconds": -600,
+                      "totalDistanceM": null
+                    },
+                    "cooldown": {
+                      "repetitionBlocks": 0,
+                      "workSegments": 0,
+                      "recoverySteps": 0,
+                      "workDistanceM": 0,
+                      "buildupDistanceM": 0,
+                      "preparationDistanceM": null,
+                      "workSeconds": 0,
+                      "buildupSeconds": 0,
+                      "preparationSeconds": 0,
+                      "recoverySeconds": 0,
+                      "recoveryDistanceM": 0,
+                      "knownRecoverySeconds": 0,
+                      "knownRecoveryDistanceM": 0,
+                      "totalSeconds": 0,
+                      "totalDistanceM": null
+                    }
+                  },
+                  "methodDifferences": [
+                    "WORK",
+                    "TARGET"
+                  ]
+                },
+                "explanation": {
+                  "version": "1.0.0",
+                  "reviewRef": "reports/review/LT_PILOT_OWNER_ADOPTION_DECISION_2026-09-28.md",
+                  "configuration": {
+                    "familyId": "TO-LT-CONTINUOUS",
+                    "configurationId": "P-LT-C",
+                    "version": "1.0.0",
+                    "contentIdentity": "sha256:56f7291e8b59718326290e022807d1024793ea6b1c3bc411df1038179c30fda4"
+                  },
+                  "sequenceContentIdentity": "sha256:5faaaa422c0d60d7ea8dbcf859cd39c5b7875543316352adbcee361d812fe666",
+                  "nodeIds": [
+                    "warmup-0",
+                    "warmup-1",
+                    "warmup-3",
+                    "warmup-5",
+                    "warmup-7",
+                    "repetitions",
+                    "part-0",
+                    "cooldown-0"
+                  ],
+                  "evidenceRefs": [
+                    "TO-WORKOUT-SUPPLY-LT-SOURCE-RECHECK-20260928",
+                    "METHOD-OWNER-REVIEW-BUNDLE-V3",
+                    "PMID-10562610",
+                    "VDOTO2-THRESHOLD-2025-06"
+                  ],
+                  "contentFingerprint": "sha256:7f238dbc46c23d52c0fda615351d79d32b9dbd5ed246bc3b539f0376d98e5259"
+                },
+                "contentFingerprint": "sha256:6ccf9e89df78b9a15d5fa9690d22e89523cb656cc12a8a7306c26b73abd08ff6"
+              },
+              "projection": {
+                "kind": "RESOLVED_METHOD_ADJUSTMENT",
+                "schemaVersion": 3,
+                "stage": "CANDIDATE_PROJECTION_ONLY",
+                "bridgeVersion": "REVIEWED_RPE_SOURCE_TO_V3@1",
+                "recordBasis": "NOT_USED",
+                "originalPrescription": {
+                  "kind": "RPE_TIME_RANGE",
+                  "rpe": {
+                    "minimum": 5,
+                    "maximum": 6
+                  },
+                  "durationMinutes": {
+                    "minimum": 30,
+                    "maximum": 50
+                  }
+                },
+                "originalBindingFingerprint": "sha256:b689a8a58dd4fb8c148616e5fcb92393726e2164bb54431d15ea461b2b617a29",
+                "source": {
+                  "from": {
+                    "familyId": "TO-LT-PILOT-INTERNAL",
+                    "configurationId": "BASELINE",
+                    "version": "1.0.0",
+                    "contentIdentity": "sha256:69acb9a8c219f6c2a147eaf3501d2df1e6da5832b5360dab0d6f67228a7cec11"
+                  },
+                  "to": {
+                    "familyId": "TO-LT-CONTINUOUS",
+                    "configurationId": "P-LT-C",
+                    "version": "1.0.0",
+                    "contentIdentity": "sha256:56f7291e8b59718326290e022807d1024793ea6b1c3bc411df1038179c30fda4"
+                  },
+                  "policy": {
+                    "policyId": "TO-LT-PILOT-OWNER-ADOPTION",
+                    "version": "1.0.0",
+                    "contentIdentity": "sha256:91f420dcf335df0b25cc483404992ad5f370c75495cea9c608202e0e7c87726e"
+                  },
+                  "authorityFingerprint": "sha256:fe8b53c3c244c2774d5fc2b725369da601c177d0988d63b7a2ba5639a9e5df8c"
+                },
+                "resolutionContextKey": "sha256:ca2cd5bc7f915e86f4ce3ef442ccfc9c4285823835e7aa744662f6567202491c",
+                "sequence": {
+                  "kind": "PRESCRIPTION_SEQUENCE",
+                  "version": 3,
+                  "id": "P-LT-C",
+                  "label": "20분 연속",
+                  "warmup": [
+                    {
+                      "kind": "segment",
+                      "id": "warmup-0",
+                      "label": "편안한 준비 조깅",
+                      "repeatCount": 1,
+                      "recoveryBetweenRepeats": [],
+                      "recoveryAfter": [],
+                      "role": "PREPARATION",
+                      "work": {
+                        "kind": "duration",
+                        "distanceM": null,
+                        "durationSeconds": 900
+                      },
+                      "target": {
+                        "kind": "EFFORT_GUIDANCE",
+                        "cue": "RPE 2-3"
+                      }
+                    },
+                    {
+                      "kind": "segment",
+                      "id": "warmup-1",
+                      "label": "점진적 가속",
+                      "repeatCount": 1,
+                      "recoveryBetweenRepeats": [],
+                      "recoveryAfter": [
+                        {
+                          "mode": "WALK",
+                          "seconds": 40
+                        }
+                      ],
+                      "role": "BUILDUP",
+                      "work": {
+                        "kind": "duration",
+                        "distanceM": null,
+                        "durationSeconds": 20
+                      },
+                      "target": {
+                        "kind": "EFFORT_GUIDANCE",
+                        "cue": "점진적으로 속도를 올리되 전력질주하지 않기"
+                      }
+                    },
+                    {
+                      "kind": "segment",
+                      "id": "warmup-3",
+                      "label": "점진적 가속",
+                      "repeatCount": 1,
+                      "recoveryBetweenRepeats": [],
+                      "recoveryAfter": [
+                        {
+                          "mode": "WALK",
+                          "seconds": 40
+                        }
+                      ],
+                      "role": "BUILDUP",
+                      "work": {
+                        "kind": "duration",
+                        "distanceM": null,
+                        "durationSeconds": 20
+                      },
+                      "target": {
+                        "kind": "EFFORT_GUIDANCE",
+                        "cue": "점진적으로 속도를 올리되 전력질주하지 않기"
+                      }
+                    },
+                    {
+                      "kind": "segment",
+                      "id": "warmup-5",
+                      "label": "점진적 가속",
+                      "repeatCount": 1,
+                      "recoveryBetweenRepeats": [],
+                      "recoveryAfter": [
+                        {
+                          "mode": "WALK",
+                          "seconds": 40
+                        }
+                      ],
+                      "role": "BUILDUP",
+                      "work": {
+                        "kind": "duration",
+                        "distanceM": null,
+                        "durationSeconds": 20
+                      },
+                      "target": {
+                        "kind": "EFFORT_GUIDANCE",
+                        "cue": "점진적으로 속도를 올리되 전력질주하지 않기"
+                      }
+                    },
+                    {
+                      "kind": "segment",
+                      "id": "warmup-7",
+                      "label": "점진적 가속",
+                      "repeatCount": 1,
+                      "recoveryBetweenRepeats": [],
+                      "recoveryAfter": [
+                        {
+                          "mode": "WALK",
+                          "seconds": 60
+                        }
+                      ],
+                      "role": "BUILDUP",
+                      "work": {
+                        "kind": "duration",
+                        "distanceM": null,
+                        "durationSeconds": 20
+                      },
+                      "target": {
+                        "kind": "EFFORT_GUIDANCE",
+                        "cue": "점진적으로 속도를 올리되 전력질주하지 않기"
+                      }
+                    }
+                  ],
+                  "main": [
+                    {
+                      "kind": "group",
+                      "id": "repetitions",
+                      "label": null,
+                      "repeatCount": 1,
+                      "recoveryBetweenRepeats": [],
+                      "recoveryAfter": [],
+                      "repeatUnit": "REPETITION",
+                      "children": [
+                        {
+                          "kind": "segment",
+                          "id": "part-0",
+                          "label": null,
+                          "repeatCount": 1,
+                          "recoveryBetweenRepeats": [],
+                          "recoveryAfter": [],
+                          "role": "WORK",
+                          "work": {
+                            "kind": "duration",
+                            "distanceM": null,
+                            "durationSeconds": 1200
+                          },
+                          "target": {
+                            "kind": "EFFORT_GUIDANCE",
+                            "cue": "힘들지만 정해진 구간 동안 고르게 유지하는 노력 · 본운동 체감 제안 RPE 6~7"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "cooldown": [
+                    {
+                      "kind": "segment",
+                      "id": "cooldown-0",
+                      "label": "편안한 정리 조깅",
+                      "repeatCount": 1,
+                      "recoveryBetweenRepeats": [],
+                      "recoveryAfter": [],
+                      "role": "PREPARATION",
+                      "work": {
+                        "kind": "duration",
+                        "distanceM": null,
+                        "durationSeconds": 600
+                      },
+                      "target": {
+                        "kind": "EFFORT_GUIDANCE",
+                        "cue": "RPE 1-2"
+                      }
+                    }
+                  ]
+                },
+                "segmentTargets": [],
+                "structuralTotals": {
+                  "warmup": {
+                    "repetitionBlocks": 0,
+                    "workSegments": 0,
+                    "recoverySteps": 4,
+                    "workDistanceM": 0,
+                    "buildupDistanceM": null,
+                    "preparationDistanceM": null,
+                    "workSeconds": 0,
+                    "buildupSeconds": 80,
+                    "preparationSeconds": 900,
+                    "recoverySeconds": 180,
+                    "recoveryDistanceM": null,
+                    "knownRecoverySeconds": 180,
+                    "knownRecoveryDistanceM": 0,
+                    "totalSeconds": 1160,
+                    "totalDistanceM": null
+                  },
+                  "main": {
+                    "repetitionBlocks": 1,
+                    "workSegments": 1,
+                    "recoverySteps": 0,
+                    "workDistanceM": null,
+                    "buildupDistanceM": 0,
+                    "preparationDistanceM": 0,
+                    "workSeconds": 1200,
+                    "buildupSeconds": 0,
+                    "preparationSeconds": 0,
+                    "recoverySeconds": 0,
+                    "recoveryDistanceM": 0,
+                    "knownRecoverySeconds": 0,
+                    "knownRecoveryDistanceM": 0,
+                    "totalSeconds": 1200,
+                    "totalDistanceM": null
+                  },
+                  "cooldown": {
+                    "repetitionBlocks": 0,
+                    "workSegments": 0,
+                    "recoverySteps": 0,
+                    "workDistanceM": 0,
+                    "buildupDistanceM": 0,
+                    "preparationDistanceM": null,
+                    "workSeconds": 0,
+                    "buildupSeconds": 0,
+                    "preparationSeconds": 600,
+                    "recoverySeconds": 0,
+                    "recoveryDistanceM": 0,
+                    "knownRecoverySeconds": 0,
+                    "knownRecoveryDistanceM": 0,
+                    "totalSeconds": 600,
+                    "totalDistanceM": null
+                  }
+                },
+                "targetModel": "REVIEWED_EFFORT_GUIDANCE_V1",
+                "explanation": {
+                  "kind": "ADJUSTED_CONFIGURATION_EXPLANATION_REQUIRED",
+                  "sourceConfiguration": {
+                    "familyId": "TO-LT-CONTINUOUS",
+                    "configurationId": "P-LT-C",
+                    "version": "1.0.0",
+                    "contentIdentity": "sha256:56f7291e8b59718326290e022807d1024793ea6b1c3bc411df1038179c30fda4"
+                  }
+                }
+              },
+              "projectionFingerprint": "sha256:42234997c0275a0b98f29dd0e03c5c3a33f0664b42f73ddb9dfbf19600106b8b"
+            }
+          },
+          {
+            "day": 6,
+            "slot": "AM",
+            "role": "REST",
+            "plannedEnergyIntent": "RECOVERY_INTENT",
+            "prescription": {
+              "kind": "REST"
+            }
+          },
+          {
+            "day": 7,
+            "slot": "AM",
+            "role": "REST",
+            "plannedEnergyIntent": "RECOVERY_INTENT",
+            "prescription": {
+              "kind": "REST"
+            }
+          },
+          {
+            "day": 8,
+            "slot": "AM",
+            "role": "REST",
+            "plannedEnergyIntent": "RECOVERY_INTENT",
+            "prescription": {
+              "kind": "REST"
+            }
+          },
+          {
+            "day": 9,
+            "slot": "AM",
+            "role": "EASY",
+            "plannedEnergyIntent": "BASE_INTENT",
+            "prescription": {
+              "kind": "RPE_TIME_RANGE",
+              "rpe": {
+                "minimum": 3,
+                "maximum": 4
+              },
+              "durationMinutes": {
+                "minimum": 35,
+                "maximum": 60
+              }
+            }
+          },
+          {
+            "day": 10,
+            "slot": "AM",
+            "role": "REST",
+            "plannedEnergyIntent": "RECOVERY_INTENT",
+            "prescription": {
+              "kind": "REST"
+            }
+          }
+        ]
+      },
+      "adjustments": {
+        "originalCandidate": {
+          "candidateId": "beta:balanced:five_k:event-5000:experienced:lt_intent:single_session_only:varies:projection-9:local-civil-9-5:app-main-day-1-app-main-day-9:1-5-9:no_usable_journal:no-continuity:template-rpe-only:candidate-sha256-4b94bac39b4ec3a9fe6511da2deca7034eba8e69a4d5aaa58c403ca1f131f0b9",
+          "pairId": "plan-pair:v3:5000:rpe-only:lt_intent:app-main-day-1-app-main-day-9:1-5-9:no-continuity:pair-sha256-0cc5f288283679303d429e375804fc257ee589ad599b73986a60711b0610d4c9",
+          "kind": "BALANCED",
+          "eventGroup": "FIVE_K",
+          "eventDistanceM": 5000,
+          "selectedDetailedTemplateRef": null,
+          "selectedEnergyIntent": "LT_INTENT",
+          "sourceMode": "PROFILE_ONLY",
+          "confidence": "LIMITED",
+          "beta": {
+            "designation": "BETA",
+            "prescriptionBasis": "DURATION_RPE_ONLY",
+            "formationMethodClaim": "NOT_UNIVERSAL"
+          },
+          "detailedPrescriptionFingerprint": null,
+          "continuityContext": {
+            "kind": "NO_PREVIOUS_FRAME_CONTEXT"
+          },
+          "selectionAuthority": "SELF",
+          "frame": {
+            "formationKind": "LOCAL_CIVIL_9_5",
+            "lengthDays": 9.5,
+            "slotCount": 19,
+            "projectionLengthDays": 9,
+            "continuity": {
+              "kind": "STANDARD_FRAME"
+            }
+          },
+          "mainExposureLedger": {
+            "mainExposureCount": 2,
+            "fingerprint": "app-main-day-1:app-main-day-9",
+            "countedExposureIds": [
+              "app-main-day-1",
+              "app-main-day-9"
+            ]
+          },
+          "rationaleCodes": [
+            "PROFILE_ONLY_LIMITED_CONTEXT",
+            "BETA_DURATION_RPE_ONLY",
+            "BETA_NON_UNIVERSAL_FORMATION_SCOPE"
+          ],
+          "sessions": [
+            {
+              "day": 1,
+              "slot": "AM",
+              "role": "EASY",
+              "plannedEnergyIntent": "BASE_INTENT",
+              "prescription": {
+                "kind": "RPE_TIME_RANGE",
+                "rpe": {
+                  "minimum": 3,
+                  "maximum": 4
+                },
+                "durationMinutes": {
+                  "minimum": 35,
+                  "maximum": 60
+                }
+              }
+            },
+            {
+              "day": 2,
+              "slot": "AM",
+              "role": "REST",
+              "plannedEnergyIntent": "RECOVERY_INTENT",
+              "prescription": {
+                "kind": "REST"
+              }
+            },
+            {
+              "day": 3,
+              "slot": "AM",
+              "role": "REST",
+              "plannedEnergyIntent": "RECOVERY_INTENT",
+              "prescription": {
+                "kind": "REST"
+              }
+            },
+            {
+              "day": 4,
+              "slot": "AM",
+              "role": "REST",
+              "plannedEnergyIntent": "RECOVERY_INTENT",
+              "prescription": {
+                "kind": "REST"
+              }
+            },
+            {
+              "day": 5,
+              "slot": "AM",
+              "role": "QUALITY",
+              "plannedEnergyIntent": "LT_INTENT",
+              "prescription": {
+                "kind": "RPE_TIME_RANGE",
+                "rpe": {
+                  "minimum": 5,
+                  "maximum": 6
+                },
+                "durationMinutes": {
+                  "minimum": 30,
+                  "maximum": 50
+                }
+              }
+            },
+            {
+              "day": 6,
+              "slot": "AM",
+              "role": "REST",
+              "plannedEnergyIntent": "RECOVERY_INTENT",
+              "prescription": {
+                "kind": "REST"
+              }
+            },
+            {
+              "day": 7,
+              "slot": "AM",
+              "role": "REST",
+              "plannedEnergyIntent": "RECOVERY_INTENT",
+              "prescription": {
+                "kind": "REST"
+              }
+            },
+            {
+              "day": 8,
+              "slot": "AM",
+              "role": "REST",
+              "plannedEnergyIntent": "RECOVERY_INTENT",
+              "prescription": {
+                "kind": "REST"
+              }
+            },
+            {
+              "day": 9,
+              "slot": "AM",
+              "role": "EASY",
+              "plannedEnergyIntent": "BASE_INTENT",
+              "prescription": {
+                "kind": "RPE_TIME_RANGE",
+                "rpe": {
+                  "minimum": 3,
+                  "maximum": 4
+                },
+                "durationMinutes": {
+                  "minimum": 35,
+                  "maximum": 60
+                }
+              }
+            },
+            {
+              "day": 10,
+              "slot": "AM",
+              "role": "REST",
+              "plannedEnergyIntent": "RECOVERY_INTENT",
+              "prescription": {
+                "kind": "REST"
+              }
+            }
+          ]
+        },
+        "originalPairId": "plan-pair:v3:5000:rpe-only:lt_intent:app-main-day-1-app-main-day-9:1-5-9:no-continuity:pair-sha256-0cc5f288283679303d429e375804fc257ee589ad599b73986a60711b0610d4c9",
+        "originalSelectedDetailedTemplateRef": null,
+        "sources": [
+          {
+            "address": {
+              "day": 5,
+              "slot": "AM"
+            },
+            "context": {
+              "kind": "UNANCHORED_SOURCE_V3",
+              "policy": {
+                "policyId": "TO-LT-PILOT-OWNER-ADOPTION",
+                "version": "1.0.0",
+                "contentIdentity": "sha256:91f420dcf335df0b25cc483404992ad5f370c75495cea9c608202e0e7c87726e"
+              },
+              "current": {
+                "familyId": "TO-LT-PILOT-INTERNAL",
+                "configurationId": "BASELINE",
+                "version": "1.0.0",
+                "contentIdentity": "sha256:69acb9a8c219f6c2a147eaf3501d2df1e6da5832b5360dab0d6f67228a7cec11"
+              },
+              "contextKey": "TO-LT-PILOT-5000-EXPERIENCED-9D-3D-SINGLE",
+              "resolutionRevision": "1.0.0"
+            }
+          }
+        ],
+        "selectedCandidateFingerprint": "sha256:8630909a2e7b2395011a0bb2b93ef30b94ad4ee7ef9c180e3e2b3c6c78805f9a",
+        "changedSlots": [
+          {
+            "day": 5,
+            "slot": "AM",
+            "candidateLineageId": "sha256:da4df8a19a49ce820bef9bed92800803fc8fbba0edce56bf2ac6b16811f16c2e",
+            "mainSlotId": "sha256:42010b82760898af2a26292b367a0c8c96a5eb6ce905f74117748ac8e63e5ee1",
+            "explanation": {
+              "configuration": {
+                "familyId": "TO-LT-CONTINUOUS",
+                "configurationId": "P-LT-C",
+                "version": "1.0.0",
+                "contentIdentity": "sha256:56f7291e8b59718326290e022807d1024793ea6b1c3bc411df1038179c30fda4"
+              },
+              "resolutionContextKey": "sha256:ca2cd5bc7f915e86f4ce3ef442ccfc9c4285823835e7aa744662f6567202491c",
+              "version": "1.0.0",
+              "reviewRef": "reports/review/LT_PILOT_OWNER_ADOPTION_DECISION_2026-09-28.md",
+              "purpose": "끊지 않고 20분 동안 RPE 6~7의 고른 노력을 유지하는 방법을 익혀요.",
+              "energySupply": "LT는 독립된 에너지 시스템이 아니에요. 이 구간에서는 산화 대사가 주요하게 에너지를 공급하고 해당과정도 함께 기여해요. 유산은 단순한 노폐물이 아니며 생성과 이용이 함께 일어나요.",
+              "workRationale": "본운동을 20분 연속으로 진행해, 회복 구간 없이 노력을 고르게 조절하는 경험을 만들어요.",
+              "recoveryRationale": "연속형이므로 본운동 사이 회복은 없어요. 준비 가속 사이에는 걷기를, 끝난 뒤에는 10분의 편안한 조깅을 두어 수행 구간과 정리 구간을 구분해요.",
+              "cycleRole": "9일 계획의 5일차 주요 훈련으로 배치해, 앞뒤 쉬운 날과 휴식일 사이에서 지속적인 노력을 확인해요.",
+              "expectedAdaptation": "일정한 체감 강도를 끊지 않고 유지하는 페이싱 경험과 지속적인 유산소 노력을 연습할 수 있어요.",
+              "limitations": "실험실에서 측정한 개인 역치값이 아니고 RPE로 조절하는 파일럿이에요. 성과 향상이나 회복 완료를 보장하지 않고, 강도·양·빈도를 자동으로 늘리지 않아요.",
+              "observation": "후반에 RPE가 급격히 오르는지, 달리기 동작과 속도를 고르게 유지했는지, 다음 날 통증이나 과도한 피로가 남는지를 일지로 확인해요.",
+              "evidenceRefs": [
+                "TO-WORKOUT-SUPPLY-LT-SOURCE-RECHECK-20260928",
+                "METHOD-OWNER-REVIEW-BUNDLE-V3",
+                "PMID-10562610",
+                "VDOTO2-THRESHOLD-2025-06"
+              ],
+              "sequenceContentIdentity": "sha256:5faaaa422c0d60d7ea8dbcf859cd39c5b7875543316352adbcee361d812fe666",
+              "nodeIds": [
+                "warmup-0",
+                "warmup-1",
+                "warmup-3",
+                "warmup-5",
+                "warmup-7",
+                "repetitions",
+                "part-0",
+                "cooldown-0"
+              ]
+            },
+            "rpeBinding": {
+              "bindingId": "TO-LT-PILOT-RPE-BINDING",
+              "version": "1.0.0",
+              "contentFingerprint": "sha256:bff879166a640d48279b7974f2ae2c67318b13a953d1973efbdadffa64b2005b"
+            }
+          }
+        ],
+        "reviewScopeFingerprint": "sha256:496777109d11669a7ba31e9bf4b267357ed27059252772e5c8a1f5d25085ca02",
+        "reviewPolicy": {
+          "policyId": "TO-LT-PILOT-BALANCED",
+          "version": "1.0.0",
+          "contentFingerprint": "sha256:6673dfd889b68797f19f4d2a4b29dd69cf158bfb05c61c4e6753fefa05227cd9"
+        },
+        "acceptedAt": "2026-09-28T12:00:00.000Z"
+      },
+      "contentFingerprint": "sha256:a7b771fa2e12b15f1886f9b23b41e4e51a5076a333f3e28b06c1cf86b877e258"
+    },
+    "progress": [],
+    "updatedAt": "2026-09-28T12:00:00.000Z",
+    "contentFingerprint": "sha256:08381174320990f631811854e7ca1303e814614875048a7447563600669d0ed4"
+  }
+}

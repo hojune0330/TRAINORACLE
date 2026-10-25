@@ -118,6 +118,7 @@ test("a real zero stays distinct from missing answers at 320px with large text a
   let dialog = await answerThree(page, "계획 선호", "전혀 그렇지 않아요")
   await dialog.getByRole("button", { name: "기록 도전도 알아보기", exact: true }).click()
   dialog = page.getByRole("dialog", { name: "기록 도전 선호", exact: true })
+  await dialog.getByRole("button", { name: "고르기 어렵다면", exact: true }).click()
   await expect(dialog.getByRole("group", { name: "숫자로 답하기 어려운 경우" })).toBeVisible()
   await dialog.getByRole("button", { name: "아직 모르겠어요", exact: true }).click()
   for (let count = 0; count < 2; count++) {

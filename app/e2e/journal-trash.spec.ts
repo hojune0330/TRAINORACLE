@@ -71,7 +71,14 @@ test("지운 일지를 그 자리에서 되돌릴 수 있다", async ({ page }) 
   // 되돌리면 일지가 돌아온다
   await undo.click()
   await expect(page.getByTestId("delete-undo")).toHaveCount(0)
-  await expect(page.getByText("휴지통 시험 훈련")).toBeVisible()
+  const restoredEntry = page.locator(".journal-entry-card--session").filter({ hasText: "휴지통 시험 훈련" })
+  await expect(restoredEntry).toHaveCount(1)
+  const restoredSection = page.locator(".journal-entry-section").filter({ has: restoredEntry })
+  const restoredToggle = restoredSection.getByRole("button", { name: /휴지통 시험 훈련.*펼쳐보기/u })
+  await expect(restoredToggle).toHaveAttribute("aria-expanded", "false")
+  await restoredToggle.click()
+  await expect(restoredSection).toHaveAttribute("data-open", "true")
+  await expect(restoredEntry.getByText("휴지통 시험 훈련", { exact: true })).toBeVisible()
 })
 
 test("휴지통 화면에서 나중에도 되돌릴 수 있다", async ({ page }) => {

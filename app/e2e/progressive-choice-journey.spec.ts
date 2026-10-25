@@ -88,6 +88,7 @@ for (const persona of personas) {
       await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "훈련", exact: true }).click()
       await completeQuickPlan(page, { event: persona.event })
       await expect(page.getByRole("region", { name: "이번 일정", exact: true })).toBeVisible()
+      await page.getByRole("button", { name: "다른 계획안 비교하기", exact: true }).click()
       await expect(page.getByRole("region", { name: "다른 계획 비교", exact: true })).toBeVisible()
       const scheduleSettings = page.getByRole("region", { name: "일정·운동 시간", exact: true })
       await expect(scheduleSettings).not.toBeVisible()

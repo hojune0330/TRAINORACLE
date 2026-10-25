@@ -15,6 +15,7 @@ import { setActiveLocalAccount } from "./account/local-journal-ownership"
 import { PlanBeta } from "../screens/PlanBeta"
 import { AdjustedPrescriptionV3 } from "../screens/plan-beta/AdjustedPrescriptionV3"
 import { nextTrainingPrescriptionLabel } from "../screens/home/TrainingHome"
+import historicalLtPilot from "./lt-pilot-e8cad36c-v6.test-fixture.json"
 
 const NOW = new Date("2026-09-28T12:00:00.000Z")
 const show = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "showModal")
@@ -115,15 +116,27 @@ it("separates another method from the split-method time adjustment for historica
   expect(screen.getByRole("radio", { name: "크루즈 인터벌 · Cruise Intervals · 2 × 8min @ RPE 6–7 · r60s Jog" })).toBeChecked()
 })
 
-it("saves and reloads the historical raw-RPE detailed pilot with retained evidence", async () => {
+it("blocks new raw-RPE pilot activation without storing a plan", async () => {
   const entry = entryFor(), locks: PlanMutationLockManager = {
     request: async (_name, _options, callback) => callback({}),
   }
   const saved = await saveSelectedMultiAdjustedPlanV6({ request: entry.seed, readReview: entry.readReview,
     isCurrentDraft: () => true, locks })
-  expect(saved.kind).toBe("saved")
+  expect(saved).toEqual({ kind: "rejected", code: "MAIN_CONFIGURATION_REQUIRED" })
+  expect(localStorage.getItem(activePlanBetaStorageKey())).toBeNull()
+  await act(async () => Promise.resolve())
+})
+
+it("reloads the exact historical raw-RPE V6 pilot saved by e8cad36c with retained evidence", async () => {
+  // Captured from e8cad36c's actual save/selection/assembly module graph. Its
+  // successful save wrote this exact V6 state; no current activation gate is bypassed.
+  expect(historicalLtPilot.sourceCommit).toBe("e8cad36c372cdb9588fb62109efee1e8accc5990")
+  localStorage.setItem(activePlanBetaStorageKey(), JSON.stringify(historicalLtPilot.state))
   const retained = LT_PILOT_MULTI_PLAN_RUNTIME_V3.readMultiAdjustedEvidenceV3?.() ?? []
-  expect(readPlanBetaStateFromStorage([], [], retained).kind).toBe("multi_adjusted_v3_loaded")
+  const reloaded = readPlanBetaStateFromStorage([], [], retained)
+  expect(reloaded.kind).toBe("multi_adjusted_v3_loaded")
+  if (reloaded.kind !== "multi_adjusted_v3_loaded") throw Error("Historical pilot did not survive the current retained reader")
+  expect(reloaded.state).toEqual(historicalLtPilot.state)
   await act(async () => Promise.resolve())
 })
 
