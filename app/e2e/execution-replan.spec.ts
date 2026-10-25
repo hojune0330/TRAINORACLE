@@ -17,6 +17,7 @@ for (const width of [375,320]) test(`remaining schedule selection and persisted 
   page.on("pageerror", e => errors.push(e.message))
   await page.goto("/?app=1&uitest=1")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "오라클" }).click()
+  await page.getByRole("button", { name: "계획과 수행 살펴보기", exact: true }).click()
   await page.getByRole("button", { name: /일부만 한 훈련/ }).click()
   await page.getByRole("button", { name: "남은 일정 조정", exact: true }).click()
   const dialog = page.getByRole("dialog")

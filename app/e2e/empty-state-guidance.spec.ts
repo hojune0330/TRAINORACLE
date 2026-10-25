@@ -25,7 +25,7 @@ test("starts a journal directly from the empty analysis screen", async ({ page }
   await page.getByRole("button", { name: "오라클", exact: true }).click()
 
   await expect(page.getByRole("heading", { name: "오라클", exact: true })).toBeVisible()
-  await expect(page.getByRole("region", { name: "내 기록으로 시작하기" })).toBeVisible()
+  await expect(page.getByRole("region", { name: "기간별 훈련 리포트" })).toHaveAttribute("data-source", "my")
   await page.getByRole("button", { name: "운동 기록 쓰기" }).click()
 
   await expect(page.getByRole("heading", { name: "무엇을 기록할까요?" })).toBeVisible()

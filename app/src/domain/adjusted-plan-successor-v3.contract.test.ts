@@ -244,6 +244,8 @@ it("takes the real schedule through comparison and explicit save, then renders t
   fireEvent.click(screen.getAllByRole("button", { name: /구성 확인$/u })[0]!)
   expect(screen.getByRole("heading", { name: "이 구성으로 다음 계획을 저장할까요?" })).toBeInTheDocument()
   expect(screen.getByRole("region", { name: "현재와 변경안 핵심 비교" })).toBeInTheDocument()
+  expect(screen.getByRole("region", { name: "현재 구성" })).not.toBeVisible()
+  fireEvent.click(screen.getByText("전체 방법 비교"))
   expect(screen.getByRole("region", { name: "현재 구성" })).toBeVisible()
   expect(screen.getByRole("region", { name: "변경 후 구성" })).toBeVisible()
   expect(screen.getByRole("table", { name: "현재와 변경안 핵심 수치" })).toBeVisible()

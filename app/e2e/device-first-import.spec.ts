@@ -34,7 +34,7 @@ test("cancelling a worker load cannot show its late result or replace a new file
   const hold = new Promise<void>(resolve => { resume = resolve })
   let requested!: () => void
   const request = new Promise<void>(resolve => { requested = resolve })
-  await page.route(/activity-file\.worker.*\.js/, async route => { requested(); await hold; await route.continue().catch(() => {}) })
+  await page.route(/activity-file\.worker.*\.(?:js|ts)(?:\?|$)/, async route => { requested(); await hold; await route.continue().catch(() => {}) })
   await page.getByLabel("가져올 운동 파일 선택", { exact: true }).setInputFiles({ name: "synthetic.json", mimeType: "application/json", buffer: input })
   await request
   try {

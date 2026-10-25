@@ -3,6 +3,8 @@ import { cleanup, render, screen, fireEvent } from "@testing-library/react"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { Trends } from "../Trends"
 import { stateFixture } from "../../domain/plan-beta-store.test-fixture"
+import { createPlannedSessionLogDraft } from "../../domain/planned-session-link"
+import { JOURNAL_STORAGE_KEY } from "../../domain/journal-storage-keys"
 
 const planStore = vi.hoisted(() => ({ state: null as unknown }))
 vi.mock("../../domain/plan-beta-store", async importOriginal => ({
@@ -13,6 +15,27 @@ vi.mock("./PersonalOraclePanel", () => ({ PersonalOraclePanel: () => null }))
 vi.mock("../home/HomeCoachingSummary", () => ({ HomeCoachingSummary: () => <div data-testid="home-coaching-summary" /> }))
 beforeEach(async () => { localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture(); planStore.state = null })
 afterEach(cleanup)
+
+it("keeps linked execution review reachable without putting it in the initial report or examples", () => {
+  const state = stateFixture()
+  const draft = createPlannedSessionLogDraft(state, state.activePlan.sessions[0]!, "2026-07-24T01:00:00Z")!
+  localStorage.setItem(JOURNAL_STORAGE_KEY, JSON.stringify([{
+    id: "linked-review", kind: "post-session", date: draft.date, savedAt: "2026-07-24T02:00:00Z", syncState: "local",
+    plannedSessionLink: draft.link, activityOutcome: "PARTIAL", activitySlot: "AM", planExecutionRelation: "MODIFIED",
+    title: "", memo: "", system: "", distanceKm: "", durationMin: "", avgPace: "", rpe: 0,
+  }]))
+  const { rerender } = render(<Trends onOpenPlan={vi.fn()} />)
+  const entry = screen.getByRole("button", { name: "계획과 수행 살펴보기" })
+  expect(entry).toBeVisible()
+  expect(screen.getByTestId("home-coaching-summary")).not.toBeVisible()
+  fireEvent.click(entry)
+  expect(screen.getByTestId("home-coaching-summary")).toBeVisible()
+  fireEvent.click(screen.getByRole("button", { name: "예시", exact: true }))
+  expect(screen.queryByTestId("home-coaching-summary")).toBeNull()
+  fireEvent.click(screen.getByRole("button", { name: "내 기록", exact: true }))
+  rerender(<Trends journalReadComplete={false} onOpenPlan={vi.fn()} />)
+  expect(screen.queryByRole("button", { name: "계획과 수행 살펴보기" })).toBeNull()
+})
 
 it("keeps import and PB actions direct on a confirmed empty analysis", () => {
   const onImport = vi.fn(), onRecords = vi.fn()

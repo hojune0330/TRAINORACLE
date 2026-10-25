@@ -179,10 +179,8 @@ describe("verified catalog targets in execution steps", () => {
     expect(paper).toHaveTextContent("7분씩 3번")
     expect(paper).toHaveTextContent("사이 1분 조깅")
     expect(within(nextReader).getByText(sessionLabel(timed))).toBeVisible()
-    const originalNotation = within(nextReader).getByText("표현·꾸미기").closest("details")!
-    expect(originalNotation).not.toHaveAttribute("open")
-    fireEvent.click(within(originalNotation).getByText("표현·꾸미기"))
-    fireEvent.click(within(originalNotation).getByRole("button", { name: "훈련 표기" }))
+    fireEvent.change(within(nextReader).getByRole("combobox", { name: "메모 표현 방식" }), { target: { value: "COACH" } })
+    fireEvent.click(within(nextReader).getByRole("button", { name: "자세히", exact: true }))
     expect(within(paper).getByText(sessionLabel(timed, false, "original"))).toBeVisible()
     const originalSequence = required(calculatedWorkoutSequence(calculation(timed)))
     for (const phase of ["warmup", "main", "cooldown"] as const) {

@@ -186,7 +186,7 @@ describe("two-a-day plan summary", () => {
     fireEvent.click(screen.getByRole("tab", { name: "이유·근거" }))
     fireEvent.click(explanation.getByText("구성·회복의 이유와 근거", { selector: "summary" }))
     expect(explanation.getByText(/목표 페이스·고정 횟수는 추정하지 않습니다\./u)).toBeVisible()
-    expect(explanation.getByText(/구간별 숫자가 없는 RPE 안내예요\. 반복과 회복의 구체적인 구성을 확인할 수 없어요\./u)).toBeVisible()
+    expect(explanation.getByText(/반복 길이·횟수와 회복 초수는 이 계획에 저장되지 않았어요\./u, { selector: "p" })).toBeVisible()
   })
 
   it.each([

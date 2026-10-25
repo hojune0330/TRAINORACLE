@@ -119,7 +119,7 @@ describe("concise workout instruction and optional effort detail", () => {
     const before = JSON.stringify(source)
     expect(presentWorkoutNotation(source).notation).toBe("20분 · 힘든 정도 6–7/10 (제안) → 마지막 본운동 뒤 3분 걷기")
     expect(presentWorkoutNotation({ ...source, version: 1, main: [old, { ...old, id: "b" }] }).notation)
-      .toBe("20분 · 힘든 정도 6–7/10 (제안) → 종료 뒤 60초 조깅 → 20분 · 힘든 정도 6–7/10 (제안)")
+      .toBe("2 × 20분 · 힘든 정도 6–7/10 (제안) · 반복 사이 60초 조깅")
     expect(JSON.stringify(source)).toBe(before)
   })
 

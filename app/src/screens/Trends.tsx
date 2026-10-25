@@ -27,6 +27,7 @@ import type { OracleTopicId } from "../domain/oracle-exploration"
 import type { AnalysisNavigation, AnalysisSection } from "../domain/analysis-navigation"
 import { fileAnalysisFormats } from "../domain/import/file-analysis-policy"
 import { TaskGuide } from "../components/TaskGuide"
+import { HomeCoachingSummary } from "./home/HomeCoachingSummary"
 import { TREND_METRIC_OPTIONS, type DisplayTrendMetric } from "./trends/trend-display"
 import { OracleReport, type OracleReportSelection } from "./trends/OracleReport"
 import { buildOracleReport } from "../domain/oracle-report"
@@ -178,6 +179,11 @@ export function Trends({ onBack, onWriteLog, onOpenImport, onOpenRecords, onWrit
           onOpenDay={onOpenCoachingDay} onWriteLog={onWriteLog} onWriteRecovery={onWriteRecovery} onOpenImport={onOpenImport}
           onOpenPlan={planState ? onOpenPlan : undefined} onOpenTopics={onOpenOracle ? () => setTopicsOpen(open => !open) : undefined} />}
         {section === "training" && detail === "summary" && reportSource === "my" && readComplete && <ImportedRecordPreview entries={entries} today={today} onOpenDay={onOpenCoachingDay} />}
+        {section === "training" && detail === "summary" && reportSource === "my" && readComplete
+          && entries.some(entry => entry.kind === "post-session" && entry.plannedSessionLink && entry.date <= today)
+          && <InfoDisclosure purpose="actions" title="계획과 수행 살펴보기">
+            <HomeCoachingSummary revision={entryRevision} onOpenDay={onOpenCoachingDay} onOpenPlan={onOpenPlan} />
+          </InfoDisclosure>}
         {section === "training" && detail === "summary" && reportSource === "my" && report.status === "missing" && (savedRace || raceRecords.message) && <div className="trends-hub__explore">
           {raceRecords.message && <p role="status">{raceRecords.message}</p>}
           {savedRace && <section className="trends-record-reading" aria-label="최근 저장한 경기 기록">

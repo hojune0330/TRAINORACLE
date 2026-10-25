@@ -29,7 +29,7 @@ it("keeps the exact main and recovery quantities in plain presentation without m
   const notation = container.querySelector(".plan-detailed-prescription__notation")!
   expect(notation).toHaveTextContent(/5.*1km/u)
   expect(notation).toHaveTextContent(/222.2초\/1km/u)
-  expect(notation).toHaveTextContent(/반복 사이.*150초 조깅/u)
+  expect(notation).toHaveTextContent(/반복 사이.*2분 30초 조깅/u)
   const preparation = container.querySelector('[data-phase="prepare"]')!
   const main = container.querySelector('.plan-detailed-prescription__primary')!
   const recovery = container.querySelector('[data-recovery-kind="repetition"]')!
