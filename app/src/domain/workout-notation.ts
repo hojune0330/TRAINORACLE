@@ -4,6 +4,7 @@ import type { PrescriptionSequenceV3, SequenceNodeV3, RecoveryStepV3 } from "@im
 import type { AdjustedSegmentTarget } from "./adjusted-method-resolution"
 import { ALL_WORKOUT_CATALOG, calculatedWorkoutSequence, calculateCatalogWorkout } from "../../../impl/src/prescription/all-workout-calculator"
 import { roundedPaceSeconds } from "@impl/prescription/record-pace"
+import { catalogDeliveryProfile } from "@impl/prescription/catalog-delivery"
 
 type Sequence = PrescriptionSequence | PrescriptionSequenceV3
 export type WorkoutNotationStyle = "COACH" | "PLAIN"
@@ -52,6 +53,13 @@ export function notationRecovery(step: RecoveryStepV3, style: WorkoutNotationSty
 
 export function notationEffort(cue: string | null, style: WorkoutNotationStyle = "COACH"): string {
   if (cue === null) return "강도 미지정"
+  const shortCues: Readonly<Record<string, string>> = {
+    "문장으로 대화할 수 있는 노력 본운동 체감 노력 제안 RPE 3~4": "대화할 수 있는 강도 · RPE 3~4",
+    "힘들지만 정해진 구간 동안 고르게 유지하는 노력 본운동 체감 노력 제안 RPE 6~7": "고르게 유지 · RPE 6~7",
+    "빠른 구간에서 유지 가능한 강한 리듬, 느린 구간에서 분명한 속도 감소 본운동 체감 노력 제안 RPE 6~7": "빠른 구간은 고르게, 느린 구간은 확실히 천천히 · RPE 6~7",
+    "숨이 많이 차지만 다음 반복을 남겨 두는 강한 노력 본운동 체감 노력 제안 RPE 7~8": "다음 반복을 할 여력을 남기기 · RPE 7~8",
+  }
+  if (style === "PLAIN") cue = shortCues[cue] ?? cue
   if (/s\/\d+m/.test(cue)) return cue
   const matches = [...cue.matchAll(/\bRPE\s*(\d+(?:\.\d+)?)(?:\s*[~–-]\s*(\d+(?:\.\d+)?))?/gu)]
   if (matches.length === 1) {
@@ -153,16 +161,16 @@ export function rpePrescriptionNotation(p: RpePrescription, style: WorkoutNotati
     ? `전체 ${range(p.durationMinutes.minimum, p.durationMinutes.maximum)}분 · 힘든 정도 ${range(p.rpe.minimum, p.rpe.maximum)}/10`
     : `전체 ${range(p.durationMinutes.minimum, p.durationMinutes.maximum)}min @ RPE ${range(p.rpe.minimum, p.rpe.maximum)}`
 }
-export function sessionWorkoutName(session: WorkoutDisplaySession): string {
+export function sessionWorkoutName(session: WorkoutDisplaySession, original = false): string {
   const p = session.prescription
   if (session.role === "REST") return "휴식 · Rest"
   if (p?.kind === "RPE_TIME_RANGE" && p.catalogWorkout) {
     const catalog = ALL_WORKOUT_CATALOG.find(e => e.id === p.catalogWorkout!.catalogId && e.fingerprint === p.catalogWorkout!.catalogFingerprint)
-    if (catalog) return catalog.name
+    if (catalog) return original ? catalog.name : catalogDeliveryProfile(catalog).name
   }
   if (p?.kind === "ADJUSTED_METHOD_V3") return sequenceWorkoutName(p.projection.sequence, session.plannedEnergyIntent)
   if (p?.kind === "ADJUSTED_METHOD") return sequenceWorkoutName(p.snapshot.projection.sequence, session.plannedEnergyIntent)
-  if (p?.kind === "PACE_TARGET") return "인터벌 · Intervals"
+  if (p?.kind === "PACE_TARGET") return original ? "인터벌 · Intervals" : `${notationDistance(p.repetitionDistanceM)} 반복 달리기`
   if (session.role === "EASY") return session.plannedEnergyIntent === "RECOVERY_INTENT" ? "회복 운동 · Recovery" : "저강도 달리기 · Easy Run"
   const names: Record<PlannedEnergyIntent, string> = {
     BASE_INTENT: "지구력 훈련 · Endurance", LT_INTENT: "템포 훈련 · LT", VO2_INTENT: "유산소 반복 훈련 · VO₂",

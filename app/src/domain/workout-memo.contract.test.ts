@@ -85,7 +85,7 @@ describe("workout memo snapshot contract", () => {
     const source = bindDefaultCatalogSessions([rpe as Parameters<typeof bindDefaultCatalogSessions>[0][number]], 5000, "EXPERIENCED", 0)[0]!
     const memo = buildWorkoutMemo(source)!
     expect(memo.lines.find(line => line.label === "본운동")).toBeDefined()
-    expect(memo.basis).toBe("구간에 적힌 힘든 정도")
+    expect(memo.basis).toBe("체감 강도 기준 · 경기 기록 환산 아님")
   })
   it("marks unapplied changes and does not guess today's date", () => {
     const memo = buildWorkoutMemo(rpe, { state: "PREVIEW" })!

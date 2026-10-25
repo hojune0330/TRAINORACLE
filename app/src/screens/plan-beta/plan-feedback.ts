@@ -10,6 +10,8 @@ export function planErrorMessage(errorCode: string): string {
     return "계정의 현재 계획이 달라졌거나 저장을 확인하지 못했어요. 현재 계획을 다시 확인해 주세요."
   }
   switch (errorCode) {
+    case "MAIN_CONFIGURATION_REQUIRED":
+      return "아직 구성이 정해지지 않은 주요 훈련이 있어요. 훈련 조절에서 확인한 뒤 시작해 주세요."
     case "CYCLE_EVIDENCE_CHANGED":
       return "일지가 바뀌어 다음 계획을 다시 계산해야 해요. 현재 계획은 그대로예요."
     case "CYCLE_EVIDENCE_UNAVAILABLE":

@@ -1,5 +1,5 @@
 import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
-import { cleanup, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import { beforeEach, afterEach, expect, it } from "vitest"
 import { ALL_WORKOUT_CATALOG, calculateCatalogWorkout, calculatedWorkoutSequence, type WorkoutCalculationInputs } from "@impl/prescription/all-workout-calculator"
 import { parsePrescriptionSequenceV3 } from "@impl/prescription/sequence-v3"
@@ -27,18 +27,20 @@ it("keeps the executable effort cue and unknown warnings visible without changin
   const before = JSON.stringify(workout)
   const { container, rerender } = render(<CatalogWorkoutDetail workout={workout} />)
   expect(container.querySelector("code")).toHaveTextContent(/분 · 힘든 정도 3–4\/10 \(제안\)/u)
-  expect(container.querySelector("dl")).toBeNull()
-  const instruction = screen.getAllByText(/문장으로 대화할 수 있는 노력.*힘든 정도 3–4\/10/u)
+  expect(container.querySelector(".session-explanation__execution")).toHaveTextContent("30분 · 대화할 수 있는 강도 · 힘든 정도(RPE) 3–4/10")
+  const instruction = screen.getAllByText(/대화할 수 있는 강도.*힘든 정도\(RPE\) 3–4\/10/u)
     .find(node => !node.closest("details"))!
   expect(instruction).toBeVisible()
   expect(instruction.closest("details")).toBeNull()
-  expect(screen.getByText("수행 표기·구간 상세").closest("details")).not.toHaveAttribute("open")
+  expect(screen.getByText("원본 구간표").closest("details")).not.toHaveAttribute("open")
   expect(JSON.stringify(workout)).toBe(before)
 
   const withWarning = { ...workout, steps: workout.steps.map(step => step.phase === "main" && step.kind !== "RECOVERY"
     ? { ...step, instruction: `통증이 생기면 중단 · ${step.instruction}` } : step) }
   rerender(<CatalogWorkoutDetail workout={withWarning} />)
-  expect(screen.getAllByText(/통증이 생기면 중단/u).some(element => !element.closest("details"))).toBe(true)
+  expect(container.querySelector(".session-explanation__execution")).toBeNull()
+  expect(screen.getByText("원본 구간표").closest("details")).toHaveAttribute("open")
+  expect(screen.getAllByText(/통증이 생기면 중단/u).some(element => element.closest("details")?.open)).toBe(true)
   expect(container.querySelector("dl")).toHaveTextContent(/통증이 생기면 중단/u)
 })
 
@@ -102,9 +104,15 @@ it("separates a bound catalog's main workout and full time, and never calls its 
   const notation = render(<WorkoutNotation sequence={sequence} intent={session.plannedEnergyIntent} />).container.querySelector("code")!
   expect(notation.textContent).toContain("힘든 정도 7–8/10")
   expect(notation.textContent).not.toMatch(/\bRPE\b/u)
-  render(<PlanSchedulePreview startDate="2026-09-30" frameLengthDays={9} sessions={[session]} />)
-  expect(screen.getByText(totalStep.instruction)).toBeVisible()
-  expect(screen.getByText(/시간을 채우지 말고 중단하세요/u)).toBeVisible()
+  render(<PlanSchedulePreview startDate="2026-09-30" frameLengthDays={9} sessions={[session]} focusSession={{ day: 1, slot: "AM" }} />)
+  expect(screen.queryByRole("list", { name: "훈련 실행 순서" })).toBeNull()
+  fireEvent.click(screen.getByRole("button", { name: "9월 30일 수요일 오전 훈련 내용 보기" }))
+  const reader = screen.getByRole("dialog", { name: "2026년 9월 30일 수요일" })
+  const totalCard = reader.querySelector(".training-instructions__card--total")!
+  expect(totalCard).toBeVisible()
+  expect(totalCard).toHaveTextContent(formatTrainingSeconds(calculation.totals.seconds!.maximum))
+  expect(totalCard).toHaveTextContent("준비·회복·정리 포함")
+  expect(within(reader).getByText(/시간을 채우지 말고 중단하세요/u)).toBeVisible()
   expect(projectInstantRecommendation({ ...source, sessions: [session] }, "2026-09-30")!.days[0]!.sessions[0]!.notation).toBe(prescriptionLabel(session))
   const generic = { ...session, prescription: { kind: "RPE_TIME_RANGE" as const, rpe: { minimum: 6, maximum: 7 }, durationMinutes: { minimum: 20, maximum: 30 } } }
   expect(projectInstantToday({ ...state, activePlan: { ...state.activePlan, sessions: [generic] } }, "2026-09-30").sessions[0]!.guidanceNotice)

@@ -5,6 +5,8 @@ import { deriveSequenceV3Totals } from "@impl/prescription/sequence-v3"
 import { bindCatalogSession, isValidCatalogSession, resolveCatalogBinding } from "@impl/prescription/catalog-session-binding"
 import { rpeForIntent, rangesFor } from "@impl/plan-generator/session-builder"
 import type { PlanSession, PlannedEnergyIntent } from "@impl/plan-generator/types"
+import { catalogExecutionReading } from "./catalog-workout-reader"
+import { buildWorkoutMemo } from "./workout-memo"
 
 const input: WorkoutCalculationInputs = { eventDistanceM: 5000, experience: "EXPERIENCED", availableSeconds: null,
   confirmedRequirements: [], fiveK: { recordId: "current-5k", seconds: 1111.7, achievedAt: "2026-09-01", evaluatedAt: "2026-09-30" }, segmentPaces: [] }
@@ -103,6 +105,12 @@ describe("every catalog workout has a deterministic calculation and evidence con
     const bound = bindCatalogSession(session, id, inputs, true)
     expect(bound).not.toBeNull()
     expect(isValidCatalogSession(bound!)).toBe(true)
+    const before = JSON.stringify(bound)
+    const reading = catalogExecutionReading(calculateCatalogWorkout(id, inputs)!)
+    expect(reading, id).not.toBeNull()
+    expect(reading!.summary).not.toMatch(/undefined|NaN/)
+    expect(buildWorkoutMemo(bound!)?.lines.some(line => line.label === "본운동")).toBe(true)
+    expect(JSON.stringify(bound)).toBe(before)
     if (bound!.prescription.kind !== "RPE_TIME_RANGE") throw Error("Wrong prescription")
     expect(resolveCatalogBinding(JSON.parse(JSON.stringify(bound!.prescription.catalogWorkout)))?.catalogId).toBe(id)
     expect(bound).toMatchObject({ day: session.day, slot: session.slot, role: session.role, plannedEnergyIntent: intent })

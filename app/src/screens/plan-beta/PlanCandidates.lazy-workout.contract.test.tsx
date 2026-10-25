@@ -56,7 +56,7 @@ describe("deferred workout editors on a candidate result", () => {
       withDisplayedSessions(candidates[0]), withDisplayedSessions(candidates[1]),
     ] as const }
     render(<PlanCandidates {...props} generated={generated} startDateValue="2026-09-20" />)
-    const first = screen.getByRole("region", { name: "주요 훈련 구성" })
+    const first = screen.getByRole("region", { name: "첫 주요 훈련" })
     expect(first).toHaveTextContent("2026-09-22 · 오후")
     expect(first).not.toHaveTextContent("오늘")
     const total = projectInstantExecutionSteps(firstWorkout).find(step => step.role === "TOTAL_DURATION")
@@ -86,9 +86,9 @@ describe("deferred workout editors on a candidate result", () => {
       withDisplayedSessions(candidates[0]), withDisplayedSessions(candidates[1]),
     ] as const }
     render(<PlanCandidates {...props} generated={generated} />)
-    expect(screen.queryByRole("region", { name: "주요 훈련 구성" })).toBeNull()
+    expect(screen.queryByRole("region", { name: "첫 주요 훈련" })).toBeNull()
     const overview = screen.getByRole("region", { name: "선택한 계획 요약" })
-    expect(within(overview).getByText("훈련 횟수").nextElementSibling).toHaveTextContent("0회")
+    expect(overview).toHaveTextContent("주요 훈련 없음 · 훈련 0회")
     expect(screen.getByRole("region", { name: "이번 일정" })).toBeVisible()
     expect(props.onSelect).not.toHaveBeenCalled()
   })

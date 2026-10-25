@@ -48,6 +48,7 @@ it.each(["ACTUAL", "GOAL"] as const)("shows verified %s MAIN with work, recovery
   expect(main.closest("details")).toBeNull()
   expect(main).toHaveTextContent("힘들면 속도를 낮추거나 중단하세요")
   expect(main).not.toHaveTextContent(kind === "ACTUAL" ? "목표 기록 기준" : "실제 기록 기준")
+  expect(screen.getByText(/기준: 10km 45:00/)).toHaveTextContent(kind === "GOAL" ? "목표 기준 (현재 실력 아님)" : "저장된 기록 기준")
   const total = screen.getByText("전체 구간 합계 52분 20초")
   expect(total).toBeVisible()
   expect(total.closest("details")).toBeNull()
@@ -59,8 +60,8 @@ it.each(["ACTUAL", "GOAL"] as const)("shows verified %s MAIN with work, recovery
 
 it("marks generic effort guidance as lacking fixed repetitions and keeps its total outside the disclosure", () => {
   show(guidance)
-  expect(screen.getByText(/반복 횟수와 회복 시간은 아직 정하지 않았어요/)).toBeVisible()
-  expect(screen.getByText(/총 시간을 계속 강하게 달리는 시간으로 쓰지 마세요/)).toBeVisible()
+  expect(screen.getByText(/상세 구성 미정/)).toBeVisible()
+  expect(screen.getByText(/전체 시간을 본운동 시간으로 사용하지 마세요/)).toBeVisible()
   const total = screen.getByText("총 시간").nextElementSibling!
   expect(total).toHaveTextContent("50분")
   expect(total.closest("details")).toBeNull()
@@ -74,7 +75,7 @@ it("does not turn a broken catalog binding into generic guidance or display stal
     ...session.prescription.catalogWorkout, calculationFingerprint: "invalid-calculation-fingerprint",
   } } })
   expect(screen.getByRole("alert")).toHaveTextContent("이 훈련의 계산을 확인하지 못했어요")
-  expect(screen.queryByText(/반복 횟수와 회복 시간은 아직 정하지 않았어요/)).toBeNull()
+  expect(screen.queryByText(/상세 구성 미정/)).toBeNull()
   expect(screen.queryByText("본운동")).toBeNull()
   expect(screen.queryByText("총 시간")).toBeNull()
   expect(screen.queryByText(/7분씩 3번/)).toBeNull()

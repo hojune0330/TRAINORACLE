@@ -107,6 +107,14 @@
   overflow-wrap: anywhere;
 }
 
+.plan-candidate-overview__basis {
+  margin: var(--space-2) 0 0;
+  color: var(--ink-2);
+  font-size: var(--fs-caption);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
 .plan-candidate__choose[aria-pressed="true"] {
   border-color: var(--category-training);
   background: var(--category-training-wash);

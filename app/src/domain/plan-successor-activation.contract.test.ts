@@ -1,6 +1,9 @@
 import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { generatePlanCandidates } from "@impl/plan-generator/generator"
+import { generatePlanCandidates, selectPlanCandidate } from "@impl/plan-generator/generator"
+import { bindDetailedPrescriptionCandidates } from "./plan-candidate-prescription"
+import { createInitialPeriodizationContext } from "./periodization-lineage"
+import { createExplanationReceipt } from "./training-explanation-receipt"
 import {
   acceptPreparedNextFrameAdaptation,
   evaluateActivePlanAdaptationSafety,
@@ -467,7 +470,7 @@ async function activeFixture(
   }, "NO_KNOWN_RISK", selectedRecordId === undefined ? undefined : { selectedRecordId })
   if (generated.kind !== "generated") throw new Error(`Expected generated plan, got ${generated.kind}`)
   let generatedPlan = generated.generated
-  if (!withDetailedPrescription && historicalRpeOnly) {
+  if (historicalRpeOnly) {
     // Historical plain-RPE plans predate the app's automatic catalog binding.
     // Exercise their approved existing-sibling transform through the real core,
     // without stripping a calculated prescription or mocking its safety gate.
@@ -488,19 +491,31 @@ async function activeFixture(
       formation: createPlanFormation(LOCAL_DATE, availableTrainingDays, generated.intake.experienceBand),
       requestedFrameLength: projectionLength,
       selectedEnergyIntent: generated.intake.trainingFocus,
-      selectedDetailedTemplateRef: null,
+      selectedDetailedTemplateRef,
       journalSource: { kind: "NO_USABLE_JOURNAL" },
       selectionAuthority: "SELF",
     })
     if (historical.kind !== "generated") throw new Error(`Expected historical RPE plan, got ${historical.kind}`)
-    generatedPlan = historical
+    generatedPlan = withDetailedPrescription ? bindDetailedPrescriptionCandidates(historical, generated.intake,
+      generated.gate, { selectedRecordId }, new Date(ACTIVATED_AT)).generated : historical
     expect(generatedPlan.candidates.every((candidate) => candidate.sessions.every((session) => (
       session.prescription.kind !== "RPE_TIME_RANGE" || session.prescription.catalogWorkout === undefined
     )))).toBe(true)
   }
   const base = generatedPlan.candidates[withPbTrigger ? 1 : 0]
   if (base === undefined) throw new Error("Expected a base candidate")
-  const selected = selectPlanForActivation(
+  const selected = historicalRpeOnly ? (() => {
+    // Restore an already-saved pre-catalog plan, not a newly activatable draft.
+    const original = selectPlanCandidate({ kind: "PLAN_BETA_SELECTION_REQUEST", generatedPlan,
+      selectedCandidateId: base.candidateId, actor: "SELF", safetyGate: generated.gate })
+    if (original.kind !== "selected") throw Error("Expected verified historical source")
+    return { kind: "selected" as const, state: planBetaStateV3Schema.parse({ version: 3,
+      intake: generated.intake, activePlan: original.activePlan, progress: [], generatedAt: ACTIVATED_AT,
+      periodization: createInitialPeriodizationContext(base.candidateId, ACTIVATED_AT),
+      athleteEvidence: generated.athleteEvidence,
+      explanationReceipt: createExplanationReceipt(original.activePlan, ACTIVATED_AT),
+    }) }
+  })() : selectPlanForActivation(
     base.candidateId,
     generatedPlan,
     generated.gate,

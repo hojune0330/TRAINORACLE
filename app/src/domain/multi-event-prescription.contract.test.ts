@@ -6,6 +6,7 @@ import {
 } from "./athlete-records"
 import { DETAILED_PRESCRIPTION_APPROVALS } from "./detailed-prescription-approvals"
 import { generatePlanFromDraft } from "./plan-beta-flow"
+import { unresolvedPlanMains } from "./plan-main-readiness"
 
 const TODAY = new Date("2026-08-17T03:00:00.000Z")
 
@@ -129,6 +130,8 @@ describe("multi-event same-event detailed prescriptions", () => {
         code: "PACE_TARGET_BOUND",
       })
       for (const candidate of result.generated.candidates) {
+        expect(unresolvedPlanMains(candidate.sessions)).toEqual([])
+        expect(candidate.sessions.filter(session => session.role === "QUALITY").length).toBeGreaterThan(1)
         const sessions = candidate.sessions.filter((session) => (
           session.role === "QUALITY"
           && session.prescription.kind === "PACE_TARGET"

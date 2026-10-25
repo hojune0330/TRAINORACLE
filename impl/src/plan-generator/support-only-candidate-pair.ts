@@ -55,16 +55,22 @@ export function isInitialCandidatePair(balanced: PlanCandidate, conservative: Pl
       return { ...s, prescription: { kind: "RPE_TIME_RANGE" as const, ...s.prescription.catalogWorkout.originalEnvelope } }
     }) })
     if (!hasValidCandidatePairIdentity(balanced, conservative)) return false
+    const independentMain = sameSingleDetailedMainWork(balanced, conservative)
     for (let i = 0; i < balanced.sessions.length; i++) {
       const a = balanced.sessions[i], b = conservative.sessions[i]
       if (!a || !b) return false
-      if (a.role === "QUALITY" && !sameJson(a, b)) return false
-      if (a.prescription.kind === "RPE_TIME_RANGE" && b.prescription.kind === "RPE_TIME_RANGE"
+      if (a.role === "QUALITY" && !sameJson(a, b) && !independentMain) return false
+      if (!(a.role === "QUALITY" && independentMain)
+        && a.prescription.kind === "RPE_TIME_RANGE" && b.prescription.kind === "RPE_TIME_RANGE"
         && b.prescription.durationMinutes.maximum > a.prescription.durationMinutes.maximum) return false
     }
-    return checkCandidatePair(strip(balanced), strip(conservative), false, true)
+    return checkCandidatePair(strip(balanced), strip(conservative), independentMain, true)
   }
   if (isSupportOnlyCandidatePair(balanced, conservative)) return true
+  return sameSingleDetailedMainWork(balanced, conservative) && checkCandidatePair(balanced, conservative, true)
+}
+
+function sameSingleDetailedMainWork(balanced: PlanCandidate, conservative: PlanCandidate): boolean {
   const main = (candidate: PlanCandidate) => candidate.sessions.filter(session => session.role === "QUALITY")
   const left = main(balanced)
   const right = main(conservative)
@@ -73,8 +79,7 @@ export function isInitialCandidatePair(balanced: PlanCandidate, conservative: Pl
   const work = (sessions: readonly PlanSession[]) => sessions.map(session => JSON.stringify({
     purpose: session.plannedEnergyIntent, prescription: session.prescription,
   })).sort()
-  if (!sameJson(work(left), work(right))) return false
-  return checkCandidatePair(balanced, conservative, true)
+  return sameJson(work(left), work(right))
 }
 
 function checkCandidatePair(balanced: PlanCandidate, conservative: PlanCandidate, independentMain: boolean, identityChecked = false): boolean {

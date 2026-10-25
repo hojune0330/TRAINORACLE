@@ -230,4 +230,60 @@ BASE:CONTINUOUS와 BASE:EASY_CONTINUOUS의 연속 달리기는 같은 탐색 방
 - 조건 확인과 숫자 입력은 새 초안의 기능이다. 과거 계획을 열었거나 다음 주기를 준비했다는
   이유로 첫 생성 확인을 소급 적용하지 않는다. 기존 저장·안전·계정 동시성 관문을 유지한다.
 
+### 9.2 2026-10-25 익숙한 처방 우선 전달
+
+오너는 종목을 단계적으로 나누지 않고 중장거리부터 마라톤까지, 익숙하고 바로
+따를 수 있는 처방을 우선하도록 지시했다. 이 절은 첫 추천의 전달 우선순위와
+표시 변경이며 기존 용량, 회복, 날짜 배치, 안전 조건의 변경 승인이 아니다.
+
+- 800·1500·3000·5000m·10km·하프·마라톤에 같은 경로를 적용한다. 종목별 적격성은
+  그대로 유지한다. 하프 입력의 21097m 호환과 계산의 21097.5m 기준도 변경하지 않는다.
+- 기존 적격성·시간 검사와 방법별 중복 제거가 먼저다. 그 안에서 이지런, 템포런,
+  크루즈 인터벌, 일정한 시간의 인터벌 등 등록된 기본 방법을 우선한다. 같은 단계에서는
+  서로 다른 구간 종류와 세트 중첩이 적은 구성을 우선하고, 동순위 안에서 기존 분산을
+  유지한다. 우선순위는 `catalog-delivery.ts`의 버전 있는 제품 규칙이지 효과 점수가 아니다.
+- 적격 기본 방법이 없으면 적격한 복합 구성을 유지한다. 기존 대안 풀을 삭제하지 않고,
+  필수 확인이나 숫자 입력을 건너뛰기 위해 다른 목적·용량으로 대체하지 않는다.
+- 이름, 짧은 목적, 실행 구간, 페이스 근거를 분리한다. 전문 이름과 원본 구간표는
+  상세에 유지한다. 두 개의 등록된 장문 RPE 안내만 짧게 풀어 쓰고 임의 문구를 잘라내지 않는다.
+- 세트/반복 사이 회복과 마지막 뒤 회복을 구분한다. 걷기·자전거·수영·언덕은 해당 구간에
+  표시한다. 기록·목표·직접 정한 시간의 출처를 유지하고, 기록이 없으면 초를 발명하지 않는다.
+- 표시 계산은 저장된 입력과 지문을 확인한다. 최신 PB를 읽어 과거 처방을 재계산하지 않는다.
+  미정/깨진 MAIN은 `상세 구성 확인 필요`로 표시하고 전체 시간을 본운동으로 안내하지 않는다.
+- 날짜 카드는 핵심 처방만 보여주고 상세를 열어 수행 순서를 읽는다. 이유 탭은 목적과
+  기준을 먼저 보여주며 구성·회복·한계·출처·주기 역할은 제목이 있는 펼치기 항목으로 둔다.
+- `코치 계획과 비교하기 · 출시 예정`은 이유 탭의 비대화형 안내다. 입력·업로드·비교가
+  가능한 버튼이나 출시일을 만들지 않는다. 실제 코치 계획 비교 구현은 별도 범위다.
+
+검수는 7종목 × 4조건의 28개 합성 여정, 전체 카탈로그 계산과 구간 표시, 기존 대안·
+다음 주기 보존 검사, 좁은 화면·확대·키보드·메모 복귀를 구분한다. 합성 검사는 선수
+실사용이나 전문가의 처방 효능 검증이 아니다. 공개 배포와 실계정 저장 증거도 별도다.
+
+참고 자료는 [VDOT 훈련 정의](https://vdoto2.com/learn-more/training-definitions)와
+[템포·크루즈 인터벌 설명](https://news.vdoto2.com/2025/06/get-the-most-out-of-your-threshold-training/)이다.
+익숙한 방법 구분과 안내의 참고 자료이며, 새 개인별 용량·주기 배치나 최적성을 승인하지 않는다.
+
+### 9.3 First-plan completion gate and compact delivery
+
+- Initial catalog completion also runs when a legacy PACE_TARGET template is selected.
+  Existing bindings and the selected pace target are preserved; only remaining unbound MAINs
+  are filled in that path, and legacy support sessions remain unchanged. Moving the single
+  detailed MAIN preserves the complete companion MAIN work set. Initial placement comparison
+  does not relax the strict support-only adaptation predicate.
+- New candidate activation rejects unresolved QUALITY slots with MAIN_CONFIGURATION_REQUIRED.
+  This gate is checked again inside the existing save lock. It is not a migration or a
+  read-time restriction on historical saved plans. Safety and template authority remain separate gates.
+- Initial condition discovery is available alongside legacy detailed templates. Conditions
+  remain explicit and source-bound; the selected template is not replaced by condition discovery.
+  An unresolved MAIN prevents activation, not access to its condition review. Pending answers
+  survive opening the schedule; existing source/account invalidation still applies.
+- The initial result exposes the first dated MAIN and its execution facts. All dates remain
+  in the schedule, and comparison/input/supply details remain discoverable after the primary action.
+- Same-event record pace offers use the existing reviewed RP path, expose a preview and
+  duration changes, and require an explicit draft-apply action. They never silently update saved plans.
+- Four exact adopted effort cues have short plain-language counterparts. Unknown text and
+  source sequences are retained, including terminal recovery and stop instructions.
+- First-draw preference does not constrain the existing same-purpose alternative picker.
+  The picker retains method grouping, unseen-method rotation and explicit application.
+
 [DRAFT_COMPLETE]

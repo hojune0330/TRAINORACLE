@@ -47,6 +47,14 @@
 .session-explanation__sources strong, .session-explanation__sources a { display: block; }
 .session-explanation__template-source a, .session-explanation__template-source small { display: block; margin-block: 8px; }
 .session-explanation__content details > summary { min-height: 44px; padding-block: 8px; cursor: pointer; }
+.session-explanation__content summary:focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; }
+.session-explanation__upcoming { padding-block: 24px 8px; color: var(--ink-2); }
+.session-explanation__upcoming strong { font-size: 0.875rem; }
+.session-explanation__content .session-explanation__upcoming p { font-size: 0.875rem; }
+.session-explanation__execution { margin: 0; display: grid; gap: 20px; }
+.session-explanation__execution dt { color: var(--ink-2); font-size: 0.875rem; }
+.session-explanation__execution dd { margin: 4px 0 0; }
+.session-explanation__execution > [data-phase="main"] dd { font-weight: 700; }
 .prescription-structure { display: grid; gap: var(--space-3); margin-top: var(--space-3); }
 .prescription-structure__section { padding-block: var(--space-2); }
 .prescription-structure__section[data-section="main"] { padding: var(--space-3); border-block: 1px solid var(--line); background: var(--surface-2); }

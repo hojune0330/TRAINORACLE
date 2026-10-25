@@ -13,6 +13,7 @@ import { useLocalToday } from "../../hooks/useLocalToday"
 import { calendarReducedMotion } from "../../hooks/useCalendarMotion"
 import { formatPaceSeconds } from "@impl/prescription/record-pace"
 import { resolveCatalogBinding } from "@impl/prescription/catalog-session-binding"
+import { sessionPrescriptionBasis } from "../../domain/prescription-basis"
 import { calculatedWorkoutSequence } from "@impl/prescription/all-workout-calculator"
 import { MonthCalendar } from "../../components/MonthCalendar"
 import { CalendarRoleIcon, CalendarTrainingMark } from "../../components/CalendarTrainingMark"
@@ -104,8 +105,8 @@ function prescriptionCalendarSummary(session: PlanSession): string {
   const prescription = session.prescription
   if (prescription.kind !== "RPE_TIME_RANGE" || !prescription.catalogWorkout) return prescriptionLabel(session, true)
   const calculation = resolveCatalogBinding(prescription.catalogWorkout)
-  const fallback = prescriptionLabel(session)
-  if (!calculation) return fallback
+  const fallback = prescriptionLabel(session, true)
+  if (!calculation) return "상세 구성 확인 필요"
   const main = calculatedWorkoutSequence(calculation)?.main
   if (!main || main.length !== 1) return fallback
   const node = main[0]!
@@ -698,7 +699,6 @@ function PlanSessionPreview({
 }) {
   const flow = sessionFlowLabel(session)
   const executionSteps = sessionExecutionSteps(session, expanded)
-  const hasCompleteDurationStep = executionSteps.some(step => step.role === "TOTAL_DURATION")
   // Navigation summaries may use the verified whole-session total. Keep MAIN
   // prescriptions and unresolved catalog links in their existing readable form.
   const compactCatalogAmount = lightweightSummary && session.role === "EASY"
@@ -712,10 +712,15 @@ function PlanSessionPreview({
     && session.prescription.catalogWorkout ? resolveCatalogBinding(session.prescription.catalogWorkout) : null
   const originalSequence = originalCalculation ? calculatedWorkoutSequence(originalCalculation) : null
   const navigationCard = !expanded && onExpand !== undefined
+  const basis = sessionPrescriptionBasis(session)
+  const incompleteMain = session.role === "QUALITY" && session.prescription.kind === "RPE_TIME_RANGE"
+    && (!session.prescription.catalogWorkout || !resolveCatalogBinding(session.prescription.catalogWorkout))
   const summary = <>
-    {!(lightweightSummary && session.role === "REST") && !(expanded && hasCompleteDurationStep) && <small className={session.role === "REST" ? "plan-session-help" : "plan-session-metric"}>
-      {compactCatalogAmount ?? compactNotation ?? prescriptionLabel(session, expanded)}
+    {!(lightweightSummary && session.role === "REST") && <small className={session.role === "REST" ? "plan-session-help" : "plan-session-metric"}>
+      {compactCatalogAmount ?? compactNotation ?? (expanded ? prescriptionCalendarSummary(session) : prescriptionLabel(session))}
     </small>}
+    {incompleteMain && <small className="plan-session-help">상세 구성 확인 필요 · 전체 시간은 본운동 시간이 아니에요.</small>}
+    {!expanded && basis && session.role === "QUALITY" && !incompleteMain && <small className="plan-session-help">기준: {basis}</small>}
     {lightweightSummary && !compactCatalogAmount && session.prescription.kind === "RPE_TIME_RANGE" && session.prescription.catalogWorkout &&
       <small className="plan-session-help">{prescriptionCalendarAmount(session)}</small>}
     {lightweightSummary && showProgress && progress !== undefined && <small className="prescription-calendar__progress" aria-label="현재 진행 상태">
@@ -779,13 +784,14 @@ function PlanSessionPreview({
         />}
       </header>}
       <div className="plan-session-content">
-        {!navigationCard && <><strong>{sessionLabel(session, expanded)}</strong>{summary}</>}
-        {!lightweightSummary && compact ? (
+        {!navigationCard && <><strong>{sessionLabel(session)}</strong>{summary}</>}
+        {expanded && basis && <p className="plan-session-help">기준: {basis}</p>}
+        {!navigationCard && (!lightweightSummary && compact ? (
           <details className="plan-day-card__details" open={returnedFromJournal}>
             <summary>{sessionSlotLabel(session.slot)} 훈련 방법과 기록</summary>
             <div>{details}{footer}</div>
           </details>
-        ) : !lightweightSummary && details}
+        ) : !lightweightSummary && details)}
         {action && <div className="plan-session-record-action">{action}</div>}
         {expanded && footer && <details className="plan-session-records" data-session-records>
           <summary>일지·진행 기록</summary>{footer}
@@ -803,7 +809,7 @@ function PlanSessionPreview({
               </li>)}
           </ol> : <p>{prescriptionLabel(session)}</p>}
         </details>}
-        {!lightweightSummary && <SessionExplanationEntry session={session} date={date} context={explanationContext} loadEvidence={loadEvidence} showPurpose={false} />}
+        {!navigationCard && !lightweightSummary && <SessionExplanationEntry session={session} date={date} context={explanationContext} loadEvidence={loadEvidence} showPurpose={false} />}
       </div>
     </section>
   )

@@ -34,6 +34,8 @@ describe("newplan-only initial MAIN condition review", () => {
       expect(review).not.toBeNull()
       expect(review.offers).toHaveLength(input.generated.candidates[0].sessions.filter(session => session.role === "QUALITY").length)
       expect(review.offers.length).toBeGreaterThan(0)
+      expect(selectPlanForActivation(source.generated.candidates[0].candidateId, source.generated, source.gate, source.intake))
+        .toEqual({ kind: "rejected", code: "MAIN_CONFIGURATION_REQUIRED" })
       expect(review.fallbacks).toEqual([])
       expect(review.offers.every(offer => offer.workout.inputs.confirmedRequirements.length === 0)).toBe(true)
       expect(applyInitialMainConditions(input, review.key, [])).toBeNull()

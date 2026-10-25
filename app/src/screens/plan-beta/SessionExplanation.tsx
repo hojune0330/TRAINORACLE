@@ -173,10 +173,11 @@ function SessionExplanationReader({ session, context, loadEvidence, initialTab =
         </div>
         <div className="session-explanation__tab-content" hidden={tab !== "이유·근거"}>
             <p className="session-explanation__note">오라클 · 훈련의 이유와 근거</p>
-            <p>{sessionGuidance(session)}</p>
-            {catalogWorkout ? <><CatalogWorkoutDetail workout={catalogWorkout} evidence /><section><h3>이번 주기에서 맡는 역할</h3>{explanation.cycle.map(line => <p key={line}>{line}</p>)}</section></> : <>
+            {catalogWorkout ? <><CatalogWorkoutDetail workout={catalogWorkout} evidence /><details><summary>이번 주기에서 맡는 역할</summary>{explanation.cycle.map(line => <p key={line}>{line}</p>)}</details></> : <>
             <p className="session-explanation__notice">{explanation.availability}</p>
             <section><h3>훈련 목적</h3><p>{explanation.profile.purpose}</p></section>
+            <details><summary>구성·회복의 이유와 근거</summary>
+            <p>{sessionGuidance(session)}</p>
             <section><h3>몸이 에너지를 공급하는 방식</h3><p>{explanation.profile.energyContext}</p>
               <details className="session-explanation__term"><summary>{term.label}은 왜 이런 이름인가요?</summary>
                 <p>{term.namingOrigin ?? term.short}</p><p>{term.technicalDefinition ?? term.detail}</p>
@@ -214,7 +215,12 @@ function SessionExplanationReader({ session, context, loadEvidence, initialTab =
               <small>설명 버전 {explanation.version} · 근거 확인과 개별 처방 채택은 별도 검토예요.</small>
               {expert && explanation.template !== null && <p className="session-explanation__note">템플릿 {explanation.template.id} · 버전 {explanation.template.version}<br />채택 결정 {explanation.template.decision}</p>}
             </section>
+            </details>
             </>}
+            <aside className="session-explanation__upcoming" aria-label="출시 예정 기능">
+              <strong>코치 계획과 비교하기 · 출시 예정</strong>
+              <p>코치에게 받은 계획과 오라클 처방의 구성·페이스·회복을 비교하는 기능을 준비하고 있어요.</p>
+            </aside>
         </div>
         <div className="session-explanation__tab-content" hidden={tab !== "주기·기록"}>
             <section><h3>주기 안의 위치</h3><ol>{explanation.cycle.map((line) => <li key={line}>{line}</li>)}</ol></section>
