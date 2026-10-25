@@ -111,7 +111,7 @@ test("audits populated home, detail, and trends actions", async ({ page, baseURL
   const homeScrollTop = await page.locator("main.app-scroll-region").evaluate(element => element.scrollTop)
   await oracleEntry.click()
   await page.getByRole("group", { name: "훈련 분석 자세히 보기" }).getByRole("button", { name: "월별 변화", exact: true }).click()
-  const metricSelector = page.getByRole("region", { name: "최근 4개월 추이" }).getByRole("button", { name: /^지표 선택:/u })
+  const metricSelector = page.getByRole("region", { name: "기간별 훈련 리포트" }).getByRole("button", { name: /^지표 선택:/u })
   await auditTouchTargets(page, [
     { name: "trends.exit", locator: page.getByRole("navigation", { name: "오라클 메뉴" }).getByRole("button", { name: "오라클 나가기", exact: true }) },
     { name: "trends.metric-selector", locator: metricSelector, count: 1 },

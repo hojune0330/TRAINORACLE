@@ -80,8 +80,8 @@ test("does not ask to discard a blank or successfully saved guest journal", asyn
 
 test("keeps personal mode when another analysis topic has no personal evidence", async ({ page }) => {
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "오라클", exact: true }).click()
-  await page.getByRole("region", { name: "오라클 예시" })
-    .getByRole("button", { name: "예시 결과 보기", exact: true }).click()
+  await page.getByRole("button", { name: "경기·계획·훈련 비교하기", exact: true }).click()
+  await page.getByRole("button", { name: /^훈련 구성 ·/u }).click()
   await page.getByRole("button", { name: "내 기록", exact: true }).click()
   await page.getByRole("button", { name: /이어서 살펴보기/ }).click()
   await expect(page.getByRole("button", { name: "내 기록", exact: true })).toHaveAttribute("aria-pressed", "true")

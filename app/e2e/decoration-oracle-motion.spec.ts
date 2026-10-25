@@ -33,13 +33,11 @@ test("keeps decoration and oracle motion brief, directional, and optional", asyn
 
   const mainTabs = page.getByRole("navigation", { name: "주 탭" })
   await mainTabs.getByRole("button", { name: "오라클" }).click()
-  const oracle = page.getByRole("region", { name: "내 훈련 요약" })
+  const oracle = page.getByRole("region", { name: "기간별 훈련 리포트" })
   await expect(oracle).toBeVisible()
 
-  // Available metrics now use static MetricSummary cards; the summary and
-  // evidence disclosure retain the same optional entrance motion.
-  await expect(oracle.getByLabel("최근 분석 지표", { exact: true })).toBeVisible()
-  const oracleAnimations = await oracle.locator(".personal-oracle__summary, .personal-oracle__details").evaluateAll((elements) => (
+  await expect(oracle.getByRole("region", { name: "월별 누적 거리" })).toBeVisible()
+  const oracleAnimations = await page.locator(".trends-motion-stage > .oracle-report").evaluateAll((elements) => (
     elements.map((element) => ({
       name: getComputedStyle(element).animationName,
       duration: getComputedStyle(element).animationDuration,
@@ -49,7 +47,7 @@ test("keeps decoration and oracle motion brief, directional, and optional", asyn
   if (testInfo.project.name === "reduced-motion") {
     expect(oracleAnimations.every((animation) => animation.name === "none")).toBe(true)
   } else {
-    expect(oracleAnimations.every((animation) => animation.name === "oracle-insight-enter")).toBe(true)
+    expect(oracleAnimations.every((animation) => animation.name === "oracle-section-enter")).toBe(true)
     expect(oracleAnimations.every((animation) => animation.duration === "0.3s")).toBe(true)
   }
 

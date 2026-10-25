@@ -27,7 +27,7 @@ beforeEach(async () => { localStorage.clear(); sessionStorage.clear(); await ini
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.useRealTimers(); context.retained = [] })
 async function openMethodDetails(slot: "AM" | "PM") {
   const session = screen.getByRole("region", { name: slot === "AM" ? "오전 훈련" : "오후 훈련" })
-  const summary = within(session).getByText("자세히 보기 · 방법과 근거", { selector: "summary" })
+  const summary = within(session).getByText("원본 구간표", { selector: "summary" })
   fireEvent.click(summary)
   expect(summary.closest("details")).toHaveAttribute("open")
 }
@@ -47,8 +47,9 @@ it("reopens a real saved adjustment in PlanBeta and links the exact session to a
   render(<PlanBeta returnToSession={link.link} onWritePlannedSessionLog={onWrite} />)
   fireEvent.click(screen.getByRole("button", { name: /크게 보기/u }))
   expect(screen.getByRole("heading", { name: "내 훈련 일정" })).toBeVisible()
-  expect(screen.getByText("400m당 약 1분 29초")).toBeVisible()
-  const recovery = screen.getByText(/반복 사이: 17초/u)
+  const memo = within(screen.getByRole("region", { name: "오전 훈련" })).getByRole("article", { name: "훈련 메모 미리보기" })
+  expect(memo).toHaveTextContent("88.8초/400m")
+  const recovery = within(memo).getByText(/반복 사이 17초/u)
   expect(recovery).toBeVisible()
   expect(recovery.closest("details")).toBeNull()
   await openMethodDetails(link.link.sessionSlot)

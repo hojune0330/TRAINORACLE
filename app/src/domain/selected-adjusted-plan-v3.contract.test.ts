@@ -24,7 +24,7 @@ import { isoShift } from "./dates"
 beforeEach(async () => { localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture(); setActiveLocalAccount(null); vi.useFakeTimers(); vi.setSystemTime(TODAY) })
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.useRealTimers() })
 async function openMethodDetails(container: HTMLElement) {
-  const summary = within(container).getByText("자세히 보기 · 방법과 근거", { selector: "summary" })
+  const summary = within(container).getByText("원본 구간표", { selector: "summary" })
   fireEvent.click(summary)
   expect(summary.closest("details")).toHaveAttribute("open")
 }

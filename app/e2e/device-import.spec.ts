@@ -103,9 +103,8 @@ test("counts an imported journal without treating its numbers as analysis eviden
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "홈", exact: true }).click()
   await expect(page.getByRole("button", { name: /기록 1개 보기/u })).toContainText("가져온 기록 포함")
   await page.getByRole("button", { name: "훈련량·변화 보기", exact: true }).click()
-  await expect(page.getByTestId("trends-analysis-exclusion").locator("summary")).toContainText("가져온 기록 1개")
-  await page.getByTestId("trends-analysis-exclusion").locator("summary").click()
-  await expect(page.getByTestId("trends-excluded-imported")).toContainText("외부 수치는 아직 분석에 넣지 않았어요")
+  await page.getByRole("region", { name: "기간별 훈련 리포트" }).locator("summary", { hasText: "집계 기준·출처" }).click()
+  await expect(page.getByTestId("trends-excluded-imported")).toContainText("가져온 일지 1개의 외부 수치 중 확인되지 않은 값은 분석에서 제외했어요")
 })
 
 test("shows a duplicate warning unchecked instead of merging silently", async ({ page }) => {

@@ -61,12 +61,6 @@ function timeText(seconds: number) {
   const rounded = Math.round(seconds * 10) / 10
   return rounded >= 60 ? `${Math.floor(rounded / 60)}분 ${Number((rounded % 60).toFixed(1))}초` : `${rounded}초`
 }
-function readerTargetText(event: number, seconds: number) {
-  // The 10km catalog has its plain-language reader; half/full marathon still
-  // retain the legacy seconds notation. Short-event recommendations use 초.
-  return event === 10000 ? timeText(seconds)
-    : `${Math.round(seconds * 10) / 10}${event > 10000 ? "s" : "초"}`
-}
 function timeFields(seconds: number) {
   return { minutes: String(Math.floor(seconds / 60)), seconds: String(Number((seconds % 60).toFixed(4))) }
 }
@@ -223,7 +217,7 @@ async function assertBoundSuccessor(page: Page, persona: Persona, source: Athlet
       .getByLabel(`${predecessor.intake.requestedFrameLength}일 훈련 일정`, { exact: true })
     await overview.getByRole("radio", { name: "달력", exact: true }).click()
     await overview.getByRole("button", { name: new RegExp(`${date.getUTCMonth() + 1}월 ${date.getUTCDate()}일`) }).click()
-    await expect(page.getByRole("dialog")).toContainText(readerTargetText(persona.event, main.minimum))
+    await expect(page.getByRole("dialog")).toContainText(timeText(main.minimum))
     await page.getByRole("button", { name: /^(?:달력|하루씩)으로 돌아가기$/u, exact: true }).click()
   }
   return evidence
@@ -300,7 +294,7 @@ for (const persona of personas) test(`${persona.id} ${persona.name}`, async ({ p
       const saved = await plan(page)
       const rows = await assertNumeric(page, persona, persona.seconds, source)
       await openActiveDayReader(page, rows[0]!.day - 1)
-      await expect(page.getByRole("dialog")).toContainText(readerTargetText(persona.event, rows[0]!.minimum))
+      await expect(page.getByRole("dialog")).toContainText(timeText(rows[0]!.minimum))
       await page.getByRole("button", { name: /^(?:달력|하루씩)으로 돌아가기$/u, exact: true }).click()
       const views = await page.evaluate(async ({ path, event }) =>
         (await import(/* @vite-ignore */ path) as typeof Harness).records(event), { path: helperPath, event: persona.event })

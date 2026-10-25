@@ -326,12 +326,12 @@ test("shows a truthful distance receipt and opens the real trend", async ({ page
   await expect(page.getByRole("heading", { name: "오라클", exact: true })).toBeVisible()
   const detailMenu = page.getByRole("group", { name: "훈련 분석 자세히 보기" })
   await expect(detailMenu.getByRole("button", { name: "월별 변화", exact: true })).toHaveAttribute("aria-pressed", "true")
-  await page.getByRole("region", { name: "최근 4개월 추이" }).locator("summary", { hasText: "월별 수치와 집계 범위 보기" }).click()
-  await expect(page.getByRole("region", { name: "최근 4개월 추이" }).getByText(/중앙 거리 8 km/u)).toBeVisible()
+  const report = page.getByRole("region", { name: "기간별 훈련 리포트" })
+  await expect(report.getByRole("img", { name: /거리 · 월별 중앙값.*8 km/u })).toBeVisible()
   await detailMenu.getByRole("button", { name: "훈련량", exact: true }).click()
-  const distance = page.getByRole("region", { name: "누적 거리와 변화" })
-  await expect(distance.getByLabel(/이번 주, 8킬로미터, 기록 1건/u)).toBeVisible()
-  await expect(distance.getByText(/1건 반영/u).first()).toBeVisible()
+  await expect(report.getByRole("img", { name: /월별 누적 거리.*8 km/u })).toBeVisible()
+  await report.locator("summary", { hasText: "집계 기준·출처" }).click()
+  await expect(report.getByText(/거리 합계: 반영 1건/u)).toBeVisible()
 })
 
 test("uses the real app on desktop and reserves the workspace for an explicit query", async ({ page }, testInfo) => {

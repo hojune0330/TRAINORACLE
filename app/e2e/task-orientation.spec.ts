@@ -23,8 +23,9 @@ test("analysis has a clear reading start and meaningful choices on a narrow phon
   expect(await page.locator('.app-scroll-region').evaluate(node => node.scrollWidth <= node.clientWidth)).toBe(true)
   await page.screenshot({ path: info.outputPath("analysis-375.png"), fullPage: true })
   await choice.click()
-  await expect(page.getByRole("heading", { name: "누적 거리와 변화", exact: true })).toBeVisible()
-  await expect(page.getByRole("region", { name: "누적 거리와 변화" })).toBeVisible()
+  const report = page.getByRole("region", { name: "기간별 훈련 리포트" })
+  await expect(report).toHaveAttribute("data-view", "distance")
+  await expect(report.getByRole("heading", { name: "아직 이 기간에 남긴 기록이 없어요", exact: true })).toBeVisible()
 })
 
 test("pace title and event actions fit at 320px and input keeps its original value on Back", async ({ page }, info) => {

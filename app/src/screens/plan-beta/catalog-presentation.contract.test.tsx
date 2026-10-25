@@ -108,7 +108,7 @@ it("separates a bound catalog's main workout and full time, and never calls its 
   expect(screen.queryByRole("list", { name: "훈련 실행 순서" })).toBeNull()
   fireEvent.click(screen.getByRole("button", { name: "9월 30일 수요일 오전 훈련 내용 보기" }))
   const reader = screen.getByRole("dialog", { name: "2026년 9월 30일 수요일" })
-  const totalCard = reader.querySelector(".training-instructions__card--total")!
+  const totalCard = within(reader).getByRole("article", { name: "훈련 메모 미리보기" })
   expect(totalCard).toBeVisible()
   expect(totalCard).toHaveTextContent(formatTrainingSeconds(calculation.totals.seconds!.maximum))
   expect(totalCard).toHaveTextContent("준비·회복·정리 포함")

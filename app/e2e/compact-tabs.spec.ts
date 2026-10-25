@@ -29,7 +29,7 @@ test("keeps analysis metric choices touchable and returns selection focus", asyn
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "오라클" }).click()
   await page.getByRole("group", { name: "훈련 분석 자세히 보기" }).getByRole("button", { name: "월별 변화", exact: true }).click()
 
-  const selector = page.getByRole("region", { name: "최근 4개월 추이" })
+  const selector = page.getByRole("region", { name: "기간별 훈련 리포트" })
     .getByRole("button", { name: /^지표 선택:/u })
   await expect(selector).toBeVisible()
   await expect(selector).toHaveAttribute("aria-expanded", "false")

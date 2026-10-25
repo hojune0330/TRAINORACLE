@@ -59,5 +59,5 @@ test("optional home content exposes its state and works without a pointer", asyn
   await action.focus()
   await expect(action).toBeFocused()
   await page.keyboard.press("Enter")
-  await expect(page.getByRole("combobox", { name: "살펴볼 주제" })).toHaveValue("focus")
+  await expect(page.getByRole("region", { name: "기간별 훈련 리포트" })).toHaveAttribute("data-source", "example")
 })
