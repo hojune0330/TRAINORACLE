@@ -40,6 +40,7 @@ import { PLAN_BETA_MUTATION_LOCK_NAME } from "./plan-mutation-lock"
 import { inspectNextFrameAdaptation } from "./plan-adaptation-availability"
 import { replacedReplanFixture } from "./execution-replan-lineage.test-fixture"
 import { resolveCurrentCycleContext } from "./plan-current-cycle-context"
+import { generateLegacyDetailedPlanFixture, restoreLegacyDetailedPlanFixture } from "./legacy-detailed-plan.test-fixture"
 
 const ACTIVE_KEY = "trainoracle.plan-beta.v1"
 const TEST_SYSTEM_TIME = new Date("2026-08-18T12:00:00.000Z")
@@ -97,9 +98,24 @@ describe("next-frame adaptation UI adapter", () => {
     expect(resolveCurrentCycleContext(changed, { kind: "loaded", plans: [] }, () => context)).toEqual({ kind: "invalid" })
   })
 
-  it.each(["BALANCED", "CONSERVATIVE"] as const)("offers only registered triggers for %s and preserves the valid sibling path", async kind => {
+  it.each(["BALANCED", "CONSERVATIVE"] as const)("offers only registered triggers for saved pre-catalog %s and preserves the valid sibling path", async kind => {
     const state = await createBoundState(kind)
     expect(inspectNextFrameAdaptation(state)).toMatchObject({ kind: "available", explicitRequest: true, pbSb: kind === "CONSERVATIVE" })
+  })
+
+  it.each(["BALANCED", "CONSERVATIVE"] as const)("keeps a newly completed catalog %s outside the legacy support-only transform", async kind => {
+    const state = await createBoundState(kind, false)
+    expect(state.activePlan.sessions.some(session => session.prescription.kind === "PACE_TARGET")).toBe(true)
+    expect(state.activePlan.sessions.some(session => session.prescription.kind === "RPE_TIME_RANGE"
+      && session.prescription.catalogWorkout !== undefined)).toBe(true)
+    const before = Object.fromEntries(Object.entries(localStorage))
+    const operationAt = new Date()
+    expect(inspectNextFrameAdaptation(state)).toEqual({ kind: "unavailable", code: "CATALOG_TRANSFORM_UNAVAILABLE" })
+    expect(await prepareNextFrameAdaptation({ state, reason: "EXPLICIT_REQUEST", record: null,
+      safety: evaluateActivePlanAdaptationSafety(state, "NO_KNOWN_RISK", operationAt),
+      operationAt: operationAt.toISOString(),
+    })).toEqual({ kind: "unavailable", code: "CATALOG_TRANSFORM_UNAVAILABLE" })
+    expect(Object.fromEntries(Object.entries(localStorage))).toEqual(before)
   })
 
   it("does not mistake manually changed plans for missing stored data or rebind their old siblings", async () => {
@@ -453,32 +469,8 @@ describe("next-frame adaptation UI adapter", () => {
     })
   })
 
-  it("accepts one real conservative successor, survives reload, and preserves active bytes", async () => {
-    const now = new Date()
-    const anchor = athleteRecord("00000000-0000-4000-8000-000000005001", 5000, "2026-08-01", now)
-    expect(saveAthleteRecord(anchor, now).ok).toBe(true)
-    const generated = generatePlanFromDraft({
-      eventGroup: "FIVE_K",
-      eventDistanceM: 5000,
-      competitionDivision: "OPEN",
-      experienceBand: "EXPERIENCED",
-      availableDayCount: 5,
-      requestedFrameLength: 9,
-      trainingFocus: "VO2_INTENT",
-      secondSessionMode: "SINGLE_SESSION_ONLY",
-      trainingTimePreference: "MORNING",
-      selectedDetailedTemplateRef: fiveKTemplateRef,
-    }, "NO_KNOWN_RISK", { selectedRecordId: anchor.id })
-    if (generated.kind !== "generated") throw new Error(`Expected generated plan, got ${generated.kind}`)
-    expect(generated.prescriptionBinding.kind).toBe("bound")
-    const saved = await saveSelectedPlanCandidate(
-      { candidateId: generated.generated.candidates[0].candidateId, startDate: "2026-08-18" },
-      generated.generated,
-      generated.gate,
-      generated.intake,
-      generated.athleteEvidence,
-    )
-    if (saved.kind !== "saved") throw new Error(`Expected saved plan, got ${saved.code}`)
+  it("accepts one real saved pre-catalog conservative successor, survives reload, and preserves active bytes", async () => {
+    const saved = { state: await createBoundState() }
     const activeBefore = window.localStorage.getItem(ACTIVE_KEY)
     expect(activeBefore).not.toBeNull()
 
@@ -703,11 +695,13 @@ describe("next-frame adaptation UI adapter", () => {
 
 async function createBoundState(
   candidateKind: "BALANCED" | "CONSERVATIVE" = "BALANCED",
+  historical = true,
 ): Promise<PlanBetaStateV3> {
   const now = new Date()
   const anchor = athleteRecord("00000000-0000-4000-8000-000000005002", 5000, "2026-08-01", now)
   expect(saveAthleteRecord(anchor, now).ok).toBe(true)
-  const generated = generatePlanFromDraft({
+  const generate = historical ? generateLegacyDetailedPlanFixture : generatePlanFromDraft
+  const generated = generate({
     eventGroup: "FIVE_K",
     eventDistanceM: 5000,
     competitionDivision: "OPEN",
@@ -720,6 +714,7 @@ async function createBoundState(
     selectedDetailedTemplateRef: fiveKTemplateRef,
   }, "NO_KNOWN_RISK", { selectedRecordId: anchor.id })
   if (generated.kind !== "generated") throw new Error(`Expected generated plan, got ${generated.kind}`)
+  if (historical) return restoreLegacyDetailedPlanFixture(generated, "2026-08-18", candidateKind)
   const candidate = generated.generated.candidates.find((item) => item.kind === candidateKind)
   if (candidate === undefined) throw new Error(`Expected ${candidateKind} candidate`)
   const saved = await saveSelectedPlanCandidate(

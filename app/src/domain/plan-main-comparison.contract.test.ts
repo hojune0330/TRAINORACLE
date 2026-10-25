@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { PaceTargetPlanPrescription, PlanCandidate, PlanSession } from "@impl/plan-generator/types"
 import { comparePlanMainWork } from "./plan-main-comparison"
 import { generatePlanFromDraft } from "./plan-beta-flow"
+import { generateLegacyDetailedPlanFixture } from "./legacy-detailed-plan.test-fixture"
 import { RUNTIME_CASES, TODAY, draftFor, saveCurrentRecord, type MatrixCase } from "./prescription-quality-matrix.test-fixtures"
 import { describeMainMethodDifferences, deriveSequenceTotals, deriveSequenceRecoveryDistanceTotals, type PrescriptionSequence } from "@impl/prescription/sequence"
 import { sessionPrescriptionSequence } from "./session-prescription-sequence"
@@ -14,7 +15,7 @@ afterEach(() => { vi.useRealTimers() })
 
 function pair(fixture: MatrixCase = RUNTIME_CASES[0]): readonly [PlanCandidate, PlanCandidate] {
   const selectedRecordId = saveCurrentRecord(fixture.eventDistanceM, fixture.performanceSeconds)
-  const result = generatePlanFromDraft(draftFor(fixture), "NO_KNOWN_RISK", { selectedRecordId })
+  const result = generateLegacyDetailedPlanFixture(draftFor(fixture), "NO_KNOWN_RISK", { selectedRecordId })
   if (result.kind !== "generated") throw new Error("Expected real generated candidates")
   return result.generated.candidates
 }
@@ -79,7 +80,7 @@ describe("actual MAIN comparison, not candidate-label comparison", () => {
     expect(options.map(option => option.ref.templateId)).toEqual(["V2-SEED-05"])
   })
 
-  it.each(RUNTIME_CASES)("compares every real $caseId slot without inventing a second method", (fixture) => {
+  it.each(RUNTIME_CASES)("compares every saved pre-catalog $caseId slot without inventing a second method", (fixture) => {
     const [a, b] = pair(fixture)
     const before = JSON.stringify([a, b])
     const result = comparePlanMainWork(a, b)
@@ -213,6 +214,24 @@ describe("actual MAIN comparison, not candidate-label comparison", () => {
       expect(row.b).toBeNull()
     }
     expect(JSON.stringify(result)).not.toMatch(/미지정|catalogFingerprint|calculationFingerprint|inputs/u)
+    expect(JSON.stringify([a, b])).toBe(before)
+  })
+
+  it("keeps newly completed companion MAINs outside the saved pre-catalog comparison", () => {
+    const fixture = RUNTIME_CASES[1]
+    const selectedRecordId = saveCurrentRecord(fixture.eventDistanceM, fixture.performanceSeconds)
+    const generated = generatePlanFromDraft(draftFor(fixture), "NO_KNOWN_RISK", { selectedRecordId })
+    if (generated.kind !== "generated") throw new Error("Expected current detailed candidates")
+    const [a, b] = generated.generated.candidates
+    expect(a.sessions.some(session => session.prescription.kind === "PACE_TARGET")).toBe(true)
+    expect(a.sessions.some(session => session.role === "QUALITY" && session.prescription.kind === "RPE_TIME_RANGE"
+      && session.prescription.catalogWorkout !== undefined)).toBe(true)
+    const before = JSON.stringify([a, b])
+    const comparison = comparePlanMainWork(a, b)
+    expect(comparison.hasUnsupportedCatalog).toBe(true)
+    expect(comparison.sameMainPrescription).toBe(false)
+    expect(comparison.easyDurationOnly).toBe(false)
+    expect(comparison.rows.some(row => row.methodRelation === "UNSUPPORTED")).toBe(true)
     expect(JSON.stringify([a, b])).toBe(before)
   })
 

@@ -2,7 +2,6 @@ import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-
 import { createElement } from "react"
 import { act, cleanup, fireEvent, render, renderHook, screen } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import type { PlanGenerationSuccess } from "@impl/plan-generator/types"
 import type { AthleteRecord } from "../athlete-records"
 import type { AccountAthleteRecordsState, AccountAthleteRecordsStatus } from "./account-athlete-record-service"
 import { ACCOUNT_ATHLETE_RECORD_EVENT, readAccountAthleteRecordsState } from "./account-athlete-record-service"
@@ -41,7 +40,9 @@ const generated = (() => {
   if (result.kind !== "generated") throw Error("Expected valid source-authority draft")
   return result.generated
 })()
-const preview = { synthetic: "preview" } as unknown as PlanGenerationSuccess
+// The offer now renders its changed workout before explicit application.
+// Keep the source-authority stub structurally valid for that read-only preview.
+const preview = structuredClone(generated)
 beforeEach(async () => {
   vi.clearAllMocks()
   vi.useFakeTimers({ toFake: ["Date"] })
@@ -149,7 +150,7 @@ describe("initial offer render and click source rechecks", () => {
   it("requires an explicit choice for goal-only confirmed data and does not substitute local extras", () => {
     state.records = [record("goal", { purpose: "RACE_GOAL", achievedOn: null })]
     const { onChange } = show()
-    expect(screen.getByRole("button", { name: "이 기록으로 목표 페이스 보기" })).toBeDisabled()
+    expect(screen.getByRole("button", { name: "이 페이스로 계획안에 적용" })).toBeDisabled()
     expect(onChange).not.toHaveBeenCalled()
     expect(prepareInitialRecordPaces).toHaveBeenLastCalledWith(generated, state.records, expect.any(String), undefined)
   })

@@ -66,8 +66,8 @@ describe("compact home training destination", () => {
     render(<TrainingHome model={model(invalid)} introductionAllowed={false} />)
     const card = screen.getByRole("button", { name: /^다음 훈련 ·/ })
     expect(card).toHaveAccessibleDescription("훈련 내용 확인 필요")
-    expect(card).not.toHaveTextContent("중간에 걷는 조깅")
-    expect(card).toHaveTextContent("중간 걷기 조깅 · Split Easy")
+    expect(card).toHaveTextContent("중간에 걷는 조깅")
+    expect(card).not.toHaveTextContent("중간 걷기 조깅 · Split Easy")
     expect(card).not.toHaveTextContent(/총 47분|총 60분/)
   })
 

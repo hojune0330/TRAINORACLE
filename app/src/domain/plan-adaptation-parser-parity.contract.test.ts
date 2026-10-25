@@ -17,7 +17,7 @@ import {
   planAdaptationCandidateSchema,
   planBetaStateV3Schema,
 } from "./plan-beta-schema"
-import { generatePlanFromDraft } from "./plan-beta-flow"
+import { generateLegacyDetailedPlanFixture } from "./legacy-detailed-plan.test-fixture"
 import {
   RUNTIME_CASES,
   TODAY,
@@ -409,10 +409,10 @@ describe("impl/app adaptation candidate parser parity", () => {
       .toEqual({ kind: "rejected", code: "MALFORMED_INPUT" })
   })
 
-  it("accepts the generated same-event detailed candidate at both boundaries", async () => {
+  it("accepts the saved pre-catalog same-event detailed candidate at both boundaries", async () => {
     const fixture = RUNTIME_CASES[1]
     const selectedRecordId = saveCurrentRecord(fixture.eventDistanceM, fixture.performanceSeconds)
-    const generated = generatePlanFromDraft(draftFor(fixture), "NO_KNOWN_RISK", { selectedRecordId })
+    const generated = generateLegacyDetailedPlanFixture(draftFor(fixture), "NO_KNOWN_RISK", { selectedRecordId })
     if (generated.kind !== "generated") throw new TypeError("Detailed fixture did not generate")
     const [baseCandidate, proposedCandidate] = generated.generated.candidates
 
@@ -466,7 +466,7 @@ describe("impl/app adaptation candidate parser parity", () => {
       fixture.eventDistanceM,
       fixture.performanceSeconds,
     )
-    const generated = generatePlanFromDraft(
+    const generated = generateLegacyDetailedPlanFixture(
       draftFor(fixture),
       "NO_KNOWN_RISK",
       { selectedRecordId },
@@ -600,7 +600,7 @@ describe("impl/app adaptation candidate parser parity", () => {
   ] as const)("rejects re-fingerprinted digit-bearing prose in %s", async (_label, mutate) => {
     const fixture = RUNTIME_CASES[1]
     const selectedRecordId = saveCurrentRecord(fixture.eventDistanceM, fixture.performanceSeconds)
-    const generated = generatePlanFromDraft(draftFor(fixture), "NO_KNOWN_RISK", { selectedRecordId })
+    const generated = generateLegacyDetailedPlanFixture(draftFor(fixture), "NO_KNOWN_RISK", { selectedRecordId })
     if (generated.kind !== "generated") throw new TypeError("Detailed fixture did not generate")
     const [baseCandidate, proposedCandidate] = generated.generated.candidates
 
@@ -625,7 +625,7 @@ describe("impl/app adaptation candidate parser parity", () => {
   ] as const)("rejects a re-fingerprinted alternate valid hash in %s", async (_label, mutate) => {
     const fixture = RUNTIME_CASES[1]
     const selectedRecordId = saveCurrentRecord(fixture.eventDistanceM, fixture.performanceSeconds)
-    const generated = generatePlanFromDraft(draftFor(fixture), "NO_KNOWN_RISK", { selectedRecordId })
+    const generated = generateLegacyDetailedPlanFixture(draftFor(fixture), "NO_KNOWN_RISK", { selectedRecordId })
     if (generated.kind !== "generated") throw new TypeError("Detailed fixture did not generate")
     const [baseCandidate, proposedCandidate] = generated.generated.candidates
     const value = `sha256:${"9".repeat(64)}`
@@ -640,7 +640,7 @@ describe("impl/app adaptation candidate parser parity", () => {
   it("rejects re-fingerprinted prose in every serialized detailed-prescription string leaf", async () => {
     const fixture = RUNTIME_CASES[1]
     const selectedRecordId = saveCurrentRecord(fixture.eventDistanceM, fixture.performanceSeconds)
-    const generated = generatePlanFromDraft(draftFor(fixture), "NO_KNOWN_RISK", { selectedRecordId })
+    const generated = generateLegacyDetailedPlanFixture(draftFor(fixture), "NO_KNOWN_RISK", { selectedRecordId })
     if (generated.kind !== "generated") throw new TypeError("Detailed fixture did not generate")
     const [baseCandidate, proposedCandidate] = generated.generated.candidates
     const session = baseCandidate.sessions.find((item) => item.prescription.kind === "PACE_TARGET")
@@ -680,7 +680,7 @@ describe("impl/app adaptation candidate parser parity", () => {
     }, TODAY)
     if (record === null) throw new TypeError("SB fixture is invalid")
     expect(saveAthleteRecord(record, TODAY)).toEqual({ ok: true, total: 1 })
-    const generated = generatePlanFromDraft(draftFor(fixture), "NO_KNOWN_RISK", { selectedRecordId: id })
+    const generated = generateLegacyDetailedPlanFixture(draftFor(fixture), "NO_KNOWN_RISK", { selectedRecordId: id })
     if (generated.kind !== "generated") throw new TypeError("Detailed SB fixture did not generate")
     const [baseCandidate, proposedCandidate] = generated.generated.candidates
 
@@ -750,7 +750,7 @@ describe("impl/app adaptation candidate parser parity", () => {
   ] as const)("never proposes app-rejected sparse PACE_TARGET %s", async (_label, mutate) => {
     const fixture = RUNTIME_CASES[1]
     const selectedRecordId = saveCurrentRecord(fixture.eventDistanceM, fixture.performanceSeconds)
-    const generated = generatePlanFromDraft(draftFor(fixture), "NO_KNOWN_RISK", { selectedRecordId })
+    const generated = generateLegacyDetailedPlanFixture(draftFor(fixture), "NO_KNOWN_RISK", { selectedRecordId })
     if (generated.kind !== "generated") throw new TypeError("Detailed fixture did not generate")
     const [baseCandidate, proposedCandidate] = generated.generated.candidates
     const malformedBase = mutate(baseCandidate)
@@ -799,7 +799,7 @@ describe("impl/app adaptation candidate parser parity", () => {
   ] as const)("rejects extra enumerable data on detailed PACE_TARGET %s", async (_label, mutate) => {
     const fixture = RUNTIME_CASES[1]
     const selectedRecordId = saveCurrentRecord(fixture.eventDistanceM, fixture.performanceSeconds)
-    const generated = generatePlanFromDraft(draftFor(fixture), "NO_KNOWN_RISK", { selectedRecordId })
+    const generated = generateLegacyDetailedPlanFixture(draftFor(fixture), "NO_KNOWN_RISK", { selectedRecordId })
     if (generated.kind !== "generated") throw new TypeError("Detailed fixture did not generate")
     const [baseCandidate, proposedCandidate] = generated.generated.candidates
     const malformedBase = mutateDetailedPrescription(baseCandidate, mutate)

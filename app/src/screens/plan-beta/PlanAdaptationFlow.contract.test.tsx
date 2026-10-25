@@ -8,6 +8,7 @@ import {
   saveAthleteRecord,
 } from "../../domain/athlete-records"
 import { generatePlanFromDraft } from "../../domain/plan-beta-flow"
+import { generateLegacyDetailedPlanFixture, restoreLegacyDetailedPlanFixture } from "../../domain/legacy-detailed-plan.test-fixture"
 import { DETAILED_PRESCRIPTION_APPROVALS } from "../../domain/detailed-prescription-approvals"
 import {
   savePlanBetaState,
@@ -572,7 +573,7 @@ async function createBoundActivePlan(kind: "BALANCED" | "CONSERVATIVE" = "BALANC
   const now = new Date()
   const anchor = athleteRecord("00000000-0000-4000-8000-000000000010", 5000, "2026-08-01", now)
   saveAthleteRecord(anchor, now)
-  const generated = generatePlanFromDraft({
+  const generated = generateLegacyDetailedPlanFixture({
     eventGroup: "FIVE_K",
     eventDistanceM: 5000,
     competitionDivision: "OPEN",
@@ -585,16 +586,7 @@ async function createBoundActivePlan(kind: "BALANCED" | "CONSERVATIVE" = "BALANC
     selectedDetailedTemplateRef: TEMPLATE_5000,
   }, "NO_KNOWN_RISK", { selectedRecordId: anchor.id })
   if (generated.kind !== "generated") throw new Error(`Expected generated plan, got ${generated.kind}`)
-  const candidate = generated.generated.candidates.find(item => item.kind === kind)!
-  const saved = await saveSelectedPlanCandidate(
-    { candidateId: candidate.candidateId, startDate: "2026-08-18" },
-    generated.generated,
-    generated.gate,
-    generated.intake,
-    generated.athleteEvidence,
-  )
-  if (saved.kind !== "saved") throw new Error(`Expected saved plan, got ${saved.code}`)
-  return { state: saved.state }
+  return { state: restoreLegacyDetailedPlanFixture(generated, "2026-08-18", kind) }
 }
 
 function athleteRecord(

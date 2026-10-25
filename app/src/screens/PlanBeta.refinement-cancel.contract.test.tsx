@@ -26,7 +26,16 @@ afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); setAct
 async function reachCandidates() {
   render(<PlanBeta />)
   fireEvent.click(await screen.findByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
-  await screen.findByRole("button", { name: "이 일정으로 시작" })
+  await screen.findByRole("heading", { name: "계획이 준비됐어요" })
+  // New drafts must complete each unresolved MAIN before activation. The
+  // cancellation tests start from that explicitly reviewed, still-unsaved draft.
+  expect(screen.queryByRole("button", { name: "이 일정으로 시작" })).toBeNull()
+  expect(store.loadPlanBetaState()).toBeNull()
+  fireEvent.click(screen.getByRole("button", { name: "필요한 항목 확인" }))
+  const review = within(screen.getByRole("region", { name: "첫 주요 훈련 조건" }))
+  fireEvent.click(review.getByRole("checkbox"))
+  fireEvent.click(review.getByRole("button", { name: "이 훈련으로 적용" }))
+  await waitFor(() => expect(screen.getByRole("button", { name: "이 일정으로 시작" })).toBeEnabled())
 }
 
 function openScheduleQuestion(name: RegExp) {
@@ -38,9 +47,6 @@ describe("canceling a plan refinement question", () => {
   it.each(["frame", "race"] as const)("preserves the applied MAIN and its confirmation when canceling %s without a new answer", async question => {
     const applied = vi.spyOn(initialMain, "applyInitialMainConditions")
     await reachCandidates()
-    fireEvent.click(within(screen.getByRole("region", { name: "첫 주요 훈련 조건" })).getByRole("checkbox"))
-    fireEvent.click(screen.getByRole("button", { name: "이 훈련으로 적용" }))
-    await waitFor(() => expect(screen.queryByRole("region", { name: "첫 주요 훈련 조건" })).toBeNull())
     const expected = applied.mock.results[0]?.value?.generated.candidates[0].sessions
     expect(expected).toBeDefined()
 
@@ -77,6 +83,7 @@ describe("canceling a plan refinement question", () => {
     const saveOriginal = selection.saveSelectedPlanCandidate
     const save = vi.spyOn(selection, "saveSelectedPlanCandidate").mockImplementation((...args) => saveOriginal(...args))
     await reachCandidates()
+    fireEvent.click(screen.getByText("다른 계획 보기", { selector: "summary" }))
     fireEvent.click(screen.getByRole("button", { name: "B안 선택" }))
     expect(screen.getByRole("button", { name: "B안 선택됨" })).toHaveAttribute("aria-pressed", "true")
 

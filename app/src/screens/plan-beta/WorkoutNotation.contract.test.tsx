@@ -39,7 +39,7 @@ describe("concise workout instruction and optional effort detail", () => {
     const source = sequence([segment({ target: { kind: "EFFORT_GUIDANCE", cue: catalogCue } })])
     expect(presentWorkoutNotation(source)).toEqual({
       notation: "2 × 10분 · 힘든 정도 6–7/10 (제안) · 반복 사이 60초 조깅",
-      explanations: ["힘들지만 정해진 구간 동안 고르게 유지하는 노력 본운동 체감 노력 제안 힘든 정도 6–7/10"],
+      explanations: ["고르게 유지 · 힘든 정도 6–7/10"],
     })
     expect(source.main[0]).toMatchObject({ target: { cue: catalogCue } })
   })
@@ -52,7 +52,7 @@ describe("concise workout instruction and optional effort detail", () => {
     const { container } = render(<WorkoutNotation sequence={source} />)
     expect(container.querySelector("code")).toHaveTextContent("20분 · 힘든 정도 3–4/10 (제안)")
     expect(container.querySelector("code")).not.toHaveTextContent("문장으로 대화")
-    const explanation = screen.getByText("문장으로 대화할 수 있는 노력 본운동 체감 노력 제안 힘든 정도 3–4/10")
+    const explanation = screen.getByText("대화할 수 있는 강도 · 힘든 정도 3–4/10")
     expect(explanation).not.toBeVisible()
     fireEvent.click(screen.getByText("강도 안내"))
     expect(explanation).toBeVisible()
