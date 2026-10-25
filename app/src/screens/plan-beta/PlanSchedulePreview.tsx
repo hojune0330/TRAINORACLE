@@ -788,13 +788,13 @@ function PlanSessionPreview({
         {!navigationCard && !memoReader && <><strong>{sessionLabel(session)}</strong>{summary}</>}
         {expanded && !memoReader && basis && <p className="plan-session-help">기준: {basis}</p>}
         {memoReader ? <WorkoutMemoTool session={session} date={date} mode="reader" allowExport={allowMemoExport}
-          state={explanationContext?.kind === "CANDIDATE" ? "PREVIEW" : "PLAN"} /> : !navigationCard && (!lightweightSummary && compact ? (
+          primaryAction={action} state={explanationContext?.kind === "CANDIDATE" ? "PREVIEW" : "PLAN"} /> : !navigationCard && (!lightweightSummary && compact ? (
           <details className="plan-day-card__details" open={returnedFromJournal}>
             <summary>{sessionSlotLabel(session.slot)} 훈련 방법과 기록</summary>
             <div>{details}{footer}</div>
           </details>
         ) : !lightweightSummary && details)}
-        {action && <div className="plan-session-record-action">{action}</div>}
+        {!memoReader && action && <div className="plan-session-record-action">{action}</div>}
         {expanded && footer && <details className="plan-session-records" data-session-records>
           <summary>일지·진행 기록</summary>{footer}
         </details>}

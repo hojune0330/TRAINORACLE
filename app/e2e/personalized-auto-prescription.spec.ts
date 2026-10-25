@@ -6,7 +6,7 @@ import { undersizedInteractiveTargets } from "./touch-audit"
 
 test.use({ serviceWorkers: "block" })
 const appPath = process.env.PLAYWRIGHT_APP_PATH ?? "/"
-const fiveKNotation = /5 × 1km · \d+(?:\.\d+)?초\/1km · 5K 경기 평균 페이스 · 반복 사이 150초 조깅/u
+const fiveKNotation = /5 × 1000m/u
 const fiveKCardNotation = /5 × 1km @ \d+(?:\.\d+)?s\/1km · 5K RP · r150s Jog/u
 const fiveKNumericNotation = /5 × 1km(?: · \d+(?:\.\d+)?초| @ \d+(?:\.\d+)?s)\/1km/u
 const currentRecords = [
@@ -77,6 +77,17 @@ async function closeCandidateDetails(reader: Locator): Promise<void> {
   await expect(reader).toHaveCount(0)
 }
 
+async function expectPaceSource(page: Page, day: Locator, expected: RegExp): Promise<void> {
+  await day.getByRole("button", { name: "이 훈련을 하는 이유", exact: true }).click()
+  const explanation = page.locator(".session-explanation[open]")
+  await explanation.locator("summary", { hasText: "페이스 계산 보기" }).click()
+  await explanation.locator("summary", { hasText: "추천 기준" }).click()
+  await expect(explanation.getByRole("definition").filter({ hasText: expected })).toBeVisible()
+  await explanation.getByRole("button", { name: "훈련 일정으로 돌아가기" }).click()
+  await expect(explanation).toHaveCount(0)
+  await expect(day).toBeVisible()
+}
+
 async function assertViewportIntegrity(page: Page): Promise<void> {
   expect(await page.evaluate(() => ({
     documentFits: document.documentElement.scrollWidth <= document.documentElement.clientWidth,
@@ -85,6 +96,7 @@ async function assertViewportIntegrity(page: Page): Promise<void> {
 }
 
 async function assertKeyboardFocus(page: Page): Promise<void> {
+  await page.locator(".plan-day-reader[open]").getByRole("button").first().focus()
   await page.keyboard.press("Tab")
   const focus = await page.evaluate(() => {
     const active = document.activeElement
@@ -178,10 +190,10 @@ for (const viewport of [
       await test.info().attach("candidate-reader-dom", { body: await candidateReader.ariaSnapshot(), contentType: "text/plain" })
     }
     await expect(candidateReader.getByText(fiveKNotation).first()).toBeVisible()
-    await expect(candidateReader.locator(".plan-detailed-prescription__primary").first()).toBeVisible()
-    await expect(candidateReader.getByText(/4번.*150초.*조깅.*600초/u).first()).toBeVisible()
-    await candidateReader.getByText("기준 기록·훈련을 바꾸는 방법", { exact: true }).first().click()
-    await expect(candidateReader.getByText(/기준 기록.*18분 30초.*2026-05-10/u).first()).toBeVisible()
+    const memo = candidateReader.getByRole("article", { name: "훈련 메모 미리보기" })
+    await expect(memo).toContainText("1000m마다 3분 42초")
+    await expect(memo).toContainText("2분 30초 조깅")
+    await expectPaceSource(page, candidateReader, /개인 최고.*18분 30초.*2026-05-10/u)
     await assertViewportIntegrity(page)
     await assertTouchTargets(page, candidateReader)
     await assertKeyboardFocus(page)
@@ -212,11 +224,16 @@ for (const viewport of [
       .getByRole("button", { name: "훈련" })
       .click()
     const activeSession = await openActiveSessionDetails(page, fiveKNotation)
-    await activeSession.getByRole("button", { name: "훈련 방법과 이유", exact: true }).click()
+    await activeSession.getByRole("button", { name: "이 훈련을 하는 이유", exact: true }).click()
     const reader = page.locator(".session-explanation[open]")
-    await expect(reader.getByText("계획을 만들 때 저장한 운동·회복 순서예요.", { exact: true })).toBeVisible()
-    await expect(reader.getByText("수행 순서", { exact: true })).toBeVisible()
-    await reader.getByText("수행 순서", { exact: true }).scrollIntoViewIfNeeded()
+    await reader.getByRole("tab", { name: "방법", exact: true }).click()
+    await reader.getByRole("button", { name: "자세히", exact: true }).click()
+    await reader.getByRole("button", { name: "방법", exact: true }).click()
+    const method = reader.getByRole("article", { name: "훈련 메모 미리보기" })
+    await expect(method).toContainText("5 × 1000m")
+    await expect(method).toContainText("1000m마다 3분 42초")
+    await expect(method).toContainText("2분 30초 조깅")
+    await method.scrollIntoViewIfNeeded()
     await page.screenshot({ path: test.info().outputPath(`${viewport.name}-stored-sequence.png`) })
     await reader.getByRole("button", { name: "훈련 일정으로 돌아가기" }).click()
     expect(await page.evaluate(() => {
@@ -325,8 +342,7 @@ test("requires reconfirmation after replacing the selected record", async ({ pag
   await expect(page.getByRole("button", { name: "A안 선택됨", exact: true })).toBeEnabled()
   const candidateA = page.getByRole("region", { name: "다른 계획 비교", exact: true }).locator(".plan-candidate").first()
   const candidateReader = await openCandidateDetails(page, candidateA)
-  await candidateReader.getByText("기준 기록·훈련을 바꾸는 방법", { exact: true }).first().click()
-  await expect(candidateReader.getByText(/기준 기록.*5000m.*19분.*2026-04-20/u).first()).toBeVisible()
+  await expectPaceSource(page, candidateReader, /시즌 최고.*5000m.*19분.*2026-04-20/u)
   await closeCandidateDetails(candidateReader)
 })
 test("keeps stale evidence RPE-only", async ({ page }) => {

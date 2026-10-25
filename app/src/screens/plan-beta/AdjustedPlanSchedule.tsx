@@ -62,7 +62,12 @@ export function AdjustedPlanSchedule({ loaded, onWritePlannedSessionLog, returnT
         <p className="adjusted-plan-role"><CalendarRoleIcon tone={plannedCalendarTone(session)} />{session.slot === "AM" ? "오전" : "오후"} · {CALENDAR_TRAINING_LABELS[plannedCalendarTone(session)]}</p>
         <h3>{session.role === "REST" ? "휴식" : label.title}</h3>
         <TermHelp term={label.term} />
-        <AdjustedJournalOriginalPlan session={session} date={date} explanation={loaded.explanation} context="plan" />
+        <AdjustedJournalOriginalPlan session={session} date={date} explanation={loaded.explanation} context="plan"
+          primaryAction={onWritePlannedSessionLog !== undefined && <button className="adjusted-plan-write" type="button" disabled={saving} onClick={() => {
+            const draft = createPlannedSessionLogDraft(plan, session, new Date().toISOString())
+            if (draft === null) { setError("이 훈련의 연결 정보를 확인하지 못했어요. 일지는 열지 않았어요."); return }
+            onWritePlannedSessionLog(draft)
+          }}><PenLine size={18} aria-hidden="true" />이 훈련 일지 쓰기</button>} />
         <p role="status">{recorded === undefined ? "아직 진행 기록이 없어요." : PROGRESS_LABELS[recorded.state]}</p>
         <div role="group" aria-label={`${session.slot === "AM" ? "오전" : "오후"} 진행 기록`}>
           {([{ state: "COMPLETED", Icon: Check }, { state: "RESTED", Icon: CircleMinus },
@@ -80,11 +85,6 @@ export function AdjustedPlanSchedule({ loaded, onWritePlannedSessionLog, returnT
                     : "진행 기록을 저장하지 못했어요. 계획을 다시 열어 현재 상태를 확인해 주세요.")
                 }}><Icon size={16} aria-hidden="true" />{PROGRESS_LABELS[state]}</button>)}
         </div>
-        {onWritePlannedSessionLog !== undefined && <button className="adjusted-plan-write" type="button" onClick={() => {
-          const draft = createPlannedSessionLogDraft(plan, session, new Date().toISOString())
-          if (draft === null) { setError("이 훈련의 연결 정보를 확인하지 못했어요. 일지는 열지 않았어요."); return }
-          onWritePlannedSessionLog(draft)
-        }}><PenLine size={18} aria-hidden="true" />이 훈련 일지 쓰기</button>}
       </section>
     })}
     </DatedPlanPanel>

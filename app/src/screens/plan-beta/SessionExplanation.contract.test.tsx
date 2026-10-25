@@ -171,8 +171,8 @@ describe("session explanation review regressions", () => {
     const paper = within(reader).getByRole("article", { name: "훈련 메모 미리보기" })
     expect(paper).toBeVisible()
     expect(paper).toHaveTextContent("5 × 1000m")
-    expect(paper).toHaveTextContent("3:42/km")
-    expect(paper).toHaveTextContent("150초 조깅")
+    expect(paper).toHaveTextContent("1000m마다 3분 42초")
+    expect(paper).toHaveTextContent("2분 30초 조깅")
     expect(paper).toHaveTextContent("15분")
     expect(paper).toHaveTextContent("4 × 20초")
     expect(paper).toHaveTextContent("40초 걷기/조깅")
@@ -346,7 +346,7 @@ describe("session explanation review regressions", () => {
     expect(screen.getByText(kind === "matching" ? "저장된 처방과 설명 버전이 일치해요." : /과거 선택 이유를 복원한 것은 아니에요/u)).toBeVisible()
     expect(screen.getByText("코치 계획과 비교하기 · 출시 예정")).toBeVisible()
     await userEvent.click(screen.getByText("구성·회복의 이유와 근거"))
-    for (const heading of ["훈련 목적", "몸이 에너지를 공급하는 방식", "거리·시간·강도·반복을 이렇게 정한 이유", "회복을 이렇게 넣은 이유", "이번 주기에서 맡는 역할", "기대하는 변화와 한계", "실제로 사용한 내 정보", "연구·코칭 근거"]) {
+    for (const heading of ["목적", "에너지 공급", "거리·시간·강도·반복을 이렇게 정한 이유", "회복을 이렇게 넣은 이유", "이번 주기에서 맡는 역할", "기대와 한계", "실제로 사용한 내 정보", "연구·코칭 근거"]) {
       expect(screen.getByRole("heading", { name: heading })).toBeVisible()
     }
     await userEvent.click(screen.getByRole("tab", { name: "주기·기록" }))

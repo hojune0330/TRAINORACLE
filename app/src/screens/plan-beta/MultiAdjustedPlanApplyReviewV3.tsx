@@ -114,11 +114,13 @@ export function MultiAdjustedPlanApplyReviewV3({ seed, readReview, locks, isCurr
       {prepared.candidate.sessions.filter(s => prepared.candidate.changedSlots.some(c => c.day === s.day && c.slot === s.slot)).map(session =>
         <section key={`${session.day}-${session.slot}`} aria-label="적용할 훈련">
           <h2>{isoShift(prepared.candidate.startDate, session.day - 1)} · {session.slot === "AM" ? "오전" : "오후"}</h2>
-          <AdjustedPrescriptionV3 session={session} explanation={opened.request.preparations.find(p => p.address.day === session.day && p.address.slot === session.slot)?.explanation} />
+          <AdjustedPrescriptionV3 session={session} explanation={opened.request.preparations.find(p => p.address.day === session.day && p.address.slot === session.slot)?.explanation}
+            date={isoShift(prepared.candidate.startDate, session.day - 1)} memoState="PREVIEW" presentation="comparison" />
         </section>)}
       <details><summary>전체 일정 확인</summary>{prepared.candidate.sessions.map(session => <section key={`${session.day}-${session.slot}`}>
         <h2>{isoShift(prepared.candidate.startDate, session.day - 1)} · {session.slot === "AM" ? "오전" : "오후"}</h2>
-        <AdjustedPrescriptionV3 session={session} explanation={opened.request.preparations.find(p => p.address.day === session.day && p.address.slot === session.slot)?.explanation} />
+        <AdjustedPrescriptionV3 session={session} explanation={opened.request.preparations.find(p => p.address.day === session.day && p.address.slot === session.slot)?.explanation}
+          date={isoShift(prepared.candidate.startDate, session.day - 1)} memoState="PREVIEW" presentation="comparison" />
       </section>)}</details>
     </> : <p role="alert">구성과 설명의 연결을 확인하지 못했어요. 후보로 돌아가 다시 선택해 주세요.</p>}
     {error && <p role="alert">{error}</p>}

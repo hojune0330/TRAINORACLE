@@ -40,7 +40,7 @@ for (const width of [320, 375]) {
     await method.focus()
     await page.keyboard.press("Enter")
     await expect(page.getByRole("dialog")).toBeVisible()
-    const instructions = page.getByRole("dialog").locator(".training-instructions__cards").first()
+    const instructions = page.getByRole("dialog").getByRole("article", { name: "훈련 메모 미리보기" })
     await expect(instructions).toContainText("분")
     await expect(instructions).toContainText("힘든 정도")
     await expect(instructions).not.toContainText("min")

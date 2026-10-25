@@ -105,7 +105,8 @@ export function MultiAdjustedPlanEditFlowV3({ seed, readReview, locks, readRevie
     <p role="status">{changes.length ? `변경한 주요 훈련 ${changes.length}개 · 아직 저장하지 않았어요.` : "아직 저장하지 않은 계획이에요."}</p>
     {prepared?.kind === "prepared" ? prepared.candidate.sessions.filter(s => prepared.candidate.changedSlots.some(c => c.day === s.day && c.slot === s.slot)).map(session => <section key={`${session.day}:${session.slot}`} aria-label="고른 주요 훈련">
       <h2>{isoShift(prepared.candidate.startDate, session.day - 1)} · {session.slot === "AM" ? "오전" : "오후"}</h2>
-      <AdjustedPrescriptionV3 session={session} explanation={request.preparations.find(p => p.address.day === session.day && p.address.slot === session.slot)?.explanation} />
+      <AdjustedPrescriptionV3 session={session} explanation={request.preparations.find(p => p.address.day === session.day && p.address.slot === session.slot)?.explanation}
+        date={isoShift(prepared.candidate.startDate, session.day - 1)} memoState="PREVIEW" presentation="comparison" />
       <button type="button" onClick={() => setEditing({ day: session.day, slot: session.slot })}><Pencil size={18} aria-hidden="true" />이 훈련 구성 바꾸기</button>
     </section>) : <p role="alert">훈련 구성과 검토 자료를 확인하지 못했어요. 현재 계획은 바뀌지 않았어요.</p>}
     {editing && <p role="alert">현재 적용할 조정 범위를 확인하지 못했어요.</p>}

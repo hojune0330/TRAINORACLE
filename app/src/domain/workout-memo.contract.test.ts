@@ -7,6 +7,8 @@ import { wrapMemoText, memoFileName } from "./workout-memo-export"
 import { memoSessionFixture } from "./workout-memo.test-fixtures"
 import { memoDisplayLines, memoLineEmphasis, presentWorkoutMemo, workoutMemoPresentationText } from "./workout-memo-presentation"
 import { notationEffort, sequencePhaseNotation } from "./workout-notation"
+import { adjustedPlanSelectionV3Fixture } from "./adjusted-plan-selection-v3.test-fixtures"
+import { prepareAdjustedPlanCandidateV3 } from "./adjusted-plan-candidate"
 
 beforeEach(async () => { await initializeCanonicalJournalFixture() })
 afterEach(() => localStorage.clear())
@@ -15,6 +17,35 @@ const rpe: WorkoutMemoSession = { day: 1, slot: "AM", role: "EASY", plannedEnerg
 } }
 
 describe("workout memo snapshot contract", () => {
+  it("uses exact adopted pace explanations and never assigns them to a different composition", () => {
+    const session = memoSessionFixture()
+    if (session.prescription.kind !== "PACE_TARGET") throw Error("Expected pace fixture")
+    const memo = buildWorkoutMemo(session)!
+    expect(memo.explanation.sections.find(line => line.label === "회복")?.text).toContain("150초")
+    expect(memo.explanation.sourceRefs.some(ref => ref.includes("V2_SEED_05_OWNER_ADOPTION"))).toBe(true)
+    const changed = buildWorkoutMemo({ ...session, prescription: { ...session.prescription, sequence: undefined, repetitionsPerSet: 4 } })!
+    expect(changed.explanation.scope).toContain("공통 설명")
+    expect(changed.explanation.sourceRefs.some(ref => ref.includes("V2_SEED_05_OWNER_ADOPTION"))).toBe(false)
+  })
+  it("uses the exact retained explanation for adjusted MAIN with inherited support, refusing mismatches", () => {
+    const { request } = adjustedPlanSelectionV3Fixture()
+    const prepared = prepareAdjustedPlanCandidateV3(request.preparation)
+    if (prepared.kind !== "prepared") throw Error("Expected adjusted fixture")
+    const session = prepared.candidate.sessions.find(s => s.prescription.kind === "ADJUSTED_METHOD_V3")!
+    const explanation = request.preparation.explanation
+    const memo = buildWorkoutMemo(session, { date: "2026-09-20", state: "HISTORICAL", reviewedExplanation: explanation })!
+    expect(memo.explanation.version).toBe(explanation.version)
+    expect(memo.explanation.sections.find(s => s.label === "목적")?.text).toBe(explanation.purpose)
+    expect(memo.explanation.sourceRefs).toEqual(explanation.evidenceRefs)
+    expect(memo.lines.find(s => s.label === "준비")).toBeDefined()
+    expect(workoutMemoPresentationText(presentWorkoutMemo(memo, "explained"))).toContain("당시 처방에 연결된 검토 설명")
+    for (const e of [undefined, { ...explanation, version: "OTHER" }, { ...explanation, purpose: "UNREVIEWED" }]) {
+      const stale = buildWorkoutMemo(session, { reviewedExplanation: e })!
+      expect(stale.explanation.version).toBe("확인 불가")
+      expect(stale.explanation.sections).toHaveLength(0)
+      expect(stale.lines).toEqual(memo.lines)
+    }
+  })
   it("keeps effort provenance in explained view without repeating it in ordinary screen or export", () => {
     const source = bindDefaultCatalogSessions([rpe as Parameters<typeof bindDefaultCatalogSessions>[0][number]], 5000, "EXPERIENCED", 0)[0]!
     const memo = buildWorkoutMemo(source)!
@@ -44,7 +75,8 @@ describe("workout memo snapshot contract", () => {
     const text = workoutMemoText(memo)
     expect(text).toContain("2026.09.20 (일) · 오후")
     expect(text).toContain("2 세트 × (3 × 200m)")
-    expect(text).toContain("@ 30.4s/200m")
+    expect(text).toContain("200m마다 30.4초")
+    expect(workoutMemoText(buildWorkoutMemo(source, {}, "COACH")!)).toContain("@ 30.4s/200m")
     expect(text).toContain("반복 사이: 60초 조깅")
     expect(text).toContain("세트 사이: 3분 걷기")
     expect(text).toContain("준비:"); expect(text).toContain("정리:")
@@ -214,10 +246,15 @@ describe("workout memo snapshot contract", () => {
   it("keeps actual numbers unchanged when switching plain and coach wording", () => {
     const session = memoSessionFixture()
     const plain = buildWorkoutMemo(session)!, coach = buildWorkoutMemo(session, {}, "COACH")!
-    const numbers = (memo: typeof plain) => memo.lines.flatMap(line => line.text.match(/\d+(?:\.\d+)?/gu) ?? [])
     // Plain RPE includes /10; this is a scale label, not a prescription change.
     expect(coach.lines.find(line => line.label === "준비")!.text).toContain("RPE 2–3")
     expect(plain.lines.find(line => line.label === "준비")!.text).toContain("힘든 정도 2–3/10")
-    expect(numbers(coach)).toEqual(numbers({ ...plain, lines: plain.lines.map(line => ({ ...line, text: line.text.replaceAll("/10", "") })) }))
+    expect(plain.lines.find(line => line.label === "본운동")).toEqual(coach.lines.find(line => line.label === "본운동"))
+    expect(plain.lines.find(line => line.label === "목표")!.text).toBe("1000m마다 3분 42초")
+    expect(coach.lines.find(line => line.label === "목표")!.text).toBe("@ ≈3:42/km")
+    expect(plain.lines.find(line => line.label === "반복 사이")!.text).toBe("2분 30초 조깅")
+    expect(coach.lines.find(line => line.label === "반복 사이")!.text).toBe("150s Jog")
+    expect(plain.basis).toBe(coach.basis)
+    expect(plain.warnings).toEqual(coach.warnings)
   })
 })

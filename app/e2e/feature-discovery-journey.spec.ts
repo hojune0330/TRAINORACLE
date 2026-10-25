@@ -91,7 +91,7 @@ test("plan session exposes writing directly and does not confuse journal save wi
   await page.getByRole("radiogroup", { name: "계획 일정 보기" }).getByRole("radio", { name: "달력", exact: true }).click()
   await page.locator(`button[data-date="${date.toISOString().slice(0, 10)}"]`).click()
   const selected = page.getByRole("dialog").locator(`[data-session-slot="${session.slot}"]`)
-  await expect(selected.locator(".training-instructions__cards")).toContainText("힘든 정도")
+  await expect(selected.getByRole("article", { name: "훈련 메모 미리보기" })).toContainText("힘든 정도")
   const write = selected.getByRole("button", { name: "이 훈련 일지 쓰기", exact: true })
   await expect(write).toBeVisible()
   expect(await write.evaluate(node => node.closest("details") === null)).toBe(true)

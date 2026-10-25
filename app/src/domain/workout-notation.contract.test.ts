@@ -3,7 +3,7 @@ import { beforeEach, afterEach, describe, expect, it } from "vitest"
 import type { PrescriptionSequenceV3, SequenceNodeV3 } from "@impl/prescription/sequence-v3"
 import type { PrescriptionSequence, PrescriptionSequenceSegment } from "@impl/prescription/sequence"
 import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identity"
-import { notationEffort, notationNumber, notationPace, sequenceNotation, sequenceWorkoutName, sessionWorkoutNotation } from "./workout-notation"
+import { notationEffort, notationNumber, notationPace, notationTime, sequenceNotation, sequenceWorkoutName, sessionWorkoutNotation } from "./workout-notation"
 import { adjustedPlanSelectionFixture } from "./adjusted-plan-selection.test-fixtures"
 import { selectAdjustedPlanForActivation } from "./adjusted-plan-selection"
 import { TODAY } from "./prescription-quality-matrix.test-fixtures"
@@ -23,6 +23,31 @@ const sequence = (main: readonly SequenceNodeV3[]): PrescriptionSequenceV3 => ({
 })
 
 describe("display-only workout notation", () => {
+  it("groups identical strides but preserves the last recovery and original sequence", () => {
+    const source = sequence(Array.from({ length: 4 }, (_, index) => segment({ id: `stride-${index}`,
+      work: { kind: "duration", durationSeconds: 20, distanceM: null }, target: { kind: "EFFORT_GUIDANCE", cue: "PROGRESSIVE_NOT_ALL_OUT" },
+      recoveryAfter: [{ mode: "WALK", seconds: index === 3 ? 60 : 40 }] })))
+    const before = JSON.stringify(source)
+    expect(sequenceNotation(source, [], "PLAIN")).toBe("4 × 20초 · 가속 달리기 (전력질주 아님) · 반복 사이 40초 걷기 → 종료 뒤 60초 걷기")
+    expect(JSON.stringify(source)).toBe(before)
+  })
+  it("never merges different exact pace targets even when their displayed rounding agrees", () => {
+    const source = sequence(["a", "b"].map(id => segment({ id,
+      work: { kind: "distance", distanceM: 200, durationSeconds: null }, target: { kind: "RACE_PACE", eventDistanceM: 800, anchorRef: "race" } })))
+    const targets = [30.375, 30.4].map((value, index) => ({ segmentId: index ? "b" : "a", kind: "CURRENT_SAME_EVENT_RACE_PACE" as const,
+      targetRepSeconds: value, secondsPerKm: value * 5, distanceM: 200, fixedWorkSeconds: null, missing: null }))
+    expect(sequenceNotation(source, targets, "PLAIN")).not.toContain("2 ×")
+    expect(sequenceNotation(source, targets, "PLAIN").match(/30.4초/gu)).toHaveLength(2)
+  })
+  it("keeps changing rests separate and carries time rounding without losing its approximation marker", () => {
+    const source = sequence([40, 60, 90].map((seconds, index) => segment({ id: `step-${index}`, recoveryAfter: [{ mode: "WALK", seconds }] })))
+    const text = sequenceNotation(source, [], "PLAIN")
+    expect(text).not.toContain("3 ×")
+    for (const seconds of [40, 60, 90]) expect(text).toContain(`${seconds}초 걷기`)
+    expect(notationTime(150, "PLAIN")).toBe("2분 30초")
+    expect(notationTime(59.999999, "PLAIN")).toBe("≈1분")
+    expect(notationTime(120.1234, "PLAIN")).toBe("≈2분 0.123초")
+  })
   it("offers plain first-read units while keeping the same pace, repeats, rest and compact notation", () => {
     const source = memoSessionFixture()
     const before = JSON.stringify(source)
@@ -71,7 +96,7 @@ describe("display-only workout notation", () => {
       recoveryBetweenRepeats: { mode: "NOT_APPLICABLE", seconds: null }, recoveryAfter: { mode: "JOG", seconds: 60 } }
     const source: PrescriptionSequence = { kind: "PRESCRIPTION_SEQUENCE", version: 1, id: "legacy", label: null,
       warmup: [], main: [old, { ...old, id: "b" }], cooldown: [] }
-    expect(sequenceNotation(source)).toBe("1km @ 5K RP → 종료 뒤 60s Jog → 1km @ 5K RP")
+    expect(sequenceNotation(source)).toBe("2 × 1km @ 5K RP · r60s Jog")
     expect(sequenceNotation({ ...source, version: 2, main: [old], terminalRecovery: { mode: "WALK", seconds: 180 } }))
       .toBe("1km @ 5K RP → 마지막 본운동 뒤 3min Walk")
   })

@@ -6,14 +6,16 @@ import type { SelectedMultiAdjustedPlanV3 } from "../../domain/selected-multi-ad
 import { WorkoutMemoTool } from "../../components/WorkoutMemoTool"
 import type { WorkoutMemoContext } from "../../domain/workout-memo"
 
-export function AdjustedPrescriptionV3({ session, explanation, date, memoState = "PREVIEW" }: {
+export function AdjustedPrescriptionV3({ session, explanation, date, memoState, presentation = "reader", primaryAction }: {
   readonly session: AdjustedPlanCandidateV3["sessions"][number] | SelectedMultiAdjustedPlanV3["activePlan"]["sessions"][number]; readonly explanation?: ReviewedAdjustedExplanationV3;
   readonly showName?: boolean;
   readonly date?: string;
   readonly memoState?: WorkoutMemoContext["state"];
+  readonly presentation?: "reader" | "comparison";
+  readonly primaryAction?: import("react").ReactNode;
 }) {
   const p = session.prescription
-  const memo = <WorkoutMemoTool session={session} date={date} state={memoState} mode="reader" />
+  const memo = <WorkoutMemoTool session={session} date={date} state={memoState} mode={presentation} reviewedExplanation={explanation} primaryAction={primaryAction} />
   if (p.kind !== "ADJUSTED_METHOD_V3") return memo
   const execution = <>
     <PrescriptionStructureV3 sequence={p.projection.sequence}
@@ -28,19 +30,6 @@ export function AdjustedPrescriptionV3({ session, explanation, date, memoState =
   </>
   return <>
     {memo}
-    {p.projection.segmentTargets.length > 0 && <p className="plan-pace-recommendation__notice">저장 당시 개인 기록을 나눈 참고값이에요. 오늘 몸 상태를 새로 판단한 값은 아니에요.</p>}
-    <details><summary>자세히 보기 · 방법과 근거</summary>
     <details><summary>원본 구간표</summary>{execution}</details>
-    {explanation ? <section aria-label="이 훈련을 하는 이유"><h4>이 훈련을 하는 이유</h4><dl>{([
-      ["목적", explanation.purpose], ["에너지 공급", explanation.energySupply], ["운동 구성", explanation.workRationale],
-      ["회복 구성", explanation.recoveryRationale], ["주기 역할", explanation.cycleRole], ["기대하는 변화", explanation.expectedAdaptation],
-      ["한계", explanation.limitations], ["기록에서 확인할 점", explanation.observation],
-    ] as const).map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
-      <details><summary>근거와 설명 버전</summary><p>설명 v{explanation.version} · 검토 {explanation.reviewRef}</p>
-        <ul>{explanation.evidenceRefs.map(ref => <li key={ref}>{ref}</li>)}</ul>
-      </details>
-    </section>
-      : <p>저장된 훈련 방법은 확인할 수 있지만, 연결된 설명을 읽지 못했어요.</p>}
-    </details>
   </>
 }

@@ -10,8 +10,16 @@ import { notationDistance, notationEffort, notationNumber, notationPace, notatio
 import { TRAINING_EXPLANATION_PROFILES } from "./training-explanation-profiles"
 import { catalogExecutionReading, catalogWorkoutReader } from "./catalog-workout-reader"
 import { catalogPrescriptionBasis, sessionPrescriptionBasis, sessionPrimaryBasis } from "./prescription-basis"
+import type { ResolvedAdjustedExplanation } from "./adjusted-method-snapshot"
+import type { ReviewedAdjustedExplanationV3 } from "./adjusted-method-snapshot-v3"
+import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identity"
+import { templateExplanation } from "./training-template-explanations"
 
-export type WorkoutMemoContext = { readonly date?: string; readonly state?: "PLAN" | "PREVIEW" | "HISTORICAL" }
+export type WorkoutMemoContext = {
+  readonly date?: string
+  readonly state?: "PLAN" | "PREVIEW" | "HISTORICAL"
+  readonly reviewedExplanation?: ResolvedAdjustedExplanation | ReviewedAdjustedExplanationV3
+}
 export type WorkoutMemoSession = WorkoutDisplaySession & { readonly day: number; readonly slot: "AM" | "PM" }
 export type WorkoutMemoLine = { readonly label: string; readonly text: string; readonly emphasis?: boolean }
 export type WorkoutMemoExplanation = {
@@ -65,8 +73,9 @@ function projectMemo(session: WorkoutMemoSession, context: WorkoutMemoContext, w
     const distance = `${notationNumber(p.repetitionDistanceM)}m`
     const work = `${p.repetitionsPerSet} × ${distance}`
     lines.push({ label: "본운동", text: p.setCount > 1 ? `${p.setCount} ${wording === "PLAIN" ? "세트" : "sets"} × (${work})` : work, emphasis: true })
-    lines.push({ label: "목표", text: p.repetitionDistanceM >= 1000 ? `@ ${notationPace(p.targetRepSeconds * 1000 / p.repetitionDistanceM)}`
-      : `@ ${notationNumber(roundedPaceSeconds(p.targetRepSeconds))}s/${distance}`, emphasis: true })
+    lines.push({ label: "목표", text: wording === "PLAIN" ? `${distance}마다 ${notationTime(roundedPaceSeconds(p.targetRepSeconds), wording)}`
+      : p.repetitionDistanceM >= 1000 ? `@ ${notationPace(p.targetRepSeconds * 1000 / p.repetitionDistanceM)}`
+        : `@ ${notationNumber(roundedPaceSeconds(p.targetRepSeconds))}s/${distance}`, emphasis: true })
     if (p.repetitionDistanceM >= 1000) lines.push({ label: "1회 목표", text: `${distance} = ${paceClock(p.targetRepSeconds)} (${notationNumber(roundedPaceSeconds(p.targetRepSeconds))}초)` })
     if (p.repetitionsPerSet > 1) lines.push({ label: "반복 사이", text: p.repetitionRecoveryMode === "NOT_APPLICABLE" ? "따로 쉬지 않음"
       : notationRecovery({ mode: p.repetitionRecoveryMode, seconds: p.repetitionRecoverySeconds }, wording) })
@@ -108,7 +117,7 @@ function projectMemo(session: WorkoutMemoSession, context: WorkoutMemoContext, w
         const text = reading?.phases[phase] ?? sequencePhaseNotation(sequence, phase, targets, wording)
         if (text) lines.push({ label, text })
       }
-      basis = targets.length ? "구간별 경기 페이스 · 기록/목표 구분은 훈련 상세에서 확인" : "구간에 적힌 힘든 정도"
+      basis = targets.length ? "저장 당시 실제 경기 기록 · 구간별 평균 페이스 환산" : "구간에 적힌 힘든 정도"
       if (catalog) {
         const total = catalog.totals.seconds
         if (total) totalDuration = `${formatPaceSeconds(total.minimum)}${total.minimum === total.maximum ? "" : `–${formatPaceSeconds(total.maximum)}`} · 준비·회복·정리 포함`
@@ -138,7 +147,7 @@ function projectMemo(session: WorkoutMemoSession, context: WorkoutMemoContext, w
   }
   return { date, dateLabel: date ? `${date.replaceAll("-", ".")} (${new Intl.DateTimeFormat("ko-KR", { weekday: "short", timeZone: "UTC" }).format(new Date(`${date}T12:00:00Z`))})` : `${session.day}일차 · 날짜 미지정`,
     slotLabel: session.slot === "AM" ? "오전" : "오후",
-    stateLabel: context.state === "PREVIEW" ? "계획안 · 아직 적용 전" : context.state === "HISTORICAL" ? "당시 계획 · 실제 수행 기록 아님" : "계획한 훈련 · 실제 수행 아님",
+    stateLabel: context.state === "PLAN" ? "계획한 훈련 · 실제 수행 아님" : context.state === "HISTORICAL" ? "당시 계획 · 실제 수행 기록 아님" : "계획안 · 아직 적용 전",
     title: p.kind === "REST" ? "휴식" : p.kind === "RPE_TIME_RANGE" && p.catalogWorkout && !resolveCatalogBinding(p.catalogWorkout)
       ? "저장된 훈련" : sessionWorkoutName(session, wording === "COACH"), lines, basis,
     basisSummary: p.kind === "ADJUSTED_METHOD" || p.kind === "ADJUSTED_METHOD_V3"
@@ -149,24 +158,43 @@ function projectMemo(session: WorkoutMemoSession, context: WorkoutMemoContext, w
 
 function memoExplanation(session: WorkoutMemoSession, context: WorkoutMemoContext): WorkoutMemoExplanation {
   const p = session.prescription!
+  const unavailable = { scope: "연결된 설명을 확인하지 못했어요. 저장된 훈련 내용은 그대로 표시해요.", version: "확인 불가", sections: [], sourceRefs: [] }
+  if (p.kind === "ADJUSTED_METHOD" || p.kind === "ADJUSTED_METHOD_V3") {
+    const e = context.reviewedExplanation
+    const binding = p.snapshot?.explanation
+    // Anchored V3 reviews MAIN; its displayed sequence also contains inherited support.
+    // Match the retained explanation fingerprint, not that expanded display sequence.
+    if (!e || !binding || binding.contentFingerprint !== canonicalJsonFingerprint(
+      p.kind === "ADJUSTED_METHOD_V3" ? "trainoracle.adjusted-method-explanation.v3" : "trainoracle.adjusted-method-explanation.v1", e)) return unavailable
+    return { scope: context.state === "HISTORICAL" ? "당시 처방에 연결된 검토 설명이에요." : "이 훈련 구성에 연결된 검토 설명이에요.",
+      version: e.version, sourceRefs: e.evidenceRefs,
+      sections: [
+        { label: "목적", text: e.purpose }, { label: "에너지 공급", text: e.energySupply },
+        { label: "운동 구성", text: e.workRationale }, { label: "회복", text: e.recoveryRationale },
+        { label: "주기 역할", text: e.cycleRole }, { label: "기대하는 변화", text: e.expectedAdaptation },
+        { label: "한계", text: e.limitations }, { label: "확인할 것", text: e.observation },
+      ] }
+  }
   const profile = TRAINING_EXPLANATION_PROFILES[p.kind === "REST" ? "REST" : session.plannedEnergyIntent]
+  const template = p.kind === "PACE_TARGET" ? templateExplanation(p) : null
   const binding = p.kind === "RPE_TIME_RANGE" ? p.catalogWorkout : undefined
   const catalog = binding && resolveCatalogBinding(binding)
     ? ALL_WORKOUT_CATALOG.find(row => row.id === binding.catalogId && row.fingerprint === binding.catalogFingerprint) : undefined
   const content = catalog?.explanation
+  if (binding && !catalog) return unavailable
   return {
     scope: context.state === "HISTORICAL" ? "저장된 처방을 읽는 현재 설명이에요. 당시 선택 이유를 복원한 것은 아니에요."
-      : catalog ? "저장된 훈련 구성에 연결된 설명이에요." : "훈련 목적의 공통 설명이에요. 개인의 효과나 이 구성의 최적성을 보장하지 않아요.",
-    version: catalog?.version ?? profile.version,
+      : catalog || template ? "저장된 훈련 구성에 연결된 설명이에요." : "훈련 목적의 공통 설명이에요. 개인의 효과나 이 구성의 최적성을 보장하지 않아요.",
+    version: catalog?.version ?? template?.version ?? profile.version,
     sections: [
       { label: "목적", text: content?.purpose ?? profile.purpose },
       { label: "에너지 공급", text: content?.energySupply ?? profile.energyContext },
-      { label: "운동 구성", text: content?.work ?? profile.workRationale },
-      { label: "회복", text: content?.recovery ?? profile.recoveryRationale },
-      { label: "기대와 한계", text: [content?.expected ?? profile.expectedAdaptation, ...(content ? [content.tradeoff, ...content.limitations] : profile.limitations)].join(" ") },
+      { label: "운동 구성", text: content?.work ?? template?.work ?? profile.workRationale },
+      { label: "회복", text: content?.recovery ?? template?.recovery ?? profile.recoveryRationale },
+      { label: "기대와 한계", text: [content?.expected ?? profile.expectedAdaptation, ...(content ? [content.tradeoff, ...content.limitations] : profile.limitations), ...(template ? [template.limitation] : [])].join(" ") },
       { label: "확인할 것", text: content?.observation ?? profile.observationGuide },
     ],
-    sourceRefs: catalog?.sourceRefs ?? profile.sourceIds,
+    sourceRefs: catalog?.sourceRefs ?? [...profile.sourceIds, ...(template ? [...new Set([template.sourceRecordPath, template.decisionPath])].map(path => `https://github.com/hojune0330/TRAINORACLE/blob/main/${path}`) : [])],
   }
 }
 

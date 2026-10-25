@@ -98,19 +98,22 @@ export function AdjustedPlanApplyReviewV3({ seed, readReview, locks, isCurrentDr
           </table>
           {comparisonRows.some(row => row.before === null || row.after === null)
             && <p className="prescription-adjustment__note">자료가 없는 항목은 추정하지 않았어요.</p>}
-          <section aria-label="현재 구성">
+          <details><summary>전체 방법 비교</summary><section aria-label="현재 구성">
             <h3>현재 구성</h3>
-            <AdjustedPrescriptionV3 session={comparison.original} explanation={opened.request.preparation.explanation} />
+            <AdjustedPrescriptionV3 session={comparison.original} explanation={opened.request.preparation.explanation}
+              date={isoShift(prepared.candidate.startDate, comparison.original.day - 1)} memoState="PREVIEW" presentation="comparison" />
           </section>
           <section aria-label="변경 후 구성">
             <h3>변경 후 구성</h3>
-            <AdjustedPrescriptionV3 session={comparison.changed} explanation={opened.request.preparation.explanation} />
-          </section>
+            <AdjustedPrescriptionV3 session={comparison.changed} explanation={opened.request.preparation.explanation}
+              date={isoShift(prepared.candidate.startDate, comparison.changed.day - 1)} memoState="PREVIEW" presentation="comparison" />
+          </section></details>
         </section>
       </> : <p role="alert">현재 구성과 변경안을 함께 확인할 수 없어 저장하지 않았어요. 후보로 돌아가 다시 확인해 주세요.</p>}
       <details><summary>전체 일정 확인</summary>{prepared.candidate.sessions.map(session => <section key={`${session.day}-${session.slot}`}>
         <h2>{isoShift(prepared.candidate.startDate, session.day - 1)} · {session.slot === "AM" ? "오전" : "오후"}</h2>
-        <AdjustedPrescriptionV3 session={session} explanation={opened.request.preparation.explanation} />
+        <AdjustedPrescriptionV3 session={session} explanation={opened.request.preparation.explanation}
+          date={isoShift(prepared.candidate.startDate, session.day - 1)} memoState="PREVIEW" presentation="comparison" />
       </section>)}</details>
     </> : <p role="alert">구성과 설명의 연결을 확인하지 못했어요. 후보로 돌아가 다시 선택해 주세요.</p>}
     {error && <p role="alert">{error}</p>}

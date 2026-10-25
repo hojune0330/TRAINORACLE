@@ -29,38 +29,38 @@ const cases = [
   {
     eventDistanceM: 800,
     focus: /고강도 반복 훈련/u,
-    notation: /10 × 200m · 30\.5초\/200m · 800m 경기 평균 페이스 · 반복 사이 60초 서서 쉬기/u,
-    paceBasis: "기준: 800m 최근 경기 2분 2초",
+    notation: /10 × 200m/u,
+    paceBasis: "기준: 800m 2:02 · 계획에 저장된 기준 기록 · 경기 평균 페이스",
     expectedPrescription: { targetEventDistanceM: 800, targetRepSeconds: 30.5,
       repetitionsPerSet: 10, repetitionDistanceM: 200, repetitionRecoverySeconds: 60,
       repetitionRecoveryMode: "STAND", totals: { qualityDistanceM: 2000,
         repetitionRecoveryOccurrences: 9, repetitionRecoveryTotalSeconds: 540 } },
-    work: "200m를 약 31초 기준으로 10회 · 주요 구간 거리 2000m",
-    recovery: "9번 · 매번 60초 서서 쉬기 · 총 540초",
+    work: "200m마다 30.5초",
+    recovery: "60초 서서 쉬기",
   },
   {
     eventDistanceM: 1500,
     focus: /혼합 훈련/u,
-    notation: /3 × 500m · 81\.7초\/500m · 1500m 경기 평균 페이스 · 반복 사이 3분 서서 쉬기/u,
-    paceBasis: "기준: 1500m 최근 경기 4분 5초",
+    notation: /3 × 500m/u,
+    paceBasis: "기준: 1500m 4:05 · 계획에 저장된 기준 기록 · 경기 평균 페이스",
     expectedPrescription: { targetEventDistanceM: 1500, targetRepSeconds: 245 * 500 / 1500,
       repetitionsPerSet: 3, repetitionDistanceM: 500, repetitionRecoverySeconds: 180,
       repetitionRecoveryMode: "STAND", totals: { qualityDistanceM: 1500,
         repetitionRecoveryOccurrences: 2, repetitionRecoveryTotalSeconds: 360 } },
-    work: "500m를 약 1분 22초 기준으로 3회 · 주요 구간 거리 1500m",
-    recovery: "2번 · 매번 180초 서서 쉬기 · 총 360초",
+    work: "500m마다 1분 21.7초",
+    recovery: "3분 서서 쉬기",
   },
   {
     eventDistanceM: 3000,
     focus: /유산소 반복 훈련/u,
-    notation: /4 × 800m · 162\.9초\/800m · 3K 경기 평균 페이스 · 반복 사이 3분 걷기/u,
-    paceBasis: "기준: 3000m 최근 경기 10분 11초",
+    notation: /4 × 800m/u,
+    paceBasis: "기준: 3000m 10:11 · 계획에 저장된 기준 기록 · 경기 평균 페이스",
     expectedPrescription: { targetEventDistanceM: 3000, targetRepSeconds: 611 * 800 / 3000,
       repetitionsPerSet: 4, repetitionDistanceM: 800, repetitionRecoverySeconds: 180,
       repetitionRecoveryMode: "WALK", totals: { qualityDistanceM: 3200,
         repetitionRecoveryOccurrences: 3, repetitionRecoveryTotalSeconds: 540 } },
-    work: "800m를 약 2분 43초 기준으로 4회 · 주요 구간 거리 3200m",
-    recovery: "3번 · 매번 180초 걷기 · 총 540초",
+    work: "800m마다 2분 42.9초",
+    recovery: "3분 걷기",
   },
 ] as const
 
@@ -171,14 +171,15 @@ for (const fixture of cases) {
     const selectedSession = await openActiveSessionDetails(page, fixture.notation)
     await expect(selectedSession.getByText(fixture.paceBasis, { exact: true }).first()).toBeVisible()
     // The date reader renders the complete prescription without a collapsed preview.
-    await expect(selectedSession.locator(".plan-detailed-prescription__primary")).toBeVisible()
+    await expect(selectedSession.getByRole("article", { name: "훈련 메모 미리보기" })).toBeVisible()
     await expect(selectedSession.getByText(fixture.work).first()).toBeVisible()
     await expect(selectedSession.getByText(fixture.recovery).first()).toBeVisible()
     await expect(selectedSession.getByText("준비", { exact: true })).toBeVisible()
     await expect(selectedSession.getByText("정리", { exact: true })).toBeVisible()
     await expect(selectedSession.getByText(fixture.notation).first()).toBeVisible()
-    await selectedSession.getByRole("button", { name: "훈련 방법과 이유", exact: true }).first().click()
+    await selectedSession.getByRole("button", { name: "이 훈련을 하는 이유", exact: true }).first().click()
     const explanation = page.locator(".session-explanation[open]")
+    await explanation.getByRole("tab", { name: "방법", exact: true }).click()
     await expect(explanation.getByText(fixture.notation).first()).toBeVisible()
     await explanation.getByRole("tab", { name: "이유·근거" }).click()
     await expect(explanation.getByText("저장된 처방과 설명 버전이 일치해요.")).toBeVisible()

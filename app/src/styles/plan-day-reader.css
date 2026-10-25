@@ -39,6 +39,8 @@
 .plan-day-reader__notice p { margin: 4px 0; font-size: 0.875rem; line-height: 1.5; }
 .plan-day-reader__body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 16px 16px max(32px, env(safe-area-inset-bottom)); scroll-padding-top: 16px; }
 .plan-day-reader__content { width: 100%; max-width: 48rem; margin-inline: auto; }
+.plan-day-reader__content[data-active-slot="AM"] [data-session-slot="PM"],
+.plan-day-reader__content[data-active-slot="PM"] [data-session-slot="AM"] { display: none; }
 .plan-day-reader__content > .plan-day-card__session { padding-block: 16px 24px; border-top: 0; scroll-margin-top: 16px; }
 .plan-day-reader .plan-session-content { gap: 12px; }
 .plan-day-reader .plan-session-content > strong { font-size: 1.25rem; line-height: 1.45; }
@@ -56,9 +58,8 @@
 .plan-session-expand { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; gap: 6px; padding: 6px; border: 0; background: transparent; color: var(--brand); cursor: pointer; font: inherit; }
 .plan-day-reader :is(button, a, summary):focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
 @media (max-width: 374px) {
-  .plan-day-reader__header { flex-wrap: wrap; }
-  .plan-day-reader__header > div:nth-child(2) { flex-basis: calc(100% - 60px); }
-  .plan-day-reader__arrows { margin-left: auto; }
+  .plan-day-reader__header { gap: 4px; padding-inline: 8px; }
+  .plan-day-reader__header h2 { font-size: 0.875rem; }
 }
 @media (prefers-reduced-motion: no-preference) {
   .plan-day-reader[open] { animation: plan-day-reader-enter 160ms ease-out; }

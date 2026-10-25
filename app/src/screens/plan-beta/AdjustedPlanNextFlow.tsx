@@ -114,13 +114,16 @@ export function AdjustedPlanNextFlow({ loaded, adjustmentResolver, readEvidence 
         return <section key={candidate.candidateId} aria-label={label.title} className="adjusted-next-candidate">
           <h2>{label.title}</h2><p>{label.detail}</p>
           <p>{candidateSharedSessionSummary(candidate)}</p>
-          <details><summary>날짜별 훈련 확인</summary>{candidate.sessions.map(session => <section key={`${session.day}-${session.slot}`}>
+          <details><summary>날짜별 훈련 확인</summary>{candidate.sessions.map(session => {
+            const source = continuity?.kind === "prepared" ? loaded.state.selection.activePlan.sessions.find(s =>
+              continuity.rows.some(r => r.target.day === session.day && r.target.slot === session.slot
+                && r.source.day === s.day && r.source.slot === s.slot)) : undefined
+            return <section key={`${session.day}-${session.slot}`}>
             <h3>{isoShift(draft.continuity.nextStartDate, session.day - 1)} · {session.slot === "AM" ? "오전" : "오후"}</h3>
-            <AdjustedJournalOriginalPlan session={continuity?.kind === "prepared"
-              ? loaded.state.selection.activePlan.sessions.find(s => continuity.rows.some(r => r.target.day === session.day
-                && r.target.slot === session.slot && r.source.day === s.day && r.source.slot === s.slot)) ?? session : session}
-              explanation={loaded.explanation} context="preview" />
-          </section>)}</details>
+            <AdjustedJournalOriginalPlan session={source ? { ...source, day: session.day, slot: session.slot } : session}
+              explanation={loaded.explanation} context="preview" date={isoShift(draft.continuity.nextStartDate, session.day - 1)}
+              presentation="comparison" />
+          </section>})}</details>
           <button type="button" onClick={() => openEditor(candidate.candidateId)} disabled={!adjustmentResolver}>
             <SlidersHorizontal size={18} aria-hidden="true" />{label.title} 구성 확인</button>
         </section>

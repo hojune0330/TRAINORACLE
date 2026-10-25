@@ -1,6 +1,6 @@
 import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import React from "react"
-import { cleanup, render, screen, within } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import { beforeEach, afterEach, expect, it, vi } from "vitest"
 import { deriveSequenceV3Totals } from "@impl/prescription/sequence-v3"
 import type { PlanMutationLockManager } from "../../domain/plan-mutation-lock"
@@ -41,8 +41,12 @@ it("shows the actual source and prepared workout side by side before final save"
     .getAllByRole("cell").map(cell => cell.textContent)
   expect(cells("반복 횟수")).toEqual([display(before.repetitionBlocks, "회"), display(after.repetitionBlocks, "회")])
   expect(cells("회복 시간")).toEqual([display(before.recoverySeconds, "초"), display(after.recoverySeconds, "초")])
+  fireEvent.click(screen.getByText("전체 방법 비교"))
   expect(screen.getByRole("region", { name: "현재 구성" })).toBeVisible()
   expect(screen.getByRole("region", { name: "변경 후 구성" })).toBeVisible()
   expect(screen.getByRole("button", { name: "이 구성으로 계획 저장" })).toBeEnabled()
   expect(onSaved).not.toHaveBeenCalled()
+  expect(screen.queryByRole("button", { name: "메모 가져가기" })).toBeNull()
+  expect(screen.queryByRole("button", { name: "이미지 저장" })).toBeNull()
+  expect(within(screen.getByRole("region", { name: "변경 후 구성" })).getAllByRole("article")[0]).toHaveTextContent("계획안 · 아직 적용 전")
 })

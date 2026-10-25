@@ -18,13 +18,17 @@ export function WorkoutMemoSheet({ memo, paper, stamp = null }: { readonly memo:
     {memoVisibleBasis(memo) && <p className="workout-memo-paper__basis">기준: {memoVisibleBasis(memo)}</p>}
     {memo.warnings.length > 0 && (memo.view === "core" ? <p className="workout-memo-paper__warnings workout-memo-paper__stop-line">{memo.warnings.join(" · ")}</p>
       : <ul className="workout-memo-paper__warnings">{memo.warnings.map(warning => <li key={warning}>{warning}</li>)}</ul>)}
-    {memo.view === "explained" && <section className="workout-memo-paper__explanation" aria-label="훈련 설명">
-      <p>{memo.explanation.scope}</p>
-      {memo.explanation.sections.map(section => <section key={section.label}><h4>{section.label}</h4><p>{section.text}</p></section>)}
-      <section><h4>근거</h4><ul>{memoExplanationSources(memo).map((source, index) => <li key={index}>{source.url
-        ? <a href={source.url} target="_blank" rel="noopener noreferrer">{source.title} (새 탭)</a> : source.title}</li>)}</ul>
-        <p>설명 버전 {memo.explanation.version}</p></section>
-    </section>}
+    {memo.view === "explained" && <WorkoutMemoExplanationView memo={memo} />}
     <footer className={stamp ? "workout-memo-paper__signature" : undefined}><span>TRAINORACLE</span>{stamp && <img src={companionStampUrl(stamp)} width={80} height={80} alt="선택한 동물 스티커" />}</footer>
   </article>
+}
+
+export function WorkoutMemoExplanationView({ memo }: { readonly memo: WorkoutMemoPresentation }) {
+  return <section className="workout-memo-paper__explanation" aria-label="훈련 설명">
+      <p>{memo.explanation.scope}</p>
+      {memo.explanation.sections.map(section => <section key={section.label}><h4>{section.label}</h4><p>{section.text}</p></section>)}
+      <details><summary>근거와 설명 버전</summary><ul>{memoExplanationSources(memo).map((source, index) => <li key={index}>{source.url
+        ? <a href={source.url} target="_blank" rel="noopener noreferrer">{source.title} (새 탭)</a> : source.title}</li>)}</ul>
+        <p>설명 버전 {memo.explanation.version}</p></details>
+    </section>
 }

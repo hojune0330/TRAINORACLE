@@ -11,8 +11,10 @@ export type WorkoutNotationStyle = "COACH" | "PLAIN"
 type PacePrescription = Extract<PlanSession["prescription"], { kind: "PACE_TARGET" }>
 type RpePrescription = Extract<PlanSession["prescription"], { kind: "RPE_TIME_RANGE" }>
 type DisplayPrescription = PlanSession["prescription"]
-  | { readonly kind: "ADJUSTED_METHOD_V3"; readonly projection: { readonly sequence: PrescriptionSequenceV3; readonly segmentTargets: readonly AdjustedSegmentTarget[] } }
-  | { readonly kind: "ADJUSTED_METHOD"; readonly snapshot: { readonly projection: { readonly sequence: PrescriptionSequence; readonly segmentTargets: readonly AdjustedSegmentTarget[] } } }
+  | { readonly kind: "ADJUSTED_METHOD_V3"; readonly projection: { readonly sequence: PrescriptionSequenceV3; readonly segmentTargets: readonly AdjustedSegmentTarget[] };
+    readonly snapshot?: { readonly explanation: { readonly contentFingerprint: string } } }
+  | { readonly kind: "ADJUSTED_METHOD"; readonly snapshot: { readonly projection: { readonly sequence: PrescriptionSequence; readonly segmentTargets: readonly AdjustedSegmentTarget[] };
+    readonly explanation?: { readonly contentFingerprint: string } } }
 export type WorkoutDisplaySession = {
   readonly role: string
   readonly plannedEnergyIntent: PlannedEnergyIntent
@@ -24,6 +26,12 @@ export function notationNumber(value: number): string {
   return `${rounded === value ? "" : "≈"}${rounded}`
 }
 export function notationTime(seconds: number, style: WorkoutNotationStyle = "COACH"): string {
+  const rounded = Number(seconds.toFixed(3))
+  if (style === "PLAIN" && rounded >= 60) {
+    const wholeMinutes = Math.floor(rounded / 60)
+    const remainder = Number((rounded - wholeMinutes * 60).toFixed(3))
+    return `${rounded === seconds ? "" : "≈"}${wholeMinutes}분${remainder ? ` ${notationNumber(remainder)}초` : ""}`
+  }
   return seconds >= 60 && seconds % 60 === 0 ? `${seconds / 60}${style === "PLAIN" ? "분" : "min"}`
     : `${notationNumber(seconds)}${style === "PLAIN" ? "초" : "s"}`
 }
@@ -83,7 +91,26 @@ function targetText(target: SequenceTarget, id: string, distance: number | null,
 }
 
 function v3NodesText(nodes: readonly SequenceNodeV3[], targets: readonly AdjustedSegmentTarget[], style: WorkoutNotationStyle = "COACH"): string {
-  return nodes.map(node => {
+  const numericTarget = (id: string) => targets.filter(target => target.segmentId === id).map(({ segmentId: _id, ...value }) => value)
+  // Compact only identical adjacent work. Preserve the last recovery as an explicit exception.
+  const grouped: SequenceNodeV3[] = []
+  for (let index = 0; index < nodes.length; index++) {
+    const first = nodes[index]!
+    if (first.kind !== "segment" || first.repeatCount !== 1 || first.recoveryBetweenRepeats.length) { grouped.push(first); continue }
+    let last = first, count = 1
+    while (index + count < nodes.length) {
+      const next = nodes[index + count]!
+      if (next.kind !== "segment" || next.repeatCount !== 1 || next.recoveryBetweenRepeats.length
+        || JSON.stringify(next.work) !== JSON.stringify(first.work) || next.role !== first.role || next.label !== first.label
+        || JSON.stringify(next.target) !== JSON.stringify(first.target)
+        || JSON.stringify(numericTarget(next.id)) !== JSON.stringify(numericTarget(first.id))
+        || JSON.stringify(last.recoveryAfter) !== JSON.stringify(first.recoveryAfter)) break
+      last = next; count++
+    }
+    grouped.push(count === 1 ? first : { ...first, repeatCount: count, recoveryBetweenRepeats: first.recoveryAfter, recoveryAfter: last.recoveryAfter })
+    index += count - 1
+  }
+  return grouped.map(node => {
     let body: string
     if (node.kind === "segment") {
       const work = node.work.kind === "distance" ? node.work.distanceM === null ? "거리 미지정" : notationDistance(node.work.distanceM)

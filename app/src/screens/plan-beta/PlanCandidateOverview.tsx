@@ -3,7 +3,7 @@ import type { PlanGenerationSuccess } from "@impl/plan-generator/types"
 import { resolveCatalogBinding } from "@impl/prescription/catalog-session-binding"
 import type { InstantPlanRecommendation } from "../../domain/instant-plan-contract"
 import { isValidIsoDate, isoShift } from "../../domain/dates"
-import { sessionPrescriptionBasis } from "../../domain/prescription-basis"
+import { sessionPrimaryBasis } from "../../domain/prescription-basis"
 import { projectInstantExecutionSteps } from "./instant-plan-today"
 import { formatTrainingSeconds, sessionExecutionSteps, sessionLabel, sessionSlotLabel } from "./labels"
 import "./plan-candidate-overview.css"
@@ -74,7 +74,7 @@ export function PlanCandidateOverview({
             {mainSteps.length > 0 ? <dl>
               {mainSteps.map((step, index) => <div key={`${step.role}-${index}`}><dt>{step.label}</dt><dd>{step.instruction}</dd></div>)}
             </dl> : null}
-            {!calculationUnavailable && !guidanceOnly && <p className="plan-candidate-overview__basis">기준: {sessionPrescriptionBasis(session)}</p>}
+            {!calculationUnavailable && !guidanceOnly && sessionPrimaryBasis(session) && <p className="plan-candidate-overview__basis">기준: {sessionPrimaryBasis(session)}</p>}
             {totalInstruction && <dl className="plan-candidate-overview__duration"><div><dt>총 시간</dt><dd>{totalInstruction}</dd></div></dl>}
             {otherSteps.length > 0 && <details className="plan-candidate-overview__support">
               <summary>준비·정리 방법</summary>

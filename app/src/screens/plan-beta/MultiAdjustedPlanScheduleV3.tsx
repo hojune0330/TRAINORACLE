@@ -53,7 +53,18 @@ export function MultiAdjustedPlanScheduleV3({ loaded, readEvidence, onStoredChan
       return <section key={session.slot} tabIndex={-1} data-session-slot={session.slot} aria-label={`${time} 훈련`}>
         <p className="adjusted-plan-role"><CalendarRoleIcon tone={plannedCalendarTone(session)} />{time} · {CALENDAR_TRAINING_LABELS[plannedCalendarTone(session)]}</p>
         <h3>{sessionLabel(session)}</h3>
-        <AdjustedPrescriptionV3 session={session} date={date} memoState="PLAN" explanation={explanation} showName={false} />
+        <AdjustedPrescriptionV3 session={session} date={date} memoState="PLAN" explanation={explanation} showName={false}
+          primaryAction={onWritePlannedSessionLog && <button className="adjusted-plan-write" type="button" disabled={saving} onClick={async () => {
+            const draft = createPlannedSessionLogDraft(plan, session, new Date().toISOString())
+            if (!draft) { setError("훈련 연결 정보를 확인하지 못했어요."); return }
+            setSaving(true); setError(null)
+            try {
+              const result = await retainMultiAdjustedOriginalPlanV3(loaded.state.contentFingerprint, { retained: readEvidence() })
+              if (result.kind !== "retained") { setError("계획 원본을 보관하지 못했어요. 일지는 아직 열지 않았어요."); return }
+              onWritePlannedSessionLog(draft)
+            } catch { setError("계획 원본을 보관하지 못했어요. 다시 시도해 주세요.") }
+            finally { setSaving(false) }
+          }}><PenLine size={18} aria-hidden="true" />이 훈련 일지 쓰기</button>} />
         <p role="status">{recorded ? PROGRESS_LABELS[recorded.state] : "아직 진행 기록이 없어요."}</p>
         <div role="group" aria-label={`${time} 진행 기록`}>{([
           ["COMPLETED", Check], ["RESTED", CircleMinus], ["SKIPPED", RefreshCw], ["PAIN_CHECKIN", HeartPulse],
@@ -68,17 +79,6 @@ export function MultiAdjustedPlanScheduleV3({ loaded, readEvidence, onStoredChan
             } catch { setError("저장하지 못했어요. 현재 계획을 다시 확인해 주세요.") }
             finally { setSaving(false) }
           }}><Icon size={16} aria-hidden="true" />{PROGRESS_LABELS[state]}</button>)}</div>
-        {onWritePlannedSessionLog && <button className="adjusted-plan-write" type="button" disabled={saving} onClick={async () => {
-          const draft = createPlannedSessionLogDraft(plan, session, new Date().toISOString())
-          if (!draft) { setError("훈련 연결 정보를 확인하지 못했어요."); return }
-          setSaving(true); setError(null)
-          try {
-            const result = await retainMultiAdjustedOriginalPlanV3(loaded.state.contentFingerprint, { retained: readEvidence() })
-            if (result.kind !== "retained") { setError("계획 원본을 보관하지 못했어요. 일지는 아직 열지 않았어요."); return }
-            onWritePlannedSessionLog(draft)
-          } catch { setError("계획 원본을 보관하지 못했어요. 다시 시도해 주세요.") }
-          finally { setSaving(false) }
-        }}><PenLine size={18} aria-hidden="true" />이 훈련 일지 쓰기</button>}
       </section>
     })}
     </DatedPlanPanel>

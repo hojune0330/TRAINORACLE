@@ -14,19 +14,23 @@ export async function openActiveSessionDetails(
   const total = await page.locator(".active-plan .plan-schedule-preview > li").count()
   for (let dayIndex = 0; dayIndex < total; dayIndex += 1) {
     const reader = await openActiveDayReader(page, dayIndex)
-    const records = reader.locator("[data-session-records]")
-    for (let sessionIndex = 0; sessionIndex < await records.count(); sessionIndex += 1) {
-      await openSessionRecords(records.nth(sessionIndex))
-    }
-    if (expectedText === undefined) return reader
-    if (await reader.getByText(expectedText).first().isVisible()) return reader
-    const notation = reader.locator("details").filter({ has: page.getByText("기존 훈련 표기", { exact: true }) })
-    for (let index = 0; index < await notation.count(); index += 1) {
-      if (await notation.nth(index).getAttribute("open") === null) {
-        await notation.nth(index).getByText("기존 훈련 표기", { exact: true }).click()
+    const slots = reader.getByRole("navigation", { name: "오전·오후 바로가기" }).getByRole("button")
+    const slotCount = await slots.count()
+    for (let slotIndex = 0; slotIndex < Math.max(1, slotCount); slotIndex += 1) {
+      if (slotCount) await slots.nth(slotIndex).click()
+      const records = reader.locator("[data-session-records]:visible")
+      for (let index = 0; index < await records.count(); index += 1) await openSessionRecords(records.nth(index))
+      if (expectedText === undefined) return reader
+      const session = reader.locator("[data-session-slot]:visible")
+      if (await session.getByText(expectedText).first().isVisible()) return reader
+      const notation = session.locator("details").filter({ has: page.getByText("기존 훈련 표기", { exact: true }) })
+      for (let index = 0; index < await notation.count(); index += 1) {
+        if (await notation.nth(index).getAttribute("open") === null) {
+          await notation.nth(index).getByText("기존 훈련 표기", { exact: true }).click()
+        }
       }
+      if (await session.getByText(expectedText).first().isVisible()) return reader
     }
-    if (await reader.getByText(expectedText).first().isVisible()) return reader
   }
 
   throw new Error(`Could not find a visible active-plan session matching ${String(expectedText)}`)

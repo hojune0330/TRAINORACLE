@@ -54,8 +54,10 @@ export function memoDisplayLines(memo: WorkoutMemoPresentation): readonly Workou
     const main = memo.lines.find(line => line.label === "본운동")
     if (!main) return memo.lines
     const targets = memo.lines.filter(line => line.label === "목표" || line.label === "1회 목표")
+    const support = memo.lines.filter(line => line.label === "준비" || line.label === "정리")
     return [{ ...main, text: [main.text, ...targets.map(line => `${line.label}: ${line.text}`)].join(" · ") },
-      ...memo.lines.filter(line => line !== main && !targets.includes(line))]
+      ...memo.lines.filter(line => line !== main && !targets.includes(line) && !support.includes(line)),
+      ...(support.length ? [{ label: "준비·정리", text: support.map(line => `${line.label}: ${line.text}`).join("\n") }] : [])]
   }
   if (memo.layout === "full") return [
     ...memo.lines.filter(line => line.label === "준비"),

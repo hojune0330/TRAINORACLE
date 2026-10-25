@@ -68,7 +68,8 @@ export function AdjustedPlanApplyReview({ request, readReview, isCurrentDraft, l
       session.day === prepared.candidate.changedSlot.day && session.slot === prepared.candidate.changedSlot.slot).map(session =>
         <section key={session.slot} aria-label="적용할 훈련">
           <h2>{isoShift(prepared.candidate.startDate, session.day - 1)} · {session.slot === "AM" ? "오전" : "오후"}</h2>
-          <AdjustedJournalOriginalPlan session={session} explanation={opened.request.preparation.explanation} context="preview" />
+          <AdjustedJournalOriginalPlan session={session} explanation={opened.request.preparation.explanation} context="preview"
+            date={isoShift(prepared.candidate.startDate, session.day - 1)} presentation="comparison" />
         </section>) : <p role="alert">변경안의 수치와 근거를 확인하지 못했어요. 돌아가서 다시 선택해 주세요.</p>}
     {error !== null && <p role="alert">{error}</p>}
     {opened.expectedPredecessorFingerprint !== undefined && <label><input type="checkbox" checked={environmentConfirmed} disabled={saving}

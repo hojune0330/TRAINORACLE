@@ -57,7 +57,7 @@ export function HomeCoachingSummary({ revision, onOpenDay, onOpenPlan }: {
   const selectedEntry = source.status === "complete" ? source.entries.find(entry => entry.kind === "post-session" && entry.id === review?.id) : undefined
   let originalMethod
   if (selectedEntry?.kind === "post-session" && review?.status !== "CONFLICT") {
-    try { originalMethod = <OriginalTrainingMethod original={readJournalOriginalPlan(selectedEntry, undefined, undefined, readRetained)} /> } catch { /* The report already explains unavailable source evidence. */ }
+    try { originalMethod = <OriginalTrainingMethod date={selectedEntry.plannedSessionLink?.plannedDate} original={readJournalOriginalPlan(selectedEntry, undefined, undefined, readRetained)} /> } catch { /* The report already explains unavailable source evidence. */ }
   }
   return <section className="home-hub__summary home-coaching" aria-labelledby="home-coaching-title">
     <AppHeading as="h2" variant="section" id="home-coaching-title" ref={heading} tabIndex={-1}>{readingFirst ? "훈련법 읽기" : "훈련 코칭"}</AppHeading>

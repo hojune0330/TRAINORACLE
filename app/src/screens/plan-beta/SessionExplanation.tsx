@@ -13,13 +13,14 @@ import { PlanMethodObservationDetails } from "./PlanMethodObservationDetails"
 import "../../styles/session-explanation.css"
 import { useReaderDialog } from "../../hooks/useReaderDialog"
 import { resolveCatalogBinding } from "@impl/prescription/catalog-session-binding"
-import { CatalogWorkoutDetail } from "./CatalogWorkoutDetail"
 import { usePlanEvidenceHistory } from "../../hooks/usePlanEvidenceHistory"
 import { PlanEvidenceHistoryNotice } from "../../components/PlanEvidenceHistoryNotice"
 import { onLocalJournalScopeChange } from "../../domain/account/local-journal-ownership"
 import { WorkoutMemoTool } from "../../components/WorkoutMemoTool"
 import { CompanionMotion } from "../../components/CompanionMotion"
-import type { WorkoutMemoContext } from "../../domain/workout-memo"
+import { buildWorkoutMemo, type WorkoutMemoContext } from "../../domain/workout-memo"
+import { presentWorkoutMemo } from "../../domain/workout-memo-presentation"
+import { WorkoutMemoExplanationView } from "../../components/WorkoutMemoSheet"
 import { PaceRecommendation } from "./PaceRecommendation"
 
 type Props = {
@@ -84,6 +85,7 @@ function SessionExplanationReader({ session, context, loadEvidence, initialTab =
   const tabs = React.useRef<(HTMLButtonElement | null)[]>([])
   const id = React.useId()
   const explanation = explainSession(session, context)
+  const memo = buildWorkoutMemo(session, { date, state: memoState ?? (context?.kind === "SAVED" ? "PLAN" : "PREVIEW") })
   const catalogWorkout = session.prescription.kind === "RPE_TIME_RANGE" && session.prescription.catalogWorkout
     ? resolveCatalogBinding(session.prescription.catalogWorkout) : null
   const memoReader = session.prescription.kind !== "RPE_TIME_RANGE" || session.role !== "QUALITY" || catalogWorkout !== null
@@ -167,12 +169,12 @@ function SessionExplanationReader({ session, context, loadEvidence, initialTab =
         <div className="session-explanation__tab-content" hidden={tab !== "이유·근거"}>
             <p className="session-explanation__note">오라클 · 훈련의 이유와 근거</p>
             {session.prescription.kind === "PACE_TARGET" && <details><summary>페이스 계산 보기</summary><PaceRecommendation prescription={session.prescription} /></details>}
-            {catalogWorkout ? <><CatalogWorkoutDetail workout={catalogWorkout} evidence /><details><summary>이번 주기에서 맡는 역할</summary>{explanation.cycle.map(line => <p key={line}>{line}</p>)}</details></> : <>
+            {memo && <WorkoutMemoExplanationView memo={presentWorkoutMemo(memo, "explained")} />}
+            {catalogWorkout ? <details><summary>이번 주기에서 맡는 역할</summary>{explanation.cycle.map(line => <p key={line}>{line}</p>)}</details> : <>
             <p className="session-explanation__notice">{explanation.availability}</p>
-            <section><h3>훈련 목적</h3><p>{explanation.profile.purpose}</p></section>
             <details><summary>구성·회복의 이유와 근거</summary>
             <p>{sessionGuidance(session)}</p>
-            <section><h3>몸이 에너지를 공급하는 방식</h3><p>{explanation.profile.energyContext}</p>
+            <section><h3>훈련 용어</h3>
               <details className="session-explanation__term"><summary>{term.label}은 왜 이런 이름인가요?</summary>
                 <p>{term.namingOrigin ?? term.short}</p><p>{term.technicalDefinition ?? term.detail}</p>
                 {term.notMeaning && <p>{term.notMeaning}</p>}
@@ -188,7 +190,6 @@ function SessionExplanationReader({ session, context, loadEvidence, initialTab =
               </section>
             ))}
             <section><h3>이번 주기에서 맡는 역할</h3>{explanation.cycle.map((line) => <p key={line}>{line}</p>)}</section>
-            <section><h3>기대하는 변화와 한계</h3><p>{explanation.profile.expectedAdaptation}</p><ul>{explanation.limitations.map((line) => <li key={line}>{line}</li>)}</ul><p>{explanation.profile.observationGuide}</p></section>
             <section><h3>실제로 사용한 내 정보</h3>{explanation.inputs.length === 0 ? <p>개인 경기 기록을 이용한 계산은 적용하지 않아요.</p> : explanation.inputs.map((line) => <p key={line}>{line}</p>)}<p>일지 원문과 비밀 메모는 설명에 사용하거나 외부로 보내지 않아요.</p></section>
             <section><h3>연구·코칭 근거</h3><p>공통 원리를 설명하는 자료예요. 자료의 존재가 이 선수에게 이 횟수·페이스가 최적이라는 증거는 아니에요.</p>
               {explanation.templateContent !== null && <div className="session-explanation__template-source">

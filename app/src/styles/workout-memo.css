@@ -4,6 +4,15 @@
 .workout-memo-tool[data-mode="reader"] .workout-memo-paper { border-radius: 8px; }
 .workout-memo-tool[data-mode="reader"] .workout-memo-paper header { border: 0; padding-bottom: 0; }
 .workout-memo-tool[data-mode="reader"] .workout-memo-paper__basis { border: 0; padding-top: 0; }
+.workout-memo-tool__reading-options { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; max-width: 480px; margin-bottom: 12px; }
+.workout-memo-tool__reading-options .workout-memo-tool__layouts { flex: 1 1 160px; }
+.workout-memo-tool__wording select { min-height: 44px; max-width: 100%; padding: 8px; border: 1px solid var(--line-2); border-radius: 4px; background: var(--surface); color: var(--ink); font: inherit; }
+.workout-memo-tool__export-entry { display: flex; align-items: center; gap: 8px; min-height: 44px; margin-block: 12px; border: 0; background: transparent; color: var(--ink-2); font: inherit; }
+.workout-memo-tool__export-panel { max-width: 480px; }
+.workout-memo-tool[data-mode="reader"] > .plan-session-record-action { margin-block: 16px 8px; }
+.workout-memo-tool[data-mode="reader"] > .workout-memo-paper { border: 0; padding-inline: 0; }
+.workout-memo-tool[data-mode="reader"] > .workout-memo-paper > footer { display: none; }
+.workout-memo-tool__wording select:focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; }
 .workout-memo-tool[data-mode="reader"] .workout-memo-paper [data-emphasis] dd { font-size: var(--fs-h3); }
 .workout-memo-paper .workout-memo-paper__total { margin-block: 0 16px; font-size: var(--fs-body-sm); line-height: 1.5; }
 .workout-memo-tool__heading { display: flex; align-items: center; gap: 8px; min-height: 44px; }
