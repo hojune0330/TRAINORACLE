@@ -1,14 +1,15 @@
 import { ALL_WORKOUT_CATALOG, calculatedWorkoutSequence } from "@impl/prescription/all-workout-calculator"
 import { resolveCatalogBinding } from "@impl/prescription/catalog-session-binding"
-import { roundedPaceSeconds } from "@impl/prescription/record-pace"
+import { formatPaceSeconds, roundedPaceSeconds } from "@impl/prescription/record-pace"
+import { matchesPacePrescriptionSequence } from "@impl/prescription/pace-sequence"
 import { parsePrescriptionSequence } from "@impl/prescription/sequence"
-import { parsePrescriptionSequenceV3 } from "@impl/prescription/sequence-v3"
+import { deriveSequenceV3Totals, parsePrescriptionSequenceV3 } from "@impl/prescription/sequence-v3"
 import { paceClock } from "./pace-tools"
 import { notationDistance, notationEffort, notationNumber, notationPace, notationRecovery, notationTime,
   sequencePhaseNotation, sessionWorkoutName, type WorkoutDisplaySession, type WorkoutNotationStyle } from "./workout-notation"
 import { TRAINING_EXPLANATION_PROFILES } from "./training-explanation-profiles"
 import { catalogExecutionReading, catalogWorkoutReader } from "./catalog-workout-reader"
-import { catalogPrescriptionBasis, sessionPrescriptionBasis } from "./prescription-basis"
+import { catalogPrescriptionBasis, sessionPrescriptionBasis, sessionPrimaryBasis } from "./prescription-basis"
 
 export type WorkoutMemoContext = { readonly date?: string; readonly state?: "PLAN" | "PREVIEW" | "HISTORICAL" }
 export type WorkoutMemoSession = WorkoutDisplaySession & { readonly day: number; readonly slot: "AM" | "PM" }
@@ -27,6 +28,8 @@ export type WorkoutMemo = {
   readonly title: string
   readonly lines: readonly WorkoutMemoLine[]
   readonly basis: string | null
+  readonly basisSummary: string | null
+  readonly totalDuration: string | null
   readonly warnings: readonly string[]
   readonly wording: WorkoutNotationStyle
   readonly explanation: WorkoutMemoExplanation
@@ -49,10 +52,12 @@ function projectMemo(session: WorkoutMemoSession, context: WorkoutMemoContext, w
   if (!p) return null
   const lines: WorkoutMemoLine[] = [], warnings: string[] = []
   let basis: string | null = null
+  let totalDuration: string | null = null
   const date = memoDate(context.date)
   if (context.date !== undefined && date === null) warnings.push("날짜가 정확하지 않아요. 날짜 없이 표시해요.")
   if (p.kind === "REST") lines.push({ label: "일정", text: "휴식", emphasis: true })
   else if (p.kind === "PACE_TARGET") {
+    if (p.sequence !== undefined && !matchesPacePrescriptionSequence(p, p.sequence)) return null
     if (![p.setCount, p.repetitionsPerSet, p.repetitionDistanceM, p.targetRepSeconds].every(value => Number.isFinite(value) && value > 0)) return null
     if (![p.setCount, p.repetitionsPerSet].every(Number.isInteger)) return null
     if (!Number.isFinite(p.targetEventDistanceM) || p.targetEventDistanceM <= 0) return null
@@ -91,6 +96,12 @@ function projectMemo(session: WorkoutMemoSession, context: WorkoutMemoContext, w
       const parsed = sequence.version === 3 ? parsePrescriptionSequenceV3(sequence) : parsePrescriptionSequence(sequence)
       if (parsed.kind !== "parsed" || !targets.every(target => Number.isFinite(target.secondsPerKm) && target.secondsPerKm > 0
         && [target.targetRepSeconds, target.fixedWorkSeconds, target.distanceM].every(value => value === null || Number.isFinite(value) && value > 0))) return null
+      if (sequence.version === 3) {
+        const phases = Object.values(deriveSequenceV3Totals(sequence))
+        totalDuration = phases.every(phase => phase.totalSeconds !== null)
+          ? `${formatPaceSeconds(phases.reduce((sum, phase) => sum + phase.totalSeconds!, 0))} · 준비·회복·정리 포함`
+          : "전체 시간 미산출 · 시간이 정해지지 않은 구간이 있어요."
+      }
       const reading = catalog && wording === "PLAIN" ? catalogWorkoutReader(session) ?? catalogExecutionReading(catalog) : null
       lines.push({ label: "본운동", text: reading?.phases.main ?? sequencePhaseNotation(sequence, "main", targets, wording), emphasis: true })
       for (const [phase, label] of [["warmup", "준비"], ["cooldown", "정리"]] as const) {
@@ -99,6 +110,8 @@ function projectMemo(session: WorkoutMemoSession, context: WorkoutMemoContext, w
       }
       basis = targets.length ? "구간별 경기 페이스 · 기록/목표 구분은 훈련 상세에서 확인" : "구간에 적힌 힘든 정도"
       if (catalog) {
+        const total = catalog.totals.seconds
+        if (total) totalDuration = `${formatPaceSeconds(total.minimum)}${total.minimum === total.maximum ? "" : `–${formatPaceSeconds(total.maximum)}`} · 준비·회복·정리 포함`
         const uniqueSteps = catalog.steps.filter((step, index, all) => all.findIndex(other => other.segmentId === step.segmentId) === index)
         for (const step of uniqueSteps) {
           if (!reading && step.kind === "RECOVERY" && step.distanceM !== null && step.seconds !== null) {
@@ -121,13 +134,16 @@ function projectMemo(session: WorkoutMemoSession, context: WorkoutMemoContext, w
       if (p.catalogWorkout) warnings.push("세부 구성을 불러오지 못했어요. 저장된 전체 시간과 힘든 정도만 보여요.")
       else if (session.role === "QUALITY") warnings.push("상세 구성 미정 · 전체 시간을 본운동 시간으로 사용하지 마세요.")
     } else return null
-    warnings.push("언제 멈춰야 하는지는 훈련 상세에서 확인하세요.")
+    warnings.push("통증·어지럼·자세 무너짐이 생기면 시간을 채우지 말고 중단하세요.")
   }
   return { date, dateLabel: date ? `${date.replaceAll("-", ".")} (${new Intl.DateTimeFormat("ko-KR", { weekday: "short", timeZone: "UTC" }).format(new Date(`${date}T12:00:00Z`))})` : `${session.day}일차 · 날짜 미지정`,
     slotLabel: session.slot === "AM" ? "오전" : "오후",
     stateLabel: context.state === "PREVIEW" ? "계획안 · 아직 적용 전" : context.state === "HISTORICAL" ? "당시 계획 · 실제 수행 기록 아님" : "계획한 훈련 · 실제 수행 아님",
     title: p.kind === "REST" ? "휴식" : p.kind === "RPE_TIME_RANGE" && p.catalogWorkout && !resolveCatalogBinding(p.catalogWorkout)
-      ? "저장된 훈련" : sessionWorkoutName(session), lines, basis, warnings, wording,
+      ? "저장된 훈련" : sessionWorkoutName(session, wording === "COACH"), lines, basis,
+    basisSummary: p.kind === "ADJUSTED_METHOD" || p.kind === "ADJUSTED_METHOD_V3"
+      ? basis === "구간에 적힌 힘든 정도" ? null : basis : sessionPrimaryBasis(session),
+    totalDuration, warnings, wording,
     explanation: memoExplanation(session, context) }
 }
 
@@ -156,5 +172,6 @@ function memoExplanation(session: WorkoutMemoSession, context: WorkoutMemoContex
 
 export function workoutMemoText(memo: WorkoutMemo): string {
   return ["TRAINORACLE", `${memo.dateLabel} · ${memo.slotLabel}`, memo.stateLabel, memo.title,
+    ...(memo.totalDuration ? [`총 시간: ${memo.totalDuration}`] : []),
     ...memo.lines.map(line => `${line.label}: ${line.text}`), ...(memo.basis ? [`기준: ${memo.basis}`] : []), ...memo.warnings].join("\n")
 }

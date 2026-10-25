@@ -15,11 +15,28 @@ const rpe: WorkoutMemoSession = { day: 1, slot: "AM", role: "EASY", plannedEnerg
 } }
 
 describe("workout memo snapshot contract", () => {
+  it("keeps effort provenance in explained view without repeating it in ordinary screen or export", () => {
+    const source = bindDefaultCatalogSessions([rpe as Parameters<typeof bindDefaultCatalogSessions>[0][number]], 5000, "EXPERIENCED", 0)[0]!
+    const memo = buildWorkoutMemo(source)!
+    for (const view of ["core", "standard", "method"] as const) {
+      const text = workoutMemoPresentationText(presentWorkoutMemo(memo, view))
+      expect(text).not.toContain("기준: 체감 강도")
+      expect(text).toContain("중단하세요")
+      for (const line of memo.lines) expect(text).toContain(line.text)
+    }
+    expect(workoutMemoPresentationText(presentWorkoutMemo(memo, "explained"))).toContain(memo.basis)
+  })
+  it("rejects a stored pace sequence that disagrees with the numeric prescription", () => {
+    const source = memoSessionFixture()
+    if (source.prescription.kind !== "PACE_TARGET" || !source.prescription.sequence) throw Error("Expected stored sequence")
+    expect(buildWorkoutMemo(source)).not.toBeNull()
+    expect(buildWorkoutMemo({ ...source, prescription: { ...source.prescription, repetitionsPerSet: source.prescription.repetitionsPerSet + 1 } })).toBeNull()
+  })
   it("exports exact repeats, set and repeat recovery modes, support and stop rules without mutating the prescription", () => {
     const session = memoSessionFixture()
     if (session.prescription.kind !== "PACE_TARGET") throw Error("Expected detailed fixture")
     const p = session.prescription
-    const source = { ...session, prescription: { ...p, setCount: 2, repetitionsPerSet: 3, repetitionDistanceM: 200,
+    const source = { ...session, prescription: { ...p, sequence: undefined, setCount: 2, repetitionsPerSet: 3, repetitionDistanceM: 200,
       targetRepSeconds: 30.375, repetitionRecoverySeconds: 60, repetitionRecoveryMode: "JOG" as const,
       setRecoverySeconds: 180, setRecoveryMode: "WALK" as const } }
     const before = JSON.stringify(source)
@@ -111,7 +128,7 @@ describe("workout memo snapshot contract", () => {
   it("does not add strides when the stored preparation has no strides", () => {
     const source = memoSessionFixture()
     if (source.prescription.kind !== "PACE_TARGET") throw Error("Expected detailed fixture")
-    const text = workoutMemoText(buildWorkoutMemo({ ...source, prescription: { ...source.prescription, operationalComponents: {
+    const text = workoutMemoText(buildWorkoutMemo({ ...source, prescription: { ...source.prescription, sequence: undefined, operationalComponents: {
       ...source.prescription.operationalComponents, warmup: { ...source.prescription.operationalComponents.warmup,
         strides: { ...source.prescription.operationalComponents.warmup.strides, repetitions: 0 } },
     } } } as unknown as WorkoutMemoSession)!)
@@ -171,6 +188,14 @@ describe("workout memo snapshot contract", () => {
     const lines = wrapMemoText(text, 5, value => Array.from(value).length)
     expect(lines.every(line => Array.from(line).length <= 5)).toBe(true)
     expect(lines.join("")).toBe(text)
+  })
+  it("keeps ordinary effort and pace tokens intact when wrapping a PNG", () => {
+    const text = "고르게 유지 힘든 정도(RPE) 6–7/10 · 4:10/km"
+    const lines = wrapMemoText(text, 12, value => Array.from(value).length)
+    expect(lines.join(" ")).toBe(text)
+    expect(lines.every(line => Array.from(line).length <= 12)).toBe(true)
+    expect(lines.some(line => line.includes("정도(RPE)"))).toBe(true)
+    expect(lines.some(line => line.includes("4:10/km"))).toBe(true)
   })
   it("preserves every prescription value and stop rule in all four depth views", () => {
     const memo = buildWorkoutMemo(memoSessionFixture())!

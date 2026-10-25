@@ -12,6 +12,10 @@ type RecommendationInput = Pick<PaceTargetPlanPrescription,
 
 export function PaceRecommendation({ prescription }: { readonly prescription: RecommendationInput }) {
   const anchor = prescription.selectedAnchor
+  if (!anchor || !Number.isFinite(anchor.eventDistanceM) || anchor.eventDistanceM <= 0
+    || !Number.isFinite(anchor.performanceSeconds) || anchor.performanceSeconds <= 0) {
+    return <p>저장된 기준 기록을 확인할 수 없어요. 새 기록으로 대신 계산하지 않았어요.</p>
+  }
   return (
     <aside className="plan-pace-recommendation" aria-label="추천 페이스 기준">
       <p>기준: {anchor.eventDistanceM}m {RECORD_KIND[anchor.kind]} {formatRecordTime(anchor.performanceSeconds)}</p>

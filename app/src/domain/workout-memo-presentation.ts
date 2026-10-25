@@ -26,13 +26,17 @@ export function presentWorkoutMemo(memo: WorkoutMemo, selection: WorkoutMemoView
 }
 
 export function workoutMemoPresentationText(memo: WorkoutMemoPresentation): string {
-  const text = workoutMemoText({ ...memo, lines: memoDisplayLines(memo) })
+  const text = workoutMemoText({ ...memo, basis: memoVisibleBasis(memo), lines: memoDisplayLines(memo) })
   const method = memo.layout === "full" ? `${text}\n수행 순서: ${memoExecutionOrder(memo)}` : text
   return memo.view !== "explained" ? method : [method, memo.explanation.scope,
     ...memo.explanation.sections.map(section => `${section.label}: ${section.text}`),
     `설명 버전: ${memo.explanation.version}`,
     ...memoExplanationSources(memo).map(source => `근거: ${source.title}${source.url ? ` (${source.url})` : ""}`),
   ].join("\n")
+}
+
+export function memoVisibleBasis(memo: WorkoutMemoPresentation): string | null {
+  return memo.view === "explained" ? memo.basis : memo.basisSummary
 }
 
 export function memoExecutionOrder(memo: WorkoutMemoPresentation): string {

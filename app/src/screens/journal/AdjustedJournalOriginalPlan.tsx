@@ -1,10 +1,7 @@
 import type { AdjustedCandidateSession } from "../../domain/adjusted-plan-candidate"
 import type { ResolvedAdjustedExplanation } from "../../domain/adjusted-method-snapshot"
 import { PrescriptionStructure } from "../plan-beta/PrescriptionStructure"
-import { DetailedPrescriptionView } from "../plan-beta/DetailedPrescriptionView"
 import { formatTrainingSeconds } from "../plan-beta/labels"
-import { WorkoutNotation } from "../plan-beta/WorkoutNotation"
-import { sessionWorkoutNotation } from "../../domain/workout-notation"
 import { WorkoutMemoTool } from "../../components/WorkoutMemoTool"
 
 /** Historical comparison only: no apply/start controls or inferred actual values. */
@@ -33,10 +30,10 @@ export function AdjustedJournalOriginalPlan({ session, explanation, context = "j
     <p>{context === "journal" ? "이 일지에 연결된 당시 계획이에요. 실제 운동 기록과는 별도로 표시해요."
       : context === "preview" ? "선택한 변경안이에요. 아래 저장 버튼을 눌러야 계획에 적용돼요."
       : "저장할 때 선택한 훈련 구성이에요. 실제 수행 기록과는 별도로 표시해요."}</p>
-    {prescription.kind === "ADJUSTED_METHOD" ? <>
-      {context === "plan" ? execution : <WorkoutNotation sequence={prescription.snapshot.projection.sequence} intent={session.plannedEnergyIntent} targets={prescription.snapshot.projection.segmentTargets} />}
+    <WorkoutMemoTool session={session} date={date} mode="reader" state={context === "journal" ? "HISTORICAL" : context === "preview" ? "PREVIEW" : "PLAN"} />
+    {prescription.kind === "ADJUSTED_METHOD" && <>
       <details><summary>자세히 보기 · 방법과 근거</summary>
-      {context !== "plan" && execution}
+      <details><summary>원본 구간표</summary>{execution}</details>
       <section aria-label="이렇게 구성한 이유"><h4>이렇게 구성한 이유</h4>
         <dl>{([
           ["훈련 목적", explanation.purpose], ["에너지 공급", explanation.energySupply],
@@ -48,9 +45,6 @@ export function AdjustedJournalOriginalPlan({ session, explanation, context = "j
           <ul>{explanation.evidenceRefs.map(ref => <li key={ref}>{ref}</li>)}</ul>
         </details>
       </section></details>
-    </> : prescription.kind === "PACE_TARGET" ? <DetailedPrescriptionView prescription={prescription} />
-      : prescription.kind === "REST" ? <p>운동을 쉬는 날로 계획했어요.</p>
-        : <p>{sessionWorkoutNotation(session)}</p>}
-    <WorkoutMemoTool session={session} date={date} state={context === "journal" ? "HISTORICAL" : context === "preview" ? "PREVIEW" : "PLAN"} />
+    </>}
   </section>
 }

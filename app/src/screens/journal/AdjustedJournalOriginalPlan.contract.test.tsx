@@ -56,6 +56,7 @@ it("opens the saved adjusted structure and reasons from the journal, not origina
   expect(screen.getByText(/2 × 400m ·/)).toBeVisible()
   expect(screen.getByText(/400m당 약/)).not.toBeVisible()
   fireEvent.click(screen.getByText("자세히 보기 · 방법과 근거"))
+  fireEvent.click(screen.getByText("원본 구간표"))
   expect(screen.getByText(/400m당 약/)).toBeVisible()
   expect(screen.getByText(/본운동 거리: 800m/)).toBeVisible()
   expect(screen.getByText(/반복 사이: 17초/)).toBeVisible()

@@ -1,5 +1,5 @@
 import type { WorkoutMemoPresentation } from "../domain/workout-memo-presentation"
-import { memoDisplayLines, memoExecutionOrder, memoExplanationSources, memoLineEmphasis } from "../domain/workout-memo-presentation"
+import { memoDisplayLines, memoExecutionOrder, memoExplanationSources, memoLineEmphasis, memoVisibleBasis } from "../domain/workout-memo-presentation"
 import type { MemoPaper } from "../domain/workout-memo-export"
 import { companionStampUrl, type CompanionStamp } from "../domain/training-companions"
 import "../styles/training-companions.css"
@@ -10,11 +10,12 @@ export function WorkoutMemoSheet({ memo, paper, stamp = null }: { readonly memo:
     <header><strong>{memo.dateLabel}</strong><span>{memo.slotLabel}</span></header>
     <p className="workout-memo-paper__state">{memo.stateLabel}</p>
     <h3>{memo.title}</h3>
+    {memo.totalDuration && <p className="workout-memo-paper__total" aria-label="계획된 전체 시간">{memo.totalDuration}</p>}
     {memo.layout === "full" && <p className="workout-memo-paper__order">{memoExecutionOrder(memo)}</p>}
     <dl>{memoDisplayLines(memo).map((line, index) => <div key={index} data-emphasis={memoLineEmphasis(memo, index) || undefined}>
       <dt>{line.label}</dt><dd>{line.text}</dd>
     </div>)}</dl>
-    {memo.basis && <p className="workout-memo-paper__basis">기준: {memo.basis}</p>}
+    {memoVisibleBasis(memo) && <p className="workout-memo-paper__basis">기준: {memoVisibleBasis(memo)}</p>}
     {memo.warnings.length > 0 && (memo.view === "core" ? <p className="workout-memo-paper__warnings workout-memo-paper__stop-line">{memo.warnings.join(" · ")}</p>
       : <ul className="workout-memo-paper__warnings">{memo.warnings.map(warning => <li key={warning}>{warning}</li>)}</ul>)}
     {memo.view === "explained" && <section className="workout-memo-paper__explanation" aria-label="훈련 설명">

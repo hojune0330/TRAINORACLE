@@ -104,9 +104,13 @@ export function buildSessionExplanationContent(session: PlanSession, context?: S
       ...genericComponent("cooldown", "정리", "COOLDOWN"),
       method: `${cooldown.easyDurationMinutes}분 · RPE ${range(cooldown.rpeMin, cooldown.rpeMax)}`,
     })
-    inputs.push(`계산에 사용한 기준 기록: ${p.selectedAnchor.eventDistanceM}m ${secondsText(p.selectedAnchor.performanceSeconds)} (${p.selectedAnchor.achievedAt ?? "미달성 목표"}).`)
-    inputs.push(`기록 종류: ${p.selectedAnchor.kind === "GOAL" ? "목표 기록 · 현재 실력 아님" : p.selectedAnchor.kind === "PB" ? "개인 최고기록" : p.selectedAnchor.kind === "SB" ? "시즌 최고기록" : "최근 경기 기록"}. 확인 상태: ${p.selectedAnchor.verificationState === "VERIFIED" ? "검증된 기록" : p.selectedAnchor.verificationState === "SELF_REPORTED" ? "직접 입력한 기록" : "검증되지 않은 기록"}.`)
-    inputs.push(`기준 기록에서 ${p.repetitionDistanceM}m 구간의 목표 시간을 계산했어요. 목표기록 달성 가능성이나 생리학적 역치를 측정한 결과는 아니에요.`)
+    const anchor = p.selectedAnchor
+    if (anchor && Number.isFinite(anchor.eventDistanceM) && anchor.eventDistanceM > 0
+      && Number.isFinite(anchor.performanceSeconds) && anchor.performanceSeconds > 0) {
+      inputs.push(`계산에 사용한 기준 기록: ${anchor.eventDistanceM}m ${secondsText(anchor.performanceSeconds)} (${anchor.achievedAt ?? "미달성 목표"}).`)
+      inputs.push(`기록 종류: ${anchor.kind === "GOAL" ? "목표 기록 · 현재 실력 아님" : anchor.kind === "PB" ? "개인 최고기록" : anchor.kind === "SB" ? "시즌 최고기록" : "최근 경기 기록"}. 확인 상태: ${anchor.verificationState === "VERIFIED" ? "검증된 기록" : anchor.verificationState === "SELF_REPORTED" ? "직접 입력한 기록" : "검증되지 않은 기록"}.`)
+      inputs.push(`기준 기록에서 ${p.repetitionDistanceM}m 구간의 목표 시간을 계산했어요. 목표기록 달성 가능성이나 생리학적 역치를 측정한 결과는 아니에요.`)
+    } else inputs.push("기준 기록 연결을 확인할 수 없어요. 저장된 목표 시간만 표시하며 새로운 기록으로 다시 계산하지 않았어요.")
     limitations.push("목표 시간은 계산값이며 실제 수행시간은 아니에요. 이 처방이 개인에게 최적인지, 같은 구성의 반복만으로 얼마나 향상될지는 아직 알 수 없어요.")
   }
 

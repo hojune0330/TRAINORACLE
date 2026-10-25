@@ -3,6 +3,20 @@ import { resolveCatalogBinding } from "@impl/prescription/catalog-session-bindin
 import { paceClock, paceEventLabel } from "./pace-tools"
 import type { WorkoutDisplaySession } from "./workout-notation"
 
+/** Effort is already written in each step; only numeric provenance needs a lead-in. */
+export function sessionPrimaryBasis(session: WorkoutDisplaySession): string | null {
+  const p = session.prescription
+  if (p?.kind === "RPE_TIME_RANGE") {
+    if (!p.catalogWorkout) return null
+    const workout = resolveCatalogBinding(p.catalogWorkout)
+    if (workout && !workout.unavailable.length && !workout.steps.some(step => [
+      "ACTUAL_RACE_REFERENCE", "GOAL_RACE_REFERENCE", "FIVE_K_REFERENCE", "THRESHOLD_REFERENCE",
+      "EXPLICIT_SEGMENT_PACE", "EXPLICIT_SEGMENT_SECONDS",
+    ].includes(step.targetModel))) return null
+  }
+  return sessionPrescriptionBasis(session)
+}
+
 /** Read only saved prescription inputs, never the athlete's current records. */
 export function catalogPrescriptionBasis(workout: CalculatedWorkout): string {
   if (workout.unavailable.length) return "이 구성의 목표 기준 확인 필요"

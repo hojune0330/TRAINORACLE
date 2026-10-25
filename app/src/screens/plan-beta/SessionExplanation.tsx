@@ -8,10 +8,7 @@ import { EXPLANATION_SOURCES } from "../../domain/training-explanation-profiles"
 import { explainSession, explanationProfile, type SessionExplanationContext } from "../../domain/session-explanation"
 import type { SessionExplanationEvidence } from "../../domain/session-explanation-evidence"
 import { COMPARISON_LABELS } from "./PlanCycleEvidence"
-import { DetailedPrescriptionView } from "./DetailedPrescriptionView"
 import { prescriptionLabel, sessionLabel, sessionExecution, sessionExecutionSteps, sessionGuidance } from "./labels"
-import { sessionPrescriptionSequence } from "../../domain/session-prescription-sequence"
-import { PrescriptionStructure } from "./PrescriptionStructure"
 import { PlanMethodObservationDetails } from "./PlanMethodObservationDetails"
 import "../../styles/session-explanation.css"
 import { useReaderDialog } from "../../hooks/useReaderDialog"
@@ -23,6 +20,7 @@ import { onLocalJournalScopeChange } from "../../domain/account/local-journal-ow
 import { WorkoutMemoTool } from "../../components/WorkoutMemoTool"
 import { CompanionMotion } from "../../components/CompanionMotion"
 import type { WorkoutMemoContext } from "../../domain/workout-memo"
+import { PaceRecommendation } from "./PaceRecommendation"
 
 type Props = {
   readonly session: PlanSession
@@ -34,6 +32,7 @@ type Props = {
   readonly showPurpose?: boolean
   readonly date?: string
   readonly memoState?: WorkoutMemoContext["state"]
+  readonly allowMemoExport?: boolean
 }
 const TABS = ["방법", "이유·근거", "주기·기록"] as const
 type Tab = typeof TABS[number]
@@ -70,7 +69,7 @@ export function SessionExplanationEntry(props: Props) {
   )
 }
 
-function SessionExplanationReader({ session, context, loadEvidence, initialTab = "방법", returnLabel = "훈련 일정으로 돌아가기", date, memoState, onClose }: Props & { readonly onClose: () => void }) {
+function SessionExplanationReader({ session, context, loadEvidence, initialTab = "방법", returnLabel = "훈련 일정으로 돌아가기", date, memoState, allowMemoExport = true, onClose }: Props & { readonly onClose: () => void }) {
   const [tab, setTab] = React.useState<Tab>(initialTab)
   const [expert, setExpert] = React.useState(false)
   const history = usePlanEvidenceHistory(context?.kind === "SAVED" && tab === "주기·기록")
@@ -85,9 +84,9 @@ function SessionExplanationReader({ session, context, loadEvidence, initialTab =
   const tabs = React.useRef<(HTMLButtonElement | null)[]>([])
   const id = React.useId()
   const explanation = explainSession(session, context)
-  const sequence = sessionPrescriptionSequence(session)
   const catalogWorkout = session.prescription.kind === "RPE_TIME_RANGE" && session.prescription.catalogWorkout
     ? resolveCatalogBinding(session.prescription.catalogWorkout) : null
+  const memoReader = session.prescription.kind !== "RPE_TIME_RANGE" || session.role !== "QUALITY" || catalogWorkout !== null
   const executionGuidance = new Map(sessionExecutionSteps(session).map((step) => [step.title, step.detail]))
   const term = GLOSSARY[explanation.profile.termId]
   const occurrence = evidence?.methodObservation?.occurrence
@@ -148,31 +147,26 @@ function SessionExplanationReader({ session, context, loadEvidence, initialTab =
       </div>
       <div ref={content} className="session-explanation__content" role="tabpanel" id={`${id}-panel`} aria-labelledby={`${id}-tab-${TABS.indexOf(tab)}`} tabIndex={0}>
         <div className="session-explanation__tab-content" hidden={tab !== "방법"}>
-            <WorkoutMemoTool session={session} date={date} state={memoState ?? (context?.kind === "SAVED" ? "PLAN" : "PREVIEW")} />
-            <section className="session-explanation__method-flow">
+            {memoReader ? <WorkoutMemoTool session={session} date={date} mode="reader" allowExport={allowMemoExport}
+              state={memoState ?? (context?.kind === "SAVED" ? "PLAN" : "PREVIEW")} /> : <section className="session-explanation__method-flow">
               <div className="session-explanation__guide">
                 <div><h3>수행 순서</h3><p className="session-explanation__metric">{sessionExecution(session)}</p></div>
                 <CompanionMotion interactive />
               </div>
-              {session.prescription.kind === "PACE_TARGET" && <DetailedPrescriptionView prescription={session.prescription} variant="sequence-lead" />}
-              {catalogWorkout ? <CatalogWorkoutDetail workout={catalogWorkout} /> : sequence !== null ? <PrescriptionStructure sequence={sequence} /> : <ol className="session-explanation__sequence">
+              <ol className="session-explanation__sequence">
                 {explanation.components.map((component) => {
                   const guidance = executionGuidance.get(component.id === "main" ? "본운동" : component.label)
                   return <li key={component.id}><strong>{component.label}</strong><span>{component.method}</span>{guidance !== undefined && <span>{guidance}</span>}<small>{component.recovery}</small></li>
                 })}
-              </ol>}
+              </ol>
               <p className="session-explanation__note">순서도예요. 칸의 길이는 운동 시간이나 에너지 비율을 뜻하지 않아요.</p>
-              {context?.kind === "SAVED" && sequence !== null && (
-                <p className="session-explanation__note">{session.prescription.kind === "PACE_TARGET" && session.prescription.sequence !== undefined
-                  ? "계획을 만들 때 저장한 운동·회복 순서예요."
-                  : "저장된 처방을 순서도로 보여드려요. 이전 계획에 새 훈련을 추가하지 않아요."}</p>
-              )}
-            </section>
+            </section>}
             {session.prescription.kind === "RPE_TIME_RANGE" && !catalogWorkout && session.role === "QUALITY" && <p className="session-explanation__notice">표시한 시간은 준비·회복·정리를 포함한 전체 시간이에요. 전부 빠르게 달리는 시간이 아니에요.</p>}
             <button className="session-explanation__next" type="button" onClick={() => selectTab("이유·근거")}>이렇게 구성한 이유<ChevronRight size={18} aria-hidden="true" /></button>
         </div>
         <div className="session-explanation__tab-content" hidden={tab !== "이유·근거"}>
             <p className="session-explanation__note">오라클 · 훈련의 이유와 근거</p>
+            {session.prescription.kind === "PACE_TARGET" && <details><summary>페이스 계산 보기</summary><PaceRecommendation prescription={session.prescription} /></details>}
             {catalogWorkout ? <><CatalogWorkoutDetail workout={catalogWorkout} evidence /><details><summary>이번 주기에서 맡는 역할</summary>{explanation.cycle.map(line => <p key={line}>{line}</p>)}</details></> : <>
             <p className="session-explanation__notice">{explanation.availability}</p>
             <section><h3>훈련 목적</h3><p>{explanation.profile.purpose}</p></section>

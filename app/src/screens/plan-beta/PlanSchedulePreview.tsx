@@ -13,7 +13,7 @@ import { useLocalToday } from "../../hooks/useLocalToday"
 import { calendarReducedMotion } from "../../hooks/useCalendarMotion"
 import { formatPaceSeconds } from "@impl/prescription/record-pace"
 import { resolveCatalogBinding } from "@impl/prescription/catalog-session-binding"
-import { sessionPrescriptionBasis } from "../../domain/prescription-basis"
+import { sessionPrimaryBasis } from "../../domain/prescription-basis"
 import { calculatedWorkoutSequence } from "@impl/prescription/all-workout-calculator"
 import { MonthCalendar } from "../../components/MonthCalendar"
 import { CalendarRoleIcon, CalendarTrainingMark } from "../../components/CalendarTrainingMark"
@@ -712,9 +712,10 @@ function PlanSessionPreview({
     && session.prescription.catalogWorkout ? resolveCatalogBinding(session.prescription.catalogWorkout) : null
   const originalSequence = originalCalculation ? calculatedWorkoutSequence(originalCalculation) : null
   const navigationCard = !expanded && onExpand !== undefined
-  const basis = sessionPrescriptionBasis(session)
+  const basis = sessionPrimaryBasis(session)
   const incompleteMain = session.role === "QUALITY" && session.prescription.kind === "RPE_TIME_RANGE"
     && (!session.prescription.catalogWorkout || !resolveCatalogBinding(session.prescription.catalogWorkout))
+  const memoReader = expanded && !incompleteMain
   const summary = <>
     {!(lightweightSummary && session.role === "REST") && <small className={session.role === "REST" ? "plan-session-help" : "plan-session-metric"}>
       {compactCatalogAmount ?? compactNotation ?? (expanded ? prescriptionCalendarSummary(session) : prescriptionLabel(session))}
@@ -784,9 +785,10 @@ function PlanSessionPreview({
         />}
       </header>}
       <div className="plan-session-content">
-        {!navigationCard && <><strong>{sessionLabel(session)}</strong>{summary}</>}
-        {expanded && basis && <p className="plan-session-help">기준: {basis}</p>}
-        {!navigationCard && (!lightweightSummary && compact ? (
+        {!navigationCard && !memoReader && <><strong>{sessionLabel(session)}</strong>{summary}</>}
+        {expanded && !memoReader && basis && <p className="plan-session-help">기준: {basis}</p>}
+        {memoReader ? <WorkoutMemoTool session={session} date={date} mode="reader" allowExport={allowMemoExport}
+          state={explanationContext?.kind === "CANDIDATE" ? "PREVIEW" : "PLAN"} /> : !navigationCard && (!lightweightSummary && compact ? (
           <details className="plan-day-card__details" open={returnedFromJournal}>
             <summary>{sessionSlotLabel(session.slot)} 훈련 방법과 기록</summary>
             <div>{details}{footer}</div>
@@ -797,8 +799,7 @@ function PlanSessionPreview({
           <summary>일지·진행 기록</summary>{footer}
         </details>}
         {!expanded && !compact && footer}
-        {expanded && allowMemoExport && <WorkoutMemoTool session={session} date={date} state={explanationContext?.kind === "CANDIDATE" ? "PREVIEW" : "PLAN"} />}
-        {showOriginalNotation && <details className="plan-session-records">
+        {showOriginalNotation && !memoReader && <details className="plan-session-records">
           <summary>기존 훈련 표기</summary>
           <p><strong>{sessionLabel(session, false, "original")}</strong></p>
           {originalSequence ? <ol className="plan-session-steps" aria-label="기존 훈련 표기 순서">
@@ -809,7 +810,8 @@ function PlanSessionPreview({
               </li>)}
           </ol> : <p>{prescriptionLabel(session)}</p>}
         </details>}
-        {!navigationCard && !lightweightSummary && <SessionExplanationEntry session={session} date={date} context={explanationContext} loadEvidence={loadEvidence} showPurpose={false} />}
+        {!navigationCard && !lightweightSummary && <SessionExplanationEntry session={session} date={date} context={explanationContext} loadEvidence={loadEvidence} showPurpose={false}
+          allowMemoExport={allowMemoExport} initialTab={memoReader ? "이유·근거" : "방법"} entryLabel={memoReader ? "이 훈련을 하는 이유" : undefined} />}
       </div>
     </section>
   )

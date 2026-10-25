@@ -5,6 +5,7 @@ import { adjustedPlanSelectionV3Fixture } from "../../domain/adjusted-plan-selec
 import { TODAY } from "../../domain/prescription-quality-matrix.test-fixtures"
 import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { AdjustedPrescriptionV3 } from "./AdjustedPrescriptionV3"
+import { buildWorkoutMemo } from "../../domain/workout-memo"
 
 beforeEach(async () => {
   localStorage.clear()
@@ -15,7 +16,7 @@ beforeEach(async () => {
 })
 afterEach(() => { cleanup(); vi.useRealTimers() })
 
-it("keeps complete adjusted execution outside rationale only while reading a plan", () => {
+it("uses one memo for adjusted execution and retains source structure behind reasons", () => {
   const { request } = adjustedPlanSelectionV3Fixture()
   const reviewed = adjustedPlanReviewScopeV3(request.preparation, request.intake.experienceBand)
   if (reviewed.kind !== "scope") throw Error(reviewed.code)
@@ -25,9 +26,14 @@ it("keeps complete adjusted execution outside rationale only while reading a pla
   const { container, rerender } = render(<AdjustedPrescriptionV3 {...props} memoState="PLAN" />)
 
   const execution = container.querySelector(".prescription-structure")!
-  expect(execution).toBeVisible()
-  expect(execution.closest("details")).toBeNull()
-  expect(screen.getByLabelText("계획된 전체 시간")).toBeVisible()
+  expect(execution).not.toBeVisible()
+  expect(execution.closest("details")).not.toBeNull()
+  const paper = screen.getByRole("article", { name: "훈련 메모 미리보기" })
+  expect(paper).toBeVisible()
+  const model = buildWorkoutMemo(session)!
+  for (const line of model.lines) expect(paper).toHaveTextContent(line.text)
+  expect(model.totalDuration).not.toBeNull()
+  expect(paper).toHaveTextContent(model.totalDuration!)
   expect(execution.querySelector(".prescription-structure__nodes")).not.toBeNull()
 
   for (const memoState of ["HISTORICAL", "PREVIEW"] as const) {
@@ -35,6 +41,7 @@ it("keeps complete adjusted execution outside rationale only while reading a pla
     const historicalExecution = container.querySelector(".prescription-structure")!
     expect(historicalExecution.closest("details")).not.toBeNull()
     expect(historicalExecution).not.toBeVisible()
+    expect(screen.getByRole("article", { name: "훈련 메모 미리보기" })).toHaveTextContent(memoState === "HISTORICAL" ? "당시 계획" : "계획안")
   }
   expect(JSON.stringify(session)).toBe(original)
 })

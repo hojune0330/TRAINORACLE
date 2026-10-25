@@ -10,15 +10,20 @@ import { CompanionStampPicker } from "./CompanionStampPicker"
 import type { CompanionStamp } from "../domain/training-companions"
 import "../styles/workout-memo.css"
 
-export function WorkoutMemoTool({ session, date, state = "PREVIEW" }: { readonly session: WorkoutMemoSession } & WorkoutMemoContext) {
+export function WorkoutMemoTool({ session, date, state = "PREVIEW", mode = "tool", allowExport = true }: {
+  readonly session: WorkoutMemoSession
+  readonly mode?: "tool" | "reader"
+  readonly allowExport?: boolean
+} & WorkoutMemoContext) {
+  const reader = mode === "reader"
   const [wording, setWording] = React.useState<WorkoutNotationStyle>("PLAIN")
   const memo = React.useMemo(() => buildWorkoutMemo(session, { date, state }, wording), [session, date, state, wording])
-  const [paper, setPaper] = React.useState<MemoPaper>("yellow")
+  const [paper, setPaper] = React.useState<MemoPaper>(reader ? "white" : "yellow")
   const [stamp, setStamp] = React.useState<CompanionStamp | null>(null)
   const [group, setGroup] = React.useState<WorkoutMemoGroup>("brief")
   const [views, setViews] = React.useState<Record<WorkoutMemoGroup, WorkoutMemoView>>({ brief: "standard", detail: "method" })
   const view = views[group]
-  const [open, setOpen] = React.useState(false)
+  const [open, setOpen] = React.useState(reader)
   const panelId = React.useId()
   const presentation = React.useMemo(() => memo ? presentWorkoutMemo(memo, view) : null, [memo, view])
   const [busy, setBusy] = React.useState(false), [message, setMessage] = React.useState<string | null>(null)
@@ -27,7 +32,7 @@ export function WorkoutMemoTool({ session, date, state = "PREVIEW" }: { readonly
   const lock = React.useRef(false), epoch = React.useRef(0)
   const png = React.useRef<{ key: string; blob: Blob } | null>(null)
   const text = presentation ? workoutMemoPresentationText(presentation) : ""
-  const key = `${view}:${wording}:${paper}:${stamp?.animal ?? "none"}:${stamp?.pose ?? "none"}:${text}`
+  const key = `${allowExport}:${view}:${wording}:${paper}:${stamp?.animal ?? "none"}:${stamp?.pose ?? "none"}:${text}`
   React.useEffect(() => {
     epoch.current++; lock.current = false; png.current = null
     setBusy(false); setMessage(null); setFailed(false); setFallback(false); setInvalidated(false)
@@ -38,7 +43,8 @@ export function WorkoutMemoTool({ session, date, state = "PREVIEW" }: { readonly
     setOpen(false)
     setBusy(false); setMessage(null); setFallback(false); setInvalidated(true)
   }), [])
-  if (!memo || !presentation || invalidated) return null
+  if (invalidated) return null
+  if (!memo || !presentation) return reader ? <p role="status">훈련 내용을 확인할 수 없어요. 계획을 다시 확인해 주세요.</p> : null
 
   function closeMemo() {
     epoch.current++; lock.current = false; png.current = null
@@ -46,7 +52,7 @@ export function WorkoutMemoTool({ session, date, state = "PREVIEW" }: { readonly
   }
 
   async function act(action: "copy" | "save" | "share") {
-    if (lock.current || !memo) return
+    if (lock.current || !memo || !allowExport) return
     lock.current = true; setBusy(true); setMessage(null); setFailed(false)
     const revision = epoch.current, current = () => revision === epoch.current
     try {
@@ -80,10 +86,10 @@ export function WorkoutMemoTool({ session, date, state = "PREVIEW" }: { readonly
     }
   }
 
-  return <section className="workout-memo-tool" aria-label="훈련 메모" data-open={open || undefined}>
-    <div className="workout-memo-tool__heading"><StickyNote size={18} aria-hidden="true" /><h3>훈련 메모</h3>
+  return <section className="workout-memo-tool" aria-label={reader ? "훈련 안내" : "훈련 메모"} data-mode={mode} data-open={open || undefined}>
+    {!reader && <div className="workout-memo-tool__heading"><StickyNote size={18} aria-hidden="true" /><h3>훈련 메모</h3>
       {open && <button type="button" aria-label="메모 접기" title="메모 접기" onClick={closeMemo}><ChevronUp size={18} aria-hidden="true" /></button>}
-    </div>
+    </div>}
     <div className="workout-memo-tool__layouts app-choice-group" role="group" aria-label="메모 정보량">
       {WORKOUT_MEMO_GROUPS.map(item => <button className="app-choice-control" key={item.id} type="button" aria-pressed={open && group === item.id}
         aria-expanded={open && group === item.id} aria-controls={panelId}
@@ -112,17 +118,17 @@ export function WorkoutMemoTool({ session, date, state = "PREVIEW" }: { readonly
           </div>
         </div>
       </details>
-      <div className="workout-memo-tool__actions" role="group" aria-label="메모 가져가기" aria-busy={busy}>
+      {allowExport && <div className="workout-memo-tool__actions" role="group" aria-label="메모 가져가기" aria-busy={busy}>
         <button type="button" disabled={busy} onClick={() => void act("copy")}><Copy size={18} aria-hidden="true" />복사</button>
         <button type="button" disabled={busy} onClick={() => void act("save")}><Download size={18} aria-hidden="true" />저장</button>
         <button type="button" disabled={busy} onClick={() => void act("share")}><Share2 size={18} aria-hidden="true" />공유</button>
-      </div>
+      </div>}
       {message && <p role={failed ? "alert" : "status"}>{message}</p>}
       {fallback && <textarea readOnly aria-label="복사할 훈련 메모" value={text} onFocus={event => event.currentTarget.select()} />}
-      <details className="workout-memo-tool__help"><summary>메모에 무엇이 담기나요?</summary>
+      {allowExport && <details className="workout-memo-tool__help"><summary>메모에 무엇이 담기나요?</summary>
         <p>지금 보는 훈련만 담아요. 일지에 쓴 글이나 계정·건강 정보는 넣지 않아요. 이미지 저장은 일지 저장과 달라요.</p>
         <p>핵심만은 겹치는 정보를 묶고, 기본은 항목별로, 방법은 수행 순서로 보여요. 설명까지를 고르면 훈련 목적과 기존 근거도 함께 볼 수 있어요. 쉬운 말과 훈련 표기는 숫자가 같아요.</p>
-      </details>
+      </details>}
     </div>}
     </div>
   </section>

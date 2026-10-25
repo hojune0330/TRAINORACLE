@@ -1,5 +1,5 @@
 import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { PlanSession } from "@impl/plan-generator/types"
@@ -163,28 +163,44 @@ describe("session explanation review regressions", () => {
     expect(reader.querySelector(".prescription-structure")).toBeNull()
   })
 
-  it("leads a detailed prescription with its selected-record recommendation and one complete performance order", async () => {
+  it("reads one memo with exact execution and keeps record calculation in reasons", async () => {
     render(<SessionExplanationEntry session={paceSession()} />)
     await userEvent.click(screen.getByRole("button", { name: "훈련 방법과 이유" }))
 
     const reader = screen.getByRole("dialog")
-    expect(screen.getByRole("heading", { name: "수행 순서" })).toBeVisible()
-    expect(screen.getByText(/준비, 5회 본운동과 4번의 사이 회복, 정리 순서/u)).toBeVisible()
-    expect(screen.getByText("개인 추천 시간")).toBeVisible()
-    expect(screen.getByText(/1000m당 약 3분 42초.*5000m 18분 30초 기준/u)).toBeVisible()
-    expect(screen.getByText("추천 기준")).toBeVisible()
-    expect(reader.querySelectorAll(".plan-detailed-prescription__notation")).toHaveLength(1)
-    expect(reader.querySelector(".plan-detailed-prescription__notation code")).toHaveTextContent('5 × 1km · 222초/1km · 5K 경기 평균 페이스 · 반복 사이 150초 조깅')
-    expect(reader).not.toHaveTextContent("오늘 할 훈련")
-    expect(reader).toHaveTextContent("준비")
-    expect(reader).toHaveTextContent("반복 사이: 150초 가벼운 조깅 · 4번")
-    expect(reader).toHaveTextContent("정리")
+    const paper = within(reader).getByRole("article", { name: "훈련 메모 미리보기" })
+    expect(paper).toBeVisible()
+    expect(paper).toHaveTextContent("5 × 1000m")
+    expect(paper).toHaveTextContent("3:42/km")
+    expect(paper).toHaveTextContent("150초 조깅")
+    expect(paper).toHaveTextContent("15분")
+    expect(paper).toHaveTextContent("4 × 20초")
+    expect(paper).toHaveTextContent("40초 걷기/조깅")
+    expect(paper).toHaveTextContent("10분")
+    expect(paper).toHaveTextContent("5000m 18:30")
+    expect(paper).toHaveTextContent("새 통증이나 심해지는 통증이 생기면 중단")
+    expect(reader.querySelector(".plan-detailed-prescription--sequence-lead")).toBeNull()
+    expect(reader.querySelector(".prescription-structure")).toBeNull()
+    await userEvent.click(within(reader).getByRole("button", { name: "자세히" }))
+    expect(paper).toHaveTextContent("준비 → 본운동 → 정리")
+    await userEvent.click(screen.getByRole("tab", { name: "이유·근거" }))
+    await userEvent.click(screen.getByText("페이스 계산 보기"))
+    expect(screen.getByText("기준: 5000m 최근 경기 18분 30초")).toBeVisible()
+    await userEvent.click(screen.getByText("추천 기준"))
+    expect(screen.getByText(/1000m당 약 3분 42초/u)).toBeVisible()
+    expect(screen.getByText("1,110초 × 1000m ÷ 5000m")).toBeVisible()
+  })
 
-    const recommendation = reader.querySelector(".plan-detailed-prescription--sequence-lead")
-    const structure = reader.querySelector(".prescription-structure")
-    expect(recommendation).not.toBeNull()
-    expect(structure).not.toBeNull()
-    expect(recommendation!.compareDocumentPosition(structure!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  it("keeps a legacy missing anchor readable and keeps read-only exports closed in the method tab", async () => {
+    const session = paceSession()
+    const missing = { ...session, prescription: { ...session.prescription, selectedAnchor: undefined } } as unknown as PlanSession
+    render(<SessionExplanationEntry session={missing} allowMemoExport={false} />)
+    await userEvent.click(screen.getByRole("button", { name: "훈련 방법과 이유" }))
+    expect(screen.getByRole("article", { name: "훈련 메모 미리보기" })).toHaveTextContent("5 × 1000m")
+    expect(screen.queryByRole("group", { name: "메모 가져가기" })).toBeNull()
+    await userEvent.click(screen.getByRole("tab", { name: "이유·근거" }))
+    await userEvent.click(screen.getByText("페이스 계산 보기"))
+    expect(screen.getByText("저장된 기준 기록을 확인할 수 없어요. 새 기록으로 대신 계산하지 않았어요.")).toBeVisible()
   })
 
   it("does not turn unspecified QUALITY intervals into one repetition and zero recovery", async () => {
@@ -286,9 +302,9 @@ describe("session explanation review regressions", () => {
     render(<SessionExplanationEntry session={session} />)
     const opener = screen.getByRole("button", { name: "훈련 방법과 이유" })
     await userEvent.click(opener)
-    const metric = document.querySelector(".session-explanation__metric")!.textContent
+    const metric = screen.getByRole("article", { name: "훈련 메모 미리보기" }).textContent
     await userEvent.click(screen.getByRole("checkbox", { name: "전문 보기" }))
-    expect(document.querySelector(".session-explanation__metric")).toHaveTextContent(metric!)
+    expect(screen.getByRole("article", { name: "훈련 메모 미리보기" })).toHaveTextContent(metric!)
     await userEvent.click(screen.getByRole("tab", { name: "이유·근거" }))
     const termDetails = document.querySelector<HTMLDetailsElement>(".session-explanation__term")!
     await userEvent.click(termDetails.querySelector("summary")!)
@@ -323,7 +339,7 @@ describe("session explanation review regressions", () => {
       context={{ kind: "SAVED", plan: state.activePlan, generatedAt: state.generatedAt, receipt }}
       loadEvidence={() => { throw new Error("synthetic lookup failure") }} />)
     await userEvent.click(screen.getByRole("button", { name: "훈련 방법과 이유" }))
-    const method = document.querySelector(".session-explanation__method-flow")!
+    const method = screen.getByRole("article", { name: "훈련 메모 미리보기" })
     const originalMethod = method.textContent
     expect(method).toBeVisible()
     await userEvent.click(screen.getByRole("tab", { name: "이유·근거" }))

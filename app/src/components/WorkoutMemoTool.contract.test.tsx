@@ -28,6 +28,27 @@ const open = () => fireEvent.click(screen.getByRole("button", { name: "자세히
 const openCustomization = () => fireEvent.click(screen.getByText("표현·꾸미기"))
 
 describe("workout memo read-only actions", () => {
+  it("opens the reader directly with one paper and keeps its full method available", () => {
+    render(<WorkoutMemoTool session={memoSessionFixture()} mode="reader" />)
+    expect(screen.getAllByRole("article", { name: "훈련 메모 미리보기" })).toHaveLength(1)
+    expect(screen.getByRole("button", { name: "간단히" })).toHaveAttribute("aria-pressed", "true")
+    expect(screen.queryByRole("button", { name: "메모 접기" })).toBeNull()
+    fireEvent.click(screen.getByRole("button", { name: "자세히" }))
+    expect(screen.getByRole("article")).toHaveAttribute("data-view", "method")
+    expect(screen.getByRole("article")).toHaveTextContent("준비 → 본운동 → 정리")
+  })
+  it("keeps a read-only preview readable without exports and cancels a pending export when disabled", async () => {
+    let finish!: (blob: Blob) => void
+    vi.mocked(renderWorkoutMemoPng).mockImplementationOnce(() => new Promise(resolve => { finish = resolve }))
+    const session = memoSessionFixture()
+    const view = render(<WorkoutMemoTool session={session} mode="reader" />)
+    fireEvent.click(screen.getByRole("button", { name: "저장" }))
+    view.rerender(<WorkoutMemoTool session={session} mode="reader" allowExport={false} />)
+    await act(async () => finish(new Blob(["cancelled-png"])))
+    expect(downloadMemo).not.toHaveBeenCalled()
+    expect(screen.getByRole("article")).toBeVisible()
+    expect(screen.queryByRole("group", { name: "메모 가져가기" })).toBeNull()
+  })
   it("exports the selected animal and invalidates a previous image after its pose changes", async () => {
     render(<WorkoutMemoTool session={memoSessionFixture()} />); open(); openCustomization()
     fireEvent.click(screen.getByRole("button", { name: "고양이" }))

@@ -1,4 +1,11 @@
 .workout-memo-tool { border-top: 1px solid var(--line); margin-block: 12px; color: var(--ink); }
+.workout-memo-tool[data-mode="reader"] { border: 0; margin-block: 8px 16px; }
+.workout-memo-tool[data-mode="reader"] .workout-memo-tool__body { padding-top: 0; }
+.workout-memo-tool[data-mode="reader"] .workout-memo-paper { border-radius: 8px; }
+.workout-memo-tool[data-mode="reader"] .workout-memo-paper header { border: 0; padding-bottom: 0; }
+.workout-memo-tool[data-mode="reader"] .workout-memo-paper__basis { border: 0; padding-top: 0; }
+.workout-memo-tool[data-mode="reader"] .workout-memo-paper [data-emphasis] dd { font-size: var(--fs-h3); }
+.workout-memo-paper .workout-memo-paper__total { margin-block: 0 16px; font-size: var(--fs-body-sm); line-height: 1.5; }
 .workout-memo-tool__heading { display: flex; align-items: center; gap: 8px; min-height: 44px; }
 .workout-memo-tool__heading h3 { margin: 0; font-size: var(--fs-body); font-weight: 600; }
 .workout-memo-tool__heading button { margin-left: auto; display: grid; place-items: center; width: 44px; height: 44px; border: 0; background: transparent; color: var(--ink); }

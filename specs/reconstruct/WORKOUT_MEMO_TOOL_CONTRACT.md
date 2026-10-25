@@ -121,6 +121,32 @@ This supersedes the two public labels in Direct Choice above. `쉽게 보기` an
 - Invalidate pending work on unmount, prescription change and account-scope change.
 - iOS transient activation may require a fresh share tap after preparing the PNG.
 
+## Owner Follow-Up: One Training Reader (2026-10-25)
+
+The owner requested that the duplicate training explanation and memo become one
+memo-style instruction surface, and questioned the repeated effort-basis caption.
+This narrow display decision supersedes the unconditional visible-basis rule above.
+
+- Complete day prescriptions, the method tab and adjusted/historical readers show
+  one immediately open memo, not instruction cards followed by a second memo tool.
+  `간단히` / `자세히` remain available without a preliminary opening action.
+- The reader starts on white paper. Wording, depth, decoration, explicit copy/save/
+  share and the separate reasons/records path remain available. Standalone memo
+  tools retain their existing optional opening behavior.
+- Suppress the generic effort-only basis caption in ordinary reading, copied text
+  and PNG. The actual effort instructions remain within each workout step. Keep
+  full provenance in `설명까지` and retain actual-record/goal/manual numerical pace
+  provenance in ordinary reading, especially the goal-versus-current-ability label.
+- Keep all work, preparation, cooldown and recovery steps, verified total time and
+  actual stop guidance. Do not replace the stop instruction with a link to details.
+  Unknown total time never becomes a made-up duration.
+- Incomplete MAIN continues to use its explicit limitation, not an executable
+  memo. A stored pace sequence inconsistent with its scalar prescription fails
+  closed; legacy prescriptions without a stored sequence remain readable.
+- Read-only safety previews can display instructions but cannot copy/save/share,
+  including through the method tab. Revoking export cancels pending export work.
+- No new training dose, record reload, journal/account write or release authority.
+
 ## Checks
 
 Verify decimals, AM/PM and real weekdays, repeat/set recovery, mixed structures,

@@ -210,7 +210,7 @@ describe("plan schedule preview", () => {
       "전체 25–40분 · 힘든 정도 5–6/10",
     )
     expect(within(reader).getByRole("group", { name: "8월 17일 월요일 오후 세션" })).toHaveTextContent(
-      "전체 15–25분 · 힘든 정도 1–2/10",
+      "15–25분 · 힘든 정도 1–2/10",
     )
     expect(JSON.stringify(sessions)).toBe(original)
   })
@@ -262,9 +262,10 @@ describe("plan schedule preview", () => {
       "전체 25–40분 · 힘든 정도 5–6/10",
     )
     expect(within(reader).getByRole("group", { name: "8월 17일 월요일 오후 세션" })).toHaveTextContent(
-      "전체 15–25분 · 힘든 정도 1–2/10",
+      "15–25분 · 힘든 정도 1–2/10",
     )
-    expect(within(reader).getAllByRole("button", { name: "훈련 방법과 이유" })).toHaveLength(2)
+    expect(within(reader).getAllByRole("button", { name: "훈련 방법과 이유" })).toHaveLength(1)
+    expect(within(reader).getByRole("button", { name: "이 훈련을 하는 이유" })).toBeVisible()
     const readerMorning = within(reader).getByRole("group", { name: "8월 17일 월요일 오전 세션" })
     await user.click(within(readerMorning).getByText("일지·진행 기록"))
     expect(within(readerMorning).getByRole("button", { name: "진행 기록 자세히" })).toBeVisible()
@@ -363,11 +364,14 @@ describe("plan schedule preview", () => {
     const reader = screen.getByRole("dialog", { name: "2026년 8월 17일 월요일" })
     expect(within(reader).getByText(reading.phases.main)).toBeVisible()
     expect(within(reader).getByText(reading.phases.main)).toHaveTextContent("고르게 유지 · 힘든 정도(RPE) 6–7/10")
-    const warmup = within(reader).getByRole("list", { name: "준비 순서" })
+    const warmup = within(reader).getByRole("article", { name: "훈련 메모 미리보기" })
     expect(warmup).toHaveTextContent("15분")
     expect(warmup).toHaveTextContent("힘든 정도(RPE) 2–3/10")
     expect(warmup).toHaveTextContent("20초 가속 달리기 4번 (전력질주 아님) · 사이 40초 걷기 · 마지막 뒤 1분 걷기")
     expect(within(reader).getByText(reading.phases.cooldown, { exact: false })).toBeVisible()
+    expect(reader.querySelector(".training-instruction-cards")).toBeNull()
+    expect(reader).not.toHaveTextContent("기준: 체감 강도 기준")
+    expect(reader).toHaveTextContent("통증·어지럼·자세 무너짐")
     expect(JSON.stringify(catalog)).toBe(original)
   })
 
@@ -398,7 +402,9 @@ describe("plan schedule preview", () => {
     expect(reader).toHaveTextContent(/22분.*2분 걷기.*23분/)
     expect(reader).toHaveTextContent("힘든 정도(RPE) 3–4/10")
     expect(within(reader).getByText("중간에 걷는 조깅")).toBeVisible()
-    await user.click(within(reader).getByText("기존 훈련 표기"))
+    await user.click(within(reader).getByText("표현·꾸미기"))
+    await user.click(within(reader).getByRole("button", { name: "훈련 표기" }))
+    expect(within(reader).getByRole("article", { name: "훈련 메모 미리보기" })).toHaveTextContent("RPE 3–4")
     expect(within(reader).getByText("중간 걷기 조깅 · Split Easy")).toBeVisible()
     expect(JSON.stringify(catalog)).toBe(original)
   })

@@ -1,6 +1,6 @@
 import type { WorkoutMemo } from "./workout-memo"
 import { companionStampUrl, type CompanionStamp } from "./training-companions"
-import { memoDisplayLines, memoExecutionOrder, memoExplanationSources, memoLineEmphasis, presentWorkoutMemo, type WorkoutMemoLayout, type WorkoutMemoView } from "./workout-memo-presentation"
+import { memoDisplayLines, memoExecutionOrder, memoExplanationSources, memoLineEmphasis, memoVisibleBasis, presentWorkoutMemo, type WorkoutMemoLayout, type WorkoutMemoView } from "./workout-memo-presentation"
 
 export type MemoPaper = "yellow" | "pink" | "white"
 export const MEMO_PAPERS: readonly { readonly id: MemoPaper; readonly label: string; readonly token: string }[] = [
@@ -13,11 +13,15 @@ export function wrapMemoText(text: string, width: number, measure: (text: string
   const lines: string[] = []
   for (const paragraph of text.split("\n")) {
     let line = ""
-    for (const character of Array.from(paragraph)) {
-      if (line && measure(line + character) > width) { lines.push(line.trimEnd()); line = character.trimStart() }
-      else line += character
+    for (const word of paragraph.match(/\S+\s*/gu) ?? [""]) {
+      if (line && measure(line + word.trimEnd()) > width) { lines.push(line.trimEnd()); line = "" }
+      // Keep ordinary words and pace tokens together; split only an oversized token.
+      for (const character of Array.from(word)) {
+        if (line && measure(line + character) > width) { lines.push(line.trimEnd()); line = character.trimStart() }
+        else line += character
+      }
     }
-    lines.push(line.trimEnd())
+    if (line.trimEnd() || !paragraph.trim()) lines.push(line.trimEnd())
   }
   return lines
 }
@@ -42,11 +46,12 @@ export async function renderWorkoutMemoPng(source: WorkoutMemo, paper: MemoPaper
     { text: `${memo.dateLabel} · ${memo.slotLabel}`, size: 32, weight: 700 },
     { text: memo.stateLabel, size: 26, weight: 500 },
     { text: memo.title, size: 38, weight: 700 },
+    ...(memo.totalDuration ? [{ text: memo.totalDuration, size: 26, weight: 500 }] : []),
     ...(memo.layout === "full" ? [{ text: memoExecutionOrder(memo), size: 26, weight: 600 }] : []),
     ...memoDisplayLines(memo).flatMap((line, index) => memo.layout === "compact" && !memoLineEmphasis(memo, index)
       ? [{ text: `${line.label}: ${line.text}`, size: 30, weight: 600 }]
       : [{ text: line.label, size: 26, weight: 500 }, { text: line.text, size: memoLineEmphasis(memo, index) ? 58 : 32, weight: memoLineEmphasis(memo, index) ? 800 : 600 }]),
-    ...(memo.basis ? [{ text: `기준: ${memo.basis}`, size: 26, weight: 500 }] : []),
+    ...(memoVisibleBasis(memo) ? [{ text: `기준: ${memoVisibleBasis(memo)}`, size: 26, weight: 500 }] : []),
     ...(memo.view === "core" ? [memo.warnings.join(" · ")].filter(Boolean) : memo.warnings).map(text => ({ text, size: 26, weight: 600 })),
     ...(memo.view === "explained" ? [
       { text: memo.explanation.scope, size: 26, weight: 500 },

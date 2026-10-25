@@ -32,8 +32,8 @@ async function openFirstSessionEvidence() {
   const firstDay = within(list).getByRole("group", { name: "7월 24일 금요일 · 훈련 1개" })
   await user.click(within(firstDay).getByRole("button", { name: /전체 처방 보기$/u }))
   const reader = screen.getByRole("dialog")
-  expect(within(reader).getByText("전체 20–30분 · 힘든 정도 2–4/10")).toBeVisible()
-  await user.click(within(reader).getByRole("button", { name: "훈련 방법과 이유" }))
+  expect(within(reader).getByText("20–30분 · 힘든 정도 2–4/10")).toBeVisible()
+  await user.click(within(reader).getByRole("button", { name: "이 훈련을 하는 이유" }))
   await user.click(screen.getByRole("tab", { name: "주기·기록" }))
   return { user, reader }
 }
