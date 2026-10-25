@@ -9,8 +9,6 @@
 .trends-hub .personal-oracle .metric-summary__value { font-size: var(--fs-h3); line-height: 1.35; }
 .trends-hub .personal-oracle__actions { display: grid; gap: var(--space-1); margin-block: var(--space-2); }
 
-.trends-hub__drilldowns button.category-choice { display: flex; align-items: center; gap: var(--space-2); min-height: var(--app-touch-min); padding: var(--space-2) var(--space-2); }
-.trends-hub__drilldowns button.category-choice > span:not(.category-icon) { min-width: 0; font-size: var(--fs-caption); line-height: 1.4; }
 .trends-hub :is(.trends-hub__start, .trends-hub__example, .trends-hub__recovery) > button.category-card {
   padding: var(--space-4); border: var(--bw-line) solid var(--hair); border-radius: var(--r-task-surface); background: var(--surface); color: var(--ink);
 }
@@ -18,10 +16,13 @@
 .trends-record-reading__journal h2 { margin: 16px 0; font-size: 20px; line-height: 1.5; }
 
 .trends-hub__drilldowns {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-2);
-  padding: 8px 20px 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: var(--space-3) var(--space-5);
+  padding: var(--space-1);
+  border-radius: var(--r-action);
+  background: var(--surface-2);
 }
 
 .trends-hub__drilldowns button,
@@ -39,17 +40,16 @@
 }
 
 .trends-hub__drilldowns button {
-  display: grid;
-  align-content: start;
-  gap: var(--space-1);
-  min-width: 0;
+  display: block;
+  flex: 1 1 3.5rem;
+  min-width: fit-content;
   min-height: var(--app-touch-min);
-  padding: var(--space-3);
-  border: var(--bw-line) solid var(--line);
+  padding: var(--space-2);
+  border: var(--bw-line) solid transparent;
   border-radius: var(--r-action);
-  background: var(--surface);
-  color: var(--ink);
-  text-align: left;
+  background: transparent;
+  color: var(--ink-2);
+  text-align: center;
   font-size: var(--fs-body);
   line-height: 1.5;
   word-break: keep-all;
@@ -57,6 +57,11 @@
 }
 
 .trends-hub__drilldowns button > span { font-weight: 600; }
+.trends-hub__drilldowns button[aria-pressed="true"] { background: var(--category-oracle-wash); color: var(--category-oracle); border-color: var(--category-oracle); }
+.trends-hub__drilldowns button[aria-pressed="true"] > span { font-weight: 750; }
+.trends-hub__tools { display: grid; gap: var(--space-2); margin: var(--space-5); }
+.trends-hub__read-status { margin: var(--space-4) var(--space-5); font: 400 var(--fs-body) / 1.5 var(--sans); }
+.trends-hub__read-status button { min-height: var(--app-touch-min); border: 1px solid var(--hair); border-radius: var(--r-action); padding: var(--space-2) var(--space-3); background: var(--surface); color: var(--ink); font: inherit; cursor: pointer; }
 /* Choice names orient sighted users; keep the extra label description for AT.
    The selected panel retains its full explanation, period and data warnings. */
 .trends-hub__drilldowns button > small {

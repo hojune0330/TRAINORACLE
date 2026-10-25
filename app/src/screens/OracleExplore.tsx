@@ -24,22 +24,35 @@ export type OracleExploreProps = {
   readonly bookmarkControl?: ReactNode
   readonly historyNotice?: ReactNode
   readonly personalResultUnavailable?: boolean
+  readonly personalReadStatus?: "ready" | "loading" | "unavailable"
+  readonly onRetryPersonalResult?: (() => void) | undefined
 }
 
-export function OracleExplore({ topicId, onBack, onSelectTopic, onPersonalAction, personalResult, initialMode, onModeChange, onPersonalResultSeen, bookmarkControl, historyNotice, personalResultUnavailable = false }: OracleExploreProps) {
+export function OracleExplore({ topicId, onBack, onSelectTopic, onPersonalAction, personalResult, initialMode, onModeChange, onPersonalResultSeen, bookmarkControl, historyNotice, personalResultUnavailable = false, personalReadStatus, onRetryPersonalResult }: OracleExploreProps) {
   const topic = getOracleTopic(topicId)
+  const readStatus = personalReadStatus ?? (personalResultUnavailable ? "unavailable" : "ready")
+  const resultUnavailable = readStatus !== "ready"
   const selectId = useId()
   const headlineId = useId()
   const [selection, setSelection] = useState<{ topic: OracleTopicId; entryMode: typeof initialMode; mode: "example" | "personal" } | null>(null)
   const mode = selection?.topic === topicId && selection.entryMode === initialMode ? selection.mode
-    : initialMode ?? (personalResultUnavailable || personalResult && personalResult.status !== "missing" ? "personal" : "example")
+    : initialMode ?? (resultUnavailable || personalResult && personalResult.status !== "missing" ? "personal" : "example")
   const selectMode = (next: "example" | "personal") => {
     setSelection({ topic: topicId, entryMode: initialMode, mode: next })
     onModeChange?.(next)
   }
+  const examplePersonalLabel = resultUnavailable ? "내 기록 확인"
+    : personalResult?.status === "missing" ? personalResult.actionLabel
+    : personalResult ? "내 기록 보기" : topic.personalLabel
+  const openPersonalFromExample = () => {
+    if (resultUnavailable) selectMode("personal")
+    else if (personalResult?.status === "missing") onPersonalAction(personalResult.action, personalResult.section, personalResult.metric)
+    else if (personalResult) selectMode("personal")
+    else onPersonalAction(topic.personalAction)
+  }
   useEffect(() => {
-    if (mode === "personal" && !personalResultUnavailable && personalResult?.fingerprint) onPersonalResultSeen?.(personalResult.fingerprint)
-  }, [mode, topicId, personalResult?.fingerprint, onPersonalResultSeen, personalResultUnavailable])
+    if (mode === "personal" && !resultUnavailable && personalResult?.fingerprint) onPersonalResultSeen?.(personalResult.fingerprint)
+  }, [mode, topicId, personalResult?.fingerprint, onPersonalResultSeen, resultUnavailable])
   const rows = topic.example.rows
   const maxValue = Math.max(...rows.map(row => row.value), 0)
   const chartLabel = `${topic.title} 예시. ${topic.example.source}. 단위 ${topic.example.unit}. ${rows.map(row => `${row.label} ${row.valueLabel}`).join(". ")}. 내 기록 분석이 아닙니다.`
@@ -50,7 +63,7 @@ export function OracleExplore({ topicId, onBack, onSelectTopic, onPersonalAction
         <ArrowLeft size={20} aria-hidden="true" />
       </button>
       <span className="app-chrome-title">오라클</span>
-      <span className="oracle-explore__header-note">탐색</span>
+      <span className="oracle-explore__header-note">{mode === "example" ? "예시" : "내 기록"}</span>
     </header>
 
     <div className="oracle-explore__body">
@@ -68,15 +81,20 @@ export function OracleExplore({ topicId, onBack, onSelectTopic, onPersonalAction
         </div>
       </div>
 
-      {(personalResult || personalResultUnavailable) && <div className="oracle-explore__modes app-choice-group" role="group" aria-label="결과 종류">
-        <button className="app-choice-control" type="button" aria-pressed={mode === "personal"} onClick={() => selectMode("personal")}>내 기록</button>
-        <button className="app-choice-control" type="button" aria-pressed={mode === "example"} onClick={() => selectMode("example")}>예시</button>
+      {(personalResult || resultUnavailable) && <div className="oracle-explore__modes app-choice-group" role="group" aria-label="결과 종류">
+        <button className="app-choice-control category-choice" data-category="oracle" type="button" aria-pressed={mode === "personal"} onClick={() => selectMode("personal")}>내 기록</button>
+        <button className="app-choice-control category-choice" data-category="oracle" type="button" aria-pressed={mode === "example"} onClick={() => selectMode("example")}>예시</button>
       </div>}
       </div>
 
       {mode === "personal" && historyNotice}
-      {mode === "personal" && personalResultUnavailable
-        ? <p role="status">일지를 아직 모두 불러오지 못했어요. 조회가 끝나면 비교가 나타나요.</p> : personalResult && mode === "personal" ? <OraclePersonalResult
+      {mode === "personal" && resultUnavailable
+        ? <div className="oracle-explore__read-status" role={readStatus === "loading" ? "status" : "alert"}>
+          <p>{readStatus === "loading" ? "기록을 확인하고 있어요. 확인이 끝나면 결과를 볼 수 있어요."
+            : "기록을 모두 확인하지 못했어요. 다시 확인한 뒤 결과를 볼 수 있어요."}</p>
+          {readStatus === "unavailable" && onRetryPersonalResult && <button type="button"
+            className="oracle-explore__related" onClick={onRetryPersonalResult}>다시 확인</button>}
+        </div> : personalResult && mode === "personal" ? <OraclePersonalResult
         key={`personal-${topicId}`}
         result={personalResult}
         onAction={() => onPersonalAction(personalResult.action, personalResult.section, personalResult.metric)}
@@ -113,8 +131,8 @@ export function OracleExplore({ topicId, onBack, onSelectTopic, onPersonalAction
       </section>
 
       <div className="oracle-explore__actions">
-        <button type="button" className="oracle-explore__personal" onClick={() => personalResult ? selectMode("personal") : onPersonalAction(topic.personalAction)}>
-          <span>{personalResult ? "내 기록으로 확인하기" : topic.personalLabel}</span><ArrowRight size={18} aria-hidden="true" />
+        <button type="button" className="oracle-explore__personal" onClick={openPersonalFromExample}>
+          <span>{examplePersonalLabel}</span><ArrowRight size={18} aria-hidden="true" />
         </button>
         <button type="button" className="oracle-explore__related" onClick={() => onSelectTopic(topic.nextId, mode)}>
           <span><small>이어서 살펴보기</small><strong>{topic.nextLabel}</strong></span>
@@ -130,7 +148,7 @@ export function OracleExplore({ topicId, onBack, onSelectTopic, onPersonalAction
         <span><small>이어서 살펴보기</small><strong>{topic.nextLabel}</strong></span><ArrowRight size={18} aria-hidden="true" />
       </button>}
       {bookmarkControl}
-      {personalResult && <OracleBookmark key={topicId} topicId={topicId} fingerprint={mode === "personal" && !personalResultUnavailable ? personalResult.fingerprint : undefined} />}
+      {personalResult && <OracleBookmark key={topicId} topicId={topicId} fingerprint={mode === "personal" && !resultUnavailable ? personalResult.fingerprint : undefined} />}
     </div>
   </div>
 }

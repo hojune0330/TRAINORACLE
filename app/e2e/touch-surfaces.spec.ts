@@ -111,14 +111,15 @@ test("audits populated home, detail, and trends actions", async ({ page, baseURL
   const homeScrollTop = await page.locator("main.app-scroll-region").evaluate(element => element.scrollTop)
   await oracleEntry.click()
   await page.getByRole("group", { name: "훈련 분석 자세히 보기" }).getByRole("button", { name: "월별 변화", exact: true }).click()
-  const metricButtons = page
-    .getByRole("region", { name: "최근 4개월 추이" })
-    .getByRole("group", { name: "추이 항목" })
-    .getByRole("button")
+  const metricSelector = page.getByRole("region", { name: "최근 4개월 추이" }).getByRole("button", { name: /^지표 선택:/u })
   await auditTouchTargets(page, [
     { name: "trends.exit", locator: page.getByRole("navigation", { name: "오라클 메뉴" }).getByRole("button", { name: "오라클 나가기", exact: true }) },
-    { name: "trends.metrics", locator: metricButtons, count: 4 },
+    { name: "trends.metric-selector", locator: metricSelector, count: 1 },
   ])
+  await metricSelector.click()
+  await auditTouchTargets(page, [{ name: "trends.metrics", locator: page.getByRole("dialog", { name: "볼 지표 선택" }).locator("button[aria-pressed]"), count: 4 }])
+  await page.getByRole("button", { name: "지표 선택 닫기" }).click()
+  await expect(metricSelector).toBeFocused()
   await expectNoHorizontalOverflow(page)
   if (testInfo.project.name === "touch-narrow") {
     await page.screenshot({ path: testInfo.outputPath("touch-targets-320.png") })

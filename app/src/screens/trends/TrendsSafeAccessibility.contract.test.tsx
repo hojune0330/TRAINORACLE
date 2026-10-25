@@ -114,6 +114,7 @@ describe("trend chart alternatives", () => {
     expect(tables).toHaveLength(4)
     expect(charts).toHaveLength(4)
     for (const metric of ["거리", "페이스", "기분", "통증"]) {
+      await user.click(within(monthly).getByRole("button", { name: /^지표 선택:/u }))
       await user.click(within(monthly).getByRole("button", { name: metric }))
       expect(within(monthly).getByRole("table", {
         name: `${metric} 최근 4개월 중앙값`,

@@ -20,7 +20,7 @@ describe("saved receipt navigation into Trends", () => {
 
     expect(screen.getByRole("button", { name: "월별 변화" })).toHaveAttribute("aria-pressed", "true")
     expect(screen.getByRole("region", { name: "최근 4개월 추이" })).toBeVisible()
-    expect(screen.getByRole("button", { name: label })).toHaveAttribute("aria-pressed", "true")
+    expect(screen.getByRole("button", { name: `지표 선택: ${label}` })).toHaveAttribute("aria-expanded", "false")
     expect(screen.getByRole("status")).toHaveTextContent("2026-09-21에 저장한")
   })
 
@@ -28,8 +28,12 @@ describe("saved receipt navigation into Trends", () => {
     const user = userEvent.setup()
     render(<Trends initialContext={{ section: "monthly", metric: "DISTANCE_KM", savedDate: "2026-09-21" }} />)
 
+    await user.click(screen.getByRole("button", { name: "지표 선택: 거리" }))
+    expect(screen.getByRole("button", { name: "거리" })).toHaveAttribute("aria-pressed", "true")
     await user.click(screen.getByRole("button", { name: "기분" }))
-    expect(screen.getByRole("button", { name: "기분" })).toHaveAttribute("aria-pressed", "true")
+    expect(screen.getByRole("button", { name: "지표 선택: 기분" })).toHaveAttribute("aria-expanded", "false")
+    await user.click(screen.getByRole("button", { name: "지표 선택: 기분" }))
     expect(screen.getByRole("button", { name: "거리" })).toHaveAttribute("aria-pressed", "false")
+    expect(screen.getByRole("button", { name: "기분" })).toHaveAttribute("aria-pressed", "true")
   })
 })

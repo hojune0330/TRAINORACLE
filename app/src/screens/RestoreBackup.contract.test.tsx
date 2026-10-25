@@ -283,7 +283,8 @@ describe("RestoreBackup — 되돌리기 실행", () => {
 
   it("고른 만큼만 일지에 저장하고 결과를 보여준다", async () => {
     const user = userEvent.setup()
-    render(<RestoreBackup />)
+    const onOpenJournal = vi.fn()
+    render(<RestoreBackup onOpenJournal={onOpenJournal} />)
 
     await pick(user, backupFile([postSession("a", "2026-07-21"), postSession("b", "2026-07-22")]))
     await waitFor(() => screen.getByRole("button", { name: /2건 되돌리기/u }))
@@ -291,6 +292,10 @@ describe("RestoreBackup — 되돌리기 실행", () => {
 
     expect(screen.getByTestId("restore-done").textContent).toMatch(/2건을 일지에 되돌렸어요/u)
     expect(loadEntries().map((entry) => entry.id).sort()).toEqual(["a", "b"])
+    const stored = localStorage.getItem(JOURNAL_STORAGE_KEY)
+    await user.click(screen.getByRole("button", { name: "일지에서 확인하기" }))
+    expect(onOpenJournal).toHaveBeenCalledOnce()
+    expect(localStorage.getItem(JOURNAL_STORAGE_KEY)).toBe(stored)
   })
 
   it("메모 제외 파일에 주입한 문구는 저장 전에 지운다", async () => {
@@ -490,7 +495,7 @@ describe("restore backup failure boundaries", () => {
 
   it("does not present a rolled-back full restore as success", async () => {
     const user = userEvent.setup()
-    const onOpenHome = vi.fn()
+    const onOpenJournal = vi.fn()
     const backup = backupFile(
       [postSession("journal", "2026-07-21")],
       FULL_FORMAT,
@@ -502,7 +507,7 @@ describe("restore backup failure boundaries", () => {
       if (key === JOURNAL_STORAGE_KEY) throw new DOMException("quota")
       setItem(key, value)
     })
-    render(<RestoreBackup onOpenHome={onOpenHome} />)
+    render(<RestoreBackup onOpenJournal={onOpenJournal} />)
 
     await pick(user, backup)
     await user.click(screen.getByTestId("restore-submit"))
@@ -510,7 +515,7 @@ describe("restore backup failure boundaries", () => {
     await waitFor(() => expect(screen.getByTestId("restore-commit-failure")).toBeTruthy())
     expect(screen.queryByTestId("restore-done")).toBeNull()
     await user.click(screen.getByRole("button", { name: "현재 일지 확인" }))
-    expect(onOpenHome).toHaveBeenCalledTimes(1)
+    expect(onOpenJournal).toHaveBeenCalledTimes(1)
     expect(screen.queryByTestId("restore-done")).toBeNull()
   })
 

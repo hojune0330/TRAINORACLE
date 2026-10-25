@@ -125,6 +125,7 @@ export function OracleProfileExperience(props: OracleProfileExperienceProps) {
   const [savedReading, setSavedReading] = React.useState<OracleProfileReading | null>(null)
   const [storyAxis, setStoryAxis] = React.useState<OracleAxisId | null>(null)
   const [learning, setLearning] = React.useState<OracleLearningDestination | null>(null)
+  const [interestsOpen, setInterestsOpen] = React.useState(false)
   const [settingsOpen, setSettingsOpen] = React.useState(false)
   const [group, setGroup] = React.useState<OracleContentGroup>(() => groups.find(item => item.id === props.navigationState?.group)?.id ?? "A")
   const [view, setView] = React.useState<"result" | "library" | "saved">(() => props.initialView === "library" ? "library" : props.navigationState?.view ?? "result")
@@ -157,7 +158,7 @@ export function OracleProfileExperience(props: OracleProfileExperienceProps) {
     if (props.status === "DELETED") {
       clearFeedback(); setResultReveal(0)
       dirty.current = false; const empty = startOracleQuestionFlow(); flowRef.current = empty; setFlow(empty)
-      setCharacter(null); setQuestionOpen(false); setEditingQuestion(false); setSavedReading(null); setStoryAxis(null); setTopicId(null); setLearning(null); setSettingsOpen(false); return
+      setCharacter(null); setQuestionOpen(false); setEditingQuestion(false); setSavedReading(null); setStoryAxis(null); setTopicId(null); setLearning(null); setInterestsOpen(false); setSettingsOpen(false); setConfirmDelete(false); return
     }
     if (dirty.current) return
     const next = restoredFlow(props.answers, props.draftAnswers, questionOpen ? flowRef.current.axisId : undefined)
@@ -300,8 +301,9 @@ export function OracleProfileExperience(props: OracleProfileExperienceProps) {
         </>}
         </section>
         <div className="oracle-v2__secondary-actions" role="group" aria-label="러닝 취향 다른 메뉴">
-          <CategoryCard category="oracle" icon={Users} variant="row" title="친구와 취향 비교" onClick={() => props.onNavigate("FRIENDS")} />
-          <CategoryCard category="oracle" icon={Settings} variant="row" title="프로필 설정·추가 정보" onClick={() => setSettingsOpen(true)} />
+          <CategoryCard category="oracle" icon={Pencil} variant="row" title="다른 취향 알아보기" onClick={() => setInterestsOpen(true)} />
+          <CategoryCard category="oracle" icon={Users} variant="row" title="친구와 비교" onClick={() => props.onNavigate("FRIENDS")} />
+          <CategoryCard category="oracle" icon={Settings} variant="row" title="내 응답·정보" onClick={() => setSettingsOpen(true)} />
         </div>
       </>}
       {activeView === "library" && <>
@@ -312,14 +314,24 @@ export function OracleProfileExperience(props: OracleProfileExperienceProps) {
       </>}
       {activeView === "saved" && <><AppHeading variant="screen" accent>보관한 풀이</AppHeading><div className="oracle-v2__topics">{props.readings.map(item => <CategoryCard category="oracle" icon={Bookmark} variant="row" title={`${item.source.answeredAt.slice(0, 10)} · 당시 응답`} key={item.source.revision} onClick={() => setSavedReading(item)} />)}</div></>}
     </div>
-    {settingsOpen && <Reader title="프로필 설정" onClose={() => setSettingsOpen(false)}>{(_close, leave) => <>
+    {interestsOpen && <Reader title="다른 취향 알아보기" onClose={() => setInterestsOpen(false)}>{(_close, leave) => <>
         <section className="oracle-v2__settings-section">
-          <AppHeading as="h2" variant="section">추가 취향</AppHeading>
+          <AppHeading variant="screen" accent>다른 취향 알아보기</AppHeading>
           <div className="oracle-v2__settings-rows" role="group" aria-label="추가 취향">
             {ORACLE_AXES.map(axis => <CategoryCard category="oracle" icon={Pencil} variant="row" title={axis.label} key={axis.id} disabled={blocked || dirty.current || props.hasPendingScore}
               onClick={() => leave(() => openQuestions(axis.id))} />)}
           </div>
         </section>
+    </>}</Reader>}
+    {settingsOpen && <Reader title="내 응답·정보" onClose={() => { setSettingsOpen(false); setConfirmDelete(false) }}>{(_close, leave) => <>
+        <AppHeading variant="screen" accent>내 응답·정보</AppHeading>
+        {visibleScores.length > 0 && <section className="oracle-v2__settings-section">
+          <AppHeading as="h2" variant="section">내 응답 확인·수정</AppHeading>
+          <div className="oracle-v2__settings-rows" role="group" aria-label="내 응답 확인·수정">
+            {visibleScores.map(score => <CategoryCard category="oracle" icon={Pencil} variant="row" title={score.label} key={score.axisId} disabled={blocked || dirty.current || props.hasPendingScore}
+              onClick={() => leave(() => reviewAnswers(score.axisId))} />)}
+          </div>
+        </section>}
         {props.onContext && !props.responsesDisabled && <button className="oracle-v2__context-action" type="button" disabled={busy || accountBlocked} onClick={() => leave(() => props.onContext?.())}>
           <span>훈련·대회 정보 추가<small>달릴 시간 · 장소 · 보조 운동 · 대회</small></span><ChevronRight size={16} />
         </button>}
@@ -327,10 +339,6 @@ export function OracleProfileExperience(props: OracleProfileExperienceProps) {
           <AppHeading as="h2" variant="section">응답 관리</AppHeading>
           {confirmDelete ? <><p>응답과 보관한 프로필 풀이를 삭제할까요?</p><button type="button" disabled={busy} onClick={async () => { setBusy(true); try { if (await props.onDelete()) { dirty.current = false; const empty = startOracleQuestionFlow(); flowRef.current = empty; setFlow(empty); setCharacter(null); setConfirmDelete(false) } else setLocalMessage("delete") } catch { setLocalMessage("delete") } finally { setBusy(false) } }}>삭제하기</button><button type="button" onClick={() => setConfirmDelete(false)}>취소</button></> : <button type="button" disabled={blocked} onClick={() => setConfirmDelete(true)}><Trash2 size={16} />응답 삭제</button>}
         </section>
-        <aside className="oracle-v2__settings-section" aria-label="읽을거리">
-          <CategoryCard category="oracle" icon={BookOpen} variant="row" title="읽을거리 살펴보기"
-            onClick={() => leave(() => props.onOpenLibrary ? props.onOpenLibrary() : setView("library"))} />
-        </aside>
         {localMessage && <p role="alert">변경을 저장하지 못했어요. 입력한 답은 그대로 남아 있어요.</p>}
     </>}</Reader>}
     {story && <Reader title="응답 해설" onClose={() => setStoryAxis(null)} action={!blocked && storyAxis ? { label: "내 답 수정", run: () => reviewAnswers(storyAxis) } : undefined}><p className="oracle-v2__eyebrow">내 응답 기준</p><AppHeading variant="screen" accent>{story.title}</AppHeading><p>{story.reading}</p><p>{story.example}</p><AppHeading as="h2" variant="section">이렇게 활용해 볼 수 있어요</AppHeading><p>{story.use}</p><InfoDisclosure title="응답 근거와 해석 범위"><AppHeading as="h2" variant="section">함께 생각할 점</AppHeading><p>{story.watchFor}</p><AppHeading as="h2" variant="section">내가 답한 내용</AppHeading>{story.facts.map((fact, i) => <p key={i}>{fact.question}<br />{typeof fact.response === "number" ? `${fact.response}/5` : fact.response === "SKIPPED" ? "건너뜀" : nonNumeric.find(([value]) => value === fact.response)?.[1]}</p>)}<AppHeading as="h2" variant="section">아직 알 수 없는 것</AppHeading><p>{story.boundary}</p><p>{story.scope}</p></InfoDisclosure></Reader>}
@@ -340,7 +348,9 @@ export function OracleProfileExperience(props: OracleProfileExperienceProps) {
         <AppHeading variant="screen" accent ref={questionHeading} tabIndex={-1}>{question.text}</AppHeading>
         <p className="oracle-v2__question-hint">{shownEditing ? "답을 고르면 이 항목의 결과에 반영돼요." : "지금 내 생각에 가까운 답을 골라요."}</p>
         <div className="oracle-v2__choices app-choice-group">{responseLabels.map(([value, label]) => <button data-auto-advance className="app-choice-control app-choice-control--answer" type="button" key={value} disabled={blocked} aria-pressed={shownFlow.draft[question.id] === value} onClick={() => answer(value)}><span>{label}</span>{shownFlow.draft[question.id] === value ? <Check size={18} aria-hidden="true" /> : <ChevronRight size={18} aria-hidden="true" />}</button>)}</div>
-        <div className="oracle-v2__choices app-choice-group" role="group" aria-label="숫자로 답하기 어려운 경우">{nonNumeric.map(([value, label]) => <button data-auto-advance className="app-choice-control app-choice-control--answer" type="button" key={value} disabled={blocked} aria-pressed={shownFlow.draft[question.id] === value} onClick={() => answer(value)}>{label}{shownFlow.draft[question.id] === value && <Check size={18} aria-hidden="true" />}</button>)}</div>
+        <InfoDisclosure title="고르기 어렵다면" purpose="actions" className="oracle-v2__uncertain" preview={nonNumeric.find(([value]) => shownFlow.draft[question.id] === value)?.[1]}>
+          <div className="oracle-v2__choices app-choice-group" role="group" aria-label="숫자로 답하기 어려운 경우">{nonNumeric.map(([value, label]) => <button data-auto-advance className="app-choice-control app-choice-control--answer" type="button" key={value} disabled={blocked} aria-pressed={shownFlow.draft[question.id] === value} onClick={() => answer(value)}><span>{label}</span>{shownFlow.draft[question.id] === value ? <Check size={18} aria-hidden="true" /> : <ChevronRight size={18} aria-hidden="true" />}</button>)}</div>
+        </InfoDisclosure>
         {previousQuestion && !shownEditing && <button type="button" className="oracle-v2__previous-answer" disabled={blocked} onClick={previous}><span><small>이전 답</small>{" "}{responseLabel(flow.draft[previousQuestion.id])}</span><Pencil size={16} aria-hidden="true" /></button>}
         <footer className="oracle-v2__pager">{shownEditing ? <button type="button" disabled={blocked} onClick={() => { clearFeedback(); const next = { ...flowRef.current, position: 3 as const }; flowRef.current = next; setFlow(next); setEditingQuestion(false) }}>수정 취소</button> : <button type="button" disabled={shownFlow.position === 0 || blocked} aria-label="이전 질문" title="이전 질문" onClick={previous}><ArrowLeft size={18} aria-hidden="true" />이전</button>}<button data-auto-advance type="button" disabled={blocked} aria-pressed={shownFlow.draft[question.id] === "SKIPPED"} onClick={() => answer("SKIPPED")}>건너뛰기</button></footer>
       </div> : <div className="oracle-v2__question-result" key={`${flow.axisId}:${resultReveal}`} data-result-reveal={resultReveal > 0 ? "true" : undefined}>

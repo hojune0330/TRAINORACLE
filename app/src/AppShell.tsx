@@ -6,6 +6,7 @@ import { oracleV2FeatureEnabled } from "./domain/oracle-rollout"
 import { productFeatures } from "./domain/product-features"
 import { READER_HISTORY_KEY } from "./hooks/useReaderDialog"
 import { useCalendarSnapshot } from "./hooks/useCalendarEntries"
+import { accountJournalProjectionStatus } from "./domain/account/account-journal-projection"
 import { rememberCalendarDate } from "./hooks/useCalendarPosition"
 import { runDraftSafeNavigation } from "./domain/unsaved-draft-navigation"
 import { useNavigationReturnFrame } from "./hooks/useNavigationReturnFrame"
@@ -927,6 +928,12 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
   const oracleUsesPlan = overlay?.kind === "oracle" && (overlay.topic === "focus" || overlay.topic === "priority")
   const oracleHistory = usePlanEvidenceHistory((oracleUsesPlan && overlay?.mode !== "example") || v.tab === "home")
   const athleteRecords = useAthleteRecordsSnapshot()
+  const oracleReadScope = localJournalScopeGeneration()
+  const oracleReadStatus = overlay?.kind === "oracle" && overlay.topic === "level"
+    ? athleteRecords.status === "LOADING" ? "loading" : athleteRecords.status === "READY" ? "ready" : "unavailable"
+    : calendarSnapshot.status === "LOADING"
+      || calendarSnapshot.status === "STALE" && accountJournalProjectionStatus() === "LOADING" ? "loading"
+      : calendarSnapshot.status === "READY" && oracleHistory.journalReadComplete ? "ready" : "unavailable"
   const oracleResult = overlay?.kind === "oracle" ? buildOraclePersonalResult({
     topicId: overlay.topic, entries: loadEntries(), planState: loadPlanBetaState(),
     athleteRecords: athleteRecords.records, today: todayISO(), planHistory: oracleHistory.history,
@@ -957,7 +964,12 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
     answer={homeCandidate?.result.headline ?? (homeSourceUnavailable ? homePlanReadUnavailable ? "저장한 훈련 계획을 확인하지 못했어요." : "기록 확인 후 오라클 결과를 볼 수 있어요." : homeExample.example.headline)}
     sourceLabel={homeCandidate ? `${homeCandidate.result.source}${homeCandidate.topic === "focus" ? ` · ${homeCandidate.result.rows[0]?.label.split(" · ")[0]}~${homeCandidate.result.rows.at(-1)?.label.split(" · ")[0]}` : ""} · 확인일 ${todayISO()}` : homeSourceUnavailable ? "확인되지 않은 자료는 결과에 넣지 않아요." : homeExample.example.source}
     kind={homeCandidate ? homeCandidate.result.status === "partial" ? "partial" : "personal" : homeSourceUnavailable ? "unavailable" : "example"}
-    onOpen={() => homeCandidate ? openOracle(homeCandidate.topic, "personal") : homeSourceUnavailable ? goTab("trends") : openOracle("focus", "example")}
+    unavailableActionLabel={homePlanReadUnavailable ? "저장한 계획 확인"
+      : athleteRecords.status !== "READY" ? "경기 기록 상태 확인" : "기록 상태 확인"}
+    onOpen={() => homeCandidate ? openOracle(homeCandidate.topic, "personal")
+      : homePlanReadUnavailable ? goTab("plan")
+      : athleteRecords.status !== "READY" ? openOverlay({ kind: "athlete-records" })
+      : homeSourceUnavailable ? goTab("trends") : openOracle("focus", "example")}
   />
 
   const accountEnabled = accountFeatureEnabled()
@@ -1280,6 +1292,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
     const common = {
       date: v.detailDate ?? "",
       initialEntryId: v.detailEntryId,
+      readComplete: calendarSnapshot.status === "READY",
       onBack,
       onAddEntry: (date: string) => runViewTransition("push", () => setV(s => viewForJournalDraft(s, date))),
       onEditEntry: (entry: JournalEntry) => runViewTransition("push", () => setV(s => viewForJournalDraft(s, entry.date, entry))),
@@ -1303,7 +1316,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
     screen = (
       <DeferredMobileScreens.RestoreBackup
         onBack={closeRestore}
-        onOpenHome={goHome}
+        onOpenJournal={() => goTab("journal")}
       />
     )
   } else if (v.tab === "home" && v.accountOpen && accountEnabled) {
@@ -1573,6 +1586,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
         initialOracleSection={oracleHubSection}
         oracleV2Enabled={oracleV2Enabled()}
         journalReadComplete={calendarSnapshot.status === "READY" && oracleHistory.journalReadComplete}
+        onRetryJournalRead={() => { calendarSnapshot.retry?.(); oracleHistory.retry() }}
         onOracleSectionChange={setOracleHubSection}
         onContextChange={context => { analysisReturnContext.current = context }}
         onOpenCoachingDay={(date, entryId) => runViewTransition("push", () => {
@@ -1636,8 +1650,10 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
       onOpenTrends={goTrendsFromReceipt}
       onDecorateSaved={() => { const date = savedToast?.receipt.savedDate; if (date && loadEntries().some(entry => entry.date === date)) openDecorationStudio(date) }}
       onOpenSaved={() => {
-        const date = savedToast?.receipt.savedDate
-        if (!date || !loadEntries().some(entry => entry.date === date)) return
+        const savedJournal = savedToast?.savedJournal
+        const date = savedJournal?.date ?? savedToast?.receipt.savedDate
+        if (!date || !loadEntries().some(entry => entry.date === date
+          && (!savedJournal || entry.id === savedJournal.id && entry.kind === savedJournal.kind))) return
         runViewTransition("push", () => {
           const recording = recordingOrigin.current
           const origin = recording && recording.owner === activeLocalAccount()
@@ -1648,7 +1664,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
           }
           setSavedToast(null)
           enterDomain("journal", undefined, undefined, origin)
-          setV({ ...viewForTab("journal"), detailDate: date })
+          setV({ ...viewForTab("journal"), detailDate: date, detailEntryId: savedJournal?.id })
         })
       }}
       onOpenBackup={() => {
@@ -1762,13 +1778,21 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
           <div className="app-flow-stage" data-motion="push" data-overlay="oracle">
             {overlay.topic === "level" && overlay.mode !== "example" && athleteRecords.status !== "READY" ? <>
               <button type="button" onClick={closeOverlay}>돌아가기</button>
-              <p role="status">{athleteRecords.message}</p>
+              <p role={athleteRecords.status === "LOADING" ? "status" : "alert"}>{athleteRecords.message}</p>
+              {athleteRecords.status !== "LOADING" && <button type="button" onClick={() => openOraclePersonal("records")}>경기 기록 확인</button>}
             </> :
             <DeferredMobileScreens.OracleExplore
               key={`${overlay.topic}-${overlay.mode ?? "auto"}-${accountScopeRevision}`}
               topicId={overlay.topic}
               personalResult={oracleResult}
-              personalResultUnavailable={oracleUsesPlan && !oracleHistory.journalReadComplete}
+              personalResultUnavailable={overlay.topic === "level" ? athleteRecords.status !== "READY"
+                : calendarSnapshot.status !== "READY" || !oracleHistory.journalReadComplete}
+              personalReadStatus={oracleReadStatus}
+              onRetryPersonalResult={overlay.topic === "level" ? undefined : () => {
+                if (oracleReadScope !== localJournalScopeGeneration() || oracleReadStatus === "loading") return
+                calendarSnapshot.retry?.()
+                oracleHistory.retry()
+              }}
               historyNotice={oracleUsesPlan && oracleHistory.status !== "ready"
                 ? <PlanEvidenceHistoryNotice status={oracleHistory.status} onRetry={oracleHistory.retry} /> : undefined}
               initialMode={overlay.mode}

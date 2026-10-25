@@ -8,7 +8,8 @@ const entries = [
   { id: "older", date: "2026-07-29" },
   { id: "current", date: "2026-08-01" },
   { id: "newer", date: "2026-08-03" },
-] as JournalEntry[]
+].map(item => ({ ...item, kind: "post-session", savedAt: `${item.date}T01:00:00Z`, syncState: "local",
+  system: "", title: "", distanceKm: "", durationMin: "", avgPace: "", rpe: 0, memo: "" } satisfies JournalEntry))
 
 afterEach(cleanup)
 

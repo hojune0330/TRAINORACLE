@@ -317,7 +317,7 @@ async function navigateHistory(direction: "back" | "forward") {
 async function enterOraclePlan(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByRole("button", { name: "오라클" }))
   await user.click(await screen.findByRole("button", { name: "예시 결과 보기" }, { timeout: 10000 }))
-  await user.click(await screen.findByRole("button", { name: "내 기록으로 확인하기" }, { timeout: 10000 }))
+  await user.selectOptions(await screen.findByRole("combobox", { name: "살펴볼 주제" }, { timeout: 10000 }), "focus")
   await user.click(screen.getByRole("button", { name: "계획 만들기" }))
   await screen.findByRole("heading", { name: "어떤 종목을 준비하세요?" })
 }

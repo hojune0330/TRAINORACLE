@@ -189,7 +189,7 @@ export function Home({
 function recentPainReviewDates(entries: readonly AnalysisJournalEntry[], today: string): readonly string[] {
   const from = isoShift(today, -13)
   const dates = entries
-    .filter(entry => entry.kind === "evening" && entry.date >= from && painLevelsRequireReview(entry.painParts))
+    .filter(entry => entry.kind === "evening" && entry.date >= from && entry.date <= today && painLevelsRequireReview(entry.painParts))
     .map(entry => entry.date)
   return [...new Set(dates)].sort().reverse()
 }

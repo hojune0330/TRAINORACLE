@@ -7,6 +7,7 @@ export type HomeOraclePreviewProps = {
   readonly sourceLabel: string
   readonly kind: "personal" | "partial" | "plan" | "example" | "unavailable"
   readonly onOpen: () => void
+  readonly unavailableActionLabel?: string
 }
 
 const KIND_LABELS: Record<HomeOraclePreviewProps["kind"], string> = {
@@ -17,7 +18,7 @@ const KIND_LABELS: Record<HomeOraclePreviewProps["kind"], string> = {
   unavailable: "결과를 표시할 수 없어요",
 }
 
-export function HomeOraclePreview({ answer, kind, onOpen }: HomeOraclePreviewProps) {
+export function HomeOraclePreview({ answer, kind, onOpen, unavailableActionLabel = "기록 상태 확인" }: HomeOraclePreviewProps) {
   // Examples remain opt-in. The home invitation contains no fictional result.
   if (kind === "example") return <section className="home-hub__oracle home-hub__oracle--example" aria-label="오라클 · 예시 결과" data-oracle-kind={kind}>
     <CategoryCard category="oracle" title="운동 분석 예시 보기" onClick={onOpen} />
@@ -25,7 +26,7 @@ export function HomeOraclePreview({ answer, kind, onOpen }: HomeOraclePreviewPro
   // Detailed loading/error and recovery notices stay at the top of Home.
   if (kind === "unavailable") return <section className="home-hub__oracle-fallback" aria-label="오라클 · 결과를 표시할 수 없어요" data-oracle-kind={kind}>
     <p>{answer}</p>
-    <CategoryCard category="oracle" title="기록 상태 확인" onClick={onOpen} />
+    <CategoryCard category="oracle" title={unavailableActionLabel} onClick={onOpen} />
   </section>
   if (kind === "plan") return null
   return <section className={`home-hub__oracle home-hub__oracle--${kind}`} aria-label={`오라클 · ${KIND_LABELS[kind]}`} data-oracle-kind={kind}>

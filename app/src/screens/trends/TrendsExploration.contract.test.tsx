@@ -128,7 +128,9 @@ describe("Trends exploration hub", () => {
 
     expect(screen.getByRole("button", { name: "운동 기록 쓰기" })).toBeVisible()
     const analysis = screen.getByRole("group", { name: "훈련 분석 자세히 보기" })
-    expect(within(analysis).getAllByRole("button")).toHaveLength(5)
+    expect(within(analysis).getAllByRole("button")).toHaveLength(4)
+    expect(within(analysis).queryByRole("button", { name: "파일 분석" })).toBeNull()
+    expect(screen.getByRole("button", { name: "파일 분석" })).toBeVisible()
     for (const button of within(analysis).getAllByRole("button")) {
       expect(button).toBeVisible()
       expect(button.closest("details")).toBeNull()

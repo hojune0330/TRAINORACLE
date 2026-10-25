@@ -292,8 +292,9 @@ export function ReviewStage({ drafts, result, selected, intents, onIntent, onTog
   )
 }
 
-export function SavedStage({ outcome, onOpenLog, onOpenAnalysis, onOpenSummary, onRestart, onRetry, busy = false }: {
+export function SavedStage({ outcome, analysisAvailable = false, onOpenLog, onOpenAnalysis, onOpenSummary, onRestart, onRetry, busy = false }: {
   readonly busy?: boolean
+  readonly analysisAvailable?: boolean
   readonly onRetry?: () => void
   readonly outcome: ImportSaveResult
   readonly onOpenLog?: () => void
@@ -302,14 +303,15 @@ export function SavedStage({ outcome, onOpenLog, onOpenAnalysis, onOpenSummary, 
   readonly onRestart: () => void
 }) {
   const confirmed = (outcome.account ?? 0) > 0
+  const canAnalyze = confirmed && analysisAvailable
   const needsReview = (outcome.pending ?? 0) > 0 || outcome.failed > 0
     || (outcome.conflicts ?? 0) > 0 || Boolean(outcome.stopReason)
   const primaryAction = needsReview
     ? onRetry ? "retry" : confirmed && onOpenSummary ? "summary" : onOpenLog ? "log" : "restart"
-    : confirmed && onOpenAnalysis ? "analysis" : confirmed && onOpenSummary ? "summary"
+    : canAnalyze && onOpenAnalysis ? "analysis" : confirmed && onOpenSummary ? "summary"
       : onOpenLog ? "log" : onRetry ? "retry" : "restart"
   const actions = [
-    { id: "analysis", label: "가져온 기록 분석하기", onClick: confirmed ? onOpenAnalysis : undefined },
+    { id: "analysis", label: "가져온 기록 분석하기", onClick: canAnalyze ? onOpenAnalysis : undefined },
     { id: "summary", label: "가져온 기록 보기", onClick: confirmed ? onOpenSummary : undefined },
     { id: "retry", label: "저장 상태 다시 확인", onClick: onRetry },
     { id: "log", label: "일지에서 확인하기", onClick: onOpenLog },

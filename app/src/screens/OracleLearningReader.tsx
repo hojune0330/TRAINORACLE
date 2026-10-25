@@ -58,7 +58,7 @@ function LearningContent({ destination, onBack }: OracleLearningReaderProps) {
         <input type="radio" name={radioName} value={choiceIndex} checked={answer?.selected === choiceIndex}
           onChange={() => setAnswers(current => ({ ...current, [quiz.id]: { selected: choiceIndex, checked: false } }))} /><span>{choice}</span>
       </label>)}</fieldset>
-      <button type="button" disabled={!answer || answer.checked} onClick={() => { if (answer) setAnswers(current => ({ ...current, [quiz.id]: { ...answer, checked: true } })) }}><Check size={16} aria-hidden="true" />답 확인</button>
+      <button type="button" className="oracle-learning__check" disabled={!answer || answer.checked} onClick={() => { if (answer) setAnswers(current => ({ ...current, [quiz.id]: { ...answer, checked: true } })) }}><Check size={16} aria-hidden="true" />답 확인</button>
       <div role="status" aria-live="polite" aria-atomic="true" className="oracle-learning__feedback">{answer?.checked && <>
         <p><strong>{answer.selected === quiz.correctIndex ? "맞아요." : "다시 살펴볼까요?"}</strong> 정답: {quiz.choices[quiz.correctIndex]}</p><p>{quiz.explanation}</p><p className="oracle-learning__meta">근거 · {quiz.basis}</p>
       </>}</div>

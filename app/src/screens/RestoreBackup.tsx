@@ -57,9 +57,9 @@ type Stage =
   | { readonly step: "failed"; readonly outcome: RestoreOutcome }
   | { readonly step: "account-result"; readonly outcome: AccountRestoreOutcome }
 
-export function RestoreBackup({ onBack, onOpenHome }: {
+export function RestoreBackup({ onBack, onOpenJournal }: {
   readonly onBack?: () => void
-  readonly onOpenHome?: () => void
+  readonly onOpenJournal?: () => void
 }) {
   const [stage, setStage] = React.useState<Stage>({ step: "pick" })
   const [failure, setFailure] = React.useState<"unreadable" | "empty" | "account-unavailable" | BackupReadFailure | null>(null)
@@ -210,14 +210,14 @@ export function RestoreBackup({ onBack, onOpenHome }: {
         {stage.step === "done" && (
           <DoneStage
             outcome={stage.outcome}
-            onOpenHome={onOpenHome}
+            onOpenJournal={onOpenJournal}
             onRestart={restart}
             busy={busy}
           />
         )}
 
         {stage.step === "failed" && (
-          <RestoreFailedStage outcome={stage.outcome} onRestart={restart} onOpenHome={onOpenHome} />
+          <RestoreFailedStage outcome={stage.outcome} onRestart={restart} onOpenJournal={onOpenJournal} />
         )}
         {stage.step === "account-result" && <div data-testid="restore-account-result" role="status">
           <AppHeading as="h2" variant="section">계정 백업 복원 결과</AppHeading>
@@ -250,7 +250,7 @@ export function RestoreBackup({ onBack, onOpenHome }: {
             busyRef.current = false; setBusy(false)
             if (outcome) setStage({ step: "account-result", outcome })
           }}>저장 상태 다시 확인</button>
-          {onOpenHome && <button type="button" style={secondaryBtn} disabled={busy} onClick={onOpenHome}>일지에서 확인하기</button>}
+          {onOpenJournal && <button type="button" style={secondaryBtn} disabled={busy} onClick={onOpenJournal}>일지에서 확인하기</button>}
           <button type="button" style={secondaryBtn} disabled={busy} onClick={restart}>다른 파일 고르기</button>
         </div>}
       </div>
@@ -548,9 +548,9 @@ function ModeChoice({ value, checked, title, detail, disabled = false }: {
   )
 }
 
-function DoneStage({ outcome, onOpenHome, onRestart, busy }: {
+function DoneStage({ outcome, onOpenJournal, onRestart, busy }: {
   readonly outcome: RestoreOutcome
-  readonly onOpenHome?: () => void
+  readonly onOpenJournal?: () => void
   readonly onRestart: () => void
   readonly busy: boolean
 }) {
@@ -587,21 +587,21 @@ function DoneStage({ outcome, onOpenHome, onRestart, busy }: {
         </ul>
       </div>
 
-      {onOpenHome && (
-        <button type="button" style={primaryBtn} disabled={busy} onClick={onOpenHome}>일지에서 확인하기</button>
+      {onOpenJournal && (
+        <button type="button" style={primaryBtn} disabled={busy} onClick={onOpenJournal}>일지에서 확인하기</button>
       )}
       <button type="button" style={secondaryBtn} disabled={busy} onClick={onRestart}>다른 파일 되돌리기</button>
     </div>
   )
 }
 
-function RestoreFailedStage({ outcome, onRestart, onOpenHome }: {
+function RestoreFailedStage({ outcome, onRestart, onOpenJournal }: {
   readonly outcome: RestoreOutcome
   readonly onRestart: () => void
-  readonly onOpenHome?: () => void
+  readonly onOpenJournal?: () => void
 }) {
   const repickRequired = outcome.failureReason === "RECOVERY_CODE_REQUIRED" || outcome.failureReason === "STATE_CHANGED"
-  const inspectFirst = !repickRequired && onOpenHome !== undefined
+  const inspectFirst = !repickRequired && onOpenJournal !== undefined
   const restartLabel = outcome.failureReason === "RECOVERY_CODE_REQUIRED" ? "복구 코드 준비 후 다시 고르기"
     : outcome.failureReason === "STATE_CHANGED" ? "파일 다시 골라 확인" : "다른 파일 고르기"
   const message = outcome.failureReason === "RECOVERY_CODE_REQUIRED"
@@ -624,11 +624,11 @@ function RestoreFailedStage({ outcome, onRestart, onOpenHome }: {
       </div>
       <div className="next-action-group restore-failure-actions">
         {inspectFirst ? <>
-          <button {...nextActionFeedback} type="button" className="next-action" onClick={onOpenHome}>현재 일지 확인</button>
+          <button {...nextActionFeedback} type="button" className="next-action" onClick={onOpenJournal}>현재 일지 확인</button>
           <button type="button" style={secondaryBtn} onClick={onRestart}>{restartLabel}</button>
         </> : <>
           <button {...nextActionFeedback} type="button" className="next-action" onClick={onRestart}>{restartLabel}</button>
-          {onOpenHome && <button type="button" style={secondaryBtn} onClick={onOpenHome}>현재 일지 확인</button>}
+          {onOpenJournal && <button type="button" style={secondaryBtn} onClick={onOpenJournal}>현재 일지 확인</button>}
         </>}
       </div>
     </div>

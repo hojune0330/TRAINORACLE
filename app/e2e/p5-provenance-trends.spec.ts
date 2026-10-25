@@ -117,13 +117,20 @@ test("shows provenance-safe trends without leaking private memo signals", async 
 
   const monthly = page.getByRole("region", { name: "최근 4개월 추이" })
   await detailMenu.getByRole("button", { name: "월별 변화", exact: true }).click()
+  const selectMetric = async (label: string) => {
+    await monthly.getByRole("button", { name: /^지표 선택:/u }).click()
+    await page.getByRole("dialog", { name: "볼 지표 선택" }).getByRole("button", { name: label, exact: true }).click()
+    await expect(page.getByRole("dialog", { name: "볼 지표 선택" })).toHaveCount(0)
+    await expect(monthly.getByRole("button", { name: `지표 선택: ${label}`, exact: true })).toBeVisible()
+  }
+  await selectMetric("페이스")
   await monthly.locator("summary", { hasText: "월별 수치와 집계 범위 보기" }).click()
   await expect(monthly.getByText(/중앙 페이스 5:00/u)).toBeVisible()
-  await monthly.getByRole("button", { name: "기분" }).click()
+  await selectMetric("기분")
   await expect(monthly.getByText(/중앙 기분 4\/5/u)).toBeVisible()
-  await monthly.getByRole("button", { name: "통증" }).click()
+  await selectMetric("통증")
   await expect(monthly.getByText(/중앙 통증 4\/5/u)).toBeVisible()
-  await monthly.getByRole("button", { name: "거리" }).click()
+  await selectMetric("거리")
   await expect(monthly.getByText(/중앙 거리 8 km/u)).toBeVisible()
   await expect(monthly.getByText(/집계 가능한 기록이 없어요/u).first()).toBeVisible()
 

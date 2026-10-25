@@ -1,5 +1,6 @@
 import React from "react"
 import { ArrowLeft, Eye, Users, X } from "lucide-react"
+import { AppHeading } from "../components/AppHeading"
 import { createSelfReportedAthleteRecord, type AthleteRecord } from "../domain/athlete-records"
 import { READING_EVENTS, parseReadingTime } from "../domain/record-reading-oracle"
 import { ORACLE_AXES, ORACLE_QUESTIONS, ORACLE_NON_NUMERIC, type OracleResponses, type OracleResponse } from "../domain/oracle-profile-v2"
@@ -61,11 +62,11 @@ export function OracleFriendComparisonV2({ today, ownProfile, records, onBack }:
   const selected = (field: OracleFriendField) => snapshot.fields.includes(field)
 
   return <section className="oracle-friend" aria-label="오라클 친구 비교">
-    <header className="oracle-friend__header"><button type="button" title="뒤로" aria-label="뒤로" onClick={() => { revoke(); onBack() }}><ArrowLeft size={20} aria-hidden="true" /></button><span>오라클 · 친구 비교</span>
+    <header className="oracle-friend__header"><button type="button" title="뒤로" aria-label="뒤로" onClick={() => { revoke(); onBack() }}><ArrowLeft size={20} aria-hidden="true" /></button><span>오라클 · 친구와 비교</span>
       {snapshot.comparisonAllowed && <button type="button" onClick={revoke}><X size={18} aria-hidden="true" />동의 철회</button>}
     </header>
     <div className="oracle-friend__body">
-      <h1><Users size={24} aria-hidden="true" />함께 살펴보기</h1>
+      <AppHeading variant="screen" accent><Users size={24} aria-hidden="true" />친구와 비교</AppHeading>
       <p className="oracle-friend__notice">친구 자료는 이 화면에서만 사용해요. 닫거나 새로고침하면 사라지며 계정·서버에 저장되지 않아요. 수동 동의 확인은 서버 접근 권한이 아니에요.</p>
       <label className="oracle-friend__permission"><input type="checkbox" checked={snapshot.comparisonAllowed} onChange={e => {
         if (e.target.checked) { session.grantComparison(); refresh() } else revoke()

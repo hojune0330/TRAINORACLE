@@ -66,6 +66,18 @@ it("passes the current-account private body to its editor without mutating the a
   expect(readAccountJournalPrivateEntry(session.id)).toEqual(privateEntry)
 })
 
+it("keeps the existing current-account private overlay when the reader supplies its canonical snapshot", () => {
+  const privateEntry: PostSessionEntry = { ...session, memo: "synthetic supplied private body", memoPurpose: "PRIVATE_SELF_ONLY" }
+  seed(privateEntry)
+  const supplied = [{ ...privateEntry, memo: "" }]
+  render(<LogDetail date={session.date} entries={supplied} readOnly />)
+  expect(screen.getByText("synthetic supplied private body")).toBeVisible()
+  expect(screen.getByText("나만의 메모 · 분석하지 않아요")).toBeVisible()
+  expect(readAccountJournalPrivateEntry(session.id)).toEqual(privateEntry)
+  act(() => { setActiveLocalAccount("22222222-2222-4222-8222-222222222222") })
+  expect(screen.queryByText("synthetic supplied private body")).toBeNull()
+})
+
 it.each([
   ["PENDING", "계정 저장 대기 중"],
   ["REJECTED", "계정 저장 거절"],

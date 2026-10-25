@@ -92,6 +92,7 @@
 .oracle-v2__question .oracle-v2__choices { gap: var(--space-3); }
 .oracle-v2__question .oracle-v2__choices button { min-height: 56px; padding: var(--space-4); border-radius: var(--r-task-surface, 16px); }
 .oracle-v2__question .oracle-v2__choices button[aria-pressed="true"] { background: var(--surface-2); color: var(--ink); border-color: var(--brand); }
+.oracle-v2__question .oracle-v2__uncertain { margin-block: var(--space-4); }
 .oracle-v2 .oracle-v2__previous-answer { width: 100%; text-align: left; justify-content: space-between; margin-top: var(--space-3); background: transparent; }
 .oracle-v2__previous-answer small, .oracle-v2__answer-review small { display: block; color: var(--ink-2); font-size: var(--fs-caption); margin-bottom: var(--space-1); }
 .oracle-v2__answer-review { display: grid; gap: var(--space-3); }

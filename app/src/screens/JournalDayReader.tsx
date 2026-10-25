@@ -16,6 +16,7 @@ type JournalDayReaderProps = {
   readonly onEditEntry?: (entry: JournalEntry) => void
   readonly onJournalSaved?: ((entry: JournalEntry) => void) | undefined
   readonly initialEntryId?: string
+  readonly readComplete?: boolean | undefined
 }
 
 export function JournalDayReader({
@@ -28,6 +29,7 @@ export function JournalDayReader({
   onEditEntry,
   onJournalSaved,
   initialEntryId,
+  readComplete,
 }: JournalDayReaderProps) {
   const reader = React.useMemo(
     () => projectJournalReader(entries, date),
@@ -72,6 +74,8 @@ export function JournalDayReader({
     >
       <LogDetail
         date={date}
+        entries={entries}
+        readComplete={readComplete}
         initialEntryId={initialEntryId}
         onBack={onBack}
         onAddEntry={onAddEntry}

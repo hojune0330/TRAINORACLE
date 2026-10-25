@@ -10,18 +10,16 @@ afterEach(() => { cleanup(); vi.unstubAllEnvs() })
 it("keeps domain navigation separate from state-specific content without inventing a first-visit result", () => {
   const write = vi.fn()
   const { container } = render(<Trends onWriteLog={write} />)
-  const title = screen.getByRole("heading", { name: "내 훈련 살펴보기", level: 2 })
+  const title = screen.getByRole("heading", { name: "내 훈련", level: 2 })
   const navigation = screen.getByRole("navigation", { name: "오라클 메뉴" })
   expect(title.compareDocumentPosition(navigation) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
-  expect(container.querySelectorAll(".trends-hub__guide img")).toHaveLength(1)
-  expect(container.querySelector(".trends-hub__guide img")).toHaveAttribute("alt", "")
-  expect(container.querySelector(".trends-hub__guide img")).toHaveAttribute("src", expect.stringContaining("analysis-lens-v2.webp"))
+  expect(container.querySelectorAll(".trends-hub__guide img")).toHaveLength(0)
   expect(screen.queryByRole("region", { name: "누적 거리와 변화" })).toBeNull()
   fireEvent.click(screen.getByRole("button", { name: "운동 기록 쓰기" }))
   expect(write).toHaveBeenCalledOnce()
 })
 
-it("omits checks on navigation while preserving checked analysis choices", () => {
+it("omits completion checks on navigation and keeps explicit pressed state on view choices", () => {
   render(<Trends />)
   const destinations = screen.getByRole("navigation", { name: "오라클 메뉴" })
   expect(within(destinations).getAllByRole("button")).toHaveLength(4)
@@ -33,7 +31,8 @@ it("omits checks on navigation while preserving checked analysis choices", () =>
 
   const analyses = screen.getByRole("group", { name: "훈련 분석 자세히 보기" })
   for (const button of within(analyses).getAllByRole("button")) {
-    expect(button.querySelector(":scope > .category-choice__check")).toBeInTheDocument()
+    expect(button.querySelector(".lucide-check")).toBeNull()
+    expect(button).toHaveAttribute("aria-pressed")
   }
 })
 
@@ -52,7 +51,8 @@ it("offers direct analysis choices and lets the selected result own its title wi
   expect(screen.getByRole("region", { name: "누적 거리와 변화" })).toBeVisible()
   expect(screen.queryByRole("region", { name: "훈련 종류별 합계" })).toBeNull()
   expect(change).toHaveBeenLastCalledWith({ section: "distance", savedDate: "2026-10-05", metric: "DISTANCE_KM" })
-  expect(container.querySelectorAll(".trends-hub__guide")).toHaveLength(0)
+  expect(container.querySelectorAll(".trends-hub__guide")).toHaveLength(1)
+  expect(screen.getByRole("heading", { name: "내 훈련", level: 2 })).toBeVisible()
   expect(distance).toHaveAttribute("aria-pressed", "true")
 })
 
@@ -75,7 +75,7 @@ it("omits unavailable file analysis while keeping file import direct", () => {
 
 it("keeps unfinished reads visible without inviting users into imaginary results", () => {
   const { container } = render(<Trends journalReadComplete={false} onOpenOracle={vi.fn()} />)
-  expect(screen.getByRole("heading", { name: "내 훈련 살펴보기", level: 2 })).toBeVisible()
+  expect(screen.getByRole("heading", { name: "내 훈련", level: 2 })).toBeVisible()
   expect(screen.getByText(/기록을 아직 모두 확인하지 못했어요/u)).toBeVisible()
   expect(container.querySelector(".trends-hub__guide img")).toBeNull()
   expect(screen.queryByText("거리와 훈련 종류, 월별 변화를 확인해요.")).toBeNull()

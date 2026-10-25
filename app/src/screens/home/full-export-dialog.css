@@ -1,0 +1,16 @@
+.full-export-dialog {
+  width: min(calc(100vw - 2 * var(--space-5)), var(--app-dialog-max-width));
+  margin: auto;
+  border-radius: var(--r-task-surface);
+  color: var(--ink);
+  font: 400 var(--fs-body) / 1.65 var(--sans);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  overscroll-behavior: contain;
+}
+
+.full-export-dialog::backdrop { background: var(--scrim); }
+.full-export-dialog .journal-confirmation__description { font: inherit; }
+.full-export-dialog .journal-confirmation__button { border-radius: var(--r-action); font: inherit; }
+.full-export-dialog .full-export-dialog__confirm { border-color: var(--brand); background: var(--brand); color: var(--surface); font-weight: 600; }
+.full-export-dialog button:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }

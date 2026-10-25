@@ -46,9 +46,110 @@ describe("Oracle exploration examples", () => {
     expect(screen.queryByText("개인 결과")).toBeNull()
   })
 
+  it("uses Oracle category choices and keeps both result modes freely selectable", async () => {
+    const result = buildOraclePersonalResult({ topicId: "level", entries: [], planState: null, today: "2026-09-27" })
+    const onPersonalAction = vi.fn()
+    render(<OracleExplore topicId="level" personalResult={result} initialMode="example"
+      onBack={vi.fn()} onSelectTopic={vi.fn()} onPersonalAction={onPersonalAction} />)
+    const modes = screen.getByRole("group", { name: "결과 종류" })
+    const personal = within(modes).getByRole("button", { name: "내 기록" })
+    const example = within(modes).getByRole("button", { name: "예시" })
+    for (const button of [personal, example]) {
+      expect(button).toHaveClass("app-choice-control", "category-choice")
+      expect(button).toHaveAttribute("data-category", "oracle")
+    }
+    expect(example).toHaveAttribute("aria-pressed", "true")
+    personal.focus()
+    await userEvent.keyboard("{Enter}")
+    expect(personal).toHaveAttribute("aria-pressed", "true")
+    expect(example).toHaveAttribute("aria-pressed", "false")
+    expect(screen.getByRole("heading", { name: result.headline })).toBeVisible()
+    example.focus()
+    await userEvent.keyboard(" ")
+    expect(example).toHaveAttribute("aria-pressed", "true")
+    expect(personal).toHaveAttribute("aria-pressed", "false")
+    expect(screen.getByText("내 기록을 분석한 결과가 아니에요")).toBeVisible()
+    expect(onPersonalAction).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    { id: "level", label: "기록 관리 열기", action: "records", section: "summary", metric: undefined },
+    { id: "focus", label: "계획 만들기", action: "plan", section: "summary", metric: undefined },
+    { id: "compare", label: "훈련 기록 남기기", action: "log", section: "monthly", metric: "DISTANCE_KM" },
+    { id: "mix", label: "훈련 기록 남기기", action: "log", section: "mix", metric: undefined },
+    { id: "priority", label: "계획 만들기", action: "plan", section: "summary", metric: undefined },
+    { id: "change", label: "훈련 기록 남기기", action: "log", section: "monthly", metric: "RPE" },
+  ] as const)("$id opens the confirmed missing result's assigned input directly from its example", ({ id, label, action, section, metric }) => {
+    const result = buildOraclePersonalResult({ topicId: id, entries: [], planState: null, today: "2026-09-27" })
+    expect(result).toMatchObject({ status: "missing", actionLabel: label, action, section })
+    expect(result.metric).toBe(metric)
+    const onPersonalAction = vi.fn()
+    const onModeChange = vi.fn()
+    const onPersonalResultSeen = vi.fn()
+    const setItem = vi.spyOn(Storage.prototype, "setItem")
+    render(<OracleExplore topicId={id} personalResult={result} initialMode="example" onBack={vi.fn()}
+      onSelectTopic={vi.fn()} onPersonalAction={onPersonalAction} onModeChange={onModeChange}
+      onPersonalResultSeen={onPersonalResultSeen} />)
+    expect(onPersonalAction).not.toHaveBeenCalled()
+    expect(onModeChange).not.toHaveBeenCalled()
+    expect(onPersonalResultSeen).not.toHaveBeenCalled()
+    expect(setItem).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole("button", { name: label }))
+    expect(onPersonalAction).toHaveBeenCalledExactlyOnceWith(action, section, metric)
+    expect(onModeChange).not.toHaveBeenCalled()
+    expect(screen.getByRole("button", { name: "예시" })).toHaveAttribute("aria-pressed", "true")
+    expect(screen.getByText("내 기록을 분석한 결과가 아니에요")).toBeVisible()
+    expect(onPersonalResultSeen).not.toHaveBeenCalled()
+    expect(setItem).not.toHaveBeenCalled()
+  })
+
+  it.each(["partial", "ready"] as const)("opens the %s personal result from the example without sending the user to input", status => {
+    const base = buildOraclePersonalResult({ topicId: "compare", entries: [], planState: null, today: "2026-09-27" })
+    const result = { ...base, status, headline: "확인한 월별 결과", fingerprint: `confirmed-${status}`,
+      rows: [{ label: "이번 달", value: 6, valueLabel: "6 km" }],
+      ...(status === "partial" ? { notice: "비교할 월별 기록이 1개월뿐이에요." } : {}) }
+    const onPersonalAction = vi.fn()
+    const onModeChange = vi.fn()
+    const onPersonalResultSeen = vi.fn()
+    render(<OracleExplore topicId="compare" personalResult={result} initialMode="example" onBack={vi.fn()}
+      onSelectTopic={vi.fn()} onPersonalAction={onPersonalAction} onModeChange={onModeChange}
+      onPersonalResultSeen={onPersonalResultSeen} />)
+    expect(onPersonalResultSeen).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole("button", { name: "내 기록 보기" }))
+    expect(screen.getByRole("button", { name: "내 기록" })).toHaveAttribute("aria-pressed", "true")
+    expect(screen.getByRole("heading", { name: result.headline })).toBeVisible()
+    expect(screen.queryByText("내 기록을 분석한 결과가 아니에요")).toBeNull()
+    if (status === "partial") expect(screen.getByText("비교할 월별 기록이 1개월뿐이에요.")).toBeVisible()
+    expect(onModeChange).toHaveBeenCalledExactlyOnceWith("personal")
+    expect(onPersonalAction).not.toHaveBeenCalled()
+    expect(onPersonalResultSeen).toHaveBeenCalledExactlyOnceWith(result.fingerprint)
+  })
+
+  it.each(["absent", "missing", "ready"] as const)("returns an unavailable %s result to its loading state instead of opening input", state => {
+    const base = buildOraclePersonalResult({ topicId: "focus", entries: [], planState: null, today: "2026-09-27" })
+    const result = state === "absent" ? undefined : { ...base, status: state, fingerprint: state === "ready" ? "unconfirmed" : null }
+    const onPersonalAction = vi.fn()
+    const onModeChange = vi.fn()
+    const onPersonalResultSeen = vi.fn()
+    render(<OracleExplore topicId="focus" personalResult={result} personalResultUnavailable initialMode="example"
+      historyNotice={<p>이전 계획 확인 중</p>} onBack={vi.fn()} onSelectTopic={vi.fn()}
+      onPersonalAction={onPersonalAction} onModeChange={onModeChange} onPersonalResultSeen={onPersonalResultSeen} />)
+    expect(onPersonalAction).not.toHaveBeenCalled()
+    expect(screen.queryByRole("button", { name: base.actionLabel })).toBeNull()
+    fireEvent.click(screen.getByRole("button", { name: "내 기록 확인" }))
+    expect(screen.getByText("기록을 모두 확인하지 못했어요. 다시 확인한 뒤 결과를 볼 수 있어요.")).toBeVisible()
+    expect(screen.getByText("이전 계획 확인 중")).toBeVisible()
+    expect(screen.getByRole("button", { name: "내 기록" })).toHaveAttribute("aria-pressed", "true")
+    expect(screen.queryByRole("heading", { name: base.headline })).toBeNull()
+    expect(screen.queryByText("내 기록을 분석한 결과가 아니에요")).toBeNull()
+    expect(onModeChange).toHaveBeenCalledExactlyOnceWith("personal")
+    expect(onPersonalAction).not.toHaveBeenCalled()
+    expect(onPersonalResultSeen).not.toHaveBeenCalled()
+  })
+
   it("does not replace an unavailable result with an example when no result object exists", () => {
     render(<OracleExplore topicId="focus" personalResultUnavailable onBack={vi.fn()} onSelectTopic={vi.fn()} onPersonalAction={vi.fn()} />)
-    expect(screen.getByText(/일지를 아직 모두 불러오지 못했어요/)).toBeVisible()
+    expect(screen.getByText(/기록을 모두 확인하지 못했어요/)).toBeVisible()
     expect(screen.queryByText("내 기록을 분석한 결과가 아니에요")).toBeNull()
     fireEvent.click(screen.getByRole("button", { name: "예시" }))
     expect(screen.getByText("내 기록을 분석한 결과가 아니에요")).toBeVisible()
@@ -67,7 +168,7 @@ describe("Oracle exploration examples", () => {
     const props = { topicId: "focus" as const, personalResult: result, onBack: vi.fn(), onSelectTopic: vi.fn(), onPersonalAction: vi.fn(), onPersonalResultSeen }
     const view = render(<OracleExplore {...props} personalResultUnavailable />)
     expect(screen.getByRole("button", { name: "내 기록" })).toHaveAttribute("aria-pressed", "true")
-    expect(screen.getByText("일지를 아직 모두 불러오지 못했어요. 조회가 끝나면 비교가 나타나요.")).toBeVisible()
+    expect(screen.getByText("기록을 모두 확인하지 못했어요. 다시 확인한 뒤 결과를 볼 수 있어요.")).toBeVisible()
     expect(screen.queryByText(result.headline)).not.toBeInTheDocument()
     expect(onPersonalResultSeen).not.toHaveBeenCalled()
     expect(store.read().state.lastSeenAnalysisFingerprints.focus).toBeUndefined()
@@ -76,13 +177,36 @@ describe("Oracle exploration examples", () => {
     expect(onPersonalResultSeen).not.toHaveBeenCalled()
     fireEvent.click(screen.getByRole("button", { name: "내 기록" }))
     view.rerender(<OracleExplore {...props} personalResultUnavailable={false} />)
-    expect(screen.queryByText("일지를 아직 모두 불러오지 못했어요. 조회가 끝나면 비교가 나타나요.")).toBeNull()
+    expect(screen.queryByText("기록을 모두 확인하지 못했어요. 다시 확인한 뒤 결과를 볼 수 있어요.")).toBeNull()
     expect(screen.getByText(result.headline)).toBeVisible()
     expect(onPersonalResultSeen).toHaveBeenCalledWith(result.fingerprint)
     expect(store.read().state.lastSeenAnalysisFingerprints.focus).toBe(result.fingerprint)
     view.unmount()
     localStorage.clear()
   })
+  it("distinguishes an active read from failure and retries without changing topic or result mode", () => {
+    const result = buildOraclePersonalResult({ topicId: "mix", entries: [], planState: null, today: "2026-09-27" })
+    const retry = vi.fn(), action = vi.fn(), select = vi.fn(), mode = vi.fn(), seen = vi.fn()
+    const props = { topicId: "mix" as const, personalResult: result, initialMode: "personal" as const,
+      onBack: vi.fn(), onSelectTopic: select, onPersonalAction: action, onModeChange: mode,
+      onPersonalResultSeen: seen, onRetryPersonalResult: retry }
+    const view = render(<OracleExplore {...props} personalReadStatus="loading" />)
+    expect(screen.getByRole("status")).toHaveTextContent("기록을 확인하고 있어요.")
+    expect(screen.queryByRole("button", { name: "다시 확인" })).toBeNull()
+    expect(screen.queryByRole("heading", { name: result.headline })).toBeNull()
+    view.rerender(<OracleExplore {...props} personalReadStatus="unavailable" />)
+    expect(screen.getByRole("alert")).toHaveTextContent("기록을 모두 확인하지 못했어요.")
+    fireEvent.click(screen.getByRole("button", { name: "다시 확인" }))
+    expect(retry).toHaveBeenCalledOnce()
+    expect(screen.getByRole("combobox", { name: "살펴볼 주제" })).toHaveValue("mix")
+    expect(screen.getByRole("button", { name: "내 기록" })).toHaveAttribute("aria-pressed", "true")
+    expect(action).not.toHaveBeenCalled(); expect(select).not.toHaveBeenCalled(); expect(mode).not.toHaveBeenCalled()
+    expect(seen).not.toHaveBeenCalled()
+    view.rerender(<OracleExplore {...props} personalReadStatus="ready" />)
+    expect(screen.getByRole("heading", { name: result.headline })).toBeVisible()
+    expect(screen.queryByRole("button", { name: "다시 확인" })).toBeNull()
+  })
+
   it("keeps the selected personal mode on topic navigation even without data", () => {
     const onSelectTopic = vi.fn()
     const result = buildOraclePersonalResult({ topicId: "level", entries: [], planState: null, today: "2026-09-27" })

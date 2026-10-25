@@ -15,11 +15,22 @@ import { useImportOwnerScope } from "./import-activities/useImportOwnerScope"
 import { fileAnalysisFormats } from "../domain/import/file-analysis-policy"
 import { AppHeading } from "../components/AppHeading"
 import { useTaskFlowBack } from "../hooks/useTaskFlowBack"
+import { readCurrentConfirmedAccountJournalProjection } from "../domain/account/account-journal-projection"
+import { buildFileAnalysisReport } from "../domain/import/file-analysis"
+import type { FileObservationV1 } from "../domain/import/file-observation"
+
+type ImportAnalysisCandidate = {
+  readonly entryId: string | null
+  readonly sourceObservationKey: string
+  readonly contentRevisionFingerprint: string
+  readonly sport: FileObservationV1["sport"] | null
+  readonly durationMeaning: FileObservationV1["durationMeaning"] | null
+}
 
 type Stage =
   | { readonly step: "pick" }
   | { readonly step: "review"; readonly drafts: readonly ImportDraft[]; readonly result: ActivityParseResult }
-  | { readonly step: "saved"; readonly outcome: ImportSaveResult }
+  | { readonly step: "saved"; readonly outcome: ImportSaveResult; readonly format: ImportFormat; readonly analysisCandidates: readonly ImportAnalysisCandidate[] }
 
 export function ImportActivities({ onBack, onOpenLog, onOpenAnalysis, onOpenSummary }: {
   readonly onBack?: () => void
@@ -161,6 +172,16 @@ export function ImportActivities({ onBack, onOpenLog, onOpenAnalysis, onOpenSumm
     if (chosen.length === 0) return
 
     const format = importFormat(stage.result.format)
+    const analysisCandidates = chosen.flatMap(({ draft, intent }): ImportAnalysisCandidate[] => {
+      const observation = draft.activity.observation
+      return intent.kind === "EXCLUDE" || observation?.format !== format ? [] : [{
+        entryId: "entryId" in intent ? intent.entryId : null,
+        sourceObservationKey: observation.sourceObservationKey,
+        contentRevisionFingerprint: observation.contentRevisionFingerprint,
+        sport: observation.confirmation?.sport ?? null,
+        durationMeaning: observation.confirmation?.durationMeaning ?? null,
+      }]
+    })
     const current = captureScope()
     busyRef.current = true; setBusy(true)
     const account = accountJournalRecordsEnabled()
@@ -168,9 +189,9 @@ export function ImportActivities({ onBack, onOpenLog, onOpenAnalysis, onOpenSumm
       if (account) confirmation.current ??= createAccountImportConfirmation(chosen, format)
       const outcome = account ? await confirmation.current!.confirm() : confirmImportDrafts(chosen, format)
       if (!current() || !outcome) return
-      setStage({ step: "saved", outcome })
+      setStage({ step: "saved", outcome, format, analysisCandidates })
     } catch {
-      if (current()) setStage({ step: "saved", outcome: {
+      if (current()) setStage({ step: "saved", format, analysisCandidates, outcome: {
         ...(account ? { account: 0, pending: 0 } : {}), saved: 0, failed: chosen.length,
         total: chosen.length, stopReason: "SAVE_REJECTED",
       } })
@@ -255,13 +276,14 @@ export function ImportActivities({ onBack, onOpenLog, onOpenAnalysis, onOpenSumm
               busyRef.current = true; setBusy(true)
               try {
                 const outcome = await confirmation.current!.confirm()
-                if (current() && outcome) setStage({ step: "saved", outcome })
+                if (current() && outcome) setStage({ ...stage, outcome })
               } catch { if (current()) setReviewError("저장 상태를 확인하지 못했어요. 기존 결과는 유지했어요. 다시 시도해 주세요.") }
               finally { if (current()) { busyRef.current = false; setBusy(false) } }
             } : undefined}
             outcome={stage.outcome}
+            analysisAvailable={hasConfirmedImportAnalysis(stage)}
             onOpenLog={onOpenLog}
-            onOpenAnalysis={fileAnalysisFormats().length > 0 ? onOpenAnalysis : undefined}
+            onOpenAnalysis={onOpenAnalysis}
             onOpenSummary={onOpenSummary}
             onRestart={() => { setStage({ step: "pick" }); setSelected(new Set()); setFailure(null) }}
           />
@@ -274,4 +296,20 @@ export function ImportActivities({ onBack, onOpenLog, onOpenAnalysis, onOpenSumm
 function importFormat(format: ActivityParseResult["format"]): ImportFormat {
   if (format === "csv" || format === "json" || format === "gpx") return format
   return "tcx"
+}
+
+/** A different format's switch or a pending receipt cannot make this batch analysable. */
+function hasConfirmedImportAnalysis({ outcome, format, analysisCandidates }: Extract<Stage, { step: "saved" }>): boolean {
+  if ((outcome.account ?? 0) === 0 || !fileAnalysisFormats().includes(format)) return false
+  const confirmed = readCurrentConfirmedAccountJournalProjection().filter(entry => entry.kind === "post-session"
+    && entry.fileObservation?.format === format && analysisCandidates.some(candidate =>
+      (candidate.entryId === null || candidate.entryId === entry.id)
+      && candidate.sourceObservationKey === entry.fileObservation!.sourceObservationKey
+      && candidate.contentRevisionFingerprint === entry.fileObservation!.contentRevisionFingerprint
+      && candidate.sport === (entry.fileObservation!.confirmation?.sport ?? null)
+      && candidate.durationMeaning === (entry.fileObservation!.confirmation?.durationMeaning ?? null)))
+  const dates = confirmed.map(entry => entry.date).sort()
+  const startDate = dates[0], endDate = dates.at(-1)
+  if (startDate === undefined || endDate === undefined) return false
+  return buildFileAnalysisReport(confirmed, { startDate, endDate, sourceContext: "ACCOUNT_CONFIRMED" }).includedSourceCount > 0
 }

@@ -241,7 +241,7 @@ function OracleProfileV2ForOwner({ owner, today, onBack, onOpenTraining, onOpenL
         if (ok) { unsafe.current = false; setContextDraft(undefined) }
         return ok
       }} />}
-    {friendsOpen && <OracleProfileReader title="친구와 함께 살펴보기" onClose={() => setFriendsOpen(false)} closeLabel={null}>
+    {friendsOpen && <OracleProfileReader title="친구와 비교" onClose={() => setFriendsOpen(false)} closeLabel={null}>
       {close => friendMode === "manual" ? <OracleFriendComparisonV2 today={today} ownProfile={comparisonProfile} records={records.status === "READY" ? records.records : null} onBack={() => setFriendMode("choose")} />
         : friendMode === "connected" && owner && documentId && current && store.status === "READY" && !hasScoreDraft
           ? <OracleConnectedComparison ownerId={owner} documentId={documentId} documentRevision={store.revision} ownProfile={current} onBack={() => setFriendMode("choose")} />

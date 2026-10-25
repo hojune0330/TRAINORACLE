@@ -6,7 +6,9 @@ vi.mock("./screens/Home", () => ({ Home: ({ onOpenMore }: { onOpenMore: () => vo
 vi.mock("./DeferredMobileScreens", async () => {
   const { More } = await import("./screens/More")
   return { DeferredMobileScreens: { More, PlanProposalInbox: () => null,
-    RestoreBackup: ({ onBack }: { onBack: () => void }) => <button onClick={onBack}>복원 닫기</button> } }
+    JournalArchive: () => <h1>복원한 일지 확인 화면</h1>,
+    RestoreBackup: ({ onBack, onOpenJournal }: { onBack: () => void; onOpenJournal: () => void }) => <>
+      <button onClick={onBack}>복원 닫기</button><button onClick={onOpenJournal}>일지에서 확인하기</button></> } }
 })
 import { AppShell } from "./AppShell"
 
@@ -23,4 +25,17 @@ it("returns to the backup section after restoring and browser Back returns to Mo
   expect(screen.getByRole("button", { name: "백업 복원" })).toBeVisible()
   act(() => window.history.back())
   await waitFor(() => expect(screen.getByRole("button", { name: /백업/u })).toBeVisible())
+})
+
+it("opens Journal from restore and preserves browser Back and the original backup destination", async () => {
+  render(<AppShell />)
+  fireEvent.click(screen.getByRole("button", { name: "더보기 열기" }))
+  fireEvent.click(await screen.findByRole("button", { name: /백업/u }))
+  fireEvent.click(screen.getByRole("button", { name: "백업 복원" }))
+  fireEvent.click(await screen.findByRole("button", { name: "일지에서 확인하기" }))
+  expect(screen.getByRole("heading", { name: "복원한 일지 확인 화면" })).toBeVisible()
+  act(() => window.history.back())
+  await waitFor(() => expect(screen.getByRole("button", { name: "복원 닫기" })).toBeVisible())
+  fireEvent.click(screen.getByRole("button", { name: "복원 닫기" }))
+  expect(screen.getByRole("button", { name: "백업 복원" })).toBeVisible()
 })

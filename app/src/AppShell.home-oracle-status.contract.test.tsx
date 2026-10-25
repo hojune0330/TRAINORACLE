@@ -2,7 +2,7 @@ import React from "react"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 
-const source = vi.hoisted(() => ({ complete: false, planState: null as unknown, planReadKind: "missing" as "missing" | "loaded" | "storage_error" }))
+const source = vi.hoisted(() => ({ complete: false, planState: null as unknown, planReadKind: "missing" as "missing" | "loaded" | "storage_error" | "invalid" }))
 vi.mock("./hooks/useCalendarEntries", () => ({ useCalendarSnapshot: () => ({ status: "READY", entries: [] }) }))
 vi.mock("./hooks/usePlanEvidenceHistory", () => ({ usePlanEvidenceHistory: () => ({ journalReadComplete: source.complete, history: { kind: "empty" } }) }))
 vi.mock("./domain/plan-beta-store", () => ({
@@ -15,6 +15,7 @@ vi.mock("./components/AppShellFrame", () => ({ AppShellFrame: ({ children }: { c
 vi.mock("./screens/Home", () => ({ Home: ({ oraclePreview, oraclePreviewLabel }: { oraclePreview: React.ReactNode; oraclePreviewLabel: string }) => <main><h1>{oraclePreviewLabel}</h1>{oraclePreview}</main> }))
 vi.mock("./DeferredMobileScreens", () => ({ DeferredMobileScreens: {
   Trends: () => <h1>기록 상태 확인 화면</h1>, PlanProposalInbox: () => null,
+  PlanBeta: () => <h1>저장된 계획을 확인하지 못했어요</h1>,
   OracleExplore: ({ topicId, personalResult, personalResultUnavailable }: { topicId: string; personalResult: OraclePersonalResult; personalResultUnavailable: boolean }) =>
     <section aria-label="개인 오라클 상세" data-topic={topicId} data-unavailable={String(personalResultUnavailable)}>
       <h2>{personalResult.headline}</h2>
@@ -76,6 +77,19 @@ it("does not offer an example when the active plan read fails", () => {
   expect(screen.getByRole("heading", { name: "오라클 기록 상태" })).toBeVisible()
   expect(screen.getByText("저장한 훈련 계획을 확인하지 못했어요.")).toBeVisible()
   expect(screen.queryByText("오라클 결과 예시 보기")).toBeNull()
+})
+
+it.each(["storage_error", "invalid"] as const)("opens plan recovery rather than analysis examples after a %s plan read", planReadKind => {
+  source.complete = true
+  source.planReadKind = planReadKind
+  const retained = "synthetic-unreadable-plan"
+  localStorage.setItem("trainoracle.plan-beta.v1", retained)
+  render(<AppShell />)
+  expect(screen.getByText("저장한 훈련 계획을 확인하지 못했어요.")).toBeVisible()
+  fireEvent.click(screen.getByRole("button", { name: "저장한 계획 확인" }))
+  expect(screen.getByRole("heading", { name: "저장된 계획을 확인하지 못했어요" })).toBeVisible()
+  expect(screen.queryByRole("heading", { name: "기록 상태 확인 화면" })).toBeNull()
+  expect(localStorage.getItem("trainoracle.plan-beta.v1")).toBe(retained)
 })
 
 it("still uses an eligible race record while the independent journal read is incomplete", () => {

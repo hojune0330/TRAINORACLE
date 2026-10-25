@@ -157,10 +157,10 @@ it("does not normalize a real account loading state into a ready helper", () => 
   expect(screen.getByRole("button", { name: "내 훈련 방식 알아보기 · 질문 3개" })).toBeDisabled()
 })
 
-it("keeps all interest axes directly selectable in settings", () => {
+it("keeps all interest axes directly selectable in the named additional-question destination", () => {
   const fixture = mount(ready(scored()))
-  fireEvent.click(screen.getByRole("button", { name: "프로필 설정·추가 정보" }))
-  const settings = screen.getByRole("dialog", { name: "프로필 설정" })
+  fireEvent.click(screen.getByRole("button", { name: "다른 취향 알아보기" }))
+  const settings = screen.getByRole("dialog", { name: "다른 취향 알아보기" })
   const axes = within(settings).getByRole("group", { name: "추가 취향" })
   expect(within(axes).getAllByRole("button")).toHaveLength(ORACLE_AXES.length)
 
@@ -172,15 +172,15 @@ it("keeps all interest axes directly selectable in settings", () => {
 })
 const contextButton = () => {
   if (!screen.queryByRole("button", { name: /훈련·대회 정보 추가|작성하던 추가 맥락 이어가기/ })) {
-    fireEvent.click(screen.getByRole("button", { name: "프로필 설정·추가 정보" }))
+    fireEvent.click(screen.getByRole("button", { name: "내 응답·정보" }))
   }
   return screen.getByRole("button", { name: /훈련·대회 정보 추가|작성하던 추가 맥락 이어가기/ })
 }
 const closeDialog = () => fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "닫기" }))
 const resultScore = (container: HTMLElement) => container.querySelector(".preference-radar__axes .preference-radar__value")
 function restartStructureQuestions() {
-  fireEvent.click(screen.getByRole("button", { name: "프로필 설정·추가 정보" }))
-  const settings = screen.getByRole("dialog", { name: "프로필 설정" })
+  fireEvent.click(screen.getByRole("button", { name: "다른 취향 알아보기" }))
+  const settings = screen.getByRole("dialog", { name: "다른 취향 알아보기" })
   fireEvent.click(within(settings).getByRole("button", { name: "계획 선호" }))
 }
 function contextAnswer() {
@@ -396,8 +396,8 @@ it("resumes question two after a same-value first edit and reload, without clear
   fireEvent.click(contextButton())
   expect(screen.queryByRole("dialog", { name: "추가 응답" })).toBeNull()
   const social = ORACLE_AXES.find(axis => axis.id === "SOCIAL")!
-  fireEvent.click(screen.getByRole("button", { name: "프로필 설정·추가 정보" }))
-  const settings = screen.getByRole("dialog", { name: "프로필 설정" })
+  fireEvent.click(screen.getByRole("button", { name: "다른 취향 알아보기" }))
+  const settings = screen.getByRole("dialog", { name: "다른 취향 알아보기" })
   const axes = within(settings).getByRole("group", { name: "추가 취향" })
   expect(axes).toBeVisible()
   expect(within(axes).getByRole("button", { name: social.label })).toBeDisabled()
@@ -437,7 +437,7 @@ it("blocks context for a legacy filled draft with identical answers but a newer 
 it("clears results, readings and context on deletion and restarts only through the explicit empty-profile action", async () => {
   const fixture = mount(ready(scored()))
   expect(resultScore(fixture.container)).toHaveTextContent("100")
-  fireEvent.click(screen.getByRole("button", { name: "프로필 설정·추가 정보" }))
+  fireEvent.click(screen.getByRole("button", { name: "내 응답·정보" }))
   fireEvent.click(screen.getByRole("button", { name: "응답 삭제" }))
   fireEvent.click(screen.getByRole("button", { name: "삭제하기" }))
   await waitFor(() => expect(screen.getByRole("button", { name: "빈 프로필로 새로 시작" })).toBeVisible())

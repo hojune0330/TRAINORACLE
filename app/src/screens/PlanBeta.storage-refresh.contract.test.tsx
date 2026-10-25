@@ -88,6 +88,7 @@ it.each(["unreadable", "invalid"])("protects a draft during a %s plan read and r
   storageChanged()
   expect(screen.getByRole("heading", { name: "저장된 계획을 확인하지 못했어요" })).toBeVisible()
   expect(question).not.toBeVisible()
+  expect(screen.getByRole("button", { name: "다시 확인" })).toHaveClass("next-action")
   read.mockRestore()
   await userEvent.setup().click(screen.getByRole("button", { name: "다시 확인" }))
   expect(question).toBeVisible()

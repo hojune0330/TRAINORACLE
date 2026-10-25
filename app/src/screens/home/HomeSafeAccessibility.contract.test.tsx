@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { todayISO, type JournalEntry } from "../../domain/journal-store"
+import { isoShift } from "../../domain/dates"
 import type { TrainingHomeViewModel } from "../../domain/home-view-model"
 import { JOURNAL_STORAGE_KEY } from "../../domain/journal-storage-keys"
 import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
@@ -149,6 +150,16 @@ describe("home hub destinations and information", () => {
     expect(notice).toBeVisible()
     expect(notice.closest("details")).toBeNull()
     expect(notice.compareDocumentPosition(screen.getByRole("heading", { name: "내 기록" })) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
+  })
+
+  it.each([[1, false], [30, false], [0, true], [-13, true], [-14, false]] as const)("includes only observed dates in the recent fourteen-day pain notice (offset %i)", (offset, visible) => {
+    const pain = { ...EVENING, date: isoShift(todayISO(), offset), note: "", memoPurpose: undefined,
+      painParts: { knee: 4 }, fieldProvenance: { painParts: { provenance: "EXPLICIT" } } }
+    const original = JSON.stringify([pain])
+    localStorage.setItem(STORAGE_KEY, original)
+    render(<Home />)
+    expect(screen.queryByTestId("home-pain-review") !== null).toBe(visible)
+    expect(localStorage.getItem(STORAGE_KEY)).toBe(original)
   })
 
   it.each(["PENDING", "FAILED", "REJECTED", "CONFLICT"])("exposes %s storage state with a direct account action", status => {

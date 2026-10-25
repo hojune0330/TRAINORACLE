@@ -2,7 +2,7 @@ import React from "react"
 import { ChevronDown } from "lucide-react"
 import { accountJournalRecordsEnabled, deleteAccountJournalRecord, undoAccountJournalDeletion } from "../domain/account/account-journal-record-service"
 import { accountJournalProjectionStatus, readAccountJournalPrivateEntry } from "../domain/account/account-journal-projection"
-import { activeLocalAccount, journalOwner } from "../domain/account/local-journal-ownership"
+import { activeLocalAccount, journalOwner, localJournalScopeGeneration, onLocalJournalScopeChange } from "../domain/account/local-journal-ownership"
 import { canEditJournalEntry } from "../domain/journal-edit-policy"
 import { AccountJournalHistory } from "./account/AccountJournalHistory"
 import { IndexCard, MoodStrip } from "../components/JournalPrimitives"
@@ -15,7 +15,8 @@ import type { TermId } from "../domain/glossary"
 import { ENERGY_SYSTEM_META, type EnergySystemKey } from "../domain/energy-system-taxonomy"
 import type { JournalEntry, PostSessionEntry, EveningEntry, RaceEntry } from "../domain/journal-store"
 import { journalRpeLabel } from "../domain/quick-journal"
-import { entriesForDate, deleteEntry, restoreDeletedEntry } from "../domain/journal-store"
+import { entriesForDate, loadJournalEntriesSnapshot, deleteEntry, restoreDeletedEntry } from "../domain/journal-store"
+import { LOCAL_JOURNALS_CHANGED } from "../domain/journal-change-events"
 import { TRASH_RETENTION_DAYS } from "../domain/journal-trash"
 import { hasImportedField } from "../domain/field-provenance"
 import { painLevelsRequireReview } from "../safety/memo-safety"
@@ -48,6 +49,7 @@ export type LogDetailProps = {
   readonly alignInitialEntry?: boolean
   readonly readOnly?: boolean
   readonly entries?: readonly JournalEntry[]
+  readonly readComplete?: boolean | undefined
   readonly decorationStudio?: { readonly onDone: () => void; readonly previewMonth?: string; readonly materialsFooter?: React.ReactNode }
 }
 
@@ -147,6 +149,7 @@ function JournalEntryDisclosure({
   imported = false,
   attention,
   onToggle,
+  entryRef,
   children,
 }: {
   readonly panelId: string
@@ -160,11 +163,13 @@ function JournalEntryDisclosure({
   readonly imported?: boolean
   readonly attention?: string
   readonly onToggle: () => void
+  readonly entryRef?: React.Ref<HTMLElement> | undefined
   readonly children: React.ReactNode
 }) {
   if (standalone) {
     return (
       <section
+        ref={entryRef}
         className="journal-entry-section"
         data-open="true"
         data-single="true"
@@ -184,7 +189,7 @@ function JournalEntryDisclosure({
   }
 
   return (
-    <section className="journal-entry-section" data-open={open ? "true" : "false"}>
+    <section ref={entryRef} className="journal-entry-section" data-open={open ? "true" : "false"}>
       <button
         type="button"
         className="journal-entry-summary"
@@ -231,7 +236,7 @@ function ReadOnlyJournalFrame({ date, children }: React.ComponentProps<typeof Jo
   return state ? <DecoratedJournalPageFrame date={date} state={state}>{children}</DecoratedJournalPageFrame> : <>{children}</>
 }
 
-function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, onJournalSaved, readerControls, pageTopRef, initialEntryId, alignInitialEntry = true, decorationStudio, readOnly = false, entries: suppliedEntries }: LogDetailProps) {
+function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, onJournalSaved, readerControls, pageTopRef, initialEntryId, alignInitialEntry = true, decorationStudio, readOnly = false, entries: suppliedEntries, readComplete }: LogDetailProps) {
   const PageFrame = readOnly ? ReadOnlyJournalFrame : JournalDecorationSurface
   const [rev, setRev] = React.useState(0)
   const [sleepInnOpen, setSleepInnOpen] = React.useState(false)
@@ -244,8 +249,21 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, onJournalSave
     { readonly id: string; readonly label: string } | null
   >(null)
   const undoRef = React.useRef<HTMLButtonElement>(null)
-  const entries = React.useMemo(() => (suppliedEntries ?? entriesForDate(date)).filter(entry => entry.date === date)
-    .map(entry => readAccountJournalPrivateEntry(entry.id) ?? entry), [date, rev, suppliedEntries])
+  const renderedScope = localJournalScopeGeneration()
+  const usesSuppliedEntries = suppliedEntries !== undefined
+  const suppliedScope = React.useRef({ entries: suppliedEntries, scope: renderedScope })
+  if (suppliedScope.current.entries !== suppliedEntries) suppliedScope.current = { entries: suppliedEntries, scope: renderedScope }
+  const snapshot = React.useMemo(() => {
+    // A supplied reader snapshot stays authoritative; a scope change cannot
+    // replace it with another owner's local records or private overlay.
+    if (suppliedEntries !== undefined && suppliedScope.current.scope !== renderedScope) return { entries: [], complete: false }
+    const source = suppliedEntries ?? entriesForDate(date)
+    return {
+      entries: source.filter(entry => entry.date === date).map(entry => readAccountJournalPrivateEntry(entry.id) ?? entry),
+      complete: readComplete ?? (suppliedEntries !== undefined || loadJournalEntriesSnapshot().readStatus === "complete"),
+    }
+  }, [date, rev, suppliedEntries, readComplete, renderedScope])
+  const entries = snapshot.entries
   const renderedOwner = activeLocalAccount()
   // ACK is presentation state; only current-account records get a local policy copy.
   const actionEntries = entries.map(entry => accountJournalRecordsEnabled() && readAccountJournalPrivateEntry(entry.id)
@@ -262,9 +280,21 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, onJournalSave
   }
   React.useEffect(() => {
     const refresh = () => setRev(value => value + 1)
-    window.addEventListener("trainoracle:account-journals-changed", refresh)
-    return () => window.removeEventListener("trainoracle:account-journals-changed", refresh)
-  }, [])
+    const unsubscribe = onLocalJournalScopeChange(refresh)
+    if (!usesSuppliedEntries) {
+      window.addEventListener("trainoracle:account-journals-changed", refresh)
+      window.addEventListener(LOCAL_JOURNALS_CHANGED, refresh)
+      window.addEventListener("storage", refresh)
+      window.addEventListener("focus", refresh)
+    }
+    return () => {
+      unsubscribe()
+      window.removeEventListener("trainoracle:account-journals-changed", refresh)
+      window.removeEventListener(LOCAL_JOURNALS_CHANGED, refresh)
+      window.removeEventListener("storage", refresh)
+      window.removeEventListener("focus", refresh)
+    }
+  }, [usesSuppliedEntries])
   const remove = async (): Promise<boolean> => {
     if (readOnly || !pendingDelete) return false
     const { id, label } = pendingDelete
@@ -298,43 +328,73 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, onJournalSave
     setJustDeleted(null)
     setRev(v => v + 1)
   }
-  const orderedEntries = React.useMemo(() => entries
-    .map((entry, sourceIndex) => ({ entry, sourceIndex }))
-    .sort((left, right) => {
+  const orderedEntries = React.useMemo(() => {
+    const occurrences = new Map<string, number>()
+    return entries.map((entry, sourceIndex) => {
+      const identity = `${entry.kind}:${entry.id}`
+      const occurrence = occurrences.get(identity) ?? 0
+      occurrences.set(identity, occurrence + 1)
+      return { entry, sourceIndex, viewKey: journalEntryViewKey(entry, occurrence) }
+    }).sort((left, right) => {
       const leftTime = Date.parse(left.entry.savedAt)
       const rightTime = Date.parse(right.entry.savedAt)
       if (Number.isNaN(leftTime) || Number.isNaN(rightTime) || leftTime === rightTime) {
         return left.sourceIndex - right.sourceIndex
       }
       return leftTime - rightTime
-    }), [entries])
-  const entryKeys = orderedEntries.map(({ entry, sourceIndex }) => journalEntryViewKey(entry, sourceIndex))
+    })
+  }, [entries])
+  const entryKeys = orderedEntries.map(({ viewKey }) => viewKey)
   const entrySignature = entryKeys.join("|")
   const targetIndex = initialEntryId ? orderedEntries.findIndex(({ entry }) => entry.id === initialEntryId) : -1
   const targetKey = targetIndex >= 0 ? entryKeys[targetIndex] : undefined
   const entryTargetRef = React.useRef<HTMLElement | null>(null)
+  const [targetMounted, setTargetMounted] = React.useState(false)
+  const captureEntryTarget = React.useCallback((element: HTMLElement | null) => {
+    entryTargetRef.current = element
+    if (element) element.tabIndex = -1
+    setTargetMounted(element !== null)
+  }, [])
   const [expandedEntryKeys, setExpandedEntryKeys] = React.useState<ReadonlySet<string>>(
-    () => new Set(targetKey ? [targetKey] : entryKeys.length <= 1 ? entryKeys : []),
+    () => new Set(targetKey ? [targetKey] : initialEntryId === undefined && entryKeys.length <= 1 ? entryKeys : []),
   )
+  const initialSelectionAvailable = snapshot.complete || (initialEntryId === undefined ? entryKeys.length > 0 : targetKey !== undefined)
+  const previousView = React.useRef({ date, scope: renderedScope, initialEntryId, initialSelectionApplied: initialSelectionAvailable })
   React.useEffect(() => {
-    setExpandedEntryKeys(new Set(targetKey ? [targetKey] : entryKeys.length <= 1 ? entryKeys : []))
-  // entrySignature intentionally represents identity/order, not edited field values.
+    const previous = previousView.current
+    const newVisit = previous.date !== date || previous.scope !== renderedScope || previous.initialEntryId !== initialEntryId
+    const firstCompletedRead = !previous.initialSelectionApplied && snapshot.complete
+    previousView.current = { date, scope: renderedScope, initialEntryId,
+      // A late partial snapshot has not applied the initial choice. Wait for
+      // READY once, without reopening a choice already made by the reader.
+      initialSelectionApplied: newVisit ? initialSelectionAvailable : previous.initialSelectionApplied || firstCompletedRead }
+    if (newVisit || firstCompletedRead) {
+      setExpandedEntryKeys(new Set(targetKey ? [targetKey] : initialEntryId === undefined && entryKeys.length <= 1 ? entryKeys : []))
+    } else if (snapshot.complete) {
+      // Ordinary additions/edits retain the reader's choices; removed records
+      // only lose their own selection, without opening a replacement.
+      setExpandedEntryKeys(current => new Set([...current].filter(key => entryKeys.includes(key))))
+    }
+  // Values do not reset selection; entrySignature tracks the current identities.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [date, entrySignature, targetKey])
-  React.useLayoutEffect(() => {
-    entryTargetRef.current = targetIndex >= 0
-      ? document.getElementById(`journal-entry-panel-${targetIndex}`)?.closest<HTMLElement>(".journal-entry-section") ?? null : null
-    if (entryTargetRef.current) entryTargetRef.current.tabIndex = -1
-  }, [targetIndex, entrySignature])
-  useActiveContentScroll(alignInitialEntry ? targetKey ?? null : null, entryTargetRef, entryTargetRef)
+  }, [date, renderedScope, initialEntryId, entrySignature, snapshot.complete])
+  // The decoration surface can mount its children after this reader commits.
+  // Start alignment from the target's actual mount, not a document lookup.
+  useActiveContentScroll(alignInitialEntry && targetMounted && previousView.current.initialSelectionApplied ? targetKey ?? null : null, entryTargetRef, entryTargetRef)
   const allEntriesExpanded = entryKeys.length > 0 && entryKeys.every((key) => expandedEntryKeys.has(key))
-  const toggleEntry = (key: string) => setExpandedEntryKeys((current) => {
-    const next = new Set(current)
-    if (next.has(key)) next.delete(key)
-    else next.add(key)
-    return next
-  })
-  const toggleAllEntries = () => setExpandedEntryKeys(allEntriesExpanded ? new Set() : new Set(entryKeys))
+  const toggleEntry = (key: string) => {
+    previousView.current.initialSelectionApplied = true
+    setExpandedEntryKeys((current) => {
+      const next = new Set(current)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
+  const toggleAllEntries = () => {
+    previousView.current.initialSelectionApplied = true
+    setExpandedEntryKeys(allEntriesExpanded ? new Set() : new Set(entryKeys))
+  }
   const entryCounts = entries.reduce((counts, entry) => ({
     ...counts,
     [entry.kind]: counts[entry.kind] + 1,
@@ -407,7 +467,10 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, onJournalSave
         </div>
       )}
 
-      {entries.length === 0 && (
+      {!snapshot.complete && <p role="status">
+        기록을 아직 모두 확인하지 못했어요. {entries.length > 0 ? "현재 불러온 내용만 표시해요." : "기록이 없는 상태로 표시하지 않아요."}
+      </p>}
+      {snapshot.complete && entries.length === 0 && (
         <div className="journal-empty-state">
           <div className="hand" style={{ fontSize: 22, color: "var(--pencil)", lineHeight: 1.35 }}>
             이 날의 일지는 아직 비어 있어요.
@@ -423,8 +486,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, onJournalSave
         </div>
       )}
 
-      {orderedEntries.map(({ entry, sourceIndex }, displayIndex) => {
-        const viewKey = journalEntryViewKey(entry, sourceIndex)
+      {orderedEntries.map(({ entry, viewKey }, displayIndex) => {
         const panelId = `journal-entry-panel-${displayIndex}`
         const open = expandedEntryKeys.has(viewKey)
         const storageLabel = journalStorageLabel(entry)
@@ -444,6 +506,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, onJournalSave
           return (
             <JournalEntryDisclosure
               key={viewKey}
+              entryRef={viewKey === targetKey ? captureEntryTarget : undefined}
               panelId={panelId}
               kindLabel="훈련"
               title={entry.title || "훈련 기록"}
@@ -451,7 +514,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, onJournalSave
               savedAt={entry.savedAt}
               position={displayIndex + 1}
               open={open}
-              standalone={entries.length === 1}
+              standalone={entries.length === 1 && open}
               imported={imported}
               onToggle={() => toggleEntry(viewKey)}
             >
@@ -488,6 +551,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, onJournalSave
           return (
             <JournalEntryDisclosure
               key={viewKey}
+              entryRef={viewKey === targetKey ? captureEntryTarget : undefined}
               panelId={panelId}
               kindLabel="경기"
               title={entry.record || entry.result || "경기 기록"}
@@ -495,7 +559,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, onJournalSave
               savedAt={entry.savedAt}
               position={displayIndex + 1}
               open={open}
-              standalone={entries.length === 1}
+              standalone={entries.length === 1 && open}
               onToggle={() => toggleEntry(viewKey)}
             >
               <div className="journal-entry-card journal-entry-card--race">
@@ -520,6 +584,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, onJournalSave
         return (
           <JournalEntryDisclosure
             key={viewKey}
+            entryRef={viewKey === targetKey ? captureEntryTarget : undefined}
             panelId={panelId}
             kindLabel="컨디션·메모"
             title={entry.note.trim().slice(0, 40) || "몸과 마음 기록"}
@@ -527,7 +592,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, onJournalSave
             savedAt={entry.savedAt}
             position={displayIndex + 1}
             open={open}
-            standalone={entries.length === 1}
+            standalone={entries.length === 1 && open}
             attention={needsReview ? "통증 확인" : undefined}
             onToggle={() => toggleEntry(viewKey)}
           >

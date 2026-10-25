@@ -17,10 +17,12 @@
 .oracle-learning th, .oracle-learning td { padding: var(--space-2); text-align: left; border-bottom: var(--bw-line) solid var(--line); vertical-align: top; }
 .oracle-learning fieldset { min-width: 0; border: 0; margin: var(--space-3) 0; padding: 0; }
 .oracle-learning legend { font-size: var(--fs-caption); color: var(--ink-3); }
-.oracle-learning label { display: flex; align-items: center; gap: var(--space-2); min-height: var(--app-touch-min, 44px); padding-block: var(--space-2); border-bottom: var(--bw-line) solid var(--line); cursor: pointer; }
+.oracle-learning label { display: flex; align-items: center; gap: var(--space-2); min-height: 56px; padding: var(--space-3) var(--space-4); border: var(--bw-line) solid var(--line); border-radius: var(--r-task-surface); background: var(--surface); cursor: pointer; }
+.oracle-learning label:has(input:checked) { background: var(--surface-2); border-color: var(--brand); font-weight: 700; }
 .oracle-learning label > span { min-width: 0; }
 .oracle-learning input[type="radio"] { flex: 0 0 18px; width: 18px; height: 18px; min-height: 0; margin: 0; padding: 0; accent-color: var(--brand); }
-.oracle-learning button { display: inline-flex; justify-content: center; align-items: center; gap: var(--space-2); min-width: var(--app-touch-min, 44px); min-height: var(--app-touch-min, 44px); padding: var(--space-2); font: inherit; color: var(--ink); background: transparent; border: var(--bw-line) solid var(--line); border-radius: var(--r-sm); cursor: pointer; }
+.oracle-learning button { display: inline-flex; justify-content: center; align-items: center; gap: var(--space-2); min-width: var(--app-touch-min, 44px); min-height: var(--app-touch-min, 44px); padding: var(--space-2); font: inherit; color: var(--ink); background: transparent; border: var(--bw-line) solid var(--line); border-radius: var(--r-action); cursor: pointer; }
+.oracle-learning button.oracle-learning__check { width: 100%; min-height: 52px; color: var(--paper); background: var(--brand); border-color: var(--brand); font-weight: 700; }
 .oracle-learning button:disabled { opacity: 0.5; cursor: default; }
 .oracle-learning svg { flex-shrink: 0; }
 .oracle-learning :focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }

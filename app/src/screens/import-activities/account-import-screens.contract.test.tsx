@@ -5,7 +5,9 @@ import { ImportActivities } from "../ImportActivities"
 import { RestoreBackup } from "../RestoreBackup"
 import { SavedStage } from "./ImportStages"
 import { setActiveLocalAccount } from "../../domain/account/local-journal-ownership"
-import { resetAccountJournalProjection } from "../../domain/account/account-journal-projection"
+import { markCurrentConfirmedAccountJournalProjection, resetAccountJournalProjection } from "../../domain/account/account-journal-projection"
+import type { JournalEntry } from "../../domain/journal-schema"
+import * as activityParser from "../../domain/import/parse-activity-file-async"
 import { FULL_FORMAT } from "../../domain/restore/backup-file"
 import { createEmptyDecorationState } from "../../domain/decoration-schema"
 import { createEmptyCalendarDecorationState } from "../../domain/calendar-decoration-schema"
@@ -37,7 +39,7 @@ beforeEach(() => {
   api.calendarHydrate.mockResolvedValue(true); api.calendarRead.mockReturnValue(createEmptyCalendarDecorationState())
   api.calendarPersist.mockResolvedValue({ ok: true, storage: "ACCOUNT", state: createEmptyCalendarDecorationState() })
 })
-afterEach(() => { cleanup(); setActiveLocalAccount(null); vi.unstubAllEnvs() })
+afterEach(() => { cleanup(); setActiveLocalAccount(null); vi.unstubAllEnvs(); vi.restoreAllMocks() })
 
 describe("next action follows account import confirmation", () => {
   it.each([
@@ -47,7 +49,7 @@ describe("next action follows account import confirmation", () => {
   ])("routes the next action for $account confirmed, $pending pending, $failed failed", async ({ account, pending, failed, name, target }) => {
     const retry = vi.fn(), analysis = vi.fn()
     const { container } = render(<SavedStage outcome={{ total: account + pending + failed, saved: 0, merged: 0, account, pending, failed, conflicts: 0 }}
-      onRetry={retry} onOpenAnalysis={analysis} onRestart={vi.fn()} />)
+      analysisAvailable onRetry={retry} onOpenAnalysis={analysis} onRestart={vi.fn()} />)
     const next = container.querySelector<HTMLButtonElement>("button.next-action")!
     expect(container.querySelectorAll("button.next-action")).toHaveLength(1)
     expect(next).toHaveAccessibleName(name)
@@ -59,20 +61,78 @@ describe("next action follows account import confirmation", () => {
   })
 
   it("offers the confirmed-record view when analysis is unavailable without retrying the import", async () => {
-    const retry = vi.fn(), summary = vi.fn()
+    const retry = vi.fn(), summary = vi.fn(), analysis = vi.fn()
     const { container } = render(<SavedStage outcome={{ total: 1, saved: 0, account: 1, pending: 0, failed: 0 }}
-      onRetry={retry} onOpenSummary={summary} onRestart={vi.fn()} />)
+      onRetry={retry} onOpenAnalysis={analysis} onOpenSummary={summary} onRestart={vi.fn()} />)
     const next = container.querySelector<HTMLButtonElement>("button.next-action")!
     expect(next).toHaveAccessibleName("가져온 기록 보기")
     await userEvent.setup().click(next)
     expect(summary).toHaveBeenCalledTimes(1)
     expect(retry).not.toHaveBeenCalled()
+    expect(analysis).not.toHaveBeenCalled()
+    expect(screen.queryByRole("button", { name: "가져온 기록 분석하기" })).toBeNull()
   })
 })
 
 function watchFile() {
   return new File([JSON.stringify([{ date: "2026-07-20", name: "Synthetic watch", sport: "running", distanceKm: 5, durationMin: 30 }])], "watch.json", { type: "application/json" })
 }
+function tcxWatchFile() {
+  return new File([`<TrainingCenterDatabase><Activities><Activity Sport="Running"><Id>2026-07-20T06:00:00Z</Id><Lap StartTime="2026-07-20T06:00:00Z"><TotalTimeSeconds>1800</TotalTimeSeconds><DistanceMeters>5000</DistanceMeters></Lap></Activity></Activities></TrainingCenterDatabase>`], "watch.tcx", { type: "application/xml" })
+}
+
+describe("analysis action uses this batch's confirmed file evidence", () => {
+  it.each(["other-format-only", "off", "kill", "no-observation", "unconfirmed", "pending", "conflict", "confirmed"] as const)("checks the %s boundary before exposing analysis", async mode => {
+    vi.stubEnv("VITE_FEATURE_FILE_ANALYSIS_TCX", mode === "off" ? "false" : "true")
+    vi.stubEnv("VITE_KILL_FILE_ANALYSIS_TCX", mode === "kill" ? "true" : "false")
+    vi.stubEnv("VITE_FEATURE_FILE_ANALYSIS_JSON", mode === "off" || mode === "kill" ? "true" : "false")
+    if (mode === "no-observation") vi.spyOn(activityParser, "parseActivityFileAsync").mockResolvedValueOnce({
+      format: "tcx", skipped: 0, activities: [{ date: "2026-07-20", name: "Synthetic legacy activity", sport: "running", distanceKm: "5", durationMin: "30", avgPace: "6:00" }],
+    })
+    api.persist.mockImplementation(async (entry: JournalEntry) => {
+      if (mode !== "unconfirmed" && mode !== "pending" && mode !== "conflict") markCurrentConfirmedAccountJournalProjection("A", entry, 1)
+      return { ok: true, storage: mode === "pending" ? "PENDING" : mode === "conflict" ? "CONFLICT" : "ACCOUNT" }
+    })
+    const analysis = vi.fn(), summary = vi.fn(), user = userEvent.setup()
+    render(<ImportActivities onOpenAnalysis={analysis} onOpenSummary={summary} />)
+    await user.upload(screen.getByLabelText(/가져올 운동 파일 선택/), mode === "other-format-only" ? watchFile() : tcxWatchFile())
+    await user.click(await screen.findByRole("button", { name: "고른 1건 일지에 저장" }))
+    await screen.findByTestId("import-saved")
+    expect(api.persist).toHaveBeenCalledOnce()
+    expect(analysis).not.toHaveBeenCalled()
+    if (mode === "confirmed") {
+      await user.click(screen.getByRole("button", { name: "가져온 기록 분석하기" }))
+      expect(analysis).toHaveBeenCalledOnce()
+      expect(summary).not.toHaveBeenCalled()
+    } else {
+      expect(screen.queryByRole("button", { name: "가져온 기록 분석하기" })).toBeNull()
+      if (mode !== "pending" && mode !== "conflict") {
+        await user.click(screen.getByRole("button", { name: "가져온 기록 보기" }))
+        expect(summary).toHaveBeenCalledOnce()
+      }
+    }
+  })
+
+  it("preserves the batch evidence through retry and offers analysis only after account confirmation", async () => {
+    vi.stubEnv("VITE_FEATURE_FILE_ANALYSIS_TCX", "true")
+    vi.stubEnv("VITE_KILL_FILE_ANALYSIS_TCX", "false")
+    api.persist.mockResolvedValueOnce({ ok: true, storage: "PENDING" })
+      .mockImplementationOnce(async (entry: JournalEntry) => {
+        markCurrentConfirmedAccountJournalProjection("A", entry, 1)
+        return { ok: true, storage: "ACCOUNT" }
+      })
+    const analysis = vi.fn(), user = userEvent.setup()
+    render(<ImportActivities onOpenAnalysis={analysis} />)
+    await user.upload(screen.getByLabelText(/가져올 운동 파일 선택/), tcxWatchFile())
+    await user.click(await screen.findByRole("button", { name: "고른 1건 일지에 저장" }))
+    await screen.findByTestId("import-saved")
+    expect(screen.queryByRole("button", { name: "가져온 기록 분석하기" })).toBeNull()
+    await user.click(screen.getByRole("button", { name: "저장 상태 다시 확인" }))
+    await user.click(await screen.findByRole("button", { name: "가져온 기록 분석하기" }))
+    expect(analysis).toHaveBeenCalledOnce()
+    expect(api.persist).toHaveBeenCalledTimes(2)
+  })
+})
 function backupFile(decorated = false) {
   return new File([JSON.stringify({ app: "TRAINORACLE", format: FULL_FORMAT, ...(decorated ? { decorations: createEmptyDecorationState() } : {}), entries: [{
     id: "synthetic-backup", date: "2026-07-20", kind: "post-session", syncState: "local", savedAt: "2026-07-20T09:00:00.000Z",

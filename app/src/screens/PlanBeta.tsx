@@ -1,4 +1,5 @@
 import React from "react"
+import "../components/next-action.css"
 import { ChevronRight, FileUp, Flag } from "lucide-react"
 import { ErrorBoundary } from "../components/ErrorBoundary"
 import { ACCOUNT_PLAN_EVENT, accountPlanService, accountPlansEnabled } from "../domain/account/account-plan-service"
@@ -48,7 +49,7 @@ import { PlanIntake } from "./plan-beta/PlanIntake"
 import { PrecisionPlanIntake, PrecisionPlanSummary } from "./plan-beta/PrecisionPlanIntake"
 import { completePrecisionOrigins, restoredPrecisionOrigins } from "./plan-beta/precision-plan-intake"
 import type { PrecisionPlanOrigins, PrecisionPlanField } from "./plan-beta/precision-plan-intake"
-import "./plan-beta/PlanIntakeMode.css"
+import { PlanIntakeMode } from "./plan-beta/PlanIntakeMode"
 import type { IntakeStep } from "./plan-beta/PlanIntake"
 import { NotationReader } from "./plan-beta/NotationReader"
 import { RaceDatePreview } from "./plan-beta/RaceDatePreview"
@@ -408,7 +409,7 @@ function PlanBetaContent(props: Omit<React.ComponentProps<typeof LegacyPlanBeta>
       ? "저장 공간에 접근하지 못했어요. 브라우저의 저장 허용 상태를 확인해 주세요."
       : "저장된 계획의 형식을 읽지 못했어요. 이전 버전의 계획이거나 일부 내용이 누락됐을 수 있어요."}</p>
     <p role="alert">계획을 지우거나 새 계획으로 바꾸지 않았어요. 다시 확인해 주세요.</p>
-    <button type="button" onClick={() => setRead(readCurrent())}>다시 확인</button>
+    <button type="button" className="next-action" onClick={() => setRead(readCurrent())}>다시 확인</button>
   </section> : null
   if (!keepLegacy) return storageError
   return <>{storageError}<div hidden={storageUnavailable}>
@@ -1320,12 +1321,7 @@ function LegacyPlanBeta({
   if (instantEntryOpen) return <>
     {/* Keep unsent values and the current question while a supporting tool is open. */}
     <div className="plan-instant-entry" hidden={recordsOpen || notationReaderOpen}>
-    <div className="plan-intake-mode" role="group" aria-label="계획 입력 방식">
-      <button type="button" aria-pressed={intakeMode === "quick"} disabled={instantRecordSaving}
-        onClick={() => setIntakeMode("quick")}>간단히</button>
-      <button type="button" aria-pressed={intakeMode === "precision"} disabled={instantRecordSaving}
-        onClick={() => setIntakeMode("precision")}>직접 설정</button>
-    </div>
+    <PlanIntakeMode value={intakeMode} disabled={instantRecordSaving} onChange={setIntakeMode} />
     <InstantPlanEntryForm today={todayISO()} readToday={todayISO} initialEntry={instantEntry} active={!recordsOpen && !notationReaderOpen} savesRecord
       disabled={instantRecordSaving} isSubmitting={instantRecordSaving} onDraftChange={setInstantEntryDirty} onSubmit={async value => {
       if (instantRecordSaveLock.current) return

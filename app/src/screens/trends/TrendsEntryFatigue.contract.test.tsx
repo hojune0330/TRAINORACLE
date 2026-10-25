@@ -28,7 +28,7 @@ it("offers one empty-state action and an explicitly selected example while recov
   const example = screen.getByRole("button", { name: "예시 결과 보기" })
   expect(example).toHaveAccessibleDescription("예시 · 내 기록 분석이 아니에요")
   fireEvent.click(example)
-  expect(explore).toHaveBeenCalledExactlyOnceWith("focus", "example")
+  expect(explore).toHaveBeenCalledExactlyOnceWith("mix", "example")
   fireEvent.click(screen.getByRole("button", { name: "몸 상태·회복 기록" }))
   expect(screen.getByRole("region", { name: "몸 상태와 회복 기록" })).toBeVisible()
   fireEvent.click(screen.getByRole("button", { name: "컨디션 기록" }))
@@ -45,7 +45,7 @@ it("passes only saved workout identities to the summary even when numeric proven
   expect(panel.mock.lastCall?.[0]).toMatchObject({ savedSessions: [{ id: entry.id, date }] })
   expect(panel.mock.lastCall?.[0].savedSessions[0]).toEqual({ id: entry.id, date })
   expect(screen.queryByText("첫 운동부터 남겨볼까요?")).toBeNull()
-  expect(screen.queryByRole("region", { name: "오라클 예시" })).toBeNull()
+  expect(screen.getByRole("region", { name: "오라클 예시" })).toBeVisible()
 })
 
 it.each(["pending", "malformed"])("does not invent an empty or saved count for %s journal reads", source => {

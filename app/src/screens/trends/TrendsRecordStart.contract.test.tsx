@@ -37,13 +37,13 @@ it("does not treat a plan alone as an analysis and offers direct workout, exampl
   expect(screen.getByRole("button", { name: "운동 기록 쓰기" })).toBeVisible()
   expect(screen.getByRole("button", { name: "예시 결과 보기" })).toBeVisible()
   expect(screen.getByRole("button", { name: "훈련표 보기" })).toBeVisible()
-  expect(container.querySelectorAll(".trends-hub__guide img")).toHaveLength(1)
-  expect(container.querySelector(".trends-hub__guide img")).toHaveAttribute("src", expect.stringContaining("analysis-lens-v2.webp"))
+  expect(container.querySelectorAll(".trends-hub__guide img")).toHaveLength(0)
+  expect(screen.getByRole("img", { name: /예시.*내 기록 분석이 아니에요/ })).toBeVisible()
 
   fireEvent.click(screen.getByRole("button", { name: "운동 기록 쓰기" }))
   expect(onWriteLog).toHaveBeenCalledOnce()
   fireEvent.click(screen.getByRole("button", { name: "예시 결과 보기" }))
-  expect(onOpenOracle).toHaveBeenCalledExactlyOnceWith("focus", "example")
+  expect(onOpenOracle).toHaveBeenCalledExactlyOnceWith("mix", "example")
   fireEvent.click(screen.getByRole("button", { name: "훈련표 보기" }))
   expect(onOpenPlan).toHaveBeenCalledOnce()
 
@@ -57,7 +57,7 @@ it("does not treat a plan alone as an analysis and offers direct workout, exampl
   render(<Trends onWriteLog={onWriteLog} onOpenPlan={onOpenPlanWithPb} onOpenOracle={onOpenOracle} />)
 
   expect(screen.getByRole("region", { name: "최근 저장한 경기 기록" })).toBeVisible()
-  expect(screen.getByRole("region", { name: "내 기록으로 시작하기" })).toBeVisible()
+  expect(screen.queryByRole("region", { name: "내 기록으로 시작하기" })).not.toBeInTheDocument()
   expect(screen.getByRole("button", { name: "훈련표 보기" })).toBeVisible()
   expect(screen.queryByRole("button", { name: "운동 기록 쓰기" })).not.toBeInTheDocument()
   fireEvent.click(screen.getByRole("button", { name: "훈련표 보기" }))

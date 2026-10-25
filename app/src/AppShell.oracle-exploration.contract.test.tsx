@@ -7,6 +7,7 @@ import { getOracleTopic, ORACLE_TOPICS, type OracleTopicId } from "./domain/orac
 import { setActiveLocalAccount } from "./domain/account/local-journal-ownership"
 import * as athleteService from "./domain/account/account-athlete-record-service"
 import * as oracleResults from "./domain/oracle-personal-result"
+import { JOURNAL_STORAGE_KEY } from "./domain/journal-storage-keys"
 
 vi.mock("./screens/Home", () => ({
   Home: ({ onOpenOracle }: { onOpenOracle: (topic: OracleTopicId) => void }) => (
@@ -92,6 +93,34 @@ function storageSnapshot(storage: Storage) {
 }
 
 describe("AppShell oracle exploration navigation", () => {
+  it.each(["LOADING", "FAILED"] as const)("uses the actual athlete-record recovery boundary for a %s level read", async status => {
+    const user = userEvent.setup()
+    vi.spyOn(athleteService, "accountAthleteRecordsEnabled").mockReturnValue(true)
+    vi.spyOn(athleteService, "readAccountAthleteRecordsState").mockReturnValue({
+      status, ownerId: "account-a", records: [], confirmed: false, documentId: null, serverRevision: null,
+    })
+    render(<AppShell />)
+    act(() => setActiveLocalAccount("account-a"))
+    await user.click(screen.getByRole("button", { name: "홈 현재 수준 예시" }))
+
+    expect(screen.queryByRole("button", { name: "다시 확인" })).toBeNull()
+    if (status === "LOADING") {
+      expect(screen.getByRole("status")).toHaveTextContent("계정의 경기 기록을 불러오고 있어요.")
+      expect(screen.queryByRole("button", { name: "경기 기록 확인" })).toBeNull()
+      return
+    }
+
+    expect(screen.getByRole("alert")).toHaveTextContent("계정의 경기 기록을 확인하지 못했어요.")
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      await user.click(screen.getByRole("button", { name: "경기 기록 확인" }))
+      expect(screen.getByRole("heading", { name: "내 종목 기록" })).toBeVisible()
+      await user.click(screen.getByRole("button", { name: "오라클로" }))
+      expect(screen.getByRole("alert")).toHaveTextContent("계정의 경기 기록을 확인하지 못했어요.")
+      expect(screen.queryByRole("button", { name: "다시 확인" })).toBeNull()
+      expect(screen.queryByText("level 개인 결과")).toBeNull()
+    }
+  })
+
   it("refreshes an open level result after online records arrive without navigation", async () => {
     const user = userEvent.setup()
     vi.spyOn(athleteService, "accountAthleteRecordsEnabled").mockReturnValue(true)
@@ -161,8 +190,6 @@ describe("AppShell oracle exploration navigation", () => {
     const topic = getOracleTopic(topicId)
     expect(topic.personalAction).toBe(action)
 
-    await user.click(screen.getByRole("button", { name: "내 기록으로 확인하기" }))
-    expect(screen.getByText("필요한 입력: 필요한 구조화 기록")).toBeVisible()
     await user.click(screen.getByRole("button", { name: "결과 행동" }))
 
     expect(screen.getByRole("heading", { name: heading })).toBeVisible()
@@ -189,7 +216,6 @@ describe("AppShell oracle exploration navigation", () => {
     const user = userEvent.setup()
     render(<AppShell />)
     await user.click(screen.getByRole("button", { name: "홈 현재 수준 예시" }))
-    await user.click(screen.getByRole("button", { name: "내 기록으로 확인하기" }))
     await user.click(screen.getByRole("button", { name: "결과 행동" }))
     expect(screen.getByRole("heading", { name: "내 종목 기록" })).toBeVisible()
 
@@ -202,7 +228,6 @@ describe("AppShell oracle exploration navigation", () => {
     const user = userEvent.setup()
     render(<AppShell />)
     await user.click(screen.getByRole("button", { name: "홈 현재 수준 예시" }))
-    await user.click(screen.getByRole("button", { name: "내 기록으로 확인하기" }))
     await user.click(screen.getByRole("button", { name: "결과 행동" }))
     expect(screen.getByRole("heading", { name: "내 종목 기록" })).toBeVisible()
     expect(screen.getByRole("button", { name: "오라클로" })).toBeVisible()
@@ -237,6 +262,25 @@ describe("AppShell oracle exploration navigation", () => {
 
     expect(screen.getByRole("heading", { name: "내 훈련 계획" })).toBeVisible()
     expect(screen.queryByRole("combobox", { name: "살펴볼 주제" })).not.toBeInTheDocument()
+  })
+
+  it.each(["mix", "compare", "change", "focus", "priority"] as const)("keeps the %s example action in read-status mode while journal reading fails", async topicId => {
+    const user = userEvent.setup()
+    const originalRead = Storage.prototype.getItem
+    vi.spyOn(Storage.prototype, "getItem").mockImplementation(function(this: Storage, key: string) {
+      if (key === JOURNAL_STORAGE_KEY) throw new Error("synthetic journal read failure")
+      return originalRead.call(this, key)
+    })
+    render(<AppShell />)
+    await user.click(screen.getByRole("button", { name: "홈 현재 수준 예시" }))
+    await user.selectOptions(screen.getByRole("combobox", { name: "살펴볼 주제" }), topicId)
+    expect(screen.getByRole("heading", { name: getOracleTopic(topicId).example.headline })).toBeVisible()
+    expect(screen.queryByRole("button", { name: "결과 행동" })).toBeNull()
+
+    await user.click(screen.getByRole("button", { name: "내 기록 확인" }))
+    expect(screen.getByText("기록을 모두 확인하지 못했어요. 다시 확인한 뒤 결과를 볼 수 있어요.")).toBeVisible()
+    expect(screen.queryByRole("button", { name: "결과 행동" })).toBeNull()
+    expect(screen.queryByRole("heading", { name: /^(새 일지 작성|내 훈련 계획|지난 일지)$/u })).toBeNull()
   })
 
   it("browses every sample and follows its next topic without writing personal storage", async () => {

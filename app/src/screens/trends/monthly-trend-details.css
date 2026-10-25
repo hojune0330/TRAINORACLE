@@ -1,6 +1,54 @@
 .monthly-trend-section {
-  padding: 26px 20px 0;
+  padding: var(--space-6) var(--space-5) 0;
   min-width: 0;
+}
+
+.monthly-trend-section__heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+  min-width: 0;
+}
+
+.monthly-trend-section__heading h3 {
+  margin: 0;
+  color: var(--ink);
+  line-height: 1.4;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.monthly-trend-section__heading p {
+  margin: var(--space-1) 0 0;
+  color: var(--ink-3);
+  font-size: var(--fs-caption);
+  line-height: 1.5;
+}
+
+.monthly-trend-section__selector {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-width: var(--app-touch-min);
+  min-height: var(--app-touch-min);
+  padding: var(--space-2) var(--space-3);
+  border: var(--bw-line) solid var(--line);
+  border-radius: var(--r-action);
+  background: var(--surface);
+  color: var(--ink);
+  font: 700 var(--fs-body) / 1.5 var(--sans);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.monthly-trend-section__selector:focus-visible,
+.monthly-trend-section__start button:focus-visible,
+.monthly-metric-sheet button:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
 }
 
 .monthly-trend-section__scope-note {
@@ -22,14 +70,23 @@
 }
 
 .monthly-trend-section__start button {
+  min-width: var(--app-touch-min);
   min-height: var(--app-touch-min);
-  padding: var(--space-2) 0;
-  border: 0;
-  background: transparent;
+  padding: var(--space-2) var(--space-3);
+  border: var(--bw-line) solid var(--line);
+  border-radius: var(--r-action);
+  background: var(--surface);
   color: var(--ink);
   font: inherit;
   text-align: left;
   cursor: pointer;
+}
+
+.monthly-trend-section__start-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
 }
 
 .monthly-trend-section__status {
@@ -91,4 +148,134 @@
   margin: var(--space-2) 0 0;
   padding-left: var(--space-5);
   overflow-wrap: anywhere;
+}
+
+.monthly-trend-section__sources li + li {
+  margin-top: var(--space-3);
+}
+
+.monthly-trend-section__source-id > summary {
+  display: flex;
+  align-items: center;
+  min-height: var(--app-touch-min);
+  cursor: pointer;
+  color: var(--ink-3);
+}
+
+.monthly-trend-section__source-id > div {
+  font-family: var(--mono);
+}
+
+.monthly-metric-sheet {
+  position: fixed;
+  inset: auto 0 0;
+  box-sizing: border-box;
+  width: min(100%, 560px);
+  max-height: min(80dvh, 640px);
+  margin: 0 auto;
+  padding: var(--space-5) var(--space-5) max(var(--space-5), env(safe-area-inset-bottom));
+  overflow-y: auto;
+  border: var(--bw-line) solid var(--line);
+  border-bottom: 0;
+  border-radius: var(--r-task-surface) var(--r-task-surface) 0 0;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--sans);
+}
+
+.monthly-metric-sheet::backdrop {
+  background: var(--scrim);
+}
+
+.monthly-metric-sheet__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.monthly-metric-sheet__header h3 {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.monthly-metric-sheet__header button {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  min-width: var(--app-touch-min);
+  min-height: var(--app-touch-min);
+  padding: var(--space-2);
+  border: 0;
+  border-radius: var(--r-action);
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.monthly-metric-sheet__options {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  border: 0;
+}
+
+.monthly-metric-sheet__options legend {
+  margin-bottom: var(--space-2);
+  color: var(--ink-3);
+  font-size: var(--fs-caption);
+}
+
+.monthly-metric-sheet__option {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 20px;
+  align-items: center;
+  gap: var(--space-3);
+  box-sizing: border-box;
+  min-width: var(--app-touch-min);
+  min-height: var(--app-touch-min);
+  padding: var(--space-3) var(--space-4);
+  border: var(--bw-line) solid transparent;
+  border-radius: var(--r-action);
+  background: transparent;
+  color: var(--ink-2);
+  font-family: inherit;
+  font-size: var(--fs-body);
+  line-height: 1.5;
+  text-align: left;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.monthly-metric-sheet__option[aria-pressed="true"] {
+  border-color: var(--line);
+  background: var(--surface-2);
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.monthly-metric-sheet__check {
+  visibility: hidden;
+}
+
+.monthly-metric-sheet__option[aria-pressed="true"] .monthly-metric-sheet__check {
+  visibility: visible;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .monthly-trend-section__selector:hover,
+  .monthly-trend-section__start button:hover,
+  .monthly-metric-sheet__header button:hover,
+  .monthly-metric-sheet__option:hover {
+    background: var(--surface-2);
+  }
+}
+
+@media (max-width: 360px) {
+  .monthly-trend-section__heading {
+    flex-wrap: wrap;
+  }
 }
