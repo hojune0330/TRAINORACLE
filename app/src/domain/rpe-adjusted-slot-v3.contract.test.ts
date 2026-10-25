@@ -634,7 +634,7 @@ it("retains a multi-plan journal original and reads the exact slot after the act
   const original = readJournalOriginalPlan(loaded, [], [], retained)
   expect(original).toMatchObject({ kind: "matched_multi_adjusted_v3", source: "ARCHIVED", session: slot })
   expect(getter).not.toHaveBeenCalled()
-  if (original.kind !== "matched_multi_adjusted_v3") throw Error("Original missing")
+  if (original.kind !== "matched_multi_adjusted_v3" || original.explanation === undefined) throw Error("Original explanation missing")
   expect(original.explanation).toEqual(retained[0]!.slots.find(s => s.address.day === slot.day && s.address.slot === slot.slot)!.explanation)
   render(React.createElement(MultiPlanEvidenceContext.Provider, { value: () => retained },
     React.createElement(JournalOriginalPlan, { entry: loaded })))
@@ -642,7 +642,14 @@ it("retains a multi-plan journal original and reads the exact slot after the act
   details.open = true
   fireEvent(details, new Event("toggle"))
   expect(screen.queryByText("저장 당시 기록으로 계산한 참고 시간")).toBeNull()
-  expect(screen.getByText("이 훈련을 하는 이유")).toBeTruthy()
+  fireEvent.click(screen.getByRole("button", { name: "자세히" }))
+  fireEvent.click(screen.getByRole("button", { name: "설명까지" }))
+  const purposeSection = screen.getByRole("heading", { name: "목적" }).closest("section")!
+  const recoverySection = screen.getByRole("heading", { name: "회복" }).closest("section")!
+  expect(purposeSection).toBeVisible()
+  expect(purposeSection).toHaveTextContent(original.explanation.purpose)
+  expect(recoverySection).toBeVisible()
+  expect(recoverySection).toHaveTextContent(original.explanation.recoveryRationale)
   expect(getter).not.toHaveBeenCalled()
   expect(loaded.distanceKm).toBe("")
   act(() => { setActiveLocalAccount("another-account") })
