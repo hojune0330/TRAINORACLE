@@ -1,8 +1,9 @@
 import { readFileSync } from "node:fs"
 import { createElement } from "react"
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { ViewSwitcher } from "../components/ViewSwitcher"
+import { MonthlyTrendSection } from "../screens/trends/MonthlyTrendSection"
 
 afterEach(cleanup)
 
@@ -14,7 +15,6 @@ const compactTabSurfaces = [
   "src/screens/TrainingLexicon.tsx",
   "src/screens/trends/CumulativeDistancePanel.tsx",
   "src/screens/trends/EnergySystemLedgerPanel.tsx",
-  "src/screens/trends/MonthlyTrendSection.tsx",
 ] as const
 
 describe("compact tab density", () => {
@@ -36,12 +36,35 @@ describe("compact tab density", () => {
     expect(compactTabsCss).not.toContain(".decoration-shop--open")
   })
 
-  it("uses the audited tab surfaces and keeps the journal view switcher controlled", () => {
+  it("uses audited tabs, a touch-safe monthly metric dialog, and a controlled journal view switcher", async () => {
     for (const path of compactTabSurfaces) {
       const source = readFileSync(path, "utf8")
       expect(source, path).toContain("app-compact-tabs")
       expect(source, path).toContain("app-compact-tab")
     }
+    const monthlyCss = readFileSync("src/screens/trends/monthly-trend-details.css", "utf8")
+    expect(monthlyCss).toMatch(/\.monthly-trend-section__selector\s*\{[^}]*min-height:\s*var\(--app-touch-min\)/u)
+    expect(monthlyCss).toMatch(/\.monthly-metric-sheet__option\s*\{[^}]*min-height:\s*var\(--app-touch-min\)/u)
+    const onMetricChange = vi.fn()
+    const monthly = render(createElement(MonthlyTrendSection, {
+      observations: [], today: "2026-10-25", initialMetric: "DISTANCE_KM", onMetricChange,
+    }))
+    const selector = screen.getByRole("button", { name: "지표 선택: 거리" })
+    expect(selector).toHaveAttribute("aria-haspopup", "dialog")
+    expect(selector).toHaveAttribute("aria-expanded", "false")
+    expect(onMetricChange).toHaveBeenCalledExactlyOnceWith("DISTANCE_KM")
+    fireEvent.click(selector)
+    const sheet = screen.getByRole("dialog", { name: "볼 지표 선택" })
+    expect(sheet).toBeVisible()
+    expect(selector).toHaveAttribute("aria-expanded", "true")
+    expect(within(sheet).getByRole("button", { name: "거리" })).toHaveAttribute("aria-pressed", "true")
+    const pace = within(sheet).getByRole("button", { name: "페이스" })
+    expect(pace).toHaveAttribute("aria-pressed", "false")
+    fireEvent.click(pace)
+    expect(onMetricChange).toHaveBeenLastCalledWith("SECONDS_PER_KM")
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument())
+    expect(screen.getByRole("button", { name: "지표 선택: 페이스" })).toHaveAttribute("aria-expanded", "false")
+    monthly.unmount()
     // Journal destinations use the shell dock; its view mode keeps controlled radios.
     const journal = readFileSync("src/screens/JournalArchive.tsx", "utf8")
     expect(journal).toContain('useDomainNavigation({ domain: "journal", current: activeSection')

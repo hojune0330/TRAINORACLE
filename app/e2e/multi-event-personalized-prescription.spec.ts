@@ -152,7 +152,13 @@ for (const fixture of cases) {
     }
     await openPlanOptions(page, true)
     const candidateA = page.getByRole("region", { name: "다른 계획 비교", exact: true }).locator(".plan-candidate").first()
-    await expect(candidateA.getByText(fixture.notation).first()).toBeVisible()
+    const workPattern = new RegExp(`${fixture.expectedPrescription.repetitionsPerSet}\\s*×\\s*${fixture.expectedPrescription.repetitionDistanceM}m`, "u")
+    await candidateA.getByRole("button", { name: /훈련 내용 보기$/u }).filter({ hasText: workPattern }).click()
+    const candidateReader = page.locator(".plan-day-reader[open]")
+    await expect(candidateReader).toBeVisible()
+    await expect(candidateReader.getByText(fixture.notation).first()).toBeVisible()
+    await candidateReader.getByRole("button", { name: /^(?:달력|하루씩)으로 돌아가기$/u }).click()
+    await expect(candidateReader).toHaveCount(0)
     await page.getByRole("button", { name: /이 일정으로 시작/u }).click()
     await expectActivePlanHeading(page)
     const storedPrescription = await page.evaluate(() => {
@@ -176,6 +182,7 @@ for (const fixture of cases) {
     await expect(explanation.getByText(fixture.notation).first()).toBeVisible()
     await explanation.getByRole("tab", { name: "이유·근거" }).click()
     await expect(explanation.getByText("저장된 처방과 설명 버전이 일치해요.")).toBeVisible()
+    await explanation.locator("summary").filter({ hasText: /^구성·회복의 이유와 근거$/u }).click()
     await expect(explanation.getByRole("heading", { name: "회복을 이렇게 넣은 이유", exact: true })).toBeAttached()
     await expect(explanation.getByText(new RegExp(`계산에 사용한 기준 기록: ${fixture.eventDistanceM}m`, "u"))).toBeAttached()
     if (process.env.CAPTURE_PLAN_QA === "1") {

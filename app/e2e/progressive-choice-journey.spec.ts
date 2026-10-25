@@ -31,7 +31,7 @@ for (const persona of personas) {
       const nav = page.getByRole("navigation", { name: "주 탭" })
       await expect(page.getByRole("button", { name: "오늘 운동 기록 쓰기" })).toBeInViewport()
       await click(nav.getByRole("button", { name: "오라클", exact: true }))
-      await expect(page.getByRole("heading", { name: "내 훈련 살펴보기", exact: true })).toBeVisible()
+      await expect(page.getByRole("heading", { name: "내 훈련", exact: true, level: 2 })).toBeVisible()
       await expect(page.getByRole("button", { name: "훈련량", exact: true })).toBeVisible()
       await page.screenshot({ path: info.outputPath("oracle-first.png") })
       const sections = () => page.getByRole("navigation", { name: "오라클 메뉴" })

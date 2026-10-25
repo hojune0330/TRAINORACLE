@@ -23,26 +23,50 @@ test("keeps compact navigation visible without shrinking its touch target", asyn
   await expectNoHorizontalOverflow(page)
 })
 
-test("keeps analysis view tabs compact and touchable", async ({ page }) => {
+test("keeps analysis metric choices touchable and returns selection focus", async ({ page }) => {
   await seedTouchAuditEntries(page)
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "오라클" }).click()
   await page.getByRole("group", { name: "훈련 분석 자세히 보기" }).getByRole("button", { name: "월별 변화", exact: true }).click()
 
-  const tabs = page.getByRole("region", { name: "최근 4개월 추이" })
-    .getByRole("group", { name: "추이 항목" })
-    .getByRole("button")
-  await expect(tabs).toHaveCount(4)
+  const selector = page.getByRole("region", { name: "최근 4개월 추이" })
+    .getByRole("button", { name: /^지표 선택:/u })
+  await expect(selector).toBeVisible()
+  await expect(selector).toHaveAttribute("aria-expanded", "false")
+  expect((await selector.boundingBox())!.height).toBeGreaterThanOrEqual(44)
+  await selector.click()
+  const sheet = page.getByRole("dialog", { name: "볼 지표 선택" })
+  const options = sheet.getByRole("group", { name: "추이 항목" }).getByRole("button")
+  await expect(options).toHaveCount(4)
+  await expect(selector).toHaveAttribute("aria-expanded", "true")
 
-  for (const tab of await tabs.all()) {
-    const box = await tab.boundingBox()
+  for (const option of await options.all()) {
+    const box = await option.boundingBox()
+    expect(box!.width).toBeGreaterThanOrEqual(44)
     expect(box!.height).toBeGreaterThanOrEqual(44)
-    const face = await tab.evaluate((element) => {
-      const style = getComputedStyle(element, "::before")
-      return { top: style.top, bottom: style.bottom, radius: style.borderRadius }
-    })
-    expect(face).toEqual({ top: "0px", bottom: "0px", radius: "12px" })
+    await expect(option).toHaveCSS("border-radius", "12px")
   }
+  const distance = sheet.getByRole("button", { name: "거리", exact: true })
+  await expect(distance).toHaveAttribute("aria-pressed", "true")
+  await expect(distance).toBeFocused()
+  await expectNoHorizontalOverflow(page)
+
+  await sheet.getByRole("button", { name: "페이스", exact: true }).click()
+  await expect(sheet).toHaveCount(0)
+  await expect(selector).toHaveAccessibleName("지표 선택: 페이스")
+  await expect(selector).toHaveAttribute("aria-expanded", "false")
+  await expect(selector).toBeFocused()
+
+  await selector.click()
+  const pace = sheet.getByRole("button", { name: "페이스", exact: true })
+  await expect(pace).toBeFocused()
+  await page.keyboard.press("ArrowDown")
+  await expect(sheet.getByRole("button", { name: "기분", exact: true })).toBeFocused()
+  await expect(pace).toHaveAttribute("aria-pressed", "true")
+  await page.keyboard.press("Escape")
+  await expect(sheet).toHaveCount(0)
+  await expect(selector).toHaveAccessibleName("지표 선택: 페이스")
+  await expect(selector).toBeFocused()
 
   await expectNoHorizontalOverflow(page)
 })
@@ -70,7 +94,7 @@ test("shared choices keep selection, keyboard operation and enlarged labels acro
     expect((await choice.boundingBox())!.height).toBeGreaterThanOrEqual(44)
   }
   await page.emulateMedia({ reducedMotion: "reduce" })
-  await expect(page.getByRole("heading", { name: "내 훈련 살펴보기", exact: true })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "내 훈련", exact: true, level: 2 })).toBeVisible()
   await expect(choices.first()).toBeVisible()
   await page.screenshot({ path: info.outputPath("rounded-oracle-default.png"), fullPage: true })
   // A larger user font must grow the face, not clip a fixed-height label.

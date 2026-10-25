@@ -42,8 +42,9 @@ test("entry cards keep exact methods and open the selected slot's progress witho
   await page.setViewportSize({ width: 375, height: 667 })
   await methodButton.click()
   const methodReader = page.getByRole("dialog", { name: "2026년 9월 27일 일요일" })
-  const afternoonMethod = methodReader.getByRole("group", { name: "9월 27일 일요일 오후 세션" }).getByRole("definition").filter({ hasText: "8 ×" })
-  await expect(afternoonMethod).toContainText("8 × (1분 · 힘든 정도 1–2/10 → 2분 · 힘든 정도 1–2/10)")
+  const afternoonMethod = methodReader.getByRole("group", { name: "9월 27일 일요일 오후 세션" })
+    .getByRole("term").filter({ hasText: /^본운동$/u }).locator("..").getByRole("definition")
+  await expect(afternoonMethod).toContainText("(1분 · 힘든 정도(RPE) 1–2/10 → 2분 · 걷기 · 힘든 정도(RPE) 1–2/10)을 8번")
   const storedMethod = (await afternoonMethod.textContent())!.trim()
   await info.attach("reader-slot-geometry", { body: JSON.stringify(await methodReader.evaluate(dialog => {
     const body = dialog.querySelector<HTMLElement>(".plan-day-reader__body")!
@@ -57,7 +58,7 @@ test("entry cards keep exact methods and open the selected slot's progress witho
   await methodButton.click()
   const reader = page.getByRole("dialog", { name: "2026년 9월 27일 일요일" })
   const afternoon = reader.getByRole("group", { name: "9월 27일 일요일 오후 세션" })
-  await expect(afternoon.getByRole("definition").filter({ hasText: "8 ×" })).toHaveText(storedMethod)
+  await expect(afternoon.getByRole("term").filter({ hasText: /^본운동$/u }).locator("..").getByRole("definition")).toHaveText(storedMethod)
   await afternoon.getByText("일지·진행 기록", { exact: true }).click()
   await expect(afternoon.getByRole("button", { name: "휴식", exact: true })).toBeVisible()
   await expect(reader.getByRole("button", { name: "오후", exact: true })).toHaveAttribute("aria-current", "location")

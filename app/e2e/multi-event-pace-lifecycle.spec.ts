@@ -150,11 +150,12 @@ async function confirmNumeric(page: Page, sourceId: string) {
     await page.getByRole("group", { name: "기준 기록 선택", exact: true }).getByRole("button").nth(index).click()
     await page.getByRole("button", { name: source.purpose === "RACE_GOAL" ? "이 목표 기록으로 페이스 적용" : "이 기록으로 개인 페이스 적용", exact: true }).click()
   } else {
-    const offer = page.getByRole("button", { name: "이 기록으로 목표 페이스 보기", exact: true })
-    if (await offer.isVisible()) {
-      const section = page.getByRole("region", { name: "최근 기록으로 페이스 추천" })
+    const section = page.getByRole("region", { name: "최근 기록으로 페이스 추천" })
+    if (await section.isVisible()) {
       await section.locator("summary", { hasText: "기준 바꾸기" }).click()
       await section.getByRole("combobox", { name: "기준 기록", exact: true }).selectOption(sourceId)
+      const offer = section.getByRole("button", { name: "이 페이스로 계획안에 적용", exact: true })
+      await expect(offer).toBeEnabled()
       await offer.click()
     }
   }

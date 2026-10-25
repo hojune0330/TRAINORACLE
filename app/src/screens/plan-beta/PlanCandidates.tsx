@@ -425,7 +425,7 @@ export function PlanCandidates({
       disabled={saving} onClick={onRebuildCycle}>일지를 반영해 다시 만들기</button>}
   </>
 
-  const planSelection = <details open={comparisonOpen} onToggle={event => setComparisonOpen(event.currentTarget.open)}>
+  const planSelection = <details className="plan-candidate-disclosure" open={comparisonOpen} onToggle={event => setComparisonOpen(event.currentTarget.open)}>
     <summary>다른 계획 보기</summary>
     {generated.racePlacement.kind !== "NO_TARGET_RACE" && <RacePlacementNotice state={generated.racePlacement} />}
     <CandidateComparison candidates={generated.candidates} />
@@ -486,7 +486,7 @@ export function PlanCandidates({
             generated={generated} records={athleteRecords} disabled={!canRevise || recordConfirmationPending || catalogDraftPending || initialMainPending || methodDraftPending || targetDraftPending}
             onChange={onCatalogChange} />}
           {planControls}
-          <details><summary>전체 구성·입력 정보</summary>
+          <details className="plan-candidate-disclosure"><summary>전체 구성·입력 정보</summary>
           {inputSummary}
           <PlanPrescriptionSupply sessions={visibleDefaultSessions} prescriptionBinding={prescriptionBinding}
             confirmationPending={recordConfirmationPending || detailedEvidencePending} startDate={startDate}

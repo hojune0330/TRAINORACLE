@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest"
 import { createElement } from "react"
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import type { StructuredJournalObservation } from "./journal-observation"
 import { projectStructuredJournalObservations } from "./journal-observation"
 import type { PostSessionEntry } from "./journal-schema"
@@ -430,15 +430,37 @@ describe("adopted file distance across distance charts", () => {
     expect(summarizeMetricCoverage(observations, "DISTANCE_KM")).toEqual({ included: 2, excluded: 0 })
   })
 
-  it("labels admitted file distance without calling it direct input and keeps file pace explicitly excluded", () => {
+  it("labels admitted file distance without calling it direct input and keeps file pace explicitly excluded", async () => {
     const observations = projectFiles([fileSession("file-source")])
-    render(createElement(MonthlyTrendSection, { observations, today: "2026-09-19" }))
-    expect(screen.getByText(/\uD30C\uC77C \uD398\uC774\uC2A4 \uC81C\uC678/u)).toBeVisible()
+    expect(observations[0]).toMatchObject({ secondsPerKm: 60, fieldProvenance: { secondsPerKm: "DERIVED" } })
+    const { unmount } = render(createElement(MonthlyTrendSection, { observations, today: "2026-09-19", initialMetric: "SECONDS_PER_KM" }))
+    expect(eligibleMetricValue(observations[0]!, "SECONDS_PER_KM")).toBeNull()
+    expect(screen.getByText("집계 사용 0건 · 집계 제외 1건")).toBeVisible()
     const distance = TREND_METRIC_OPTIONS.find(option => option.metric === "DISTANCE_KM")!
-    fireEvent.click(screen.getByRole("button", { name: distance.buttonLabel }))
+    fireEvent.click(screen.getByRole("button", { name: "지표 선택: 페이스" }))
+    const selector = screen.getByRole("dialog", { name: "볼 지표 선택" })
+    fireEvent.click(within(selector).getByRole("button", { name: distance.buttonLabel }))
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument())
+    expect(screen.getByRole("button", { name: "지표 선택: 거리" })).toHaveAttribute("aria-expanded", "false")
     fireEvent.click(screen.getByText("월별 수치와 집계 범위 보기"))
     expect(screen.getByText(/\uD655\uC778\uD55C \uD30C\uC77C \uAC70\uB9AC \uD3EC\uD568/u)).toBeVisible()
     expect(screen.queryByText(/\uC9C1\uC811 \uAE30\uB85D/u)).not.toBeInTheDocument()
-    expect(screen.getByText(/file-source.*\uD655\uC778\uD55C \uD30C\uC77C \uAC70\uB9AC/u)).toBeInTheDocument()
+    fireEvent.click(screen.getByText("출처 기록 보기"))
+    const source = screen.getByRole("listitem")
+    expect(within(source).getByText("2026년 9월 19일 · 운동 기록 · 확인한 파일 거리")).toBeVisible()
+    expect(within(source).getByText("기록 ID: file-source")).not.toBeVisible()
+    fireEvent.click(within(source).getByText("원본 식별 정보"))
+    expect(within(source).getByText("기록 ID: file-source")).toBeVisible()
+    expect(within(source).getByText(`출처 버전: ${observations[0]!.sourceRef.sourceVersion}`)).toBeVisible()
+    unmount()
+
+    // The FILE-only presentation notice has its own typed observation fixture;
+    // the current imported-entry projection above retains DERIVED provenance.
+    const filePace: StructuredJournalObservation = { ...observations[0]!,
+      fieldProvenance: { ...observations[0]!.fieldProvenance, secondsPerKm: "FILE" } }
+    expect(eligibleMetricValue(filePace, "SECONDS_PER_KM")).toBeNull()
+    render(createElement(MonthlyTrendSection, { observations: [filePace], today: "2026-09-19", initialMetric: "SECONDS_PER_KM" }))
+    expect(screen.getByText("집계 사용 0건 · 집계 제외 1건")).toBeVisible()
+    expect(screen.getByText(/\uD30C\uC77C \uD398\uC774\uC2A4 \uC81C\uC678/u)).toBeVisible()
   })
 })

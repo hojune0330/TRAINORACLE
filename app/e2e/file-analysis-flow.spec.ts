@@ -286,10 +286,16 @@ async function saveImport(page: Page) {
 async function openFileAnalysis(page: Page) {
   const panel = page.getByTestId("file-analysis-panel")
   if (await panel.isVisible()) return panel
-  const menu = page.getByRole("group", { name: "훈련 분석 자세히 보기" })
-  await menu.getByRole("button", { name: "파일 분석", exact: true }).click()
+  await page.getByRole("button", { name: "파일 분석", exact: true }).click()
   await expect(panel).toBeVisible()
   return panel
+}
+
+async function openComparison(page: Page) {
+  await openPlanOptions(page)
+  const summary = page.locator("summary").filter({ hasText: /^다른 계획 보기$/u })
+  if (await summary.locator("..").getAttribute("open") === null) await summary.click()
+  await expect(page.getByRole("region", { name: "다른 계획 비교", exact: true })).toBeVisible()
 }
 
 test("TCX account acknowledgement -> report -> pace plan saved/reopened -> confirmed original comparison saved/reloaded", async ({ page, context, browser }, testInfo) => {
@@ -389,10 +395,10 @@ test("TCX account acknowledgement -> report -> pace plan saved/reopened -> confi
   await method.evaluate(node => node.scrollIntoView({ block: "start" }))
   await page.screenshot({ path: testInfo.outputPath("method-preference-eligibility.png"), animations: "disabled" })
   await method.getByRole("button", { name: "기록으로 페이스 받기", exact: true }).click()
-  await openPlanOptions(page)
-  const choose = page.locator("article.plan-candidate")
+  await openComparison(page)
+  const candidate = page.locator("article.plan-candidate")
     .filter({ has: page.getByRole("button", { name: /^계획안 A 일정/u }) })
-    .getByRole("button", { name: "A안 선택됨", exact: true })
+  const choose = candidate.getByRole("button", { name: "A안 선택됨", exact: true })
   await expect(choose).toBeDisabled()
   await assertNoAutomaticPlanWrite()
   await page.getByRole("group", { name: "계획 확인·변경" })
@@ -401,14 +407,19 @@ test("TCX account acknowledgement -> report -> pace plan saved/reopened -> confi
   const record = page.getByRole("region", { name: "개인 페이스 기준 기록" })
   await record.getByRole("group", { name: "기준 기록 선택" }).getByRole("button").first().click()
   await record.getByRole("button", { name: "이 기록으로 개인 페이스 적용" }).click()
-  await openPlanOptions(page)
+  await openComparison(page)
   const candidateDetails = page.getByRole("button", { name: "계획안 A 일정 펼치기" })
   if (await candidateDetails.count()) await candidateDetails.click()
-  const pace = page.getByRole("complementary", { name: "추천 페이스 기준" }).first()
+  await candidate.getByRole("button", { name: /훈련 내용 보기$/u }).filter({ hasText: /5 × 1km/u }).click()
+  const previewReader = page.locator(".plan-day-reader[open]")
+  await expect(previewReader).toBeVisible()
+  const pace = previewReader.getByRole("complementary", { name: "추천 페이스 기준" })
   await pace.locator("summary").focus(); await pace.locator("summary").press("Enter")
   await expect(pace.getByText("1,111.25초 × 1000m ÷ 5000m")).toBeVisible()
   await pace.scrollIntoViewIfNeeded()
   await page.screenshot({ path: testInfo.outputPath("explicit-pace-candidate.png") })
+  await previewReader.getByRole("button", { name: /^(?:달력|하루씩)으로 돌아가기$/u }).click()
+  await expect(previewReader).toHaveCount(0)
   await assertNoAutomaticPlanWrite()
   await choose.click()
   await assertNoAutomaticPlanWrite()

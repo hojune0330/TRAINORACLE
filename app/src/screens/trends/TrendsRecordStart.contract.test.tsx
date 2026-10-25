@@ -9,7 +9,6 @@ vi.mock("../../domain/plan-beta-store", async importOriginal => ({
   ...await importOriginal<typeof import("../../domain/plan-beta-store")>(),
   loadPlanBetaState: () => planStore.state,
 }))
-vi.mock("../../domain/personal-oracle", () => ({ derivePersonalOracle: ({ planState }: { planState: unknown }) => ({ maturity: planState === null ? "EMPTY" : "STARTING" }) }))
 vi.mock("./PersonalOraclePanel", () => ({ PersonalOraclePanel: () => null }))
 vi.mock("../home/HomeCoachingSummary", () => ({ HomeCoachingSummary: () => <div data-testid="home-coaching-summary" /> }))
 beforeEach(async () => { localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture(); planStore.state = null })

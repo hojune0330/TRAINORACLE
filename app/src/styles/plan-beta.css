@@ -2436,6 +2436,13 @@
   outline-offset: 2px;
 }
 
+.plan-candidates .plan-candidate-disclosure > summary {
+  min-height: var(--app-touch-min);
+  padding-block: var(--space-3);
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
 .plan-candidate-list {
   margin-top: var(--space-3);
   border-top: var(--bw-line) solid var(--ink);

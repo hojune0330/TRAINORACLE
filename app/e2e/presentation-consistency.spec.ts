@@ -14,7 +14,7 @@ test("desktop results expand without changing diary width or navigation", async 
   const shell = page.locator(".app-shell")
   const originalWidth = (await shell.boundingBox())!.width
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "오라클", exact: true }).click()
-  await expect(page.getByRole("heading", { name: "내 훈련 살펴보기" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "내 훈련", exact: true, level: 2 })).toBeVisible()
   expect((await shell.boundingBox())!.width).toBeGreaterThan(originalWidth)
   await page.screenshot({ path: info.outputPath("analysis-desktop.png"), fullPage: true })
   await page.getByRole("navigation", { name: "오라클 메뉴" }).getByRole("button", { name: "오라클 나가기" }).click()

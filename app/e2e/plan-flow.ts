@@ -84,10 +84,13 @@ export async function openPlanOptions(page: Page, expandA = false): Promise<void
   const purposeEntry = page.getByRole("group", { name: "계획 확인·변경" })
     .getByRole("button", { name: "일정·운동 시간", exact: true })
   if (await purposeEntry.count()) {
+    const comparison = page.getByRole("region", { name: "다른 계획 비교", exact: true })
+    if (!await comparison.isVisible()) await page.locator("summary").filter({ hasText: /^다른 계획 보기$/u }).click()
+    await expect(comparison).toBeVisible()
     if (await purposeEntry.getAttribute("aria-expanded") !== "true") await purposeEntry.click()
     const schedule = page.getByRole("region", { name: "일정·운동 시간", exact: true })
     await expect(schedule).toBeVisible()
-    const toggle = page.getByRole("region", { name: "다른 계획 비교", exact: true }).getByRole("button", { name: "계획안 A 일정 펼치기" })
+    const toggle = comparison.getByRole("button", { name: "계획안 A 일정 펼치기" })
     if (expandA && await toggle.count()) await toggle.click()
     return
   }

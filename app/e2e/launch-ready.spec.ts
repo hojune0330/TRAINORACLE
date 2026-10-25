@@ -36,7 +36,11 @@ async function expectCanonicalPlanCandidates(page: Page): Promise<void> {
     name: "계획이 준비됐어요",
   })).toBeVisible()
   await expect(page.locator(".plan-candidate")).toHaveCount(2)
-  await expect(page.getByRole("button", { name: /^[AB]안 선택(?:됨)?$/u })).toHaveCount(2)
+  const comparison = page.getByRole("region", { name: "다른 계획 비교", exact: true })
+  if (!await comparison.isVisible()) {
+    await page.getByRole("button", { name: "다른 계획안 비교하기", exact: true }).click()
+  }
+  await expect(comparison.getByRole("button", { name: /^[AB]안 선택(?:됨)?$/u })).toHaveCount(2)
   await expect(page.getByRole("button", { name: "이 일정으로 시작", exact: true })).toHaveCount(1)
   await expect(page.getByText(/9일/u).first()).toBeVisible()
   await expect.poll(async () => page.evaluate(
@@ -135,6 +139,8 @@ test("generates a bounded two-a-day 9-day candidate", async ({ page }) => {
   await completeDetailedPlan(page, { event: /^5000m\b/u, division: /고등부/u, days: /^매일/u, focus: /유산소 반복 훈련/u, twice: true })
 
   await expectCanonicalPlanCandidates(page)
+  const candidateSchedule = page.getByRole("button", { name: /^계획안 A 일정 (펼치기|접기)$/u })
+  if (await candidateSchedule.getAttribute("aria-expanded") !== "true") await candidateSchedule.click()
   const days = page.locator(".plan-candidate").first().locator(".plan-day-deck:visible .plan-schedule-preview > li")
   await expect(days).toHaveCount(9)
   for (let day = 0; day < 9; day += 1) {
@@ -161,17 +167,28 @@ test("keeps an evening two-a-day plan after selection and reload", async ({ page
   if (await candidateSchedule.getAttribute("aria-expanded") !== "true") await candidateSchedule.click()
   const candidateQuality = page.locator(".plan-candidate").first()
     .locator('.plan-day-card__session[data-session-slot="PM"][data-flow-kind="main"]').first()
-  const candidateSteps = candidateQuality.getByRole("list", { name: "훈련 실행 순서" })
-  await expect(candidateSteps.locator("li > strong")).toHaveText(["총 시간", "준비", "본운동", "정리"])
   const selectedTitle = await candidateQuality.getByRole("heading", { level: 3 }).innerText()
   const selectedNotation = await candidateQuality.locator(".plan-session-metric").innerText()
-  const selectedSteps = await candidateSteps.locator("li > span").allTextContents()
+  await expect(candidateQuality.getByRole("list", { name: "훈련 실행 순서" })).toHaveCount(0)
+  await candidateQuality.getByRole("button", { name: /오후 훈련 내용 보기$/u }).click()
+  const candidateReader = page.locator(".plan-day-reader[open]")
+  await expect(candidateReader).toBeVisible()
+  const candidateSteps = candidateReader.locator('.plan-day-card__session[data-session-slot="PM"][data-flow-kind="main"] .training-instructions__cards')
+  await expect(candidateSteps.getByRole("term")).toHaveText(["총 시간", "준비", "본운동", "정리"])
+  const selectedSteps = await candidateSteps.getByRole("definition").evaluateAll(elements => elements.map(element => {
+    const steps = Array.from(element.querySelectorAll("li > div"))
+    return steps.length ? steps.map(step => Array.from(step.children).map(child => child.textContent).join(" · ")).join(" → ")
+      : element.textContent?.trim() ?? ""
+  }))
+  selectedSteps[0] = `${await candidateSteps.locator(".training-instructions__included").innerText()} ${await candidateSteps.locator(".training-instructions__duration").innerText()}`
   // Preserve the selected work and recovery details across activation and reload.
   expect(selectedNotation).toMatch(/@ RPE/u)
   expect(selectedSteps[0]).toBe("준비·회복·정리 포함 40분 20초")
-  expect(selectedSteps[2]).toMatch(/\d+\s*×\s*\d+(?:\.\d+)?분/u)
-  expect(selectedSteps[2]).toMatch(/힘든 정도 7[–~]8\/10/u)
-  expect(selectedSteps[2]).toMatch(/반복 사이 \d+초 조깅/u)
+  expect(selectedSteps[2]).toMatch(/\d+(?:\.\d+)?분씩 \d+번/u)
+  expect(selectedSteps[2]).toMatch(/힘든 정도\(RPE\) 7[–~]8\/10/u)
+  expect(selectedSteps[2]).toMatch(/사이 \d+(?:분|초) 조깅/u)
+  await candidateReader.getByRole("button", { name: /^(?:달력|하루씩)으로 돌아가기$/u, exact: true }).click()
+  await expect(candidateReader).toHaveCount(0)
 
   // When
   await page.getByRole("button", { name: "이 일정으로 시작", exact: true }).click()

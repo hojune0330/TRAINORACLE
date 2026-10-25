@@ -56,6 +56,8 @@ test("the real arena remains mandatory in every fixture project with a loopback 
   const setup = readFileSync(new URL('../e2e/browser-fixtures.setup.mjs', import.meta.url), 'utf8')
   const worker = readFileSync(new URL('../e2e/arena-fixture-worker.mjs', import.meta.url), 'utf8')
   assert.match(config, /browserFixtureTests = .*friend-arena\.spec\.ts/)
+  assert.match(config, /browserFixtureTests = .*prescription-delivery\.spec\.ts/)
+  assert.match(config, /testIgnore: \[.*\.\.\.browserFixtureTests\]/)
   assert.match(fixtureConfig, /testMatch: browserFixtureTests/)
   assert.match(fixtureConfig, /\.\.\.generic/)
   assert(commands(jobs['app-browser-generic']).includes('npm ci --ignore-scripts'))
