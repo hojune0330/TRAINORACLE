@@ -88,15 +88,14 @@ describe("provenance-safe Trends surface", () => {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(entries()))
   })
 
-  it("shows only verified weekly distance and explains excluded records", () => {
+  it("shows only verified report distance and explains excluded records", () => {
     render(<Trends />)
 
     fireEvent.click(screen.getByRole("button", { name: "훈련량" }))
-    const distance = screen.getByRole("region", { name: "누적 거리와 변화" })
-    expect(within(distance).getByLabelText(/이번 주, 8킬로미터, 기록 1건/u)).toBeVisible()
-    expect(within(distance).getByLabelText(/이번 달, 8킬로미터, 기록 1건/u)).toBeVisible()
-    expect(within(distance).getAllByText(/집계 기준에 맞지 않아 제외한 기록 2건/u)).toHaveLength(2)
-    fireEvent.click(screen.getByText(/분석 제외 안내/u))
+    const distance = screen.getByRole("region", { name: "기간별 훈련 리포트" })
+    expect(within(distance).getByRole("img")).toHaveAccessibleName(/8 km/u)
+    expect(within(distance).getByText(/집계 제외 · 거리 2건/u)).toBeVisible()
+    fireEvent.click(screen.getByText("집계 기준·출처"))
     expect(screen.getByTestId("trends-excluded-imported")).toBeVisible()
     expect(screen.getByTestId("trends-excluded-imported")).toHaveTextContent("가져온 일지 1개")
     expect(screen.getByTestId("trends-excluded-no-provenance")).toBeVisible()
@@ -105,31 +104,30 @@ describe("provenance-safe Trends surface", () => {
     expect(screen.queryByText(/기준:\s*데모|과다|통증·피로/u)).not.toBeInTheDocument()
   })
 
-  it("switches among four-month descriptive metrics without judgment copy", async () => {
+  it("switches among descriptive report metrics without judgment copy", async () => {
     const user = userEvent.setup()
     render(<Trends />)
 
     await user.click(screen.getByRole("button", { name: "월별 변화" }))
-    const monthly = screen.getByRole("region", { name: "최근 4개월 추이" })
+    const monthly = screen.getByRole("region", { name: "기간별 훈련 리포트" })
     expect(within(monthly).getByRole("button", { name: "지표 선택: 거리" })).toBeVisible()
     await user.click(within(monthly).getByRole("button", { name: "지표 선택: 거리" }))
     await user.click(within(monthly).getByRole("button", { name: "페이스" }))
-    await user.click(within(monthly).getByText("월별 수치와 집계 범위 보기"))
-    expect(within(monthly).getByText(/중앙 페이스 5:00/u)).toBeVisible()
-    expect(within(monthly).getAllByText(/표본 1건/u).some((element) =>
-      element.tagName === "DIV")).toBe(true)
+    expect(within(monthly).getByRole("img")).toHaveAccessibleName(/5:00\/km/u)
+    await user.click(within(monthly).getByText("집계 기준·출처"))
+    expect(within(monthly).getByText(/페이스: 반영 1건/u)).toBeVisible()
 
     await user.click(within(monthly).getByRole("button", { name: /^지표 선택:/u }))
     await user.click(within(monthly).getByRole("button", { name: "기분" }))
-    expect(within(monthly).getByText(/중앙 기분 4\/5/u)).toBeVisible()
+    expect(within(monthly).getByRole("img")).toHaveAccessibleName(/4\/5/u)
 
     await user.click(within(monthly).getByRole("button", { name: /^지표 선택:/u }))
     await user.click(within(monthly).getByRole("button", { name: "통증" }))
-    expect(within(monthly).getByText(/중앙 통증 4\/5/u)).toBeVisible()
+    expect(within(monthly).getByRole("img")).toHaveAccessibleName(/4\/5/u)
 
     await user.click(within(monthly).getByRole("button", { name: /^지표 선택:/u }))
     await user.click(within(monthly).getByRole("button", { name: "거리" }))
-    expect(within(monthly).getByText(/중앙 거리 8 km/u)).toBeVisible()
+    expect(within(monthly).getByRole("img")).toHaveAccessibleName(/8 km/u)
     expect(within(monthly).queryByText(
       /준비가 됐|부상 위험|좋아졌|나빠졌|다음 훈련/u,
     )).not.toBeInTheDocument()

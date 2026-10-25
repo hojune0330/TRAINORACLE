@@ -13,6 +13,7 @@ export type DistanceWindowKind =
   | "RECENT_MONTH"
   | "CURRENT_MONTH_DAY"
   | "ACTIVE_PLAN_DATE_WINDOW"
+  | "CALENDAR_REPORT_RANGE"
 
 export type DistanceWindow = {
   readonly kind: DistanceWindowKind

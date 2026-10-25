@@ -40,6 +40,13 @@ vi.mock("./domain/oracle-personal-result", () => ({
   }),
 }))
 
+// Navigation tests isolate the deterministic example from personal source-read assertions.
+vi.mock("./domain/oracle-demo-scenario", () => ({
+  buildOracleDemoTopicResult: (topicId: OracleTopicId) => ({ status: "ready", headline: `${topicId} 가상 예시 결과`,
+    summary: "동일한 가상 이력", source: "가상 예시 · 2026-04~2026-09", rows: [{ label: "가상 기록", value: 4, valueLabel: "4건" }],
+    unit: "건", detail: "구조화 예시", action: "trends", actionLabel: "내 기록 보기", fingerprint: null }),
+}))
+
 vi.mock("./DeferredMobileScreens", async () => {
   const { OracleExplore } = await import("./screens/OracleExplore")
   return {
@@ -153,7 +160,7 @@ describe("AppShell oracle exploration navigation", () => {
 
     await user.click(screen.getByRole("button", { name: openLabel }))
 
-    expect(screen.getByRole("heading", { name: getOracleTopic(topic).example.headline })).toBeVisible()
+    expect(screen.getByRole("heading", { name: `${topic} 가상 예시 결과` })).toBeVisible()
     expect(screen.getByText("내 기록을 분석한 결과가 아니에요")).toBeVisible()
     expect(screen.queryByRole("heading", { name: heading })).not.toBeInTheDocument()
     expect(window.location.search).toBe("?app=1")
@@ -163,11 +170,11 @@ describe("AppShell oracle exploration navigation", () => {
     expect(oracleTabs().getByRole("button", { name: "분석" })).toHaveAttribute("aria-current", "page")
 
     await user.selectOptions(screen.getByRole("combobox", { name: "살펴볼 주제" }), next)
-    expect(screen.getByRole("heading", { name: getOracleTopic(next).example.headline })).toBeVisible()
+    expect(screen.getByRole("heading", { name: `${next} 가상 예시 결과` })).toBeVisible()
 
     act(() => window.history.back())
     await waitFor(() => expect(screen.getByRole("combobox", { name: "살펴볼 주제" })).toHaveValue(topic))
-    expect(screen.getByRole("heading", { name: getOracleTopic(topic).example.headline })).toBeVisible()
+    expect(screen.getByRole("heading", { name: `${topic} 가상 예시 결과` })).toBeVisible()
 
     act(() => window.history.back())
     await waitFor(() => expect(screen.getByRole("heading", { name: heading })).toBeVisible())
@@ -274,7 +281,7 @@ describe("AppShell oracle exploration navigation", () => {
     render(<AppShell />)
     await user.click(screen.getByRole("button", { name: "홈 현재 수준 예시" }))
     await user.selectOptions(screen.getByRole("combobox", { name: "살펴볼 주제" }), topicId)
-    expect(screen.getByRole("heading", { name: getOracleTopic(topicId).example.headline })).toBeVisible()
+    expect(screen.getByRole("heading", { name: `${topicId} 가상 예시 결과` })).toBeVisible()
     expect(screen.queryByRole("button", { name: "결과 행동" })).toBeNull()
 
     await user.click(screen.getByRole("button", { name: "내 기록 확인" }))
@@ -297,7 +304,7 @@ describe("AppShell oracle exploration navigation", () => {
     await user.click(screen.getByRole("button", { name: "홈 현재 수준 예시" }))
     for (const topic of ORACLE_TOPICS) {
       await user.selectOptions(screen.getByRole("combobox", { name: "살펴볼 주제" }), topic.id)
-      expect(screen.getByRole("heading", { name: topic.example.headline })).toBeVisible()
+      expect(screen.getByRole("heading", { name: `${topic.id} 가상 예시 결과` })).toBeVisible()
       expect(screen.getByText("내 기록을 분석한 결과가 아니에요")).toBeVisible()
     }
     const lastTopic = ORACLE_TOPICS[ORACLE_TOPICS.length - 1]!

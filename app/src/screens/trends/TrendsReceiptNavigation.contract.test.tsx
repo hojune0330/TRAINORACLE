@@ -19,9 +19,9 @@ describe("saved receipt navigation into Trends", () => {
     render(<Trends initialContext={{ section: "monthly", metric, savedDate: "2026-09-21" }} />)
 
     expect(screen.getByRole("button", { name: "월별 변화" })).toHaveAttribute("aria-pressed", "true")
-    expect(screen.getByRole("region", { name: "최근 4개월 추이" })).toBeVisible()
+    expect(screen.getByRole("region", { name: "기간별 훈련 리포트" })).toHaveAttribute("data-view", "monthly")
     expect(screen.getByRole("button", { name: `지표 선택: ${label}` })).toHaveAttribute("aria-expanded", "false")
-    expect(screen.getByRole("status")).toHaveTextContent("2026-09-21에 저장한")
+    expect(screen.getByText(/2026-09-21에 저장한/u)).toBeVisible()
   })
 
   it("keeps metric selection interactive after receipt entry", async () => {

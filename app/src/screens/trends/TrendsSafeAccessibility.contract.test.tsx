@@ -74,25 +74,23 @@ describe("trend chart alternatives", () => {
 
     // When — charts are mounted one analysis section at a time.
     await user.click(screen.getByRole("button", { name: "훈련량" }))
-    const distance = screen.getByRole("region", { name: "누적 거리와 변화" })
+    const distance = screen.getByRole("region", { name: "기간별 훈련 리포트" })
     const distanceTableToggles = within(distance).getAllByText("표로 보기")
     for (const toggle of distanceTableToggles) await user.click(toggle)
     const distanceTables = within(distance).getAllByRole("table")
     const distanceCharts = within(distance).getAllByRole("img")
 
     // Then — preserve the existing table, chart and heatmap accessibility checks.
-    expect(distanceTableToggles).toHaveLength(2)
-    expect(distanceTables).toHaveLength(2)
-    expect(distanceCharts).toHaveLength(2)
-    expect(within(distance).getByRole("list", { name: /월 날짜별 거리/u })).toBeVisible()
-    expect(within(distance).getAllByRole("listitem").some((item) => (
-      item.getAttribute("aria-label")?.includes("킬로미터") ?? false
-    ))).toBe(true)
+    expect(distanceTableToggles).toHaveLength(1)
+    expect(distanceTables).toHaveLength(1)
+    expect(distanceCharts).toHaveLength(1)
+    expect(distanceCharts[0]).toHaveAccessibleName(/월별 누적 거리.*8 km/u)
+    expect(within(distance).getByRole("group", { name: "근거를 볼 월 선택" }).querySelectorAll("button")).toHaveLength(3)
 
     await user.click(screen.getByRole("button", { name: "훈련 구성" }))
-    const mix = screen.getByRole("region", { name: "훈련 종류별 합계" })
+    const mix = screen.getByRole("region", { name: "기간별 훈련 리포트" })
     const mixTableToggles = within(mix).getAllByText("표로 보기")
-    for (const toggle of mixTableToggles) await user.click(toggle)
+    for (const toggle of mixTableToggles) if (!toggle.closest("details")?.open) await user.click(toggle)
     const mixTables = within(mix).getAllByRole("table")
     const mixCharts = within(mix).getAllByRole("img")
     expect(mixTableToggles).toHaveLength(1)
@@ -100,9 +98,9 @@ describe("trend chart alternatives", () => {
     expect(mixCharts).toHaveLength(1)
 
     await user.click(screen.getByRole("button", { name: "월별 변화" }))
-    const monthly = screen.getByRole("region", { name: "최근 4개월 추이" })
+    const monthly = screen.getByRole("region", { name: "기간별 훈련 리포트" })
     const monthlyTableToggle = within(monthly).getByText("표로 보기")
-    await user.click(monthlyTableToggle)
+    if (!monthlyTableToggle.closest("details")?.open) await user.click(monthlyTableToggle)
     const monthlyTables = within(monthly).getAllByRole("table")
     const monthlyCharts = within(monthly).getAllByRole("img")
     expect(monthlyTables).toHaveLength(1)
@@ -110,17 +108,17 @@ describe("trend chart alternatives", () => {
     const tableToggles = [...distanceTableToggles, ...mixTableToggles, monthlyTableToggle]
     const tables = [...distanceTables, ...mixTables, ...monthlyTables]
     const charts = [...distanceCharts, ...mixCharts, ...monthlyCharts]
-    expect(tableToggles).toHaveLength(4)
-    expect(tables).toHaveLength(4)
-    expect(charts).toHaveLength(4)
+    expect(tableToggles).toHaveLength(3)
+    expect(tables).toHaveLength(3)
+    expect(charts).toHaveLength(3)
     for (const metric of ["거리", "페이스", "기분", "통증"]) {
       await user.click(within(monthly).getByRole("button", { name: /^지표 선택:/u }))
       await user.click(within(monthly).getByRole("button", { name: metric }))
       expect(within(monthly).getByRole("table", {
-        name: `${metric} 최근 4개월 중앙값`,
+        name: `내 기록 · ${metric} · 월별 중앙값`,
       })).toBeVisible()
       expect(within(monthly).getByRole("img")).toHaveAccessibleName(
-        new RegExp(`${metric} 최근 4개월`, "u"),
+        new RegExp(`${metric} · 월별 중앙값`, "u"),
       )
     }
   })

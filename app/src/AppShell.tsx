@@ -966,10 +966,10 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
     kind={homeCandidate ? homeCandidate.result.status === "partial" ? "partial" : "personal" : homeSourceUnavailable ? "unavailable" : "example"}
     unavailableActionLabel={homePlanReadUnavailable ? "저장한 계획 확인"
       : athleteRecords.status !== "READY" ? "경기 기록 상태 확인" : "기록 상태 확인"}
-    onOpen={() => homeCandidate ? openOracle(homeCandidate.topic, "personal")
+    onOpen={() => homeCandidate ? homeCandidate.topic === "level" ? openOracle("level", "personal") : goTab("trends", { section: "summary", reportSource: "my", reportMonths: 3 })
       : homePlanReadUnavailable ? goTab("plan")
       : athleteRecords.status !== "READY" ? openOverlay({ kind: "athlete-records" })
-      : homeSourceUnavailable ? goTab("trends") : openOracle("focus", "example")}
+      : homeSourceUnavailable ? goTab("trends") : goTab("trends", { section: "summary", reportSource: "example", reportMonths: 3 })}
   />
 
   const accountEnabled = accountFeatureEnabled()
@@ -1586,6 +1586,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
         initialOracleSection={oracleHubSection}
         oracleV2Enabled={oracleV2Enabled()}
         journalReadComplete={calendarSnapshot.status === "READY" && oracleHistory.journalReadComplete}
+        journalReadState={calendarSnapshot.status === "LOADING" ? "loading" : calendarSnapshot.status === "READY" && oracleHistory.journalReadComplete ? "ready" : "error"}
         onRetryJournalRead={() => { calendarSnapshot.retry?.(); oracleHistory.retry() }}
         onOracleSectionChange={setOracleHubSection}
         onContextChange={context => { analysisReturnContext.current = context }}

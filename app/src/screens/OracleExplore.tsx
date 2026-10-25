@@ -1,4 +1,4 @@
-import { useEffect, useId, useState, type ReactNode } from "react"
+import { useEffect, useId, useMemo, useState, type ReactNode } from "react"
 import { AppHeading } from "../components/AppHeading"
 import { ArrowLeft, ArrowRight, ChevronDown, NotebookPen, Target, ListChecks } from "lucide-react"
 import { InfoDisclosure } from "../components/InfoDisclosure"
@@ -8,6 +8,7 @@ import { OraclePersonalResult } from "./OraclePersonalResult"
 import type { OraclePersonalResult as PersonalResult } from "../domain/oracle-personal-result"
 import type { AnalysisSection } from "../domain/analysis-navigation"
 import { OracleBookmark } from "../components/OracleBookmark"
+import { buildOracleDemoTopicResult } from "../domain/oracle-demo-scenario"
 import "./oracle-explore.css"
 
 type OraclePersonalAction = "records" | "journal" | "trends" | "plan" | "log"
@@ -30,6 +31,7 @@ export type OracleExploreProps = {
 
 export function OracleExplore({ topicId, onBack, onSelectTopic, onPersonalAction, personalResult, initialMode, onModeChange, onPersonalResultSeen, bookmarkControl, historyNotice, personalResultUnavailable = false, personalReadStatus, onRetryPersonalResult }: OracleExploreProps) {
   const topic = getOracleTopic(topicId)
+  const example = useMemo(() => buildOracleDemoTopicResult(topicId), [topicId])
   const readStatus = personalReadStatus ?? (personalResultUnavailable ? "unavailable" : "ready")
   const resultUnavailable = readStatus !== "ready"
   const selectId = useId()
@@ -53,9 +55,9 @@ export function OracleExplore({ topicId, onBack, onSelectTopic, onPersonalAction
   useEffect(() => {
     if (mode === "personal" && !resultUnavailable && personalResult?.fingerprint) onPersonalResultSeen?.(personalResult.fingerprint)
   }, [mode, topicId, personalResult?.fingerprint, onPersonalResultSeen, resultUnavailable])
-  const rows = topic.example.rows
+  const rows = example.rows
   const maxValue = Math.max(...rows.map(row => row.value), 0)
-  const chartLabel = `${topic.title} 예시. ${topic.example.source}. 단위 ${topic.example.unit}. ${rows.map(row => `${row.label} ${row.valueLabel}`).join(". ")}. 내 기록 분석이 아닙니다.`
+  const chartLabel = `${topic.title} 예시. ${example.source}. 단위 ${example.unit}. ${rows.map(row => `${row.label} ${row.valueLabel}`).join(". ")}. 내 기록 분석이 아닙니다.`
 
   return <div className="oracle-explore">
     <header className="oracle-explore__header">
@@ -105,12 +107,13 @@ export function OracleExplore({ topicId, onBack, onSelectTopic, onPersonalAction
           <span>{rows.length > 0 ? "예시 기록" : "예시 상황"}</span>
           <p>내 기록을 분석한 결과가 아니에요</p>
         </div>
-        <AppHeading variant="screen" accent id={headlineId} aria-live="polite" aria-atomic="true">{topic.example.headline}</AppHeading>
+        <AppHeading variant="screen" accent id={headlineId} aria-live="polite" aria-atomic="true">{example.headline}</AppHeading>
+        <p>{example.summary}</p>
 
         {rows.length > 0 ? <div className="oracle-explore__data">
           <div className="oracle-explore__chart" role="img" aria-label={chartLabel}>
             <div className="oracle-explore__chart-caption" aria-hidden="true">
-              <span>{topic.example.source}</span><span>단위 · {topic.example.unit}</span>
+              <span>{example.source}</span><span>단위 · {example.unit}</span>
             </div>
             <div className="oracle-explore__bars" aria-hidden="true">
               {rows.map(row => <div key={row.label} className="oracle-explore__bar-row">
@@ -123,10 +126,10 @@ export function OracleExplore({ topicId, onBack, onSelectTopic, onPersonalAction
             </div>
           </div>
           <AccessibleTrendTable
-            caption={`${topic.title} · 예시 데이터 · 단위 ${topic.example.unit}`}
+            caption={`${topic.title} · 예시 데이터 · 단위 ${example.unit}`}
             rows={rows.map(row => ({ key: row.label, label: row.label, value: row.valueLabel }))}
           />
-        </div> : <PriorityExample source={topic.example.source} />}
+        </div> : <PriorityExample source={example.source} />}
 
       </section>
 
@@ -140,15 +143,14 @@ export function OracleExplore({ topicId, onBack, onSelectTopic, onPersonalAction
         </button>
       </div>
       <InfoDisclosure key={`explanation-${topicId}`} title="예시의 기준과 읽는 방법">
-        <p>{topic.example.summary}</p>
-        <p>{topic.example.detail}</p>
+        <p>{example.detail}</p>
       </InfoDisclosure>
       </>}
       {personalResult && mode === "personal" && <button type="button" className="oracle-explore__related" onClick={() => onSelectTopic(topic.nextId, mode)}>
         <span><small>이어서 살펴보기</small><strong>{topic.nextLabel}</strong></span><ArrowRight size={18} aria-hidden="true" />
       </button>}
-      {bookmarkControl}
-      {personalResult && <OracleBookmark key={topicId} topicId={topicId} fingerprint={mode === "personal" && !resultUnavailable ? personalResult.fingerprint : undefined} />}
+      {mode === "personal" && bookmarkControl}
+      {personalResult && mode === "personal" && !resultUnavailable && <OracleBookmark key={topicId} topicId={topicId} fingerprint={personalResult.fingerprint} />}
     </div>
   </div>
 }

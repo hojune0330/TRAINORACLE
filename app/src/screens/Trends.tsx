@@ -2,12 +2,11 @@ import React from "react"
 import { ArrowRight, Calculator, ChartColumn, Layers, CalendarDays, FileChartColumn, TrendingUp } from "lucide-react"
 import { OracleSectionNavigation, type OracleHubSection } from "../components/OracleSectionNavigation"
 export type { OracleHubSection } from "../components/OracleSectionNavigation"
-import { CategoryCard, CategoryDisclosure } from "../components/CategoryCard"
+import { CategoryCard } from "../components/CategoryCard"
 import { CategoryShortcuts } from "../components/CategoryShortcuts"
 import { useAppOverlayNavigation } from "../components/AppOverlayNavigation"
 import { projectStructuredJournalObservations } from "../domain/journal-observation"
 import { analysisExclusionSummary, loadEntries, loadEntriesForPlanSafety } from "../domain/journal-store"
-import { MonthlyTrendSection } from "./trends/MonthlyTrendSection"
 import { RecoveryRecordPanel } from "./trends/RecoveryRecordPanel"
 import { RecordStartActions } from "../components/RecordStartActions"
 import { useAthleteRecordsSnapshot } from "../hooks/useAthleteRecordsSnapshot"
@@ -19,10 +18,6 @@ import { useLocalToday } from "../hooks/useLocalToday"
 import { ImportedRecordPreview } from "./trends/ImportedRecordPreview"
 import { productFeatures } from "../domain/product-features"
 import { loadPlanBetaState } from "../domain/plan-beta-store"
-import { activePlanDateWindow } from "../domain/cumulative-distance"
-import { CumulativeDistancePanel } from "./trends/CumulativeDistancePanel"
-import { EnergySystemLedgerPanel } from "./trends/EnergySystemLedgerPanel"
-import { PersonalOraclePanel } from "./trends/PersonalOraclePanel"
 import { InfoDisclosure } from "../components/InfoDisclosure"
 import { FileAnalysisPanel } from "./trends/FileAnalysisPanel"
 import { readAccountJournalProjection, readCurrentConfirmedAccountJournalProjection } from "../domain/account/account-journal-projection"
@@ -31,12 +26,11 @@ import { OracleResume } from "../components/OracleResume"
 import type { OracleTopicId } from "../domain/oracle-exploration"
 import type { AnalysisNavigation, AnalysisSection } from "../domain/analysis-navigation"
 import { fileAnalysisFormats } from "../domain/import/file-analysis-policy"
-import { HomeCoachingSummary } from "./home/HomeCoachingSummary"
 import { TaskGuide } from "../components/TaskGuide"
-import { OracleExamplePreview } from "./trends/OracleExamplePreview"
-import { analysisPresentation } from "./trends/analysis-presentation"
-import { personalOraclePresentation } from "./trends/personal-oracle-presentation"
-import type { DisplayTrendMetric } from "./trends/trend-display"
+import { TREND_METRIC_OPTIONS, type DisplayTrendMetric } from "./trends/trend-display"
+import { OracleReport, type OracleReportSelection } from "./trends/OracleReport"
+import { buildOracleReport } from "../domain/oracle-report"
+import { buildOracleDemoScenario } from "../domain/oracle-demo-scenario"
 import "./trends/trends-hub.css"
 
 const ANALYSIS_SECTIONS = [
@@ -47,7 +41,7 @@ const ANALYSIS_SECTIONS = [
   { id: "files", label: "파일 분석", description: "운동 파일의 구간 기록", icon: FileChartColumn },
 ] as const
 
-export function Trends({ onBack, onWriteLog, onOpenImport, onOpenRecords, onWriteRecovery, onOpenPlan, onOpenOracle, onOpenRecordReading, onOpenRunningProfile, onOpenOracleLibrary, onOpenTrainingContent, onOpenCoachingDay, oracleV2Enabled = false, journalReadComplete, onRetryJournalRead, initialContext, initialOracleSection, onOracleSectionChange, onContextChange }: {
+export function Trends({ onBack, onWriteLog, onOpenImport, onOpenRecords, onWriteRecovery, onOpenPlan, onOpenOracle, onOpenRecordReading, onOpenRunningProfile, onOpenOracleLibrary, onOpenTrainingContent, onOpenCoachingDay, oracleV2Enabled = false, journalReadComplete, journalReadState, onRetryJournalRead, initialContext, initialOracleSection, onOracleSectionChange, onContextChange }: {
   readonly onBack?: (() => void) | undefined
   readonly onWriteLog?: (() => void) | undefined
   readonly onOpenImport?: (() => void) | undefined
@@ -62,6 +56,7 @@ export function Trends({ onBack, onWriteLog, onOpenImport, onOpenRecords, onWrit
   readonly onOpenCoachingDay?: ((date: string, entryId?: string) => void) | undefined
   readonly oracleV2Enabled?: boolean | undefined
   readonly journalReadComplete?: boolean | undefined
+  readonly journalReadState?: "ready" | "loading" | "error" | undefined
   readonly onRetryJournalRead?: (() => void) | undefined
   readonly initialContext?: AnalysisNavigation | undefined
   readonly initialOracleSection?: OracleHubSection | undefined
@@ -80,6 +75,17 @@ export function Trends({ onBack, onWriteLog, onOpenImport, onOpenRecords, onWrit
   const [detail, setDetail] = React.useState<AnalysisSection>(initialContext?.section === "files" && !fileAnalysisEnabled
     ? "summary" : initialContext?.section ?? "summary")
   const [selectedMetric, setSelectedMetric] = React.useState<DisplayTrendMetric | undefined>(initialContext?.metric)
+  const [reportSource, setReportSource] = React.useState<"my" | "example">(initialContext?.reportSource ?? "my")
+  const [reportMonths, setReportMonths] = React.useState<3 | 6>(initialContext?.reportMonths ?? 3)
+  const [selectedMonth, setSelectedMonth] = React.useState<string | undefined>(initialContext?.selectedMonth)
+  const [evidenceExpanded, setEvidenceExpanded] = React.useState(initialContext?.reportEvidenceExpanded === true)
+  const [topicsOpen, setTopicsOpen] = React.useState(false)
+  React.useEffect(() => {
+    setReportSource(initialContext?.reportSource ?? "my")
+    setReportMonths(initialContext?.reportMonths ?? 3)
+    setSelectedMonth(initialContext?.selectedMonth)
+    setEvidenceExpanded(initialContext?.reportEvidenceExpanded === true)
+  }, [initialContext?.reportSource, initialContext?.reportMonths, initialContext?.selectedMonth, initialContext?.reportEvidenceExpanded])
   React.useEffect(() => { setSelectedMetric(initialContext?.metric) }, [initialContext?.metric])
   React.useEffect(() => { if (initialOracleSection) setSection(destinationFor(initialOracleSection) ? "training" : initialOracleSection) }, [initialOracleSection])
   React.useEffect(() => {
@@ -111,27 +117,26 @@ export function Trends({ onBack, onWriteLog, onOpenImport, onOpenRecords, onWrit
   const observations = React.useMemo(() => projectStructuredJournalObservations(entries), [entries])
   const today = useLocalToday()
   const planState = loadPlanBetaState()
-  const planFrame = planState?.activePlan.frame
-  const planVisibleLength = planFrame === undefined
-    ? undefined
-    : "projectionLengthDays" in planFrame
-      ? planFrame.projectionLengthDays ?? planFrame.lengthDays
-      : planFrame.lengthDays
-  const planWindow = activePlanDateWindow(planState?.intake.startDate, planVisibleLength)
   const isEmpty = observations.length === 0
   const readComplete = journalReadComplete !== false && loadEntriesForPlanSafety().status === "complete"
-  const savedSessions = entries.filter(entry => entry.kind === "post-session").map(({ id, date }) => ({ id, date }))
-  // A saved plan is not evidence of a completed workout analysis. Keep the
-  // plan available as its own destination, but only show the summary when
-  // workouts or structured observations can support it.
-  const personalSummary = personalOraclePresentation({ observations, today, planState, savedSessions })
-  const presentation = analysisPresentation({ readComplete, hasRecords: entries.length > 0,
-    hasFacts: personalSummary.hasAnalysisFacts })
-  const hasSummary = readComplete && (savedSessions.some(entry => entry.date <= today) || presentation === "facts")
+  const demo = React.useMemo(() => buildOracleDemoScenario(), [])
+  const report = React.useMemo(() => buildOracleReport({ source: reportSource, months: reportMonths, today,
+    entries: reportSource === "example" ? demo.entries : entries,
+    confirmedFileEntries: reportSource === "example" ? [] : accountEntries }), [reportSource, reportMonths, today, demo, entries, accountEntries])
+  const metric = selectedMetric ?? TREND_METRIC_OPTIONS.find(option => report.monthly.some(month => month.metrics[option.metric].kind === "DATA"))?.metric ?? "DISTANCE_KM"
+  const reportSelection: OracleReportSelection = { source: reportSource, months: reportMonths, metric, selectedMonth, evidenceExpanded }
+  const reportContext = (patch: Partial<AnalysisNavigation> = {}): AnalysisNavigation => ({ ...initialContext, section: detail,
+    metric, reportSource, reportMonths, selectedMonth, reportEvidenceExpanded: evidenceExpanded, ...patch })
+  const changeReportSelection = (next: OracleReportSelection) => {
+    setReportSource(next.source); setReportMonths(next.months); setSelectedMetric(next.metric); setSelectedMonth(next.selectedMonth)
+    setEvidenceExpanded(next.evidenceExpanded === true)
+    onContextChange?.(reportContext({ reportSource: next.source, reportMonths: next.months, metric: next.metric,
+      selectedMonth: next.selectedMonth, reportEvidenceExpanded: next.evidenceExpanded === true,
+      savedDate: next.metric === initialContext?.metric ? initialContext.savedDate : undefined }))
+  }
   const guideTitle = section === "profile" ? "최고기록 살펴보기"
     : section === "library" ? "훈련 이야기 읽기"
       : "내 훈련"
-  const startAction = onWriteLog ? { label: savedSessions.length > 0 ? "기록 더 남기기" : "운동 기록 쓰기", run: onWriteLog } : null
   /**
    * 값을 적었는데도 추이에 못 들어간 일지 개수 (Q1).
    * 화면이 침묵하면 사용자는 자기가 적은 값이 왜 그래프에 없는지 알 수 없다.
@@ -162,29 +167,30 @@ export function Trends({ onBack, onWriteLog, onOpenImport, onOpenRecords, onWrit
         {section === "training" && <div className="trends-hub__drilldowns" role="group" aria-label="훈련 분석 자세히 보기">
           {ANALYSIS_SECTIONS.filter(item => item.id !== "files").map(item => <button key={item.id} type="button" aria-pressed={detail === item.id}
             aria-label={item.label} aria-describedby={`trends-choice-${item.id}`}
-            onClick={() => { setDetail(item.id); onContextChange?.({ ...initialContext, metric: selectedMetric, section: item.id }) }}>
+            onClick={() => { setDetail(item.id); onContextChange?.(reportContext({ section: item.id })) }}>
             <span>{item.id === "summary" ? "요약" : item.id === "mix" ? "구성" : item.id === "monthly" ? "월별" : item.label}</span>
             <small id={`trends-choice-${item.id}`}>{item.description}</small>
           </button>)}
         </div>}
-        {section === "training" && !readComplete && <div className="trends-hub__read-status">
-          <p role="status">기록을 아직 모두 확인하지 못했어요. 확인한 뒤 분석 결과를 표시해요.</p>
-          <button type="button" onClick={() => { onRetryJournalRead?.(); setEntryRevision(value => value + 1) }}>다시 확인</button>
-        </div>}
-        {section === "training" && detail === "summary" && readComplete && <ImportedRecordPreview entries={entries} today={today} onOpenDay={onOpenCoachingDay} />}
-        {section === "training" && detail === "summary" && (isEmpty || !hasSummary) && (savedRace || raceRecords.message) && <div className="trends-hub__explore">
+        {section === "training" && detail !== "files" && <OracleReport report={report} view={detail} selection={reportSelection}
+          readState={readComplete ? "ready" : journalReadState === "loading" ? "loading" : "error"} hasSavedEntries={report.scopedEntryCount > 0}
+          onSelectionChange={changeReportSelection} onRetry={() => { onRetryJournalRead?.(); setEntryRevision(value => value + 1) }}
+          onOpenDay={onOpenCoachingDay} onWriteLog={onWriteLog} onWriteRecovery={onWriteRecovery} onOpenImport={onOpenImport}
+          onOpenPlan={planState ? onOpenPlan : undefined} onOpenTopics={onOpenOracle ? () => setTopicsOpen(open => !open) : undefined} />}
+        {section === "training" && detail === "summary" && reportSource === "my" && readComplete && <ImportedRecordPreview entries={entries} today={today} onOpenDay={onOpenCoachingDay} />}
+        {section === "training" && detail === "summary" && reportSource === "my" && report.status === "missing" && (savedRace || raceRecords.message) && <div className="trends-hub__explore">
           {raceRecords.message && <p role="status">{raceRecords.message}</p>}
           {savedRace && <section className="trends-record-reading" aria-label="최근 저장한 경기 기록">
             <div><p>최근 저장한 경기 기록</p><h2>{paceEventLabel(savedRace.eventDistanceM)} · {paceClock(savedRace.performanceSeconds)}</h2><p>{savedRace.achievedOn ?? "달성일 미입력"} · {athleteRecordAuthorityCopy(savedRace)}</p></div>
             {navigation?.openPaceCalculator && <button type="button" onClick={() => navigation.openPaceCalculator?.({ record: savedRace })}>이 기록으로 페이스 보기<ArrowRight size={18} aria-hidden="true" /></button>}
           </section>}
         </div>}
-        {initialContext?.savedDate && selectedMetric === initialContext.metric && section === "training" && detail === initialContext.section && (
+        {initialContext?.savedDate && metric === initialContext.metric && reportSource === "my" && section === "training" && detail === initialContext.section && (
           <p className="trends-hub__saved-context" role="status">
             {initialContext.savedDate}에 저장한 {initialContext.metric === "PAIN_MAX" ? "통증을" : initialContext.metric === "MOOD" ? "기분을" : "거리를"} 월별 기록과 함께 볼 수 있어요.
           </p>
         )}
-        {pendingFileCount > 0 && !(section === "training" && detail === "files") && (
+        {pendingFileCount > 0 && reportSource === "my" && !(section === "training" && detail === "files") && (
           <div className="trends-hub__notice" role="status">
             <span>파일 기록 {pendingFileCount}건 · 확인 전 분석에서 제외</span>
             {fileAnalysisEnabled && <button type="button" onClick={() => { setSection("training"); setDetail("files"); onOracleSectionChange?.("training"); onContextChange?.({ ...initialContext, section: "files" }) }}>확인하기</button>}
@@ -211,42 +217,11 @@ export function Trends({ onBack, onWriteLog, onOpenImport, onOpenRecords, onWrit
           <OracleTopicGrid onSelectTopic={topic => onOpenOracle(topic, "example")} title="오라클 예시 보기" compact />
           <InfoDisclosure purpose="actions" title="내 관심 주제·기록할 요일"><OracleResume onOpenTopic={onOpenOracle} /></InfoDisclosure>
         </div>}
-        {section === "training" && detail === "summary" && readComplete && !hasSummary && planState !== null && onOpenPlan &&
-          <div className="trends-hub__explore"><CategoryCard category="training" variant="row" title="훈련표 보기" onClick={onOpenPlan} /></div>}
-        {section === "training" && detail === "summary" && hasSummary && <div className="trends-hub__result-layout">
-          <div className="trends-hub__result">
-            <PersonalOraclePanel observations={observations} today={today} planState={planState} savedSessions={savedSessions}
-              summary={personalSummary}
-              onOpenPlan={onOpenPlan} onOpenDay={onOpenCoachingDay} onWriteLog={onWriteLog} />
-          </div>
-          <div className="trends-hub__coaching">
-            <HomeCoachingSummary revision={entryRevision} onOpenDay={onOpenCoachingDay} onOpenPlan={onOpenPlan} />
-          </div>
+        {section === "training" && topicsOpen && onOpenOracle && <div className="trends-hub__explore">
+          <OracleTopicGrid onSelectTopic={topic => onOpenOracle(topic, reportSource === "example" ? "example" : "personal")} title="경기·계획·훈련 비교하기" compact />
         </div>}
-        {section === "training" && detail === "summary" && hasSummary && onOpenOracle && <div className="trends-hub__explore">
-          <CategoryDisclosure category="oracle" title="경기·계획·훈련 비교하기"><OracleTopicGrid onSelectTopic={onOpenOracle} title="다른 주제 살펴보기" compact /></CategoryDisclosure>
-        </div>}
-        {section === "training" && detail === "summary" && readComplete && onOpenOracle && <div className="trends-hub__explore">
-          <OracleExamplePreview compact={presentation === "facts"} onOpen={() => onOpenOracle("mix", "example")} />
-        </div>}
-        {section === "training" && detail === "summary" && readComplete && !hasSummary && !savedRace && (startAction || entries.length > 0) &&
-          <section className="trends-hub__start trends-hub__explore" aria-label="내 기록으로 시작하기">
-            {!savedRace && entries.length > 0 && <p>저장한 일지는 있어요. 분석에 쓸 값은 기록마다 달라요.</p>}
-            {!savedRace && startAction && <button type="button" onClick={startAction.run}>{startAction.label}<ArrowRight size={16} aria-hidden="true" /></button>}
-          </section>}
-        {section === "training" && detail === "summary" && (onOpenImport || onOpenRecords) && <div className="trends-hub__explore">
-          <RecordStartActions onImport={onOpenImport} onRecords={onOpenRecords} />
-        </div>}
-        {section === "training" && readComplete && detail === "distance" && <CumulativeDistancePanel observations={observations} today={today} planWindow={planWindow} mode="full" onWriteLog={onWriteLog} />}
-        {section === "training" && readComplete && detail === "mix" && <EnergySystemLedgerPanel observations={observations} today={today} planState={planState} mode="full" onWriteLog={onWriteLog} />}
-        {section === "training" && readComplete && detail === "monthly" && <MonthlyTrendSection observations={observations} today={today} initialMetric={selectedMetric}
-          onMetricChange={metric => { setSelectedMetric(metric); onContextChange?.({ ...initialContext, savedDate: metric === initialContext?.metric ? initialContext?.savedDate : undefined, section: "monthly", metric }) }}
-          onShowExample={onOpenOracle ? () => onOpenOracle("compare", "example") : undefined} onOpenImport={onOpenImport}
-          onWriteLog={onWriteLog} onWriteRecovery={onWriteRecovery} />}
-        {section === "training" && detail !== "files" && <div style={{ padding: "0 20px" }}>
-          <AnalysisExclusionNotice summary={exclusion} />
-        </div>}
-        {section === "training" && detail === "summary" && <div className="trends-hub__recovery">
+        {section === "training" && detail === "summary" && onOpenRecords && <div className="trends-hub__explore"><RecordStartActions onRecords={onOpenRecords} /></div>}
+        {section === "training" && detail === "summary" && reportSource === "my" && <div className="trends-hub__recovery">
           <CategoryCard category="body" title="몸 상태·회복 기록" aria-expanded={recoveryOpen} aria-controls="trends-recovery" onClick={() => setRecoveryOpen(open => !open)} />
           <div id="trends-recovery">{recoveryOpen && <RecoveryRecordPanel today={today} entries={entries} observations={observations}
             onWriteRecovery={onWriteRecovery} onOpenDay={onOpenCoachingDay} experimentalFatigue={productFeatures().experimentalFatigue} />}</div>

@@ -40,6 +40,7 @@ import { samePlannedSessionLink } from "./planned-session-link"
 import { readAccountJournalProjection, readCurrentConfirmedAccountJournalProjection, readAccountJournalPrivateEntry, accountJournalProjectionStatus, accountJournalBackupReady, isAccountJournalLocalCopyShadowed } from "./account/account-journal-projection"
 import { accountJournalPreviewEnabled } from "./account/account-journal-api"
 import { buildFileAnalysisReport } from "./import/file-analysis"
+import type { FileAnalysisEntry } from "./import/file-analysis"
 import { stringifyBackupJsonForExport } from "./restore/backup-json-stream"
 import { isCanonicalJournalWritable } from "./canonical-journal-storage"
 import { canonicalJournalRawStorage } from "./canonical-journal-access"
@@ -645,12 +646,14 @@ export type AnalysisExclusionSummary = {
  * 이 함수는 **빠진다는 사실을 화면이 말할 수 있게** 개수를 제공할 뿐이며,
  * 어떤 수치도 분석에 새로 넣지 않는다.
  */
-export function analysisExclusionSummary(): AnalysisExclusionSummary {
-  const entries = loadEntries()
-  const confirmed = readCurrentConfirmedAccountJournalProjection()
+export function analysisExclusionSummary(
+  entries: readonly JournalEntry[] = loadEntries(),
+  confirmed: readonly FileAnalysisEntry[] = readCurrentConfirmedAccountJournalProjection(),
+  asOfDate?: string,
+): AnalysisExclusionSummary {
   const dates = confirmed.map(entry => entry.date).sort()
   const fileReport = buildFileAnalysisReport(confirmed, {
-    startDate: dates[0] ?? todayISO(), endDate: dates.at(-1) ?? todayISO(), sourceContext: "ACCOUNT_CONFIRMED",
+    startDate: dates[0] ?? asOfDate ?? todayISO(), endDate: dates.at(-1) ?? asOfDate ?? todayISO(), sourceContext: "ACCOUNT_CONFIRMED",
   })
   const includedFileIds = new Set(fileReport.observations.map(item => item.journalEntryId))
   let included = 0

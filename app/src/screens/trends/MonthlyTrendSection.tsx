@@ -42,7 +42,7 @@ function sourceDate(date: string | null | undefined): string {
   return match ? `${match[1]}년 ${Number(match[2])}월 ${Number(match[3])}일` : "날짜 확인 필요"
 }
 
-function MetricSelectorSheet({ metric, onSelect, onClose, returnFocusTo }: {
+export function MetricSelectorSheet({ metric, onSelect, onClose, returnFocusTo }: {
   readonly metric: DisplayTrendMetric
   readonly onSelect: (metric: DisplayTrendMetric) => void
   readonly onClose: () => void

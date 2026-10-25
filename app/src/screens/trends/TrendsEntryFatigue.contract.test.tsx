@@ -14,8 +14,7 @@ afterEach(cleanup)
 it("offers one empty-state action and an explicitly selected example while recovery is opt-in", () => {
   const write = vi.fn(), explore = vi.fn(), recovery = vi.fn(), importFile = vi.fn(), saveRecord = vi.fn()
   render(<Trends onWriteLog={write} onOpenOracle={explore} onOpenImport={importFile} onOpenRecords={saveRecord} onWriteRecovery={recovery} />)
-  const start = screen.getByRole("region", { name: "내 기록으로 시작하기" })
-  expect(start.querySelectorAll("button")).toHaveLength(1)
+  expect(screen.getAllByRole("button", { name: "운동 기록 쓰기" })).toHaveLength(1)
   const importButton = screen.getByRole("button", { name: /운동 파일 가져오기/ })
   expect(importButton).toBeVisible()
   expect(screen.getByRole("button", { name: /최고기록 남기기/ })).toBeVisible()
@@ -26,26 +25,27 @@ it("offers one empty-state action and an explicitly selected example while recov
   fireEvent.click(importButton)
   expect(importFile).toHaveBeenCalledOnce()
   const example = screen.getByRole("button", { name: "예시 결과 보기" })
-  expect(example).toHaveAccessibleDescription("예시 · 내 기록 분석이 아니에요")
   fireEvent.click(example)
-  expect(explore).toHaveBeenCalledExactlyOnceWith("mix", "example")
+  expect(screen.getByRole("region", { name: "기간별 훈련 리포트" })).toHaveAttribute("data-source", "example")
+  expect(explore).not.toHaveBeenCalled()
+  fireEvent.click(screen.getByRole("button", { name: "내 기록" }))
   fireEvent.click(screen.getByRole("button", { name: "몸 상태·회복 기록" }))
   expect(screen.getByRole("region", { name: "몸 상태와 회복 기록" })).toBeVisible()
   fireEvent.click(screen.getByRole("button", { name: "컨디션 기록" }))
   expect(recovery).toHaveBeenCalledOnce()
 })
 
-it("passes only saved workout identities to the summary even when numeric provenance is absent", () => {
+it("keeps private workout text out of a report when numeric provenance is absent", () => {
   const date = todayISO()
   const entry: JournalEntry = { id: "saved-no-metrics", kind: "post-session", date, savedAt: `${date}T08:00:00Z`,
     syncState: "local", system: "base", title: "private title", distanceKm: "", durationMin: "", avgPace: "", rpe: 0, memo: "" }
   localStorage.setItem(JOURNAL_STORAGE_KEY, JSON.stringify([entry]))
   render(<Trends onOpenOracle={vi.fn()} />)
-  expect(screen.getByText("저장한 운동 요약")).toBeVisible()
-  expect(panel.mock.lastCall?.[0]).toMatchObject({ savedSessions: [{ id: entry.id, date }] })
-  expect(panel.mock.lastCall?.[0].savedSessions[0]).toEqual({ id: entry.id, date })
+  expect(screen.getByRole("region", { name: "기간별 훈련 리포트" })).toHaveAttribute("data-source", "my")
+  expect(screen.queryByText("private title")).toBeNull()
+  expect(screen.queryByRole("img")).toBeNull()
   expect(screen.queryByText("첫 운동부터 남겨볼까요?")).toBeNull()
-  expect(screen.getByRole("region", { name: "오라클 예시" })).toBeVisible()
+  expect(screen.getByRole("button", { name: "예시 결과 보기" })).toBeVisible()
 })
 
 it.each(["pending", "malformed"])("does not invent an empty or saved count for %s journal reads", source => {

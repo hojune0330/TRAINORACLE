@@ -5,6 +5,10 @@ export type AnalysisNavigation = {
   readonly section: AnalysisSection
   readonly metric?: "DISTANCE_KM" | "MOOD" | "PAIN_MAX" | "SECONDS_PER_KM"
   readonly savedDate?: string
+  readonly reportSource?: "my" | "example"
+  readonly reportMonths?: 3 | 6
+  readonly selectedMonth?: string
+  readonly reportEvidenceExpanded?: boolean
 }
 
 /** Keep the saved fact's destination, without copying the record or private text. */

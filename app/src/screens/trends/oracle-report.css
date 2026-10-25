@@ -1,0 +1,60 @@
+.oracle-report { padding: var(--space-4) var(--space-5) var(--space-6); min-width: 0; font-family: var(--sans); color: var(--ink); word-break: keep-all; overflow-wrap: anywhere; }
+.oracle-report button { min-width: var(--app-touch-min); min-height: var(--app-touch-min); cursor: pointer; font: inherit; line-height: 1.5; white-space: normal; }
+.oracle-report :is(button, summary):focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.oracle-report__controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-5); }
+.oracle-report__controls .app-choice-group { display: flex; flex-wrap: wrap; flex: 1 1 9rem; gap: var(--space-1); }
+.oracle-report .oracle-report__controls button.app-choice-control { flex: 1 1 3.5rem; min-width: var(--app-touch-min); padding: var(--space-2); }
+.oracle-report .oracle-report__controls button.app-choice-control[aria-pressed="true"] { color: var(--category-oracle); background: var(--category-oracle-wash); border-color: var(--category-oracle); font-weight: 700; }
+.oracle-report__range { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); color: var(--ink-2); font-size: var(--fs-caption); margin: var(--space-4) 0 var(--space-2); }
+.oracle-report__example { color: var(--category-oracle); background: var(--category-oracle-wash); border-radius: var(--r-action); padding: var(--space-1) var(--space-2); font-weight: 700; }
+.oracle-report__source-note { color: var(--ink-2); font-size: var(--fs-caption); line-height: 1.6; margin: var(--space-2) 0; }
+.oracle-report__observation { margin: var(--space-6) 0 var(--space-5); }
+.oracle-report__observation > p { margin: var(--space-2) 0; line-height: 1.6; color: var(--ink-2); }
+.oracle-report__observation .oracle-report__number { font-size: var(--fs-app-metric); line-height: 1.3; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+.oracle-report__observation .oracle-report__total-label { margin: var(--space-4) 0 var(--space-1); font-size: var(--fs-caption); }
+.oracle-report__observation .oracle-report__partial { color: var(--warn); }
+.oracle-report__chart-section h3, .oracle-report__evidence h3, .oracle-report__state h3 { font-size: var(--fs-app-section, 18px); margin: 0 0 var(--space-4); line-height: 1.5; }
+.oracle-report__chart { display: grid; gap: var(--space-4); padding: var(--space-3) 0; }
+.oracle-report__bar-row { display: grid; grid-template-columns: minmax(2rem, 1fr) minmax(0, 3fr) minmax(4rem, 1.5fr); align-items: center; gap: var(--space-2); font-size: var(--fs-body); }
+.oracle-report__bar-row > strong { text-align: right; font-variant-numeric: tabular-nums; font-weight: 650; }
+.oracle-report__bar-row[data-selected="true"] { color: var(--category-oracle); font-weight: 700; }
+.oracle-report__bar-row[data-selected="true"] .oracle-report__track > span { background: var(--category-oracle); }
+.oracle-report__track { height: var(--space-3); background: var(--surface-2); border-radius: var(--r-action); overflow: hidden; }
+.oracle-report__track > span { display: block; height: 100%; background: var(--brand); border-radius: inherit; }
+.oracle-report__month-label { margin: var(--space-4) 0 var(--space-2); color: var(--ink-2); font-size: var(--fs-caption); }
+.oracle-report__months { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-2); }
+.oracle-report__months button { display: flex; justify-content: center; align-items: center; gap: var(--space-1); padding: var(--space-2); border: var(--bw-line) solid var(--line); border-radius: var(--r-action); background: var(--surface); color: var(--ink-2); }
+.oracle-report__months button > span { white-space: nowrap; }
+.oracle-report__months button svg { visibility: hidden; flex-shrink: 0; }
+.oracle-report__months button[aria-pressed="true"] { background: var(--category-oracle-wash); color: var(--category-oracle); border-color: var(--category-oracle); font-weight: 700; }
+.oracle-report__months button[aria-pressed="true"] svg { visibility: visible; }
+.oracle-report__interpretation { font-size: var(--fs-body); color: var(--ink-2); line-height: 1.65; margin: var(--space-4) 0 var(--space-6); }
+.oracle-report__metric { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); margin-bottom: var(--space-5); }
+.oracle-report__metric button { display: inline-flex; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-4); background: var(--surface); border: var(--bw-line) solid var(--line); border-radius: var(--r-action); color: var(--ink); font-weight: 700; }
+.oracle-report__metric > span { color: var(--ink-2); font-size: var(--fs-caption); }
+.oracle-report__facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr)); gap: var(--space-4); padding: var(--space-4) 0 var(--space-6); }
+.oracle-report__facts p { display: grid; gap: var(--space-1); margin: 0; font-size: var(--fs-caption); color: var(--ink-2); }
+.oracle-report__facts strong { font-size: var(--fs-app-section, 18px); color: var(--ink); font-variant-numeric: tabular-nums; }
+.oracle-report__facts small { font: inherit; }
+.oracle-report__section-heading { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--space-2); }
+.oracle-report__section-heading h3 { margin: 0; }
+.oracle-report__section-heading button { background: none; border: 0; color: var(--brand); padding: var(--space-2); }
+.oracle-report__evidence > p, .oracle-report__basis p { color: var(--ink-2); font-size: var(--fs-caption); line-height: 1.65; }
+.oracle-report__evidence-list { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+.oracle-report__evidence-list li { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); justify-content: space-between; padding: var(--space-3) 0; border-bottom: var(--bw-line) solid var(--line); }
+.oracle-report__evidence-list li > div { display: grid; gap: var(--space-1); flex: 1 1 9rem; }
+.oracle-report__evidence-list span, .oracle-report__evidence-list small { font-size: var(--fs-caption); color: var(--ink-2); }
+.oracle-report__evidence-list strong { font-size: var(--fs-body); }
+.oracle-report__evidence-list button { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3); border: var(--bw-line) solid var(--line); border-radius: var(--r-action); color: var(--brand); background: var(--surface); }
+.oracle-report__example-detail { flex: 1 1 100%; font-size: var(--fs-body); color: var(--ink-2); margin: 0; line-height: 1.6; }
+.oracle-report__basis { margin-top: var(--space-4); }
+.oracle-report__basis summary, .oracle-report__all-evidence summary { min-height: var(--app-touch-min); cursor: pointer; align-content: center; font-size: var(--fs-caption); color: var(--ink-2); }
+.oracle-report__next { display: grid; gap: var(--space-2); margin-top: var(--space-6); }
+.oracle-report__next button, .oracle-report__state button { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); background: var(--surface); color: var(--brand); border: var(--bw-line) solid var(--line); border-radius: var(--r-action); text-align: left; }
+.oracle-report__next button:first-child { background: var(--brand); color: var(--surface); border-color: var(--brand); font-weight: 700; }
+.oracle-report__state { padding: var(--space-5) 0; line-height: 1.6; }
+.oracle-report__state p { color: var(--ink-2); }
+.oracle-report__state button { margin-top: var(--space-4); }
+@media (min-width: 56rem) { .oracle-report { max-width: 58rem; margin-inline: auto; } .oracle-report__controls .app-choice-group { flex: 0 1 15rem; } .oracle-report__months:has(> button:nth-child(6)) { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+@media (max-width: 22rem) { .oracle-report { padding-inline: var(--space-4); } .oracle-report__bar-row { grid-template-columns: minmax(2rem, 1fr) minmax(0, 2fr) minmax(4rem, 1.5fr); } }
+@media (prefers-reduced-motion: reduce) { .oracle-report *, .oracle-report *::before, .oracle-report *::after { transition: none; animation: none; } }

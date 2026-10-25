@@ -100,10 +100,11 @@ describe("Trends exploration hub", () => {
     expect(screen.getByRole("heading", { name: "오라클", level: 1 })).toBeVisible()
     expect(screen.getByRole("navigation", { name: "오라클 메뉴" })).toBeVisible()
     expect(screen.getAllByRole("button", { name: /^(분석|취향|읽을거리)$/u })).toHaveLength(3)
-    expect(screen.getByText("예시 · 내 기록 분석이 아니에요")).toBeVisible()
+    expect(screen.getByRole("region", { name: "기간별 훈련 리포트" })).toHaveAttribute("data-source", "my")
 
     expect(screen.queryAllByRole("button", { name: / · 결과 보기$/u })).toHaveLength(0)
-    expect(screen.getByRole("button", { name: "예시 결과 보기" })).toHaveAccessibleDescription("예시 · 내 기록 분석이 아니에요")
+    await user.click(screen.getByRole("button", { name: "예시 결과 보기" }))
+    expect(screen.getByText("예시 · 가상 기록")).toBeVisible()
     await user.click(screen.getByRole("button", { name: "읽을거리" }))
     expect(screen.getByText("내 관심 주제·기록할 요일")).toBeVisible()
     const topicButtons = screen.getAllByRole("button", { name: /결과 보기/u })
@@ -137,17 +138,17 @@ describe("Trends exploration hub", () => {
     }
 
     await chooseDetail(user, "훈련량")
-    expect(screen.getByRole("region", { name: "누적 거리와 변화" })).toBeVisible()
+    expect(screen.getByRole("region", { name: "기간별 훈련 리포트" })).toHaveAttribute("data-view", "distance")
     expect(screen.queryByRole("region", { name: "훈련 종류별 합계" })).not.toBeInTheDocument()
     expect(screen.queryByRole("region", { name: "최근 4개월 추이" })).not.toBeInTheDocument()
 
     await chooseDetail(user, "훈련 구성")
-    expect(screen.getByRole("region", { name: "훈련 종류별 합계" })).toBeVisible()
+    expect(screen.getByRole("region", { name: "기간별 훈련 리포트" })).toHaveAttribute("data-view", "mix")
     expect(screen.queryByRole("region", { name: "누적 거리와 변화" })).not.toBeInTheDocument()
     expect(screen.queryByRole("region", { name: "최근 4개월 추이" })).not.toBeInTheDocument()
 
     await chooseDetail(user, "월별 변화")
-    expect(screen.getByRole("region", { name: "최근 4개월 추이" })).toBeVisible()
+    expect(screen.getByRole("region", { name: "기간별 훈련 리포트" })).toHaveAttribute("data-view", "monthly")
     expect(screen.queryByRole("region", { name: "누적 거리와 변화" })).not.toBeInTheDocument()
     expect(screen.queryByRole("region", { name: "훈련 종류별 합계" })).not.toBeInTheDocument()
 
@@ -207,7 +208,7 @@ describe("Trends exploration hub", () => {
 
     expect(screen.getByRole("button", { name: "분석" })).toHaveAttribute("aria-current", "page")
     await chooseDetail(user, "월별 변화")
-    expect(onContextChange).toHaveBeenLastCalledWith({ section: "monthly", metric: "MOOD", savedDate: "2026-10-05" })
+    expect(onContextChange).toHaveBeenLastCalledWith(expect.objectContaining({ section: "monthly", metric: "MOOD", savedDate: "2026-10-05" }))
     expect(screen.getByText("2026-10-05에 저장한 기분을 월별 기록과 함께 볼 수 있어요.")).toBeVisible()
   })
 
@@ -244,8 +245,8 @@ describe("Trends exploration hub", () => {
     render(<Trends />)
 
     expect(screen.getByText(/파일 기록 1건 · 확인 전 분석에서 제외/u)).toBeVisible()
-    expect(screen.getByTestId("trends-analysis-exclusion")).toBeVisible()
-    expect(screen.getByText("가져온 기록 1개 · 출처 미확인 1개 · 분석 제외 안내")).toBeVisible()
+    expect(screen.getByText(/기록을 아직 모두 확인하지 못했어요/u)).toBeVisible()
+    expect(screen.queryByRole("img")).toBeNull()
 
     await chooseDetail(user, "파일 분석")
     expect(screen.getByTestId("file-analysis-panel")).toBeVisible()

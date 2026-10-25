@@ -8,6 +8,7 @@ import { OracleExplore } from "./OracleExplore"
 import { buildOraclePersonalResult } from "../domain/oracle-personal-result"
 import { createOracleReturnStore } from "../domain/oracle-return-state"
 import { replacedReplanFixture } from "../domain/execution-replan-lineage.test-fixture"
+import * as demoScenario from "../domain/oracle-demo-scenario"
 
 afterEach(() => {
   cleanup()
@@ -221,14 +222,15 @@ describe("Oracle exploration examples", () => {
   })
   it.each(routes)("$id keeps the example and source visible while supporting explanation starts closed", ({ id }) => {
     const topic = catalog.getOracleTopic(id)
+    const example = demoScenario.buildOracleDemoTopicResult(id)
     mountExplore(id)
 
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
-    expect(screen.getByRole("heading", { name: topic.example.headline })).toBeVisible()
-    expect(screen.getByRole("heading", { level: 1, name: topic.example.headline })).toHaveClass("app-heading--screen", "app-heading--accent")
-    expect(screen.getByText(id === "priority" ? "예시 상황" : "예시 기록")).toBeVisible()
+    expect(screen.getByRole("heading", { name: example.headline })).toBeVisible()
+    expect(screen.getByRole("heading", { level: 1, name: example.headline })).toHaveClass("app-heading--screen", "app-heading--accent")
+    expect(screen.getByText("예시 기록")).toBeVisible()
     expect(screen.getByText("내 기록을 분석한 결과가 아니에요")).toBeVisible()
-    expect(screen.getByText(topic.example.source)).toBeVisible()
+    expect(screen.getByText(example.source)).toBeVisible()
     expect(screen.getByText("오라클", { selector: ".oracle-explore__header > span" })).toHaveClass("app-chrome-title")
 
     const explanation = screen.getByText("예시의 기준과 읽는 방법")
@@ -237,13 +239,13 @@ describe("Oracle exploration examples", () => {
     expect(personalAction.compareDocumentPosition(explanation) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(relatedAction.compareDocumentPosition(explanation) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(explanation.closest("details")).not.toHaveAttribute("open")
-    expect(screen.getByText(topic.example.summary)).not.toBeVisible()
-    expect(screen.getByText(topic.example.detail)).not.toBeVisible()
+    expect(screen.getByText(example.summary)).toBeVisible()
+    expect(screen.getByText(example.detail)).not.toBeVisible()
     fireEvent.click(explanation)
-    expect(screen.getByText(topic.example.summary)).toBeVisible()
-    expect(screen.getByText(topic.example.detail)).toBeVisible()
+    expect(screen.getByText(example.summary)).toBeVisible()
+    expect(screen.getByText(example.detail)).toBeVisible()
     expect(screen.getByText("내 기록을 분석한 결과가 아니에요")).toBeVisible()
-    expect(screen.getByText(topic.example.source)).toBeVisible()
+    expect(screen.getByText(example.source)).toBeVisible()
   })
 
   it.each(routes)("$id routes related exploration and personal CTA only to their assigned destinations", ({ id, next, action }) => {
@@ -276,17 +278,18 @@ describe("Oracle exploration examples", () => {
   })
 
   it.each([
-    { id: "level", labels: ["앞선 기록", "최근 기록"], values: ["24분 40초", "24분 10초"], widths: [100, 97.97297297297297] },
-    { id: "focus", labels: ["계획", "실제"], values: ["힘든 정도 5/10", "힘든 정도 7/10"], widths: [71.42857142857143, 100] },
-    { id: "compare", labels: ["지난달", "이번 달"], values: ["5 km", "6 km"], widths: [83.33333333333334, 100] },
-    { id: "mix", labels: ["기초 지구력 · BASE", "지속 페이스 · LT", "강한 유산소 반복 · VO2"], values: ["4건", "1건", "1건"], widths: [100, 25, 25] },
-    { id: "change", labels: ["지난달", "이번 달"], values: ["7 / 10", "5 / 10"], widths: [100, 71.42857142857143] },
+    { id: "level", labels: ["2026-06-28", "2026-09-13"], values: ["22분 6초", "21분 45초"], widths: [100, 1305 / 1326 * 100] },
+    { id: "focus", labels: ["2026-09-22 · AM", "2026-09-24 · AM", "2026-09-27 · AM", "2026-09-30 · AM"], values: ["실제 4/10 · 계획 2~4", "실제 4/10 · 계획 2~4", "실제 5/10 · 계획 2~4", "실제 4/10 · 계획 2~4"], widths: [80, 80, 100, 80] },
+    { id: "compare", labels: ["2026-08", "2026-09"], values: ["7 km", "8 km"], widths: [87.5, 100] },
+    { id: "mix", labels: ["BASE 기초 지구력", "LT 지속 페이스", "VO₂ 강한 유산소 반복"], values: ["18회", "3회", "3회"], widths: [100, 3 / 18 * 100, 3 / 18 * 100] },
+    { id: "change", labels: ["2026-08", "2026-09"], values: ["4", "4"], widths: [100, 100] },
   ] as const)("$id exposes the full chart data, proportional bars and matching accessible table", ({ id, labels, values, widths }) => {
     const topic = catalog.getOracleTopic(id)
+    const example = demoScenario.buildOracleDemoTopicResult(id)
     mountExplore(id)
     const chart = screen.getByRole("img")
-    expect(chart).toHaveAccessibleName(expect.stringContaining(topic.example.source))
-    expect(chart).toHaveAccessibleName(expect.stringContaining(`단위 ${topic.example.unit}`))
+    expect(chart).toHaveAccessibleName(expect.stringContaining(example.source))
+    expect(chart).toHaveAccessibleName(expect.stringContaining(`단위 ${example.unit}`))
     const actualWidths = readWidths(chart)
     expect(actualWidths).toHaveLength(widths.length)
     widths.forEach((width, index) => expect(actualWidths[index]).toBeCloseTo(width, 5))
@@ -296,7 +299,7 @@ describe("Oracle exploration examples", () => {
 
     expect(screen.getByRole("table", { hidden: true })).not.toBeVisible()
     fireEvent.click(screen.getByText("표로 보기"))
-    const table = screen.getByRole("table", { name: `${topic.title} · 예시 데이터 · 단위 ${topic.example.unit}` })
+    const table = screen.getByRole("table", { name: `${topic.title} · 예시 데이터 · 단위 ${example.unit}` })
     expect(within(table).getAllByRole("row")).toHaveLength(labels.length)
     labels.forEach((label, index) => {
       const row = within(table).getByRole("rowheader", { name: label }).closest("tr")!
@@ -305,38 +308,33 @@ describe("Oracle exploration examples", () => {
   })
 
   it("draws zero and small nonzero values from zero without a minimum bar-length floor", () => {
-    const topic = catalog.getOracleTopic("mix")
-    vi.spyOn(catalog, "getOracleTopic").mockReturnValue({ ...topic, example: { ...topic.example, rows: [
+    const example = demoScenario.buildOracleDemoTopicResult("mix")
+    vi.spyOn(demoScenario, "buildOracleDemoTopicResult").mockReturnValue({ ...example, rows: [
       { label: "기록 0회", value: 0, valueLabel: "0회" },
       { label: "기록 1회", value: 1, valueLabel: "1회" },
       { label: "기록 10회", value: 10, valueLabel: "10회" },
-    ] } })
+    ] })
     mountExplore("mix")
     expect(readWidths(screen.getByRole("img"))).toEqual([0, 10, 100])
     expect(screen.getByRole("img")).toHaveAccessibleName(expect.stringContaining("기록 0회 0회"))
   })
 
   it("keeps an all-zero numeric example finite without inventing a nonzero bar", () => {
-    const topic = catalog.getOracleTopic("mix")
-    vi.spyOn(catalog, "getOracleTopic").mockReturnValue({ ...topic, example: { ...topic.example, rows: [
+    const example = demoScenario.buildOracleDemoTopicResult("mix")
+    vi.spyOn(demoScenario, "buildOracleDemoTopicResult").mockReturnValue({ ...example, rows: [
       { label: "기록한 조깅", value: 0, valueLabel: "0회" },
       { label: "기록한 인터벌", value: 0, valueLabel: "0회" },
-    ] } })
+    ] })
     mountExplore("mix")
     expect(readWidths(screen.getByRole("img"))).toEqual([0, 0])
   })
 
-  it("presents priority as a nonnumeric example sequence instead of a score or an empty chart", () => {
-    const { container } = mountExplore("priority")
-    expect(screen.queryByRole("img")).not.toBeInTheDocument()
-    expect(screen.queryByRole("table", { hidden: true })).not.toBeInTheDocument()
-    expect(container.querySelector(".oracle-explore__bar")).toBeNull()
-    const steps = within(screen.getByRole("list")).getAllByRole("listitem")
-    expect(steps).toHaveLength(3)
-    expect(steps[0]).toHaveTextContent("기록계획에 연결한 훈련 일지")
-    expect(steps[1]).toHaveTextContent("비교계획 강도와 실제 느낌")
-    expect(steps[2]).toHaveTextContent("다음 행동현재 계획 검토")
-    expect(screen.getByText("예시 상황")).toBeVisible()
+  it("shows priority from the same four linked current-plan records without inventing a fitness score", () => {
+    mountExplore("priority")
+    expect(screen.getByRole("img")).toHaveAccessibleName(/현재 계획 · 연결 4건 · 비교 4건 · 2026-09-22~2026-09-30/u)
+    expect(screen.getByRole("img")).toHaveAccessibleName(/실제 5\/10 · 계획 2~4/u)
+    expect(screen.getByRole("table", { hidden: true })).not.toBeVisible()
+    expect(screen.queryByText(/체력 점수/u)).toBeNull()
   })
 
   it("returns through the explicit back callback without opening another destination", async () => {
@@ -350,21 +348,21 @@ describe("Oracle exploration examples", () => {
   })
 
   it("replaces the result and closes supporting details when a new topic is supplied", () => {
-    const first = catalog.getOracleTopic("level")
-    const next = catalog.getOracleTopic("mix")
+    const first = demoScenario.buildOracleDemoTopicResult("level")
+    const next = demoScenario.buildOracleDemoTopicResult("mix")
     const callbacks = { onBack: vi.fn(), onSelectTopic: vi.fn(), onPersonalAction: vi.fn() }
     const view = render(<OracleExplore topicId="level" {...callbacks} />)
     fireEvent.click(screen.getByText("예시의 기준과 읽는 방법"))
     fireEvent.click(screen.getByText("표로 보기"))
-    expect(screen.getByText(first.example.detail)).toBeVisible()
+    expect(screen.getByText(first.detail)).toBeVisible()
 
     view.rerender(<OracleExplore topicId="mix" {...callbacks} />)
     expect(screen.getByRole("combobox", { name: "살펴볼 주제" })).toHaveValue("mix")
-    expect(screen.queryByRole("heading", { name: first.example.headline })).not.toBeInTheDocument()
-    expect(screen.getByRole("heading", { name: next.example.headline })).toBeVisible()
-    expect(screen.getByText(next.example.detail)).not.toBeVisible()
+    expect(screen.queryByRole("heading", { name: first.headline })).not.toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: next.headline })).toBeVisible()
+    expect(screen.getByText(next.detail)).not.toBeVisible()
     expect(screen.getByRole("table", { hidden: true })).not.toBeVisible()
-    expect(screen.getByText(next.example.source)).toBeVisible()
+    expect(screen.getByText(next.source)).toBeVisible()
   })
 
   it("does not write local or session storage while browsing examples or invoking navigation", () => {
@@ -377,7 +375,7 @@ describe("Oracle exploration examples", () => {
       const topic = catalog.getOracleTopic(id)
       view.rerender(<OracleExplore topicId={id} {...callbacks} />)
       fireEvent.click(screen.getByText("예시의 기준과 읽는 방법"))
-      if (id !== "priority") fireEvent.click(screen.getByText("표로 보기"))
+      fireEvent.click(screen.getByText("표로 보기"))
       fireEvent.change(screen.getByRole("combobox", { name: "살펴볼 주제" }), { target: { value: topic.nextId } })
       fireEvent.click(screen.getByRole("button", { name: topic.personalLabel }))
       fireEvent.click(screen.getByRole("button", { name: name => name.startsWith("이어서 살펴보기") && name.endsWith(topic.nextLabel) }))

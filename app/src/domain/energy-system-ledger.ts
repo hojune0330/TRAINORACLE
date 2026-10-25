@@ -1,4 +1,4 @@
-import { isValidIsoDate, isoShift } from "./dates"
+import { isValidIsoDate, isoShift, pad2 } from "./dates"
 import type { StructuredJournalObservation } from "./journal-observation"
 import { acceptsExplicitField } from "./analysis-field-eligibility"
 import {
@@ -9,7 +9,7 @@ import type { EnergySystemKey } from "./energy-system-taxonomy"
 
 export const ENERGY_SYSTEM_LEDGER_VERSION = "ENERGY_SYSTEM_LEDGER_V1" as const
 
-export type EnergyLedgerPeriod = "RECENT_4_WEEKS" | "RECENT_8_WEEKS" | "RECENT_24_WEEKS" | "YEAR_TO_DATE"
+export type EnergyLedgerPeriod = "RECENT_4_WEEKS" | "RECENT_8_WEEKS" | "RECENT_24_WEEKS" | "YEAR_TO_DATE" | "CALENDAR_3_MONTHS" | "CALENDAR_6_MONTHS"
 
 export type EnergyLedgerWindow = {
   readonly period: EnergyLedgerPeriod
@@ -133,6 +133,11 @@ function emptyRows(): Map<EnergySystemKey, {
 
 export function energyLedgerWindow(period: EnergyLedgerPeriod, asOfDate: string): EnergyLedgerWindow {
   if (!isValidIsoDate(asOfDate)) throw new RangeError("asOfDate must be a real local date")
+  if (period === "CALENDAR_3_MONTHS" || period === "CALENDAR_6_MONTHS") {
+    const months = period === "CALENDAR_3_MONTHS" ? 3 : 6
+    const start = new Date(Number(asOfDate.slice(0, 4)), Number(asOfDate.slice(5, 7)) - months, 1)
+    return { period, startDate: `${start.getFullYear()}-${pad2(start.getMonth() + 1)}-01`, endDate: asOfDate, precision: "LOCAL_DATE" }
+  }
   const startDate = period === "YEAR_TO_DATE"
     ? `${asOfDate.slice(0, 4)}-01-01`
     : isoShift(asOfDate, -({

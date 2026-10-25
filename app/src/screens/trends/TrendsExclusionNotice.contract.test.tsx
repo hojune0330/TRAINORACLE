@@ -64,7 +64,7 @@ describe("추이 화면 · 반영되지 않은 일지 안내", () => {
     expect(notice.textContent).toContain("일지에는 그대로 남아 있어요")
     expect(screen.getByRole("region", { name: "가져온 운동 기록 미리보기" })).toBeVisible()
     expect(screen.getByText("8km")).toBeVisible()
-    expect(screen.getByRole("region", { name: "내 훈련 요약" })).toBeVisible()
+    expect(screen.getByRole("region", { name: "기간별 훈련 리포트" })).toHaveAttribute("data-source", "my")
     expect(screen.queryByText("첫 운동부터 남겨볼까요?")).toBeNull()
   })
 

@@ -25,31 +25,29 @@ beforeEach(async () => {
 })
 afterEach(cleanup)
 
-it.each(["empty", "date-only", "plan-only", "ineligible RPE", "old RPE"])("keeps the full example when %s supplies no displayed analysis fact", kind => {
+it.each(["empty", "date-only", "plan-only", "ineligible RPE"])("offers the common example explicitly when %s supplies no displayed analysis fact", kind => {
   const entries = kind === "empty" || kind === "plan-only" ? [] : [session(kind === "ineligible RPE" ? { rpe: 6 }
     : kind === "old RPE" ? { date: isoShift(todayISO(), -56), rpe: 6, fieldProvenance: { rpe: { provenance: "EXPLICIT" } } } : {})]
   localStorage.setItem(JOURNAL_STORAGE_KEY, JSON.stringify(entries))
   if (kind === "plan-only") runtime.plan = stateFixture()
   render(<Trends onOpenOracle={vi.fn()} onOpenPlan={vi.fn()} />)
-  const example = screen.getByRole("region", { name: "오라클 예시" })
-  expect(within(example).getByRole("img")).toBeVisible()
-  expect(example).not.toHaveClass("oracle-example-preview--compact")
+  const report = screen.getByRole("region", { name: "기간별 훈련 리포트" })
+  expect(report).toHaveAttribute("data-source", "my")
+  expect(within(report).queryByRole("img")).toBeNull()
+  expect(within(report).getByRole("button", { name: "예시 결과 보기" })).toBeVisible()
   expect(screen.queryByRole("heading", { name: /힘든 정도/u })).toBeNull()
 })
 
-it.each(["RPE-only", "rich"])("keeps the actual %s result first and reduces its example to a row", kind => {
+it.each(["RPE-only", "rich", "old RPE"])("shows the actual %s facts in the common calendar-month report", kind => {
   localStorage.setItem(JOURNAL_STORAGE_KEY, JSON.stringify([session(kind === "RPE-only"
-    ? { rpe: 6, fieldProvenance: { rpe: { provenance: "EXPLICIT" } } }
+    || kind === "old RPE" ? { date: kind === "old RPE" ? isoShift(todayISO(), -56) : todayISO(), rpe: 6, fieldProvenance: { rpe: { provenance: "EXPLICIT" } } }
     : { distanceKm: "8", system: "base", fieldProvenance: { distanceKm: { provenance: "EXPLICIT" }, system: { provenance: "EXPLICIT" } } })]))
   render(<Trends onOpenOracle={vi.fn()} />)
-  const result = screen.getByRole("region", { name: "내 훈련 요약" })
-  if (kind === "RPE-only") expect(within(result).getByRole("heading", { name: "힘든 정도 6/10" })).toBeVisible()
-  else expect(within(result).getByText("8 km")).toBeVisible()
-  const example = screen.getByRole("region", { name: "오라클 예시" })
-  expect(example).toHaveClass("oracle-example-preview--compact")
-  expect(within(example).queryByRole("img")).toBeNull()
-  expect(within(example).getByRole("button", { name: "예시 결과 보기" })).toHaveAccessibleDescription("예시 · 내 기록 분석이 아니에요")
-  expect(result.compareDocumentPosition(example) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  const result = screen.getByRole("region", { name: "기간별 훈련 리포트" })
+  if (kind === "RPE-only" || kind === "old RPE") expect(within(result).getByLabelText("함께 남긴 기록")).toHaveTextContent("힘든 정도6/10")
+  else expect(result.querySelector(".oracle-report__number")).toHaveTextContent("8 km")
+  expect(result).toHaveAttribute("data-source", "my")
+  expect(screen.getByRole("button", { name: "예시" })).toHaveAttribute("aria-pressed", "false")
 })
 
 it("never renders an example or actual summary while the parent journal read is incomplete", () => {
