@@ -12,11 +12,12 @@ export type GuideProps = {
   readonly onBack?: () => void
   readonly backLabel?: string
   readonly onWriteLog?: () => void
+  readonly onOpenDecorations?: () => void
   readonly feedbackAvailable?: boolean
   readonly onOpenFeedback?: () => void
 }
 
-export function Guide({ initialSection = "all", onBack, backLabel = "더보기로 돌아가기", onWriteLog, feedbackAvailable = feedbackConfig() !== null, onOpenFeedback }: GuideProps) {
+export function Guide({ initialSection = "all", onBack, backLabel = "더보기로 돌아가기", onWriteLog, onOpenDecorations, feedbackAvailable = feedbackConfig() !== null, onOpenFeedback }: GuideProps) {
   const root = React.useRef<HTMLDivElement>(null)
   const [guidePurpose, setGuidePurpose] = React.useState<"terms" | "app">("terms")
   useTaskFlowBack({ enabled: onBack !== undefined, onBack: () => {
@@ -35,7 +36,7 @@ export function Guide({ initialSection = "all", onBack, backLabel = "더보기�
           <ArrowLeft aria-hidden="true" size={18} />{backLabel}
         </button>
       )}
-      {(initialSection === "all" || initialSection === "minji") && <MinjiJournal onWriteLog={onWriteLog} />}
+      {(initialSection === "all" || initialSection === "minji") && <MinjiJournal onWriteLog={onWriteLog} onOpenDecorations={onOpenDecorations} />}
       {(initialSection === "all" || initialSection === "guide") && (
         <>
           <div className="guide-screen__purpose app-choice-group" role="group" aria-label="도움말 종류">

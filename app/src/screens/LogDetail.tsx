@@ -29,6 +29,8 @@ import { JournalOriginalPlan } from "./journal/JournalOriginalPlan"
 import { useActiveContentScroll } from "../hooks/useActiveContentScroll"
 import { DecoratedJournalPageFrame } from "../components/DecoratedJournalPageFrame"
 import { useJournalDecorationSnapshot } from "./journal/JournalDecorationPreview"
+import { JournalShareTool } from "../components/JournalShareTool"
+import { journalShareCard } from "../domain/journal-share-card"
 import "../styles/journal-detail-reader.css"
 
 const SleepInnEntry = React.lazy(() => import("./sleep-inn/SleepInnEntry").then(module => ({ default: module.SleepInnEntry })))
@@ -633,6 +635,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, onJournalSave
             onAddEntry={onAddEntry}
             onEditEntry={onEditEntry ? edit : undefined}
           />}
+          {!readOnly && !decorationStudio && snapshot.complete && <JournalDayShare entries={entries} />}
         </>
       )}
 
@@ -649,4 +652,15 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, onJournalSave
       </PageFrame>
     </div>
   )
+}
+
+function JournalDayShare({ entries }: { readonly entries: readonly JournalEntry[] }) {
+  const cards = entries.flatMap(entry => { const card = journalShareCard(entry); return card ? [{ id: entry.id, card }] : [] })
+  const [selected, setSelected] = React.useState<string | null>(null)
+  const card = cards.find(item => item.id === selected) ?? cards[0]
+  if (!card) return null
+  return <div className="journal-day-share">
+    {cards.length > 1 && <label>공유할 운동<select aria-label="공유할 운동" value={card.id} onChange={event => setSelected(event.target.value)}>{cards.map((item, index) => <option key={item.id} value={item.id}>{index + 1}번째 운동 · {item.card.metrics.map(metric => metric.value).join(" · ")}</option>)}</select></label>}
+    <JournalShareTool key={card.id} card={card.card} />
+  </div>
 }

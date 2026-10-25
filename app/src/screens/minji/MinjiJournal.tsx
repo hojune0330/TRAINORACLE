@@ -1,5 +1,8 @@
 import React from "react"
-import { ChevronRight, X } from "lucide-react"
+import { ChevronRight, Palette, PenLine, X } from "lucide-react"
+import { AppHeading } from "../../components/AppHeading"
+import { JournalShareTool } from "../../components/JournalShareTool"
+import type { JournalShareCard } from "../../domain/journal-share-card"
 import { DecoratedJournalPageFrame } from "../../components/DecoratedJournalPageFrame"
 import { JournalPageNavigator } from "../../components/JournalPageNavigator"
 import { decorationCatalogItem } from "../../domain/decoration-catalog"
@@ -8,7 +11,7 @@ import { useJournalPageTurn } from "../../hooks/useJournalPageTurn"
 import { MINJI_JOURNAL_PAGES, minjiDecorationState } from "./minji-journal-data"
 import type { MinjiJournalPage } from "./minji-journal-data"
 
-export function MinjiJournal({ onWriteLog }: { readonly onWriteLog?: () => void }) {
+export function MinjiJournal({ onWriteLog, onOpenDecorations }: { readonly onWriteLog?: () => void; readonly onOpenDecorations?: () => void }) {
   const [selectedIndex, setSelectedIndex] = React.useState<number | null>(null)
   const openerIndexRef = React.useRef<number | null>(null)
   const headingRef = React.useRef<HTMLHeadingElement>(null)
@@ -43,6 +46,7 @@ export function MinjiJournal({ onWriteLog }: { readonly onWriteLog?: () => void 
         onPrevious={selectedIndex > 0 ? () => setSelectedIndex(selectedIndex - 1) : undefined}
         onNext={selectedIndex < MINJI_JOURNAL_PAGES.length - 1 ? () => setSelectedIndex(selectedIndex + 1) : undefined}
         onWriteLog={onWriteLog}
+        onOpenDecorations={onOpenDecorations}
       />
     )
   }
@@ -50,9 +54,12 @@ export function MinjiJournal({ onWriteLog }: { readonly onWriteLog?: () => void 
   return (
     <section className="minji-index" aria-labelledby="minji-index-title">
       <div className="minji-index__eyebrow">가상 기록 · 예시 꾸미기</div>
-      <h1 id="minji-index-title">민지의 일지</h1>
-      <p>거리·시간·RPE, 쉬는 날, 통증, 경기 기록이 쌓이는 여섯 장을 차례로 보세요.</p>
-      <MinjiIndexPreview />
+      <AppHeading id="minji-index-title">민지의 일지</AppHeading>
+      <p>짧게 남긴 오늘도, 간직하고 싶은 한 장이 돼요.</p>
+      <JournalShareTool card={exampleShareCard(MINJI_JOURNAL_PAGES[0]!)} label="예시 꾸미고 공유해 보기" showPreview
+        primaryAction={onWriteLog && <button type="button" className="minji-primary" onClick={onWriteLog}><PenLine size={18} aria-hidden="true" />내 일지 쓰기</button>} />
+      <DecorationGuide onOpenDecorations={onOpenDecorations} />
+      <AppHeading as="h2" variant="section">다른 날은 어떻게 적었을까?</AppHeading>
       <div className="minji-index__stack" aria-label="민지의 예시 일지 목록">
         {MINJI_JOURNAL_PAGES.map((page, index) => (
           <button
@@ -67,10 +74,6 @@ export function MinjiJournal({ onWriteLog }: { readonly onWriteLog?: () => void 
             <span className="minji-index__when">{page.when}</span>
             <span className="minji-index__copy">
               <strong>{page.title}</strong>
-              <small>{page.preview}</small>
-              <span className="minji-index__signals" aria-label="기분, 몸 상태, 날씨">
-                <span>{page.mood}</span><span>{page.bodyCondition}</span><span>{page.weather}</span>
-              </span>
             </span>
             <MinjiIndexDecorationThumbnail page={page} />
             <ChevronRight aria-hidden="true" size={18} />
@@ -96,19 +99,19 @@ export function MinjiIndexDecorationThumbnail({ page }: { readonly page: MinjiJo
   )
 }
 
-function MinjiIndexPreview() {
-  const previewPages = MINJI_JOURNAL_PAGES.filter((_, index) => index === 0 || index === 3 || index === 5)
-  return (
-    <div className="minji-showcase-preview" aria-label="민지의 꾸며진 일지 미리보기">
-      {previewPages.map((page) => (
-        <DecoratedJournalPageFrame key={page.id} date={page.date} state={minjiDecorationState(page)}>
-          <span>{page.when}</span>
-          <strong>{page.title}</strong>
-          <small>{page.mood} · {page.weather}</small>
-        </DecoratedJournalPageFrame>
-      ))}
-    </div>
-  )
+function exampleShareCard(page: MinjiJournalPage): JournalShareCard {
+  return { example: true, date: page.date, title: "오늘을 남긴 한 페이지", source: "민지의 가상 일지 · 실제 기록 아님", metrics: page.id === "DAY_ONE"
+    ? [{ label: "거리", value: "4.6 km" }, { label: "시간", value: "30분" }]
+    : [{ label: "일지", value: "한 페이지" }] }
+}
+
+function DecorationGuide({ onOpenDecorations }: { readonly onOpenDecorations?: () => void }) {
+  return <details className="minji-decoration-guide">
+    <summary><Palette size={18} aria-hidden="true" />내 일지도 이렇게 꾸밀 수 있나요?</summary>
+    <ol><li>일지를 저장하고 <strong>꾸미기</strong>를 열어요.</li><li>종이·그림·글 스티커를 고르고, 끌어서 위치와 크기를 바꿔요.</li><li><strong>공유 카드 만들기</strong>에서는 숫자만 골라 담은 이미지를 저장해요.</li></ol>
+    <p>일지 꾸미기와 공유 카드 꾸미기는 별개예요. 예시를 바꿔도 내 일지나 포인트는 바뀌지 않아요. 일부 재료는 포인트가 필요해요.</p>
+    {onOpenDecorations && <button type="button" onClick={onOpenDecorations}><Palette size={18} aria-hidden="true" />내 꾸미기 열기</button>}
+  </details>
 }
 
 type MinjiPageProps = {
@@ -119,9 +122,10 @@ type MinjiPageProps = {
   readonly onPrevious: (() => void) | undefined
   readonly onNext: (() => void) | undefined
   readonly onWriteLog: (() => void) | undefined
+  readonly onOpenDecorations: (() => void) | undefined
 }
 
-function MinjiPage({ page, position, headingRef, onClose, onPrevious, onNext, onWriteLog }: MinjiPageProps) {
+function MinjiPage({ page, position, headingRef, onClose, onPrevious, onNext, onWriteLog, onOpenDecorations }: MinjiPageProps) {
   const [openNotationPageId, setOpenNotationPageId] = React.useState<MinjiJournalPage["id"] | null>(null)
   const [openQuestionPageId, setOpenQuestionPageId] = React.useState<MinjiJournalPage["id"] | null>(null)
   const paperTopRef = React.useRef<HTMLElement>(null)
@@ -164,14 +168,14 @@ function MinjiPage({ page, position, headingRef, onClose, onPrevious, onNext, on
         <div className="minji-page__body">
           <div className="minji-page__when">{page.date} · {page.when}</div>
           <h1 id="minji-page-title" ref={headingRef} tabIndex={-1}>{page.title}</h1>
-          <div className="minji-page__vibe" aria-label="기분, 몸 상태, 날씨">
+          <ul aria-label="오늘 적은 기록">{page.facts.map((fact) => <li key={fact}>{fact}</li>)}</ul>
+          <blockquote>{page.quote}</blockquote>
+          <details className="minji-page__context"><summary>그날의 기분과 상황</summary><div className="minji-page__vibe" aria-label="기분, 몸 상태, 날씨">
             <span>기분 <strong>{page.mood}</strong></span>
             <span>몸 상태 <strong>{page.bodyCondition}</strong></span>
             <span>날씨 <strong>{page.weather}</strong></span>
           </div>
-          <p className="minji-page__situation">{page.situation}</p>
-          <blockquote>{page.quote}</blockquote>
-          <ul aria-label="오늘 적은 기록">{page.facts.map((fact) => <li key={fact}>{fact}</li>)}</ul>
+          <p className="minji-page__situation">{page.situation}</p></details>
           {page.notation !== undefined && (
             <div className="minji-page__notation">
               <code>{page.notation.raw}</code>
@@ -180,11 +184,11 @@ function MinjiPage({ page, position, headingRef, onClose, onPrevious, onNext, on
               {notationOpen && <div id={`minji-notation-${page.id}`}>{page.notation.lines.map((line) => <p key={line}>{line}</p>)}</div>}
             </div>
           )}
-          <section className="minji-page__decorations" aria-labelledby={`minji-decorations-${page.id}`}>
-            <h2 id={`minji-decorations-${page.id}`}>이 페이지에 쓴 꾸미기</h2>
+          <details className="minji-page__decorations">
+            <summary>이 페이지에 쓴 꾸미기</summary>
             <p>{page.decorationPreset.name}</p>
             <div>{decorationNames.map((name) => <span key={name}>{name}</span>)}</div>
-          </section>
+          </details>
           <section className="minji-page__discovery" aria-label="기록에서 확인한 점">
             <strong>기록에서 확인한 점</strong><p>{page.discovery}</p>
             {page.supportingText !== undefined && <small>{page.supportingText}</small>}
@@ -204,7 +208,11 @@ function MinjiPage({ page, position, headingRef, onClose, onPrevious, onNext, on
         onPrevious={onPrevious === undefined ? undefined : pageTurn.goPrevious}
         onNext={onNext === undefined ? undefined : pageTurn.goNext}
       />
-      {onNext === undefined && <button type="button" className="minji-page__write" onClick={onWriteLog}>내 첫 페이지 적기</button>}
+      <div className="minji-page__next-actions">
+        {onWriteLog && <button type="button" className="minji-primary" onClick={onWriteLog}><PenLine size={18} aria-hidden="true" />내 일지 쓰기</button>}
+        <JournalShareTool key={page.id} card={exampleShareCard(page)} label="이 예시로 공유 카드 만들기" />
+        <DecorationGuide onOpenDecorations={onOpenDecorations} />
+      </div>
     </article>
   )
 }

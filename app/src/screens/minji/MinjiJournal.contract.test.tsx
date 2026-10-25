@@ -7,6 +7,18 @@ import { MinjiIndexDecorationThumbnail, MinjiJournal } from "./MinjiJournal"
 afterEach(cleanup)
 
 describe("Minji journal fixed page frame", () => {
+  it("offers writing immediately and explains decorating without changing stored records", async () => {
+    const user = userEvent.setup(), onWriteLog = vi.fn(), onOpenDecorations = vi.fn()
+    const before = { ...localStorage }
+    render(<MinjiJournal onWriteLog={onWriteLog} onOpenDecorations={onOpenDecorations} />)
+    await user.click(screen.getByRole("button", { name: "내 일지 쓰기" }))
+    expect(onWriteLog).toHaveBeenCalledOnce()
+    await user.click(screen.getByText("내 일지도 이렇게 꾸밀 수 있나요?"))
+    expect(screen.getByText(/일지 꾸미기와 공유 카드 꾸미기는 별개예요/u)).toBeVisible()
+    await user.click(screen.getByRole("button", { name: "내 꾸미기 열기" }))
+    expect(onOpenDecorations).toHaveBeenCalledOnce()
+    expect({ ...localStorage }).toEqual(before)
+  })
   it("renders an emoji decoration as text instead of an empty image URL", () => {
     const page = MINJI_JOURNAL_PAGES[0]
     if (page === undefined) throw new Error("Minji fixture page is missing")

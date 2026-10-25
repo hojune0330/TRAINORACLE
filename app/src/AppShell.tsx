@@ -1391,6 +1391,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
       backLabel={utilityOrigin === "home" ? "홈으로 돌아가기" : "더보기로 돌아가기"}
       onBack={closeGuide}
       onWriteLog={() => runViewTransition("tab-forward", () => { setUtilityView(null); setV(viewForTab("log")) })}
+      onOpenDecorations={() => openDecorationStudio()}
       onOpenFeedback={() => openOverlay({ kind: "feedback" })}
     />
   } else if (v.tab === "home") {

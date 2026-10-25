@@ -1,4 +1,40 @@
 import { expect, test } from "@playwright/test"
+import { readFile } from "node:fs/promises"
+
+test("previews, decorates and downloads the same example image without saving a journal", async ({ page }, testInfo) => {
+  await page.goto("/?app=1")
+  await page.getByRole("button", { name: "일지 예시 보기", exact: true }).click()
+  const storage = await page.evaluate(() => JSON.stringify({ ...localStorage }))
+  await expect(page.getByRole("button", { name: "내 일지 쓰기", exact: true })).toBeVisible()
+  await page.getByRole("button", { name: "예시 꾸미고 공유해 보기" }).click()
+  await expect(page.getByLabel("공유 카드 예시")).toHaveCount(0)
+  const image = page.getByRole("img", { name: /예시 · 가상 기록/u })
+  await expect(image).toBeVisible()
+  await page.getByRole("button", { name: "분홍 종이", exact: true }).click()
+  await page.getByRole("button", { name: "정사각", exact: true }).click()
+  await page.getByRole("checkbox", { name: "날짜 넣기" }).check()
+  await expect(image).toHaveAttribute("alt", /2025-03-02/u)
+  await expect.poll(() => image.evaluate((img: HTMLImageElement) => [img.naturalWidth, img.naturalHeight])).toEqual([1080, 1080])
+  const downloadPromise = page.waitForEvent("download")
+  await page.getByRole("button", { name: "이미지 저장", exact: true }).click()
+  const download = await downloadPromise
+  expect(download.suggestedFilename()).toBe("trainoracle-example.png")
+  const path = await download.path()
+  expect(path).not.toBeNull()
+  const png = await readFile(path!)
+  expect(png.subarray(1, 4).toString()).toBe("PNG")
+  expect(png.readUInt32BE(16)).toBe(1080)
+  expect(png.readUInt32BE(20)).toBe(1080)
+  await page.getByRole("button", { name: "공유 카드 닫기" }).click()
+  await expect(page.getByRole("button", { name: "예시 꾸미고 공유해 보기" })).toBeFocused()
+  await page.evaluate(() => {
+    const sizes = [...document.querySelectorAll<HTMLElement>(".guide-screen *")].map(element => ({ element, size: parseFloat(getComputedStyle(element).fontSize) }))
+    sizes.forEach(({ element, size }) => { element.style.fontSize = `${size * 2}px` })
+  })
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  await page.screenshot({ path: testInfo.outputPath("journal-example-large-text.png"), fullPage: true })
+  expect(await page.evaluate(() => JSON.stringify({ ...localStorage }))).toBe(storage)
+})
 
 async function swipeJournalLeft(page: import("@playwright/test").Page): Promise<void> {
   await page.locator(".minji-page").evaluate((element) => {
@@ -69,9 +105,9 @@ test("opens Minji's diary as a readable page stack", async ({ page }, testInfo) 
   await page.getByRole("button", { name: "일지 예시 보기", exact: true }).click()
   const storageBefore = await page.evaluate(() => JSON.stringify({ ...window.localStorage }))
 
-  await expect(page.getByLabel("민지의 꾸며진 일지 미리보기")).toBeVisible()
+  await expect(page.getByLabel("공유 카드 예시")).toBeVisible()
   const previewGeometry = await page.evaluate(() => {
-    const preview = document.querySelector<HTMLElement>(".minji-showcase-preview")
+    const preview = document.querySelector<HTMLElement>(".journal-share-preview")
     const list = document.querySelector<HTMLElement>(".minji-index__stack")
     if (preview === null || list === null) return null
     const previewRect = preview.getBoundingClientRect()
@@ -87,7 +123,7 @@ test("opens Minji's diary as a readable page stack", async ({ page }, testInfo) 
   await expectDecoratedPaperAtReadableTop(page)
   await expect(page.getByTestId("journal-decoration-item-0")).toBeVisible()
   await expect(page.getByText("시간 30분", { exact: true })).toBeVisible()
-  await expect(page.getByRole("heading", { name: "이 페이지에 쓴 꾸미기" })).toBeVisible()
+  await expect(page.getByText("이 페이지에 쓴 꾸미기", { exact: true })).toBeVisible()
   for (let pageNumber = 2; pageNumber <= 6; pageNumber += 1) {
     if (pageNumber === 2) await swipeJournalLeft(page)
     else await page.getByRole("button", { name: "다음 일지" }).click()
