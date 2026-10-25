@@ -180,7 +180,7 @@ describe("verified catalog targets in execution steps", () => {
     expect(paper).toHaveTextContent("사이 1분 조깅")
     expect(within(nextReader).getByText(sessionLabel(timed))).toBeVisible()
     fireEvent.change(within(nextReader).getByRole("combobox", { name: "메모 표현 방식" }), { target: { value: "COACH" } })
-    fireEvent.click(within(nextReader).getByRole("button", { name: "자세히", exact: true }))
+    fireEvent.click(within(nextReader).getByRole("button", { name: "자세히" }))
     expect(within(paper).getByText(sessionLabel(timed, false, "original"))).toBeVisible()
     const originalSequence = required(calculatedWorkoutSequence(calculation(timed)))
     for (const phase of ["warmup", "main", "cooldown"] as const) {
