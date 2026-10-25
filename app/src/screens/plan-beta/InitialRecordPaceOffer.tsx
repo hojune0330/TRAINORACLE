@@ -1,4 +1,5 @@
 import React from "react"
+import { sessionExecutionSteps } from "./labels"
 import type { PlanGenerationSuccess } from "@impl/plan-generator/types"
 import { canonicalPaceDistance, formatPaceSeconds } from "@impl/prescription/record-pace"
 import type { AthleteRecord } from "../../domain/athlete-records"
@@ -28,6 +29,9 @@ export function InitialRecordPaceOffer({ generated, records, disabled, onChange 
   const offer = localAccountScopeIsCurrent(scope)
     ? prepareInitialRecordPaces(generated, available, todayISO(), selectedRecordId) : null
   const [message, setMessage] = React.useState("")
+  const firstChanged = offer?.changed[0]
+  const preview = firstChanged ? offer?.generated.candidates[0].sessions.find(session =>
+    session.day === firstChanged.day && session.slot === firstChanged.slot) : undefined
   if (!offer && !options.length) return null
   const compatible = generated.candidates[0].sessions.some(session => session.role === "QUALITY"
     && session.prescription.kind === "RPE_TIME_RANGE" && session.prescription.catalogWorkout
@@ -40,8 +44,11 @@ export function InitialRecordPaceOffer({ generated, records, disabled, onChange 
     return range.minimum === range.maximum ? `${number.format(range.minimum)}분` : `${number.format(range.minimum)}~${number.format(range.maximum)}분`
   }
   return <section aria-label="최근 기록으로 페이스 추천">
+    <h3>내 기록으로 목표 페이스 정하기</h3>
     {offer ? offer.records.map(record => <p key={record.id}>{eventLabel(record.eventDistanceM)} {record.purpose === "RACE_GOAL" ? "목표기록" : "경기 기록"} {formatPaceSeconds(record.performanceSeconds)} · {record.achievedOn ?? (record.purpose === "RACE_GOAL" ? "현재 능력과 달라요" : "날짜 미입력")}</p>)
       : <p>사용할 경기 기록을 골라 주세요.</p>}
+    {preview && <p>{sessionExecutionSteps(preview, true).find(step => step.role === "MAIN")?.detail}</p>}
+    {offer && <p>{offer.changed.length}개 훈련 변경 미리보기 · 아직 적용 전</p>}
     <details><summary>기준 바꾸기</summary><label>기준 기록<select value={selectedRecordId ?? ""} disabled={disabled} onChange={event => {
       setSelectedRecordId(event.target.value || undefined); setMessage("")
     }}><option value="">최근 실제 경기 우선</option>{options.map(option => <option key={option.sourceSnapshot.id} value={option.sourceSnapshot.id}>
@@ -61,7 +68,7 @@ export function InitialRecordPaceOffer({ generated, records, disabled, onChange 
         setMessage("경기 기록이 바뀌었어요. 최신 기록을 다시 확인해 주세요."); return
       }
       onChange(fresh.generated)
-    }}>이 기록으로 목표 페이스 보기</button>
+    }}>이 페이스로 계획안에 적용</button>
     {message && <p role="status">{message}</p>}
   </section>
 }

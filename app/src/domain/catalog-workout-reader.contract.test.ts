@@ -5,6 +5,7 @@ import * as catalogBinding from "@impl/prescription/catalog-session-binding"
 import type { SequenceNodeV3 } from "@impl/prescription/sequence-v3"
 import { catalogWorkoutReader } from "./catalog-workout-reader"
 import { sessionWorkoutNotation } from "./workout-notation"
+import { catalogDeliveryProfile } from "@impl/prescription/catalog-delivery"
 import { prescriptionLabel, sessionExecutionSteps, sessionLabel } from "../screens/plan-beta/labels"
 
 afterEach(() => vi.restoreAllMocks())
@@ -142,12 +143,12 @@ describe("explicit easy catalog reader", () => {
     const calculated = calculation(session)
     const before = JSON.stringify({ session, entry, calculated })
     const reading = required(catalogWorkoutReader(session))
-    expect(reading.name).toBe(title ? `${entry.name} · ${title}` : entry.name)
-    expect(reading.name).toContain(entry.name)
+    expect(reading.name).toBe(title ? `${catalogDeliveryProfile(entry).name} · ${title}` : catalogDeliveryProfile(entry).name)
+    expect(sessionLabel(session, false, "original")).toBe(entry.name)
     expect(reading.summary).not.toMatch(/1km에|목표 기록 기준|실제 기록 기준|초\/km/)
     expect(calculated.totals.seconds).toEqual({ minimum: seconds, maximum: seconds })
-    if (id === "P-BASE-B") expect(reading.summary).toContain("문장으로 대화할 수 있는 노력 본운동 체감 노력 제안 힘든 정도(RPE) 3–4/10")
-    if (id.startsWith("P-") && id.includes("LT")) expect(reading.summary).toContain("힘들지만 정해진 구간 동안 고르게 유지하는 노력 본운동 체감 노력 제안 힘든 정도(RPE) 6–7/10")
+    if (id === "P-BASE-B") expect(reading.summary).toContain("대화할 수 있는 강도 · 힘든 정도(RPE) 3–4/10")
+    if (id.startsWith("P-") && id.includes("LT")) expect(reading.summary).toContain("고르게 유지 · 힘든 정도(RPE) 6–7/10")
     if (id === "X-BASE-09") expect(reading.summary).toBe("22분 · 힘든 정도(RPE) 3–4/10 → 끝낸 뒤 2분 걷기 → 23분 · 힘든 정도(RPE) 3–4/10")
     if (id === "X-LT-05" || id === "X-LT-06") {
       const values = id === "X-LT-05" ? [4, 6, 8] : [8, 6, 4]
@@ -177,12 +178,15 @@ describe("explicit easy catalog reader", () => {
     expect(JSON.stringify({ session, entry, calculated })).toBe(before)
   })
 
-  it("falls back for unreviewed numeric distance-work without shortening its instruction", () => {
+  it("retains numeric distance-work and its original safety cue in the execution reading", () => {
     const session = bound("P-GLY-D", { segmentSeconds: [{ segmentId: "part-0", seconds: 40.125 }] })
     const before = JSON.stringify(session)
     expect(catalogWorkoutReader(session)).toBeNull()
     expect(prescriptionLabel(session, true)).toBe(sessionWorkoutNotation(session, "PLAIN"))
-    expect(sessionExecutionSteps(session, true)).toEqual(sessionExecutionSteps(session))
+    expect(phase(session, "MAIN")).toContain("200m씩 6번")
+    expect(phase(session, "MAIN")).toContain("한 번에 약 40.1초")
+    expect(phase(session, "MAIN")).toContain("사이 2분 걷기")
+    expect(phase(session, "MAIN")).toContain("첫 회 전력 기록 경쟁은 하지 않음")
     expect(JSON.stringify(session)).toBe(before)
   })
 
@@ -204,7 +208,8 @@ describe("explicit easy catalog reader", () => {
     const before = JSON.stringify(session)
     const professional = sessionWorkoutNotation(session)
     const execution = sessionExecutionSteps(session)
-    expect(sessionLabel(session)).toBe(source("RP-10000-TIMED").name)
+    expect(sessionLabel(session)).toBe("10km 페이스 연습")
+    expect(sessionLabel(session, false, "original")).toBe(source("RP-10000-TIMED").name)
     expect(prescriptionLabel(session)).toBe(professional)
     expect(execution.find(step => step.role === "MAIN")?.detail).toContain("3 × 7분 · 270초/km · 목표기록 기준 · RP · 반복 사이 60초 조깅")
     sessionLabel(session, true)

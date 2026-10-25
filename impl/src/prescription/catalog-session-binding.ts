@@ -2,6 +2,7 @@ import { ALL_WORKOUT_CATALOG, calculateCatalogWorkout, catalogMethodIdentity } f
 import type { CalculatedWorkout, WorkoutCalculationInputs } from "./all-workout-calculator"
 import type { PlanSession, RpeTimeRange } from "../plan-generator/session-types"
 import type { ExperienceBand, PlannedEnergyIntent } from "../plan-generator/types"
+import { preferredCatalogEntries } from "./catalog-delivery"
 
 export type CatalogSessionBinding = {
   readonly version: 1
@@ -104,12 +105,22 @@ export function initialCatalogMainOptions(session: PlanSession, eventDistanceM: 
 /** Only new plans. Existing saved plans are never upgraded or rewritten on read. */
 export function bindDefaultCatalogSessions(sessions: readonly PlanSession[], eventDistanceM: number, experience: ExperienceBand,
   seed: number): readonly PlanSession[] {
+  const hasDetailedMain = sessions.some(session => session.role === "QUALITY" && session.prescription.kind === "PACE_TARGET")
+  let remainingMainOrdinal = 0
   return sessions.map(session => {
     if (session.prescription.kind !== "RPE_TIME_RANGE" || session.prescription.catalogWorkout) return session
     if (session.role === "QUALITY") {
       const options = initialCatalogMainOptions(session, eventDistanceM, experience)
-      return options.length ? options[(seed + session.day + (session.slot === "PM" ? 1 : 0)) % options.length]! : session
+      const ids = new Set(options.flatMap(option => option.prescription.kind === "RPE_TIME_RANGE"
+        && option.prescription.catalogWorkout ? [option.prescription.catalogWorkout.catalogId] : []))
+      const preferredIds = new Set(preferredCatalogEntries(ALL_WORKOUT_CATALOG.filter(entry => ids.has(entry.id))).map(entry => entry.id))
+      const preferred = options.filter(option => option.prescription.kind === "RPE_TIME_RANGE"
+        && option.prescription.catalogWorkout && preferredIds.has(option.prescription.catalogWorkout.catalogId))
+      // Moving the single legacy pace target must not also redraw its companion MAINs.
+      const position = hasDetailedMain ? remainingMainOrdinal++ : session.day + (session.slot === "PM" ? 1 : 0)
+      return preferred.length ? preferred[((seed + position) % preferred.length + preferred.length) % preferred.length]! : session
     }
+    if (hasDetailedMain) return session
     const originalRpeMaximum = session.prescription.rpe.maximum
     const input: WorkoutCalculationInputs = { eventDistanceM, experience, availableSeconds: session.prescription.durationMinutes.maximum * 60,
       confirmedRequirements: [], fiveK: null, segmentPaces: [] }

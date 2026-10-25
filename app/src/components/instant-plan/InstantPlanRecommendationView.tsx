@@ -28,12 +28,14 @@ export type InstantPlanRecommendationViewProps = {
   readonly startLabel?: string
   readonly blockedAction?: { readonly label: string; readonly onClick: () => void }
   readonly conditionReviewLabel?: string
+  readonly conditionReviewDisabled?: boolean
   readonly onReviewCondition?: () => void
   readonly scheduleReview?: ReactNode
   readonly showSupportingDetails?: boolean
   readonly beforeStart?: ReactNode
   /** The selected candidate's execution facts, before the full calendar. */
   readonly executionSummary?: ReactNode
+  readonly afterStart?: ReactNode
   /** The selected candidate's prescription calendar, replacing the generic projection. */
   readonly calendar?: ReactNode
 }
@@ -64,11 +66,13 @@ export function InstantPlanRecommendationView({
   startLabel,
   blockedAction,
   conditionReviewLabel,
+  conditionReviewDisabled,
   onReviewCondition,
   scheduleReview,
   showSupportingDetails = true,
   beforeStart,
   executionSummary,
+  afterStart,
   calendar,
 }: InstantPlanRecommendationViewProps) {
   const headingId = useId()
@@ -106,7 +110,7 @@ export function InstantPlanRecommendationView({
       {anchorLabel && <p className="instant-plan__source"><span>기준 기록</span> <span>{anchorLabel}</span></p>}
       {recommendation.guidanceNotice && <IncompleteWorkoutNotice detail={recommendation.guidanceNotice} />}
       {conditionReviewLabel && onReviewCondition && <button className="instant-plan__secondary"
-        type="button" disabled={!ready} onClick={onReviewCondition}>{conditionReviewLabel}</button>}
+        type="button" disabled={conditionReviewDisabled ?? !ready} onClick={onReviewCondition}>{conditionReviewLabel}</button>}
 
       {status !== null && (
         <section
@@ -150,6 +154,7 @@ export function InstantPlanRecommendationView({
         </button>
       </div>}
       </div>
+      {afterStart}
       <section aria-label="이번 일정">
         <h3>이번 일정</h3>
         {calendar ?? (recommendation.days.length === 0 ? (

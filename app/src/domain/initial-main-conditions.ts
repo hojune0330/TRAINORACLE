@@ -63,12 +63,12 @@ export function reviewInitialMainConditions(input: InitialMainInput): InitialMai
     if (context.mode !== "newplan" || !isValidIsoDate(context.startDate)
       || !Number.isSafeInteger(context.revision) || context.revision < 0
       || !localAccountScopeIsCurrent(context.accountScope)
-      || gate.kind !== "passed" || !gate.planGenerationAllowed || intake.selectedDetailedTemplateRef !== null
+      || gate.kind !== "passed" || !gate.planGenerationAllowed
       || generated.pairId !== generated.candidates[0].pairId
       || !generated.candidates.every(candidate => isVerifiedPlanCandidate(candidate)
         && candidate.eventDistanceM === intake.eventDistanceM
         && candidate.selectedEnergyIntent === intake.trainingFocus
-        && candidate.selectedDetailedTemplateRef === null
+        && JSON.stringify(candidate.selectedDetailedTemplateRef) === JSON.stringify(intake.selectedDetailedTemplateRef)
         && candidate.candidateId.includes(`:${intake.experienceBand.toLowerCase()}:`))
       || !isInitialCandidatePair(...generated.candidates)) return null
     const offers: InitialMainOffer[] = [], fallbacks: InitialMainFallback[] = []

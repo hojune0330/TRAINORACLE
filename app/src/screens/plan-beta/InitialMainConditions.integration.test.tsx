@@ -25,39 +25,36 @@ async function reachCandidates(next = intake) {
   vi.mocked(store.loadPreviousIntake).mockReturnValue(next)
   const view = render(<PlanBeta />)
   fireEvent.click(await screen.findByRole("button", { name: /통증은 없고 몸 상태는 평소와 같아요/u }))
-  await screen.findByRole("button", { name: "이 일정으로 시작" })
+  fireEvent.click(await screen.findByRole("button", { name: "필요한 항목 확인" }))
   return view
 }
 const applyName = "이 훈련으로 적용"
 function initialRegion() { return screen.getByRole("region", { name: "첫 주요 훈련 조건" }) }
 
 describe("first-generation MAIN integration", () => {
-  it("keeps compact unchecked review optional and saves RPE fallback without hypothetical answers", async () => {
+  it("keeps the preview available but does not start an unresolved MAIN or invent answers", async () => {
     await reachCandidates()
     const region = initialRegion()
     expect(within(region).getByRole("checkbox")).not.toBeChecked()
     expect(within(region).getByText("상세 훈련 미리보기").closest("details")).not.toHaveAttribute("open")
     expect(screen.queryByRole("button", { name: /공간 확인하고 상세 훈련 보기/u })).toBeNull()
     expect(localStorage.getItem(store.activePlanBetaStorageKey())).toBeNull()
-    fireEvent.click(screen.getByRole("button", { name: "이 일정으로 시작" }))
-    await waitFor(() => expect(store.readPlanBetaStateFromStorage().kind).toBe("loaded"))
-    const read = store.readPlanBetaStateFromStorage()
-    if (read.kind !== "loaded") throw Error("fixture")
-    expect(read.state.activePlan.sessions.filter(session => session.role === "QUALITY").every(session =>
-      session.prescription.kind === "RPE_TIME_RANGE" && !session.prescription.catalogWorkout)).toBe(true)
-    expect(screen.queryByRole("region", { name: "첫 주요 훈련 조건" })).toBeNull()
+    expect(screen.queryByRole("button", { name: "이 일정으로 시작" })).toBeNull()
+    fireEvent.click(screen.getByRole("button", { name: "필요한 항목 확인" }))
+    expect(within(initialRegion()).getByRole("checkbox")).not.toBeChecked()
+    expect(localStorage.getItem(store.activePlanBetaStorageKey())).toBeNull()
   })
 
   it("applies only genuine answers, premarks their exact dates, and rechecks on date change", async () => {
     await reachCandidates()
     fireEvent.click(within(initialRegion()).getByRole("checkbox"))
     expect(screen.getByRole("button", { name: "이 일정으로 시작" })).toBeDisabled()
-    fireEvent.click(screen.getByRole("button", { name: "훈련 조절" }))
     within(screen.getByRole("region", { name: "훈련 조건" })).getAllByRole("button").forEach(button => expect(button).toBeDisabled())
     fireEvent.click(screen.getByRole("button", { name: "일정·운동 시간" }))
     within(screen.getByRole("region", { name: "일정 조건" })).getAllByRole("button").forEach(button => expect(button).toBeDisabled())
     expect(screen.getByLabelText("계획 시작 날짜")).toBeDisabled()
-    fireEvent.click(screen.getByRole("button", { name: "일정·운동 시간" }))
+    fireEvent.click(screen.getByRole("button", { name: "훈련 조절" }))
+    expect(within(initialRegion()).getByRole("checkbox")).toBeChecked()
     expect(localStorage.getItem(store.activePlanBetaStorageKey())).toBeNull()
     fireEvent.click(screen.getByRole("button", { name: applyName }))
     await waitFor(() => expect(screen.queryByRole("region", { name: "첫 주요 훈련 조건" })).toBeNull())
@@ -71,11 +68,12 @@ describe("first-generation MAIN integration", () => {
     expect(screen.getByRole("button", { name: "이 일정으로 시작" })).toBeDisabled()
   })
 
-  it("cancelled checkboxes preserve the RPE path; beginner GLY changes purpose without changing experience", async () => {
+  it("cancelled answers keep activation blocked; beginner GLY changes purpose without changing experience", async () => {
     const view = await reachCandidates()
     fireEvent.click(within(initialRegion()).getByRole("checkbox"))
     fireEvent.click(within(initialRegion()).getByRole("button", { name: "변경 취소" }))
-    expect(screen.getByRole("button", { name: "이 일정으로 시작" })).toBeEnabled()
+    expect(screen.queryByRole("button", { name: "이 일정으로 시작" })).toBeNull()
+    expect(localStorage.getItem(store.activePlanBetaStorageKey())).toBeNull()
     view.unmount()
     await reachCandidates({ ...intake, trainingFocus: "GLY_INTENT" })
     expect(within(initialRegion()).getByRole("status")).toHaveTextContent("처음 시작하는 분께 맞는 해당계 세부 훈련은 아직 준비 중이에요")
@@ -99,15 +97,24 @@ describe("first-generation MAIN integration", () => {
     expect(within(region).getByRole("combobox", { name: "시간을 정할 일정" })).toBeDisabled()
     fireEvent.click(within(region).getByRole("checkbox", { name: /준비·회복·정리까지 최대/u }))
     fireEvent.click(within(region).getByRole("button", { name: "이 구성으로 바꾸기" }))
-    await waitFor(() => expect(within(initialRegion()).queryByRole("spinbutton")).toHaveValue(null))
+    await waitFor(() => expect(within(initialRegion()).queryByRole("spinbutton", { hidden: true })).toHaveValue(null))
     expect(localStorage.getItem(store.activePlanBetaStorageKey())).toBeNull()
+    expect(screen.queryByRole("button", { name: "이 일정으로 시작" })).toBeNull()
+    for (let remaining = 0; screen.queryByRole("region", { name: "첫 주요 훈련 조건" }) && remaining < 4; remaining++) {
+      const next = initialRegion()
+      fireEvent.click(within(next).getByText(/· 구간 시간 정하기$/u))
+      fireEvent.change(within(next).getByRole("spinbutton", { name: /200m 운동 구간/u }), { target: { value: "45" } })
+      fireEvent.click(within(next).getByRole("checkbox", { name: /준비·회복·정리까지 최대/u }))
+      fireEvent.click(within(next).getByRole("button", { name: "이 구성으로 바꾸기" }))
+      await waitFor(() => expect(screen.queryByRole("button", { name: "이 구성으로 바꾸기", hidden: true })).not.toBeEnabled())
+    }
     fireEvent.click(screen.getByRole("button", { name: "이 일정으로 시작" }))
     await waitFor(() => expect(store.readPlanBetaStateFromStorage().kind).toBe("loaded"))
     const read = store.readPlanBetaStateFromStorage()
     if (read.kind !== "loaded") throw Error("fixture")
     const main = read.state.activePlan.sessions.filter(session => session.role === "QUALITY")
     const bindings = main.flatMap(session => session.prescription.kind === "RPE_TIME_RANGE" && session.prescription.catalogWorkout ? [session.prescription.catalogWorkout] : [])
-    expect(bindings).toHaveLength(1)
+    expect(bindings).toHaveLength(main.length)
     expect(bindings[0]!.inputs).toMatchObject({ experience: "DEVELOPING", confirmedRequirements: [], segmentSeconds: [{ segmentId: "part-0", seconds: 45 }] })
     expect(bindings[0]!.acceptedDurationSeconds).toBe(2630)
   })
@@ -134,7 +141,7 @@ describe("first-generation MAIN integration", () => {
     if (change === "unmount") view.unmount()
     if (change === "account") act(() => setActiveLocalAccount("another"))
     if (change === "stored") {
-      const source = flow.generatePlanFromDraft(intake, "NO_KNOWN_RISK")
+      const source = flow.generatePlanFromDraft({ ...intake, trainingFocus: "VO2_INTENT" }, "NO_KNOWN_RISK")
       if (source.kind !== "generated") throw Error("fixture")
       const selected = flow.selectPlanForActivation(source.generated.candidates[0].candidateId,
         source.generated, source.gate, source.intake, source.athleteEvidence)

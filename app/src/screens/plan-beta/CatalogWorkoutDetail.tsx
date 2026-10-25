@@ -5,6 +5,9 @@ import { formatTrainingSeconds } from "./labels"
 import type { PlannedEnergyIntent } from "@impl/plan-generator/types"
 import { formatPaceSeconds } from "@impl/prescription/record-pace"
 import { conciseReviewedEffortCue } from "./workout-notation-presentation"
+import { catalogPrescriptionBasis } from "../../domain/prescription-basis"
+import { catalogExecutionReading } from "../../domain/catalog-workout-reader"
+import { catalogDeliveryProfile } from "@impl/prescription/catalog-delivery"
 
 const intents: Record<string, PlannedEnergyIntent> = { BASE: "BASE_INTENT", LT: "LT_INTENT", VO2: "VO2_INTENT", GLY: "GLY_INTENT",
   "ATP-PC": "ATP_PC_INTENT", MIX: "MIXED_INTENT", REC: "RECOVERY_INTENT" }
@@ -13,13 +16,20 @@ export function CatalogWorkoutDetail({ workout, evidence = false }: { readonly w
   const entry = ALL_WORKOUT_CATALOG.find(e => e.id === workout.catalogId)!
   const sequence = calculatedWorkoutSequence(workout)
   if (evidence) return <div className="session-explanation__sequence">
-    {([
-      ["훈련 목적", entry.explanation.purpose], ["에너지 공급", entry.explanation.energySupply],
-      ["이렇게 나눈 이유", entry.explanation.work], ["회복을 둔 이유", entry.explanation.recovery],
-      ["기대할 점", entry.explanation.expected], ["부담", entry.explanation.tradeoff],
-      ["일지에서 확인할 것", entry.explanation.observation],
-    ] as const).map(([label, text]) => <section key={label}><h3>{label}</h3><p>{text}</p></section>)}
-    <section><h3>적용의 한계</h3><ul>{entry.explanation.limitations.map(text => <li key={text}>{text}</li>)}</ul></section>
+    <section><h3>훈련 목적</h3><p>{catalogDeliveryProfile(entry).purpose}</p></section>
+    <section><h3>목표 강도의 기준</h3><p>{catalogPrescriptionBasis(workout)}</p></section>
+    <details><summary>구성·회복의 이유</summary>
+      <p>{entry.explanation.purpose}</p>
+      <section><h3>이렇게 나눈 이유</h3><p>{entry.explanation.work}</p></section>
+      <section><h3>회복을 둔 이유</h3><p>{entry.explanation.recovery}</p></section>
+    </details>
+    <details><summary>기대·한계와 일지에서 확인할 것</summary>
+      <section><h3>기대할 점</h3><p>{entry.explanation.expected}</p></section>
+      <section><h3>부담</h3><p>{entry.explanation.tradeoff}</p></section>
+      <section><h3>일지에서 확인할 것</h3><p>{entry.explanation.observation}</p></section>
+      <section><h3>적용의 한계</h3><ul>{entry.explanation.limitations.map(text => <li key={text}>{text}</li>)}</ul></section>
+    </details>
+    <details><summary>에너지 공급</summary><p>{entry.explanation.energySupply}</p></details>
     <details><summary>사용한 기록과 출처</summary>
       {workout.unresolved.includes("RECORD_NOT_CURRENT") && <p>오래된 경기 기록은 이번 참고 페이스 계산에 사용하지 않았어요.</p>}
       <p>{workout.steps.some(s => s.referenceRecordId) ? "각 구간에 표시한 경기 기록 또는 목표를 페이스 계산에 사용했어요. 다른 구간이나 회복 시간을 기록에 맞춰 자동으로 늘리지는 않았어요." : "선택한 목적·경험 수준과 훈련 구성을 사용했어요. 개인 경기 기록으로 페이스를 계산하지는 않았어요."}</p>
@@ -35,7 +45,13 @@ export function CatalogWorkoutDetail({ workout, evidence = false }: { readonly w
   // both named disclosures. Keep other instructions, targets and warnings visible.
   const detailTargets = sequence ? targets.filter(s => s.distanceM !== null || s.referenceRecordId != null
     || conciseReviewedEffortCue(s.instruction) === null) : targets
+  const reading = catalogExecutionReading(workout)
   return <div>
+    {reading && <dl className="session-explanation__execution">
+      {([['warmup', '준비'], ['main', '본운동'], ['cooldown', '정리']] as const).filter(([phase]) => reading.phases[phase])
+        .map(([phase, label]) => <div key={phase} data-phase={phase}><dt>{label}</dt><dd>{reading.phases[phase]}</dd></div>)}
+    </dl>}
+    <details open={!reading}><summary>원본 구간표</summary>
     <p>{workout.totals.workOccurrences}개 운동 구간{workout.totals.mainDistanceM !== null ? ` · 본운동 ${notationDistance(workout.totals.mainDistanceM)}` : ""}</p>
     {sequence && <PrescriptionStructureV3 sequence={sequence} intent={intents[entry.family]} compact collapseSupport hideTotals />}
     {detailTargets.length > 0 && <dl>{detailTargets.map(s => <div key={s.segmentId}>
@@ -44,6 +60,7 @@ export function CatalogWorkoutDetail({ workout, evidence = false }: { readonly w
         ? `${formatPaceSeconds(s.seconds.minimum)}${s.seconds.minimum === s.seconds.maximum ? "" : `~${formatPaceSeconds(s.seconds.maximum)}`} · `
         : `${notationNumber(s.seconds.minimum)}${s.seconds.minimum === s.seconds.maximum ? "" : `~${notationNumber(s.seconds.maximum)}`}초 · ` : ""}{notationEffort(s.instruction, "PLAIN")}</dd>
     </div>)}</dl>}
+    </details>
     {workout.inputs.paceReferences?.map(reference => <p key={reference.segmentId}>
       기준: {reference.eventDistanceM === 21097.5 ? "하프" : `${reference.eventDistanceM}m`} {formatPaceSeconds(reference.performanceSeconds)} · {reference.kind === "GOAL" ? "목표" : reference.achievedOn ?? "날짜 미입력 실제 기록"}
     </p>)}

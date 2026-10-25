@@ -4,9 +4,11 @@ import { roundedPaceSeconds } from "@impl/prescription/record-pace"
 import { parsePrescriptionSequence } from "@impl/prescription/sequence"
 import { parsePrescriptionSequenceV3 } from "@impl/prescription/sequence-v3"
 import { paceClock } from "./pace-tools"
-import { notationDistance, notationEffort, notationEvent, notationNumber, notationPace, notationRecovery, notationTime,
+import { notationDistance, notationEffort, notationNumber, notationPace, notationRecovery, notationTime,
   sequencePhaseNotation, sessionWorkoutName, type WorkoutDisplaySession, type WorkoutNotationStyle } from "./workout-notation"
 import { TRAINING_EXPLANATION_PROFILES } from "./training-explanation-profiles"
+import { catalogExecutionReading, catalogWorkoutReader } from "./catalog-workout-reader"
+import { catalogPrescriptionBasis, sessionPrescriptionBasis } from "./prescription-basis"
 
 export type WorkoutMemoContext = { readonly date?: string; readonly state?: "PLAN" | "PREVIEW" | "HISTORICAL" }
 export type WorkoutMemoSession = WorkoutDisplaySession & { readonly day: number; readonly slot: "AM" | "PM" }
@@ -74,7 +76,7 @@ function projectMemo(session: WorkoutMemoSession, context: WorkoutMemoContext, w
     lines.push({ label: "준비", text: `${notationTime(warmup.easyDurationMinutes * 60, wording)} · ${notationEffort(`RPE ${range(warmup.rpeMin, warmup.rpeMax)}`, wording)}`
       + (warmup.strides.repetitions > 0 ? ` → ${warmup.strides.repetitions} × ${notationTime(warmup.strides.durationSeconds, wording)} ${notationEffort("PROGRESSIVE_NOT_ALL_OUT", wording)} · 반복 사이 ${notationTime(warmup.strides.recoverySeconds, wording)} ${wording === "PLAIN" ? "걷기/조깅" : "Walk/Jog"}` : "") })
     lines.push({ label: "정리", text: `${notationTime(cooldown.easyDurationMinutes * 60, wording)} · ${notationEffort(`RPE ${range(cooldown.rpeMin, cooldown.rpeMax)}`, wording)}` })
-    basis = `${notationEvent(p.targetEventDistanceM)} ${wording === "PLAIN" ? "경기 평균 페이스" : "RP"} · ${p.selectedAnchor.kind === "GOAL" ? "목표 기준 (현재 실력 아님)" : "계획에 저장된 기준 기록"}`
+    basis = sessionPrescriptionBasis(session)
     if (p.stopCodes.includes("STOP_NEW_OR_WORSENING_PAIN")) warnings.push("새 통증이나 심해지는 통증이 생기면 중단")
     if (p.stopCodes.includes("STOP_DIZZINESS_OR_FAINTNESS")) warnings.push("어지럽거나 쓰러질 것 같으면 중단")
     if (p.stopCodes.includes("STOP_CHEST_PAIN_OR_UNUSUAL_BREATHING")) warnings.push("가슴 통증이나 평소와 다른 호흡 곤란이 생기면 중단")
@@ -89,28 +91,27 @@ function projectMemo(session: WorkoutMemoSession, context: WorkoutMemoContext, w
       const parsed = sequence.version === 3 ? parsePrescriptionSequenceV3(sequence) : parsePrescriptionSequence(sequence)
       if (parsed.kind !== "parsed" || !targets.every(target => Number.isFinite(target.secondsPerKm) && target.secondsPerKm > 0
         && [target.targetRepSeconds, target.fixedWorkSeconds, target.distanceM].every(value => value === null || Number.isFinite(value) && value > 0))) return null
-      lines.push({ label: "본운동", text: sequencePhaseNotation(sequence, "main", targets, wording), emphasis: true })
+      const reading = catalog && wording === "PLAIN" ? catalogWorkoutReader(session) ?? catalogExecutionReading(catalog) : null
+      lines.push({ label: "본운동", text: reading?.phases.main ?? sequencePhaseNotation(sequence, "main", targets, wording), emphasis: true })
       for (const [phase, label] of [["warmup", "준비"], ["cooldown", "정리"]] as const) {
-        const text = sequencePhaseNotation(sequence, phase, targets, wording)
+        const text = reading?.phases[phase] ?? sequencePhaseNotation(sequence, phase, targets, wording)
         if (text) lines.push({ label, text })
       }
       basis = targets.length ? "구간별 경기 페이스 · 기록/목표 구분은 훈련 상세에서 확인" : "구간에 적힌 힘든 정도"
       if (catalog) {
         const uniqueSteps = catalog.steps.filter((step, index, all) => all.findIndex(other => other.segmentId === step.segmentId) === index)
         for (const step of uniqueSteps) {
-          if (step.kind === "RECOVERY" && step.distanceM !== null && step.seconds !== null) {
+          if (!reading && step.kind === "RECOVERY" && step.distanceM !== null && step.seconds !== null) {
             lines.push({ label: "거리 회복", text: step.instruction })
           }
-          if (step.phase === "main" && step.kind !== "RECOVERY" && (step.terrain !== "FLAT" || step.modality !== "RUN")) {
+          if (!reading && step.phase === "main" && step.kind !== "RECOVERY" && (step.terrain !== "FLAT" || step.modality !== "RUN")) {
             const terrain: Record<string, string> = { HILL: "언덕", UPHILL: "오르막", FLAT: "평지", MIXED: "혼합 지형" }
             const modality: Record<string, string> = { RUN: "달리기", WALK: "걷기", CYCLE: "자전거", PLYO: "플라이오", STRENGTH: "근력" }
             lines.push({ label: step.distanceM === null ? "운동 방식" : `${notationDistance(step.distanceM)} 방식`,
               text: `${modality[step.modality] ?? step.modality} · ${terrain[step.terrain] ?? step.terrain}` })
           }
         }
-        if (catalog.inputs.paceReferences?.length) basis = [...new Set(catalog.inputs.paceReferences.map(reference =>
-          `${notationEvent(reference.eventDistanceM)} · ${reference.kind === "GOAL" ? "목표 기준 (현재 실력 아님)" : "저장된 기록 기준"}${reference.model === "FIVE_K_THRESHOLD_V1" ? " · 역치 추정, 측정값 아님" : " 경기 평균 페이스"}`))].join(" / ")
-        else if (catalog.steps.some(step => step.referenceRecordId)) basis = "5K 기록 기반 참고 · 계획에 저장된 값"
+        basis = catalogPrescriptionBasis(catalog)
       }
     } else if (p.kind === "RPE_TIME_RANGE") {
       if (![p.durationMinutes.minimum, p.durationMinutes.maximum, p.rpe.minimum, p.rpe.maximum].every(value => Number.isFinite(value) && value >= 0)
@@ -118,6 +119,7 @@ function projectMemo(session: WorkoutMemoSession, context: WorkoutMemoContext, w
       lines.push({ label: "전체 운동", text: `${range(p.durationMinutes.minimum, p.durationMinutes.maximum)}${wording === "PLAIN" ? "분" : "min"} · ${notationEffort(`RPE ${range(p.rpe.minimum, p.rpe.maximum)}`, wording)}`, emphasis: true })
       basis = "힘든 정도로 맞추는 훈련 · 목표 페이스는 따로 없음"
       if (p.catalogWorkout) warnings.push("세부 구성을 불러오지 못했어요. 저장된 전체 시간과 힘든 정도만 보여요.")
+      else if (session.role === "QUALITY") warnings.push("상세 구성 미정 · 전체 시간을 본운동 시간으로 사용하지 마세요.")
     } else return null
     warnings.push("언제 멈춰야 하는지는 훈련 상세에서 확인하세요.")
   }

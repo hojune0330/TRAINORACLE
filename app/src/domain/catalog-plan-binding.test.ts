@@ -24,8 +24,13 @@ describe("catalog -> plan -> selection -> saved structure", () => {
         expect(result.generated.candidates.every(isVerifiedPlanCandidate)).toBe(true)
         expect(isInitialCandidatePair(...result.generated.candidates)).toBe(true)
         const selected = selectPlanForActivation(result.generated.candidates[0].candidateId, result.generated, result.gate, result.intake, result.athleteEvidence)
-        expect(selected.kind).toBe("selected")
-        if (selected.kind === "selected") expect(parsePlanBetaState(selected.state)).not.toBeNull()
+        if (trainingFocus === "ATP_PC_INTENT" || trainingFocus === "GLY_INTENT" && experienceBand !== "EXPERIENCED") {
+          expect(selected).toEqual({ kind: "rejected", code: "MAIN_CONFIGURATION_REQUIRED" })
+          expect(localStorage.getItem("trainoracle.plan-beta.v1")).toBeNull()
+        } else {
+          expect(selected.kind, `${eventDistanceM}/${experienceBand}/${trainingFocus}`).toBe("selected")
+          if (selected.kind === "selected") expect(parsePlanBetaState(selected.state)).not.toBeNull()
+        }
         for (const s of result.generated.candidates[0].sessions) if (s.prescription.kind === "RPE_TIME_RANGE" && s.prescription.catalogWorkout) {
           expect(s.prescription.catalogWorkout.inputs).toMatchObject({ eventDistanceM, experience: experienceBand })
           const exact = resolveCatalogBinding(s.prescription.catalogWorkout)
@@ -47,6 +52,11 @@ describe("catalog -> plan -> selection -> saved structure", () => {
     expect(result.generated.candidates.every(isVerifiedPlanCandidate)).toBe(true)
     expect(isInitialCandidatePair(...result.generated.candidates)).toBe(true)
     const selected = selectPlanForActivation(result.generated.candidates[0].candidateId, result.generated, result.gate, result.intake, result.athleteEvidence)
+    if (trainingFocus === "ATP_PC_INTENT") {
+      expect(selected).toEqual({ kind: "rejected", code: "MAIN_CONFIGURATION_REQUIRED" })
+      expect(localStorage.getItem("trainoracle.plan-beta.v1")).toBeNull()
+      return
+    }
     expect(selected.kind).toBe("selected")
     if (selected.kind !== "selected") return
     expect(parsePlanBetaState(selected.state)).not.toBeNull()

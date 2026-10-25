@@ -16,9 +16,9 @@ beforeEach(async () => {
   vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(new Date("2026-10-01T12:00:00Z"))
 })
 afterEach(() => { cleanup(); vi.useRealTimers(); setActiveLocalAccount(null) })
-function fixture() {
+function fixture(availableDayCount: 3 | 5 = 5) {
   const result = generatePlanFromDraft({ eventGroup: "FIVE_K", eventDistanceM: 5000, competitionDivision: "HIGH_SCHOOL",
-    experienceBand: "EXPERIENCED", availableDayCount: 5, requestedFrameLength: 9, trainingFocus: "ATP_PC_INTENT",
+    experienceBand: "EXPERIENCED", availableDayCount, requestedFrameLength: 9, trainingFocus: "ATP_PC_INTENT",
     secondSessionMode: "SINGLE_SESSION_ONLY", trainingTimePreference: "EVENING", selectedDetailedTemplateRef: null }, "NO_KNOWN_RISK")
   if (result.kind !== "generated") throw Error(result.kind)
   return result
@@ -30,7 +30,7 @@ function props(source = fixture()): React.ComponentProps<typeof PlanCandidates> 
     recordConfirmationPending: false, onSelectRecord: vi.fn(), onCompareRecord: vi.fn(), onConfirmRecord: vi.fn(),
     onBack: vi.fn(), onSelect: vi.fn(), onCatalogChange: vi.fn(), startDateValue: "2026-10-02" }
 }
-function withAppliedCondition(source = fixture()) {
+function withAppliedCondition(source = fixture(3)) {
   const offer = findCatalogConditionReview(source.generated, source.intake)!
   const generated = replaceCandidateCatalogWorkout(source.generated, offer, offer.catalogId, {
     eventDistanceM: 5000, experience: "EXPERIENCED", availableSeconds: null,
@@ -41,7 +41,7 @@ function withAppliedCondition(source = fixture()) {
 }
 describe("condition review to explicit detail application", () => {
   it("opens the exact slot with no preconfirmation and only applies after the user's actual answer", () => {
-    const source = fixture(), initial = props(source), offer = findCatalogConditionReview(source.generated, source.intake)!
+    const source = fixture(3), initial = props(source), offer = findCatalogConditionReview(source.generated, source.intake)!
     const snapshot = JSON.stringify(source.generated)
     const view = render(<PlanCandidates {...initial} />)
     fireEvent.click(screen.getByRole("button", { name: /공간 확인하고 상세 훈련 보기/u }))
@@ -73,11 +73,12 @@ describe("condition review to explicit detail application", () => {
     expect(initial.onSelect).toHaveBeenCalledOnce()
   })
 
-  it("keeps the general plan reachable without making the environment question compulsory", () => {
+  it("keeps the preview reachable but requires unresolved MAIN conditions before starting", () => {
     const initial = props()
     render(<PlanCandidates {...initial} />)
-    fireEvent.click(screen.getByRole("button", { name: "이 일정으로 시작" }))
-    expect(initial.onSelect).toHaveBeenCalledOnce()
+    expect(screen.queryByRole("button", { name: "이 일정으로 시작" })).toBeNull()
+    fireEvent.click(screen.getByRole("button", { name: "필요한 항목 확인" }))
+    expect(initial.onSelect).not.toHaveBeenCalled()
     expect(initial.onCatalogChange).not.toHaveBeenCalled()
   })
 
@@ -113,7 +114,7 @@ describe("condition review to explicit detail application", () => {
   })
 
   it("requires a new calendar review after changing dates, without changing the applied workout or writing storage", () => {
-    const initial = props(), view = render(<PlanCandidates {...initial} />)
+    const initial = props(fixture(3)), view = render(<PlanCandidates {...initial} />)
     // The calendar has many buttons. Find this exact visible action without
     // recomputing every calendar button's accessible name on each rerender.
     const visibleButton = (name: string | RegExp) => {
@@ -140,6 +141,7 @@ describe("condition review to explicit detail application", () => {
     expect(review).toHaveTextContent("2026-11-")
     expect(startButton()).toBeDisabled()
     fireEvent.click(visibleButton("일정·운동 시간"))
+    fireEvent.click(screen.getByText("다른 계획 보기", { exact: true }))
     expect(visibleButton("A안 선택됨")).toBeDisabled()
     expect(visibleButton("B안 선택")).toBeDisabled()
     fireEvent.click(within(review).getByRole("checkbox"))
@@ -225,11 +227,15 @@ describe("condition review to explicit detail application", () => {
   })
 
   it("never carries a calendar review into another account, including a stale click before rerender", () => {
-    const initial = props(), view = render(<PlanCandidates {...initial} />)
+    const { generated, initial } = withAppliedCondition()
+    const view = render(<PlanCandidates {...initial} generated={generated} />)
+    const review = screen.getByRole("group", { name: "이 날짜에도 운동할 환경이 갖춰져 있나요?" })
+    fireEvent.click(within(review).getByRole("checkbox"))
+    fireEvent.click(within(review).getByRole("button"))
     setActiveLocalAccount("synthetic-other-account")
     fireEvent.click(screen.getByRole("button", { name: "이 일정으로 시작" }))
     expect(initial.onSelect).not.toHaveBeenCalled()
-    view.rerender(<PlanCandidates {...initial} />)
+    view.rerender(<PlanCandidates {...initial} generated={generated} />)
     expect(initial.onCatalogChange).not.toHaveBeenCalled()
   })
 

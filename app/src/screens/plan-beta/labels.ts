@@ -11,7 +11,7 @@ import type {
 import { resolveCatalogBinding } from "@impl/prescription/catalog-session-binding"
 import { calculatedWorkoutSequence } from "@impl/prescription/all-workout-calculator"
 import { sequencePhaseNotation, sessionWorkoutName, sessionWorkoutNotation, type WorkoutDisplaySession } from "../../domain/workout-notation"
-import { catalogWorkoutReader } from "../../domain/catalog-workout-reader"
+import { catalogExecutionReading, catalogWorkoutReader } from "../../domain/catalog-workout-reader"
 import type { InstantPlanStepRole } from "../../domain/instant-plan-contract"
 
 export const EVENT_LABELS: Record<PlanEventGroup, {
@@ -128,7 +128,7 @@ export const PROGRESS_LABELS: Record<PlanProgressState, string> = {
 /** An exact built-in source may have a shorter UI name. Original catalog names
  * remain available for details; arbitrary titles and unknown bindings are untouched. */
 export function sessionLabel(session: WorkoutDisplaySession, plain = false, mode: "display" | "original" = "display"): string {
-  if (mode === "original") return sessionWorkoutName(session)
+  if (mode === "original") return sessionWorkoutName(session, true)
   const prescription = session.prescription
   if (prescription?.kind === "RPE_TIME_RANGE" && prescription.catalogWorkout?.catalogId === "X-BASE-09"
     && prescription.catalogWorkout.catalogFingerprint === "sha256:8285f615acf8589d363be3b5aeccefadd015498c96056efceef6df7da8fd171f"
@@ -220,7 +220,7 @@ export function sessionExecutionSteps(session: PlanSession, plain = false): read
     const calculation = resolveCatalogBinding(session.prescription.catalogWorkout)
     const sequence = calculation && calculatedWorkoutSequence(calculation)
     if (sequence) {
-      const reading = plain ? catalogWorkoutReader(session) : null
+      const reading = plain ? catalogWorkoutReader(session) ?? catalogExecutionReading(calculation) : null
       const total = calculation.totals.seconds
       const phases = ([['warmup', '준비', 'PREPARATION'], ['main', '본운동', 'MAIN'], ['cooldown', '정리', 'COOLDOWN']] as const)
         .filter(([phase]) => sequence[phase].length > 0)

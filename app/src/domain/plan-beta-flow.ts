@@ -1,4 +1,5 @@
 import { evaluateD9ColloquialLayer } from "@impl/d9/evaluator"
+import { unresolvedPlanMains } from "./plan-main-readiness"
 import { journalBodyMetadataNeedsReview, journalPainPartsForSafety } from "./body-part-metadata"
 import { assertNever } from "@impl/shared/assert-never"
 import { bindDefaultCatalogSessions } from "@impl/prescription/catalog-session-binding"
@@ -429,7 +430,7 @@ function generatePlanDraftWithContinuity(
             )
       const sourceCandidates = binding.generated.candidates
       const seed = Number((formationStartDate ?? todayISO(evaluatedAt)).replaceAll("-", ""))
-      const candidates = effectiveIntake.selectedDetailedTemplateRef !== null ? sourceCandidates : rebindCandidatePairIdentity(sourceCandidates.map(candidate => ({ ...candidate,
+      const candidates = rebindCandidatePairIdentity(sourceCandidates.map(candidate => ({ ...candidate,
         sessions: bindDefaultCatalogSessions(candidate.sessions, effectiveIntake.eventDistanceM, effectiveIntake.experienceBand, seed),
       })) as unknown as readonly [PlanCandidate, PlanCandidate])
       return {
@@ -517,6 +518,9 @@ export function selectPlanForActivation(
   )
   if (canonicalCandidate === undefined) {
     return { kind: "rejected", code: "CANDIDATE_NOT_FOUND" }
+  }
+  if (unresolvedPlanMains(canonicalCandidate.sessions).length > 0) {
+    return { kind: "rejected", code: "MAIN_CONFIGURATION_REQUIRED" }
   }
   const detailedReferences = canonicalCandidate.sessions.flatMap(session => session.prescription.kind === "PACE_TARGET"
     ? [{

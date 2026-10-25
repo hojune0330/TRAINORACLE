@@ -46,7 +46,8 @@ export type CatalogWorkoutEditorProps = Omit<PickerProps, "generated" | "onChang
 export function CatalogWorkoutPicker(props: PickerProps) {
   const { generated, disabled = false } = props
   const sessions = generated.candidates[0].sessions.filter(s => s.role !== "REST" && s.prescription.kind === "RPE_TIME_RANGE")
-  const first = sessions.find(s => s.role === "QUALITY") ?? sessions[0]
+  const first = sessions.find(s => s.role === "QUALITY" && s.prescription.kind === "RPE_TIME_RANGE" && !s.prescription.catalogWorkout)
+    ?? sessions.find(s => s.role === "QUALITY") ?? sessions[0]
   const [address, setAddress] = React.useState(first ? `${first.day}:${first.slot}` : "")
   const [message, setMessage] = React.useState("")
   const [pending, setPending] = React.useState(false)

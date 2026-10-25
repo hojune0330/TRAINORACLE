@@ -1,4 +1,5 @@
 import React from "react"
+import { unresolvedPlanMains } from "../../domain/plan-main-readiness"
 import { formatPaceSeconds } from "@impl/prescription/record-pace"
 import { InitialRecordPaceOffer } from "./InitialRecordPaceOffer"
 import { ArrowLeft, CalendarDays, BookOpen, SlidersHorizontal, ShieldCheck } from "lucide-react"
@@ -170,6 +171,7 @@ export function PlanCandidates({
   const resultRef = React.useRef<HTMLElement>(null)
   const headingRef = React.useRef<HTMLHeadingElement>(null)
   const optionsRef = React.useRef<HTMLDivElement>(null)
+  const [comparisonOpen, setComparisonOpen] = React.useState(false)
   const methodRef = React.useRef<HTMLDivElement>(null)
   const recordRef = React.useRef<HTMLDivElement>(null)
   const catalogRef = React.useRef<HTMLDivElement>(null)
@@ -180,7 +182,7 @@ export function PlanCandidates({
   const [navigation, setNavigation] = React.useState<{ kind: "result" | "options" | "date" | "method" | "catalog" | "recovery" | "record"; revision: number } | null>(null)
   const reveal = React.useCallback((kind: "result" | "options" | "date" | "method" | "catalog" | "recovery" | "record") => {
     if (kind === "date") setPurpose("schedule")
-    else if (kind === "options") setPurpose(null)
+    else if (kind === "options") { setPurpose(null); setComparisonOpen(true) }
     else if (kind === "method" || kind === "catalog" || kind === "record") {
       setWorkoutOpened(true)
       setPurpose("workout")
@@ -255,8 +257,10 @@ export function PlanCandidates({
   const canRevise = !saving && !initialApplying && (saveCode === undefined || saveCode === null
     || !saveCode.startsWith("ACCOUNT_PLAN_")
     || ["ACCOUNT_PLAN_STALE", "ACCOUNT_PLAN_EVIDENCE_REQUIRED", "ACCOUNT_PLAN_REVIEW_REQUIRED"].includes(saveCode))
-  const canSelect = hasValidStartDate && !recordConfirmationPending && !detailedEvidencePending && !targetDraftPending && !methodDraftPending && !catalogDraftPending
+  const unresolvedMains = unresolvedPlanMains((generated.candidates.find(candidate => candidate.kind === selectedCandidateKind) ?? defaultCandidate).sessions)
+  const canReviewConfiguration = hasValidStartDate && !recordConfirmationPending && !detailedEvidencePending && !targetDraftPending && !methodDraftPending && !catalogDraftPending
     && !initialMainPending && !initialApplying && !selectionUnavailable && unreviewedConditions.length === 0 && saveCode !== "CYCLE_EVIDENCE_CHANGED"
+  const canSelect = unresolvedMains.length === 0 && canReviewConfiguration
   const selectedRecord = athleteRecords.find((record) => record.id === selectedRecordId)
   const selectedEventLabel = selectedRecord === undefined
     ? "선택한 종목"
@@ -310,9 +314,7 @@ export function PlanCandidates({
     <section id={`${purposeId}-workout`} hidden={visiblePurpose !== "workout"} aria-labelledby={`${purposeId}-workout-entry`}>
       {workoutOpened && <>
         {instantAdjustment && <button type="button" className="plan-text-action" disabled={!canSelect} onClick={instantAdjustment}>처방 확인·조절</button>}
-        {onCatalogChange && intake.selectedDetailedTemplateRef === null && <InitialRecordPaceOffer
-          generated={generated} records={athleteRecords} disabled={!canRevise || !canSelect} onChange={onCatalogChange} />}
-        {onCatalogChange && intake.selectedDetailedTemplateRef === null && <div ref={catalogRef} tabIndex={-1}>
+        {onCatalogChange && <div ref={catalogRef} tabIndex={-1}>
           <CatalogWorkoutPicker inline generated={generated} intake={intake} openRequest={navigation?.kind === "catalog" ? navigation.revision : null}
             conditionRequest={conditionRequest} startDate={startDate} reviewedConditionKeys={reviewedConditionKeys} records={athleteRecords}
             onChange={(next, reviewedAddress) => {
@@ -414,16 +416,17 @@ export function PlanCandidates({
       </div>
       {generated.racePlacement.kind !== "NO_TARGET_RACE" && <RacePlacementNotice state={generated.racePlacement} />}
     </section>
-    {initialMainActive && instantAdjustment === undefined && <InitialMainConditions {...initialMain}
+    {initialMainActive && instantAdjustment === undefined && workoutOpened && <div hidden={visiblePurpose !== "workout"}><InitialMainConditions {...initialMain}
       disabled={!canRevise || selectionUnavailable || catalogDraftPending || methodDraftPending || targetDraftPending || recordConfirmationPending}
-      onPendingChange={setInitialMainPending} />}
+      onPendingChange={setInitialMainPending} /></div>}
     {!recommendation && <PlanPrescriptionBasis sessions={visibleDefaultSessions}
       confirmationPending={recordConfirmationPending || detailedEvidencePending} />}
     {saveCode === "CYCLE_EVIDENCE_CHANGED" && onRebuildCycle && <button type="button" className="plan-text-action"
       disabled={saving} onClick={onRebuildCycle}>일지를 반영해 다시 만들기</button>}
   </>
 
-  const planSelection = <>
+  const planSelection = <details open={comparisonOpen} onToggle={event => setComparisonOpen(event.currentTarget.open)}>
+    <summary>다른 계획 보기</summary>
     {generated.racePlacement.kind !== "NO_TARGET_RACE" && <RacePlacementNotice state={generated.racePlacement} />}
     <CandidateComparison candidates={generated.candidates} />
     <div ref={optionsRef} tabIndex={-1} role="region" aria-label="다른 계획 비교" className="plan-candidate-list">
@@ -441,7 +444,7 @@ export function PlanCandidates({
           if (canSelect && localAccountScopeIsCurrent(accountScope)) adjustmentActions[candidate.candidateId]?.()
         }} />)}
     </div>
-  </>
+  </details>
 
   return (
     <section ref={resultRef} className="plan-candidates" aria-labelledby="plan-candidates-title">
@@ -476,19 +479,31 @@ export function PlanCandidates({
           allowMemoExport={false}
           timelineHeading="전체 훈련표"
         />}
-        executionSummary={<PlanCandidateOverview recommendation={recommendation} candidate={selectedCandidate}
-          inputSummary={inputSummary}
-          supply={<PlanPrescriptionSupply sessions={visibleDefaultSessions} prescriptionBinding={prescriptionBinding}
+        executionSummary={<PlanCandidateOverview compact recommendation={recommendation} candidate={selectedCandidate}
+          startDate={startDate} />}
+        afterStart={<>
+          {onCatalogChange && intake.selectedDetailedTemplateRef === null && <InitialRecordPaceOffer
+            generated={generated} records={athleteRecords} disabled={!canRevise || recordConfirmationPending || catalogDraftPending || initialMainPending || methodDraftPending || targetDraftPending}
+            onChange={onCatalogChange} />}
+          {planControls}
+          <details><summary>전체 구성·입력 정보</summary>
+          {inputSummary}
+          <PlanPrescriptionSupply sessions={visibleDefaultSessions} prescriptionBinding={prescriptionBinding}
             confirmationPending={recordConfirmationPending || detailedEvidencePending} startDate={startDate}
-            initialReview={initialSupplyReview ?? undefined} verifiedDetailedSlots={verifiedDetailedSlots} />}
-          basis={<PlanPrescriptionBasis sessions={visibleDefaultSessions} inline
-            confirmationPending={recordConfirmationPending || detailedEvidencePending} />}
-          startDate={startDate} controls={planControls} selection={planSelection} />}
+            initialReview={initialSupplyReview ?? undefined} verifiedDetailedSlots={verifiedDetailedSlots} />
+          <PlanPrescriptionBasis sessions={visibleDefaultSessions} inline
+            confirmationPending={recordConfirmationPending || detailedEvidencePending} />
+          </details>
+          {planSelection}
+        </>}
         beforeStart={<>
           <p className="instant-plan__hint">아직 저장 전이에요. ‘이 일정으로 시작’을 누르면 저장돼요.</p>
         </>}
         recoveryRef={recoveryRef}
-        blockedAction={canReviewMethodDraft
+        blockedAction={!selectionUnavailable && !saveError && !initialApplying && unresolvedMains.length > 0
+          && !catalogDraftPending && !initialMainPending && !methodDraftPending && !targetDraftPending && !recordConfirmationPending && !detailedEvidencePending
+          ? { label: "필요한 항목 확인", onClick: () => reveal("catalog") }
+          : canReviewMethodDraft
           ? { label: "변경한 훈련 확인", onClick: () => reveal("method") }
           : !selectionUnavailable && !saveError && !initialApplying && !catalogDraftPending && !initialMainPending
           && !methodDraftPending && !targetDraftPending && hasValidStartDate && unreviewedConditions.length === 0
@@ -501,6 +516,7 @@ export function PlanCandidates({
           : initialApplying ? { kind: "BLOCKED", message: "확인한 구성을 계획안에 반영하고 있어요." }
           : catalogDraftPending || initialMainPending ? { kind: "BLOCKED", message: "바꾼 훈련을 적용하거나 취소해 주세요." }
           : unreviewedConditions.length ? { kind: "BLOCKED", message: "새 날짜에 사용할 운동 환경을 확인해 주세요." }
+          : unresolvedMains.length > 0 ? { kind: "BLOCKED", message: `준비가 필요한 훈련 ${unresolvedMains.length}개 · 확인 후 시작할 수 있어요.` }
           : needsReview ? { kind: "BLOCKED", message: !hasValidStartDate
             ? isRealStartDate ? "시작 날짜가 지났어요. 일정·운동 시간에서 오늘 또는 이후 날짜를 다시 골라 주세요."
               : "일정·운동 시간에서 시작 날짜를 골라 주세요."
@@ -528,8 +544,9 @@ export function PlanCandidates({
         workoutLabelTitle={instantAdjustment ? "상세 훈련" : undefined}
         conditionReviewLabel={conditionReview && hasValidStartDate
           ? `${isoShift(startDate, conditionReview.day - 1)} ${conditionReview.slot === "AM" ? "오전" : "오후"} · 공간 확인하고 상세 훈련 보기` : undefined}
+        conditionReviewDisabled={!canReviewConfiguration}
         onReviewCondition={conditionReview ? () => {
-          if (!canSelect || !localAccountScopeIsCurrent(accountScope)) return
+          if (!canReviewConfiguration || !localAccountScopeIsCurrent(accountScope)) return
           setConditionRequest(previous => ({ ...conditionReview, startDate, accountScope, revision: (previous?.revision ?? 0) + 1 }))
           reveal("catalog")
         } : undefined}

@@ -1,8 +1,10 @@
-import { ALL_WORKOUT_CATALOG, type CalculatedWorkout, type WorkoutCalculatedStep, type WorkoutCatalogEntry } from "@impl/prescription/all-workout-calculator"
+import { ALL_WORKOUT_CATALOG, verifyCalculatedWorkout, type CalculatedWorkout, type WorkoutCalculatedStep, type WorkoutCatalogEntry } from "@impl/prescription/all-workout-calculator"
 import { resolveCatalogBinding } from "@impl/prescription/catalog-session-binding"
 import { roundedPaceSeconds } from "@impl/prescription/record-pace"
 import type { RecoveryStepV3, SequenceNodeV3 } from "@impl/prescription/sequence-v3"
 import { notationDistance, notationEffort, type WorkoutDisplaySession } from "./workout-notation"
+import { catalogDeliveryProfile } from "@impl/prescription/catalog-delivery"
+import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identity"
 
 type Phase = WorkoutCalculatedStep["phase"]
 type Segment = Extract<SequenceNodeV3, { readonly kind: "segment" }>
@@ -152,10 +154,14 @@ function targetText(node: Segment, step: WorkoutCalculatedStep, workout: Calcula
 function segmentBody(node: Segment, phase: Phase, workout: CalculatedWorkout, count = node.repeatCount): string {
   const step = segmentStep(node, phase, workout)
   const amount = workAmount(node, phase, workout)
+  const modalities: Record<string, string> = { RUN: "달리기", WALK: "걷기", BIKE: "자전거", SWIM: "수영", ELLIPTICAL: "일립티컬", DEEP_WATER_RUN: "수중 조깅" }
+  const terrains: Record<string, string> = { UPHILL: "오르막", ROLLING: "기복 있는 코스", INDOOR: "실내", POOL: "수영장" }
+  const context = [step.modality !== "RUN" ? modalities[step.modality] ?? step.modality : "",
+    step.terrain !== "FLAT" ? terrains[step.terrain] ?? step.terrain : ""].filter(Boolean).join(" · ")
   if (node.role === "BUILDUP" && ["PROGRESSIVE_NOT_ALL_OUT", "점진적으로 속도를 올리되 전력질주하지 않기"].includes(step.instruction)) {
-    return `${amount} 가속 달리기${count > 1 ? ` ${count}번` : ""} (전력질주 아님)`
+    return `${amount} 가속 달리기${count > 1 ? ` ${count}번` : ""} (전력질주 아님)${context ? ` · ${context}` : ""}`
   }
-  return `${amount}${count > 1 ? `씩 ${count}번` : ""} · ${targetText(node, step, workout)}`
+  return `${amount}${count > 1 ? `씩 ${count}번` : ""}${context ? ` · ${context}` : ""} · ${targetText(node, step, workout)}`
 }
 
 function nodesText(nodes: readonly SequenceNodeV3[], phase: Phase, workout: CalculatedWorkout): string {
@@ -201,7 +207,7 @@ function nodesText(nodes: readonly SequenceNodeV3[], phase: Phase, workout: Calc
     }
     if (node.repeatCount > 1 && node.recoveryBetweenRepeats.length) body += ` · ${node.kind === "group" && node.repeatUnit === "SET" ? "세트 사이" : "사이"} ${recoveryText(node.recoveryBetweenRepeats, node.id, "between", workout)}`
     if (node.recoveryAfter.length) body += ` → 끝낸 뒤 ${recoveryText(node.recoveryAfter, node.id, "after", workout)}`
-    pieces.push(body)
+    pieces.push(`${node.label ? `${node.label}: ` : ""}${body}`)
   }
   return pieces.join(" → ")
 }
@@ -242,9 +248,43 @@ export function catalogWorkoutReader(session: WorkoutDisplaySession): CatalogWor
     // RP is only the same-event average speed, never LT/VO2 or an effect claim.
     const name = sameEventRacePace && event !== undefined
       ? `${notationDistance(event)} ${goalReference ? "목표 속도" : references.every(reference => reference?.kind === "ACTUAL") ? "기록 속도" : "속도"} 연습 (RP) · ${amount}`
-      : amount ? `${entry.name} · ${amount}` : entry.name
+      : amount ? `${catalogDeliveryProfile(entry).name} · ${amount}` : catalogDeliveryProfile(entry).name
     return { name, summary: phases.main, phases }
   } catch {
     return null
   }
+}
+
+/** All catalog forms retain their exact structure, cues, modality and terrain.
+ * Unlike the legacy easy-reader whitelist, this projection does not abbreviate cues.
+ * Callers must supply a binding that has passed resolveCatalogBinding.
+ */
+export function catalogExecutionReading(workout: CalculatedWorkout): CatalogWorkoutReading | null {
+  try {
+    const entry = ALL_WORKOUT_CATALOG.find(item => item.id === workout.catalogId && item.fingerprint === workout.catalogFingerprint)
+    if (!entry?.sequence || entry.version !== "1.0.0" || workout.unavailable.length || !verifyCalculatedWorkout(workout)) return null
+    const { fingerprint, ...content } = entry
+    const { version: _version, reviewRef: _review, ...originalContent } = content
+    const sourceIdentity = entry.id.startsWith("RP-")
+      ? canonicalJsonFingerprint("trainoracle.same-event-race-pace.v1", content)
+      : canonicalJsonFingerprint("trainoracle.all-workout-catalog.v1", originalContent)
+    if (sourceIdentity !== fingerprint) return null
+    const phaseText = (phase: Phase) => {
+      const text = nodesText(entry.sequence![phase], phase, workout)
+      // Calculated speed can replace an effort cue in targetText. Keep the
+      // source instruction alongside it, including its safety limitations.
+      const cues: string[] = []
+      const inspect = (nodes: readonly SequenceNodeV3[]) => nodes.forEach(node => {
+        if (node.kind === "group") inspect(node.children)
+        else if (node.target.kind === "EFFORT_GUIDANCE" && node.target.cue) {
+          const step = segmentStep(node, phase, workout)
+          if (step.paceSecondsPerKm || node.work.kind === "distance" && step.seconds) cues.push(notationEffort(node.target.cue, "PLAIN"))
+        }
+      })
+      inspect(entry.sequence![phase])
+      return [text, ...new Set(cues)].filter(Boolean).join(" · ")
+    }
+    const phases = { warmup: phaseText("warmup"), main: phaseText("main"), cooldown: phaseText("cooldown") }
+    return { name: catalogDeliveryProfile(entry).name, summary: phases.main, phases }
+  } catch { return null }
 }

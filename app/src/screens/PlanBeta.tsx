@@ -1203,7 +1203,7 @@ function LegacyPlanBeta({
     const initialInput: InitialMainInput = { generated, intake: generatedIntake, gate,
       context: { mode: "newplan", startDate: candidateStartDate, accountScope: draftAccountScope, revision: draftRevision.current } }
     const initialMain: InitialMainCandidateReview | undefined = stored === null && nextPredecessor === null && cycleDraft === null
-      && cycleSummary === null && generatedIntake.selectedDetailedTemplateRef === null ? {
+      && cycleSummary === null ? {
         input: initialInput, applying: initialApplying, confirmed: initialConfirmed,
         onApply: (key, requirements) => { void applyInitialReview(key, input => applyInitialMainConditions(input, key, requirements)) },
         onApplyManual: (key, address, id, inputs, longer) => { void applyInitialReview(key, input => {
