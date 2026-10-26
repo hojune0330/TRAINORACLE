@@ -278,11 +278,11 @@ describe("Oracle exploration examples", () => {
   })
 
   it.each([
-    { id: "level", labels: ["2026-06-28", "2026-09-13"], values: ["22분 6초", "21분 45초"], widths: [100, 1305 / 1326 * 100] },
+    { id: "level", labels: ["2026-07-26", "2026-09-13"], values: ["47분 6초", "46분 45초"], widths: [100, 2805 / 2826 * 100] },
     { id: "focus", labels: ["2026-09-22 · AM", "2026-09-24 · AM", "2026-09-27 · AM", "2026-09-30 · AM"], values: ["실제 4/10 · 계획 2~4", "실제 4/10 · 계획 2~4", "실제 5/10 · 계획 2~4", "실제 4/10 · 계획 2~4"], widths: [80, 80, 100, 80] },
-    { id: "compare", labels: ["2026-08", "2026-09"], values: ["7 km", "8 km"], widths: [87.5, 100] },
-    { id: "mix", labels: ["BASE 기초 지구력", "LT 지속 페이스", "VO₂ 강한 유산소 반복"], values: ["18회", "3회", "3회"], widths: [100, 3 / 18 * 100, 3 / 18 * 100] },
-    { id: "change", labels: ["2026-08", "2026-09"], values: ["4", "4"], widths: [100, 100] },
+    { id: "compare", labels: ["2026-08", "2026-09"], values: ["7 km", "5 km"], widths: [100, 5 / 7 * 100] },
+    { id: "mix", labels: ["REC 회복 운동", "BASE 기초 지구력", "LT 지속 페이스", "VO₂ 강한 유산소 반복", "MIX 여러 강도 조합"], values: ["4회", "9회", "1회", "1회", "1회"], widths: [4 / 9 * 100, 100, 1 / 9 * 100, 1 / 9 * 100, 1 / 9 * 100] },
+    { id: "change", labels: ["2026-08", "2026-09"], values: ["4.5", "4"], widths: [100, 4 / 4.5 * 100] },
   ] as const)("$id exposes the full chart data, proportional bars and matching accessible table", ({ id, labels, values, widths }) => {
     const topic = catalog.getOracleTopic(id)
     const example = demoScenario.buildOracleDemoTopicResult(id)

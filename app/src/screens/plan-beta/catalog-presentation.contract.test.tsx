@@ -114,7 +114,7 @@ it("separates a bound catalog's main workout and full time, and never calls its 
   expect(totalCard).not.toHaveTextContent(formatTrainingSeconds(calculation.totals.seconds!.maximum))
   expect(totalCard).not.toHaveTextContent("준비·회복·정리 포함")
   fireEvent.click(within(reader).getByRole("button", { name: "자세히" }))
-  expect(totalCard).toHaveAttribute("data-view", "explained")
+  expect(totalCard).toHaveAttribute("data-view", "method")
   expect(totalCard).toHaveTextContent(formatTrainingSeconds(calculation.totals.seconds!.maximum))
   expect(totalCard).toHaveTextContent("준비·회복·정리 포함")
   expect(within(reader).getByText(/시간을 채우지 말고 중단하세요/u)).toBeVisible()

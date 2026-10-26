@@ -181,13 +181,18 @@ describe("verified catalog targets in execution steps", () => {
     expect(within(nextReader).getByText(sessionLabel(timed))).toBeVisible()
     expect(paper).toHaveAttribute("data-view", "core")
     expect(paper).not.toHaveTextContent("준비")
-    expect(within(nextReader).queryByRole("combobox", { name: "메모 표현 방식" })).toBeNull()
+    expect(within(nextReader).getByRole("combobox", { name: "메모 표현 방식" })).toHaveValue("PLAIN")
     fireEvent.click(within(nextReader).getByRole("button", { name: "자세히" }))
-    expect(paper).toHaveAttribute("data-view", "explained")
+    expect(paper).toHaveAttribute("data-view", "method")
     fireEvent.change(within(nextReader).getByRole("combobox", { name: "메모 표현 방식" }), { target: { value: "COACH" } })
     expect(within(paper).getByText(sessionLabel(timed, false, "original"))).toBeVisible()
     const originalSequence = required(calculatedWorkoutSequence(calculation(timed)))
-    for (const phase of ["warmup", "main", "cooldown"] as const) {
+    const warmup = required(within(paper).getByText("준비", { exact: true }).parentElement)
+    expect(within(warmup).getAllByRole("listitem").map(item => item.textContent)).toEqual([
+      "15min @ RPE 2–3",
+      "4 × 20s @ Build-up (전력질주 아님) · r40s Walk → 종료 뒤 60s Walk",
+    ])
+    for (const phase of ["main", "cooldown"] as const) {
       expect(within(paper).getByText(sequencePhaseNotation(originalSequence, phase, [], "COACH"))).toBeVisible()
     }
     expect(paper).toHaveTextContent("RPE")

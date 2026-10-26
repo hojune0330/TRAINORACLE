@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs"
 import { join } from "node:path"
 import { describe, expect, it } from "vitest"
+import { parse } from "yaml"
 
 const workflow = readFileSync(
   join(process.cwd(), "..", ".github", "workflows", "ci.yml"),
@@ -39,9 +40,11 @@ const requiredKillVariables = [
 describe("hosted beta feature controls", () => {
   it("allows an operator to request a fresh guarded deployment", () => {
     expect(workflow).toMatch(/on:\s*[\s\S]*?workflow_dispatch:/u)
-    expect(workflow).toContain(
-      "if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'",
-    )
+    const condition = parse(workflow).jobs["deploy-pages"].if
+    expect(condition).toContain("(github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'")
+    expect(condition).toContain("needs.delivery-complete.result == 'success'")
+    expect(condition).toContain("(needs.delivery-scope.outputs.full == 'true' || needs.delivery-scope.outputs.reused == 'true')")
+    expect(condition).toContain("!contains(github.event.head_commit.message, '[manual-pages]')")
   })
 
   it("preserves published switches while keeping the shared-origin account held", () => {
