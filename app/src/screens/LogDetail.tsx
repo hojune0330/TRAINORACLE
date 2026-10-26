@@ -635,7 +635,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, onJournalSave
             onAddEntry={onAddEntry}
             onEditEntry={onEditEntry ? edit : undefined}
           />}
-          {!readOnly && !decorationStudio && snapshot.complete && <JournalDayShare entries={entries} />}
+          {!readOnly && !decorationStudio && snapshot.complete && <JournalDayShare entries={orderedEntries} />}
         </>
       )}
 
@@ -654,13 +654,14 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, onJournalSave
   )
 }
 
-function JournalDayShare({ entries }: { readonly entries: readonly JournalEntry[] }) {
-  const cards = entries.flatMap(entry => { const card = journalShareCard(entry); return card ? [{ id: entry.id, card }] : [] })
+function JournalDayShare({ entries }: { readonly entries: readonly { readonly entry: JournalEntry; readonly viewKey: string }[] }) {
+  // Match the reader's occurrence keys without changing duplicate stored IDs.
+  const cards = entries.flatMap(({ entry, viewKey }) => { const card = journalShareCard(entry); return card ? [{ viewKey, card }] : [] })
   const [selected, setSelected] = React.useState<string | null>(null)
-  const card = cards.find(item => item.id === selected) ?? cards[0]
+  const card = cards.find(item => item.viewKey === selected) ?? cards[0]
   if (!card) return null
   return <div className="journal-day-share">
-    {cards.length > 1 && <label>공유할 운동<select aria-label="공유할 운동" value={card.id} onChange={event => setSelected(event.target.value)}>{cards.map((item, index) => <option key={item.id} value={item.id}>{index + 1}번째 운동 · {item.card.metrics.map(metric => metric.value).join(" · ")}</option>)}</select></label>}
-    <JournalShareTool key={card.id} card={card.card} />
+    {cards.length > 1 && <label>공유할 운동<select aria-label="공유할 운동" value={card.viewKey} onChange={event => setSelected(event.target.value)}>{cards.map((item, index) => <option key={item.viewKey} value={item.viewKey}>{index + 1}번째 운동 · {item.card.metrics.map(metric => metric.value).join(" · ")}</option>)}</select></label>}
+    <JournalShareTool key={card.viewKey} card={card.card} />
   </div>
 }
