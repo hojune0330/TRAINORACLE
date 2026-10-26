@@ -1,0 +1,14 @@
+.oracle-report-share { box-sizing: border-box; position: fixed; inset: 0; margin: 0 auto; width: 100%; max-width: 720px; height: 100dvh; max-height: 100dvh; border: 0; padding: 24px 20px calc(24px + env(safe-area-inset-bottom)); background: var(--bg); color: var(--ink); font-family: var(--sans); overflow-y: auto; }
+.oracle-report-share::backdrop { background: var(--ink-3); }
+.oracle-report-share *, .oracle-report-share *::before, .oracle-report-share *::after { box-sizing: border-box; min-width: 0; }
+.oracle-report-share .app-choice-group { max-width: 100%; flex-wrap: wrap; }
+.oracle-report-share select { width: 100%; max-width: 100%; }
+.oracle-report-share p, .oracle-report-share span { overflow-wrap: anywhere; }
+.oracle-report-share header, .oracle-report-share footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.oracle-report-share h2 { font-size: 24px; margin: 0; }
+.oracle-report-share p { line-height: 1.5; }
+.oracle-report-share button, .oracle-report-share select { min-height: 44px; padding: 10px 16px; border: 1px solid var(--ink-4); border-radius: var(--r-action); color: var(--ink); background: var(--surface); font: inherit; white-space: normal; }
+.oracle-report-share button:disabled { opacity: .55; }
+.oracle-report-share label { display: grid; gap: 8px; margin-top: 16px; }
+.oracle-report-share img { display: block; width: 100%; height: auto; margin-top: 24px; border: 1px solid var(--ink-4); }
+.oracle-report-share footer { margin-top: 24px; }

@@ -10,6 +10,7 @@ const planStore = vi.hoisted(() => ({ state: null as unknown }))
 vi.mock("../../domain/plan-beta-store", async importOriginal => ({
   ...await importOriginal<typeof import("../../domain/plan-beta-store")>(),
   loadPlanBetaState: () => planStore.state,
+  readPlanBetaStateFromStorage: () => planStore.state ? { kind: "loaded", state: planStore.state } : { kind: "missing" },
 }))
 vi.mock("./PersonalOraclePanel", () => ({ PersonalOraclePanel: () => null }))
 vi.mock("../home/HomeCoachingSummary", () => ({ HomeCoachingSummary: () => <div data-testid="home-coaching-summary" /> }))

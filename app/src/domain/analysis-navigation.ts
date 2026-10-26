@@ -9,6 +9,8 @@ export type AnalysisNavigation = {
   readonly reportMonths?: 3 | 6
   readonly selectedMonth?: string
   readonly reportEvidenceExpanded?: boolean
+  readonly reportScenario?: import("./oracle-demo-scenario").OracleDemoScenarioId
+  readonly reportSelectedDay?: string
 }
 
 /** Keep the saved fact's destination, without copying the record or private text. */
