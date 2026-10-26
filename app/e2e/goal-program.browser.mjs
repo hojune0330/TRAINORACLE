@@ -41,7 +41,7 @@ try {
   assert.equal(await page.getByRole('list', { name: '날짜별 계획 미리보기', exact: true }).locator(':scope > li').count(), 29)
   for (const width of [320, 375, 1280]) {
     await page.setViewportSize({ width, height: 900 })
-    await page.getByRole('button', { name: '목록', exact: true }).click()
+    await page.getByRole('button', { name: '하루씩', exact: true }).click()
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `List overflow at ${width}`)
     await page.screenshot({ path: fileURLToPath(new URL(`program-list-${width}.png`, output)), fullPage: true })
     await page.getByRole('button', { name: '달력', exact: true }).click()
@@ -98,7 +98,7 @@ try {
   const reloaded = await page.evaluate(() => JSON.parse(localStorage.getItem('trainoracle.goal-training-program.v1')))
   assert.equal(reloaded.program.programId, saved.program.programId)
   await page.setViewportSize({ width: 320, height: 900 })
-  await page.getByRole('button', { name: '목록', exact: true }).click()
+  await page.getByRole('button', { name: '하루씩', exact: true }).click()
   await page.evaluate(() => {
     const sizes = [...document.querySelectorAll('.goal-program *')].map(element => ({ element, size: parseFloat(getComputedStyle(element).fontSize) }))
     for (const { element, size } of sizes) element.style.fontSize = `${size * 2}px`

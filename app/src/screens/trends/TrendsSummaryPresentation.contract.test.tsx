@@ -10,6 +10,7 @@ import { Trends } from "../Trends"
 const runtime = vi.hoisted(() => ({ plan: null as ReturnType<typeof stateFixture> | null }))
 vi.mock("../../domain/plan-beta-store", async original => ({
   ...await original<typeof import("../../domain/plan-beta-store")>(), loadPlanBetaState: () => runtime.plan,
+  readPlanBetaStateFromStorage: () => runtime.plan ? { kind: "loaded", state: runtime.plan } : { kind: "missing" },
 }))
 vi.mock("../home/HomeCoachingSummary", () => ({ HomeCoachingSummary: () => null }))
 
@@ -44,8 +45,8 @@ it.each(["RPE-only", "rich", "old RPE"])("shows the actual %s facts in the commo
     : { distanceKm: "8", system: "base", fieldProvenance: { distanceKm: { provenance: "EXPLICIT" }, system: { provenance: "EXPLICIT" } } })]))
   render(<Trends onOpenOracle={vi.fn()} />)
   const result = screen.getByRole("region", { name: "기간별 훈련 리포트" })
-  if (kind === "RPE-only" || kind === "old RPE") expect(within(result).getByLabelText("함께 남긴 기록")).toHaveTextContent("힘든 정도6/10")
-  else expect(result.querySelector(".oracle-report__number")).toHaveTextContent("8 km")
+  if (kind === "RPE-only" || kind === "old RPE") expect(within(result).getByRole("region", { name: "리포트 근거" })).toHaveTextContent("힘든 정도 6/10")
+  else expect(within(result).getByLabelText("기간 핵심 수치")).toHaveTextContent("누적 거리8 km")
   expect(result).toHaveAttribute("data-source", "my")
   expect(screen.getByRole("button", { name: "예시" })).toHaveAttribute("aria-pressed", "false")
 })

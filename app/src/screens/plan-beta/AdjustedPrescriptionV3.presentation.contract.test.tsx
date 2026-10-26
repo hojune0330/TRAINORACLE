@@ -39,8 +39,9 @@ it("uses one memo for adjusted execution and retains source structure behind rea
   expect(model.totalDuration).not.toBeNull()
   expect(paper).not.toHaveTextContent(model.totalDuration!)
   fireEvent.click(screen.getByRole("button", { name: "자세히" }))
-  expect(paper).toHaveAttribute("data-view", "explained")
-  for (const line of model.lines) expect(paper).toHaveTextContent(line.text)
+  expect(paper).toHaveAttribute("data-view", "method")
+  for (const line of model.lines) for (const step of line.steps ?? [line.text]) expect(paper).toHaveTextContent(step)
+
   expect(paper).toHaveTextContent(model.totalDuration!)
   expect(execution.querySelector(".prescription-structure__nodes")).not.toBeNull()
 
@@ -51,5 +52,7 @@ it("uses one memo for adjusted execution and retains source structure behind rea
     expect(historicalExecution).not.toBeVisible()
     expect(screen.getByRole("article", { name: "훈련 메모 미리보기" })).toHaveTextContent(memoState === "HISTORICAL" ? "당시 계획" : "계획안")
   }
+  rerender(<AdjustedPrescriptionV3 {...props} date="2026-09-20" hideDate memoState="PLAN" />)
+  expect(screen.getByRole("article").querySelector("header")).toBeNull()
   expect(JSON.stringify(session)).toBe(original)
 })

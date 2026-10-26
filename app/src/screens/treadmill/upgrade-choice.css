@@ -16,10 +16,10 @@
 .upgrade-choice__effects strong { display:block; font-size:12px; line-height:1.5; }
 .upgrade-choice__demo { position:relative; display:grid; place-items:center; height:72px; margin-bottom:8px; border-radius:12px; border:2px solid var(--game-outline); background:var(--game-sky-low); overflow:hidden; }
 .upgrade-choice__demo svg { z-index:1; color:var(--game-shirt-dark); }
-[data-effect="grip"] svg { animation:upgrade-grip 1.2s ease-out 2; }
-[data-effect="grip"] i { position:absolute; bottom:0; height:12px; width:100%; background:var(--game-mud-light); }
-[data-effect="spring"] svg, [data-effect="spring"] .treadmill-party-icon { animation:upgrade-jump 1.2s ease-in-out 2; }
-[data-effect="economy"] i { position:absolute; bottom:8px; left:15%; height:6px; width:70%; border-radius:4px; background:var(--game-good); transform-origin:left; animation:upgrade-energy 1.2s ease-out 2; }
+.treadmill-game .upgrade-choice [data-effect="grip"] .treadmill-game__gear-art { animation:upgrade-grip 1.2s ease-out 2; }
+.treadmill-game .upgrade-choice [data-effect="grip"] .upgrade-choice__demo > i { position:absolute; bottom:0; height:12px; width:100%; background:var(--game-mud-light); }
+.treadmill-game .upgrade-choice [data-effect="spring"] .treadmill-game__gear-art { animation:upgrade-jump 1.2s ease-in-out 2; }
+.treadmill-game .upgrade-choice [data-effect="economy"] .upgrade-choice__demo > i { position:absolute; bottom:8px; left:15%; height:6px; width:70%; border-radius:4px; background:var(--game-good); transform-origin:left; animation:upgrade-energy 1.2s ease-out 2; }
 .treadmill-game__equipped { position:absolute; top:100px; left:12px; right:12px; z-index:4; display:grid; justify-items:center; gap:4px; padding:10px; border-radius:12px; background:var(--game-panel); border:3px solid var(--game-shirt-dark); color:var(--game-ink); pointer-events:none; animation:treadmill-pop .3s ease-out; }
 .treadmill-game__equipped span { font-size:12px; }
 .treadmill-game__wave { position:absolute; left:12px; bottom:12px; padding:3px 8px; background:var(--game-panel); border-radius:8px; color:var(--game-ink); font-size:11px; pointer-events:none; }
@@ -28,3 +28,51 @@
 @keyframes upgrade-energy { 0% {transform:scaleX(.4)} 100% {transform:scaleX(1)} }
 .treadmill-game[data-reduced] .upgrade-choice__demo *, .treadmill-game[data-reduced] .treadmill-game__equipped { animation:none; }
 @media(prefers-reduced-motion:reduce) { .upgrade-choice__demo *, .treadmill-game__equipped { animation:none !important; } }
+
+/* One selection, one explicit apply action. Keep equipment previews inside the game. */
+.treadmill-game .upgrade-choice { width:min(100%, 440px); gap:var(--space-2); }
+.treadmill-game .upgrade-choice .treadmill-game__upgrades button { grid-template-columns:44px minmax(0,1fr) 20px; gap:var(--space-2); padding:var(--space-2); min-height:80px; }
+.treadmill-game .upgrade-choice .treadmill-game__upgrades button[aria-pressed="true"] { border-color:var(--game-shirt-dark); background:color-mix(in srgb,var(--game-shirt) 12%,var(--game-panel)); }
+.treadmill-game .upgrade-choice .treadmill-game__gear-icon { width:44px; height:44px; }
+.treadmill-game .upgrade-choice .treadmill-game__gear-text { min-width:0; overflow-wrap:anywhere; }
+.treadmill-game .upgrade-choice .treadmill-game__gear-text strong { font-size:16px; line-height:1.4; }
+.treadmill-game .upgrade-choice .treadmill-game__gear-text small { font-size:12px; }
+.treadmill-game .upgrade-choice__arrow { color:var(--game-shirt-dark); }
+.treadmill-game .upgrade-choice__preview { width:100%; text-align:left; border-top:1px solid var(--game-panel-edge); padding-top:var(--space-3); }
+.treadmill-game .upgrade-choice__preview > header { display:flex; align-items:baseline; flex-wrap:wrap; justify-content:space-between; gap:var(--space-1); }
+.treadmill-game .upgrade-choice__preview > header strong { font-size:16px; }
+.treadmill-game .upgrade-choice__preview > header span { font-size:12px; color:var(--game-ink-soft); }
+.treadmill-game .upgrade-choice__portraits { display:grid; grid-template-columns:80px 20px 80px; align-items:center; justify-content:center; gap:var(--space-2); margin:var(--space-2) 0; }
+.treadmill-game .upgrade-choice__portraits figure { margin:0; display:grid; justify-items:center; border-radius:12px; background:var(--game-sky-low); }
+.treadmill-game .upgrade-choice__portraits figure[data-preview] { outline:2px solid var(--game-shirt-dark); }
+.treadmill-game .upgrade-choice__portraits figcaption { font-size:12px; padding-bottom:var(--space-1); }
+.treadmill-game .upgrade-choice__portraits > p { grid-column:1/-1; display:flex; align-items:center; justify-content:center; gap:var(--space-2); margin:0; font-size:12px; }
+.treadmill-game .upgrade-choice__portraits > p > .treadmill-game__gear-art { width:36px; height:36px; flex:0 0 36px; }
+.treadmill-game .upgrade-choice__portraits small { display:block; font-size:12px; color:var(--game-ink-soft); }
+.treadmill-game .upgrade-choice__stats { width:100%; border-collapse:collapse; font-size:12px; font-variant-numeric:tabular-nums; }
+.treadmill-game .upgrade-choice__stats th, .treadmill-game .upgrade-choice__stats td { padding:var(--space-2) var(--space-1); text-align:right; border-bottom:1px solid var(--game-panel-edge); }
+.treadmill-game .upgrade-choice__stats th:first-child { text-align:left; }
+.treadmill-game .upgrade-choice__stats thead { color:var(--game-ink-soft); }
+.treadmill-game .upgrade-choice__stats tr[data-change="gain"] td:last-child { color:var(--game-good); font-weight:800; }
+.treadmill-game .upgrade-choice__stats tr[data-change="cost"] td:last-child, .treadmill-game .upgrade-choice__limit { color:var(--game-danger-dark); font-weight:800; }
+.treadmill-game .upgrade-choice__limit, .treadmill-game .upgrade-choice__note, .treadmill-game .upgrade-choice__empty { font-size:12px; line-height:1.5; margin:var(--space-2) 0; }
+.treadmill-game .upgrade-choice__apply { display:grid; gap:var(--space-1); margin-top:var(--space-3); }
+.treadmill-game .upgrade-choice__apply button { width:100%; min-height:44px; }
+.treadmill-game .upgrade-choice__preview .sr-only { position:absolute; width:1px; height:1px; padding:0; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+.treadmill-game .upgrade-loadout { width:100%; text-align:left; color:var(--game-ink); }
+.treadmill-game .upgrade-loadout > strong { font-size:12px; }
+.treadmill-game .upgrade-loadout small { font-size:12px; font-weight:400; color:var(--game-ink-soft); }
+.treadmill-game .upgrade-loadout ul { display:flex; flex-wrap:wrap; gap:var(--space-2); list-style:none; margin:var(--space-2) 0; padding:0; }
+.treadmill-game .upgrade-loadout li { display:flex; align-items:center; gap:var(--space-1); font-size:12px; }
+.treadmill-game .upgrade-loadout li > .treadmill-game__gear-art { width:32px; height:32px; flex:0 0 32px; }
+.treadmill-game .upgrade-loadout li small { display:block; }
+.treadmill-game .upgrade-loadout > p { font-size:12px; line-height:1.5; margin:var(--space-1) 0; }
+.treadmill-game .treadmill-game__gear-band { display:grid; place-items:center; width:30px; height:36px; border:6px solid var(--game-gold-dark); border-radius:12px; background:var(--game-gold); color:var(--game-outline); transform:rotate(-16deg); }
+.treadmill-game .treadmill-game__gear-springs { position:absolute; bottom:4px; left:8px; right:8px; display:flex; justify-content:space-between; transform:rotate(-20deg); }
+.treadmill-game .treadmill-game__gear-springs i { display:block; width:10px; height:10px; border-top:3px solid var(--game-gold-dark); border-bottom:3px solid var(--game-gold-dark); background:var(--game-gold); }
+.treadmill-game .upgrade-choice__demo .treadmill-game__gear-art { width:52px; height:52px; }
+@media (max-width:360px) {
+  .treadmill-game .upgrade-choice { padding-inline:var(--space-2); }
+  .treadmill-game .upgrade-choice .treadmill-game__upgrades button { grid-template-columns:36px minmax(0,1fr) 18px; }
+  .treadmill-game .upgrade-choice .treadmill-game__gear-icon { width:36px; height:36px; }
+}

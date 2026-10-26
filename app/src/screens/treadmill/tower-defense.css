@@ -103,10 +103,8 @@
 .td-shop .td-artwork { height: 54px!important; width: 54px!important; }
 .td-shop button:active:not(:disabled),.td-upgrades button:active:not(:disabled) { transform: translateY(2px); border-bottom-width: 1px; }
 .td-upgrades button { padding: 8px; border-width: 1px; border-bottom-width: 3px; }
-.td-upgrades .td-artwork { display: none!important; }
 .td-upgrades strong { font-size: 13px; line-height: 1.5; }
 .td-current-tower { gap: 8px; }
-.td-current-tower .td-artwork { width: 56px!important; height: 56px!important; }
 .td-current-tower p { font-size: 12px; }
 .tower-defense .td-wave { order: 5; border-width: 0; background: var(--game-panel-edge); margin: 10px 12px 0; padding: 10px 12px; gap: 4px; }
 .td-intel-toggle { display: flex; align-items: center; justify-content: space-between; border: 0; padding: 0; color: var(--game-ink); background: transparent; text-align: left; gap: 12px; }
@@ -132,6 +130,53 @@
 }
 @media (prefers-reduced-motion: reduce) { .td-shop button:active,.td-upgrades button:active { transform: none; } }
 [data-reduced-motion="true"] .td-shop button:active,[data-reduced-motion="true"] .td-upgrades button:active { transform: none; }
+
+/* One shared growth silhouette in the workbench and battlefield; the approved
+   generated tower remains the center, with level/branch attachments around it. */
+.td-tower-art { display: inline-grid; position: relative; flex-shrink: 0; }
+.td-tower-art > svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.td-tower-art > .td-artwork { grid-area: 1 / 1; }
+.td-growth-shape { stroke: var(--game-defense-outline); stroke-width: 2.5; stroke-linejoin: round; }
+.td-growth-metal { fill: var(--game-defense-foundation); }
+.td-growth-power { fill: var(--game-defense-cannon); }
+.td-growth-reach { fill: var(--game-defense-range); }
+.td-growth-final { fill: var(--game-defense-level); }
+.td-growth-line { fill: none; stroke: var(--game-defense-foundation); stroke-width: 3; stroke-linecap: round; }
+.td-growth-steps { display: flex; list-style: none; gap: 8px; padding: 0; }
+.td-growth-steps li { flex: 1; display: flex; justify-content: center; align-items: center; gap: 5px; padding: 5px 2px; font-size: 12px; border-bottom: 3px solid var(--game-panel-edge); color: var(--game-ink-soft); }
+.td-growth-steps li[aria-current="step"] { border-color: var(--game-defense-selection); color: var(--game-ink); font-weight: 800; }
+.td-growth-steps li[data-complete="true"] { border-color: var(--game-defense-health); }
+.td-growth-steps li > span { display: grid; place-items: center; min-width: 18px; height: 18px; border: 1px solid currentColor; border-radius: 50%; font-size: 11px; }
+.td-current-tower > div { min-width: 0; }
+.td-branch-label { display: flex; align-items: center; gap: 4px; font-size: 13px; }
+.td-current-tower p { margin-top: 4px; font-variant-numeric: tabular-nums; }
+.tower-defense p.td-upgrade-guide { font-size: 13px; line-height: 1.5; }
+.tower-defense p.td-upgrade-rule { font-size: 12px; color: var(--game-ink-soft); }
+.td-upgrades { align-items: stretch; }
+.td-upgrades[data-final="true"] { grid-template-columns: 1fr; }
+.td-upgrades button { min-width: 0; align-content: start; gap: 7px; }
+.td-upgrade-image { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 2px; }
+.td-upgrade-image > span:last-child { font-size: 11px; font-weight: 700; }
+.td-upgrade-role { font-size: 12px; line-height: 1.45; font-weight: 700; word-break: keep-all; }
+.td-stat-changes { display: grid; gap: 4px; font-variant-numeric: tabular-nums; }
+.td-stat-changes > span { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0 4px; font-size: 12px; line-height: 1.4; }
+.td-stat-changes > span > span:last-child { margin-left: auto; text-align: right; }
+.tower-defense .td-stat-changes small { font-size: 10px; }
+.tower-defense small.td-upgrade-tradeoff { font-size: 11px; line-height: 1.5; word-break: keep-all; }
+.td-upgrade-budget { display: block; border-top: 1px solid var(--game-panel-edge); padding-top: 6px; font-size: 12px; font-weight: 700; }
+.td-upgrade-confirmation { display: flex; align-items: center; gap: 8px; padding: 10px; border: 1px solid var(--game-defense-health); border-radius: 12px; background: var(--game-panel-edge); }
+.td-upgrade-confirmation > div { min-width: 0; }
+.td-upgrade-confirmation strong,.td-max-level { display: flex; align-items: center; gap: 6px; }
+.td-upgrade-confirmation strong { font-size: 13px; }
+.tower-defense .td-upgrade-confirmation p { font-size: 12px; }
+.td-upgrade-spark { flex-shrink: 0; pointer-events: none; animation: td-upgrade-appear 180ms ease-out; }
+.td-max-level { padding: 10px; border: 1px solid var(--game-defense-level); border-radius: 12px; background: var(--game-panel-edge); }
+.td-max-level > svg { flex-shrink: 0; }
+.td-max-level strong { font-size: 13px; }
+.tower-defense .td-max-level p { font-size: 12px; }
+@keyframes td-upgrade-appear { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .td-upgrade-spark { animation: none; } }
+[data-reduced-motion="true"] .td-upgrade-spark { animation: none; }
 
 /* A movable world. HUD and construction stay in screen space. */
 .tower-defense .td-map-workspace { order: 3; min-width: 0; margin: 0 12px; }

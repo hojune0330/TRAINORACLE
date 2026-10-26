@@ -11,9 +11,9 @@ beforeEach(() => {
 })
 afterEach(async () => { cleanup(); await Promise.resolve(); vi.restoreAllMocks() })
 
-function Reader({ close, confirmationClose, enabled = true }: { readonly close: () => void; readonly confirmationClose: () => void; readonly enabled?: boolean }) {
+function Reader({ close, confirmationClose, enabled = true, returnFocusTo }: { readonly close: () => void; readonly confirmationClose: () => void; readonly enabled?: boolean; readonly returnFocusTo?: () => HTMLElement | null }) {
   const dialog = React.useRef<HTMLDialogElement>(null)
-  const back = useReaderDialog(dialog, close, undefined, enabled)
+  const back = useReaderDialog(dialog, close, returnFocusTo, enabled)
   const [confirmation, setConfirmation] = React.useState(false)
   return <dialog ref={dialog}>
     <button onClick={back}>close reader</button>
@@ -24,6 +24,41 @@ function Reader({ close, confirmationClose, enabled = true }: { readonly close: 
 }
 
 describe("native reader with a confirmation above it", () => {
+  it("can close again after its Back consumed a child layer instead of the reader", () => {
+    const close = vi.fn()
+    render(<Reader close={close} confirmationClose={vi.fn()} />)
+    const readerState = window.history.state
+    fireEvent.click(screen.getByRole("button", { name: "open top confirmation" }))
+    fireEvent.click(screen.getByRole("button", { name: "close reader" }))
+    expect(window.history.back).toHaveBeenCalledTimes(1)
+    window.history.replaceState(readerState, "", window.location.href)
+    fireEvent(window, new PopStateEvent("popstate", { state: readerState }))
+    expect(screen.queryByRole("alertdialog")).toBeNull()
+    expect(close).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole("button", { name: "close reader" }))
+    expect(window.history.back).toHaveBeenCalledTimes(2)
+    window.history.replaceState({ parent: "synthetic-origin" }, "", window.location.href)
+    fireEvent(window, new PopStateEvent("popstate", { state: window.history.state }))
+    expect(close).toHaveBeenCalledOnce()
+  })
+
+  it.each(["inert", "hidden", "disabled"])("rejects a %s return target and restores the valid opener", kind => {
+    const opener = document.createElement("button")
+    document.body.append(opener)
+    opener.focus()
+    const target = document.createElement("button")
+    const wrapper = document.createElement("div")
+    wrapper.append(target)
+    document.body.append(wrapper)
+    if (kind === "disabled") target.disabled = true
+    else wrapper.setAttribute(kind, "")
+    const view = render(<Reader close={vi.fn()} confirmationClose={vi.fn()} returnFocusTo={() => target} />)
+    screen.getByRole("button", { name: "close reader" }).focus()
+    view.unmount()
+    expect(opener).toHaveFocus()
+    wrapper.remove(); opener.remove()
+  })
+
   it("does not open a disabled reader, then waits for a queued result Back before its first opening", () => {
     const close = vi.fn(), show = vi.spyOn(HTMLDialogElement.prototype, "showModal")
     const view = render(<Reader close={close} confirmationClose={vi.fn()} enabled={false} />)

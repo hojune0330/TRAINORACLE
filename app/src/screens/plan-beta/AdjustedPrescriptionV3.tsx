@@ -6,16 +6,17 @@ import type { SelectedMultiAdjustedPlanV3 } from "../../domain/selected-multi-ad
 import { WorkoutMemoTool } from "../../components/WorkoutMemoTool"
 import type { WorkoutMemoContext } from "../../domain/workout-memo"
 
-export function AdjustedPrescriptionV3({ session, explanation, date, memoState, presentation = "reader", primaryAction }: {
+export function AdjustedPrescriptionV3({ session, explanation, date, memoState, presentation = "reader", primaryAction, hideDate = false }: {
   readonly session: AdjustedPlanCandidateV3["sessions"][number] | SelectedMultiAdjustedPlanV3["activePlan"]["sessions"][number]; readonly explanation?: ReviewedAdjustedExplanationV3;
   readonly showName?: boolean;
   readonly date?: string;
   readonly memoState?: WorkoutMemoContext["state"];
   readonly presentation?: "reader" | "comparison";
   readonly primaryAction?: import("react").ReactNode;
+  readonly hideDate?: boolean;
 }) {
   const p = session.prescription
-  const memo = <WorkoutMemoTool session={session} date={date} state={memoState} mode={presentation} reviewedExplanation={explanation} primaryAction={primaryAction} />
+  const memo = <WorkoutMemoTool session={session} date={date} state={memoState} mode={presentation} reviewedExplanation={explanation} primaryAction={primaryAction} hideDate={hideDate} />
   if (p.kind !== "ADJUSTED_METHOD_V3") return memo
   const execution = <>
     <PrescriptionStructureV3 sequence={p.projection.sequence}

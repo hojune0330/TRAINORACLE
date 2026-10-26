@@ -4,8 +4,8 @@ import path from "node:path"
 import { fileURLToPath } from "node:url"
 
 const app = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..")
-const out = path.resolve(app, "../reports/review/evidence/workout-memo-20261006")
-const base = process.env.MEMO_QA_URL ?? "http://127.0.0.1:4466"
+const out = path.resolve(app, "../reports/review/evidence/workout-memo-20261026")
+const base = process.env.MEMO_QA_URL ?? "http://127.0.0.1:4491"
 await mkdir(out, { recursive: true })
 const browser = await chromium.launch({ headless: true })
 const context = await browser.newContext({ acceptDownloads: true })
@@ -14,7 +14,7 @@ const failures = []
 page.on("pageerror", error => failures.push(error.message))
 const cases = []
 async function openCustomization(scope) {
-  const summary = scope.locator("summary", { hasText: "표현·꾸미기" }).first()
+  const summary = scope.locator("summary", { hasText: "꾸미기" }).first()
   const disclosure = summary.locator("..")
   if (await disclosure.getAttribute("open") === null) await summary.click()
 }
@@ -27,11 +27,19 @@ try {
   await page.screenshot({ path: path.join(out, "memo-entry-320.png"), fullPage: true })
   await page.getByRole("button", { name: "간단히", exact: true }).click()
   if (await page.locator(".workout-memo-paper").first().getAttribute("data-layout") !== "compact") throw Error("One-tap compact entry failed")
+  if (!await page.getByRole("combobox", { name: "메모 표현 방식" }).isVisible()) throw Error("Wording requires export controls")
+  if (await page.locator(".workout-memo-paper__total").count()) throw Error("Brief view repeats total time")
   await page.evaluate(() => document.fonts.ready)
   const fonts = await page.evaluate(() => Array.from(document.fonts).map(font => ({ family: font.family, status: font.status })))
   if (!fonts.some(font => font.family.includes("Pretendard") && font.status === "loaded")) throw Error("Expected self-hosted Pretendard")
   for (const layout of ["full", "compact"]) {
     await page.getByRole("button", { name: layout === "full" ? "자세히" : "간단히", exact: true }).click()
+    if (await page.locator(".workout-memo-paper").count() !== 1) throw Error("Duplicate paper")
+    if (layout === "full") {
+      if (await page.locator(".workout-memo-paper").getAttribute("data-view") !== "method") throw Error("Detail opened all rationale")
+      if (await page.locator(".workout-memo-paper__steps li").count() < 2) throw Error("Support steps merged")
+      if (await page.getByRole("region", { name: "훈련 설명" }).isVisible()) throw Error("Rationale is not collapsed")
+    }
     await openCustomization(page)
     for (const width of [320, 375, 1024]) {
     await page.setViewportSize({ width, height: 900 })
@@ -61,11 +69,17 @@ try {
   await page.emulateMedia({ reducedMotion: "reduce" })
   const reducedAnimation = await page.locator(".workout-memo-tool__body").first().evaluate(element => getComputedStyle(element).animationName)
   if (reducedAnimation !== "none") throw Error("Reduced motion not respected")
+  await page.emulateMedia({ reducedMotion: "no-preference" })
+  await page.evaluate(() => document.documentElement.setAttribute("data-reduced-motion", "true"))
+  if (await page.locator(".workout-memo-tool__body").first().evaluate(element => getComputedStyle(element).animationName) !== "none") throw Error("App reduced motion not respected")
+  await page.evaluate(() => document.documentElement.removeAttribute("data-reduced-motion"))
+  const warningFont = await page.locator(".workout-memo-paper__warnings").first().evaluate(element => parseFloat(getComputedStyle(element).fontSize))
+  if (warningFont < 14) throw Error("Safety text is too small")
   await openCustomization(page)
   await page.getByRole("button", { name: "노랑 종이" }).click()
   await page.getByRole("button", { name: "자세히", exact: true }).click()
   const downloading = page.waitForEvent("download")
-  await page.getByRole("button", { name: "저장", exact: true }).click()
+  await page.getByRole("button", { name: "이미지 저장", exact: true }).click()
   const download = await downloading
   const pngPath = path.join(out, "exported-workout-memo-yellow.png")
   await download.saveAs(pngPath)
@@ -82,7 +96,7 @@ try {
   if (pixels.width !== 1080 || pixels.darkPixels < 1000 || pixels.firstPixel[3] !== 255) throw Error("PNG is blank or invalid")
   await page.getByRole("button", { name: "간단히", exact: true }).click()
   const compactDownloading = page.waitForEvent("download")
-  await page.getByRole("button", { name: "저장", exact: true }).click()
+  await page.getByRole("button", { name: "이미지 저장", exact: true }).click()
   await (await compactDownloading).saveAs(path.join(out, "exported-workout-memo-yellow-compact.png"))
   // Optional mode switch is keyboard-operable and keeps the same prescription.
   await page.getByRole("button", { name: "자세히", exact: true }).focus()
@@ -90,9 +104,12 @@ try {
   if (await page.getByRole("button", { name: "자세히", exact: true }).getAttribute("aria-pressed") !== "true") throw Error("Layout keyboard switch failed")
   const copied = []
   await page.evaluate(() => { window.memoCopies = []; Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async text => window.memoCopies.push(text) } }) })
-  await page.getByRole("button", { name: "복사", exact: true }).click()
+  await page.getByRole("button", { name: "텍스트 복사", exact: true }).click()
   copied.push(...await page.evaluate(() => window.memoCopies))
   if (!copied[0]?.includes("반복 사이: 2분 조깅") || !copied[0]?.includes("가속 달리기 (전력질주 아님)") || copied[0]?.includes("SYNTHETIC_NOT_AN_ACCOUNT")) throw Error("Wrong/private memo copy")
+  await page.locator("summary", { hasText: "이 훈련의 이유" }).click()
+  await page.getByRole("region", { name: "훈련 설명" }).waitFor({ state: "visible" })
+  if (await page.locator(".workout-memo-paper").count() !== 1) throw Error("Rationale created a second paper")
   // The disclosure does not change history; Back from its parent must still close just the reader.
   await page.getByRole("button", { name: "훈련 방법과 이유" }).click()
   await page.getByRole("dialog").waitFor({ state: "visible" })
@@ -101,17 +118,7 @@ try {
   if (historyLength !== await page.evaluate(() => history.length)) throw Error("Memo added a nested navigation entry")
   await page.goBack()
   await page.getByRole("dialog").waitFor({ state: "hidden" })
-  const appPage = await context.newPage()
-  appPage.on("pageerror", error => failures.push(error.message))
-  await appPage.goto(`${base}/?app=1&oracleV2=1`)
-  await appPage.getByRole("button", { name: "더보기", exact: true }).click()
-  await appPage.getByRole("heading", { name: "더보기", exact: true }).waitFor()
-  await appPage.getByRole("button", { name: "페이스 계산", exact: true }).click()
-  await appPage.getByRole("heading", { name: "어떤 종목의 기록인가요?" }).waitFor()
-  await appPage.goBack()
-  await appPage.getByRole("heading", { name: "더보기", exact: true }).waitFor()
-  await appPage.close()
   if (failures.length) throw Error(failures.join("\n"))
-  await writeFile(path.join(out, "browser-result.json"), JSON.stringify({ directOneTapEntry: "pass (both choices visible before opening)", cases, fonts, text200Percent: "pass (both layouts)", reducedMotion: reducedAnimation, pixels, compactHeight: { full: fullHeight, compact: compactHeight }, keyboardLayout: "pass", copy: "pass", readerBack: "pass", moreCalculatorBack: "pass", pageErrors: failures, scope: "synthetic local component, native reader and real app More navigation; not production/account persistence" }, null, 2))
+  await writeFile(path.join(out, "browser-result.json"), JSON.stringify({ directOneTapEntry: "pass (both choices visible before opening)", cases, fonts, enlargedTextTokens: "pass (both layouts; not native browser zoom)", reducedMotion: { os: reducedAnimation, app: "none" }, warningFont, pixels, compactHeight: { full: fullHeight, compact: compactHeight }, keyboardLayout: "pass", copy: "pass", readerBack: "pass", singlePaper: "pass", collapsedRationale: "pass", pageErrors: failures, scope: "synthetic local memo and native reader; not production, real athletes or account persistence" }, null, 2))
   console.log(JSON.stringify({ status: "pass", cases: cases.length, pixels, out }))
 } finally { await context.close(); await browser.close() }

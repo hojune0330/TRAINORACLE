@@ -138,7 +138,7 @@ test("shows an executable record-based workout and opens its same stored method"
   await expect(memo).toContainText("1000m마다 3분 42.2초")
   await expect(memo).toContainText("2분 30초 조깅")
   await reader.getByRole("button", { name: "자세히", exact: true }).click()
-  await expect(memo).toHaveAttribute("data-view", "explained")
+  await expect(memo).toHaveAttribute("data-view", "method")
   await expect(memo).toContainText("15분")
   await expect(memo).toContainText("10분")
   await expect(memo).toContainText("5 × 1000m")

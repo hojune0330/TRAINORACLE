@@ -1,0 +1,278 @@
+{
+  "baseline": "781aad4207353cddc3e819ef5061582bee3c6cd2",
+  "reviewedAt": "2026-10-26T14:57:43.091Z",
+  "sourceRepositories": [
+    "TRAINORACLE",
+    "TRAINORACLE-device-integration-20260829",
+    "TRAINORACLE-ux-oracle-integration-20261006"
+  ],
+  "inventory": {
+    "registered": 114,
+    "accessible": 113,
+    "dirty": 26,
+    "trackedChangePreservations": 12
+  },
+  "originalTrackedPatchesUnchanged": true,
+  "worktrees": [
+    {
+      "worktree": "TRAINORACLE-device-integration-20260829",
+      "head": "acfaade1a9d193a7a16e486169600fff1e923322",
+      "tracked": 12,
+      "untracked": 2,
+      "sourceFiles": 0,
+      "blobsInMainHistory": 0,
+      "disposition": "preserved-evidence",
+      "reason": "Only screenshot evidence changed; no application source delta."
+    },
+    {
+      "worktree": "TRAINORACLE-integrate-pr317-20260911",
+      "head": "b664ec22712020fc0b6a5e0806c6f5deef189a6b",
+      "tracked": 21,
+      "untracked": 18,
+      "sourceFiles": 29,
+      "blobsInMainHistory": 4,
+      "disposition": "superseded",
+      "reason": "Old React Router NavigationProvider replaced by current browserNavigation, AppOverlayNavigation, draft-safe form navigation and reader-position contracts; current multi-touch and browser-edge protections retained."
+    },
+    {
+      "worktree": "TRAINORACLE-multi-event-pace-release-20261002",
+      "head": "f86266b15759ce4453d88622903a852a99ff77c9",
+      "tracked": 0,
+      "untracked": 117,
+      "sourceFiles": 0,
+      "blobsInMainHistory": 0,
+      "disposition": "preserved-artifacts",
+      "reason": "Only local outputs, caches, source assets or investigation evidence; not an outstanding application source patch."
+    },
+    {
+      "worktree": "TRAINORACLE-oracle-exploration-20260921",
+      "head": "1ff8349beb7fd4abbff7c8893ba9a6094c12891a",
+      "tracked": 144,
+      "untracked": 92,
+      "sourceFiles": 185,
+      "blobsInMainHistory": 178,
+      "disposition": "already-integrated-or-superseded",
+      "reason": "178/185 source blobs occur in main history. Current explicit calendar restore choice and protected export supersede old automatic replace. Public-profile own-record comparison intentionally retains its runtime (App.public-records.test.tsx). Current catalog/session selection retains newer binding guards."
+    },
+    {
+      "worktree": "TRAINORACLE-plan-actions-review-20261001",
+      "head": "8b80fa111d0442c6a7856142a692782334feea64",
+      "tracked": 0,
+      "untracked": 1,
+      "sourceFiles": 0,
+      "blobsInMainHistory": 0,
+      "disposition": "preserved-artifacts",
+      "reason": "Only local outputs, caches, source assets or investigation evidence; not an outstanding application source patch."
+    },
+    {
+      "worktree": "TRAINORACLE-plan-integration-20260920",
+      "head": "5cc89a76f4623bd42decc342c24592a631c8bb2c",
+      "tracked": 12,
+      "untracked": 8,
+      "sourceFiles": 11,
+      "blobsInMainHistory": 1,
+      "disposition": "superseded",
+      "reason": "Current InstantPlanTodayView uses compactSessionSummary plus complete TrainingInstructionCards and WorkoutMemo readers. Preserve current actual prescriptions and source EASY-only compaction instead of reintroducing optional summary projections."
+    },
+    {
+      "worktree": "TRAINORACLE-private-memo-save-hotfix-20260913",
+      "head": "83211de5943365cdcfb7798c01548fb91d62661e",
+      "tracked": 1,
+      "untracked": 4,
+      "sourceFiles": 0,
+      "blobsInMainHistory": 0,
+      "disposition": "preserved-artifacts",
+      "reason": "Only local outputs, caches, source assets or investigation evidence; not an outstanding application source patch."
+    },
+    {
+      "worktree": "TRAINORACLE-ux-oracle-integration-20261006",
+      "head": "602d48fd039be62fbd5ecdaf74a950c7ac35f15f",
+      "tracked": 0,
+      "untracked": 130,
+      "sourceFiles": 0,
+      "blobsInMainHistory": 0,
+      "disposition": "preserved-artifacts",
+      "reason": "Only local outputs, caches, source assets or investigation evidence; not an outstanding application source patch."
+    },
+    {
+      "worktree": "companion-app-20261015",
+      "head": "3807352aadf14c4d511fd3860254449eef10df84",
+      "tracked": 0,
+      "untracked": 6,
+      "sourceFiles": 0,
+      "blobsInMainHistory": 0,
+      "disposition": "preserved-artifacts",
+      "reason": "Only local outputs, caches, source assets or investigation evidence; not an outstanding application source patch."
+    },
+    {
+      "worktree": "domain-navigation-release-20261024",
+      "head": "db1311f2e0a601e78447339b746cbb73b49a1089",
+      "tracked": 0,
+      "untracked": 1,
+      "sourceFiles": 0,
+      "blobsInMainHistory": 0,
+      "disposition": "preserved-artifacts",
+      "reason": "Only local outputs, caches, source assets or investigation evidence; not an outstanding application source patch."
+    },
+    {
+      "worktree": "game-quality-20261016",
+      "head": "a103decea365e01b63de395cc14f22d0cf33be96",
+      "tracked": 26,
+      "untracked": 12,
+      "sourceFiles": 42,
+      "blobsInMainHistory": 25,
+      "disposition": "integrated",
+      "reason": "Upgrade previews, applied equipment, generated runner attachments and tower growth visuals recovered with existing behavior tests. Current sleep-inn, journal callbacks and lounge navigation retained."
+    },
+    {
+      "worktree": "lounge-main-release-20261016",
+      "head": "c0b4c31ff9c882a5d3cd3d7191a3de12c96a2f92",
+      "tracked": 0,
+      "untracked": 1,
+      "sourceFiles": 0,
+      "blobsInMainHistory": 0,
+      "disposition": "preserved-artifacts",
+      "reason": "Only local outputs, caches, source assets or investigation evidence; not an outstanding application source patch."
+    },
+    {
+      "worktree": "manual-design-release-20261015-source",
+      "head": "611fcf59eb72a8acf7a12566d2ea13bb5a815464",
+      "tracked": 31,
+      "untracked": 12,
+      "sourceFiles": 31,
+      "blobsInMainHistory": 31,
+      "disposition": "already-integrated",
+      "reason": "All 31 modified/untracked source blobs occur in main history."
+    },
+    {
+      "worktree": "oracle-prescription-20261025",
+      "head": "b068289573858d44548877570c5591198cc996bf",
+      "tracked": 29,
+      "untracked": 7,
+      "sourceFiles": 26,
+      "blobsInMainHistory": 0,
+      "disposition": "integrated",
+      "reason": "Workout memo follow-up integrated in 2e381bfa, preserving existing visual guides. Native Escape cancellation repaired in f5d94698."
+    },
+    {
+      "worktree": "pet-journal-friends-release-20261020-source",
+      "head": "44602dffd769356ceb413834a3755970b6e0d9e9",
+      "tracked": 62,
+      "untracked": 6,
+      "sourceFiles": 58,
+      "blobsInMainHistory": 58,
+      "disposition": "already-integrated",
+      "reason": "All 58 modified/untracked source blobs occur in main history."
+    },
+    {
+      "worktree": "reconcile-latest-20261012",
+      "head": "55c5f51bc30053628770adaa0dd258cf9c93a472",
+      "tracked": 97,
+      "untracked": 12,
+      "sourceFiles": 49,
+      "blobsInMainHistory": 21,
+      "disposition": "integrated-or-superseded",
+      "reason": "PR355 recovery/auth fixes merged with current storage; OracleContextEditor list-position and multiple-choice layout recovered. Current original-retention membership guard, reader scroll interruption and newer report/profile disclosure design retained. Old redundant test initialization removed."
+    },
+    {
+      "worktree": "release-body-20261014-source",
+      "head": "3300f6b81c059c3c7833c918e3c37aec81cda6c4",
+      "tracked": 0,
+      "untracked": 1,
+      "sourceFiles": 0,
+      "blobsInMainHistory": 0,
+      "disposition": "preserved-artifacts",
+      "reason": "Only local outputs, caches, source assets or investigation evidence; not an outstanding application source patch."
+    },
+    {
+      "worktree": "simplified-ui-release-20261018-source",
+      "head": "872f82fe35d1bee3b8fe134f8546192f2ae1f4fd",
+      "tracked": 0,
+      "untracked": 3,
+      "sourceFiles": 0,
+      "blobsInMainHistory": 0,
+      "disposition": "preserved-artifacts",
+      "reason": "Only local outputs, caches, source assets or investigation evidence; not an outstanding application source patch."
+    },
+    {
+      "worktree": "sleep-inn-release-20261018",
+      "head": "2495f54bfefc7fed1900f7b58df66b83637cc631",
+      "tracked": 8,
+      "untracked": 24,
+      "sourceFiles": 14,
+      "blobsInMainHistory": 14,
+      "disposition": "already-integrated",
+      "reason": "All 14 modified/untracked source blobs occur in main history."
+    },
+    {
+      "worktree": "training-helper-release-20261014",
+      "head": "55db3575ceefdaddedafa574e829ad1b3c1ccd34",
+      "tracked": 0,
+      "untracked": 1,
+      "sourceFiles": 0,
+      "blobsInMainHistory": 0,
+      "disposition": "preserved-artifacts",
+      "reason": "Only local outputs, caches, source assets or investigation evidence; not an outstanding application source patch."
+    },
+    {
+      "worktree": "TRAINORACLE-gesture-release-20261015",
+      "head": "299e14cb095121439959ef7ea1e2be0c37c9e4cc",
+      "tracked": 0,
+      "untracked": 1,
+      "sourceFiles": 0,
+      "blobsInMainHistory": 0,
+      "disposition": "preserved-artifacts",
+      "reason": "Only local outputs, caches, source assets or investigation evidence; not an outstanding application source patch."
+    },
+    {
+      "worktree": "TRAINORACLE-home-clarity-20261008",
+      "head": "aba840b62e72d605c6f19263f852a92dd25d7ff3",
+      "tracked": 169,
+      "untracked": 9,
+      "sourceFiles": 165,
+      "blobsInMainHistory": 0,
+      "disposition": "superseded",
+      "reason": "Canonical fixture helpers integrated with PR355; current per-test initialization retained. Duplicate legacy initializer imports/calls are not layered again."
+    },
+    {
+      "worktree": "TRAINORACLE-next-action-ux-20261012",
+      "head": "ff6f81384740c2ed4d95e16243e38cc78e4749f7",
+      "tracked": 0,
+      "untracked": 1,
+      "sourceFiles": 0,
+      "blobsInMainHistory": 0,
+      "disposition": "preserved-artifacts",
+      "reason": "Only local outputs, caches, source assets or investigation evidence; not an outstanding application source patch."
+    },
+    {
+      "worktree": "TRAINORACLE-personal-plan-ci-gates-20261007",
+      "head": "c4ef873a2ae1f1b7efdedb3240d4c815722dadc9",
+      "tracked": 0,
+      "untracked": 135,
+      "sourceFiles": 0,
+      "blobsInMainHistory": 0,
+      "disposition": "preserved-artifacts",
+      "reason": "Only local outputs, caches, source assets or investigation evidence; not an outstanding application source patch."
+    },
+    {
+      "worktree": "TRAINORACLE-reward-claim-ux-20261012",
+      "head": "d70c323003fbd5f6903ac93870a6f9d980e31207",
+      "tracked": 0,
+      "untracked": 1,
+      "sourceFiles": 0,
+      "blobsInMainHistory": 0,
+      "disposition": "preserved-artifacts",
+      "reason": "Only local outputs, caches, source assets or investigation evidence; not an outstanding application source patch."
+    },
+    {
+      "worktree": "TRAINORACLE-treadmill-minigame",
+      "head": "0e133403ea691fe968a4861e9c6c1003f101e611",
+      "tracked": 0,
+      "untracked": 3,
+      "sourceFiles": 0,
+      "blobsInMainHistory": 0,
+      "disposition": "preserved-artifacts",
+      "reason": "Only local outputs, caches, source assets or investigation evidence; not an outstanding application source patch."
+    }
+  ]
+}

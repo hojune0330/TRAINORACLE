@@ -40,6 +40,7 @@ import { DAILY_CONTEXT_STORAGE_KEY } from "./daily-context"
 import { FATIGUE_EXPERIMENT_STORAGE_KEY } from "./fatigue-experiment-store"
 import { SYNC_CONSENT_STORAGE_KEY } from "./account/sync-local"
 import { ACCOUNT_DELETION_BOUNDARY_PREFIX } from "./account/account-deletion-boundary"
+import { clearJournalPrivateReadCache } from "./journal-store"
 
 const ACCOUNT_SCOPED_PLAN_LOCAL_KEYS = [
   "trainoracle.plan-beta.v1",
@@ -216,6 +217,7 @@ function clearStorageKeys(
 export function eraseAllLocalData(options: EraseOptions = {}): EraseResult {
   const localStorage = storage("local")
   if (localStorage === null) return { ok: false, cleared: 0, failed: ["storage-unavailable"] }
+  clearJournalPrivateReadCache()
 
   // This explicit lifecycle is allowed even while ordinary journal access is
   // held for a conflict. Its erase intent prevents a partial wipe remigrating

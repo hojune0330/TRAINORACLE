@@ -17,7 +17,8 @@ import { onLocalJournalScopeChange } from "../domain/account/local-journal-owner
 import { useLocalToday } from "../hooks/useLocalToday"
 import { ImportedRecordPreview } from "./trends/ImportedRecordPreview"
 import { productFeatures } from "../domain/product-features"
-import { loadPlanBetaState } from "../domain/plan-beta-store"
+import { readPlanBetaStateFromStorage, readArchivedOriginalPlans } from "../domain/plan-beta-store"
+import { ACCOUNT_PLAN_EVENT } from "../domain/account/account-plan-service"
 import { InfoDisclosure } from "../components/InfoDisclosure"
 import { FileAnalysisPanel } from "./trends/FileAnalysisPanel"
 import { readAccountJournalProjection, readCurrentConfirmedAccountJournalProjection } from "../domain/account/account-journal-projection"
@@ -31,7 +32,7 @@ import { HomeCoachingSummary } from "./home/HomeCoachingSummary"
 import { TREND_METRIC_OPTIONS, type DisplayTrendMetric } from "./trends/trend-display"
 import { OracleReport, type OracleReportSelection } from "./trends/OracleReport"
 import { buildOracleReport } from "../domain/oracle-report"
-import { buildOracleDemoScenario } from "../domain/oracle-demo-scenario"
+import { buildOracleDemoScenario, type OracleDemoScenarioId } from "../domain/oracle-demo-scenario"
 import "./trends/trends-hub.css"
 
 const ANALYSIS_SECTIONS = [
@@ -78,15 +79,19 @@ export function Trends({ onBack, onWriteLog, onOpenImport, onOpenRecords, onWrit
   const [selectedMetric, setSelectedMetric] = React.useState<DisplayTrendMetric | undefined>(initialContext?.metric)
   const [reportSource, setReportSource] = React.useState<"my" | "example">(initialContext?.reportSource ?? "my")
   const [reportMonths, setReportMonths] = React.useState<3 | 6>(initialContext?.reportMonths ?? 3)
+  const [reportScenario, setReportScenario] = React.useState<OracleDemoScenarioId>(initialContext?.reportScenario ?? "ten-k")
   const [selectedMonth, setSelectedMonth] = React.useState<string | undefined>(initialContext?.selectedMonth)
+  const [selectedDay, setSelectedDay] = React.useState<string | undefined>(initialContext?.reportSelectedDay)
   const [evidenceExpanded, setEvidenceExpanded] = React.useState(initialContext?.reportEvidenceExpanded === true)
   const [topicsOpen, setTopicsOpen] = React.useState(false)
   React.useEffect(() => {
     setReportSource(initialContext?.reportSource ?? "my")
     setReportMonths(initialContext?.reportMonths ?? 3)
+    if (initialContext?.reportScenario) setReportScenario(initialContext.reportScenario)
     setSelectedMonth(initialContext?.selectedMonth)
+    setSelectedDay(initialContext?.reportSelectedDay)
     setEvidenceExpanded(initialContext?.reportEvidenceExpanded === true)
-  }, [initialContext?.reportSource, initialContext?.reportMonths, initialContext?.selectedMonth, initialContext?.reportEvidenceExpanded])
+  }, [initialContext?.reportSource, initialContext?.reportMonths, initialContext?.selectedMonth, initialContext?.reportEvidenceExpanded, initialContext?.reportScenario, initialContext?.reportSelectedDay])
   React.useEffect(() => { setSelectedMetric(initialContext?.metric) }, [initialContext?.metric])
   React.useEffect(() => { if (initialOracleSection) setSection(destinationFor(initialOracleSection) ? "training" : initialOracleSection) }, [initialOracleSection])
   React.useEffect(() => {
@@ -97,14 +102,16 @@ export function Trends({ onBack, onWriteLog, onOpenImport, onOpenRecords, onWrit
   const [entryRevision, setEntryRevision] = React.useState(0)
   React.useEffect(() => {
     const refresh = () => setEntryRevision(value => value + 1)
-    const unsubscribe = onLocalJournalScopeChange(refresh)
+    const unsubscribe = onLocalJournalScopeChange(() => { refresh(); setSelectedMonth(undefined); setSelectedDay(undefined); setEvidenceExpanded(false) })
     window.addEventListener("trainoracle:account-journals-changed", refresh)
     window.addEventListener(LOCAL_JOURNALS_CHANGED, refresh)
+    window.addEventListener(ACCOUNT_PLAN_EVENT, refresh)
     window.addEventListener("storage", refresh)
     return () => {
       unsubscribe()
       window.removeEventListener("trainoracle:account-journals-changed", refresh)
       window.removeEventListener(LOCAL_JOURNALS_CHANGED, refresh)
+      window.removeEventListener(ACCOUNT_PLAN_EVENT, refresh)
       window.removeEventListener("storage", refresh)
     }
   }, [])
@@ -117,22 +124,32 @@ export function Trends({ onBack, onWriteLog, onOpenImport, onOpenRecords, onWrit
   }, [accountEntries])
   const observations = React.useMemo(() => projectStructuredJournalObservations(entries), [entries])
   const today = useLocalToday()
-  const planState = loadPlanBetaState()
+  const planRead = React.useMemo(() => readPlanBetaStateFromStorage(), [entryRevision])
+  const planState = planRead.kind === "loaded" ? planRead.state : null
+  const planHistory = React.useMemo(() => readArchivedOriginalPlans(), [entryRevision])
   const isEmpty = observations.length === 0
   const readComplete = journalReadComplete !== false && loadEntriesForPlanSafety().status === "complete"
-  const demo = React.useMemo(() => buildOracleDemoScenario(), [])
+  const demo = React.useMemo(() => buildOracleDemoScenario(reportScenario), [reportScenario])
   const report = React.useMemo(() => buildOracleReport({ source: reportSource, months: reportMonths, today,
     entries: reportSource === "example" ? demo.entries : entries,
-    confirmedFileEntries: reportSource === "example" ? [] : accountEntries }), [reportSource, reportMonths, today, demo, entries, accountEntries])
+    confirmedFileEntries: reportSource === "example" ? [] : accountEntries,
+    athleteRecords: reportSource === "example" ? demo.athleteRecords : raceRecords.records,
+    raceReadState: reportSource === "example" || raceRecords.status === "READY" ? "loaded" : "error",
+    planState: reportSource === "example" ? demo.planState : planState,
+    planHistory: reportSource === "example" ? demo.planHistory : planHistory,
+    planReadState: reportSource === "example" || planRead.kind === "loaded" ? "loaded" : planRead.kind === "missing" ? "missing" : "error",
+  }), [reportSource, reportMonths, today, demo, entries, accountEntries, raceRecords.records, planState])
   const metric = selectedMetric ?? TREND_METRIC_OPTIONS.find(option => report.monthly.some(month => month.metrics[option.metric].kind === "DATA"))?.metric ?? "DISTANCE_KM"
-  const reportSelection: OracleReportSelection = { source: reportSource, months: reportMonths, metric, selectedMonth, evidenceExpanded }
+  const reportSelection: OracleReportSelection = { source: reportSource, months: reportMonths, metric, selectedMonth, selectedDay, evidenceExpanded, scenario: reportScenario }
   const reportContext = (patch: Partial<AnalysisNavigation> = {}): AnalysisNavigation => ({ ...initialContext, section: detail,
-    metric, reportSource, reportMonths, selectedMonth, reportEvidenceExpanded: evidenceExpanded, ...patch })
+    metric, reportSource, reportMonths, selectedMonth, reportSelectedDay: selectedDay, reportEvidenceExpanded: evidenceExpanded, reportScenario, ...patch })
   const changeReportSelection = (next: OracleReportSelection) => {
     setReportSource(next.source); setReportMonths(next.months); setSelectedMetric(next.metric); setSelectedMonth(next.selectedMonth)
     setEvidenceExpanded(next.evidenceExpanded === true)
+    setSelectedDay(next.selectedDay)
+    if (next.scenario) setReportScenario(next.scenario)
     onContextChange?.(reportContext({ reportSource: next.source, reportMonths: next.months, metric: next.metric,
-      selectedMonth: next.selectedMonth, reportEvidenceExpanded: next.evidenceExpanded === true,
+      selectedMonth: next.selectedMonth, reportSelectedDay: next.selectedDay, reportEvidenceExpanded: next.evidenceExpanded === true, reportScenario: next.scenario ?? reportScenario,
       savedDate: next.metric === initialContext?.metric ? initialContext.savedDate : undefined }))
   }
   const guideTitle = section === "profile" ? "최고기록 살펴보기"
@@ -174,10 +191,12 @@ export function Trends({ onBack, onWriteLog, onOpenImport, onOpenRecords, onWrit
           </button>)}
         </div>}
         {section === "training" && detail !== "files" && <OracleReport report={report} view={detail} selection={reportSelection}
+          accountScopeKey={raceRecords.ownerId ?? "device"}
           readState={readComplete ? "ready" : journalReadState === "loading" ? "loading" : "error"} hasSavedEntries={report.scopedEntryCount > 0}
           onSelectionChange={changeReportSelection} onRetry={() => { onRetryJournalRead?.(); setEntryRevision(value => value + 1) }}
           onOpenDay={onOpenCoachingDay} onWriteLog={onWriteLog} onWriteRecovery={onWriteRecovery} onOpenImport={onOpenImport}
-          onOpenPlan={planState ? onOpenPlan : undefined} onOpenTopics={onOpenOracle ? () => setTopicsOpen(open => !open) : undefined} />}
+          onOpenRecords={onOpenRecords}
+          onOpenPlan={planState || planRead.kind !== "missing" ? onOpenPlan : undefined} onOpenTopics={onOpenOracle ? () => setTopicsOpen(open => !open) : undefined} />}
         {section === "training" && detail === "summary" && reportSource === "my" && readComplete && <ImportedRecordPreview entries={entries} today={today} onOpenDay={onOpenCoachingDay} />}
         {section === "training" && detail === "summary" && reportSource === "my" && readComplete
           && entries.some(entry => entry.kind === "post-session" && entry.plannedSessionLink && entry.date <= today)

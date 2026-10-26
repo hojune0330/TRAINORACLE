@@ -1,11 +1,34 @@
-import { appendFileSync } from "node:fs"
+import { appendFileSync, readFileSync } from "node:fs"
 import { pathToFileURL } from "node:url"
 import { classifyPaths } from './ci-delivery-scope.cjs'
 
 const PAGE_SIZE = 100
 const POLICY_ACTIVATED_AT = Date.parse("2026-08-14T11:10:24Z")
 
-export function evaluateFreshness({ main, branches, pulls, deployment, deploymentDelta = null }) {
+export function validateBranchDecisions(decisions) {
+  if (!Array.isArray(decisions)) throw new Error("Branch decisions must be an array")
+  const keys = new Set()
+  for (const decision of decisions) {
+    const key = `${decision?.branch}@${decision?.sha}`
+    if (!decision || typeof decision.branch !== "string" || !decision.branch
+      || ["main", "gh-pages"].includes(decision.branch)
+      || !/^[a-f0-9]{40}$/u.test(decision.sha ?? "")
+      || !/^[a-f0-9]{40}$/u.test(decision.reviewedAgainst ?? "")
+      || !["already_integrated", "superseded", "not_adopted"].includes(decision.disposition)
+      || typeof decision.reason !== "string" || decision.reason.trim().length < 20
+      || !Array.isArray(decision.evidence) || !decision.evidence.length
+      || decision.evidence.some(value => typeof value !== "string" || !value.trim())
+      || keys.has(key)) throw new Error(`Invalid branch decision: ${key}`)
+    keys.add(key)
+  }
+  return decisions
+}
+
+export function evaluateFreshness({ main, branches, pulls, deployment, deploymentDelta = null, branchDecisions = [] }) {
+  const decisions = new Map(validateBranchDecisions(branchDecisions)
+    .map(decision => [`${decision.branch}@${decision.sha}`, decision]))
+  const reviewedBranches = []
+
   const newestPullByBranch = new Map()
   for (const pull of [...pulls].sort((left, right) => right.number - left.number)) {
     if (!newestPullByBranch.has(pull.head.ref)) newestPullByBranch.set(pull.head.ref, pull)
@@ -15,6 +38,13 @@ export function evaluateFreshness({ main, branches, pulls, deployment, deploymen
     .filter((branch) => Date.parse(branch.committedAt) >= POLICY_ACTIVATED_AT)
     .flatMap((branch) => {
       const pull = newestPullByBranch.get(branch.name)
+      const decision = decisions.get(`${branch.name}@${branch.sha}`)
+      // Only the exact reviewed tip is settled. Reopened work or a new commit
+      // must be assessed again; a disposition never changes deployment checks.
+      if (decision && pull?.state !== "open") {
+        reviewedBranches.push(`${branch.name}@${branch.sha.slice(0, 7)} (${decision.disposition})`)
+        return []
+      }
       if (!pull) return [`${branch.name}@${branch.sha.slice(0, 7)} (NO_PR)`]
       if (pull.head.sha !== branch.sha) return [`${branch.name}@${branch.sha.slice(0, 7)} (ADVANCED_AFTER_PR)`]
       if (pull.state === "closed" && pull.mergedAt === null) {
@@ -40,6 +70,7 @@ export function evaluateFreshness({ main, branches, pulls, deployment, deploymen
     deploymentSourceSha: deployment.sourceSha,
     deploymentAlignment: deployment.sourceSha === main.sha ? 'EXACT_SOURCE' : notesOnly ? 'OPERATOR_NOTES_ONLY_RUNTIME_UNCHANGED' : 'SOURCE_MISMATCH',
     unresolvedBranches,
+    reviewedBranches,
     openPullRequests: pulls.filter((pull) => pull.state === "open").map((pull) => pull.number),
     problems,
   }
@@ -110,6 +141,8 @@ async function inspectRepository(repository, token) {
     })),
     deployment,
     deploymentDelta,
+    branchDecisions: JSON.parse(readFileSync(new URL("../reports/operations/branch-decisions.json", import.meta.url), "utf8")),
+
   }
 }
 
@@ -126,6 +159,7 @@ async function main() {
     `- deployment alignment: ${result.deploymentAlignment}`,
     `- open PRs: ${result.openPullRequests.length === 0 ? "none" : result.openPullRequests.map((number) => `#${number}`).join(", ")}`,
     `- unresolved newer branches: ${result.unresolvedBranches.length === 0 ? "none" : result.unresolvedBranches.join(", ")}`,
+    `- reviewed historical branches: ${result.reviewedBranches.length === 0 ? "none" : result.reviewedBranches.join(", ")}`,
   ]
   console.log(lines.join("\n"))
   if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${lines.join("\n")}\n`)

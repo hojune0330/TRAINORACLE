@@ -643,6 +643,7 @@ it("retains a multi-plan journal original and reads the exact slot after the act
   fireEvent(details, new Event("toggle"))
   expect(screen.queryByText("저장 당시 기록으로 계산한 참고 시간")).toBeNull()
   fireEvent.click(screen.getByRole("button", { name: "자세히" }))
+  fireEvent.click(screen.getByText("이 훈련의 이유"))
   const purposeSection = screen.getByRole("heading", { name: "목적" }).closest("section")!
   const recoverySection = screen.getByRole("heading", { name: "회복" }).closest("section")!
   expect(purposeSection).toBeVisible()
@@ -1040,7 +1041,8 @@ it.each(["initial", "successor"])("requires explicit final confirmation in the %
     expectedPredecessorFingerprint: successor?.previous.contentFingerprint,
     cycleDraft: successor?.input.cycleDraft }
   render(React.createElement(MultiAdjustedPlanApplyReviewV3, props))
-  expect(screen.getAllByRole("region", { name: "적용할 훈련" })).toHaveLength(input.request.preparations.length)
+  expect(screen.getAllByRole("region", { name: "훈련 내용 변경" })).toHaveLength(input.request.preparations.length)
+  expect(screen.getAllByText("전체 방법 비교")).toHaveLength(input.request.preparations.length)
   expect(localStorage.getItem(activePlanBetaStorageKey())).toBe(before)
   fireEvent.click(screen.getByRole("button", { name: "후보로 돌아가기" }))
   expect(onCancel).toHaveBeenCalledOnce()

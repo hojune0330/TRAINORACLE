@@ -53,7 +53,8 @@ it.each([null, "[]", "{broken", '[{"invalid":"entry"}]'])
     const readers = await openFirstSessionEvidence()
     const complete = raw === null || raw === "[]"
     expect(screen.queryByText(/이 훈련과 연결된 일지가 아직 없어요/u) !== null).toBe(complete)
-    expect(screen.queryByText(/일지를 아직 모두 불러오지 못했어요/u) !== null).toBe(!complete)
+    if (complete) expect(screen.queryByRole("alert")).toBeNull()
+    else expect(screen.getByRole("alert")).toHaveTextContent("기록을 불러오지 못했어요.")
     expect(localStorage.getItem(JOURNAL_STORAGE_KEY)).toBe(raw)
     await closeEvidenceReaders(readers)
   })
@@ -67,7 +68,7 @@ it("does not turn a storage exception into an empty journal", async () => {
   render(<ActivePlan state={stateFixture()} onProgress={vi.fn()} onNextFrame={vi.fn()}
     onActivateNextFrame={vi.fn()} onCheckDetailedExecution={vi.fn()} />)
   const readers = await openFirstSessionEvidence()
-  expect(screen.getByText(/일지를 아직 모두 불러오지 못했어요/u)).toBeVisible()
+  expect(screen.getByRole("alert")).toHaveTextContent("기록을 불러오지 못했어요.")
   expect(screen.queryByText(/이 훈련과 연결된 일지가 아직 없어요/u)).toBeNull()
   await closeEvidenceReaders(readers)
 })

@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
+import type { GamePalette } from "./sprites"
 
 afterEach(() => { vi.unstubAllGlobals(); vi.resetModules() })
 
@@ -50,5 +51,25 @@ describe("Tori art loading and frame selection", () => {
     expect(art.toriFrame({ ...look, phase: -Math.PI / 4 })).toBe(7)
     expect(art.toriFrame({ ...look, phase: NaN })).toBe(0)
     expect(([0,1,2] as const).map(jumpStage => art.toriFrame({ ...look, pose: "jump", phase: 99, jumpStage }))).toEqual([10,11,12])
+  })
+
+  it("keeps selected equipment visible when the generated atlas replaces the fallback runner", async () => {
+    const { art, images } = await fixture()
+    const pending = art.loadToriArt(); images[0]!.onload(); await pending
+    const { drawRunner } = await import("./sprites")
+    const context = {
+      save: vi.fn(), restore: vi.fn(), scale: vi.fn(), drawImage: vi.fn(), translate: vi.fn(), rotate: vi.fn(),
+      fillRect: vi.fn(), beginPath: vi.fn(), moveTo: vi.fn(), lineTo: vi.fn(), stroke: vi.fn(), arc: vi.fn(), fill: vi.fn(),
+    }
+    const palette = { outline: "outline", lane: "lane", gold: "gold", shirtDark: "shirt-dark" } as GamePalette
+    drawRunner(context as unknown as CanvasRenderingContext2D, palette, { pose: "run", phase: 0, upgrades: ["grip", "spring", "economy"], character: "tori" })
+    expect(context.drawImage).toHaveBeenCalledOnce()
+    expect(context.fillRect).toHaveBeenCalledWith(-13, -4, 31, 6)
+    expect(context.lineTo).toHaveBeenCalledWith(10, 3)
+    expect(context.arc).toHaveBeenCalledWith(151, 179, 8, 0, Math.PI * 2)
+    expect(context.translate).toHaveBeenCalledWith(100, 216)
+    context.arc.mockClear(); context.translate.mockClear()
+    drawRunner(context as unknown as CanvasRenderingContext2D, palette, { pose: "run", phase: Math.PI / 4, upgrades: ["economy"], character: "tori" })
+    expect(context.arc).toHaveBeenCalledWith(162, 145, 8, 0, Math.PI * 2)
   })
 })

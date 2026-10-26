@@ -9,6 +9,28 @@ vi.mock("../hooks/useReaderDialog", () => ({ useReaderDialog: (ref: React.RefObj
 } }))
 beforeEach(() => { HTMLDialogElement.prototype.showModal = function () { this.setAttribute("open", "") } })
 afterEach(cleanup)
+it("opens questions at the top, preserves multiple-choice scrolling and restores the topic-list position", () => {
+  const draft = vi.fn(), save = vi.fn(async () => true)
+  render(<OracleContextEditor onDraft={draft} onSave={save} onClose={vi.fn()} />)
+  const body = screen.getByRole("dialog").querySelector<HTMLElement>(".oracle-v2__reader-body")!
+  body.scrollTop = 120
+  fireEvent.click(screen.getByRole("button", { name: "어떤 이유로 달리나요?" }))
+  expect(body.scrollTop).toBe(0)
+  expect(screen.getByRole("heading", { name: "어떤 이유로 달리나요?" })).toHaveFocus()
+  body.scrollTop = 180
+  fireEvent.click(screen.getByRole("button", { name: "배움" }))
+  expect(body.scrollTop).toBe(180)
+  fireEvent.click(screen.getByRole("button", { name: "선택 완료" }))
+  expect(body.scrollTop).toBe(120)
+  fireEvent.click(screen.getByRole("button", { name: "더 알아보고 싶은 것은?" }))
+  expect(body.scrollTop).toBe(0)
+  fireEvent.click(screen.getByRole("button", { name: "답하지 않기" }))
+  expect(body.scrollTop).toBe(120)
+  fireEvent.click(screen.getByRole("button", { name: "함께" }))
+  expect(body.scrollTop).toBe(0)
+  expect(draft).toHaveBeenLastCalledWith(expect.objectContaining({ answers: { motivations: ["LEARN"] } }))
+  expect(save).not.toHaveBeenCalled()
+})
 function openEvent() {
   fireEvent.click(screen.getByRole("button", { name: "대회" }))
   fireEvent.click(screen.getByRole("button", { name: "대회 일정·이동·비용" }))

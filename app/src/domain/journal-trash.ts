@@ -58,6 +58,8 @@ export type TrashedEntry = {
   /** 지운 시각 ISO — 남은 기간 계산 기준 */
   readonly deletedAt: string
   readonly privateMemo?: PrivateMemoRecord
+  /** Confirmed before copying: a retry resumes this new id without consuming the source. */
+  readonly restoredId?: string
 }
 
 function storage(): Storage | null {
@@ -83,9 +85,12 @@ function parseTrashed(value: unknown): TrashedEntry | null {
   if (typeof record.deletedAt !== "string" || record.deletedAt === "") return null
   const entry = parseJournalEntryForWrite(record.entry)
   if (entry === null) return null
-  if (record.privateMemo === undefined) return { entry, deletedAt: record.deletedAt }
+  if (record.restoredId !== undefined && (typeof record.restoredId !== "string"
+    || record.restoredId.length === 0 || record.restoredId.length > 128 || record.restoredId === entry.id)) return null
+  const resume = record.restoredId === undefined ? {} : { restoredId: record.restoredId as string }
+  if (record.privateMemo === undefined) return { entry, deletedAt: record.deletedAt, ...resume }
   const privateMemo = parsePrivateMemoRecord(record.privateMemo)
-  return privateMemo === null ? null : { entry, deletedAt: record.deletedAt, privateMemo }
+  return privateMemo === null ? null : { entry, deletedAt: record.deletedAt, privateMemo, ...resume }
 }
 
 // Recovery must not mistake unreadable or retained ciphertext for an empty vault.
@@ -142,6 +147,25 @@ function loadAllTrash(now: number = Date.now()): TrashedEntry[] {
 
 export function loadTrash(now: number = Date.now()): TrashedEntry[] {
   return loadAllTrash(now).filter((item) => isJournalVisible(item.entry.id))
+}
+
+/** Keep the only recovery copy until its destination is confirmed. A small
+ * identifier in the same trash value survives a tab/process restart, including
+ * a successful setItem whose confirmation could not be read. */
+export function prepareTrashRestore(id: string, proposedId: string): { item: TrashedEntry & { restoredId: string }; raw: string } | null {
+  if (!isJournalVisible(id) || !proposedId || proposedId.length > 128 || proposedId === id) return null
+  const target = storage()
+  if (target === null) return null
+  const snapshot = readTrashForRecovery(target)
+  if (snapshot === null) return null
+  const matches = snapshot.items.filter(item => item.entry.id === id)
+  if (matches.length !== 1 || isExpired(matches[0]!.deletedAt, Date.now())) return null
+  const found = matches[0]!
+  const item = { ...found, restoredId: found.restoredId ?? proposedId }
+  if (found.restoredId !== undefined) return { item, raw: snapshot.raw! }
+  const items = snapshot.items.map(candidate => candidate.entry.id === id ? item : candidate)
+  if (!write(items, snapshot.raw)) return null
+  return { item, raw: JSON.stringify(items) }
 }
 
 /**

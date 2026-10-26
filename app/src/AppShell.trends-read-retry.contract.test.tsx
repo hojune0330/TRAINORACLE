@@ -54,7 +54,8 @@ it.each([false, true])("retries parent and child readiness after a local read fa
     expect(screen.queryByRole("region", { name: "오라클 예시" })).toBeNull()
   } else {
     expect(screen.queryByText(/기록을 아직 모두 확인하지 못했어요/u)).toBeNull()
-    expect(screen.getByLabelText("함께 남긴 기록")).toHaveTextContent("힘든 정도6/10")
+    expect(screen.getByRole("region", { name: "리포트 근거" })).toHaveTextContent("힘든 정도 6/10")
+    expect(screen.getByRole("button", { name: `${date} 운동 일지 보기` })).toBeVisible()
     expect(screen.getByRole("region", { name: "기간별 훈련 리포트" })).toHaveAttribute("data-source", "my")
     expect(screen.getByRole("button", { name: "예시 결과 보기" })).toBeVisible()
   }

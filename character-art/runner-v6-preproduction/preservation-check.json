@@ -1,0 +1,95 @@
+{
+  "sourceSha256": "e6d3417b3727bf13fcf987d6e2400e78fa0f9414c2db51e325bc69019ae2314e",
+  "workingCopySha256": "1ca316efe179ea4141e47135e41284ec2ed17722d4342d2a08823accf38108e9",
+  "unchangedChecks": {
+    "vertexCount": true,
+    "polygonCount": true,
+    "geometryHash": true,
+    "topologyHash": true,
+    "weightsHash": true,
+    "vertexGroups": true,
+    "bones": true,
+    "restRigHash": true,
+    "actions": true
+  },
+  "allUnchanged": true,
+  "packedImages": [
+    {
+      "name": "tori-game-motions_basecolor",
+      "packed": true,
+      "bytes": 579692,
+      "sha256": "d5996b58358f34489109a39e8ab39f4f4adc695dece1e2a65262cf9e44c6cb9f"
+    }
+  ],
+  "sourceMetrics": {
+    "vertexCount": 4701,
+    "polygonCount": 9398,
+    "geometryHash": "5d7b5becc3e8b5aa8614f3df81ce67150babb2c6bd823d93dc7db7605e1932d4",
+    "topologyHash": "436972d177498dcc92037e4f36e044235ad4e130a944ca8a22a19d200f2b8aad",
+    "weightsHash": "0ba43d0c73d76b6586bf99b1f48c7de1f9ae6c5ba9b6f7b60c259b64c29dfe95",
+    "restRigHash": "6d500719ca471c5a55a95419a21219642fe90b11dcee1ed52847613498638cda"
+  },
+  "actions": [
+    {
+      "name": "Armature|cheer",
+      "range": [
+        1.0,
+        291.0
+      ],
+      "channels": 659,
+      "keyCount": 148478,
+      "keysHash": "699cd1d9f85ca216e6f1f6ba76617f8fa03f943c70406656328e54f411093bb4"
+    },
+    {
+      "name": "Armature|fall",
+      "range": [
+        1.0,
+        73.0
+      ],
+      "channels": 659,
+      "keyCount": 37188,
+      "keysHash": "a06967a3088b834af002614a01ef8c835f6b694153943c537ec4826294fc1de1"
+    },
+    {
+      "name": "Armature|hit_to_body_01",
+      "range": [
+        1.0,
+        32.0
+      ],
+      "channels": 659,
+      "keyCount": 7618,
+      "keysHash": "ecd5d7b5838f39b12a02e73358f6d713e93050c3abea217e1e29998fb55458ab"
+    },
+    {
+      "name": "Armature|idle",
+      "range": [
+        1.0,
+        369.0
+      ],
+      "channels": 659,
+      "keyCount": 149728,
+      "keysHash": "f1396a478884d982f1a4dadaf1cb5740d90013a5c7eefb3c0dd1fef77b0d8202"
+    },
+    {
+      "name": "Armature|jump",
+      "range": [
+        1.0,
+        54.0
+      ],
+      "channels": 659,
+      "keyCount": 28348,
+      "keysHash": "ffdb98c6659c9bf81f63bf57483df273525fb71ce4c3892dc311c5d41c88852a"
+    },
+    {
+      "name": "Armature|run",
+      "range": [
+        1.0,
+        31.0
+      ],
+      "channels": 659,
+      "keyCount": 7918,
+      "keysHash": "3969eae7f7f0e206a8078f94d1f08889c6b35a47f94420fa384a6ff5a54ec4d4"
+    }
+  ],
+  "scope": "Offline preservation check only. Not runtime integration, transition, gameplay or mobile performance acceptance."
+}

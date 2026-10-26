@@ -65,7 +65,10 @@ test("keeps explicit energy records separate from legacy defaults across home an
   const analysis = distance
   await expect(analysis).toHaveAttribute("data-view", "mix")
   await expect(analysis.getByRole("img", { name: /지속 페이스 1회/u })).toBeVisible()
-  await expect(analysis.getByRole("img", { name: /여러 강도 조합 0회/u })).toBeVisible()
+  await expect(analysis.getByRole("img", { name: /여러 강도 조합 0회/u })).toHaveCount(0)
+  const unrecorded = analysis.locator("details").filter({ has: page.locator("summary", { hasText: "기록 없는 종류 6개" }) })
+  await unrecorded.locator("summary").click()
+  await expect(unrecorded).toContainText("여러 강도 조합")
   await expect(analysis.getByText(/훈련 종류: 반영 1건 · 제외 1건/u)).toBeVisible()
   await expect(analysis.getByText(/일지에서 직접 선택한 주된 목적의 횟수/u)).toBeVisible()
   await analysis.getByRole("button", { name: "6개월", exact: true }).click()

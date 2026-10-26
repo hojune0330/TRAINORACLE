@@ -14,15 +14,18 @@ import type { MinigameProgress, MinigameSettings } from "../../domain/minigame/p
 import type { MinigameStorageStatus } from "../../domain/minigame/progress-store"
 import { medalBalance, medalsEarned, runMedalsLeftToday, MINIGAME_REWARD_RULES, TRAIL_ITEMS } from "../../domain/minigame/rewards"
 import { medalsOf } from "../../domain/minigame/progress"
-import { TREADMILL_RULES, TREADMILL_UPGRADES } from "../../domain/minigame/treadmill"
+import { TREADMILL_RULES, TREADMILL_UPGRADES, type TreadmillUpgrade } from "../../domain/minigame/treadmill"
 import { drawRunner, gamePalette } from "./sprites"
 import { loadToriArt } from "./runner-art"
 import { CityPreview } from "./CityPreview"
 import { PartyIcon } from "./PartyIcon"
 import type { RunnerCharacter } from "./sprites"
 
-export function CharacterPortrait({ character, size = 64, pose = "idle", label }: {
+const NO_UPGRADES: readonly TreadmillUpgrade[] = []
+
+export function CharacterPortrait({ character, size = 64, pose = "idle", label, upgrades = NO_UPGRADES }: {
   readonly character: RunnerCharacter; readonly size?: number; readonly pose?: "idle" | "cheer" | "hit"; readonly label?: string
+  readonly upgrades?: readonly TreadmillUpgrade[]
 }) {
   const ref = React.useRef<HTMLCanvasElement>(null)
   React.useEffect(() => {
@@ -35,12 +38,12 @@ export function CharacterPortrait({ character, size = 64, pose = "idle", label }
       if (!mounted) return
       context.setTransform(ratio, 0, 0, ratio, 0, 0); context.clearRect(0, 0, size, size)
       context.translate(size / 2, size * 0.9); context.scale(size / 90, size / 90)
-      drawRunner(context, gamePalette(canvas), { pose, phase: 0, upgrades: [], character })
+      drawRunner(context, gamePalette(canvas), { pose, phase: 0, upgrades, character })
     }
     paint()
     if (character === "tori") void loadToriArt().then(paint)
     return () => { mounted = false }
-  }, [character, size, pose])
+  }, [character, size, pose, upgrades])
   return <canvas ref={ref} className="treadmill-game__mini-portrait" style={{ width: size, height: size }}
     {...(label ? { role: "img", "aria-label": label } : { "aria-hidden": true })} />
 }

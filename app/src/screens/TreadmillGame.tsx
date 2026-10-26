@@ -37,7 +37,7 @@ import { fxPalette, mountShaderSky } from "./treadmill/shader-sky"
 import type { ShaderSky } from "./treadmill/shader-sky"
 import type { SkyScene } from "./treadmill/sky-presets"
 import { CharacterPortrait, GameMenu, TourMap } from "./treadmill/GamePanels"
-import { UpgradeChoice, UPGRADE_STORIES } from "./treadmill/UpgradeChoice"
+import { UpgradeChoice, EquippedGearSummary, UPGRADE_STORIES } from "./treadmill/UpgradeChoice"
 import { playGameSound } from "./treadmill/sound"
 import "../styles/treadmill-game.css"
 import "../styles/treadmill-tour.css"
@@ -512,6 +512,7 @@ function SoloTreadmillGame({ onBack, backLabel, initialCityId, onDefense }: { re
       {view.mode === "paused" && !menuOpen && !leave && <div className="treadmill-game__overlay">
         <div className="treadmill-game__card treadmill-game__card--small">
           <span className="treadmill-game__ribbon">일시정지</span><h2>잠깐 쉬는 중</h2><p>{pauseReason}<br />계속을 누르면 이어서 달려요.</p>
+          <EquippedGearSummary state={view} />
           <button type="button" className="treadmill-game__cta" onClick={resume}><Play size={18} aria-hidden="true" />계속</button>
           <div className="treadmill-game__pause-nav">
             <button type="button" className="treadmill-game__ghost" onClick={() => saveAndGo(goMap)}>저장하고 지도로 나가기</button>
@@ -545,7 +546,7 @@ function SoloTreadmillGame({ onBack, backLabel, initialCityId, onDefense }: { re
         </section>
       </div>}
 
-      {view.mode === "upgrade" && nextStage && <UpgradeChoice state={view} nextStage={nextStage} onPick={pickUpgrade} reduced={reduced} />}
+      {view.mode === "upgrade" && nextStage && <UpgradeChoice state={view} nextStage={nextStage} onPick={pickUpgrade} reduced={reduced} character={character} />}
 
       {ended && <div className="treadmill-game__overlay">
         <section className="treadmill-game__card treadmill-game__result" aria-labelledby="treadmill-result-title" data-result={view.mode}>
@@ -587,13 +588,13 @@ function SoloTreadmillGame({ onBack, backLabel, initialCityId, onDefense }: { re
           </div>
           <details className="treadmill-game__more">
             <summary>이번 판 기록</summary>
+            <EquippedGearSummary state={view} />
             <dl className="treadmill-game__stats">
               <div><dt>버틴 시간</dt><dd>{elapsed}<small>/{total}초</small></dd></div>
               <div><dt>넘은 장애물</dt><dd>{view.stats.cleared}</dd></div>
               <div><dt>최장 연속 회피</dt><dd>{view.stats.bestCombo}개</dd></div>
               <div><dt>보급소 이용</dt><dd>{view.aid.received}회</dd></div>
             </dl>
-            {view.upgrades.length > 0 && <p className="treadmill-game__picks">강화: {view.upgrades.map(upgradeName).join(" · ")}</p>}
           </details>
         </section>
       </div>}

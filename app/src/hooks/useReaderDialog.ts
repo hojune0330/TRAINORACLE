@@ -4,6 +4,17 @@ import { hasPendingBrowserBackLayer, isBrowserPopNavigationConsumed, subscribeBr
 export const READER_HISTORY_KEY = "trainoracleReader"
 const HISTORY_KEY = READER_HISTORY_KEY
 
+function canRestoreFocus(target: HTMLElement | null | undefined): target is HTMLElement {
+  if (!target?.isConnected || target.matches(":disabled, [aria-disabled='true']")) return false
+  for (let element: HTMLElement | null = target; element; element = element.parentElement) {
+    if (element.inert || element.hidden || element.hasAttribute("inert")
+      || element.getAttribute("aria-hidden") === "true" || element.matches("dialog:not([open])")) return false
+    const style = window.getComputedStyle(element)
+    if (style.display === "none" || style.visibility === "hidden" || style.visibility === "collapse") return false
+  }
+  return true
+}
+
 /** Keep native dialogs in the back stack without putting record content in history. */
 export function useReaderDialog(dialog: RefObject<HTMLDialogElement | null>, onClose: () => void, returnFocusTo?: () => HTMLElement | null, enabled = true) {
   const id = useId()
@@ -51,6 +62,9 @@ export function useReaderDialog(dialog: RefObject<HTMLDialogElement | null>, onC
     document.body.style.overflow = "hidden"
     element?.showModal()
     const onPop = (event: PopStateEvent) => {
+      // A Back can close a journal/confirmation above this reader. It must not
+      // leave the reader's next close permanently locked.
+      closing.current = false
       if (isBrowserPopNavigationConsumed(event)) return
       if (window.history.state?.[HISTORY_KEY] !== id) closeRef.current()
     }
@@ -65,8 +79,8 @@ export function useReaderDialog(dialog: RefObject<HTMLDialogElement | null>, onC
       if (region?.isConnected) region.scrollTop = top
       if (enabledRef.current) {
         const requestedFocus = fallbackFocus.current?.()
-        if (requestedFocus?.isConnected) requestedFocus.focus({ preventScroll: true })
-        else if (opener?.isConnected) opener.focus({ preventScroll: true })
+        if (canRestoreFocus(requestedFocus)) requestedFocus.focus({ preventScroll: true })
+        else if (canRestoreFocus(opener)) opener.focus({ preventScroll: true })
       }
     }
   }, [dialog, id, enabled, readyRevision])

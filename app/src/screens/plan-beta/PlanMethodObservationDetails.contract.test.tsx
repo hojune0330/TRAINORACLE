@@ -83,7 +83,9 @@ it.each(["other-slot", "stale-content"] as const)("does not display a %s method 
   await userEvent.click(screen.getByRole("tab", { name: "주기·기록" }))
   expect(screen.queryByText("3.2km")).toBeNull()
   expect(screen.queryByText("4/10 · 직접 입력")).toBeNull()
-  expect(screen.getByText(/조회하지 못한 상태를 일지가 없는 것으로 판단하지 않아요/u)).toBeVisible()
+  expect(screen.getByText("현재 훈련과 기록의 연결을 확인하지 못했어요.")).toBeVisible()
+  expect(screen.queryByText(/이 훈련과 연결된 일지가 아직 없어요/u)).toBeNull()
+  expect(screen.getByRole("button", { name: "기록 다시 불러오기" })).toBeVisible()
 })
 
 it("labels an in-range comparison as RPE only, not distance, time or method adherence", async () => {

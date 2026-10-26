@@ -3,10 +3,10 @@ import { beforeEach, afterEach, describe, expect, it } from "vitest"
 import type { PrescriptionSequenceV3 } from "@impl/prescription/sequence-v3"
 import { bindDefaultCatalogSessions } from "@impl/prescription/catalog-session-binding"
 import { buildWorkoutMemo, workoutMemoText, type WorkoutMemoSession } from "./workout-memo"
-import { wrapMemoText, memoFileName } from "./workout-memo-export"
+import { wrapMemoText, memoFileName, MEMO_IMAGE_TYPE } from "./workout-memo-export"
 import { memoSessionFixture } from "./workout-memo.test-fixtures"
 import { memoDisplayLines, memoLineEmphasis, presentWorkoutMemo, workoutMemoPresentationText } from "./workout-memo-presentation"
-import { notationEffort, sequencePhaseNotation } from "./workout-notation"
+import { notationEffort, sequencePhaseNotation, sequencePhaseLines } from "./workout-notation"
 import { adjustedPlanSelectionV3Fixture } from "./adjusted-plan-selection-v3.test-fixtures"
 import { prepareAdjustedPlanCandidateV3 } from "./adjusted-plan-candidate"
 
@@ -17,6 +17,36 @@ const rpe: WorkoutMemoSession = { day: 1, slot: "AM", role: "EASY", plannedEnerg
 } }
 
 describe("workout memo snapshot contract", () => {
+  it("uses readable image type without shrinking the prescription to fit", () => {
+    expect(MEMO_IMAGE_TYPE.body / 3).toBeGreaterThanOrEqual(16)
+    expect(MEMO_IMAGE_TYPE.caption / 3).toBeGreaterThanOrEqual(14)
+  })
+  it("removes duplicate whole-second 1km targets but keeps fractional and longer rep precision", () => {
+    const source = memoSessionFixture()
+    if (source.prescription.kind !== "PACE_TARGET") throw Error("Expected pace fixture")
+    for (const distance of [1000, 1200]) {
+      for (const seconds of [222, 222.375]) {
+        const session = { ...source, prescription: { ...source.prescription, sequence: undefined, repetitionDistanceM: distance, targetRepSeconds: seconds } }
+        const plain = buildWorkoutMemo(session)!, coach = buildWorkoutMemo(session, {}, "COACH")!
+        expect(plain.lines.filter(line => line.label === "1회 목표")).toHaveLength(0)
+        const target = coach.lines.find(line => line.label === "1회 목표")
+        if (distance === 1000 && Number.isInteger(seconds)) expect(target).toBeUndefined()
+        else expect(target?.text).toContain(seconds === 222 ? "222s" : "222.4s")
+        expect(plain.lines.find(line => line.label === "목표")?.text).toContain(seconds === 222 ? "3분 42초" : "3분 42.4초")
+      }
+    }
+  })
+  it("retains support-phase recovery when splitting legacy sequence steps", () => {
+    const source = memoSessionFixture()
+    const { prescription } = source
+    if (prescription.kind !== "PACE_TARGET" || !prescription.sequence) throw Error("Expected stored sequence")
+    for (const phase of ["warmup", "cooldown"] as const) {
+      expect(sequencePhaseLines(prescription.sequence, phase, [], "PLAIN").join(" → ")).toBe(sequencePhaseNotation(prescription.sequence, phase, [], "PLAIN"))
+    }
+    const prep = buildWorkoutMemo(source)!.lines.find(line => line.label === "준비")!
+    expect(prep.steps!.length).toBeGreaterThan(1)
+    expect(prep.text).toBe(prep.steps!.join("\n"))
+  })
   it("uses exact adopted pace explanations and never assigns them to a different composition", () => {
     const session = memoSessionFixture()
     if (session.prescription.kind !== "PACE_TARGET") throw Error("Expected pace fixture")

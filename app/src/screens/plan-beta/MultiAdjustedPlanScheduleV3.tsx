@@ -10,7 +10,7 @@ import { saveMultiAdjustedPlanProgressV3 } from "../../domain/adjusted-plan-prog
 import { retainMultiAdjustedOriginalPlanV3 } from "../../domain/multi-adjusted-plan-archive-v3"
 import { createPlannedSessionLogDraft, resolveCurrentPlannedSession, type PlannedSessionLogDraft } from "../../domain/planned-session-link"
 import { AdjustedPrescriptionV3 } from "./AdjustedPrescriptionV3"
-import { sessionLabel, PROGRESS_LABELS } from "./labels"
+import { PROGRESS_LABELS } from "./labels"
 import { isoShift } from "../../domain/dates"
 import { todayISO } from "../../domain/journal-store"
 import "./AdjustedPlanSchedule.css"
@@ -45,15 +45,13 @@ export function MultiAdjustedPlanScheduleV3({ loaded, readEvidence, onStoredChan
   return <section className="plan-active adjusted-plan-schedule" aria-labelledby="multi-adjusted-title">
     <h1 id="multi-adjusted-title">내 훈련 일정</h1><p>{start} ~ {isoShift(start, days.at(-1)! - 1)}</p>
     <DatedPlanPanel identity={plan.activePlan.candidateId} start={start} sessions={plan.activePlan.sessions} day={day} onDayChange={setDay} notice={error ? <p role="alert">{error}</p> : undefined}>
-    <h2>{date} ({new Intl.DateTimeFormat("ko-KR", { weekday: "short" }).format(new Date(`${date}T12:00:00`))})</h2>
     {plan.activePlan.sessions.filter(s => s.day === day).sort((a, b) => a.slot.localeCompare(b.slot)).map(session => {
       const time = session.slot === "AM" ? "오전" : "오후"
       const recorded = loaded.state.progress.find(r => r.sessionDay === day && r.sessionSlot === session.slot)
       const explanation = loaded.explanations.find(e => e.address.day === day && e.address.slot === session.slot)?.explanation
       return <section key={session.slot} tabIndex={-1} data-session-slot={session.slot} aria-label={`${time} 훈련`}>
         <p className="adjusted-plan-role"><CalendarRoleIcon tone={plannedCalendarTone(session)} />{time} · {CALENDAR_TRAINING_LABELS[plannedCalendarTone(session)]}</p>
-        <h3>{sessionLabel(session)}</h3>
-        <AdjustedPrescriptionV3 session={session} date={date} memoState="PLAN" explanation={explanation} showName={false}
+        <AdjustedPrescriptionV3 session={session} date={date} memoState="PLAN" explanation={explanation} hideDate
           primaryAction={onWritePlannedSessionLog && <button className="adjusted-plan-write" type="button" disabled={saving} onClick={async () => {
             const draft = createPlannedSessionLogDraft(plan, session, new Date().toISOString())
             if (!draft) { setError("훈련 연결 정보를 확인하지 못했어요."); return }

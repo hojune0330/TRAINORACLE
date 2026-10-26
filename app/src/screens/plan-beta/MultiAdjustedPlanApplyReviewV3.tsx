@@ -15,6 +15,13 @@ import { checkSessionAvailabilityV3, exactSessionSecondsV3, type SessionAvailabi
 import { formatTrainingSeconds } from "./labels"
 import "./AdjustedPlanNextFlow.css"
 import type { CatalogCycleDraftContext } from "../../domain/catalog-cycle-draft"
+import { buildWorkoutMemo, type WorkoutMemoSession } from "../../domain/workout-memo"
+
+function mainComparisonLines(session: WorkoutMemoSession) {
+  const memo = buildWorkoutMemo(session)
+  if (!memo) return null
+  return memo.lines.filter(line => line.label !== "준비" && line.label !== "정리")
+}
 
 export type MultiAdjustmentEntryV3 = {
   readonly seed: MultiAdjustedPlanSelectionRequestV3;
@@ -64,10 +71,18 @@ export function MultiAdjustedPlanApplyReviewV3({ seed, readReview, locks, isCurr
     && identity(live.current.cycleDraft ?? null) === identity(opened.cycleDraft ?? null)
     && (opened.expectedPredecessorFingerprint === undefined || environment.current)
   const prepared = React.useMemo(() => prepareMultiAdjustedPlanCandidateV3(opened.request.preparations, opened.bindings), [opened])
+  const comparisons = React.useMemo(() => prepared.kind === "prepared" ? prepared.candidate.changedSlots.map(address => {
+    const original = opened.request.preparations[0]!.candidate.sessions.find(session => session.day === address.day && session.slot === address.slot)
+    const changed = prepared.candidate.sessions.find(session => session.day === address.day && session.slot === address.slot)
+    if (!original || !changed) return null
+    const before = mainComparisonLines(original), after = mainComparisonLines(changed)
+    return before && after ? { original, changed, before, after, mainChanged: identity(before) !== identity(after) } : null
+  }) : [], [opened, prepared])
+  const comparisonAvailable = comparisons.length > 0 && comparisons.every(comparison => comparison !== null)
   const limits = readLimits(availableMinutes)
   const availability = prepared.kind === "prepared" ? checkSessionAvailabilityV3(prepared.candidate.sessions, limits) : null
   const apply = async () => {
-    if (pending.current || !valid.current) return
+    if (pending.current || !valid.current || !comparisonAvailable) return
     const selectedLimits = readLimits(availableRef.current)
     const timeCheck = prepared.kind === "prepared" ? checkSessionAvailabilityV3(prepared.candidate.sessions, selectedLimits) : null
     if (timeCheck?.kind !== "checked") { setError(timeCheck ? availabilityMessage(timeCheck.code) : "구성을 다시 확인해 주세요."); return }
@@ -111,12 +126,29 @@ export function MultiAdjustedPlanApplyReviewV3({ seed, readReview, locks, isCurr
           </div>
         })}</div>
       </details>
-      {prepared.candidate.sessions.filter(s => prepared.candidate.changedSlots.some(c => c.day === s.day && c.slot === s.slot)).map(session =>
-        <section key={`${session.day}-${session.slot}`} aria-label="적용할 훈련">
-          <h2>{isoShift(prepared.candidate.startDate, session.day - 1)} · {session.slot === "AM" ? "오전" : "오후"}</h2>
-          <AdjustedPrescriptionV3 session={session} explanation={opened.request.preparations.find(p => p.address.day === session.day && p.address.slot === session.slot)?.explanation}
-            date={isoShift(prepared.candidate.startDate, session.day - 1)} memoState="PREVIEW" presentation="comparison" />
-        </section>)}
+      {comparisonAvailable ? comparisons.map(comparison => {
+        if (!comparison) return null
+        const { original, changed: session, before, after, mainChanged } = comparison
+        const date = isoShift(prepared.candidate.startDate, session.day - 1)
+        const explanation = opened.request.preparations.find(p => p.address.day === session.day && p.address.slot === session.slot)?.explanation
+        return <section key={`${session.day}-${session.slot}`} aria-label="훈련 내용 변경">
+          <h2>{date} · {session.slot === "AM" ? "오전" : "오후"}</h2>
+          {mainChanged ? <dl aria-label="본운동 변경 전후">
+            <div><dt>현재</dt><dd>{before.map((line, index) => <p key={`${line.label}-${index}`}><strong>{line.label}</strong> · {line.text}</p>)}</dd></div>
+            <div><dt>변경안</dt><dd>{after.map((line, index) => <p key={`${line.label}-${index}`}><strong>{line.label}</strong> · {line.text}</p>)}</dd></div>
+          </dl> : <p>본운동·목표·회복은 같아요. 준비·정리 변경은 전체 방법에서 확인해 주세요.</p>}
+          {original.prescription.kind === "RPE_TIME_RANGE" && !original.prescription.catalogWorkout && original.role === "QUALITY"
+            && <p>현재 계획은 전체 시간·힘든 정도 안내예요. 정해지지 않은 반복·회복은 비교하지 않았어요.</p>}
+          <details><summary>전체 방법 비교</summary>
+            <section aria-label="현재 구성"><h3>현재 구성</h3>
+              <AdjustedPrescriptionV3 session={original} date={date} memoState="PREVIEW" presentation="comparison" />
+            </section>
+            <section aria-label="변경 후 구성"><h3>변경 후 구성</h3>
+              <AdjustedPrescriptionV3 session={session} explanation={explanation} date={date} memoState="PREVIEW" presentation="comparison" />
+            </section>
+          </details>
+        </section>
+      }) : <p role="alert">현재 구성과 변경안을 함께 확인하지 못했어요. 후보로 돌아가 다시 확인해 주세요.</p>}
       <details><summary>전체 일정 확인</summary>{prepared.candidate.sessions.map(session => <section key={`${session.day}-${session.slot}`}>
         <h2>{isoShift(prepared.candidate.startDate, session.day - 1)} · {session.slot === "AM" ? "오전" : "오후"}</h2>
         <AdjustedPrescriptionV3 session={session} explanation={opened.request.preparations.find(p => p.address.day === session.day && p.address.slot === session.slot)?.explanation}
@@ -128,7 +160,7 @@ export function MultiAdjustedPlanApplyReviewV3({ seed, readReview, locks, isCurr
     {opened.expectedPredecessorFingerprint !== undefined && <label><input type="checkbox" checked={environmentConfirmed} disabled={saving}
       onChange={event => { environment.current = event.target.checked; setEnvironmentConfirmed(event.target.checked) }} />
       다음 날짜에도 이 훈련에 필요한 장소와 시간을 확보했어요</label>}
-    <button type="button" disabled={saving || prepared.kind !== "prepared" || availability?.kind !== "checked"
+    <button type="button" disabled={saving || prepared.kind !== "prepared" || !comparisonAvailable || availability?.kind !== "checked"
       || opened.expectedPredecessorFingerprint !== undefined && !environmentConfirmed} onClick={() => void apply()}><Check size={18} aria-hidden="true" />{saving ? "저장 중" : "이 구성으로 계획 저장"}</button>
   </section>
 }

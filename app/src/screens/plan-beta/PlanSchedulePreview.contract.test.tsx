@@ -57,6 +57,36 @@ afterEach(() => {
 afterEach(() => vi.useRealTimers())
 
 describe("plan schedule preview", () => {
+  it("hides the memo date only when the day reader supplies both date and AM/PM selection", () => {
+    const props = { startDate: "2026-08-17", frameLengthDays: 7 as const, showRpeGuide: false,
+      readerRequest: { day: 1, slot: "PM" as const, sequence: 1 } }
+    const view = render(<PlanSchedulePreview {...props} sessions={sessions} />)
+    const reader = screen.getByRole("dialog", { name: "2026년 8월 17일 월요일" })
+    expect(within(reader).getByRole("navigation", { name: "오전·오후 바로가기" })).toBeVisible()
+    expect(within(reader).getByRole("article", { name: "훈련 메모 미리보기" }).querySelector("header")).toBeNull()
+    view.rerender(<PlanSchedulePreview {...props} sessions={[sessions[1]!]} />)
+    expect(within(reader).queryByRole("navigation", { name: "오전·오후 바로가기" })).toBeNull()
+    expect(within(reader).getByRole("article", { name: "훈련 메모 미리보기" }).querySelector("header")).toBeVisible()
+  })
+
+  it("returns focus to the current daily rail after advancing the reader date, never the inert old card", async () => {
+    const user = userEvent.setup()
+    const original = JSON.stringify(sessions)
+    render(<PlanSchedulePreview startDate="2026-08-17" frameLengthDays={7} sessions={sessions}
+      presentation="prescription-calendar" scheduleView="list" onScheduleViewChange={vi.fn()}
+      focusSession={{ day: 1, slot: "AM" }} />)
+    const opener = screen.getByRole("button", { name: "8월 17일 월요일 오전 훈련 내용 보기" })
+    await user.click(opener)
+    const reader = screen.getByRole("dialog")
+    await user.click(within(reader).getByRole("button", { name: "크게 보기 다음 날짜" }))
+    const oldCard = opener.closest("li")!
+    expect(oldCard.inert).toBe(true)
+    await user.click(within(reader).getByRole("button", { name: "하루씩으로 돌아가기" }))
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull())
+    expect(screen.getByRole("button", { name: "8월 18일 화요일 선택" })).toHaveFocus()
+    expect(JSON.stringify(sessions)).toBe(original)
+  })
+
   it("shares a controlled date across the calendar and daily rail with one inline detail, including rest", async () => {
     const user = userEvent.setup()
     const changed = vi.fn()
@@ -367,18 +397,20 @@ describe("plan schedule preview", () => {
     const reader = screen.getByRole("dialog", { name: "2026년 8월 17일 월요일" })
     expect(within(reader).getByText(reading.phases.main)).toBeVisible()
     expect(within(reader).getByText(reading.phases.main)).toHaveTextContent("고르게 유지 · 힘든 정도(RPE) 6–7/10")
+    expect(within(reader).getByRole("article", { name: "훈련 메모 미리보기" })).not.toHaveTextContent("15분")
     const warmup = within(reader).getByRole("article", { name: "훈련 메모 미리보기" })
     expect(warmup).toHaveAttribute("data-view", "core")
     expect(warmup).not.toHaveTextContent("15분")
     expect(warmup).not.toHaveTextContent(reading.phases.cooldown)
     expect(reader).not.toHaveTextContent("기준: 체감 강도 기준")
     await user.click(within(reader).getByRole("button", { name: "자세히" }))
-    expect(warmup).toHaveAttribute("data-view", "explained")
+    expect(warmup).toHaveAttribute("data-view", "method")
     expect(warmup).toHaveTextContent("15분")
     expect(warmup).toHaveTextContent("힘든 정도(RPE) 2–3/10")
     expect(warmup).toHaveTextContent("20초 가속 달리기 4번 (전력질주 아님) · 사이 40초 걷기 · 마지막 뒤 1분 걷기")
     expect(within(reader).getByText(reading.phases.cooldown, { exact: false })).toBeVisible()
     expect(reader.querySelector(".training-instruction-cards")).toBeNull()
+    await user.click(within(warmup).getByText("이 훈련의 이유"))
     expect(warmup).toHaveTextContent("기준: 체감 강도 기준 · 경기 기록 환산 아님")
     expect(reader).toHaveTextContent("통증·어지럼·자세 무너짐")
     expect(JSON.stringify(catalog)).toBe(original)
@@ -412,9 +444,9 @@ describe("plan schedule preview", () => {
     expect(reader).toHaveTextContent("힘든 정도(RPE) 3–4/10")
     expect(within(reader).getByText("중간에 걷는 조깅")).toBeVisible()
     expect(within(reader).getByRole("article", { name: "훈련 메모 미리보기" })).toHaveAttribute("data-view", "core")
-    expect(within(reader).queryByRole("combobox", { name: "메모 표현 방식" })).toBeNull()
+    expect(within(reader).getByRole("combobox", { name: "메모 표현 방식" })).toBeVisible()
     await user.click(within(reader).getByRole("button", { name: "자세히" }))
-    expect(within(reader).getByRole("article", { name: "훈련 메모 미리보기" })).toHaveAttribute("data-view", "explained")
+    expect(within(reader).getByRole("article", { name: "훈련 메모 미리보기" })).toHaveAttribute("data-view", "method")
     await user.selectOptions(within(reader).getByRole("combobox", { name: "메모 표현 방식" }), "COACH")
     expect(within(reader).getByRole("article", { name: "훈련 메모 미리보기" })).toHaveTextContent("RPE 3–4")
     expect(within(reader).getByText("중간 걷기 조깅 · Split Easy")).toBeVisible()

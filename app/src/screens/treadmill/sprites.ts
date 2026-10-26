@@ -91,7 +91,7 @@ export type RunnerLook = {
 
 /** Generated Tori art uses the same foot origin; other runners and load failures keep the canvas fallback. */
 export function drawRunner(context: CanvasRenderingContext2D, palette: GamePalette, look: RunnerLook) {
-  if (drawToriArt(context, look)) return
+  if (drawToriArt(context, look, palette)) return
   drawAnimeRunner(context, palette, look)
 }
 

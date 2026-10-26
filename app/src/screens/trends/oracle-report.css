@@ -1,5 +1,5 @@
 .oracle-report { padding: var(--space-4) var(--space-5) var(--space-6); min-width: 0; font-family: var(--sans); color: var(--ink); word-break: keep-all; overflow-wrap: anywhere; }
-.oracle-report button { min-width: var(--app-touch-min); min-height: var(--app-touch-min); cursor: pointer; font: inherit; line-height: 1.5; white-space: normal; }
+.oracle-report button { min-width: var(--app-touch-min); min-height: var(--app-touch-min); cursor: pointer; font: inherit; line-height: 1.5; white-space: normal; scroll-margin-block: var(--space-2); }
 .oracle-report :is(button, summary):focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
 .oracle-report__controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-5); }
 .oracle-report__controls .app-choice-group { display: flex; flex-wrap: wrap; flex: 1 1 9rem; gap: var(--space-1); }
@@ -55,6 +55,18 @@
 .oracle-report__state { padding: var(--space-5) 0; line-height: 1.6; }
 .oracle-report__state p { color: var(--ink-2); }
 .oracle-report__state button { margin-top: var(--space-4); }
+.oracle-report__scenarios { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); margin-top: var(--space-4); }
+.oracle-report__scenarios button, .oracle-report__share { border: var(--bw-line) solid var(--line); border-radius: var(--r-action); background: var(--surface); color: var(--ink-2); padding: var(--space-2) var(--space-3); }
+.oracle-report__scenarios button[aria-pressed="true"] { background: var(--category-oracle-wash); color: var(--category-oracle); border-color: var(--category-oracle); font-weight: 700; }
+.oracle-report__insights, .oracle-report__purpose { margin-block: var(--space-6); }
+.oracle-report__insights h3, .oracle-report__purpose h3 { font-size: var(--fs-app-section); line-height: 1.5; }
+.oracle-report__insights article { padding-block: var(--space-4); border-bottom: var(--bw-line) solid var(--line); }
+.oracle-report__insights h4 { margin: 0; font-size: var(--fs-body); line-height: 1.5; }
+.oracle-report__insights p { line-height: 1.6; margin-block: var(--space-2); }
+.oracle-report__insights small { display: block; color: var(--ink-2); font-size: var(--fs-caption); line-height: 1.6; }
+.oracle-report__purpose > p { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-3); line-height: 1.6; }
+.oracle-report__share { margin-block: var(--space-4); color: var(--brand); }
+.oracle-report__months button > span { white-space: normal; }
 @media (min-width: 56rem) { .oracle-report { max-width: 58rem; margin-inline: auto; } .oracle-report__controls .app-choice-group { flex: 0 1 15rem; } .oracle-report__months:has(> button:nth-child(6)) { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
 @media (max-width: 22rem) { .oracle-report { padding-inline: var(--space-4); } .oracle-report__bar-row { grid-template-columns: minmax(2rem, 1fr) minmax(0, 2fr) minmax(4rem, 1.5fr); } }
 @media (prefers-reduced-motion: reduce) { .oracle-report *, .oracle-report *::before, .oracle-report *::after { transition: none; animation: none; } }

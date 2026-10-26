@@ -17,6 +17,8 @@ export function OracleContextEditor({ initial, onSave, onClose, onDraft, records
   const [failed, setFailed] = React.useState(false)
   const [saved, setSaved] = React.useState(false)
   const ref = React.useRef<HTMLDialogElement>(null)
+  const body = React.useRef<HTMLDivElement>(null)
+  const listScroll = React.useRef(0)
   const heading = React.useRef<HTMLHeadingElement>(null)
   const conditions = React.useRef<OracleConditionsHandle>(null)
   const dirty = React.useRef(false)
@@ -37,10 +39,19 @@ export function OracleContextEditor({ initial, onSave, onClose, onDraft, records
   const selectedAnswer = question ? draft.answers[question.id] : undefined
   const hasSelectedAnswer = Array.isArray(selectedAnswer) ? selectedAnswer.length > 0 : typeof selectedAnswer === "string" && selectedAnswer.length > 0
   const grouped = [[0, 1, 4, 5], [2, 3, 10, 11], [6, 7], [8, 9, 12], []]
-  React.useEffect(() => {
+  React.useLayoutEffect(() => {
+    if (body.current) body.current.scrollTop = question || conditionsView ? 0 : listScroll.current
     const target = conditionsView ? ref.current?.querySelector<HTMLElement>(".oracle-v2__conditions h2") : heading.current
     target?.focus({ preventScroll: true })
-  }, [index, conditionsView])
+  }, [index, conditionsView, group])
+  const openQuestion = (next: number) => {
+    listScroll.current = body.current?.scrollTop ?? 0
+    setIndex(next)
+  }
+  const openConditions = (next: "race" | "event" | "meeting") => {
+    listScroll.current = body.current?.scrollTop ?? 0
+    setConditionsView(next)
+  }
   const change = (value: string) => {
     if (!question || busy) return
     const current = draft.answers[question.id]
@@ -54,19 +65,19 @@ export function OracleContextEditor({ initial, onSave, onClose, onDraft, records
   }
   return <dialog ref={ref} className="oracle-v2 oracle-v2__dialog oracle-context-editor" aria-label="추가 응답" onCancel={event => { event.preventDefault(); close() }}>
     <header className="oracle-v2__chrome"><button type="button" disabled={busy} aria-label="항목 목록으로" title="항목 목록으로" onClick={() => { if (finishConditions()) { setIndex(null); setConditionsView(null) } }}><ArrowLeft size={18} /></button><span>원하는 항목만 알려주세요</span><button type="button" disabled={busy} aria-label="닫기" title="닫기" onClick={close}><X size={18} /></button></header>
-    <div className="oracle-v2__reader-body">
+    <div ref={body} className="oracle-v2__reader-body">
       {conditionsView ? <><OracleConditionsFields ref={conditions} key={conditionsView} kind={conditionsView} value={draft.conditions} records={records} onChange={conditions => {
         const next = { ...draft, conditions }; dirty.current = true; setSaved(false); setFailed(false); setDraft(next)
         notifiedDraft.current = next; draftListener.current(next)
-      }} /></> : question ? <><h1 ref={heading} tabIndex={-1}>{question.title}</h1><div className="oracle-v2__choices app-choice-group">{question.options.map(([value, label]) => {
+      }} /></> : question ? <><h1 ref={heading} tabIndex={-1}>{question.title}</h1>{question.multiple && <p className="oracle-context-editor__choice-hint">여러 개 선택할 수 있어요</p>}<div className={`oracle-v2__choices app-choice-group${question.options.length >= 6 && question.options.every(([, label]) => label.length <= 8) ? " oracle-context-editor__many-choices" : ""}`}>{question.options.map(([value, label]) => {
         const selected = draft.answers[question.id], pressed = Array.isArray(selected) ? (selected as string[]).includes(value) : selected === value
-        return <button className="app-choice-control app-choice-control--answer" type="button" key={value} disabled={busy} aria-pressed={pressed} onClick={() => change(value)}>{label}{pressed && <Check size={16} />}</button>
+        return <button className="app-choice-control app-choice-control--answer" type="button" key={value} disabled={busy} aria-pressed={pressed} onClick={() => change(value)}><span>{label}</span><span className="oracle-context-editor__choice-mark" aria-hidden="true">{pressed && <Check size={16} />}</span></button>
       })}</div></> : <>
         <h1 ref={heading} tabIndex={-1}>조금 더 나답게</h1><p>여기서 고른 답은 점수에 더하지 않아요. 관련된 풀이에만 사용해요.</p>
-        <div className="oracle-v2__groups app-choice-group" role="group" aria-label="추가 응답 주제">{["달리기", "함께", "보조 운동", "대회", "시간·장소"].map((label, n) => <button className="app-choice-control" type="button" key={label} aria-pressed={group === n} onClick={() => setGroup(n)}>{label}</button>)}</div>
-        <div className="oracle-v2__topics">{ORACLE_CONTEXT_QUESTIONS.map((item, n) => grouped[group]!.includes(n) ? <button type="button" key={item.id} disabled={busy} onClick={() => setIndex(n)}>{item.title}{draft.answers[item.id] !== undefined ? <Check size={16} aria-label="응답 있음" /> : <ChevronRight size={16} />}</button> : null)}</div>
-        {group === 1 && <button type="button" onClick={() => setConditionsView("meeting")}>함께 달릴 수 있는 시간<ChevronRight size={16} /></button>}
-        {group === 3 && <div className="oracle-v2__topics"><button type="button" onClick={() => setConditionsView("race")}>경기별 코스와 날씨<ChevronRight size={16} /></button><button type="button" onClick={() => setConditionsView("event")}>대회 일정·이동·비용<ChevronRight size={16} /></button></div>}
+        <div className="oracle-v2__groups app-choice-group" role="group" aria-label="추가 응답 주제">{["달리기", "함께", "보조 운동", "대회", "시간·장소"].map((label, n) => <button className="app-choice-control" type="button" key={label} aria-pressed={group === n} onClick={() => { if (group !== n) { listScroll.current = 0; setGroup(n) } }}>{label}</button>)}</div>
+        <div className="oracle-v2__topics">{ORACLE_CONTEXT_QUESTIONS.map((item, n) => grouped[group]!.includes(n) ? <button type="button" key={item.id} disabled={busy} onClick={() => openQuestion(n)}>{item.title}{draft.answers[item.id] !== undefined ? <Check size={16} aria-label="응답 있음" /> : <ChevronRight size={16} />}</button> : null)}</div>
+        {group === 1 && <button type="button" onClick={() => openConditions("meeting")}>함께 달릴 수 있는 시간<ChevronRight size={16} /></button>}
+        {group === 3 && <div className="oracle-v2__topics"><button type="button" onClick={() => openConditions("race")}>경기별 코스와 날씨<ChevronRight size={16} /></button><button type="button" onClick={() => openConditions("event")}>대회 일정·이동·비용<ChevronRight size={16} /></button></div>}
         {group === 4 && <><label>운동할 수 있는 시간 (분)<input type="number" min="0" max="1440" inputMode="numeric" value={draft.conditions.availableMinutes ?? ""} onChange={event => {
           const raw = event.currentTarget.value, number = raw === "" ? undefined : Number(raw)
           if (number !== undefined && (!Number.isFinite(number) || number < 0 || number > 1440)) return
