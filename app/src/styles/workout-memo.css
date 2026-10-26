@@ -50,6 +50,7 @@
 .workout-memo-paper__explanation h4 { font-size: var(--fs-body); margin-block: 16px 4px; }
 .workout-memo-paper__explanation p, .workout-memo-paper__explanation ul { font-size: var(--fs-body-sm); line-height: 1.6; margin-block: 4px 8px; }
 .workout-memo-paper__explanation ul { padding-left: 16px; }
+.workout-memo-paper__explanation summary { min-height: 44px; padding-block: 10px; box-sizing: border-box; cursor: pointer; }
 .workout-memo-paper__explanation a { color: var(--brand); }
 .workout-memo-paper[data-layout="compact"] { padding: 16px; }
 .workout-memo-paper[data-layout="compact"] dl { gap: 8px; }

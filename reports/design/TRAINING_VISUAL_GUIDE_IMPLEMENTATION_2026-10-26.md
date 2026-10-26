@@ -55,6 +55,7 @@
 | 설명을 닫은 뒤 상위 계층이 아닌 곳에 포커스가 복귀할 수 있음 | 활성 부모 계층 안의 실제 opener로 포커스 복원 | 브라우저에서 Escape·Back 복귀 확인, 최종 focused 검사 통과 |
 | 도식의 가로 터치가 글 넘기기로 전파될 수 있음 | `data-training-visual-interactive` 안의 터치는 글 넘기기에서 제외하고 일반 본문 넘기기는 유지 | 최종 focused 검사 통과 |
 | 답 확인 없이 마지막 장에 도달해도 풀이 완료로 표시됨 | `퀴즈를 둘러봤어요`와 `문제 풀이를 마쳤어요`를 실제 답 확인 건수로 구분 | 최종 focused 검사 통과 |
+| 기존 메모의 `근거와 설명 버전` 펼침 영역이 약 25px로 작음 | 기본 표시·원고를 유지하고 클릭 영역에 최소 44px 높이와 안쪽 여백 적용 | 로컬 실제 Chromium 320px·375px·1440px 터치 검사 포함 8개 시나리오 통과 |
 
 ## 5. 검증 증거와 확정 대기
 
@@ -78,6 +79,10 @@
 - `60620af6`의 전체 CI에서 앱·브라우저 타입 검사, production build, 계약 검사는 통과했다. 이어 실행된 built-preview 브라우저 검사에서 이전 MAIN 우선 변경에 맞춰 갱신되지 않은 3개 경로도 확인했다. `free-exploration-followup`, `launch-ready`, `multi-event-personalized-prescription`의 기존 준비·정리·전체 시간 검증은 상세 보기를 명시적으로 연 뒤 수행하도록 보완하며, 기본 본운동 표시와 기존 수치 검증을 함께 유지한다. 이 기록은 후속 커밋의 전체 브라우저 통과를 대신하지 않는다.
 - 같은 CI에서 UTC/KST 전체 단위검사 각각 9,415개 통과·33개 기존 skip, 격리 실행 각각 117개 통과·2개 기존 skip을 확인했다. 달력 장식·tower defense·암호화 계정 복원 등 전용 브라우저 묶음과 데스크톱·움직임 줄이기 fixture 경로도 통과했다. 후속 브라우저 테스트 보완은 앱 소스를 변경하지 않는다.
 - 후속 E2E 검색에서는 `personalized-auto-prescription`도 이미 제거된 메모 내부 `방법` 버튼을 기대하고 있음을 확인했다. 해당 호출을 현재 `자세히` 동선으로 바꾸고, 기본 MAIN과 상세 양쪽의 `5 × 1000m`·`3분 42초`·`2분 30초 조깅` 검증을 유지했다. 총 4개 E2E 파일을 보완한다.
+- `c86ff9ff`의 다음 CI에서 기존 검사 오류를 지나 실제 터치 영역 누락을 확인했다. `personalized-auto-prescription`의 320px·375px·1440px 시나리오에서 `근거와 설명 버전` summary 높이가 약 24.8px였다. `workout-memo.css`의 해당 펼침 영역만 최소 44px로 보완했다. 검사를 생략하거나 기준을 낮추지 않았다.
+- 위 CSS 보완 뒤 로컬 Vite 실제 앱(`127.0.0.1:4528`)에서 `personalized-auto-prescription.spec.ts --project=reduced-motion --workers=1 --retries=0` 8개 모두 통과(3.3분). 320px·375px·1440px 수치·복원·터치 검사와 기존 연령/근거/안전 경계를 함께 확인했다.
+- 같은 로컬 실행본에서 `plan-goal-progressive-disclosure`, `progressive-information`, `running-profile`, `training-content` 4개 E2E 파일을 reduced-motion 프로젝트·단일 worker·재시도 없이 실행해 17개 모두 통과(1.3분). 앞선 CI 중단 지점 이후의 읽을거리·오라클·작은 화면·글자 확대·키보드·복귀 경로를 추가 확인했다.
+- 최종 CSS 수정 직전 원격 main에 다른 작업의 `58f2c412` 펫 기능이 반영되어 해당 변경 위로 충돌 없이 통합했다. 해당 커밋의 `[manual-pages]` 공개 보류와 별도 운영 검증 범위를 유지한다. 최종 통합 커밋도 전체 CI는 실행하되 자동 Pages 게시는 보류한다. 훈련 설명 기능의 검증 결과를 펫 기능의 운영 계정 저장·사용자 검증 완료로 확대하지 않는다.
 
 ### 실제 앱 브라우저 관측
 
