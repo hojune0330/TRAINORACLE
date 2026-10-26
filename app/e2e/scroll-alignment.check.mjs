@@ -10,8 +10,9 @@ try {
   await page.goto('http://127.0.0.1:4477/e2e/fixtures/scroll-alignment.html')
   await page.getByRole('button', { name: '5000m', exact: true }).waitFor()
   // Freeze timer progress so browser input latency cannot hide a delayed reset.
-  await page.clock.install()
-  await page.clock.pauseAt(new Date())
+  // Keep the pause target ahead of the installed clock regardless of host/browser drift.
+  await page.clock.install({ time: new Date('2026-10-26T08:00:00Z') })
+  await page.clock.pauseAt(new Date('2026-10-26T10:00:00Z'))
   await page.locator('#next').click()
   await page.clock.runFor(20)
   const region = page.locator('.app-scroll-region')

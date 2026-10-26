@@ -18,9 +18,25 @@ describe('sleep journal projection', () => {
   })
   it('projects only recorded sleep facts and excludes memo, mood, pain and save timestamps', () => {
     expect(sleepJournalProjection(entry.date, entry)).toEqual({ date: entry.date, entryId: entry.id, status: 'recorded',
-      sleepH: 7.25, sleepQuality: 3, sourceLabel: '일지에 직접 입력한 수면' })
+      sleepH: 7.25, sleepQuality: 3, sleepQualityExplicit: true, sourceLabel: '일지에 직접 입력한 수면' })
     expect(sleepJournalProjection(entry.date, { ...entry, sleepH: 0, sleepQuality: 0 })).toMatchObject({ status: 'missing' })
     expect(sleepJournalProjection(entry.date, { ...entry, fieldProvenance: undefined }).sourceLabel).toContain('출처 확인 필요')
+  })
+  it('marks only explicit quality input for a sleep-sensitive greeting', () => {
+    expect(sleepJournalProjection(entry.date, { ...entry, fieldProvenance: undefined }))
+      .toMatchObject({ sleepQuality: 3, sleepQualityExplicit: false })
+    expect(sleepJournalProjection(entry.date, { ...entry, fieldProvenance: { sleepH: { provenance: 'EXPLICIT' } } }))
+      .toMatchObject({ sleepQuality: 3, sleepQualityExplicit: false })
+    expect(sleepJournalProjection(entry.date, { ...entry, fieldProvenance: { sleepQuality: { provenance: 'EXPLICIT' } } }))
+      .toMatchObject({ sleepQuality: 3, sleepQualityExplicit: true })
+    for (const missing of [
+      { ...entry, sleepQuality: 0 },
+      { ...entry, fieldProvenance: { sleepQuality: { provenance: 'MISSING' as const } } },
+    ]) {
+      const projected = sleepJournalProjection(entry.date, missing)
+      expect(projected).not.toHaveProperty('sleepQuality')
+      expect(projected).not.toHaveProperty('sleepQualityExplicit')
+    }
   })
   it('does not represent a failed read as missing sleep or expose stale measurements', () => {
     expect(sleepJournalProjection(entry.date, entry, false)).toEqual({ date: entry.date, status: 'unavailable', sourceLabel: '일지 확인 필요' })

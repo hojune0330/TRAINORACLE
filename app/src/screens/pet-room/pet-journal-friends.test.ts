@@ -93,14 +93,30 @@ describe('journal day friend opportunities', () => {
     const different = PET_IDS.find(value => value !== id)!
     expect(adoptJournalFriend(home, different, at(30)).pets[different]?.adoptedOn).toBe(at(30))
   })
-  it('keeps unused opportunities when all forty-eight are owned and supports their full bedtime handoff', () => {
+  it('keeps all forty-eight owned friends and unused opportunities while handing off the three bedtime participants', () => {
     let home = earned()
     for (const id of PET_IDS) home.pets[id] = { metOn: day, caredDays: [], actions: { pet: [], feed: [], play: [], bed: [] }, adoptedOn: day }
+    home.selected = 'cat'
     expect(proposeJournalFriend(home)).toBe(home)
     expect(journalFriendCredits(home)).toBe(1)
     home = sleepTogether(home, at(12))
-    expect(parseHome(JSON.stringify(home))?.sleeping?.pets).toHaveLength(48)
-    expect(parseHome(JSON.stringify(wakeTogether(home, at(13))))?.morning?.pets).toHaveLength(48)
+    const sleeping = parseHome(JSON.stringify(home))!
+    expect(sleeping.sleeping?.pets).toEqual(['cat', 'otter', 'seal'])
+    const morning = parseHome(JSON.stringify(wakeTogether(sleeping, at(13))))!
+    expect(morning.morning?.pets).toEqual(['cat', 'otter', 'seal'])
+    expect(PET_IDS.filter(id => morning.pets[id]?.adoptedOn)).toEqual([...PET_IDS])
+    expect(journalFriendCredits(morning)).toBe(1)
+    expect(proposeJournalFriend(morning)).toBe(morning)
+  })
+  it('preserves a previously saved forty-eight-friend bedtime through its morning handoff', () => {
+    const home = earned()
+    for (const id of PET_IDS) home.pets[id] = { metOn: day, caredDays: [], actions: { pet: [], feed: [], play: [], bed: [] }, adoptedOn: day }
+    const { observation: _observation, ...legacy } = home
+    const sleeping = parseHome(JSON.stringify({ ...legacy, sleeping: { day: at(12), pets: [...PET_IDS] } }))!
+    expect(sleeping.sleeping?.pets).toEqual([...PET_IDS])
+    const morning = parseHome(JSON.stringify(wakeTogether(sleeping, at(13))))!
+    expect(morning.morning?.pets).toEqual([...PET_IDS])
+    expect(journalFriendCredits(morning)).toBe(1)
   })
 })
 describe('authoritative v2 home and preservation', () => {

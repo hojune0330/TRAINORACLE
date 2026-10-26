@@ -123,6 +123,9 @@ export async function validateDecorationAssets(root = publicDirectory, {
       assert.match(item.fileName, /^[a-z0-9]+(?:-[a-z0-9]+)*\.webp$/u, `${item.id}: unsafe asset filename`)
       assert.match(item.sha256 ?? "", /^[a-f0-9]{64}$/u, `${item.id}: registry sha256 must be present and valid`)
       nonempty(item.sourceAsset, `${item.id}: sourceAsset`)
+      if (item.pixelDimensions !== undefined) {
+        assert.ok([item.pixelDimensions.width, item.pixelDimensions.height].every((value) => Number.isSafeInteger(value) && value > 0), `${item.id}: pixelDimensions must be positive safe integers`)
+      }
       const license = licenses.find((candidate) => candidate.id === item.licenseId)
       assert.ok(license, `${item.id}: unknown licenseId ${item.licenseId}`)
       expectedLicenses[license.id] = license
@@ -135,6 +138,7 @@ export async function validateDecorationAssets(root = publicDirectory, {
         pointCost: acquisitionCost(acquisition),
         sourceAsset: item.sourceAsset,
         sha256: item.sha256,
+        ...(item.pixelDimensions === undefined ? {} : { pixelDimensions: item.pixelDimensions }),
       })
     }
 
@@ -173,7 +177,8 @@ export async function validateDecorationAssets(root = publicDirectory, {
 
     await exactFiles(join(root, collection.assetDir), ["assets.json", ...collection.items.map((item) => item.fileName)])
     for (const asset of manifest.assets) {
-      const bytes = await validateWebp(root, `${collection.assetDir}/${asset.file}`, [collection.render.width, collection.render.height])
+      const dimensions = asset.pixelDimensions ?? collection.render
+      const bytes = await validateWebp(root, `${collection.assetDir}/${asset.file}`, [dimensions.width, dimensions.height])
       assert.equal(createHash("sha256").update(bytes).digest("hex"), asset.sha256, `${asset.file}: hash must match the manifest and registry`)
       totalBytes += bytes.length
     }

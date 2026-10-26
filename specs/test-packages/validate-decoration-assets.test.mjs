@@ -34,6 +34,17 @@ test("an unmodified on-disk fixture passes the same validator", async () => {
   })
 })
 
+test("pet assets retain heterogeneous exact sizes from their original scene contract", async () => {
+  const collection = DECORATION_COLLECTIONS.find((entry) => entry.id === "PET_OBSERVATIONS_V1")
+  const scenes = JSON.parse(await readFile(new URL("../../docs/art/pet-observations/scene-manifest.json", import.meta.url), "utf8"))
+  assert.deepEqual([...new Set(collection.items.map((item) => item.pixelDimensions.height))].sort((a, b) => a - b), [320, 427, 571])
+  for (const item of collection.items) {
+    const scene = scenes.assets.find((entry) => `${entry.id}.webp` === item.fileName)
+    assert.deepEqual(item.pixelDimensions, { width: scene.width, height: scene.height }, item.fileName)
+  }
+  await validateDecorationAssets()
+})
+
 function mutationTest(name, mutate, expectedError) {
   test(`${name} fails closed`, async () => {
     await withFixture(async (fixture) => {
@@ -107,6 +118,46 @@ mutationTest("changed base asset dimensions", async ({ root }) => {
   bytes[chunk === "VP8X" ? 24 : 26] ^= 1
   await writeFile(path, bytes)
 }, /dimensions must stay stable/u)
+
+for (const collectionId of ["OPEN_CUTE_V1", "PET_OBSERVATIONS_V1"]) {
+  mutationTest(`changed ${collectionId} asset dimensions`, async ({ root, collections }) => {
+    const collection = collections.find((entry) => entry.id === collectionId)
+    const path = join(root, collection.assetDir, collection.items[0].fileName)
+    const bytes = await readFile(path)
+    const chunk = bytes.toString("ascii", 12, 16)
+    assert.ok(["VP8X", "VP8 "].includes(chunk))
+    bytes[chunk === "VP8X" ? 24 : 26] ^= 1
+    await writeFile(path, bytes)
+  }, /dimensions must stay stable/u)
+}
+
+mutationTest("tampered per-item manifest dimensions", async ({ root, collections }) => {
+  const collection = collections.find((entry) => entry.id === "PET_OBSERVATIONS_V1")
+  const path = join(root, collection.assetDir, "assets.json")
+  const manifest = JSON.parse(await readFile(path, "utf8"))
+  manifest.assets[0].pixelDimensions.height += 1
+  await writeFile(path, JSON.stringify(manifest))
+}, /manifest must match registry/u)
+
+mutationTest("matching but incorrect per-item registry and manifest dimensions", async ({ root, collections }) => {
+  const collection = collections.find((entry) => entry.id === "PET_OBSERVATIONS_V1")
+  const path = join(root, collection.assetDir, "assets.json")
+  const manifest = JSON.parse(await readFile(path, "utf8"))
+  collection.items[0].pixelDimensions.height += 1
+  manifest.assets[0].pixelDimensions.height += 1
+  await writeFile(path, JSON.stringify(manifest))
+}, /dimensions must stay stable/u)
+
+test("per-item dimensions reject nonpositive, fractional and unsafe integers", async () => {
+  await withFixture(async ({ root, collections, licenses }) => {
+    const collection = collections.find((entry) => entry.id === "PET_OBSERVATIONS_V1")
+    for (const height of [0, -1, 427.5, Number.MAX_SAFE_INTEGER + 1]) {
+      collection.items[0].pixelDimensions.height = height
+      await assert.rejects(validateDecorationAssets(root, { collections, licenses }), /pixelDimensions must be positive safe integers/u)
+    }
+  })
+})
+
 mutationTest("oversized base asset", async ({ root }) => {
   const path = join(root, "decorations", "ink-navy.webp")
   await writeFile(path, Buffer.concat([await readFile(path), Buffer.alloc(120 * 1024)]))

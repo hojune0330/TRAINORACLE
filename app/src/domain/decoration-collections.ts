@@ -189,6 +189,8 @@ export type CollectionItemDefinition = {
   /** 장부용: 원본 자산 식별자와 SHA-256. */
   readonly sourceAsset?: string
   readonly sha256?: string
+  /** 실제 WebP 픽셀 크기. 생략하면 컬렉션 render 크기를 정확히 따른다. */
+  readonly pixelDimensions?: { readonly width: number; readonly height: number }
 }
 
 export type DecorationCollection = {

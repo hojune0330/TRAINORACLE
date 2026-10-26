@@ -1,5 +1,21 @@
 import type { DecorationCollection } from './decoration-collections'
 
+/** Exact encoded sizes from docs/art/pet-observations/scene-manifest.json; artwork keeps its original aspect ratio. */
+const SCENE_PIXEL_HEIGHTS = {
+  'otter-ball': 427,
+  'otter-seal-ball': 320,
+  'cat-box': 427,
+  'cat-box-paws': 427,
+  'seal-cushion': 427,
+  'seal-flat': 320,
+  'red-panda-tail': 427,
+  'red-panda-tent': 427,
+  'rabbit-blanket': 427,
+  'rabbit-hedgehog-blanket': 320,
+  'puppy-plush': 571,
+  'puppy-plush-hug': 427,
+} as const
+
 /** Stable IDs survive later scene/art updates and already decorated journals. */
 export const PET_OBSERVATION_STICKERS = [
   { sceneId: 'otter-ball', sha256: '69bd042a7814425e83e76126104993c9596c66349eeebbe29b0a332358809f11', id: 'PET_NIGHT_OTTER_BALL', ruleId: 'PET_PHOTO_OTTER_BALL', name: '공을 안고 쿨쿨', group: 'OTTER' },
@@ -28,6 +44,7 @@ export const PET_OBSERVATIONS_V1 = {
     fileName: `${item.sceneId}.webp`, group: item.group, licenseId: 'TRAINORACLE_PET_OBSERVATION_ORIGINAL' as const,
     sourceAsset: `games/pet-room-v1/observations/${item.sceneId}.webp`,
     sha256: item.sha256,
+    pixelDimensions: { width: 640, height: SCENE_PIXEL_HEIGHTS[item.sceneId] },
     acquisition: { kind: 'REWARD' as const, ruleId: item.ruleId },
   })),
   defaultAcquisition: { kind: 'REWARD', ruleId: 'PET_PHOTO_OTTER_BALL' }, availability: 'ACTIVE',

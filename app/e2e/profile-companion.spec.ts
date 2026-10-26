@@ -130,8 +130,9 @@ test("touch answers confirm briefly, clear the next choice and reveal the real r
   await openProfile(page)
   await page.getByRole("button", { name: "내 훈련 방식 알아보기 · 질문 3개", exact: true }).click()
   const dialog = page.getByRole("dialog", { name: "계획 선호", exact: true })
-  await page.clock.install()
-  await page.clock.pauseAt(new Date())
+  // Keep the pause target ahead of the installed clock regardless of host/browser drift.
+  await page.clock.install({ time: new Date('2026-10-26T08:00:00Z') })
+  await page.clock.pauseAt(new Date('2026-10-26T10:00:00Z'))
   const answer = dialog.getByRole("button", { name: "그런 편이에요", exact: true })
   await answer.tap()
   await expect(dialog.locator(".oracle-v2__question")).toHaveAttribute("data-answer-feedback", "true")

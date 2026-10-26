@@ -17,6 +17,7 @@ import {
   licenseById,
   type DecorationCollection,
   type DecorationLicense,
+  type CollectionItemDefinition,
 } from "./decoration-collections"
 
 /** 생성 스크립트(esbuild 번들)가 한 모듈만 import 하면 되도록 레지스트리를 다시 내보낸다. */
@@ -93,7 +94,10 @@ function renderCollectionSection(collection: DecorationCollection): string {
   lines.push(`      <p>${escapeHtml(collection.sourceNote)}</p>`)
   lines.push(`      <ul>`)
   lines.push(`        <li>아트 디렉션: ${escapeHtml(collection.artDirection)}</li>`)
-  lines.push(`        <li>구성: ${collection.items.length}종 · ${collection.render.width}×${collection.render.height} WebP${collection.render.transparentBackground ? " (투명 배경)" : ""}</li>`)
+  const pixelSize = collection.items.some((item) => item.pixelDimensions !== undefined)
+    ? "개별 크기(자산 장부에 표기)"
+    : `${collection.render.width}×${collection.render.height}`
+  lines.push(`        <li>구성: ${collection.items.length}종 · ${pixelSize} WebP${collection.render.transparentBackground ? " (투명 배경)" : ""}</li>`)
   lines.push(`        <li>획득: ${escapeHtml(acquisitionSummary(collection))}</li>`)
   lines.push(`        <li>상태: ${status}</li>`)
   if (collection.season !== undefined) {
@@ -182,6 +186,7 @@ export type CollectionLedger = {
     readonly pointCost: number
     readonly sourceAsset?: string
     readonly sha256?: string
+    readonly pixelDimensions?: CollectionItemDefinition["pixelDimensions"]
   }[]
 }
 
@@ -209,6 +214,7 @@ export function buildCollectionLedger(collection: DecorationCollection): Collect
         pointCost: acquisitionCost(acquisition),
         ...(item.sourceAsset === undefined ? {} : { sourceAsset: item.sourceAsset }),
         ...(item.sha256 === undefined ? {} : { sha256: item.sha256 }),
+        ...(item.pixelDimensions === undefined ? {} : { pixelDimensions: item.pixelDimensions }),
       }
     }),
   }
@@ -246,6 +252,7 @@ export function validateCollectionRegistry(collections: readonly DecorationColle
       if (!groupIds.has(item.group)) problems.push(`${item.id}: 알 수 없는 group ${item.group}`)
       if (item.fileName.includes("/")) problems.push(`${item.id}: fileName은 디렉터리 없이`)
       if (item.sha256 !== undefined && !/^[0-9a-f]{64}$/u.test(item.sha256)) problems.push(`${item.id}: sha256 형식 오류`)
+      if (item.pixelDimensions !== undefined && ![item.pixelDimensions.width, item.pixelDimensions.height].every((value) => Number.isSafeInteger(value) && value > 0)) problems.push(`${item.id}: pixelDimensions는 양의 안전한 정수여야 한다`)
     }
     for (const previewId of collection.entryPreviewItemIds) {
       if (!collection.items.some((item) => item.id === previewId)) problems.push(`${collection.id}: entryPreviewItemIds에 없는 아이템 ${previewId}`)
