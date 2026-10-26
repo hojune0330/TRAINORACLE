@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { CARE_ACTIONS, LEGACY_PET_IDS, PET_IDS, petById, type CareAction, type PetId } from './pet-catalog'
 import { ROOM_DECOR_IDS, roomKeepsakes, type RoomDecorId } from './pet-decor'
+import { activeObservationNight, freshObservationState, observationSchema, prepareObservationNight, revealObservationNight, validObservationState } from './pet-observation'
 
 const daySchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(value => {
   const date = new Date(`${value}T12:00:00Z`)
@@ -30,6 +31,7 @@ const schema = legacySchema.extend({
   morning: z.object({ day: daySchema, bedDay: daySchema, pets: z.array(z.enum(PET_IDS)).min(1).max(PET_IDS.length) }).strict().nullable().default(null),
   journal: z.object({ days: daysSchema, claimed: z.number().int().nonnegative(), pending: z.object({ ordinal: z.number().int().positive(), id: z.enum(PET_IDS) }).strict().nullable() }).strict(),
   roomDecoration: z.enum(ROOM_DECOR_IDS).nullable().default(null),
+  observation: observationSchema,
 }).strict()
 export type PetHome = z.infer<typeof schema>
 export type PetBond = z.infer<typeof petSchema>
@@ -51,7 +53,7 @@ function visitorsFor(home: PetHome, day: string): PetId[] {
 }
 export function createHome(day: string, seed: number, scope = 'guest'): PetHome {
   daySchema.parse(day)
-  const home: PetHome = { version: 2, scope, journal: { days: [], claimed: 0, pending: null }, roomDecoration: null, revision: 0, seed: Math.max(1, seed >>> 0), day, visitors: [], invited: null, selected: 'otter', pets: {}, sleeping: null, morning: null }
+  const home: PetHome = { version: 2, scope, journal: { days: [], claimed: 0, pending: null }, roomDecoration: null, observation: freshObservationState(), revision: 0, seed: Math.max(1, seed >>> 0), day, visitors: [], invited: null, selected: 'otter', pets: {}, sleeping: null, morning: null }
   home.visitors = visitorsFor(home, day)
   home.selected = home.visitors[0]!
   for (const id of home.visitors) home.pets[id] = freshBond(day)
@@ -62,6 +64,7 @@ export function parseHome(raw: string): PetHome | null {
     const parsed = schema.safeParse(JSON.parse(raw))
     if (!parsed.success) return null
     const home = parsed.data
+    if (!validObservationState(home)) return null
     if (home.roomDecoration && !roomKeepsakes(home).some(item => item.id === home.roomDecoration)) return null
     const earned = Math.floor(home.journal.days.length / 7)
     if (home.journal.claimed > earned || home.journal.pending && (home.journal.pending.ordinal !== home.journal.claimed + 1 || earned <= home.journal.claimed || home.pets[home.journal.pending.id]?.adoptedOn)) return null
@@ -135,16 +138,20 @@ export function adoptJournalFriend(home: PetHome, id: PetId, day: string): PetHo
   const bond = home.pets[id] ?? freshBond(day)
   return { ...home, selected: id, journal: { ...home.journal, claimed: home.journal.claimed + 1, pending: null }, pets: { ...home.pets, [id]: { ...bond, adoptedOn: day } } }
 }
-export function sleepTogether(home: PetHome, day: string): PetHome {
+export function sleepTogether(home: PetHome, day: string, wakeDate = day): PetHome {
   if (home.sleeping || home.morning || !daySchema.safeParse(day).success || day < home.day) return home
-  const ids = atHome(home)
-  let next = home
+  let next = prepareObservationNight(home, day, wakeDate, atHome(home))
+  // A committed morning date cannot be drawn twice, even after finishing its greeting.
+  if (next === home) return home
+  const ids = activeObservationNight(next)!.roster
   for (const id of ids) next = careFor(next, id, 'bed', day)
   return { ...next, sleeping: { day, pets: ids } }
 }
 export function wakeTogether(home: PetHome, day: string): PetHome {
   if (!home.sleeping || !daySchema.safeParse(day).success || day < home.sleeping.day) return home
-  return { ...home, sleeping: null, morning: { day, bedDay: home.sleeping.day, pets: home.sleeping.pets } }
+  const night = activeObservationNight(home)
+  if (night && day < night.wakeDate) return home
+  return { ...revealObservationNight(home, day), sleeping: null, morning: { day, bedDay: home.sleeping.day, pets: home.sleeping.pets } }
 }
 /** Greeting is not a sleep measurement or a care reward. The chosen friend stays. */
 export function finishMorning(home: PetHome, day: string): PetHome {

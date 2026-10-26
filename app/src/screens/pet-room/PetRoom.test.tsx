@@ -4,7 +4,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { PetRoom } from './PetRoom'
 import { careDay, careFor, confirmJournalDay, createHome, parseHome, petHomeKey, sleepTogether } from './pet-engine'
 import { PET_IDS, petById, type PetId } from './pet-catalog'
-import { careVoice, PET_VOICES } from './pet-personality'
+import { careVoice } from './pet-personality'
 import { PET_PLAY } from './pet-play'
 
 // UI behavior runs after a granted room lease. Cross-tab/unsupported/awaited
@@ -21,7 +21,7 @@ it('does not add care when a scene is opened, abandoned or closed through the ho
   act(() => { expect(canExit!()).toBe(false) })
   expect(screen.queryByRole('dialog')).toBeNull()
   expect(canExit!()).toBe(true)
-  fireEvent.click(screen.getByRole('button', { name: /^같이 자기/ }))
+  openBed()
   fireEvent.click(screen.getByRole('button', { name: '친구들 이불 펴 주기' }))
   fireEvent.click(screen.getByRole('button', { name: '커튼 닫아 주기' }))
   fireEvent.click(screen.getByRole('button', { name: '방으로 돌아가기' }))
@@ -31,7 +31,7 @@ it('does not add care when a scene is opened, abandoned or closed through the ho
 it('saves all current companions only when lights are switched off and uses the matching night art', () => {
   render(<PetRoom {...props} />)
   const before = stored()
-  fireEvent.click(screen.getByRole('button', { name: /^같이 자기/ }))
+  openBed()
   fireEvent.click(screen.getByRole('button', { name: '친구들 이불 펴 주기' }))
   fireEvent.click(screen.getByRole('button', { name: '커튼 닫아 주기' }))
   expect(stored()).toEqual(before)
@@ -141,25 +141,29 @@ it('honors only an explicit saved-result meeting destination and cancels without
   expect(stored().journal.claimed).toBe(0)
   expect(stored().journal.pending).toBeNull()
 })
-it('keeps every adopted friend in the bedtime handoff while only loading three scene portraits', () => {
+it('keeps adopted friends while only the three visible companions enter this night', () => {
   const home = createHome(careDay(), 123)
   for (const id of PET_IDS) home.pets[id] = { metOn: careDay(), caredDays: [], actions: { pet: [], feed: [], play: [], bed: [] }, adoptedOn: careDay() }
   localStorage.setItem(petHomeKey('guest'), JSON.stringify(home))
   render(<PetRoom {...props} />)
-  fireEvent.click(screen.getByRole('button', { name: /^같이 자기/ }))
+  openBed()
   const scene = screen.getByRole('dialog')
   expect(scene.querySelectorAll('.pet-bedtime-friend')).toHaveLength(3)
-  fireEvent.click(within(scene).getByText('함께 쉬는 친구 48명 보기'))
-  for (const id of PET_IDS) expect(scene).toHaveTextContent(petById(id).name)
+  expect(scene).toHaveTextContent('3명이 함께 쉬어요.')
   quickBed()
-  expect(stored().sleeping?.pets).toHaveLength(48)
-  expect(screen.getByRole('region', { name: '함께 쉬는 친구 모두' }).querySelectorAll('.pet-sprite')).toHaveLength(0)
+  expect(stored().sleeping?.pets).toHaveLength(3)
+  expect(PET_IDS.every(id => stored().pets[id]?.adoptedOn)).toBe(true)
 })
 function finishFeed() {
   const scene = within(screen.getByRole('dialog'))
   fireEvent.click(scene.getByRole('button', { name: '간식 그릇 들기' }))
   fireEvent.click(scene.getByRole('button', { name: '그릇 놓을 자리' }))
   fireEvent.click(scene.getByRole('button', { name: /^(간식 두고 )?방으로 가기$/ }))
+}
+function openBed() {
+  fireEvent.click(screen.getByRole('button', { name: /^같이 자기/ }))
+  fireEvent.change(screen.getByLabelText('일어날 날짜'), { target: { value: careDay() } })
+  fireEvent.click(screen.getByRole('button', { name: '이대로 잠자리 준비' }))
 }
 function quickBed() {
   fireEvent.click(screen.getByRole('button', { name: '졸려요, 바로 재우기' }))
@@ -202,7 +206,7 @@ it('records real today, shows care poses, and restores sleeping pets after remou
   expect(stored().pets[id]!.caredDays).toEqual([careDay()])
   expect(stored().pets[id]!.actions.feed).toEqual([careDay()])
   expect(screen.getByText(careVoice(id, 'feed', 0))).toBeVisible()
-  fireEvent.click(screen.getByRole('button', { name: /^같이 자기/ }))
+  openBed()
   quickBed()
   expect(stored().sleeping).not.toBeNull()
   view.unmount()
@@ -312,7 +316,7 @@ it('puts the visible guests to bed after midnight, not newly drawn unseen guests
   localStorage.setItem(petHomeKey('guest'), JSON.stringify(home))
   render(<PetRoom {...props} />)
   vi.setSystemTime(new Date(2026, 9, 19, 0, 1))
-  fireEvent.click(screen.getByRole('button', { name: /^같이 자기/ }))
+  openBed()
   quickBed()
   expect(stored().sleeping).toEqual({ day: '2026-10-19', pets: home.visitors })
   expect(stored().pets[home.selected]!.actions.bed).toEqual(['2026-10-19'])
@@ -324,22 +328,41 @@ it('keeps the same pet for morning greeting across reload, then keeps that compa
   const night = sleepTogether(createHome('2026-10-18', 123), '2026-10-18')
   localStorage.setItem(petHomeKey('guest'), JSON.stringify(night))
   const view = render(<PetRoom {...props} />)
-  fireEvent.click(screen.getByRole('button', { name: '다 잤어, 일어나자' }))
+  // A later-day return reveals the committed scene without another wake prompt.
+  expect(screen.queryByRole('button', { name: '다 잤어, 일어나자' })).toBeNull()
   expect(stored().selected).toBe(night.selected)
   expect(stored().visitors).toEqual(night.visitors)
-  expect(screen.getByText(PET_VOICES[night.selected].wake)).toBeVisible()
+  expect(screen.getByRole('heading', { name: '어젯밤에 뭐 했니?' })).toBeVisible()
   expect(stored().sleeping).toBeNull()
   view.unmount()
   render(<PetRoom {...props} />)
-  expect(screen.getByRole('region', { name: '함께 잔 친구들과 아침 인사' })).toBeVisible()
+  expect(screen.getByRole('region', { name: '어젯밤에 뭐 했니?' })).toBeVisible()
   expect(screen.queryByRole('button', { name: '간식 주기' })).toBeNull()
-  fireEvent.click(screen.getByRole('button', { name: '오늘도 같이 지내기' }))
+  fireEvent.click(screen.getByRole('button', { name: '나도 일어났어' }))
   expect(stored().selected).toBe(night.selected)
   expect(stored().visitors).not.toContain(night.selected)
   expect(stored().invited).toBe(night.selected)
   expect(stored().morning).toBeNull()
   expect(stored().pets[night.selected]).toEqual(night.pets[night.selected])
   expect(screen.getByRole('button', { name: '간식 주기' })).toBeVisible()
+  const previousResults = JSON.stringify(stored().observation.nights)
+  const date = careDay()
+  fireEvent.click(screen.getByRole('button', { name: new RegExp(`그대로 재우기.*${date.slice(5).replace('-', '/')}`) }))
+  expect(stored().sleeping).not.toBeNull()
+  expect(JSON.stringify(stored().observation.nights.slice(0, -1))).toBe(previousResults)
+})
+
+it('keeps a legacy sleeping home usable without inventing an old observation', () => {
+  const old = createHome(careDay(), 123)
+  old.sleeping = { day: careDay(), pets: old.visitors }
+  const { observation: _observation, ...legacy } = old
+  localStorage.setItem(petHomeKey('guest'), JSON.stringify(legacy))
+  render(<PetRoom {...props} />)
+  fireEvent.click(screen.getByRole('button', { name: '다 잤어, 일어나자' }))
+  expect(screen.getByRole('region', { name: '함께 잔 친구들과 아침 인사' })).toBeVisible()
+  fireEvent.click(screen.getByRole('button', { name: '나도 일어났어' }))
+  expect(stored().morning).toBeNull()
+  expect(stored().observation.nights).toEqual([])
 })
 
 it('shows personal reactions without awarding duplicate care and saves the actual moment in the album', () => {

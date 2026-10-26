@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { setActiveLocalAccount } from './account/local-journal-ownership'
 import { capturePetJournalScope, pendingPetJournalError, readPetJournalProgress, recordConfirmedPetJournalSave, retryPetJournalSave } from './pet-journal-progress'
-import { careDay, createHome, legacyPetHomeKey, loadHome, petHomeKey } from '../screens/pet-room/pet-engine'
+import { careDay, createHome, legacyPetHomeKey, loadHome, petHomeKey, sleepTogether } from '../screens/pet-room/pet-engine'
 import { petLockFixture } from '../test/pet-lock-fixture'
 
 beforeEach(() => {
@@ -103,4 +103,24 @@ it('projects only committed owner-scoped counts and hides them after a generatio
   expect(readPetJournalProgress(ticket)).toEqual({ status: 'READY', days: 1, credits: 0, canMeet: false, recordedToday: true, friend: { id: savedFriend, pose: 'happy' } })
   setActiveLocalAccount('read-other'); setActiveLocalAccount(null)
   expect(readPetJournalProgress(ticket)).toEqual({ status: 'STALE' })
+})
+
+it('shows a ready morning without waking or writing, and keeps future nights and same-day naps asleep', () => {
+  const ticket = capturePetJournalScope()
+  const today = careDay()
+  const previousDay = '2026-10-18'
+  const ready = sleepTogether(createHome(previousDay, 1), previousDay, today)
+  const future = sleepTogether(createHome(previousDay, 1), previousDay, '2026-10-20')
+  const nap = sleepTogether(createHome(today, 1), today, today)
+  const write = vi.spyOn(Storage.prototype, 'setItem')
+  for (const [home, pose] of [[ready, 'waking'], [future, 'sleeping'], [nap, 'sleeping']] as const) {
+    const raw = JSON.stringify(home)
+    expect(readPetJournalProgress(ticket, { storage: { getItem: () => raw }, today })).toMatchObject({ status: 'READY', friend: { id: home.selected, pose } })
+    expect(JSON.stringify(home)).toBe(raw)
+    expect(home.sleeping).not.toBeNull()
+    expect(home.morning).toBeNull()
+    expect(home.observation.nights[0]?.observedOn).toBeNull()
+  }
+  expect(write).not.toHaveBeenCalled()
+  expect(localStorage.getItem(petHomeKey(ticket.owner))).toBeNull()
 })

@@ -8,7 +8,7 @@ export function PetOverlay({ title, onClose, children, night = false, contained 
     <section className={`pet-activity${contained ? ' pet-activity--contained' : ''}`} role="dialog" aria-modal="true" aria-labelledby="pet-activity-title" onKeyDown={event => {
       if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); onClose() }
       if (event.key !== 'Tab') return
-      const controls = Array.from(event.currentTarget.querySelectorAll<HTMLElement>('button:not(:disabled), [tabindex="0"]'))
+      const controls = Array.from(event.currentTarget.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), a[href], [tabindex="0"]')).filter(control => !control.closest('[hidden], [inert]'))
       const first = controls[0]; const last = controls[controls.length - 1]
       if (event.shiftKey && (document.activeElement === first || document.activeElement === heading.current)) { event.preventDefault(); last?.focus() }
       else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus() }

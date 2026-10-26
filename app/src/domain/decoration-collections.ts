@@ -1,4 +1,5 @@
 import { TRAINING_COMPANIONS_V1 } from "./training-companion-collection.ts"
+import { PET_OBSERVATIONS_V1, PET_OBSERVATION_STICKERS } from "./pet-observation-collection.ts"
 
 /*
  * 꾸미기 컬렉션 레지스트리.
@@ -41,6 +42,15 @@ export type DecorationLicense = {
 }
 
 export const LICENSES = [
+  {
+    id: "TRAINORACLE_PET_OBSERVATION_ORIGINAL",
+    holder: "TrainOracle",
+    kind: "IN_HOUSE",
+    terms: "TrainOracle 원본 펫 그림 · AI 이미지 생성 도구 이용약관 적용",
+    attributionRequired: false,
+    revision: "pet-observations-v1-20261026",
+    modification: "원본 펫 설정을 참고해 잠자리 장면을 새로 생성하고 서비스용 WebP로 내보냄",
+  },
   {
     id: "TRAINORACLE_COMPANIONS_TRIPO",
     holder: "TrainOracle",
@@ -132,6 +142,8 @@ export function acquisitionLabel(acquisition: DecorationAcquisition): string {
 export type RewardSignals = {
   readonly journalDays: number
   readonly visitDays: number
+  /** Owner-scoped, revealed scenes explicitly saved as photos in the pet room. */
+  readonly petObservationScenes?: readonly string[]
 }
 
 export type RewardRule = {
@@ -147,6 +159,9 @@ export const REWARD_RULES = [
   { id: "JOURNAL_7_DAYS", label: "기록 7일", description: "일지를 7일 남기면 받아요.", satisfied: (s: RewardSignals) => s.journalDays >= 7 },
   { id: "JOURNAL_30_DAYS", label: "기록 30일", description: "일지를 30일 남기면 받아요.", satisfied: (s: RewardSignals) => s.journalDays >= 30 },
   { id: "VISIT_14_DAYS", label: "방문 14일", description: "14일 방문하면 받아요.", satisfied: (s: RewardSignals) => s.visitDays >= 14 },
+  ...PET_OBSERVATION_STICKERS.map(item => ({ id: item.ruleId, label: item.name,
+    description: `친구 방에서 ‘${item.name}’ 사진을 남기면 받아요.`,
+    satisfied: (s: RewardSignals) => s.petObservationScenes?.includes(item.sceneId) ?? false })),
 ] as const satisfies readonly RewardRule[]
 
 export type RewardRuleId = (typeof REWARD_RULES)[number]["id"]
@@ -263,7 +278,7 @@ export const OPEN_CUTE_V1 = {
  * 새 컬렉션(시즌/굿즈/라이선스 캐릭터)은 여기에 한 항목만 추가하면 카탈로그 id·툴바·법적 고지·장부가 따라온다.
  * `as const`로 두어 아이템 id가 리터럴 유니언으로 남고, 카탈로그의 `DecorationId`·zod enum에 자동 편입된다.
  */
-export const DECORATION_COLLECTIONS = [OPEN_CUTE_V1, TRAINING_COMPANIONS_V1] as const satisfies readonly DecorationCollection[]
+export const DECORATION_COLLECTIONS = [OPEN_CUTE_V1, TRAINING_COMPANIONS_V1, PET_OBSERVATIONS_V1] as const satisfies readonly DecorationCollection[]
 
 export type DecorationCollectionId = (typeof DECORATION_COLLECTIONS)[number]["id"]
 export type CollectionItemId = (typeof DECORATION_COLLECTIONS)[number]["items"][number]["id"]

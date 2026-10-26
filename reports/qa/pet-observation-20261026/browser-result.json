@@ -1,0 +1,9 @@
+{
+  "checkedAt": "2026-10-26T06:32:41.549Z",
+  "fixture": "local synthetic guest only",
+  "results": [
+    "375px: morning scene, explicit photo, reload persistence, album, exact-date journal save, explicit poor-quality greeting",
+    "320px with reduced motion: preparation layout, scrollable controls, explicit sleep commit, no horizontal overflow"
+  ],
+  "errors": []
+}

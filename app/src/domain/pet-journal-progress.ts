@@ -2,6 +2,7 @@ import { activeLocalAccount, localJournalScopeGeneration } from './account/local
 import { careDay, confirmJournalDay, journalFriendCredits, loadHome, parseHome, petHomeKey, persistHome, type HomeStorage } from '../screens/pet-room/pet-engine'
 import { withPetHomeWrite } from './pet-home-lock'
 import { PET_IDS, type PetId, type PetPose } from '../screens/pet-room/pet-catalog'
+import { activeObservationNight } from '../screens/pet-room/pet-observation'
 
 export const PET_JOURNAL_EVENT = 'trainoracle:pet-journal-progress'
 export type PetJournalScope = { readonly owner: string; readonly generation: number }
@@ -31,8 +32,10 @@ export function readPetJournalProgress(ticket: PetJournalScope, options: { stora
     if (!home || home.scope !== ticket.owner || home.day > today || home.journal.days.some(day => day > today)) return { status: 'UNAVAILABLE' }
     if (!currentScope(ticket)) return { status: 'STALE' }
     const credits = journalFriendCredits(home)
+    const night = activeObservationNight(home)
+    const morningReady = !!home.sleeping && home.sleeping.day < today && !!night && night.wakeDate <= today
     return { status: 'READY', days: home.journal.days.length, credits, canMeet: credits > 0 && !home.sleeping && !home.morning && PET_IDS.some(id => !home.pets[id]?.adoptedOn), recordedToday: home.journal.days.includes(today),
-      friend: { id: home.selected, pose: home.sleeping ? 'sleeping' : home.morning ? 'waking' : 'happy' } }
+      friend: { id: home.selected, pose: home.morning || morningReady ? 'waking' : home.sleeping ? 'sleeping' : 'happy' } }
   } catch { return { status: 'UNAVAILABLE' } }
 }
 export const pendingPetJournalError = (scope: string) => {

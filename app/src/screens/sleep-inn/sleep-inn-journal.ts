@@ -24,6 +24,7 @@ export function sleepJournalProjection(date: string, entry?: EveningEntry, avail
   return {
     date, entryId: entry.id, status: sleepH !== undefined || sleepQuality !== undefined ? 'recorded' : 'missing',
     ...(sleepH === undefined ? {} : { sleepH }), ...(sleepQuality === undefined ? {} : { sleepQuality }),
+    ...(sleepQuality === undefined ? {} : { sleepQualityExplicit: entry.fieldProvenance?.sleepQuality?.provenance === 'EXPLICIT' }),
     sourceLabel: fields.length > 0 && fields.every(field => field?.provenance === 'EXPLICIT')
       ? '일지에 직접 입력한 수면' : '기존 일지 · 입력 출처 확인 필요',
   }

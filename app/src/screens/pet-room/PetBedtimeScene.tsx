@@ -6,10 +6,13 @@ import { PetOverlay } from './PetOverlay'
 import { inDropZone, type RoomPoint } from './pet-play'
 import { DecorArt } from './PetRoomDecor'
 import type { RoomDecorId } from './pet-decor'
+import type { ObservationPlacements } from './pet-observation'
+import { ObservationPlacementArt } from './PetObservationArt'
 
-export function PetBedtimeScene({ companions, onFinish, onClose, error, onReload, decoration }: {
+export function PetBedtimeScene({ companions, onFinish, onClose, error, onReload, decoration, placements }: {
   companions: PetId[]; onFinish: () => void; onClose: () => void; error: string | null; onReload: () => void
   decoration?: RoomDecorId | null
+  placements?: ObservationPlacements
 }) {
   const [step, setStep] = useState(0)
   const [held, setHeld] = useState(false)
@@ -33,6 +36,7 @@ export function PetBedtimeScene({ companions, onFinish, onClose, error, onReload
       <img className="pet-care-world__background" src={petRoomAsset('room.webp')} alt="" draggable={false} />
       <img className={`pet-care-world__background pet-night-layer${step >= 2 ? ' pet-night-layer--visible' : ''}`} src={petRoomAsset('room-curtains-v2.webp')} alt="" draggable={false} />
       {decoration && <DecorArt id={decoration} className="pet-bedtime-keepsake" />}
+      {placements && <ObservationPlacementArt placements={placements} />}
       {visibleFriends.map((id, index) => <div className="pet-bedtime-friend" key={id} style={{ left: `${places[index]!.x}%`, top: `${places[index]!.y}%`, width: `${places[index]!.width}%`, zIndex: visibleFriends.length - index }}>
         {step > 0 && <PropArt item="blanket" className="pet-bedtime-mat" />}<PetSprite id={id} pose={step > 0 ? 'sleeping' : 'awake'} motion={step > 0 ? 'lie-down' : 'idle'} settleTo="sleep" /><span>{petById(id).name}</span>
       </div>)}

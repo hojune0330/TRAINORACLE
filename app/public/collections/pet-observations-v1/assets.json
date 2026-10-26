@@ -1,0 +1,171 @@
+{
+  "schemaVersion": 2,
+  "generatedBy": "app/scripts/generate-collection-docs.mjs",
+  "collectionId": "PET_OBSERVATIONS_V1",
+  "title": "잠든 친구들",
+  "licenseReviewedOn": "2026-10-26",
+  "availability": "ACTIVE",
+  "assetDir": "collections/pet-observations-v1",
+  "render": {
+    "width": 640,
+    "height": 640,
+    "transparentBackground": true
+  },
+  "licenses": {
+    "TRAINORACLE_PET_OBSERVATION_ORIGINAL": {
+      "id": "TRAINORACLE_PET_OBSERVATION_ORIGINAL",
+      "holder": "TrainOracle",
+      "kind": "IN_HOUSE",
+      "terms": "TrainOracle 원본 펫 그림 · AI 이미지 생성 도구 이용약관 적용",
+      "attributionRequired": false,
+      "revision": "pet-observations-v1-20261026",
+      "modification": "원본 펫 설정을 참고해 잠자리 장면을 새로 생성하고 서비스용 WebP로 내보냄"
+    }
+  },
+  "assets": [
+    {
+      "catalogId": "PET_NIGHT_OTTER_BALL",
+      "file": "otter-ball.webp",
+      "licenseId": "TRAINORACLE_PET_OBSERVATION_ORIGINAL",
+      "acquisition": {
+        "kind": "REWARD",
+        "ruleId": "PET_PHOTO_OTTER_BALL"
+      },
+      "pointCost": 0,
+      "sourceAsset": "games/pet-room-v1/observations/otter-ball.webp",
+      "sha256": "69bd042a7814425e83e76126104993c9596c66349eeebbe29b0a332358809f11"
+    },
+    {
+      "catalogId": "PET_NIGHT_OTTER_SEAL_BALL",
+      "file": "otter-seal-ball.webp",
+      "licenseId": "TRAINORACLE_PET_OBSERVATION_ORIGINAL",
+      "acquisition": {
+        "kind": "REWARD",
+        "ruleId": "PET_PHOTO_OTTER_SEAL_BALL"
+      },
+      "pointCost": 0,
+      "sourceAsset": "games/pet-room-v1/observations/otter-seal-ball.webp",
+      "sha256": "7bc05566cec76e782907aba1333d3309e65d7cd59c3544411dccce36ebe27bf8"
+    },
+    {
+      "catalogId": "PET_NIGHT_CAT_BOX",
+      "file": "cat-box.webp",
+      "licenseId": "TRAINORACLE_PET_OBSERVATION_ORIGINAL",
+      "acquisition": {
+        "kind": "REWARD",
+        "ruleId": "PET_PHOTO_CAT_BOX"
+      },
+      "pointCost": 0,
+      "sourceAsset": "games/pet-room-v1/observations/cat-box.webp",
+      "sha256": "3f98740618f1e2cc773ccb1c880a1a4d7cadaa88a292c29b30554845c0a06b3c"
+    },
+    {
+      "catalogId": "PET_NIGHT_CAT_BOX_PAWS",
+      "file": "cat-box-paws.webp",
+      "licenseId": "TRAINORACLE_PET_OBSERVATION_ORIGINAL",
+      "acquisition": {
+        "kind": "REWARD",
+        "ruleId": "PET_PHOTO_CAT_BOX_PAWS"
+      },
+      "pointCost": 0,
+      "sourceAsset": "games/pet-room-v1/observations/cat-box-paws.webp",
+      "sha256": "f46ebf654f4c1d56e218d086b929c654cd3ee6241851e3ccf5bfc0c39c39652d"
+    },
+    {
+      "catalogId": "PET_NIGHT_SEAL_CUSHION",
+      "file": "seal-cushion.webp",
+      "licenseId": "TRAINORACLE_PET_OBSERVATION_ORIGINAL",
+      "acquisition": {
+        "kind": "REWARD",
+        "ruleId": "PET_PHOTO_SEAL_CUSHION"
+      },
+      "pointCost": 0,
+      "sourceAsset": "games/pet-room-v1/observations/seal-cushion.webp",
+      "sha256": "df8c612e9b47ba42a5635c36361d7d54c472c6cb57001300102b2e1be23baf86"
+    },
+    {
+      "catalogId": "PET_NIGHT_SEAL_FLAT",
+      "file": "seal-flat.webp",
+      "licenseId": "TRAINORACLE_PET_OBSERVATION_ORIGINAL",
+      "acquisition": {
+        "kind": "REWARD",
+        "ruleId": "PET_PHOTO_SEAL_FLAT"
+      },
+      "pointCost": 0,
+      "sourceAsset": "games/pet-room-v1/observations/seal-flat.webp",
+      "sha256": "b086998bd3a8d4d7275a5441457ad9c1acb0cbe68ef91bf5e54dcfa0190494fa"
+    },
+    {
+      "catalogId": "PET_NIGHT_RED_PANDA_TAIL",
+      "file": "red-panda-tail.webp",
+      "licenseId": "TRAINORACLE_PET_OBSERVATION_ORIGINAL",
+      "acquisition": {
+        "kind": "REWARD",
+        "ruleId": "PET_PHOTO_RED_PANDA_TAIL"
+      },
+      "pointCost": 0,
+      "sourceAsset": "games/pet-room-v1/observations/red-panda-tail.webp",
+      "sha256": "117024969fb5ed32f1baded0b1d958752df7cc81021c7811a22267d6e03bd0f4"
+    },
+    {
+      "catalogId": "PET_NIGHT_RED_PANDA_TENT",
+      "file": "red-panda-tent.webp",
+      "licenseId": "TRAINORACLE_PET_OBSERVATION_ORIGINAL",
+      "acquisition": {
+        "kind": "REWARD",
+        "ruleId": "PET_PHOTO_RED_PANDA_TENT"
+      },
+      "pointCost": 0,
+      "sourceAsset": "games/pet-room-v1/observations/red-panda-tent.webp",
+      "sha256": "fe147478f89eb7e36a3ed035ef27c76b885c5c03d6572cefbeee905f465e6de0"
+    },
+    {
+      "catalogId": "PET_NIGHT_RABBIT_BLANKET",
+      "file": "rabbit-blanket.webp",
+      "licenseId": "TRAINORACLE_PET_OBSERVATION_ORIGINAL",
+      "acquisition": {
+        "kind": "REWARD",
+        "ruleId": "PET_PHOTO_RABBIT_BLANKET"
+      },
+      "pointCost": 0,
+      "sourceAsset": "games/pet-room-v1/observations/rabbit-blanket.webp",
+      "sha256": "87147e4006b13896316899debe229bef384046bd8aac8d447ee2fcb5b9c2bdf5"
+    },
+    {
+      "catalogId": "PET_NIGHT_RABBIT_HEDGEHOG_BLANKET",
+      "file": "rabbit-hedgehog-blanket.webp",
+      "licenseId": "TRAINORACLE_PET_OBSERVATION_ORIGINAL",
+      "acquisition": {
+        "kind": "REWARD",
+        "ruleId": "PET_PHOTO_RABBIT_HEDGEHOG_BLANKET"
+      },
+      "pointCost": 0,
+      "sourceAsset": "games/pet-room-v1/observations/rabbit-hedgehog-blanket.webp",
+      "sha256": "3a842c516c412030ecfaf5b0479d0469283efd4822526521a39c4e4f36ff5e6a"
+    },
+    {
+      "catalogId": "PET_NIGHT_PUPPY_PLUSH",
+      "file": "puppy-plush.webp",
+      "licenseId": "TRAINORACLE_PET_OBSERVATION_ORIGINAL",
+      "acquisition": {
+        "kind": "REWARD",
+        "ruleId": "PET_PHOTO_PUPPY_PLUSH"
+      },
+      "pointCost": 0,
+      "sourceAsset": "games/pet-room-v1/observations/puppy-plush.webp",
+      "sha256": "7fa8ecb99bf4e5e353bbb55c5e43808aa20a84f25f67c03cb0d848c9fd500f53"
+    },
+    {
+      "catalogId": "PET_NIGHT_PUPPY_PLUSH_HUG",
+      "file": "puppy-plush-hug.webp",
+      "licenseId": "TRAINORACLE_PET_OBSERVATION_ORIGINAL",
+      "acquisition": {
+        "kind": "REWARD",
+        "ruleId": "PET_PHOTO_PUPPY_PLUSH_HUG"
+      },
+      "pointCost": 0,
+      "sourceAsset": "games/pet-room-v1/observations/puppy-plush-hug.webp",
+      "sha256": "2434197c77c1122e643c2b21381c8837253d2a9d02caade7be74d38e6bfc037e"
+    }
+  ]
+}

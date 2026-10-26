@@ -1,0 +1,137 @@
+[
+  {
+    "id": "otter-ball",
+    "source": "source/otter-ball.png",
+    "width": 1536,
+    "height": 1024,
+    "transparentFraction": 0.7083104451497396,
+    "partialAlphaFraction": 0.29168955485026044,
+    "runtimeBytes": 23480
+  },
+  {
+    "id": "otter-seal-ball",
+    "source": "source/otter-seal-ball.png",
+    "width": 1774,
+    "height": 887,
+    "transparentFraction": 0.6307346883265609,
+    "partialAlphaFraction": 0.3680559350965785,
+    "runtimeBytes": 23852
+  },
+  {
+    "id": "cat-box",
+    "source": "source/cat-box.png",
+    "width": 1536,
+    "height": 1024,
+    "transparentFraction": 0.5128072102864584,
+    "partialAlphaFraction": 0.4871927897135417,
+    "runtimeBytes": 35690
+  },
+  {
+    "id": "cat-box-paws",
+    "source": "source/cat-box-paws.png",
+    "width": 1536,
+    "height": 1024,
+    "transparentFraction": 0.6100978851318359,
+    "partialAlphaFraction": 0.38990211486816406,
+    "runtimeBytes": 24772
+  },
+  {
+    "id": "seal-cushion",
+    "source": "source/seal-cushion.png",
+    "width": 1536,
+    "height": 1024,
+    "transparentFraction": 0.6410566965738932,
+    "partialAlphaFraction": 0.35894330342610675,
+    "runtimeBytes": 21318
+  },
+  {
+    "id": "seal-flat",
+    "source": "source/seal-flat.png",
+    "width": 1774,
+    "height": 887,
+    "transparentFraction": 0.7765468644544968,
+    "partialAlphaFraction": 0.22248906604098534,
+    "runtimeBytes": 17044
+  },
+  {
+    "id": "red-panda-tail",
+    "source": "source/red-panda-tail.png",
+    "width": 1536,
+    "height": 1024,
+    "transparentFraction": 0.16001256306966147,
+    "partialAlphaFraction": 0.8399874369303385,
+    "runtimeBytes": 56540
+  },
+  {
+    "id": "red-panda-tent",
+    "source": "source/red-panda-tent.png",
+    "width": 1536,
+    "height": 1024,
+    "transparentFraction": 0.71502685546875,
+    "partialAlphaFraction": 0.28497314453125,
+    "runtimeBytes": 27204
+  },
+  {
+    "id": "rabbit-blanket",
+    "source": "source/rabbit-blanket.png",
+    "width": 1536,
+    "height": 1024,
+    "transparentFraction": 0.6008936564127604,
+    "partialAlphaFraction": 0.39910634358723956,
+    "runtimeBytes": 26178
+  },
+  {
+    "id": "rabbit-hedgehog-blanket",
+    "source": "source/rabbit-hedgehog-blanket.png",
+    "width": 1774,
+    "height": 887,
+    "transparentFraction": 0.7125007467248964,
+    "partialAlphaFraction": 0.2867436312310221,
+    "runtimeBytes": 21642
+  },
+  {
+    "id": "puppy-plush",
+    "source": "source/puppy-plush.png",
+    "width": 1328,
+    "height": 1184,
+    "transparentFraction": 0.5875580022793878,
+    "partialAlphaFraction": 0.4124419977206122,
+    "runtimeBytes": 36866
+  },
+  {
+    "id": "puppy-plush-hug",
+    "source": "source/puppy-plush-hug.png",
+    "width": 1536,
+    "height": 1024,
+    "transparentFraction": 0.6219272613525391,
+    "partialAlphaFraction": 0.37807273864746094,
+    "runtimeBytes": 29750
+  },
+  {
+    "id": "props/box",
+    "source": "source/props/box.png",
+    "width": 1536,
+    "height": 1024,
+    "transparentFraction": 0.6039422353108724,
+    "partialAlphaFraction": 0.3960577646891276,
+    "runtimeBytes": 25816
+  },
+  {
+    "id": "props/plush",
+    "source": "source/props/plush.png",
+    "width": 1536,
+    "height": 1024,
+    "transparentFraction": 0.7588322957356771,
+    "partialAlphaFraction": 0.2411677042643229,
+    "runtimeBytes": 21198
+  },
+  {
+    "id": "props/tent",
+    "source": "source/props/tent.png",
+    "width": 1536,
+    "height": 1024,
+    "transparentFraction": 0.7076816558837891,
+    "partialAlphaFraction": 0.29231834411621094,
+    "runtimeBytes": 24976
+  }
+]

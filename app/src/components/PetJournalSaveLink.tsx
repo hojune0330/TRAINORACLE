@@ -13,7 +13,7 @@ const SleepInnEntry = React.lazy(() => import('../screens/sleep-inn/SleepInnEntr
 export function PetJournalSaveLink({ journal }: { readonly journal: SavedPetJournalRef }) {
   const [ticket] = React.useState(capturePetJournalScope)
   const [revision, refresh] = React.useReducer(value => value + 1, 0)
-  const [opened, setOpened] = React.useState(false)
+  const [opened, setOpened] = React.useState<'setup' | 'room' | null>(null)
   const [retrying, setRetrying] = React.useState(false)
   const alive = React.useRef(true)
   React.useEffect(() => {
@@ -41,6 +41,8 @@ export function PetJournalSaveLink({ journal }: { readonly journal: SavedPetJour
   const currentDay = journal.date === today
   const ready = progress.status === 'READY'
   const canMeet = ready && progress.canMeet
+  const resting = ready && progress.friend.pose === 'sleeping'
+  const morning = ready && progress.friend.pose === 'waking'
   const summary = error ? '일지는 저장됐어요. 친구 진행은 반영하지 못했어요.'
     : !currentDay ? (ready && canMeet ? `친구 만남 기회 ${progress.credits}번 · 이 날짜는 오늘 진행에 더해지지 않아요.` : '이 날짜는 오늘 친구 진행에 더해지지 않아요.')
       : ready && progress.recordedToday ? (progress.credits > 0 ? `친구 만남 기회 ${progress.credits}번이 있어요` : `일지로 만나는 친구 · ${progress.days % 7}/7일`)
@@ -53,6 +55,7 @@ export function PetJournalSaveLink({ journal }: { readonly journal: SavedPetJour
   }
   return <>
     <div className="journal-save-friends" aria-label="일지와 친구들">
+      <strong>{!currentDay ? '일지를 저장했어요. 친구 방에도 들러 볼까요?' : resting ? '친구들은 자고 있어요. 아침에 다시 만나요.' : morning ? '친구들이 일어났어요. 밤에 무슨 일이 있었을까요?' : '일지를 저장했어요. 친구들 잠자리도 준비할까요?'}</strong>
       {ready && !error && <div className="journal-save-friends__pet">
         <PetSprite id={progress.friend.id} pose={progress.friend.pose} motion={progress.friend.pose === 'sleeping' ? 'sleep' : 'hello'} replay={journal.id} active={!opened} />
         <span>{petById(progress.friend.id).name}{progress.friend.pose === 'sleeping' ? '도 새근새근 자고 있어요.' : '도 방에서 기다리고 있어요.'}</span>
@@ -60,12 +63,13 @@ export function PetJournalSaveLink({ journal }: { readonly journal: SavedPetJour
       <p aria-live="polite">{summary}</p>
       <div className="journal-save-friends__actions">
         {error && <button type="button" disabled={retrying} onClick={() => { void retry() }}>{retrying ? '친구 진행 확인 중' : '친구 진행 다시 확인'}</button>}
-        <button type="button" onClick={() => setOpened(true)}>{canMeet ? '친구 만나기' : '우리 집 친구들'}<ChevronRight size={16} aria-hidden="true" /></button>
+        {currentDay && !resting && !morning && <button type="button" onClick={() => setOpened('setup')}>잠자리 준비하기<ChevronRight size={16} aria-hidden="true" /></button>}
+        <button type="button" onClick={() => setOpened('room')}>{morning ? '아침 장면 보기' : '친구 방 보기'}<ChevronRight size={16} aria-hidden="true" /></button>
       </div>
       {error && <details><summary>친구 진행 안내</summary><p>{error}</p></details>}
     </div>
     {opened && createPortal(<React.Suspense fallback={<p role="status">친구 방을 여는 중이에요.</p>}>
-      <SleepInnEntry date={journal.date} sourceJournal={{ entryId: journal.id }} startWithJournalMeeting={canMeet} onBack={() => { setOpened(false); refresh() }} returnLabel="저장 완료로 돌아가기" />
+      <SleepInnEntry date={journal.date} sourceJournal={{ entryId: journal.id }} startWithBedtime={opened === 'setup'} onBack={() => { setOpened(null); refresh() }} returnLabel="저장 완료로 돌아가기" />
     </React.Suspense>, document.body)}
   </>
 }

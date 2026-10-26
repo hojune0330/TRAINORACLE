@@ -22,6 +22,7 @@ export interface SleepInnEntryProps {
   /** Read the originating saved journal without replacing its completion/form. */
   readonly sourceJournal?: { readonly entryId?: string | undefined } | undefined
   readonly startWithJournalMeeting?: boolean | undefined
+  readonly startWithBedtime?: boolean | undefined
   readonly onBack: () => void
   readonly returnLabel?: string | undefined
   readonly onJournalSaved?: ((entry: JournalEntry) => void) | undefined
@@ -73,7 +74,7 @@ function useSleepInnDialog(dialog: React.RefObject<HTMLDialogElement | null>, on
   return React.useCallback(() => layerRef.current?.close(), [])
 }
 
-function SleepInnEntryScoped({ date, entryId, draft, sourceJournal, startWithJournalMeeting, onBack, returnLabel = '일지로 돌아가기', onJournalSaved }: SleepInnEntryProps) {
+function SleepInnEntryScoped({ date, entryId, draft, sourceJournal, startWithJournalMeeting, startWithBedtime, onBack, returnLabel = '일지로 돌아가기', onJournalSaved }: SleepInnEntryProps) {
   const [fromOldInvite] = React.useState(hasSleepInnInviteFragment)
   const [oldGame, setOldGame] = React.useState(hasSleepInnInviteFragment)
   const dialog = React.useRef<HTMLDialogElement>(null)
@@ -86,7 +87,17 @@ function SleepInnEntryScoped({ date, entryId, draft, sourceJournal, startWithJou
   // undefined permits the initial single-record choice; null is an explicit disconnect.
   const [selectedId, setSelectedId] = React.useState<string | null | undefined>(entryId)
   const [revision, refresh] = React.useReducer(value => value + 1, 0)
-  const [editing, setEditing] = React.useState<{ entry?: EveningEntry } | null>(null)
+  const [editing, setEditing] = React.useState<{ entry?: EveningEntry; date: string; morning: boolean } | null>(null)
+  const [morningDate, setMorningDate] = React.useState<string | null>(null)
+  const [morningSelectedId, setMorningSelectedId] = React.useState<string | undefined>(undefined)
+  const [morningChoice, setMorningChoice] = React.useState(false)
+  const morningSelect = React.useRef<HTMLSelectElement>(null)
+  const morningDateRef = React.useRef<string | null>(null)
+  const changeMorningDate = React.useCallback((next: string | null) => {
+    if (morningDateRef.current === next) return
+    morningDateRef.current = next
+    setMorningDate(next); setMorningSelectedId(undefined); setMorningChoice(false)
+  }, [])
   const [reading, setReading] = React.useState(false)
   const [receipt, setReceipt] = React.useState<string | null>(null)
   const [notice, setNotice] = React.useState<string | null>(null)
@@ -114,6 +125,15 @@ function SleepInnEntryScoped({ date, entryId, draft, sourceJournal, startWithJou
       window.removeEventListener('storage', update)
     }
   }, [])
+  React.useEffect(() => { if (morningChoice) morningSelect.current?.focus() }, [morningChoice])
+  const morningSnapshot = React.useMemo(() => {
+    if (!morningDate) return { available: true, entries: [] }
+    const read = loadEntriesForPlanSafety()
+    return { available: read.status === 'complete', entries: sleepJournalChoices(read.status === 'complete' ? read.entries : [], morningDate) }
+  }, [morningDate, revision])
+  const morningSelected = selectSleepJournal(morningSnapshot.entries, morningSelectedId)
+  const morningContext = morningDate ? sleepJournalProjection(morningDate, morningSelected,
+    morningSnapshot.available && !(morningSelectedId && !morningSelected)) : undefined
   const snapshot = React.useMemo(() => {
     // A saved-reader shortcut carries navigation metadata only. Do not infer a
     // different same-day sleep record or read body fields for this connection.
@@ -145,13 +165,47 @@ function SleepInnEntryScoped({ date, entryId, draft, sourceJournal, startWithJou
     }
     gameReturn.current = { focus: document.activeElement instanceof HTMLElement ? document.activeElement : null, scrollTop: dialog.current?.scrollTop ?? 0 }
     setNotice(null); setReceipt(null)
-    setEditing(current?.kind === 'evening' ? { entry: current } : {})
+    setEditing(current?.kind === 'evening' ? { entry: current, date, morning: false } : { date, morning: false })
+  }
+  const openMorningJournal = (wakeDate: string, explicitlyNew = false) => {
+    if (draft) {
+      if (draft.date === wakeDate) close()
+      else setNotice('아직 쓰고 있는 일지가 있어요. 먼저 그 일지를 마친 뒤 수면을 적어 주세요.')
+      return
+    }
+    if (wakeDate !== morningDate) { setNotice('아침 날짜를 다시 확인해 주세요.'); return }
+    const read = loadEntriesForPlanSafety()
+    if (read.status !== 'complete') { setNotice('일지를 불러오지 못했어요. 잠시 뒤 다시 열어 주세요.'); return }
+    const choices = sleepJournalChoices(read.entries, wakeDate)
+    if (explicitlyNew && choices.length) { refresh(); setMorningChoice(true); setNotice('이 날짜에 기록이 생겼어요. 먼저 기록을 골라 주세요.'); return }
+    const chosen = selectSleepJournal(choices, explicitlyNew ? undefined : morningSelectedId)
+    if (!chosen && (choices.length > 1 || !explicitlyNew && morningSelectedId)) { setMorningChoice(true); return }
+    const accountEntry = chosen ? readAccountJournalPrivateEntry(chosen.id) : undefined
+    const current = accountEntry ?? (chosen ? loadEntries().find(entry => entry.id === chosen.id) : undefined)
+    if (chosen && (!current || current.kind !== 'evening' || current.date !== wakeDate
+      || current.memoPurpose === 'PRIVATE_SELF_ONLY' && current.note === ''
+      || !canEditJournalEntry(accountEntry ? { ...current, syncState: 'local' } : current))) {
+      setNotice('이 기록은 일지에서 확인해 주세요. 여기서는 새 기록을 덧붙이지 않아요.'); return
+    }
+    gameReturn.current = { focus: document.activeElement instanceof HTMLElement ? document.activeElement : null, scrollTop: dialog.current?.scrollTop ?? 0 }
+    setMorningChoice(false); setNotice(null); setReceipt(null)
+    setEditing(current?.kind === 'evening' ? { entry: current, date: wakeDate, morning: true } : { date: wakeDate, morning: true })
   }
   const returnFromEditor = () => { restoringGame.current = true; setEditing(null); refresh() }
   const returnFromReader = () => { restoringGame.current = true; setReading(false) }
   return <dialog ref={dialog} aria-label={oldGame ? '꿈손님 여관' : '우리 집 친구들'} style={dialogStyle}
     onCancel={event => { event.preventDefault(); if (reading) readerExit.current?.(); else if (editing) editorExit.current?.(); else close() }}>
     <div hidden={editing !== null || reading}>
+      {morningChoice && morningDate && <section className="pet-home pet-morning-journal-choice" aria-label="아침 수면 기록 고르기">
+        <h2>어느 수면 기록을 볼까요?</h2><p>{morningDate} · {morningSelectedId && !morningSelected ? '고른 기록을 찾을 수 없어요. 다른 기록을 골라 주세요.' : '아침 인사에 연결할 기록을 골라 주세요.'}</p>
+        <label htmlFor="pet-morning-journal">아침 수면 기록</label>
+        <select ref={morningSelect} id="pet-morning-journal" value={morningSelected?.id ?? ''} onChange={event => setMorningSelectedId(event.target.value || undefined)}>
+          <option value="">기록 고르기</option>{morningSnapshot.entries.map((entry, index) => <option key={entry.id} value={entry.id}>{index + 1}번째 기록 · {entry.sleepH > 0 ? `${entry.sleepH}시간` : '시간 미입력'}</option>)}
+        </select>
+        <button type="button" className="pet-primary" disabled={!morningSelected} onClick={() => openMorningJournal(morningDate)}>이 수면 기록 열기</button>
+        {!morningSnapshot.entries.length && <><p>이 날짜에 남은 수면 기록이 없어요.</p><button type="button" className="pet-primary" onClick={() => openMorningJournal(morningDate, true)}>새 수면 기록 적기</button></>}
+        <button type="button" className="pet-secondary" onClick={() => setMorningChoice(false)}>나중에 고르기</button>
+      </section>}
       {!draft && !sourceJournal && (snapshot.entries.length > 1 || selectedMissing || disconnected) && <section style={{ padding: 'var(--space-4)' }} aria-label="연결할 일지 선택">
         {selectedMissing && <p role="status">연결했던 일지를 찾을 수 없어요. 다른 기록을 고르거나 연결을 해제해 주세요.</p>}
         <label htmlFor="sleep-inn-journal-choice">{date}의 컨디션 기록</label>
@@ -169,15 +223,18 @@ function SleepInnEntryScoped({ date, entryId, draft, sourceJournal, startWithJou
       {oldGame ? <SleepInnGame journal={context} persistenceScope={activeLocalAccount() ?? 'guest'} onBack={fromOldInvite ? close : () => setOldGame(false)}
         onOpenJournal={openJournal} returnLabel={fromOldInvite ? returnLabel : '우리 방으로 돌아가기'} onCanExitReady={registerGameCanExit} />
         : <PetRoom journal={context} persistenceScope={activeLocalAccount() ?? 'guest'} onBack={close}
-          onOpenJournal={openJournal} journalLinkLabel={sourceJournal ? sourceJournal.entryId ? '저장한 일지 보기' : '이날 일지 보기' : undefined} startWithJournalMeeting={startWithJournalMeeting} returnLabel={returnLabel} onCanExitReady={registerGameCanExit} onOldGame={() => setOldGame(true)} />}
+          onOpenJournal={openJournal} journalLinkLabel={sourceJournal ? sourceJournal.entryId ? '저장한 일지 보기' : '이날 일지 보기' : undefined} startWithJournalMeeting={startWithJournalMeeting} startWithBedtime={startWithBedtime}
+          morningJournal={morningContext} onMorningDateChange={changeMorningDate} onOpenMorningJournal={openMorningJournal}
+          returnLabel={returnLabel} onCanExitReady={registerGameCanExit} onOldGame={() => setOldGame(true)} />}
     </div>
     {reading && sourceJournal && <PetSourceJournalReader date={date} entryId={sourceJournal.entryId} onBack={returnFromReader} exitRef={readerExit} />}
-    {editing !== null && <LogEntry entryType="evening" targetDate={date} initialEntry={editing.entry}
+    {editing !== null && <LogEntry entryType="evening" targetDate={editing.date} initialEntry={editing.entry}
       initialSection="sleep" embedded onNavigationReady={exit => { editorExit.current = exit }}
       onBack={returnFromEditor} onExit={returnFromEditor}
       onDone={(_kind, saved, reviewMessage, storageMessage) => {
-        if (!saved || saved.kind !== 'evening' || saved.date !== date) return
-        setSelectedId(saved.id); setReceipt([storageMessage ?? '이 기기에 일지를 저장했어요.', reviewMessage].filter(Boolean).join(' '))
+        if (!saved || saved.kind !== 'evening' || saved.date !== editing.date) return
+        if (editing.morning) setMorningSelectedId(saved.id); else setSelectedId(saved.id)
+        setReceipt([storageMessage ?? '이 기기에 일지를 저장했어요.', reviewMessage].filter(Boolean).join(' '))
         onJournalSaved?.(saved); returnFromEditor()
       }} />}
   </dialog>

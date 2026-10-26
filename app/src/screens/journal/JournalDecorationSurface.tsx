@@ -66,6 +66,7 @@ import { JournalDecorationPreview, useJournalDecorationPreviews } from "./Journa
 import "./journal-decoration-unified.css"
 import { ACCOUNT_AUTH_STATE_EVENT, accountAuthState } from "../../domain/account/account-auth-state"
 import { AccountCalendarDecorationConflictPanel } from "../../components/AccountCalendarDecorationConflictPanel"
+import { readPetObservationRewardScenes } from "../../domain/pet-observation-rewards"
 
 const CalendarDecorationEditor = React.lazy(() => import("./CalendarDecorationEditor").then(module => ({ default: module.CalendarDecorationEditor })))
 // Rejected ownership outbox data remains an owner-scoped local draft, not a
@@ -258,7 +259,7 @@ function JournalDecorationSurfaceSession({
         /* 계정 보상은 서버가 소유권을 검증한다. 기기 모드에서만 로컬 규칙으로 자동 지급한다. */
         const claim = claimRewardDecorations(
           canonical,
-          { journalDays: summary.journalDays, visitDays: summary.visitDays },
+          { journalDays: summary.journalDays, visitDays: summary.visitDays, petObservationScenes: readPetObservationRewardScenes({ today }) },
           today,
           storageVersion,
         )

@@ -9,7 +9,7 @@ import { careDay, createHome, petHomeKey } from '../screens/pet-room/pet-engine'
 import { PET_IDS } from '../screens/pet-room/pet-catalog'
 import type { SleepInnEntryProps } from '../screens/sleep-inn/SleepInnEntry'
 
-vi.mock('../screens/sleep-inn/SleepInnEntry', () => ({ SleepInnEntry: ({ date, sourceJournal, startWithJournalMeeting, onBack, returnLabel }: SleepInnEntryProps) => <section role="dialog" aria-label="친구 연결 검사"><p>{date} · {sourceJournal?.entryId}</p><p>{startWithJournalMeeting ? '만남으로 진입' : '방으로 진입'}</p><button onClick={onBack}>{returnLabel}</button></section> }))
+vi.mock('../screens/sleep-inn/SleepInnEntry', () => ({ SleepInnEntry: ({ date, sourceJournal, startWithJournalMeeting, startWithBedtime, onBack, returnLabel }: SleepInnEntryProps) => <section role="dialog" aria-label="친구 연결 검사"><p>{date} · {sourceJournal?.entryId}</p><p>{startWithBedtime ? '잠자리 준비로 진입' : startWithJournalMeeting ? '만남으로 진입' : '방으로 진입'}</p><button onClick={onBack}>{returnLabel}</button></section> }))
 const owner = 'completion-fixture'
 const journal = { id: 'confirmed-synthetic-id', date: '2026-10-20', kind: 'evening' }
 beforeEach(() => {
@@ -30,7 +30,7 @@ it('shows committed progress without writing and opens only the explicit origina
   expect(screen.getByText('일지로 만나는 친구 · 3/7일')).toBeVisible()
   expect(screen.queryByRole('dialog')).toBeNull()
   expect(write).not.toHaveBeenCalled()
-  fireEvent.click(screen.getByRole('button', { name: '우리 집 친구들' }))
+  fireEvent.click(screen.getByRole('button', { name: '친구 방 보기' }))
   const dialog = await screen.findByRole('dialog', { name: '친구 연결 검사' })
   expect(dialog).toHaveTextContent(`${journal.date} · ${journal.id}`)
   expect(dialog).toHaveTextContent('방으로 진입')
@@ -40,7 +40,7 @@ it('shows committed progress without writing and opens only the explicit origina
   expect(write).not.toHaveBeenCalled()
 })
 
-it('refreshes a persisted seventh day and enters the meeting only after the user asks', async () => {
+it('preserves seventh-day meeting credit while opening the room without an automatic meeting', async () => {
   homeWithDays(6)
   render(<PetJournalSaveLink journal={journal} />)
   homeWithDays(7)
@@ -48,8 +48,8 @@ it('refreshes a persisted seventh day and enters the meeting only after the user
   expect(screen.getByText('친구 만남 기회 1번이 있어요')).toBeVisible()
   expect(screen.queryByRole('dialog')).toBeNull()
   const before = localStorage.getItem(petHomeKey(owner))
-  fireEvent.click(screen.getByRole('button', { name: '친구 만나기' }))
-  expect(await screen.findByRole('dialog')).toHaveTextContent('만남으로 진입')
+  fireEvent.click(screen.getByRole('button', { name: '친구 방 보기' }))
+  expect(await screen.findByRole('dialog')).toHaveTextContent('방으로 진입')
   expect(localStorage.getItem(petHomeKey(owner))).toBe(before)
 })
 
@@ -57,7 +57,7 @@ it('does not turn a past save or unavailable storage into a zero-count success',
   const write = vi.spyOn(Storage.prototype, 'setItem')
   const view = render(<PetJournalSaveLink journal={{ ...journal, date: '2026-10-19' }} />)
   expect(screen.getByText('이 날짜는 오늘 친구 진행에 더해지지 않아요.')).toBeVisible()
-  expect(screen.getByRole('button', { name: '우리 집 친구들' })).toBeVisible()
+  expect(screen.getByRole('button', { name: '친구 방 보기' })).toBeVisible()
   expect(screen.queryByText(/0\/7/)).toBeNull()
   localStorage.setItem(petHomeKey(owner), '{corrupt')
   write.mockClear()
@@ -65,6 +65,24 @@ it('does not turn a past save or unavailable storage into a zero-count success',
   act(() => window.dispatchEvent(new Event(PET_JOURNAL_EVENT)))
   expect(screen.getByText('일지는 저장됐어요. 친구 진행을 확인하지 못했어요.')).toBeVisible()
   expect(screen.queryByText(/0\/7/)).toBeNull()
+  expect(write).not.toHaveBeenCalled()
+})
+
+it('offers only a neutral room visit for a past-date save without requesting bedtime or writing pet progress', async () => {
+  homeWithDays(3)
+  const pastJournal = { ...journal, date: '2026-10-19' }
+  const before = localStorage.getItem(petHomeKey(owner))
+  const write = vi.spyOn(Storage.prototype, 'setItem')
+  render(<PetJournalSaveLink journal={pastJournal} />)
+  expect(screen.getByText('일지를 저장했어요. 친구 방에도 들러 볼까요?')).toBeVisible()
+  expect(screen.queryByRole('button', { name: '잠자리 준비하기' })).toBeNull()
+  expect(screen.queryByText('일지를 저장했어요. 친구들 잠자리도 준비할까요?')).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: '친구 방 보기' }))
+  const dialog = await screen.findByRole('dialog', { name: '친구 연결 검사' })
+  expect(dialog).toHaveTextContent(`${pastJournal.date} · ${pastJournal.id}`)
+  expect(dialog).toHaveTextContent('방으로 진입')
+  expect(dialog).not.toHaveTextContent('잠자리 준비로 진입')
+  expect(localStorage.getItem(petHomeKey(owner))).toBe(before)
   expect(write).not.toHaveBeenCalled()
 })
 
@@ -92,7 +110,7 @@ it.each(['PENDING', 'CONFLICT'] as const)('does not present a friend shortcut fo
 it('drops the prior owner shortcut on account change instead of reading another home', () => {
   homeWithDays(7)
   render(<PetJournalSaveLink journal={journal} />)
-  expect(screen.getByRole('button', { name: '친구 만나기' })).toBeVisible()
+  expect(screen.getByRole('button', { name: '잠자리 준비하기' })).toBeVisible()
   act(() => setActiveLocalAccount('another-completion-owner'))
   expect(screen.queryByLabelText('일지와 친구들')).toBeNull()
   expect(localStorage.getItem(petHomeKey('another-completion-owner'))).toBeNull()
@@ -108,6 +126,22 @@ it('keeps earned opportunities without offering a nonexistent meeting after all 
   render(<PetJournalSaveLink journal={journal} />)
   expect(screen.getByText('친구 만남 기회 1번이 있어요')).toBeVisible()
   expect(screen.queryByRole('button', { name: '친구 만나기' })).toBeNull()
-  expect(screen.getByRole('button', { name: '우리 집 친구들' })).toBeVisible()
+  expect(screen.getByRole('button', { name: '친구 방 보기' })).toBeVisible()
+  expect(localStorage.getItem(petHomeKey(owner))).toBe(before)
+})
+
+it('passes an explicit setup intent without putting pets to sleep or granting a bedtime day', async () => {
+  homeWithDays(3)
+  const before = localStorage.getItem(petHomeKey(owner))
+  const write = vi.spyOn(Storage.prototype, 'setItem')
+  render(<PetJournalSaveLink journal={journal} />)
+  expect(screen.queryByRole('dialog')).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: '잠자리 준비하기' }))
+  expect(await screen.findByRole('dialog', { name: '친구 연결 검사' })).toHaveTextContent('잠자리 준비로 진입')
+  expect(localStorage.getItem(petHomeKey(owner))).toBe(before)
+  expect(write).not.toHaveBeenCalled()
+  fireEvent.click(screen.getByRole('button', { name: '저장 완료로 돌아가기' }))
+  fireEvent.click(screen.getByRole('button', { name: '친구 방 보기' }))
+  expect(await screen.findByRole('dialog', { name: '친구 연결 검사' })).toHaveTextContent('방으로 진입')
   expect(localStorage.getItem(petHomeKey(owner))).toBe(before)
 })

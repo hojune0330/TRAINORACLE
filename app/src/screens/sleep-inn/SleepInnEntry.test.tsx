@@ -9,9 +9,14 @@ import { useTaskFlowBack } from '../../hooks/useTaskFlowBack'
 import type { SleepInnGameProps } from './types'
 
 vi.mock('./SleepInnGame', () => ({ SleepInnGame: ({ onBack }: SleepInnGameProps) => <button onClick={onBack}>게임 닫기</button> }))
-vi.mock('../pet-room/PetRoom', () => ({ PetRoom: ({ journal, onBack, onOpenJournal, journalLinkLabel }: SleepInnGameProps) => {
+vi.mock('../pet-room/PetRoom', () => ({ PetRoom: ({ journal, morningJournal, onMorningDateChange, onOpenMorningJournal, startWithBedtime, onBack, onOpenJournal, journalLinkLabel }: SleepInnGameProps) => {
   const [turn, setTurn] = React.useState(0)
+  const [wakeDate, setWakeDate] = React.useState('2026-10-10')
   return <section aria-label="게임 검사 화면"><p data-testid="sleep-context">{JSON.stringify(journal)}</p>
+    <p data-testid="morning-context">{JSON.stringify(morningJournal ?? null)}</p><p>{startWithBedtime ? '잠자리 준비로 진입' : '방으로 진입'}</p>
+    <button onClick={() => onMorningDateChange?.(wakeDate)}>아침 날짜 알리기</button>
+    <button onClick={() => { setWakeDate('2026-10-11'); onMorningDateChange?.('2026-10-11') }}>다른 아침 날짜 알리기</button>
+    <button onClick={() => onOpenMorningJournal?.(wakeDate)}>아침 수면 일지 열기</button>
     <button onClick={() => setTurn(value => value + 1)}>게임 진행 {turn}</button>
     <button onClick={onOpenJournal}>{journalLinkLabel ?? '수면 일지 열기'}</button><button onClick={onBack}>게임 닫기</button></section>
 } }))
@@ -294,4 +299,100 @@ it('keeps an approved date-only entry as a date reader instead of choosing one s
   expect(reader).toHaveTextContent('같은 날짜의 두 번째 합성 훈련')
   expect(reader.querySelector('[data-testid="journal-manage-toggle"]')).toBeNull()
   expect(screen.queryByRole('textbox', { name: '수면 시간' })).toBeNull()
+})
+
+const wakeDate = '2026-10-10'
+const morningRecord: EveningEntry = { ...original, id: 'exact-morning-sleep', date: wakeDate, savedAt: '2026-10-10T01:00:00Z', sleepH: 8, sleepQuality: 5 }
+
+it('uses the actual wake date for morning context instead of the journal that opened the room', () => {
+  expect(saveEntry({ ...original, sleepQuality: 1 }).ok).toBe(true)
+  render(<SleepInnEntry date={date} entryId={original.id} startWithBedtime onBack={vi.fn()} />)
+  expect(screen.getByText('잠자리 준비로 진입')).toBeVisible()
+  expect(JSON.parse(screen.getByTestId('sleep-context').textContent!)).toMatchObject({ date, sleepQuality: 1 })
+  fireEvent.click(screen.getByRole('button', { name: '아침 날짜 알리기' }))
+  expect(JSON.parse(screen.getByTestId('morning-context').textContent!)).toEqual({ date: wakeDate, status: 'missing', sourceLabel: '연결할 수면 기록 없음' })
+  expect(loadEntries()).toHaveLength(1)
+})
+
+it('edits only the exact wake-date record while retaining the originating journal as a read-only reader', async () => {
+  expect(saveEntry(source).ok).toBe(true)
+  expect(saveEntry(morningRecord).ok).toBe(true)
+  const savedSource = loadEntries().find(entry => entry.id === source.id)
+  const saved = vi.fn()
+  render(<SleepInnEntry date={date} sourceJournal={{ entryId: source.id }} onBack={vi.fn()} onJournalSaved={saved} />)
+  fireEvent.click(screen.getByRole('button', { name: '게임 진행 0' }))
+  fireEvent.click(screen.getByRole('button', { name: '아침 날짜 알리기' }))
+  expect(JSON.parse(screen.getByTestId('morning-context').textContent!)).toMatchObject({ date: wakeDate, entryId: morningRecord.id, sleepQuality: 5, sleepQualityExplicit: true })
+  expect(JSON.parse(screen.getByTestId('sleep-context').textContent!)).not.toHaveProperty('sleepQuality')
+  const gameState = window.history.state
+  fireEvent.click(screen.getByRole('button', { name: '아침 수면 일지 열기' }))
+  expect(screen.getByRole('textbox', { name: '수면 시간' })).toHaveValue('8')
+  expect(document.querySelector(`time[datetime="${wakeDate}"]`)).not.toBeNull()
+  fireEvent.change(screen.getByRole('textbox', { name: '수면 시간' }), { target: { value: '7.5' } })
+  fireEvent.click(screen.getByRole('button', { name: '입력 확인으로' }))
+  fireEvent.click(screen.getByRole('button', { name: '수정 저장' }))
+  await waitFor(() => expect(loadEntries().find(entry => entry.id === morningRecord.id)).toMatchObject({ date: wakeDate, sleepH: 7.5 }))
+  await popTo(gameState)
+  await waitFor(() => expect(saved).toHaveBeenCalledOnce())
+  expect(loadEntries()).toHaveLength(2)
+  expect(loadEntries().find(entry => entry.id === source.id)).toEqual(savedSource)
+  expect(screen.getByRole('button', { name: '게임 진행 1' })).toBeVisible()
+  fireEvent.click(screen.getByRole('button', { name: '저장한 일지 보기' }))
+  const reader = await screen.findByRole('region', { name: '저장한 일지' })
+  await waitFor(() => expect(reader).toHaveTextContent(source.title))
+  expect(reader.querySelector('[data-testid="journal-manage-toggle"]')).toBeNull()
+  expect(screen.queryByRole('textbox', { name: '수면 시간' })).toBeNull()
+})
+
+it('requires an explicit choice among multiple wake-date records and clears it when the wake date changes', () => {
+  expect(saveEntry(morningRecord).ok).toBe(true)
+  expect(saveEntry({ ...morningRecord, id: 'other-morning', sleepH: 6, sleepQuality: 1 }).ok).toBe(true)
+  render(<SleepInnEntry date={date} sourceJournal={{ entryId: source.id }} onBack={vi.fn()} />)
+  fireEvent.click(screen.getByRole('button', { name: '아침 날짜 알리기' }))
+  expect(JSON.parse(screen.getByTestId('morning-context').textContent!)).not.toHaveProperty('sleepQuality')
+  fireEvent.click(screen.getByRole('button', { name: '아침 수면 일지 열기' }))
+  expect(screen.getByRole('region', { name: '아침 수면 기록 고르기' })).toBeVisible()
+  expect(screen.queryByRole('textbox', { name: '수면 시간' })).toBeNull()
+  expect(screen.getByRole('button', { name: '이 수면 기록 열기' })).toBeDisabled()
+  fireEvent.change(screen.getByRole('combobox', { name: '아침 수면 기록' }), { target: { value: 'other-morning' } })
+  expect(JSON.parse(screen.getByTestId('morning-context').textContent!)).toMatchObject({ date: wakeDate, entryId: 'other-morning', sleepQuality: 1 })
+  fireEvent.click(screen.getByRole('button', { name: '나중에 고르기' }))
+  fireEvent.click(screen.getByRole('button', { name: '다른 아침 날짜 알리기' }))
+  expect(JSON.parse(screen.getByTestId('morning-context').textContent!)).toEqual({ date: '2026-10-11', status: 'missing', sourceLabel: '연결할 수면 기록 없음' })
+  expect(loadEntries()).toHaveLength(2)
+})
+
+it('does not replace a deleted morning choice with another record or create a duplicate', async () => {
+  expect(saveEntry(morningRecord).ok).toBe(true)
+  expect(saveEntry({ ...morningRecord, id: 'remaining-morning', sleepH: 6 }).ok).toBe(true)
+  render(<SleepInnEntry date={date} onBack={vi.fn()} />)
+  fireEvent.click(screen.getByRole('button', { name: '아침 날짜 알리기' }))
+  fireEvent.click(screen.getByRole('button', { name: '아침 수면 일지 열기' }))
+  fireEvent.change(screen.getByRole('combobox', { name: '아침 수면 기록' }), { target: { value: morningRecord.id } })
+  fireEvent.click(screen.getByRole('button', { name: '나중에 고르기' }))
+  act(() => { expect(deleteEntry(morningRecord.id).ok).toBe(true) })
+  await waitFor(() => expect(JSON.parse(screen.getByTestId('morning-context').textContent!)).toMatchObject({ status: 'unavailable' }))
+  fireEvent.click(screen.getByRole('button', { name: '아침 수면 일지 열기' }))
+  expect(screen.queryByRole('textbox', { name: '수면 시간' })).toBeNull()
+  expect(screen.getByRole('button', { name: '이 수면 기록 열기' })).toBeDisabled()
+  expect(loadEntries()).toHaveLength(1)
+  fireEvent.change(screen.getByRole('combobox', { name: '아침 수면 기록' }), { target: { value: 'remaining-morning' } })
+  fireEvent.click(screen.getByRole('button', { name: '이 수면 기록 열기' }))
+  expect(screen.getByRole('textbox', { name: '수면 시간' })).toHaveValue('6')
+  expect(loadEntries()).toHaveLength(1)
+})
+
+it.each([wakeDate, date])('does not open a second morning editor over the existing %s draft', async draftDate => {
+  const close = vi.fn()
+  const before = loadEntries()
+  render(<SleepInnEntry date={draftDate} draft={{ date: draftDate, status: 'draft' }} onBack={close} />)
+  fireEvent.click(screen.getByRole('button', { name: '아침 날짜 알리기' }))
+  fireEvent.click(screen.getByRole('button', { name: '아침 수면 일지 열기' }))
+  expect(screen.queryByRole('textbox', { name: '수면 시간' })).toBeNull()
+  expect(loadEntries()).toEqual(before)
+  if (draftDate === wakeDate) await waitFor(() => expect(close).toHaveBeenCalledOnce())
+  else {
+    expect(close).not.toHaveBeenCalled()
+    expect(screen.getByRole('alert')).toHaveTextContent('아직 쓰고 있는 일지가 있어요. 먼저 그 일지를 마친 뒤 수면을 적어 주세요.')
+  }
 })
