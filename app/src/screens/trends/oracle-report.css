@@ -1,5 +1,5 @@
 .oracle-report { padding: var(--space-4) var(--space-5) var(--space-6); min-width: 0; font-family: var(--sans); color: var(--ink); word-break: keep-all; overflow-wrap: anywhere; }
-.oracle-report button { min-width: var(--app-touch-min); min-height: var(--app-touch-min); cursor: pointer; font: inherit; line-height: 1.5; white-space: normal; }
+.oracle-report button { min-width: var(--app-touch-min); min-height: var(--app-touch-min); cursor: pointer; font: inherit; line-height: 1.5; white-space: normal; scroll-margin-block: var(--space-2); }
 .oracle-report :is(button, summary):focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
 .oracle-report__controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-5); }
 .oracle-report__controls .app-choice-group { display: flex; flex-wrap: wrap; flex: 1 1 9rem; gap: var(--space-1); }
