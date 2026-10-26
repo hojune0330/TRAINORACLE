@@ -4,9 +4,8 @@ import { formatPaceSeconds, roundedPaceSeconds } from "@impl/prescription/record
 import { matchesPacePrescriptionSequence } from "@impl/prescription/pace-sequence"
 import { parsePrescriptionSequence } from "@impl/prescription/sequence"
 import { deriveSequenceV3Totals, parsePrescriptionSequenceV3 } from "@impl/prescription/sequence-v3"
-import { paceClock } from "./pace-tools"
 import { notationDistance, notationEffort, notationNumber, notationPace, notationRecovery, notationTime,
-  sequencePhaseNotation, sessionWorkoutName, type WorkoutDisplaySession, type WorkoutNotationStyle } from "./workout-notation"
+  sequencePhaseLines, sequencePhaseNotation, sessionWorkoutName, type WorkoutDisplaySession, type WorkoutNotationStyle } from "./workout-notation"
 import { TRAINING_EXPLANATION_PROFILES } from "./training-explanation-profiles"
 import { catalogExecutionReading, catalogWorkoutReader } from "./catalog-workout-reader"
 import { catalogPrescriptionBasis, sessionPrescriptionBasis, sessionPrimaryBasis } from "./prescription-basis"
@@ -21,7 +20,7 @@ export type WorkoutMemoContext = {
   readonly reviewedExplanation?: ResolvedAdjustedExplanation | ReviewedAdjustedExplanationV3
 }
 export type WorkoutMemoSession = WorkoutDisplaySession & { readonly day: number; readonly slot: "AM" | "PM" }
-export type WorkoutMemoLine = { readonly label: string; readonly text: string; readonly emphasis?: boolean }
+export type WorkoutMemoLine = { readonly label: string; readonly text: string; readonly emphasis?: boolean; readonly steps?: readonly string[] }
 export type WorkoutMemoExplanation = {
   readonly scope: string
   readonly version: string
@@ -76,7 +75,10 @@ function projectMemo(session: WorkoutMemoSession, context: WorkoutMemoContext, w
     lines.push({ label: "목표", text: wording === "PLAIN" ? `${distance}마다 ${notationTime(roundedPaceSeconds(p.targetRepSeconds), wording)}`
       : p.repetitionDistanceM >= 1000 ? `@ ${notationPace(p.targetRepSeconds * 1000 / p.repetitionDistanceM)}`
         : `@ ${notationNumber(roundedPaceSeconds(p.targetRepSeconds))}s/${distance}`, emphasis: true })
-    if (p.repetitionDistanceM >= 1000) lines.push({ label: "1회 목표", text: `${distance} = ${paceClock(p.targetRepSeconds)} (${notationNumber(roundedPaceSeconds(p.targetRepSeconds))}초)` })
+    if (wording === "COACH" && p.repetitionDistanceM >= 1000
+      && (p.repetitionDistanceM > 1000 || roundedPaceSeconds(p.targetRepSeconds) !== Math.round(p.targetRepSeconds))) {
+      lines.push({ label: "1회 목표", text: `${distance} = ${notationTime(roundedPaceSeconds(p.targetRepSeconds), wording)}` })
+    }
     if (p.repetitionsPerSet > 1) lines.push({ label: "반복 사이", text: p.repetitionRecoveryMode === "NOT_APPLICABLE" ? "따로 쉬지 않음"
       : notationRecovery({ mode: p.repetitionRecoveryMode, seconds: p.repetitionRecoverySeconds }, wording) })
     if (p.setCount > 1) lines.push({ label: "세트 사이", text: p.setRecoveryMode === "NOT_APPLICABLE" ? "따로 쉬지 않음"
@@ -87,8 +89,11 @@ function projectMemo(session: WorkoutMemoSession, context: WorkoutMemoContext, w
       cooldown.rpeMin, cooldown.rpeMax].every(value => Number.isFinite(value) && value >= 0)) return null
     if (!Number.isInteger(warmup.strides.repetitions) || warmup.rpeMin > warmup.rpeMax || cooldown.rpeMin > cooldown.rpeMax
       || warmup.rpeMax > 10 || cooldown.rpeMax > 10) return null
-    lines.push({ label: "준비", text: `${notationTime(warmup.easyDurationMinutes * 60, wording)} · ${notationEffort(`RPE ${range(warmup.rpeMin, warmup.rpeMax)}`, wording)}`
-      + (warmup.strides.repetitions > 0 ? ` → ${warmup.strides.repetitions} × ${notationTime(warmup.strides.durationSeconds, wording)} ${notationEffort("PROGRESSIVE_NOT_ALL_OUT", wording)} · 반복 사이 ${notationTime(warmup.strides.recoverySeconds, wording)} ${wording === "PLAIN" ? "걷기/조깅" : "Walk/Jog"}` : "") })
+    const warmupSteps = [
+      `${notationTime(warmup.easyDurationMinutes * 60, wording)} · ${notationEffort(`RPE ${range(warmup.rpeMin, warmup.rpeMax)}`, wording)}`,
+      ...(warmup.strides.repetitions > 0 ? [`${warmup.strides.repetitions} × ${notationTime(warmup.strides.durationSeconds, wording)} ${notationEffort("PROGRESSIVE_NOT_ALL_OUT", wording)} · 반복 사이 ${notationTime(warmup.strides.recoverySeconds, wording)} ${wording === "PLAIN" ? "걷기/조깅" : "Walk/Jog"}`] : []),
+    ]
+    lines.push({ label: "준비", text: warmupSteps.join("\n"), steps: warmupSteps })
     lines.push({ label: "정리", text: `${notationTime(cooldown.easyDurationMinutes * 60, wording)} · ${notationEffort(`RPE ${range(cooldown.rpeMin, cooldown.rpeMax)}`, wording)}` })
     basis = sessionPrescriptionBasis(session)
     if (p.stopCodes.includes("STOP_NEW_OR_WORSENING_PAIN")) warnings.push("새 통증이나 심해지는 통증이 생기면 중단")
@@ -115,7 +120,10 @@ function projectMemo(session: WorkoutMemoSession, context: WorkoutMemoContext, w
       lines.push({ label: "본운동", text: reading?.phases.main ?? sequencePhaseNotation(sequence, "main", targets, wording), emphasis: true })
       for (const [phase, label] of [["warmup", "준비"], ["cooldown", "정리"]] as const) {
         const text = reading?.phases[phase] ?? sequencePhaseNotation(sequence, phase, targets, wording)
-        if (text) lines.push({ label, text })
+        if (text) {
+          const steps = reading?.phaseSteps[phase] ?? sequencePhaseLines(sequence, phase, targets, wording)
+          lines.push({ label, text: steps.join("\n"), steps })
+        }
       }
       basis = targets.length ? "저장 당시 실제 경기 기록 · 구간별 평균 페이스 환산" : "구간에 적힌 힘든 정도"
       if (catalog) {

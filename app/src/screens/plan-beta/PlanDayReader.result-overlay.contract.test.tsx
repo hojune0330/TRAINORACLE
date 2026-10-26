@@ -4,12 +4,48 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { AppShellFrame, type ShellToastState } from "../../components/AppShellFrame"
 import { beginBrowserPopNavigation } from "../../navigation/browserNavigation"
 import { PlanDayReader } from "./PlanDayReader"
+import { CalendarJournalDetails } from "../../components/CalendarJournalDetails"
+import type { JournalEntry } from "../../domain/journal-schema"
+
+vi.mock("../LogDetail", () => ({ LogDetail: () => <div>synthetic day original</div> }))
 
 beforeEach(() => {
   window.history.replaceState({ parent: "synthetic-plan" }, "", window.location.href)
   vi.spyOn(window.history, "back").mockImplementation(() => {})
 })
 afterEach(async () => { cleanup(); await Promise.resolve(); vi.restoreAllMocks() })
+
+it("preserves the day journal across AM/PM and consumes its Back before closing the reader", async () => {
+  const entry: JournalEntry = { id: "synthetic-day-navigation", kind: "post-session", date: "2026-10-02",
+    savedAt: "2026-10-02T09:00:00.000Z", syncState: "local", system: "", title: "synthetic", memo: "",
+    distanceKm: "", durationMin: "", avgPace: "", rpe: 0 }
+  const before = JSON.stringify(entry), close = vi.fn(), push = vi.spyOn(window.history, "pushState")
+  render(<PlanDayReader date={entry.date} sessions={[{ slot: "AM" }, { slot: "PM" }]}
+    canPrevious={false} canNext={false} onPrevious={vi.fn()} onNext={vi.fn()} onClose={close}>
+    <section data-session-slot="AM">AM</section><section data-session-slot="PM">PM</section>
+    <CalendarJournalDetails entries={[entry]} date={entry.date} />
+  </PlanDayReader>)
+  const readerState = window.history.state
+  fireEvent.click(screen.getByRole("button", { name: "일지·메모 원문 열기" }))
+  expect(await screen.findByText("synthetic day original")).toBeVisible()
+  const originalState = window.history.state
+  fireEvent.click(screen.getByRole("button", { name: "오후" }))
+  expect(screen.getByText("synthetic day original")).toBeVisible()
+  expect(window.history.state).toEqual(originalState)
+  expect(push).toHaveBeenCalledTimes(2)
+  fireEvent.click(screen.getByRole("button", { name: "달력으로 돌아가기" }))
+  expect(window.history.back).toHaveBeenCalledTimes(1)
+  window.history.replaceState(readerState, "", window.location.href)
+  fireEvent(window, new PopStateEvent("popstate", { state: readerState }))
+  expect(screen.queryByText("synthetic day original")).toBeNull()
+  expect(close).not.toHaveBeenCalled()
+  fireEvent.click(screen.getByRole("button", { name: "달력으로 돌아가기" }))
+  expect(window.history.back).toHaveBeenCalledTimes(2)
+  window.history.replaceState({ parent: "synthetic-plan" }, "", window.location.href)
+  fireEvent(window, new PopStateEvent("popstate", { state: window.history.state }))
+  expect(close).toHaveBeenCalledOnce()
+  expect(JSON.stringify(entry)).toBe(before)
+})
 
 it("keeps the selected session independent of scrolling and resets the reading position on explicit selection", () => {
   const props = { sessions: [{ slot: "AM" }, { slot: "PM" }] as const,

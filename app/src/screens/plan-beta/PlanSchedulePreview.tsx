@@ -256,6 +256,7 @@ export function PlanSchedulePreview({
   const calendarRef = React.useRef<HTMLElement>(null)
   const handledReaderRequest = React.useRef<number>()
   const readerRequestOrigin = React.useRef<HTMLElement | null>(null)
+  const readerOpenedDate = React.useRef<string | null>(null)
   const readerOpenedFromCalendar = React.useRef(false)
   const readerPreservesSelection = React.useRef(false)
   const previousCalendarIdentity = React.useRef(calendarIdentity)
@@ -305,6 +306,7 @@ export function PlanSchedulePreview({
     setReader(null)
     setReaderJournalDate(null)
     readerRequestOrigin.current = null
+    readerOpenedDate.current = null
     readerOpenedFromCalendar.current = false
     readerPreservesSelection.current = false
   }, [calendarIdentity])
@@ -315,6 +317,7 @@ export function PlanSchedulePreview({
     const day = days[index]
     if (!day) return
     handledReaderRequest.current = readerRequest.sequence
+    readerOpenedDate.current = day.date
     readerRequestOrigin.current = readerRequest.returnFocusToCalendar
       ? null : document.activeElement instanceof HTMLElement ? document.activeElement : null
     readerOpenedFromCalendar.current = readerRequest.returnFocusToCalendar === true
@@ -410,6 +413,7 @@ export function PlanSchedulePreview({
     if (!day) return
     if (origin !== "preserve") {
       readerRequestOrigin.current = null
+      readerOpenedDate.current = day.date
       readerOpenedFromCalendar.current = origin === "calendar"
       readerPreservesSelection.current = false
     }
@@ -493,6 +497,7 @@ export function PlanSchedulePreview({
           if (index < 0) {
             setSelectedDate(date)
             readerRequestOrigin.current = null
+            readerOpenedDate.current = date
             readerOpenedFromCalendar.current = true
             readerPreservesSelection.current = false
             setReader({ date }); setReaderJournalDate(journalEntries.some(entry => entry.date === date) ? date : null); return
@@ -527,6 +532,7 @@ export function PlanSchedulePreview({
         {prescriptionCalendar && previewDisplayMode === "swipe" && <div
           ref={dateRailRef} className="plan-date-rail" role="group" aria-label="훈련 날짜 선택">
           {days.map(({ date, day }, index) => <button key={date} type="button"
+            data-date={date}
             aria-label={`${calendarDateLabel(date)} 선택`}
             aria-pressed={index === activeDayIndex}
             aria-current={date === today ? "date" : undefined}
@@ -638,7 +644,11 @@ export function PlanSchedulePreview({
         initialSlot={reader.slot} initialSection={reader.section} canPrevious canNext
         backLabel={prescriptionCalendar && scheduleView === "list" ? "하루씩으로 돌아가기" : undefined}
         returnFocusTo={readerRequestOrigin.current !== null || readerOpenedFromCalendar.current || reader.section === "records"
-          ? date => (readerRequestOrigin.current?.isConnected ? readerRequestOrigin.current : null)
+          || (prescriptionCalendar && previewDisplayMode === "swipe" && readerOpenedDate.current !== reader.date)
+          ? date => (readerRequestOrigin.current?.isConnected && !readerRequestOrigin.current.closest("[inert], [hidden], [aria-hidden='true']") ? readerRequestOrigin.current : null)
+            ?? (prescriptionCalendar && previewDisplayMode === "swipe"
+              ? dateRailRef.current?.querySelector<HTMLElement>(`button[data-date="${date}"]`)
+                ?? dateRailRef.current?.querySelector<HTMLElement>('button[aria-pressed="true"]') : null)
             ?? calendarRef.current?.querySelector<HTMLElement>(`button[data-date="${date}"]`)
             ?? calendarRef.current?.querySelector<HTMLElement>(".month-calendar__month") ?? null
           : undefined}
@@ -652,6 +662,7 @@ export function PlanSchedulePreview({
           footer={renderSessionFooter?.(session)}
           action={renderSessionAction?.(session, leave)}
           returnedFromJournal={focusSession?.day === session.day && focusSession.slot === session.slot}
+          hideMemoDate={(readerDay?.sessions.length ?? 0) > 1 && isValidIsoDate(reader.date)}
           allowMemoExport={allowMemoExport} />)}
         {!readerDay?.sessions.length && <p>이 계획에는 이날 예정된 훈련이 없어요.</p>}
         {journalEntries.some(entry => entry.date === reader.date) || (journalEntriesComplete && readerJournalDate === reader.date)
@@ -680,6 +691,7 @@ function PlanSessionPreview({
   expanded = false,
   onExpand,
   allowMemoExport = true,
+  hideMemoDate = false,
 }: {
   readonly date: string
   readonly session: PlanSession
@@ -696,6 +708,7 @@ function PlanSessionPreview({
   readonly expanded?: boolean
   readonly onExpand?: () => void
   readonly allowMemoExport?: boolean
+  readonly hideMemoDate?: boolean
 }) {
   const flow = sessionFlowLabel(session)
   const executionSteps = sessionExecutionSteps(session, expanded)
@@ -787,7 +800,7 @@ function PlanSessionPreview({
       <div className="plan-session-content">
         {!navigationCard && !memoReader && <><strong>{sessionLabel(session)}</strong>{summary}</>}
         {expanded && !memoReader && basis && <p className="plan-session-help">기준: {basis}</p>}
-        {memoReader ? <WorkoutMemoTool session={session} date={date} mode="reader" allowExport={allowMemoExport}
+        {memoReader ? <WorkoutMemoTool session={session} date={date} mode="reader" allowExport={allowMemoExport} hideDate={hideMemoDate}
           primaryAction={action} state={explanationContext?.kind === "CANDIDATE" ? "PREVIEW" : "PLAN"} /> : !navigationCard && (!lightweightSummary && compact ? (
           <details className="plan-day-card__details" open={returnedFromJournal}>
             <summary>{sessionSlotLabel(session.slot)} 훈련 방법과 기록</summary>

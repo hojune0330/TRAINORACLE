@@ -195,6 +195,36 @@ no-additional-modal wording only for the voluntary explanation described here.
 - Date/prescription/account changes close stale explanations. No new persistent
   tracking, account writes, rewards, AI calls or private text inputs are added.
 
+## Owner Follow-Up: Quiet Reading and Reliable Actions (2026-10-26)
+
+This supersedes automatic explanations in detailed view and hiding the wording
+selector inside exports. It is a presentation-only change.
+
+- Keep two depth choices. Detailed view shows the method; `이 훈련의 이유`
+  separately reveals rationale and sources. Remove global expert controls that
+  do not change content. Wording is available in both depths without exporting.
+- Preparation steps are separate rows from the same structured sequence. Do not
+  re-interpret legacy between-sibling recovery as unconditional final recovery.
+- Suppress duplicate whole-second 1km rep targets, not precision. Keep exact rep
+  times when the rounded per-km pace would lose fractional or distance detail.
+- Hide a repeated date/slot only when the surrounding reader already names both.
+  Copy/PNG remain independently understandable and always include their date.
+- Comparison starts with the changed values. Expanding before/after gives one
+  full paper per version, never a brief paper followed by another full paper.
+- Use visible disclosure chevrons, readable warnings and plain outer surfaces.
+  At 1080px export width, body text is at least 48px and supporting text at least
+  42px. Long content grows vertically; it is never cropped or shrunk to fit.
+- Preserve export cancellation on source replacement, account change, closing,
+  and hidden/inert ancestors. An inactive reader cannot intercept Escape.
+- Evidence loading distinguishes loading, empty, mismatched and failed states.
+  Retry loads again; failure never masquerades as verified evidence.
+- Returning from a journal's original prescription and switching AM/PM keeps
+  history coherent. Closing after a date change restores focus to the current
+  visible day, not an off-screen/inert date.
+- Both OS and app reduced-motion settings apply. Synthetic checks, local build,
+  public release and athlete usability remain separate evidence levels.
+
+
 ## Checks
 
 Verify decimals, AM/PM and real weekdays, repeat/set recovery, mixed structures,

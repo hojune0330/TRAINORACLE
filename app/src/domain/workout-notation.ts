@@ -90,7 +90,7 @@ function targetText(target: SequenceTarget, id: string, distance: number | null,
   return rp
 }
 
-function v3NodesText(nodes: readonly SequenceNodeV3[], targets: readonly AdjustedSegmentTarget[], style: WorkoutNotationStyle = "COACH"): string {
+function v3NodesLines(nodes: readonly SequenceNodeV3[], targets: readonly AdjustedSegmentTarget[], style: WorkoutNotationStyle = "COACH"): string[] {
   const numericTarget = (id: string) => targets.filter(target => target.segmentId === id).map(({ segmentId: _id, ...value }) => value)
   // Compact only identical adjacent work. Preserve the last recovery as an explicit exception.
   const grouped: SequenceNodeV3[] = []
@@ -131,7 +131,10 @@ function v3NodesText(nodes: readonly SequenceNodeV3[], targets: readonly Adjuste
     }
     if (node.recoveryAfter.length) body += ` → 종료 뒤 ${node.recoveryAfter.map(step => notationRecovery(step, style)).join(" + ")}`
     return body
-  }).join(" → ")
+  })
+}
+function v3NodesText(nodes: readonly SequenceNodeV3[], targets: readonly AdjustedSegmentTarget[], style: WorkoutNotationStyle = "COACH"): string {
+  return v3NodesLines(nodes, targets, style).join(" → ")
 }
 
 // Display adapter only: V1/V2 recoveryAfter is conditional on the next sibling.
@@ -157,6 +160,11 @@ export function sequenceNotation(sequence: Sequence, targets: readonly AdjustedS
 export function sequencePhaseNotation(sequence: Sequence, phase: "warmup" | "main" | "cooldown", targets: readonly AdjustedSegmentTarget[] = [], style: WorkoutNotationStyle = "COACH"): string {
   if (phase === "main") return sequenceNotation(sequence, targets, style)
   return sequence.version === 3 ? v3NodesText(sequence[phase], targets, style) : v3NodesText(legacyDisplayNodes(sequence[phase]), targets, style)
+}
+
+/** Convert the complete phase before separating rows so legacy between-node recovery survives. */
+export function sequencePhaseLines(sequence: Sequence, phase: "warmup" | "cooldown", targets: readonly AdjustedSegmentTarget[] = [], style: WorkoutNotationStyle = "COACH"): readonly string[] {
+  return v3NodesLines(sequence.version === 3 ? sequence[phase] : legacyDisplayNodes(sequence[phase]), targets, style)
 }
 
 function repeated(nodes: Sequence["main"]): boolean {

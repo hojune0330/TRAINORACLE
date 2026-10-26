@@ -13,6 +13,7 @@ export type CatalogWorkoutReading = {
   readonly name: string
   readonly summary: string
   readonly phases: Readonly<Record<Phase, string>>
+  readonly phaseSteps: Readonly<Record<Phase, readonly string[]>>
 }
 
 // Exact sources inspected for this reader, not permission to simplify the whole
@@ -164,7 +165,7 @@ function segmentBody(node: Segment, phase: Phase, workout: CalculatedWorkout, co
   return `${amount}${count > 1 ? `씩 ${count}번` : ""}${context ? ` · ${context}` : ""} · ${targetText(node, step, workout)}`
 }
 
-function nodesText(nodes: readonly SequenceNodeV3[], phase: Phase, workout: CalculatedWorkout): string {
+function nodesLines(nodes: readonly SequenceNodeV3[], phase: Phase, workout: CalculatedWorkout): string[] {
   const pieces: string[] = []
   for (let index = 0; index < nodes.length; index++) {
     const node = nodes[index]!
@@ -209,7 +210,10 @@ function nodesText(nodes: readonly SequenceNodeV3[], phase: Phase, workout: Calc
     if (node.recoveryAfter.length) body += ` → 끝낸 뒤 ${recoveryText(node.recoveryAfter, node.id, "after", workout)}`
     pieces.push(`${node.label ? `${node.label}: ` : ""}${body}`)
   }
-  return pieces.join(" → ")
+  return pieces
+}
+function nodesText(nodes: readonly SequenceNodeV3[], phase: Phase, workout: CalculatedWorkout): string {
+  return nodesLines(nodes, phase, workout).join(" → ")
 }
 function simpleMainAmount(nodes: readonly SequenceNodeV3[], workout: CalculatedWorkout): string | null {
   if (nodes.length !== 1) return null
@@ -249,7 +253,9 @@ export function catalogWorkoutReader(session: WorkoutDisplaySession): CatalogWor
     const name = sameEventRacePace && event !== undefined
       ? `${notationDistance(event)} ${goalReference ? "목표 속도" : references.every(reference => reference?.kind === "ACTUAL") ? "기록 속도" : "속도"} 연습 (RP) · ${amount}`
       : amount ? `${catalogDeliveryProfile(entry).name} · ${amount}` : catalogDeliveryProfile(entry).name
-    return { name, summary: phases.main, phases }
+    return { name, summary: phases.main, phases, phaseSteps: {
+      warmup: nodesLines(sequence.warmup, "warmup", workout), main: [phases.main], cooldown: nodesLines(sequence.cooldown, "cooldown", workout),
+    } }
   } catch {
     return null
   }
@@ -269,8 +275,8 @@ export function catalogExecutionReading(workout: CalculatedWorkout): CatalogWork
       ? canonicalJsonFingerprint("trainoracle.same-event-race-pace.v1", content)
       : canonicalJsonFingerprint("trainoracle.all-workout-catalog.v1", originalContent)
     if (sourceIdentity !== fingerprint) return null
-    const phaseText = (phase: Phase) => {
-      const text = nodesText(entry.sequence![phase], phase, workout)
+    const phaseReading = (phase: Phase) => {
+      const lines = nodesLines(entry.sequence![phase], phase, workout)
       // Calculated speed can replace an effort cue in targetText. Keep the
       // source instruction alongside it, including its safety limitations.
       const cues: string[] = []
@@ -282,9 +288,12 @@ export function catalogExecutionReading(workout: CalculatedWorkout): CatalogWork
         }
       })
       inspect(entry.sequence![phase])
-      return [text, ...new Set(cues)].filter(Boolean).join(" · ")
+      const additional = [...new Set(cues)]
+      return { steps: [...lines, ...additional].filter(Boolean), text: [lines.join(" → "), ...additional].filter(Boolean).join(" · ") }
     }
-    const phases = { warmup: phaseText("warmup"), main: phaseText("main"), cooldown: phaseText("cooldown") }
-    return { name: catalogDeliveryProfile(entry).name, summary: phases.main, phases }
+    const reading = { warmup: phaseReading("warmup"), main: phaseReading("main"), cooldown: phaseReading("cooldown") }
+    const phaseSteps = { warmup: reading.warmup.steps, main: reading.main.steps, cooldown: reading.cooldown.steps }
+    const phases = { warmup: reading.warmup.text, main: reading.main.text, cooldown: reading.cooldown.text }
+    return { name: catalogDeliveryProfile(entry).name, summary: phases.main, phases, phaseSteps }
   } catch { return null }
 }

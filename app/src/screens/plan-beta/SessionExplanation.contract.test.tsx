@@ -12,6 +12,8 @@ import { createExplanationReceipt } from "../../domain/training-explanation-rece
 import { SessionExplanationEntry } from "./SessionExplanation"
 import { sessionExecutionSteps } from "./labels"
 import { replacedReplanFixture } from "../../domain/execution-replan-lineage.test-fixture"
+import * as calendarRead from "../../hooks/useCalendarEntries"
+import * as historyRead from "../../hooks/usePlanEvidenceHistory"
 
 const originalShowModal = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "showModal")
 const originalScrollTo = Object.getOwnPropertyDescriptor(Element.prototype, "scrollTo")
@@ -67,6 +69,86 @@ function paceSession(): PlanSession {
 }
 
 describe("session explanation review regressions", () => {
+  it("keeps specialist information in named disclosures without a global expert choice", async () => {
+    render(<SessionExplanationEntry session={paceSession()} initialTab="이유·근거" />)
+    await userEvent.click(screen.getByRole("button", { name: "훈련 방법과 이유" }))
+    expect(screen.queryByRole("checkbox", { name: "전문 보기" })).toBeNull()
+    await userEvent.click(screen.getByText("구성·회복의 이유와 근거"))
+    const termDetails = document.querySelector<HTMLDetailsElement>(".session-explanation__term")!
+    await userEvent.click(termDetails.querySelector("summary")!)
+    const pathway = screen.getByText("에너지 공급 과정 자세히").closest("details")!
+    expect(pathway).not.toHaveAttribute("open")
+    await userEvent.click(within(pathway).getByText("에너지 공급 과정 자세히"))
+    expect(pathway.querySelector("p")).toBeVisible()
+    const template = screen.getByText("템플릿 버전과 채택 결정").closest("details")!
+    expect(template).not.toHaveAttribute("open")
+    await userEvent.click(within(template).getByText("템플릿 버전과 채택 결정"))
+    expect(template).toHaveTextContent("V2-SEED-05")
+  })
+
+  it("retries a failed evidence loader and preserves verified records until the retry succeeds", async () => {
+    const state = stateFixture(), session = state.activePlan.sessions[0]!
+    const context = { kind: "SAVED" as const, plan: state.activePlan, generatedAt: state.generatedAt }
+    let fails = false
+    const loader = vi.fn(() => { if (fails) throw Error("synthetic failure"); return scope(state.activePlan.candidateId, state.generatedAt, 3) })
+    const view = render(<SessionExplanationEntry session={session} context={context} initialTab="주기·기록" loadEvidence={loader} />)
+    await userEvent.click(screen.getByRole("button", { name: "훈련 방법과 이유" }))
+    expect(screen.getByText(/실제 힘든 정도 3\/10/u)).toBeVisible()
+    fails = true
+    view.rerender(<SessionExplanationEntry session={session} context={context} initialTab="주기·기록" loadEvidence={() => loader()} />)
+    expect(screen.getByRole("alert")).toHaveTextContent("앞서 확인한 기록")
+    expect(screen.getByText(/실제 힘든 정도 3\/10/u)).toBeVisible()
+    expect(screen.queryByText(/연결된 일지가 아직 없어요/u)).toBeNull()
+    const calls = loader.mock.calls.length
+    fails = false
+    await userEvent.click(screen.getByRole("button", { name: "기록 다시 불러오기" }))
+    expect(loader.mock.calls.length).toBeGreaterThan(calls)
+    expect(screen.queryByRole("alert")).toBeNull()
+    expect(screen.queryByRole("button", { name: "기록 다시 불러오기" })).toBeNull()
+  })
+
+  it("retries journal and plan reads instead of leaving a failed journal read in loading", async () => {
+    const state = stateFixture(), session = state.activePlan.sessions[0]!
+    let complete = false
+    const journalRetry = vi.fn(() => { complete = true })
+    vi.spyOn(calendarRead, "useCalendarSnapshot").mockImplementation(() => ({
+      entries: [], owner: null, revision: complete ? 1 : 0, status: complete ? "READY" : "ERROR", retry: journalRetry,
+    }))
+    const originalHistory = historyRead.usePlanEvidenceHistory
+    const historyRetry = vi.fn()
+    vi.spyOn(historyRead, "usePlanEvidenceHistory").mockImplementation(active => {
+      const value = originalHistory(active)
+      return { ...value, journalReadComplete: complete, retry: () => { historyRetry(); value.retry() } }
+    })
+    const loader = vi.fn(() => ({ ...scope(state.activePlan.candidateId, state.generatedAt, 3), rows: [] }))
+    render(<SessionExplanationEntry session={session} context={{ kind: "SAVED", plan: state.activePlan, generatedAt: state.generatedAt }}
+      initialTab="주기·기록" loadEvidence={loader} />)
+    await userEvent.click(screen.getByRole("button", { name: "훈련 방법과 이유" }))
+    expect(screen.getByRole("alert")).toHaveTextContent("기록을 불러오지 못했어요.")
+    expect(screen.queryByText("일지를 불러오고 있어요.")).toBeNull()
+    expect(screen.queryByText(/연결된 일지가 아직 없어요/u)).toBeNull()
+    await userEvent.click(screen.getByRole("button", { name: "기록 다시 불러오기" }))
+    expect(journalRetry).toHaveBeenCalledOnce()
+    expect(historyRetry).toHaveBeenCalledOnce()
+    expect(loader.mock.calls.length).toBeGreaterThan(1)
+    expect(screen.getByText("이 훈련과 연결된 일지가 아직 없어요.")).toBeVisible()
+    expect(screen.queryByRole("alert")).toBeNull()
+  })
+
+  it("distinguishes a pending journal read from failure and does not label it empty", async () => {
+    const state = stateFixture()
+    vi.spyOn(calendarRead, "useCalendarSnapshot").mockReturnValue({ entries: [], owner: null, revision: 0, status: "LOADING" })
+    const originalHistory = historyRead.usePlanEvidenceHistory
+    vi.spyOn(historyRead, "usePlanEvidenceHistory").mockImplementation(active => ({ ...originalHistory(active), journalReadComplete: false }))
+    render(<SessionExplanationEntry session={state.activePlan.sessions[0]!}
+      context={{ kind: "SAVED", plan: state.activePlan, generatedAt: state.generatedAt }} initialTab="주기·기록" loadEvidence={() => null} />)
+    await userEvent.click(screen.getByRole("button", { name: "훈련 방법과 이유" }))
+    expect(screen.getByText("일지를 불러오고 있어요.")).toBeVisible()
+    expect(screen.queryByRole("alert")).toBeNull()
+    expect(screen.queryByRole("button", { name: "기록 다시 불러오기" })).toBeNull()
+    expect(screen.queryByText(/연결된 일지가 아직 없어요/u)).toBeNull()
+  })
+
   it("cancels only the portal explanation and returns focus inside its parent day reader", async () => {
     const parentCancel = vi.fn()
     const session = paceSession()
@@ -120,8 +202,8 @@ describe("session explanation review regressions", () => {
     expect(screen.queryByText(/연결된 일지가 아직 없어요/u)).toBeNull()
     view.rerender(<SessionExplanationEntry session={session} context={context} initialTab="주기·기록"
       loadEvidence={() => collectSessionExplanationEvidence([entry], f.state, session, { kind: "unavailable" })} />)
-    expect(screen.queryByText(/^(?:실제 힘든 정도 )?3\/10 · 직접 입력$/u)).toBeNull()
-    expect(screen.getByText("이전 기록의 연결을 다시 확인해 주세요.")).toBeVisible()
+    expect(screen.getByText(/^(?:실제 힘든 정도 )?3\/10 · 직접 입력$/u)).toBeVisible()
+    expect(screen.getByText("이전 계획을 불러오지 못했어요. 확인된 기록은 그대로 보여드려요.")).toBeVisible()
     expect(screen.queryByText(/연결된 일지가 아직 없어요/u)).toBeNull()
     view.rerender(<SessionExplanationEntry session={session} context={context} initialTab="주기·기록" loadEvidence={load} />)
     expect(screen.getByText(/^(?:실제 힘든 정도 )?3\/10 · 직접 입력$/u)).toBeVisible()
@@ -134,7 +216,7 @@ describe("session explanation review regressions", () => {
     render(<SessionExplanationEntry session={session} context={{ kind: "SAVED", plan: f.state.activePlan, generatedAt: f.state.generatedAt }}
       initialTab="주기·기록" loadEvidence={() => ({ ...evidence, rows: evidence.rows.map(row => ({ ...row, currentPlannedSessionId: "wrong-occurrence" })) })} />)
     await userEvent.click(screen.getByRole("button", { name: "훈련 방법과 이유" }))
-    expect(screen.getByText(/조회하지 못한 상태를 일지가 없는 것으로 판단하지 않아요/u)).toBeVisible()
+    expect(screen.getByText("현재 훈련과 기록의 연결을 확인하지 못했어요.")).toBeVisible()
   })
 
   it("opens a linked journal directly on actual records without inventing missing evidence", async () => {
@@ -175,18 +257,18 @@ describe("session explanation review regressions", () => {
     expect(paper).toHaveTextContent("2분 30초 조깅")
     expect(paper).toHaveAttribute("data-view", "core")
     expect(paper).not.toHaveTextContent("15분")
-    expect(paper).not.toHaveTextContent("40초 걷기/조깅")
-    await userEvent.click(within(reader).getByRole("button", { name: "자세히" }))
-    expect(paper).toHaveAttribute("data-view", "explained")
-    expect(paper).toHaveTextContent("15분")
-    expect(paper).toHaveTextContent("4 × 20초")
-    expect(paper).toHaveTextContent("40초 걷기/조깅")
-    expect(paper).toHaveTextContent("10분")
+
     expect(paper).toHaveTextContent("5000m 18:30")
     expect(paper).toHaveTextContent("새 통증이나 심해지는 통증이 생기면 중단")
     expect(reader.querySelector(".plan-detailed-prescription--sequence-lead")).toBeNull()
     expect(reader.querySelector(".prescription-structure")).toBeNull()
-    expect(paper).toHaveTextContent("준비 → 본운동 → 정리")
+    await userEvent.click(within(reader).getByRole("button", { name: "자세히" }))
+    expect(paper).toHaveAttribute("data-view", "method")
+    expect(paper).toHaveTextContent("15분")
+    expect(paper).toHaveTextContent("4 × 20초")
+    expect(paper).toHaveTextContent("40초 걷기/조깅")
+    expect(paper).toHaveTextContent("10분")
+
     await userEvent.click(screen.getByRole("tab", { name: "이유·근거" }))
     await userEvent.click(screen.getByText("페이스 계산 보기"))
     expect(screen.getByText("기준: 5000m 최근 경기 18분 30초")).toBeVisible()
@@ -232,15 +314,17 @@ describe("session explanation review regressions", () => {
     expect(screen.getByText(/^(?:실제 힘든 정도 )?6\/10 · 직접 입력$/u)).toBeVisible()
     view.rerender(<SessionExplanationEntry session={session} context={nextContext} loadEvidence={() => current} />)
     expect(screen.queryByText(/^(?:실제 힘든 정도 )?3\/10 · 직접 입력$/u)).toBeNull()
-    expect(screen.getByText(/조회하지 못한 상태를 일지가 없는 것으로 판단하지 않아요/u)).toBeVisible()
+    expect(screen.getByText("현재 훈련과 기록의 연결을 확인하지 못했어요.")).toBeVisible()
   })
 
   it.each(["absent", "failed"] as const)("distinguishes %s evidence access from zero linked journals", async (kind) => {
     const state = stateFixture()
-    render(<SessionExplanationEntry session={state.activePlan.sessions[0]!} loadEvidence={kind === "absent" ? undefined : () => { throw new Error("unavailable") }} />)
+    render(<SessionExplanationEntry session={state.activePlan.sessions[0]!}
+      context={{ kind: "SAVED", plan: state.activePlan, generatedAt: state.generatedAt }}
+      loadEvidence={kind === "absent" ? undefined : () => { throw new Error("unavailable") }} />)
     await userEvent.click(screen.getByRole("button", { name: "훈련 방법과 이유" }))
     await userEvent.click(screen.getByRole("tab", { name: "주기·기록" }))
-    expect(screen.getByText(/조회하지 못한 상태를 일지가 없는 것으로 판단하지 않아요/u)).toBeVisible()
+    expect(screen.getByText(kind === "absent" ? "저장한 계획에서 연결된 일지를 확인할 수 있어요." : "기록을 불러오지 못했어요.")).toBeVisible()
     expect(screen.queryByText(/연결된 일지가 아직 없어요/u)).toBeNull()
   })
 
@@ -260,7 +344,7 @@ describe("session explanation review regressions", () => {
     await userEvent.click(screen.getByRole("button", { name: "훈련 방법과 이유" }))
     await userEvent.click(screen.getByRole("tab", { name: "주기·기록" }))
     expect(screen.queryByText(/^(?:실제 힘든 정도 )?3\/10 · 직접 입력$/u)).toBeNull()
-    expect(screen.getByText(/조회하지 못한 상태를 일지가 없는 것으로 판단하지 않아요/u)).toBeVisible()
+    expect(screen.getByText("현재 훈련과 기록의 연결을 확인하지 못했어요.")).toBeVisible()
     expect(screen.queryByText(/연결된 일지가 아직 없어요/u)).toBeNull()
   })
 
@@ -307,7 +391,7 @@ describe("session explanation review regressions", () => {
     const opener = screen.getByRole("button", { name: "훈련 방법과 이유" })
     await userEvent.click(opener)
     const metric = screen.getByRole("article", { name: "훈련 메모 미리보기" }).textContent
-    await userEvent.click(screen.getByRole("checkbox", { name: "전문 보기" }))
+    expect(screen.queryByRole("checkbox", { name: "전문 보기" })).toBeNull()
     expect(screen.getByRole("article", { name: "훈련 메모 미리보기" })).toHaveTextContent(metric!)
     await userEvent.click(screen.getByRole("tab", { name: "이유·근거" }))
     const termDetails = document.querySelector<HTMLDetailsElement>(".session-explanation__term")!
@@ -324,7 +408,7 @@ describe("session explanation review regressions", () => {
     fireEvent(window, new Event("blur"))
     fireEvent(window, new Event("focus"))
     expect(screen.getByRole("tab", { name: "이유·근거" })).toHaveAttribute("aria-selected", "true")
-    expect(screen.getByRole("checkbox", { name: "전문 보기" })).toBeChecked()
+    expect(screen.queryByRole("checkbox", { name: "전문 보기" })).toBeNull()
     expect(termDetails.open).toBe(true)
     expect(panel.scrollTop).toBe(480)
     expect(link).toHaveFocus()
@@ -354,7 +438,7 @@ describe("session explanation review regressions", () => {
       expect(screen.getByRole("heading", { name: heading })).toBeVisible()
     }
     await userEvent.click(screen.getByRole("tab", { name: "주기·기록" }))
-    expect(screen.getByText(/조회하지 못한 상태를 일지가 없는 것으로 판단하지 않아요/u)).toBeVisible()
+    expect(screen.getByText("기록을 불러오지 못했어요.")).toBeVisible()
     await userEvent.click(screen.getByRole("tab", { name: "방법" }))
     expect(method).toBeVisible()
     expect(method.textContent).toBe(originalMethod)

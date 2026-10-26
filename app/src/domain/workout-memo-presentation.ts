@@ -27,8 +27,7 @@ export function presentWorkoutMemo(memo: WorkoutMemo, selection: WorkoutMemoView
 
 export function workoutMemoPresentationText(memo: WorkoutMemoPresentation): string {
   const text = workoutMemoText({ ...memo, basis: memoVisibleBasis(memo), lines: memoDisplayLines(memo) })
-  const method = memo.layout === "full" ? `${text}\n수행 순서: ${memoExecutionOrder(memo)}` : text
-  return memo.view !== "explained" ? method : [method, memo.explanation.scope,
+  return memo.view !== "explained" ? text : [text, memo.explanation.scope,
     ...memo.explanation.sections.map(section => `${section.label}: ${section.text}`),
     `설명 버전: ${memo.explanation.version}`,
     ...memoExplanationSources(memo).map(source => `근거: ${source.title}${source.url ? ` (${source.url})` : ""}`),
@@ -55,7 +54,7 @@ export function memoDisplayLines(memo: WorkoutMemoPresentation): readonly Workou
     if (!main) return memo.lines.filter(line => line.label !== "준비" && line.label !== "정리")
     const targets = memo.lines.filter(line => line.label === "목표" || line.label === "1회 목표")
     const support = memo.lines.filter(line => line.label === "준비" || line.label === "정리")
-    return [{ ...main, text: [main.text, ...targets.map(line => `${line.label}: ${line.text}`)].join(" · ") },
+    return [main, ...targets,
       ...memo.lines.filter(line => line !== main && !targets.includes(line) && !support.includes(line))]
   }
   if (memo.layout === "full") return [

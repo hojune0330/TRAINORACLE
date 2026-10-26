@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useId, useMemo, useRef, useState } from "react"
-import { isBrowserPopNavigationConsumed } from "../navigation/browserNavigation"
+import { BROWSER_BACK_LAYER_HISTORY_KEY, registerBrowserBackLayer, requestBrowserBackLayer } from "../navigation/browserNavigation"
 import { validJournalCalendarReturn, type JournalCalendarReturn, type OpenJournalDay } from "../navigation/readerPosition"
 import { localJournalScopeGeneration, onLocalJournalScopeChange } from "../domain/account/local-journal-ownership"
 import { useNavigationReturnFrame } from "../hooks/useNavigationReturnFrame"
@@ -45,43 +45,41 @@ export function CalendarJournalDetails({ entries, date, onOpenDay, onWriteDate, 
   readonly returnPosition?: JournalCalendarReturn | null
   readonly onReturnRestored?: () => void
 }) {
-  const [original, setOriginal] = useState(false)
+  const [original, setOriginal] = useState<{ readonly date: string; readonly scope: number } | null>(null)
   const renderedScope = localJournalScopeGeneration()
+  const originalOpen = original?.date === date && original.scope === renderedScope
   const [selection, setSelection] = useState<{ readonly date: string; readonly id: string; readonly scope: number } | null>(
     () => initialEntryId ? { date, id: initialEntryId, scope: renderedScope } : null)
   const section = useRef<HTMLElement>(null)
   const localReturnPosition = useRef<JournalCalendarReturn | null>(null)
   const restoredPosition = useRef<JournalCalendarReturn | null>(null)
   const { schedule: scheduleReturnFrame, invalidate: invalidateReturnFrame } = useNavigationReturnFrame()
-  const originalEntryCreated = useRef(false)
-  const originalToken = useRef<string | null>(null)
+  const originalLayer = useRef<ReturnType<typeof registerBrowserBackLayer> | null>(null)
   const selectionPanelId = useId()
-  const closeOriginal = () => { if (originalToken.current && window.history.state?.calendarOriginal === originalToken.current) window.history.back(); else setOriginal(false) }
+  const originalLayerId = `calendar-original-${selectionPanelId}`
+  const closeOriginal = () => {
+    // Restore reading position after the native POP, not before it invalidates
+    // pending return frames. Denied history writes still allow local closing.
+    if (window.history.state?.[BROWSER_BACK_LAYER_HISTORY_KEY] === originalLayerId && requestBrowserBackLayer()) return
+    if (originalLayer.current) originalLayer.current.close()
+    else setOriginal(null)
+  }
   useEffect(() => {
-    if (!original) { originalEntryCreated.current = false; originalToken.current = null; return }
-    const previous = window.history.state
-    const token = `original-${date}`
-    originalToken.current = token
-    try {
-      window.history[originalEntryCreated.current ? "replaceState" : "pushState"]({ ...previous, calendarOriginal: token }, "", window.location.href)
-      originalEntryCreated.current = true
-    } catch { /* The in-reader Back action remains available. */ }
-    const pop = (event: PopStateEvent) => {
-      if (isBrowserPopNavigationConsumed(event)) return
-      if (window.history.state?.calendarOriginal !== token) setOriginal(false)
-    }
-    window.addEventListener("popstate", pop)
+    if (!originalOpen) return
+    // Use the shared layer lifecycle so leaving a date consumes its entry,
+    // rather than replacing it with a duplicate of the parent reader entry.
+    const layer = registerBrowserBackLayer({ id: originalLayerId,
+      canClose: () => true, onClose: () => setOriginal(null) })
+    originalLayer.current = layer
     return () => {
-      window.removeEventListener("popstate", pop)
-      try {
-        if (window.history.state?.calendarOriginal === token) window.history.replaceState(previous, "", window.location.href)
-      } catch { /* History may be unavailable in embedded browsers. */ }
+      if (originalLayer.current === layer) originalLayer.current = null
+      layer.dispose()
     }
-  }, [original, date])
+  }, [originalOpen, originalLayerId])
   const today = useLocalToday()
   const activeDates = useMemo(() => new Set(entries.map((entry) => entry.date).filter(isValidIsoDate)), [entries])
   const decorationPreviews = useJournalDecorationPreviews(activeDates)
-  useEffect(() => setOriginal(false), [date])
+  useEffect(() => setOriginal(null), [date])
   const day = useMemo(() => entries.filter(entry => entry.date === date), [entries, date])
   const defaultEntry = day.find(entry => entry.kind === "post-session") ?? day[0] ?? null
   const selectedEntry = day.find(entry => selection?.scope === renderedScope && selection.date === date && entry.id === selection.id)
@@ -89,7 +87,7 @@ export function CalendarJournalDetails({ entries, date, onOpenDay, onWriteDate, 
   const selectedIndex = day.findIndex(entry => entry.id === selectedEntry?.id)
   useEffect(() => onLocalJournalScopeChange(() => {
     localReturnPosition.current = null; restoredPosition.current = null
-    setOriginal(false); setSelection(null)
+    setOriginal(null); setSelection(null)
   }), [])
   useEffect(() => {
     if (selection?.scope === renderedScope && selection.date === date && day.some(entry => entry.id === selection.id)) return
@@ -98,7 +96,7 @@ export function CalendarJournalDetails({ entries, date, onOpenDay, onWriteDate, 
   }, [date, day, defaultEntry, selection, initialEntryId, renderedScope])
   const position = returnPosition ?? localReturnPosition.current
   useEffect(() => {
-    if (original || position === restoredPosition.current || position?.date !== date
+    if (originalOpen || position === restoredPosition.current || position?.date !== date
       || !validJournalCalendarReturn(position, day)) return
     scheduleReturnFrame(() => {
       const root = section.current
@@ -114,8 +112,8 @@ export function CalendarJournalDetails({ entries, date, onOpenDay, onWriteDate, 
       onReturnRestored?.()
     })
     return invalidateReturnFrame
-  }, [date, day, original, position, onReturnRestored, scheduleReturnFrame, invalidateReturnFrame])
-  if (original) return <section ref={section} className="calendar-journal-detail">
+  }, [date, day, originalOpen, position, onReturnRestored, scheduleReturnFrame, invalidateReturnFrame])
+  if (originalOpen) return <section ref={section} className="calendar-journal-detail">
     <button type="button" onClick={closeOriginal}><ChevronLeft size={18} aria-hidden="true" />날짜 요약으로</button>
     <Suspense fallback={<p role="status">일지를 여는 중이에요.</p>}><OriginalJournal date={date} initialEntryId={selectedEntry?.id} onBack={closeOriginal} /></Suspense>
   </section>
@@ -159,7 +157,7 @@ export function CalendarJournalDetails({ entries, date, onOpenDay, onWriteDate, 
         if (onOpenDay) onOpenDay(date, selectedEntry?.id, calendarReturn)
         else {
           localReturnPosition.current = calendarReturn
-          setOriginal(true)
+          setOriginal({ date, scope: renderedScope })
         }
       }}>
         <BookOpen size={18} aria-hidden="true" />일지·메모 원문 열기

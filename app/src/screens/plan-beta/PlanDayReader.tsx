@@ -30,6 +30,7 @@ export function PlanDayReader({ date, sessions, initialSlot, initialSection, can
   const enabled = useShellReaderVisibility()
   const calendar = React.useRef(document.activeElement?.closest<HTMLElement>(".month-calendar"))
   const requestedReturnFocus = React.useRef(returnFocusTo)
+  requestedReturnFocus.current = returnFocusTo
   const defaultSlot = sessions.some(session => session.slot === initialSlot) ? initialSlot : sessions[0]?.slot
   const [selection, setSelection] = React.useState({ date, slot: defaultSlot })
   const activeSlot = selection.date === date && sessions.some(session => session.slot === selection.slot)
@@ -84,7 +85,7 @@ export function PlanDayReader({ date, sessions, initialSlot, initialSection, can
         onClick={() => jumpToSlot(session.slot)}>{sessionSlotLabel(session.slot)}</button>)}
     </nav>}
     <div className="plan-day-reader__body" ref={content}>
-      <div key={`${date}:${activeSlot}`} data-active-slot={activeSlot} className="plan-day-reader__content plan-schedule-preview__sessions calendar-reader-transition">{typeof children === "function" ? children(leave) : children}</div>
+      <div key={date} data-active-slot={activeSlot} className="plan-day-reader__content plan-schedule-preview__sessions calendar-reader-transition">{typeof children === "function" ? children(leave) : children}</div>
     </div>
   </dialog>, document.body)
 }

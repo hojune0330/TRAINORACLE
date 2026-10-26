@@ -1,6 +1,6 @@
 import React from "react"
 import { createPortal } from "react-dom"
-import { ArrowLeft, BookOpen, ChevronRight } from "lucide-react"
+import { ArrowLeft, BookOpen, ChevronRight, RefreshCw } from "lucide-react"
 import type { PlanSession } from "@impl/plan-generator/types"
 import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identity"
 import { GLOSSARY } from "../../domain/glossary"
@@ -14,6 +14,7 @@ import "../../styles/session-explanation.css"
 import { useReaderDialog } from "../../hooks/useReaderDialog"
 import { resolveCatalogBinding } from "@impl/prescription/catalog-session-binding"
 import { usePlanEvidenceHistory } from "../../hooks/usePlanEvidenceHistory"
+import { useCalendarSnapshot } from "../../hooks/useCalendarEntries"
 import { PlanEvidenceHistoryNotice } from "../../components/PlanEvidenceHistoryNotice"
 import { onLocalJournalScopeChange } from "../../domain/account/local-journal-ownership"
 import { WorkoutMemoTool } from "../../components/WorkoutMemoTool"
@@ -72,11 +73,13 @@ export function SessionExplanationEntry(props: Props) {
 
 function SessionExplanationReader({ session, context, loadEvidence, initialTab = "방법", returnLabel = "훈련 일정으로 돌아가기", date, memoState, allowMemoExport = true, onClose }: Props & { readonly onClose: () => void }) {
   const [tab, setTab] = React.useState<Tab>(initialTab)
-  const [expert, setExpert] = React.useState(false)
+  const [evidenceRevision, refreshEvidence] = React.useReducer(value => value + 1, 0)
+  const journals = useCalendarSnapshot()
   const history = usePlanEvidenceHistory(context?.kind === "SAVED" && tab === "주기·기록")
-  const evidence = React.useMemo(() => {
-    try { return loadEvidence?.(session) ?? null } catch { return null }
-  }, [loadEvidence, session, context?.plan.candidateId, context?.generatedAt, history.history, history.revision, history.scope])
+  const evidenceRead = React.useMemo(() => {
+    try { return { evidence: loadEvidence?.(session) ?? null, failed: false } } catch { return { evidence: null, failed: true } }
+  }, [loadEvidence, session, context?.plan.candidateId, context?.generatedAt, history.history, history.revision, history.scope, journals.revision, evidenceRevision])
+  const evidence = evidenceRead.evidence
   const dialog = React.useRef<HTMLDialogElement>(null)
   const close = useReaderDialog(dialog, onClose)
   const content = React.useRef<HTMLDivElement>(null)
@@ -93,7 +96,7 @@ function SessionExplanationReader({ session, context, loadEvidence, initialTab =
   const term = GLOSSARY[explanation.profile.termId]
   const occurrence = evidence?.methodObservation?.occurrence
   // A loader can retain another session from the same plan generation.
-  const evidenceMatches = history.journalReadComplete && evidence !== null && context?.kind === "SAVED" && explanation.contextMatchesSession
+  const evidenceMatches = evidence !== null && context?.kind === "SAVED" && explanation.contextMatchesSession
     && evidence.candidateId === context.plan.candidateId && evidence.generatedAt === context.generatedAt
     && evidence.rows.every(row => row.currentPlannedSessionId === evidence.sessionId
       && row.day === session.day && row.slot === session.slot && row.role === session.role
@@ -102,8 +105,33 @@ function SessionExplanationReader({ session, context, loadEvidence, initialTab =
       && occurrence.sessionDay === session.day && occurrence.sessionSlot === session.slot
       && occurrence.plannedRole === session.role && occurrence.plannedEnergyIntent === session.plannedEnergyIntent
       && occurrence.sessionContentFingerprint === canonicalJsonFingerprint("trainoracle.planned-session-content.v1", session)))
-  const rows = evidenceMatches ? evidence.rows : []
-  const methodObservation = evidenceMatches ? evidence.methodObservation ?? null : null
+  const evidenceKey = JSON.stringify({
+    session, candidateId: context?.plan.candidateId ?? null, generatedAt: context?.generatedAt ?? null,
+  })
+  const verified = React.useRef<{ key: string; scope: typeof history.scope; evidence: SessionExplanationEvidence } | null>(null)
+  const archiveReadIncomplete = evidenceMatches && evidence.historyReadIncomplete && evidence.rows.length === 0
+  const currentEvidence = evidenceMatches && history.journalReadComplete && !archiveReadIncomplete ? evidence : null
+  // Keep an already verified read through transient failure, never through a
+  // successful empty/mismatched response or a different account/session.
+  const retainedEvidence = (evidenceRead.failed || !history.journalReadComplete || archiveReadIncomplete)
+    && explanation.contextMatchesSession && context?.kind === "SAVED"
+    && verified.current?.key === evidenceKey && verified.current.scope === history.scope ? verified.current.evidence : null
+  const displayedEvidence = currentEvidence ?? retainedEvidence ?? (evidenceMatches && history.journalReadComplete ? evidence : null)
+  const rows = displayedEvidence?.rows ?? []
+  const methodObservation = displayedEvidence?.methodObservation ?? null
+  React.useEffect(() => {
+    if (currentEvidence) verified.current = { key: evidenceKey, scope: history.scope, evidence: currentEvidence }
+    else if (verified.current?.key !== evidenceKey || verified.current.scope !== history.scope
+      || history.journalReadComplete && !evidenceRead.failed && !archiveReadIncomplete) verified.current = null
+  }, [currentEvidence, evidenceKey, history.scope, history.journalReadComplete, evidenceRead.failed, archiveReadIncomplete])
+  const canReadRecords = context?.kind === "SAVED" && loadEvidence !== undefined
+  const journalLoading = !history.journalReadComplete && journals.status === "LOADING"
+  const recordReadFailed = !history.journalReadComplete && !journalLoading || evidenceRead.failed
+  const retryRecords = () => {
+    journals.retry?.()
+    history.retry()
+    refreshEvidence()
+  }
 
   React.useLayoutEffect(() => {
     content.current?.scrollTo({ top: scrollPositions.current[tab], behavior: "instant" })
@@ -132,7 +160,6 @@ function SessionExplanationReader({ session, context, loadEvidence, initialTab =
           <ArrowLeft size={21} aria-hidden="true" />
         </button>
         <div><small>{session.day}일차 · {session.slot === "AM" ? "오전" : "오후"}</small><h2 id={`${id}-title`}>{sessionLabel(session)}</h2></div>
-        <label className="session-explanation__expert"><input type="checkbox" checked={expert} onChange={(event) => setExpert(event.target.checked)} />전문 보기</label>
       </header>
       <div className="session-explanation__tabs app-choice-group" role="tablist" aria-label="훈련 상세 구분">
         {TABS.map((item, index) => (
@@ -178,7 +205,7 @@ function SessionExplanationReader({ session, context, loadEvidence, initialTab =
               <details className="session-explanation__term"><summary>{term.label}은 왜 이런 이름인가요?</summary>
                 <p>{term.namingOrigin ?? term.short}</p><p>{term.technicalDefinition ?? term.detail}</p>
                 {term.notMeaning && <p>{term.notMeaning}</p>}
-                {expert && <p>{term.pathwayContext}</p>}
+                {term.pathwayContext && <details><summary>에너지 공급 과정 자세히</summary><p>{term.pathwayContext}</p></details>}
                 <a href={`?terms=1&term=${explanation.profile.termId}`} target="_blank" rel="noopener noreferrer">용어집에서 더 읽기 (새 탭)</a>
               </details>
             </section>
@@ -208,7 +235,7 @@ function SessionExplanationReader({ session, context, loadEvidence, initialTab =
                 </li>
               })}</ul>
               <small>설명 버전 {explanation.version} · 근거 확인과 개별 처방 채택은 별도 검토예요.</small>
-              {expert && explanation.template !== null && <p className="session-explanation__note">템플릿 {explanation.template.id} · 버전 {explanation.template.version}<br />채택 결정 {explanation.template.decision}</p>}
+              {explanation.template !== null && <details><summary>템플릿 버전과 채택 결정</summary><p className="session-explanation__note">템플릿 {explanation.template.id} · 버전 {explanation.template.version}<br />채택 결정 {explanation.template.decision}</p></details>}
             </section>
             </details>
             </>}
@@ -222,14 +249,20 @@ function SessionExplanationReader({ session, context, loadEvidence, initialTab =
             {explanation.currentFrameLabel !== null && <section><h3>현재 장기 계획 연결</h3><p>{explanation.currentFrameLabel}</p></section>}
             <section><h3>계획한 자극</h3><p>{explanation.profile.purpose}</p><p>{prescriptionLabel(session)}</p></section>
             <section ref={actualRecords}><h3>실제 기록</h3>
-              {evidenceMatches && evidence.historyReadIncomplete && <PlanEvidenceHistoryNotice status={history.status} onRetry={history.retry} />}
-              {!history.journalReadComplete ? <p role="status">일지를 아직 모두 불러오지 못했어요. 조회가 끝나면 실제 기록이 나타나요.</p>
-                : !evidenceMatches ? <p>이 화면에서는 현재 훈련과 연결된 일지를 확인하지 못했어요. 조회하지 못한 상태를 일지가 없는 것으로 판단하지 않아요.</p>
-                : evidence.historyReadIncomplete && rows.length === 0 ? <p>이전 기록의 연결을 다시 확인해 주세요.</p>
+              {!canReadRecords ? <p>저장한 계획에서 연결된 일지를 확인할 수 있어요.</p> : <>
+              {(history.status !== "ready" || evidence?.historyReadIncomplete || displayedEvidence?.historyReadIncomplete) && <PlanEvidenceHistoryNotice
+                status={history.status === "ready" ? "unavailable" : history.status} onRetry={retryRecords} />}
+              {journalLoading ? <p role="status">일지를 불러오고 있어요.</p>
+                : recordReadFailed ? <p role="alert">기록을 불러오지 못했어요.{retainedEvidence && " 앞서 확인한 기록을 보여드려요."}</p>
+                : !evidenceMatches ? <p role="status">현재 훈련과 기록의 연결을 확인하지 못했어요.</p> : null}
+              {!journalLoading && (recordReadFailed || !evidenceMatches) && <button type="button" onClick={retryRecords}>
+                <RefreshCw size={16} aria-hidden="true" />기록 다시 불러오기</button>}
+              {displayedEvidence === null ? null
+                : displayedEvidence.historyReadIncomplete && rows.length === 0 ? <p>이전 기록의 연결을 다시 확인해 주세요.</p>
                 : methodObservation !== null ? <PlanMethodObservationDetails observation={methodObservation} comparison={rows[0] === undefined ? undefined : COMPARISON_LABELS[rows[0].comparison]} />
-                : rows.length === 0 ? <p>이 훈련과 연결된 일지가 아직 없어요. 미기록을 0이나 훈련 실패로 계산하지 않아요.</p> : rows.map((row) => (
+                : rows.length === 0 ? currentEvidence && <p>이 훈련과 연결된 일지가 아직 없어요.</p> : rows.map((row) => (
               <div key={row.plannedSessionId}><p>{row.date} · {row.slot === "AM" ? "오전" : "오후"}</p><p>{row.actualRpe === null ? "힘든 정도 미기록" : `실제 힘든 정도 ${row.actualRpe}/10 · 직접 입력`}</p><p>계획한 힘든 정도와 비교: {COMPARISON_LABELS[row.comparison]}</p></div>
-            ))}</section>
+            ))}</>}</section>
             <section><h3>관찰할 변화</h3><p>{explanation.profile.observationGuide}</p><p>계획의 자극과 실제 수행은 다를 수 있어요. 한 번의 기록이나 특정 훈련 횟수만으로 능력 부족·향상 원인·다음 경기 성적을 판단하지 않아요.</p><p>다음 주기에도 같은 방법을 선택할 수 있어요. 기록이 쌓였다는 이유만으로 강도·양·횟수를 자동으로 올리지 않아요.</p></section>
         </div>
       </div>
