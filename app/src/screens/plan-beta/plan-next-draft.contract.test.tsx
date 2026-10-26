@@ -1,7 +1,6 @@
 import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import React from "react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { cleanup, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { PlanBeta } from "../PlanBeta"
@@ -44,10 +43,6 @@ beforeEach(async () => {
   vi.stubGlobal("fetch", vi.fn(() => { throw Error("Synthetic test forbids network") }))
 })
 afterEach(() => { cleanup(); vi.useRealTimers(); vi.restoreAllMocks(); vi.unstubAllGlobals(); setActiveLocalAccount(null) })
-
-beforeEach(async () => {
-  await initializeCanonicalJournalFixture()
-})
 
 describe("ordinary next-plan draft preservation", () => {
   it.each([true, false])("opens from a changed-cycle summary with original history %s and advances only on acceptance", async retainHistory => {

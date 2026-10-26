@@ -2,7 +2,6 @@ import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-
 import type React from "react"
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { PlanBeta } from "../PlanBeta"
 import { generatePlanFromDraft } from "../../domain/plan-beta-flow"
 import { loadPlanBetaState } from "../../domain/plan-beta-store"
@@ -31,10 +30,6 @@ function candidateProps(): React.ComponentProps<typeof PlanCandidates> {
     onSelect: vi.fn(), onCatalogChange: vi.fn(), onRefine: vi.fn(), onStartDateChange: vi.fn(),
   }
 }
-
-beforeEach(async () => {
-  await initializeCanonicalJournalFixture()
-})
 
 describe("batch2 purpose-first plan journey", () => {
   it("keeps import at entry and result, not every question, without losing explicit activation", async () => {

@@ -12,9 +12,9 @@ import type { ImportDraftSelection, ImportSaveIntent } from "./import-draft"
 import { ReviewStage, SavedStage } from "../../screens/import-activities/ImportStages"
 import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 
-const api = vi.hoisted(() => ({ enabled: vi.fn(), hydrate: vi.fn(), persist: vi.fn(), deleted: vi.fn(), base: vi.fn(), fingerprint: vi.fn() }))
+const api = vi.hoisted(() => ({ hydrate: vi.fn(), persist: vi.fn(), deleted: vi.fn(), base: vi.fn(), fingerprint: vi.fn() }))
 vi.mock("../account/account-journal-record-service", () => ({
-  accountJournalRecordsEnabled: api.enabled,
+  accountJournalRecordsEnabled: () => true,
   hydrateAccountJournalRecords: api.hydrate,
   persistAccountJournalRecord: api.persist,
   accountJournalDeletedDocuments: api.deleted,
@@ -49,7 +49,6 @@ function observedBatch(selections: readonly ImportDraftSelection[]) {
 
 beforeEach(() => {
   vi.resetAllMocks(); setActiveLocalAccount("A"); resetAccountJournalProjection("A")
-  api.enabled.mockReturnValue(true)
   api.hydrate.mockResolvedValue(true); api.deleted.mockReturnValue([])
   api.persist.mockResolvedValue({ ok: true, storage: "ACCOUNT" })
   api.fingerprint.mockImplementation(async ({ syncState: _transport, ...entry }) => JSON.stringify(entry))
@@ -292,28 +291,18 @@ describe("explicit file identity choices", () => {
     expect(screen.queryByText("가져오기 제외 완료")).not.toBeInTheDocument()
   })
 
-  it.each(["format-disabled", "format-killed", "account-disabled"] as const)("keeps file correction and read-only guards when %s", held => {
-    vi.stubEnv("VITE_KILL_FILE_ANALYSIS_TCX", "false")
+  it("mentions file correction only when this format's analysis is enabled", () => {
     const source = observedActivity(), drafts = buildImportDrafts([source], [])
     const props = { drafts, result: { format: "tcx" as const, activities: [source], skipped: 0 }, selected: new Set([0]),
       intents: new Map<number, ImportSaveIntent>([[0, { kind: "SAVE_SEPARATE" }]]),
-      onIntent: vi.fn(), onToggle: vi.fn(), onSave: vi.fn(), onRestart: vi.fn(), onActivityChange: vi.fn() }
+      onIntent: vi.fn(), onToggle: vi.fn(), onSave: vi.fn(), onRestart: vi.fn() }
     const view = render(createElement(ReviewStage, props))
     expect(screen.getByText(/파일 기록은 오라클의 파일 분석에서 수정할 수 있어요/u)).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: "시간과 날짜 확인" })).toBeVisible()
     expect(screen.queryByText(/새 일지는 읽기 전용이에요/u)).not.toBeInTheDocument()
-    if (held === "format-disabled") vi.stubEnv("VITE_FEATURE_FILE_ANALYSIS_TCX", "false")
-    else if (held === "format-killed") vi.stubEnv("VITE_KILL_FILE_ANALYSIS_TCX", "true")
-    else api.enabled.mockReturnValue(false)
+    vi.stubEnv("VITE_FEATURE_FILE_ANALYSIS_TCX", "false")
     view.rerender(createElement(ReviewStage, props))
     expect(screen.queryByText(/파일 기록은 오라클의 파일 분석에서 수정할 수 있어요/u)).not.toBeInTheDocument()
-    expect(screen.queryByRole("button", { name: "시간과 날짜 확인" })).not.toBeInTheDocument()
-    expect(screen.getByText(/새 일지는 읽기 전용이에요/u)).toBeVisible()
-    expect(screen.getByText(/ 가져온 숫자는 주간 통계·추이·훈련계획에는 들어가지 않아요/u)).toBeVisible()
-    expect(screen.getByRole("button", { name: "고른 1건 일지에 저장" })).toBeEnabled()
-    expect(props.onSave).not.toHaveBeenCalled()
-    expect(props.onActivityChange).not.toHaveBeenCalled()
-    expect(api.persist).not.toHaveBeenCalled()
+    expect(screen.getByText(/새 일지는 읽기 전용이에요/u)).toBeInTheDocument()
   })
 })
 

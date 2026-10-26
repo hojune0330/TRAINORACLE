@@ -1,6 +1,5 @@
 import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { isoShift } from "../../domain/dates"
 import { saveEntry, todayISO, type PostSessionEntry } from "../../domain/journal-store"

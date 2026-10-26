@@ -1,6 +1,5 @@
 import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { beforeEach, expect, it, vi } from "vitest"
-import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { accountPlanPacketFixture } from "./account/account-plan.test-fixtures"
 import { accountPlanEntry, emptyAccountPlanDocument } from "./account/account-plan-document-schema"
 import { setActiveLocalAccount } from "./account/local-journal-ownership"
@@ -30,7 +29,6 @@ beforeEach(async () => {
   window.sessionStorage.clear()
   await initializeCanonicalJournalFixture()
   runtime.snapshot.mockReset()
-  await initializeCanonicalJournalFixture()
 })
 
 it("does not read multi-plan evidence for an account V3 plan", () => {

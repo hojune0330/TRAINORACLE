@@ -2,13 +2,10 @@ import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-
 import React from "react"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { QuickSessionForm } from "./QuickSessionForm"
 import { PostSessionForm } from "./PostSessionForm"
 import { readJournalOriginalPlan } from "../../domain/journal-original-plan"
 import { repetitionFixture, REPETITION_TEST_NOW } from "../../domain/planned-repetition.test-fixture"
-import { loadEntriesForPlanSafety } from "../../domain/journal-store"
-import { accountJournalProjectionStatus } from "../../domain/account/account-journal-projection"
 import { saveEntry } from "../../domain/journal-store"
 import { sessionWorkoutName, sessionWorkoutNotation } from "../../domain/workout-notation"
 vi.mock("../../domain/journal-original-plan", () => ({ readJournalOriginalPlan: vi.fn() }))

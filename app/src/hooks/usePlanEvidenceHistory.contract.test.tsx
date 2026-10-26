@@ -3,7 +3,6 @@ import React from "react"
 import { act, cleanup, render, renderHook, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
-import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { usePlanEvidenceHistory } from "./usePlanEvidenceHistory"
 import { ACCOUNT_PLAN_EVENT, type AccountPlanService } from "../domain/account/account-plan-service"
 import { accountPlanEntry, emptyAccountPlanDocument, materializeAccountPlan } from "../domain/account/account-plan-document-schema"
@@ -234,9 +233,4 @@ it("initial account-read failure gives honest recovery guidance instead of a non
   expect(screen.getByText(/계정의 계획을 불러오지 못했어요/u)).toBeVisible()
   expect(screen.queryByRole("button", { name: "이전 계획 다시 불러오기" })).toBeNull()
   expect(f.loadHistory).not.toHaveBeenCalled()
-})
-
-
-beforeEach(async () => {
-  await initializeCanonicalJournalFixture()
 })

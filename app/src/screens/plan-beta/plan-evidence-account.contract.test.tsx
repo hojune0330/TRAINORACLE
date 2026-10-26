@@ -1,7 +1,6 @@
 import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import React from "react"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
-import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { act, cleanup, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { PlanBeta } from "../PlanBeta"
@@ -72,8 +71,3 @@ it("real account history progress does not close an open cycle review; actual pl
   expect(screen.queryByRole("heading", { name: "이번 주기 기록 요약" })).toBeNull()
   expect(server.commits).toHaveLength(1)
 }, 20_000)
-
-
-beforeEach(async () => {
-  await initializeCanonicalJournalFixture()
-})

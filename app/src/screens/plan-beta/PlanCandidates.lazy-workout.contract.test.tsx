@@ -2,7 +2,6 @@ import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-
 import React from "react"
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { PlanCandidates } from "./PlanCandidates"
 import * as catalog from "./CatalogWorkoutPicker"
 import * as methods from "./PlanMethodPicker"
@@ -39,10 +38,6 @@ function fixture(detailed = false): React.ComponentProps<typeof PlanCandidates> 
   }
 }
 const toggleWorkout = () => fireEvent.click(screen.getByRole("button", { name: "훈련 조절" }))
-
-beforeEach(async () => {
-  await initializeCanonicalJournalFixture()
-})
 
 describe("deferred workout editors on a candidate result", () => {
   it("puts the dated QUALITY workout and its existing total-time notation ahead of the full calendar", () => {

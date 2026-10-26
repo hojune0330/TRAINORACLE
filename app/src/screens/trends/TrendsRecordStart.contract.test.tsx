@@ -1,7 +1,6 @@
 import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { cleanup, render, screen, fireEvent } from "@testing-library/react"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
-import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { Trends } from "../Trends"
 import { stateFixture } from "../../domain/plan-beta-store.test-fixture"
 import { createPlannedSessionLogDraft } from "../../domain/planned-session-link"
@@ -88,9 +87,4 @@ it("does not treat a plan alone as an analysis and offers direct workout, exampl
   expect(screen.getByRole("button", { name: "운동 기록 쓰기" })).toBeVisible()
   fireEvent.click(screen.getByRole("button", { name: "현재 훈련표 보기" }))
   expect(onOpenPlanWithPb).toHaveBeenCalledOnce()
-})
-
-
-beforeEach(async () => {
-  await initializeCanonicalJournalFixture()
 })

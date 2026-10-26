@@ -2,7 +2,6 @@ import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fix
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import {
   DECORATION_STORAGE_KEY_V3,
   MAX_DECORATION_ITEMS_PER_PAGE,
@@ -75,10 +74,6 @@ afterEach(() => {
 async function openJournalDecorationTools(): Promise<void> {
   await userEvent.click(screen.getByRole("button", { name: "모든 꾸미기 도구" }))
 }
-
-beforeEach(async () => {
-  await initializeCanonicalJournalFixture()
-})
 
 describe("real journal decoration surface", () => {
   it("adds a free page decoration and undoes the exact saved change", async () => {

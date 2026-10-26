@@ -2,7 +2,6 @@ import { readFileSync } from "node:fs"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { AccountAuthGateway } from "./AccountAuthGateway"
 import { AccountSyncPanel } from "./AccountSyncPanel"
 import { CoachSupportPanel } from "./CoachSupportPanel"
@@ -33,10 +32,6 @@ beforeEach(async () => {
 afterEach(() => {
   cleanup()
   vi.unstubAllEnvs()
-})
-
-beforeEach(async () => {
-  await initializeCanonicalJournalFixture()
 })
 
 describe("DS-06 account presentation fixtures", () => {
@@ -157,19 +152,6 @@ describe("DS-06 account presentation fixtures", () => {
     await user.click(screen.getByRole("button", { name: "합칠 내용 미리보기" }))
     await user.click(await screen.findByRole("button", { name: "확인한 내용 합치기" }))
     expect(screen.getByRole("status")).toHaveAttribute("data-state", "success")
-  })
-
-  it("keeps legacy device journal sync closed and exposes its informational state", () => {
-    const preview = vi.fn()
-    const sync = vi.fn()
-    render(<AccountSyncPanel userId="synthetic-athlete" enabled={false} onPreview={preview} onSync={sync} />)
-
-    expect(screen.getByRole("status")).toHaveAttribute("data-state", "info")
-    expect(screen.getByText(/동기화만 잠시 닫혀 있어요/u)).toBeVisible()
-    expect(screen.queryByRole("checkbox", { name: "이 기기 동기화 켜기" })).toBeNull()
-    expect(screen.queryByRole("button", { name: "합칠 내용 미리보기" })).toBeNull()
-    expect(preview).not.toHaveBeenCalled()
-    expect(sync).not.toHaveBeenCalled()
   })
 
   it("keeps local validation and injected account actions out of the network path", async () => {

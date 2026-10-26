@@ -2,7 +2,6 @@ import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fix
 import React from "react"
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { PlanBeta } from "./PlanBeta"
 import * as store from "../domain/plan-beta-store"
 import * as initialMain from "../domain/initial-main-conditions"
@@ -43,10 +42,6 @@ function openScheduleQuestion(name: RegExp) {
   fireEvent.click(screen.getByRole("button", { name: "일정·운동 시간" }))
   fireEvent.click(screen.getByRole("button", { name }))
 }
-
-beforeEach(async () => {
-  await initializeCanonicalJournalFixture()
-})
 
 describe("canceling a plan refinement question", () => {
   it.each(["frame", "race"] as const)("preserves the applied MAIN and its confirmation when canceling %s without a new answer", async question => {

@@ -2,7 +2,6 @@ import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-
 import React from "react"
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { beforeEach, afterEach, expect, it, vi } from "vitest"
-import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { AdjustedPlanImport } from "./AdjustedPlanImport"
 import { adjustedSuccessorFixture } from "../../domain/adjusted-plan-successor.test-fixtures"
 import { exportAdjustedPlanBackup } from "../../domain/adjusted-plan-backup"
@@ -26,9 +25,4 @@ it("shows the file count and requires confirmation before the real historical im
   expect(screen.getByRole("status")).toHaveTextContent("원본 1개를 추가했어요")
   expect(readAdjustedOriginalPlans(retained)).toMatchObject({ kind: "loaded", entries: [{ state: old.state }] })
   expect(localStorage.getItem(activePlanBetaStorageKey())).toBeNull()
-})
-
-
-beforeEach(async () => {
-  await initializeCanonicalJournalFixture()
 })

@@ -1,7 +1,6 @@
 import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import React from "react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { FilePlanComparison } from "./FilePlanComparison"
 import { accountPlanPacketFixture } from "../../domain/account/account-plan.test-fixtures"

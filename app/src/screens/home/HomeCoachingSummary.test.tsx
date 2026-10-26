@@ -1,7 +1,6 @@
 import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
-import { afterEach, beforeEach, expect, it, vi } from "vitest"
-import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
+import { afterEach, expect, it, vi } from "vitest"
 import { HomeCoachingSummary } from "./HomeCoachingSummary"
 import { TrainingHome } from "./TrainingHome"
 import type { TrainingHomeViewModel } from "../../domain/home-view-model"
@@ -14,7 +13,6 @@ import type { PostSessionEntry } from "../../domain/journal-schema"
 import { MultiPlanEvidenceContext } from "../../components/MultiPlanEvidenceContext"
 import type { RetainedMultiAdjustedEvidenceV3 } from "../../domain/selected-multi-adjusted-plan-v3"
 
-beforeEach(async () => { localStorage.clear(); sessionStorage.clear(); await initializeCanonicalJournalFixture() })
 afterEach(() => { cleanup(); vi.restoreAllMocks(); localStorage.clear() })
 
 it("opens a general article from its whole card and returns focus without writing a record", async () => {

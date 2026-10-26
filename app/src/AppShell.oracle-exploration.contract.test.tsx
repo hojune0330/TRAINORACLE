@@ -3,7 +3,6 @@ import React from "react"
 import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { initializeCanonicalJournalFixture } from "./test/canonical-journal-fixture"
 import { getOracleTopic, ORACLE_TOPICS, type OracleTopicId } from "./domain/oracle-exploration"
 import { setActiveLocalAccount } from "./domain/account/local-journal-ownership"
 import * as athleteService from "./domain/account/account-athlete-record-service"
@@ -99,10 +98,6 @@ function storageSnapshot(storage: Storage) {
     return [key, storage.getItem(key)]
   }))
 }
-
-beforeEach(async () => {
-  await initializeCanonicalJournalFixture()
-})
 
 describe("AppShell oracle exploration navigation", () => {
   it.each(["LOADING", "FAILED"] as const)("uses the actual athlete-record recovery boundary for a %s level read", async status => {

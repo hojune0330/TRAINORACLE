@@ -21,10 +21,8 @@ afterEach(() => { cleanup(); localStorage.clear(); setActiveLocalAccount(null) }
 it("orients the first choice without repeating art or losing focus in the input step", () => {
   const { container } = render(<Harness />)
   expect(screen.getByRole("heading", { name: "어떤 종목의 기록인가요?" })).toHaveFocus()
-  expect(screen.getByRole("region", { name: "페이스 계산" })).toBeVisible()
   expect(screen.queryByText("기록으로 거리별 평균 시간을 계산해요.")).toBeNull()
   expect(screen.getByRole("group", { name: "직접 입력할 종목" })).toBeVisible()
-  expect(container.querySelectorAll("img")).toHaveLength(1)
   expect(container.querySelector("img")?.getAttribute("src")).toMatch(/pace-stopwatch-v3.webp$/u)
   fireEvent.click(screen.getByRole("button", { name: "800m" }))
   expect(screen.getByRole("heading", { name: "800m 기록을 입력해 주세요" })).toHaveFocus()

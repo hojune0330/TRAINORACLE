@@ -5,11 +5,19 @@ import path from "node:path"
 import { test } from "node:test"
 import YAML from "yaml"
 import { projects } from "../e2e/run-full-suite.mjs"
+import { REQUIRED as reusableChecks } from "../../.tools/ci-reuse-pr.cjs"
 
 const workflow = YAML.parse(readFileSync(new URL("../../.github/workflows/ci.yml", import.meta.url), "utf8"))
 const jobs = workflow.jobs
 const needs = job => (Array.isArray(job.needs) ? job.needs : [job.needs]).filter(name => name !== 'delivery-scope' && name !== 'delivery-complete')
 const commands = job => job.steps.filter(step => step.run).flatMap(step => step.run.trim().split("\n").map(line => line.trim()))
+
+test("reused PR evidence requires every current browser project and execution lane", () => {
+  const matrix = jobs["app-browser-generic"].strategy.matrix
+  assert.deepEqual(reusableChecks.filter(name => name.startsWith("app-browser-generic")),
+    matrix.project.flatMap(project => matrix.lane.map(lane => `app-browser-generic (${project}, ${lane})`)))
+  assert.equal(reusableChecks.filter(name => name.startsWith("app-browser-generic")).length, 8)
+})
 
 test("CI distributes the complete fixed timezone and browser project inventories", () => {
   assert.deepEqual(jobs["app-unit"].strategy.matrix.include, [
@@ -43,7 +51,9 @@ test("quality and dedicated checks keep the original complete command coverage",
     "npm run test:e2e:form-input-autosave", "npm run test:e2e:file-analysis",
   ])
   assert.deepEqual(needs(jobs["app-browser-dedicated"]), ["app-quality"])
-  assert.deepEqual(needs(jobs["deploy-pages"]), ["contract-tests", "app-quality", "app-browser"])
+  assert.deepEqual(needs(jobs["deploy-pages"]), [])
+  assert(jobs['deploy-pages'].if.includes("needs.delivery-complete.result == 'success'"))
+  assert(jobs['deploy-pages'].if.includes("needs.delivery-scope.outputs.reused == 'true'"))
   assert.equal(workflow.permissions.contents, "read")
   for (const name of ["app-unit", "app-quality", "app-browser-generic", "app-browser-dedicated", "app-browser"]) {
     assert.equal(jobs[name].permissions, undefined)

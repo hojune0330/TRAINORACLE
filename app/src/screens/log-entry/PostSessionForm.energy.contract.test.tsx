@@ -2,7 +2,6 @@ import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-
 import { cleanup, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { loadEntries, saveEntry } from "../../domain/journal-store"
 import { PostSessionForm } from "./PostSessionForm"
 
@@ -14,10 +13,6 @@ async function advanceToReview(user: ReturnType<typeof userEvent.setup>) {
     await user.click(screen.getByRole("button", { name: "다음 질문" }))
   }
 }
-
-beforeEach(async () => {
-  await initializeCanonicalJournalFixture()
-})
 
 describe("post-session energy provenance", () => {
   it("saves an untouched energy system as missing instead of defaulting to BASE", async () => {

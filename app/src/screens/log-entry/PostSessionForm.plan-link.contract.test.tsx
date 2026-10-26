@@ -2,7 +2,6 @@ import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-
 import { cleanup, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { stateFixture } from "../../domain/plan-beta-store.test-fixture"
 import { createPlannedSessionLogDraft } from "../../domain/planned-session-link"
 import { PostSessionForm } from "./PostSessionForm"
@@ -15,10 +14,6 @@ async function advanceToReview(user: ReturnType<typeof userEvent.setup>) {
     await user.click(screen.getByRole("button", { name: "다음 질문" }))
   }
 }
-
-beforeEach(async () => {
-  await initializeCanonicalJournalFixture()
-})
 
 describe("planned session journal entry", () => {
   it("shows the selected plan occurrence and preserves its link without pre-filling actual effort", async () => {

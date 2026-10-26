@@ -1,6 +1,5 @@
 import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { generatePlanFromDraft } from "../../domain/plan-beta-flow"
 import { stateFixture } from "../../domain/plan-beta-store.test-fixture"
 import { planBetaStateV3Schema } from "../../domain/plan-beta-schema"
@@ -34,10 +33,6 @@ beforeEach(async () => {
   vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(new Date("2026-10-01T03:00:00.000Z"))
 })
 afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks(); setActiveLocalAccount(null) })
-
-beforeEach(async () => {
-  await initializeCanonicalJournalFixture()
-})
 
 describe("next selection retains exact predecessor until accepted", () => {
   it("uses the visible predecessor progress for continuity without first archiving it", () => {
