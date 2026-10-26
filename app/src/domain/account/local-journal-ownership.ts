@@ -99,6 +99,20 @@ export function localJournalScopeGeneration(): number {
   return scopeGeneration
 }
 
+/** Pin both the session and the exact ledger across async private operations.
+ * Ownership-only writes do not change the canonical migration/deletion epoch.
+ * This is a checked commit guard, not a cross-tab transaction or a new store. */
+export function captureJournalOwnershipGuard(): () => boolean {
+  const owner = activeAccountId
+  const generation = scopeGeneration
+  const snapshot = loadSnapshot()
+  return () => {
+    if (snapshot.status !== "complete" || activeAccountId !== owner || scopeGeneration !== generation) return false
+    const current = loadSnapshot()
+    return current.status === "complete" && current.raw === snapshot.raw
+  }
+}
+
 export function onLocalJournalScopeChange(listener: () => void): () => void {
   if (typeof window === "undefined") return () => undefined
   window.addEventListener(SCOPE_CHANGED_EVENT, listener)

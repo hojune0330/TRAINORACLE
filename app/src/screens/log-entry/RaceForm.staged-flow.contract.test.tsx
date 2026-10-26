@@ -1,6 +1,7 @@
 import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import type { JournalEntry } from "../../domain/journal-store"
 import { loadEntries, replaceAllEntries } from "../../domain/journal-store"
 import { setActiveLocalAccount } from "../../domain/account/local-journal-ownership"
@@ -21,6 +22,10 @@ afterEach(() => {
   vi.restoreAllMocks()
   localStorage.clear()
   sessionStorage.clear()
+})
+
+beforeEach(async () => {
+  await initializeCanonicalJournalFixture()
 })
 
 describe("race form staged flow", () => {

@@ -1,5 +1,6 @@
 import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { stateFixture } from "../../domain/plan-beta-store.test-fixture"
 import * as safety from "../../domain/plan-beta-flow"
 import * as journal from "../../domain/journal-store"
@@ -14,6 +15,10 @@ function fixture() {
   return { ...state, intake: { ...state.intake, startDate: "2026-09-20" } }
 }
 const now = new Date("2026-09-20T03:00:00Z")
+beforeEach(async () => {
+  await initializeCanonicalJournalFixture()
+})
+
 describe("today live context", () => {
   it("suppresses executable instructions when recent journal safety is blocked", () => {
     vi.spyOn(safety, "evaluatePlanSafety").mockReturnValue({ kind: "blocked", code: "RECENT_JOURNAL_REQUIRES_REVIEW" })

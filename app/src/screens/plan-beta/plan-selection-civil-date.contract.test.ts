@@ -1,5 +1,6 @@
 import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { generatePlanFromDraft } from "../../domain/plan-beta-flow"
 import { setActiveLocalAccount } from "../../domain/account/local-journal-ownership"
 import { todayISO } from "../../domain/journal-store"
@@ -43,6 +44,10 @@ function save(plan: ReturnType<typeof candidate>, startDate: string) {
     plan.generated, plan.gate, plan.intake, plan.athleteEvidence,
   )
 }
+
+beforeEach(async () => {
+  await initializeCanonicalJournalFixture()
+})
 
 describe("new personal plan selection at the local civil-day boundary", () => {
   it.each([

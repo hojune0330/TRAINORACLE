@@ -2,6 +2,7 @@ import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fix
 import React from "react"
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import type { PostSessionEntry } from "../domain/journal-store"
 
 const mocks = vi.hoisted(() => ({ enabled: true, persist: vi.fn() }))
@@ -57,4 +58,9 @@ it("preserves the two-argument classic callback when Quick has no review message
   fireEvent.click(screen.getByRole("button", { name: "완료" }))
   expect(onDone).toHaveBeenCalledExactlyOnceWith("post-session", expect.objectContaining({ syncState: "local" }))
   expect(mocks.persist).not.toHaveBeenCalled()
+})
+
+
+beforeEach(async () => {
+  await initializeCanonicalJournalFixture()
 })

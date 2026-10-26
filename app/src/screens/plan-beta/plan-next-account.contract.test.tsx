@@ -1,6 +1,7 @@
 import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import React from "react"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { act, cleanup, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { PlanBeta } from "../PlanBeta"
@@ -139,3 +140,8 @@ it.each([false, true])("leaves the pending next-plan screen when the server rece
   expect(service.snapshot().currentPlan?.planId).not.toBe(entry.planId)
   expect(server.commits).toHaveLength(1)
 }, 20_000)
+
+
+beforeEach(async () => {
+  await initializeCanonicalJournalFixture()
+})

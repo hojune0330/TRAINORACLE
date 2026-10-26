@@ -2,6 +2,7 @@ import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-
 import React from "react"
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { JournalOriginalPlan } from "./JournalOriginalPlan"
 import { stateFixture } from "../../domain/plan-beta-store.test-fixture"
 import { createPlannedSessionLogDraft } from "../../domain/planned-session-link"
@@ -108,4 +109,9 @@ it("closes the previous original when the displayed journal link changes", async
   expect(screen.queryByRole("button", { name: /원본 상세/u })).toBeNull()
   await open()
   await screen.findByText(/계획을 읽지 못했어요/u)
+})
+
+
+beforeEach(async () => {
+  await initializeCanonicalJournalFixture()
 })

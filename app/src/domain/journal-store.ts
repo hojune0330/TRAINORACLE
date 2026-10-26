@@ -4,8 +4,8 @@ import { hasValueExcludedFromAnalysis, toAnalysisJournalEntry, toExportJournalEn
 import type { AnalysisJournalEntry, SafeJournalEntry } from "./safe-export"
 import { hasImportedField } from "./field-provenance"
 import { canEditJournalEntry, keepsImportedObjectiveFacts, preserveJournalProvenance } from "./journal-edit-policy"
-import { recordTombstone, removeTombstone } from "./account/tombstone"
-import { moveToTrash, takeFromTrash } from "./journal-trash"
+import { loadTombstones, recordTombstone, removeTombstone } from "./account/tombstone"
+import { moveToTrash, takeFromTrash, prepareTrashRestore, JOURNAL_TRASH_STORAGE_KEY } from "./journal-trash"
 import { JOURNAL_STORAGE_KEY, journalStorage, writeJournalEntries } from "./journal-local-storage"
 import {
   hasPrivateMemoText,
@@ -31,6 +31,7 @@ import {
   isJournalOwnedBy,
   isJournalVisible,
   journalOwner,
+  localJournalScopeGeneration,
   onLocalJournalScopeChange,
   reserveJournalOwnership,
   rollbackJournalOwnership,
@@ -50,6 +51,13 @@ import { announceLocalJournalChange } from "./journal-change-events"
 export { BackupJsonExportLimitError } from "./restore/backup-json-stream"
 
 const privateMemoCache = new Map<string, { readonly recoveryCode: string; readonly memo: string }>()
+let privateReadGeneration = 0
+
+/** Erasure also revokes decryptions that were already in flight. */
+export function clearJournalPrivateReadCache(): void {
+  privateReadGeneration++
+  privateMemoCache.clear()
+}
 
 /** Cutover guard for legacy writers; account-less local journals remain available. */
 export function legacyJournalWritesBlocked(userId: string | null = activeLocalAccount()): boolean {
@@ -192,12 +200,15 @@ export async function savePrivateEntry(entry: unknown): Promise<{ readonly ok: b
 
   const ownership = reserveJournalOwnership([parsedEntry.id], activeLocalAccount())
   if (!ownership.ok) return { ok: false, total: loadEntries().length }
+  const owner = activeLocalAccount(), generation = localJournalScopeGeneration(), readGeneration = privateReadGeneration
   const ok = await savePrivateMemoWithJournalShell(
     localStorage,
     [...all, parsedEntry],
     parsedEntry,
     recoveryCode,
     snapshot.raw,
+    () => activeLocalAccount() === owner && localJournalScopeGeneration() === generation
+      && privateReadGeneration === readGeneration && loadSessionRecoveryCode() === recoveryCode,
   )
   if (!ok) {
     rollbackJournalOwnership(ownership)
@@ -248,12 +259,15 @@ export async function updatePrivateEntry(
 
   const preservedEntry = preserveJournalProvenance(previous, nextEntry)
   const nextEntries = entries.map((current) => current.id === nextEntry.id ? preservedEntry : current)
+  const owner = activeLocalAccount(), generation = localJournalScopeGeneration(), readGeneration = privateReadGeneration
   const ok = await savePrivateMemoWithJournalShell(
     localStorage,
     nextEntries,
     preservedEntry,
     recoveryCode,
     snapshot.raw,
+    () => activeLocalAccount() === owner && localJournalScopeGeneration() === generation
+      && privateReadGeneration === readGeneration && loadSessionRecoveryCode() === recoveryCode,
   )
   if (!ok) return { ok: false, total: entries.length }
   privateMemoCache.set(nextEntry.id, { recoveryCode, memo: nextEntry.kind === "evening" ? nextEntry.note : nextEntry.memo })
@@ -262,11 +276,12 @@ export async function updatePrivateEntry(
 
 export async function loadEntriesWithPrivateMemos(): Promise<JournalEntry[]> {
   const owner = activeLocalAccount()
+  const readGeneration = privateReadGeneration
   let revoked = false
   const unsubscribe = onLocalJournalScopeChange(() => {
     if (activeLocalAccount() !== owner) revoked = true
   })
-  const current = () => !revoked && activeLocalAccount() === owner
+  const current = () => !revoked && activeLocalAccount() === owner && privateReadGeneration === readGeneration
   try {
     const entries = loadEntries().map(entry => readAccountJournalPrivateEntry(entry.id) ?? entry)
     const localStorage = journalStorage()
@@ -457,34 +472,54 @@ export type RestoreDeletedResult = {
  * 새 id를 쓰면 오래된 id는 계속 "지워진 id"로 남고, 복구본은 새 기록으로
  * 취급된다. 사용자가 보는 내용(날짜·수치·메모)은 완전히 같다.
  *
- * 휴지통에서 꺼내기(takeFromTrash)를 먼저 해서, 저장이 실패하면 되돌려 놓는다.
+ * 복구할 새 id를 휴지통 원본에 먼저 기록한다. 저장을 확인한 뒤 원본을 정리한다.
+ * 중간에 앱이 종료되면 같은 id로 이어서 복구하며 원본을 먼저 없애지 않는다.
  */
 export function restoreDeletedEntry(id: string): RestoreDeletedResult {
   if (legacyJournalWritesBlocked()) return { ok: false, restoredId: null, total: loadEntries().length }
   if (!isJournalVisible(id)) return { ok: false, restoredId: null, total: loadEntries().length }
   const snapshot = loadJournalEntriesSnapshot()
   if (snapshot.readStatus !== "complete") return { ok: false, restoredId: null, total: loadEntries().length }
-  const taken = takeFromTrash(id)
-  if (taken === null) return { ok: false, restoredId: null, total: loadEntries().length }
-
-  const restored = { ...taken.entry, id: newEntryId(), syncState: "local" as const }
+  const prepared = prepareTrashRestore(id, newEntryId())
+  if (prepared === null) return { ok: false, restoredId: null, total: snapshot.entries.length }
+  const taken = prepared.item
+  const restored = parseJournalEntryForWrite({ ...taken.entry, id: taken.restoredId, syncState: "local" })
   const owner = journalOwner(taken.entry.id)
-  if (owner === undefined) {
-    moveToTrash(taken.entry, taken.deletedAt, taken.privateMemo)
+  if (restored === null || owner === undefined || loadTombstones().some(item => item.id === restored.id)) {
     return { ok: false, restoredId: null, total: loadEntries().length }
   }
-  const ownership = reserveJournalOwnership([restored.id], owner)
-  if (!ownership.ok) {
-    moveToTrash(taken.entry, taken.deletedAt, taken.privateMemo)
-    return { ok: false, restoredId: null, total: loadEntries().length }
-  }
-  const next = [...snapshot.entries, restored]
   const localStorage = journalStorage()
-  if (localStorage === null) {
-    rollbackJournalOwnership(ownership)
-    moveToTrash(taken.entry, taken.deletedAt, taken.privateMemo)
-    return { ok: false, restoredId: null, total: next.length - 1 }
+  if (localStorage === null) return { ok: false, restoredId: null, total: snapshot.entries.length }
+  const destinationOwner = journalOwner(restored.id)
+  if (destinationOwner === undefined || destinationOwner !== null && destinationOwner !== owner) {
+    return { ok: false, restoredId: null, total: snapshot.entries.length }
   }
+  const existing = snapshot.entries.filter(entry => entry.id === restored.id)
+  const existingMemo = privateMemoRecord(localStorage, restored.id)
+  const memoMatches = taken.privateMemo === undefined ? existingMemo === null
+    : existingMemo !== null && JSON.stringify(existingMemo) === JSON.stringify(taken.privateMemo)
+  if (existing.length > 0) {
+    // An already saved or subsequently edited/owned destination is never overwritten.
+    if (existing.length !== 1 || journalOwner(restored.id) !== owner || !memoMatches
+      || JSON.stringify(existing[0]) !== JSON.stringify(restored)) {
+      return { ok: false, restoredId: null, total: snapshot.entries.length }
+    }
+    const cleaned = permanentlyEraseJournalOriginals(localStorage, [taken])
+    announceLocalJournalChange()
+    return { ok: true, restoredId: restored.id, total: snapshot.entries.length,
+      ...(!cleaned ? { cleanupPending: true } : {}) }
+  }
+  // A crash after vault persistence may leave the exact ciphertext at the reserved
+  // id. Reusing it is safe; any different ciphertext remains untouched.
+  if (existingMemo !== null && !memoMatches) return { ok: false, restoredId: null, total: snapshot.entries.length }
+  try {
+    if (localStorage.getItem(JOURNAL_TRASH_STORAGE_KEY) !== prepared.raw) {
+      return { ok: false, restoredId: null, total: snapshot.entries.length }
+    }
+  } catch { return { ok: false, restoredId: null, total: snapshot.entries.length } }
+  const ownership = reserveJournalOwnership([restored.id], owner)
+  if (!ownership.ok) return { ok: false, restoredId: null, total: snapshot.entries.length }
+  const next = [...snapshot.entries, restored]
   const ok = taken.privateMemo === undefined
     ? writeJournalEntries(localStorage, next, snapshot.raw)
     : restorePrivateMemoRecordWithJournalShell(
@@ -497,8 +532,7 @@ export function restoreDeletedEntry(id: string): RestoreDeletedResult {
     )
   if (!ok) {
     rollbackJournalOwnership(ownership)
-    // 꺼내 놓고 저장에 실패하면 일지가 어디에도 없게 된다. 휴지통에 되돌린다.
-    moveToTrash(taken.entry, taken.deletedAt, taken.privateMemo)
+    // The original trash item, its ciphertext and reserved id are still present.
     return { ok: false, restoredId: null, total: next.length - 1 }
   }
   const cleaned = permanentlyEraseJournalOriginals(localStorage, [taken])

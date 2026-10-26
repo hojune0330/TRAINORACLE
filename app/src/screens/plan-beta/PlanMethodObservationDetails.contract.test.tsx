@@ -1,5 +1,6 @@
 import React from "react"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { cleanup, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { stateFixture } from "../../domain/plan-beta-store.test-fixture"
@@ -123,4 +124,9 @@ it("distinguishes a missing journal from a linked journal with missing measureme
   await userEvent.click(screen.getByText("어떤 기록을 비교하나요?"))
   expect(screen.getByText("거리·시간·페이스 미기록")).toBeVisible()
   expect(screen.getByText("미기록")).toBeVisible()
+})
+
+
+beforeEach(async () => {
+  await initializeCanonicalJournalFixture()
 })

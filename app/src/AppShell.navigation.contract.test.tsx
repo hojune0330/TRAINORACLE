@@ -2,6 +2,7 @@ import { initializeCanonicalJournalFixture } from "./test/canonical-journal-fixt
 import { act, cleanup, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "./test/canonical-journal-fixture"
 import { AppShell } from "./AppShell"
 import { registerUnsavedDraftGuard } from "./domain/unsaved-draft-navigation"
 import { setActiveLocalAccount } from "./domain/account/local-journal-ownership"
@@ -31,6 +32,10 @@ afterEach(async () => {
   // let that queued POP navigate the following test's fresh application.
   await waitFor(() => expect(hasPendingBrowserBackLayer()).toBe(false), { timeout: 5000 })
   vi.unstubAllEnvs()
+})
+
+beforeEach(async () => {
+  await initializeCanonicalJournalFixture()
 })
 
 describe("AppShell origin-preserving navigation", { timeout: 15000 }, () => {

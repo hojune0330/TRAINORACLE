@@ -1,3 +1,4 @@
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture";
 import React from "react"
 import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
@@ -23,6 +24,7 @@ const close = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "clos
 
 beforeEach(async () => {
   localStorage.clear(); sessionStorage.clear(); setActiveLocalAccount(null)
+    await initializeCanonicalJournalFixture();
   vi.useFakeTimers(); vi.setSystemTime(NOW)
   await initializeCanonicalJournalFixture()
   Object.defineProperty(HTMLDialogElement.prototype, "showModal", { configurable: true,

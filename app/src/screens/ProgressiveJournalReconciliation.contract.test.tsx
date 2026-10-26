@@ -1,6 +1,7 @@
 import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import React from "react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fixture"
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { PostSessionForm } from "./log-entry/PostSessionForm"
@@ -38,6 +39,10 @@ function ReviewHarness({ draft }: { readonly draft: ImportDraft }) {
     onIntent={(index, intent) => setIntents(intent === undefined ? new Map() : new Map([[index, intent]]))}
     onRestart={() => undefined} onSave={() => confirmImportDrafts([{ draft, intent: intents.get(0)! }], "csv")} />
 }
+
+beforeEach(async () => {
+  await initializeCanonicalJournalFixture()
+})
 
 describe("progressive journal reconciliation UI", () => {
   it("P2-1 keeps the saved detailed continuation in the import candidate list", async () => {

@@ -1,0 +1,649 @@
+{
+  "baseline": "aba840b62e72d605c6f19263f852a92dd25d7ff3",
+  "method": "Read canonical committed blobs with git show aba840b6:path",
+  "remoteCandidates": [
+    {
+      "branch": "b02-wip-safety",
+      "sha": "cd9ca80c699edadddd076df87377547cbacd4404",
+      "disposition": "already-present",
+      "reason": "REST/QUALITY PM slots and current plan/home semantics exist; broad branch snapshot stale.",
+      "evidence": [
+        "impl/src/plan-generator/session-builder.ts:158-167,204-236",
+        "app/src/domain/plan-beta-schema.ts"
+      ]
+    },
+    {
+      "branch": "codex/diversified-improvements",
+      "sha": "5f9ae78cbd36ca1d9abcc07f01d58b3bac898784",
+      "disposition": "already-present",
+      "reason": "Chosen training time and PM quality slot semantics exist.",
+      "evidence": [
+        "app/src/domain/plan-beta-flow.ts:147-165,376-394",
+        "impl/src/plan-generator/session-builder.ts:158-167,204-236"
+      ]
+    },
+    {
+      "branch": "codex/home-records-surface",
+      "sha": "5d2f29c7818a7c7e29440760e3c5fab0b16bf5eb",
+      "disposition": "already-present",
+      "reason": "Feedback entry truthfully shows preparation state; board gates composition.",
+      "evidence": [
+        "app/src/screens/More.tsx",
+        "app/src/screens/FeedbackBoard.tsx",
+        "app/src/screens/More.feedback.contract.test.tsx"
+      ]
+    },
+    {
+      "branch": "codex/personal-plan-reliability-20261007",
+      "sha": "ddf37b5d644999060a1e7320e66ebc862e61c7bb",
+      "disposition": "already-present",
+      "reason": "Migration, save retry, and restore guards exist.",
+      "evidence": [
+        "app/src/domain/account/device-training-data-connection.ts:463-483",
+        "app/src/screens/PlanBeta.tsx:890-901,1173-1176",
+        "app/src/domain/plan-beta-store.ts:295-325"
+      ]
+    },
+    {
+      "branch": "codex/plan-save-reliability-audit",
+      "sha": "ab37972b335f4f398ac9ab245d9399e85421ec87",
+      "disposition": "already-present",
+      "reason": "Storage-failure retry preserves candidate; current contract/E2E coverage.",
+      "evidence": [
+        "app/src/screens/PlanBeta.tsx:890-901,1173-1176",
+        "app/src/screens/PlanBeta.retry.contract.test.tsx",
+        "app/e2e/plan-save-retry.spec.ts"
+      ]
+    },
+    {
+      "branch": "codex/v3-full-plan-selection",
+      "sha": "048f267dc62a7fef94394d4cbede7260e3cb2f45",
+      "disposition": "superseded",
+      "reason": "Current plan selection/intake contains semantics; remaining broad patch is stale.",
+      "evidence": [
+        "app/src/domain/plan-beta-flow.ts",
+        "app/src/screens/plan-beta/PlanIntake.tsx",
+        "app/src/screens/plan-beta/PlanChoice.tsx"
+      ]
+    },
+    {
+      "branch": "fable/diary-aesthetic-emoji-stickers-v1",
+      "sha": "a572ff9dcf83da8dcbd28c5f8dd74a7875e2db0f",
+      "disposition": "already-present",
+      "reason": "Emoji sticker catalog/rendering present; later collections supersede V1 packaging.",
+      "evidence": [
+        "app/src/domain/decorations.ts",
+        "app/src/components/CalendarDecorationFrame.tsx",
+        "app/public/collections/open-cute-v1/assets.json"
+      ]
+    },
+    {
+      "branch": "genspark_ai_developer",
+      "sha": "133842a73b3fcd7793d733a384d842f7b8df1735",
+      "disposition": "already-present",
+      "reason": "The exact head commit is a 34-file quick-plan UI/test change (four-question intake, calendar peek, blocked guide, refinement panel). Canonical main has these components and current quick-intake/navigation behavior; later UI/test changes supersede the historical patch snapshot.",
+      "evidence": [
+        "app/src/screens/plan-beta/IntakeCalendarPeek.tsx",
+        "app/src/screens/plan-beta/PlanBlockedGuide.tsx",
+        "app/src/screens/plan-beta/PlanRefinePanel.tsx",
+        "app/src/screens/plan-beta/plan-intake-navigation.ts:QUICK_STEP_ORDER",
+        "app/src/screens/plan-beta/PlanIntake.tsx"
+      ]
+    }
+  ],
+  "localCandidateSHAs": [
+    {
+      "sha": "00ca7c5e2e7f70d7c0f18e3e351c2392c51af23f",
+      "branches": [
+        {
+          "repository": "TRAINORACLE-device-integration-20260829",
+          "branch": "codex/latest-main-checkpoint",
+          "inMain": true
+        }
+      ],
+      "disposition": "already-present",
+      "reason": "Exact SHA ancestor; emoji/collection decoration present.",
+      "currentCodeEvidence": [
+        "local inventory inMain=true uniqueCommitCount=0",
+        "app/src/domain/decorations.ts",
+        "app/src/components/CalendarDecorationFrame.tsx"
+      ],
+      "uniqueCommitCount": 0
+    },
+    {
+      "sha": "073431e6149ea0514672dba24627fe15b7e8f62f",
+      "branches": [
+        {
+          "repository": "TRAINORACLE-device-integration-20260829",
+          "branch": "codex/account-plan-migration-truth",
+          "inMain": false
+        }
+      ],
+      "disposition": "already-present",
+      "reason": "Migration result verified before online connection success.",
+      "currentCodeEvidence": [
+        "app/src/domain/account/device-training-data-connection.ts:463-483"
+      ],
+      "uniqueCommitCount": 1
+    },
+    {
+      "sha": "08c1005f2ccc378d63212e4485c68c07d0afb603",
+      "branches": [
+        {
+          "repository": "TRAINORACLE-device-integration-20260829",
+          "branch": "codex/account-storage-public-beta-release",
+          "inMain": false
+        }
+      ],
+      "disposition": "superseded",
+      "reason": "Older beta-readiness narrative stale; current gate keeps sync/sharing off.",
+      "currentCodeEvidence": [
+        "docs/ACCOUNT_PUBLIC_RELEASE_GATE.md:9,90,G10-G15"
+      ],
+      "uniqueCommitCount": 1
+    },
+    {
+      "sha": "12193df8731377da25a095e8ddbf628e475ccd5d",
+      "branches": [
+        {
+          "repository": "TRAINORACLE-device-integration-20260829",
+          "branch": "codex/garmin-coros-integration-readiness",
+          "inMain": false
+        }
+      ],
+      "disposition": "already-present",
+      "reason": "Candidate is a substantial implementation (15 files, 1111 insertions): COROS OAuth callback, workout push, status handler, readiness migration/config, public legal/support pages, runbook and validation. Canonical main already contains the OAuth/status/migration pieces and has a later push/storage pipeline with prepareCorosWorkoutStorage; reviewed code is therefore integrated/evolved. This classification does not enable provider accounts, credentials, or external submissions.",
+      "currentCodeEvidence": [
+        "supabase/functions/coros-oauth-callback/index.ts",
+        "supabase/functions/coros-workout-push/index.ts",
+        "supabase/functions/_shared/coros-workout-storage.mjs:prepareCorosWorkoutStorage",
+        "supabase/functions/device-integration-status/index.ts",
+        "supabase/migrations/0030_device_integration_readiness.sql",
+        "app/scripts/validate-device-integration.test.mjs",
+        "app/public/legal/device-integrations.html"
+      ],
+      "uniqueCommitCount": 1
+    },
+    {
+      "sha": "1ff8349beb7fd4abbff7c8893ba9a6094c12891a",
+      "branches": [
+        {
+          "repository": "TRAINORACLE-device-integration-20260829",
+          "branch": "codex/workout-choice-runtime-completion",
+          "inMain": true
+        }
+      ],
+      "disposition": "already-present",
+      "reason": "Exact SHA ancestor; failed-screen recovery included.",
+      "currentCodeEvidence": [
+        "local inventory inMain=true uniqueCommitCount=0"
+      ],
+      "uniqueCommitCount": 0
+    },
+    {
+      "sha": "2091a717d276e4f4617bcf353963b9c72e970c01",
+      "branches": [
+        {
+          "repository": "TRAINORACLE",
+          "branch": "codex/email-link-auth-20260826",
+          "inMain": false
+        }
+      ],
+      "disposition": "already-present",
+      "reason": "Confirmation callback and email OTP gateway exist.",
+      "currentCodeEvidence": [
+        "app/src/screens/account/AccountAuthGateway.tsx",
+        "app/src/domain/account/auth.ts"
+      ],
+      "uniqueCommitCount": 1
+    },
+    {
+      "sha": "2a33cc9ca08815d62cba129107a24132188993e0",
+      "branches": [
+        {
+          "repository": "TRAINORACLE",
+          "branch": "codex/structured-journal-sync-beta",
+          "inMain": false
+        }
+      ],
+      "disposition": "already-present",
+      "reason": "Sync preview/run exists; SYNC stays disabled.",
+      "currentCodeEvidence": [
+        "app/src/domain/account/sync-preview.ts",
+        "app/src/domain/account/sync-run.ts",
+        "app/src/domain/product-features.ts",
+        "docs/ACCOUNT_PUBLIC_RELEASE_GATE.md"
+      ],
+      "uniqueCommitCount": 1
+    },
+    {
+      "sha": "2e2c60fc5e00d5e4b0129aeb1c5384ed7c1fb7bd",
+      "branches": [
+        {
+          "repository": "TRAINORACLE-device-integration-20260829",
+          "branch": "codex/preserve-coros-analysis-readiness",
+          "inMain": false
+        },
+        {
+          "repository": "TRAINORACLE-device-integration-20260829",
+          "branch": "codex/preserved-local-main-20260912",
+          "inMain": false
+        }
+      ],
+      "disposition": "already-present",
+      "reason": "This SHA adds only two readiness/review documents. Both exact paths are present in canonical main; the COROS MCP report records oauth_client_registered=false and readiness as not activation, while the training-analysis alignment remains a review artifact rather than new runtime authority.",
+      "currentCodeEvidence": [
+        "reports/research/COROS_MCP_INTEGRATION_READINESS_2026-09-04.md",
+        "reports/review/TRAINING_ANALYSIS_SPEC_ALIGNMENT_AND_READINESS_2026-09-04.md",
+        "PRODUCT_NORTH_STAR.md"
+      ],
+      "uniqueCommitCount": 1
+    },
+    {
+      "sha": "45ca864445f87402320460d5d6d0fa3dd4b5d03a",
+      "branches": [
+        {
+          "repository": "TRAINORACLE-device-integration-20260829",
+          "branch": "codex/journal-storage-label-truth",
+          "inMain": false
+        }
+      ],
+      "disposition": "already-present",
+      "reason": "Diary labels account-storage vs browser-storage.",
+      "currentCodeEvidence": [
+        "app/src/screens/home/DeviceJournal.tsx:entry.syncState"
+      ],
+      "uniqueCommitCount": 1
+    },
+    {
+      "sha": "5594cf9e52c9fe6bad5ae3c07e20f99821ecee34",
+      "branches": [
+        {
+          "repository": "TRAINORACLE-device-integration-20260829",
+          "branch": "codex/compact-decoration-returning-flow",
+          "inMain": false
+        }
+      ],
+      "disposition": "already-present",
+      "reason": "The commit changes three E2E assertions from the old “일지 꾸미기” label to “꾸미기 보관함”. Canonical main renders that current label and keeps current decoration-store contract assertions; the historical E2E wording is already overtaken by the redesigned surface.",
+      "currentCodeEvidence": [
+        "app/src/screens/home/DecorationShop.tsx:43",
+        "app/src/screens/home/DecorationShop.contract.test.tsx:22,31",
+        "app/src/styles/decoration-studio.css:2"
+      ],
+      "uniqueCommitCount": 2
+    },
+    {
+      "sha": "56be77236a1030e422dc649650db8cec208d27c9",
+      "branches": [
+        {
+          "repository": "TRAINORACLE-device-integration-20260829",
+          "branch": "codex/device-integration-public-status",
+          "inMain": false
+        }
+      ],
+      "disposition": "already-present",
+      "reason": "Review/unavailable provider states shown honestly.",
+      "currentCodeEvidence": [
+        "app/src/screens/account/DeviceTrainingDataPanel.tsx:29-36",
+        "app/src/domain/account/device-training-data-connection.ts"
+      ],
+      "uniqueCommitCount": 1
+    },
+    {
+      "sha": "5a61a5115906a2c033aa725794f26e04aa835cda",
+      "branches": [
+        {
+          "repository": "TRAINORACLE-device-integration-20260829",
+          "branch": "codex/account-plan-storage-outcome-truth",
+          "inMain": false
+        }
+      ],
+      "disposition": "already-present",
+      "reason": "Exact plan storage outcomes rendered.",
+      "currentCodeEvidence": [
+        "app/src/screens/account/DeviceTrainingDataPanel.tsx:29-36"
+      ],
+      "uniqueCommitCount": 1
+    },
+    {
+      "sha": "5cc89a76f4623bd42decc342c24592a631c8bb2c",
+      "branches": [
+        {
+          "repository": "TRAINORACLE-device-integration-20260829",
+          "branch": "codex/compact-plan-overview-20260921",
+          "inMain": true
+        },
+        {
+          "repository": "TRAINORACLE-device-integration-20260829",
+          "branch": "codex/plan-integration-20260920",
+          "inMain": true
+        }
+      ],
+      "disposition": "already-present",
+      "reason": "Exact SHA ancestor of baseline, zero unique commits.",
+      "currentCodeEvidence": [
+        "local inventory inMain=true uniqueCommitCount=0"
+      ],
+      "uniqueCommitCount": 0
+    },
+    {
+      "sha": "602d48fd039be62fbd5ecdaf74a950c7ac35f15f",
+      "branches": [
+        {
+          "repository": "TRAINORACLE-ux-oracle-integration-20261006",
+          "branch": "codex/personal-plan-reliability-20261007",
+          "inMain": false
+        }
+      ],
+      "disposition": "superseded",
+      "reason": "Old panel UX/validator superseded by current home/plan recovery.",
+      "currentCodeEvidence": [
+        "app/src/screens/Home.tsx",
+        "app/src/screens/home/HomeCoachingSummary.tsx",
+        "app/src/domain/plan-beta-schema.ts",
+        "app/src/domain/plan-beta-store.ts"
+      ],
+      "uniqueCommitCount": 3
+    },
+    {
+      "sha": "66f2b39e15d68e2ded1367366ee6a362e99885f5",
+      "branches": [
+        {
+          "repository": "TRAINORACLE",
+          "branch": "codex/plan-backup-public-profile-migration-fix",
+          "inMain": false
+        }
+      ],
+      "disposition": "already-present",
+      "reason": "Migration 0029 includes FEEDBACK_BOARD in both constraints.",
+      "currentCodeEvidence": [
+        "supabase/migrations/0029_plan_backup_public_profiles.sql"
+      ],
+      "uniqueCommitCount": 1
+    },
+    {
+      "sha": "78ee331883ff32188f03fd24be9657dd939a46c9",
+      "branches": [
+        {
+          "repository": "TRAINORACLE-device-integration-20260829",
+          "branch": "codex/device-integration-more-link",
+          "inMain": false
+        }
+      ],
+      "disposition": "already-present",
+      "reason": "More/account routes expose device-status outcomes.",
+      "currentCodeEvidence": [
+        "app/src/screens/More.tsx",
+        "app/src/screens/account/DeviceTrainingDataPanel.tsx"
+      ],
+      "uniqueCommitCount": 1
+    },
+    {
+      "sha": "a36631b39d5cedd37c6636c832cf837003930a7a",
+      "branches": [
+        {
+          "repository": "TRAINORACLE-device-integration-20260829",
+          "branch": "codex/multi-event-pace-release-20261002",
+          "inMain": true
+        }
+      ],
+      "disposition": "already-present",
+      "reason": "Exact SHA ancestor.",
+      "currentCodeEvidence": [
+        "local inventory inMain=true uniqueCommitCount=0"
+      ],
+      "uniqueCommitCount": 0
+    },
+    {
+      "sha": "a7901702c50b3cd225c12f7b5acbda7d12863c4e",
+      "branches": [
+        {
+          "repository": "TRAINORACLE",
+          "branch": "codex/plan-backup-public-profile-sharing",
+          "inMain": false
+        }
+      ],
+      "disposition": "already-present",
+      "reason": "Backup/profile code exists; feature defaults keep sync/sharing closed.",
+      "currentCodeEvidence": [
+        "app/src/domain/account/plan-cloud-backup.ts",
+        "app/src/domain/account/public-profile.ts",
+        "app/src/domain/product-features.ts",
+        "docs/ACCOUNT_PUBLIC_RELEASE_GATE.md"
+      ],
+      "uniqueCommitCount": 1
+    },
+    {
+      "sha": "a956a46ab78bae00191bb256b796c51bc84cdc2e",
+      "branches": [
+        {
+          "repository": "TRAINORACLE-device-integration-20260829",
+          "branch": "codex/journal-page-play",
+          "inMain": false
+        }
+      ],
+      "disposition": "superseded",
+      "reason": "Viewport adjustment is test-only; current diary flow supersedes it.",
+      "currentCodeEvidence": [
+        "app/src/screens/home/DeviceJournal.tsx",
+        "app/e2e/beta-diary-experience.spec.ts"
+      ],
+      "uniqueCommitCount": 2
+    },
+    {
+      "sha": "aa947314dc34f5033deb23a3ded5eaef22affbf3",
+      "branches": [
+        {
+          "repository": "TRAINORACLE",
+          "branch": "codex/account-runtime-receipt-20260826",
+          "inMain": false
+        }
+      ],
+      "disposition": "already-present",
+      "reason": "Email link template/callback is in current auth.",
+      "currentCodeEvidence": [
+        "app/src/domain/account/auth.ts",
+        "app/src/screens/account/AccountAuthGateway.tsx"
+      ],
+      "uniqueCommitCount": 3
+    },
+    {
+      "sha": "acfaade1a9d193a7a16e486169600fff1e923322",
+      "branches": [
+        {
+          "repository": "TRAINORACLE-device-integration-20260829",
+          "branch": "codex/account-plan-isolation-recovery-evidence",
+          "inMain": false
+        }
+      ],
+      "disposition": "already-present",
+      "reason": "Account plan migration/recovery semantics exist; merge topology adds no behavior.",
+      "currentCodeEvidence": [
+        "app/src/domain/account/device-training-data-connection.ts:463-483",
+        "app/src/domain/plan-beta-store.ts:295-325",
+        "app/src/screens/account/DeviceTrainingDataPanel.tsx"
+      ],
+      "uniqueCommitCount": 3
+    },
+    {
+      "sha": "b718d2e8c3132ed4dc993ca4690fd82211a3282d",
+      "branches": [
+        {
+          "repository": "TRAINORACLE",
+          "branch": "codex/post-audit-hardening-271",
+          "inMain": false
+        },
+        {
+          "repository": "TRAINORACLE-device-integration-20260829",
+          "branch": "codex/post-audit-hardening-271-review",
+          "inMain": false
+        }
+      ],
+      "disposition": "superseded",
+      "reason": "Freshness/manual release guards supersede old audit snapshot.",
+      "currentCodeEvidence": [
+        ".tools/pages-release-safety.mjs",
+        ".tools/publish-oracle-pages-release.mjs",
+        "reports/operations/REPOSITORY_FRESHNESS_POLICY.md"
+      ],
+      "uniqueCommitCount": 1
+    },
+    {
+      "sha": "cafa57ab335c1bb0810b2bfca7a1fc7c07523d9c",
+      "branches": [
+        {
+          "repository": "TRAINORACLE-device-integration-20260829",
+          "branch": "codex/compact-tabs-density",
+          "inMain": false
+        }
+      ],
+      "disposition": "superseded",
+      "reason": "Old tabs CSS stale under current journal layout.",
+      "currentCodeEvidence": [
+        "app/src/AppShell.tsx",
+        "app/src/screens/home/DeviceJournal.tsx",
+        "app/src/styles/app.css"
+      ],
+      "uniqueCommitCount": 4
+    },
+    {
+      "sha": "e4462563e836ea8f219dbba39f62aad080fa1232",
+      "branches": [
+        {
+          "repository": "TRAINORACLE",
+          "branch": "codex/account-public-release-20260826",
+          "inMain": false
+        }
+      ],
+      "disposition": "already-present",
+      "reason": "Public legal pages/link are in main.",
+      "currentCodeEvidence": [
+        "app/public/legal/privacy.html",
+        "app/public/legal/terms.html",
+        "app/src/screens/More.tsx"
+      ],
+      "uniqueCommitCount": 1
+    },
+    {
+      "sha": "e93885d28a8478b618dd6b2ecd4483dd85743ea9",
+      "branches": [
+        {
+          "repository": "TRAINORACLE-device-integration-20260829",
+          "branch": "codex/compact-tabs-ci-stability",
+          "inMain": false
+        }
+      ],
+      "disposition": "superseded",
+      "reason": "Diary scroll wait is test-only and superseded by current flow.",
+      "currentCodeEvidence": [
+        "app/src/screens/home/DeviceJournal.tsx",
+        "app/e2e/beta-diary-experience.spec.ts"
+      ],
+      "uniqueCommitCount": 1
+    },
+    {
+      "sha": "ee7a91e3edbb2da38782717ecc46ce9c18b29a69",
+      "branches": [
+        {
+          "repository": "TRAINORACLE-device-integration-20260829",
+          "branch": "codex/analysis-integrity-coros-readiness",
+          "inMain": false
+        }
+      ],
+      "disposition": "already-present",
+      "reason": "The candidate adds sequence structure-difference codes to the MAIN comparison display and tests. Canonical main includes methodDifferences wiring and Korean labels, plus the current-scope note that this read-only comparison was implemented; current code retains catalog-unsupported safeguards that this historical candidate removed.",
+      "currentCodeEvidence": [
+        "app/src/domain/plan-main-comparison.ts:80-87",
+        "app/src/screens/plan-beta/MainWorkComparison.tsx:DIFFERENCE_LABELS and rendered 다른 부분",
+        "impl/src/prescription/sequence.ts:531-537",
+        "TRAINING_PLAN_CURRENT_SCOPE.md:79-80"
+      ],
+      "uniqueCommitCount": 4
+    },
+    {
+      "sha": "ef6eb627df965fbf62b09f80bbe243886663ca17",
+      "branches": [
+        {
+          "repository": "TRAINORACLE",
+          "branch": "fable/master-plan-v2-review",
+          "inMain": false
+        }
+      ],
+      "disposition": "superseded",
+      "reason": "Navigation proposal replaced by current navigation/product direction.",
+      "currentCodeEvidence": [
+        "app/src/screens/More.tsx",
+        "PRODUCT_NORTH_STAR.md"
+      ],
+      "uniqueCommitCount": 2
+    },
+    {
+      "sha": "f86266b15759ce4453d88622903a852a99ff77c9",
+      "branches": [
+        {
+          "repository": "TRAINORACLE-device-integration-20260829",
+          "branch": "codex/fatigue-test-alignment-20261007",
+          "inMain": true
+        }
+      ],
+      "disposition": "already-present",
+      "reason": "Exact SHA ancestor; publication guards present.",
+      "currentCodeEvidence": [
+        "local inventory inMain=true uniqueCommitCount=0",
+        ".tools/pages-release-safety.mjs",
+        ".tools/publish-oracle-pages-release.mjs"
+      ],
+      "uniqueCommitCount": 0
+    },
+    {
+      "sha": "fb6991c2eb0b6f33c14a6a7c542655cd5f8c06d8",
+      "branches": [
+        {
+          "repository": "TRAINORACLE-device-integration-20260829",
+          "branch": "codex/journal-backup-security-release-20261002",
+          "inMain": true
+        }
+      ],
+      "disposition": "already-present",
+      "reason": "Exact SHA ancestor; account backup/export present.",
+      "currentCodeEvidence": [
+        "local inventory inMain=true uniqueCommitCount=0",
+        "app/src/screens/home/DeviceJournal.tsx"
+      ],
+      "uniqueCommitCount": 0
+    },
+    {
+      "sha": "fbcee3c9ecb2132e9fd48ef1ff1396ed945c22b0",
+      "branches": [
+        {
+          "repository": "TRAINORACLE",
+          "branch": "codex/trainoracle-master-plan-v2",
+          "inMain": false
+        }
+      ],
+      "disposition": "superseded",
+      "reason": "Current product/readiness docs replace old master-plan snapshot.",
+      "currentCodeEvidence": [
+        "PRODUCT_NORTH_STAR.md",
+        "TRAINORACLE_IMPLEMENTATION_READINESS.md"
+      ],
+      "uniqueCommitCount": 1
+    }
+  ],
+  "coverage": {
+    "remote": 8,
+    "PR355Excluded": true,
+    "localRows": 33,
+    "localUniqueSHAs": 30,
+    "duplicateRows": 3,
+    "missing": 0,
+    "mergeNeeded": 0
+  },
+  "notes": [
+    "No merge-needed semantic delta found.",
+    "Already-present does not authorize enabling sync/sharing/provider settings.",
+    "Provider/MCP readiness without approved runtime behavior is unadopted-with-reason.",
+    "CI/fixture workflow changes intentionally not assessed."
+  ]
+}

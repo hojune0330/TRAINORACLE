@@ -2,6 +2,7 @@ import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import type { PlanSession } from "@impl/plan-generator/types"
 import { stateFixture } from "../../domain/plan-beta-store.test-fixture"
 import { createPlannedSessionLogDraft } from "../../domain/planned-session-link"
@@ -67,6 +68,10 @@ function paceSession(): PlanSession {
     },
   } as unknown as PlanSession
 }
+
+beforeEach(async () => {
+  await initializeCanonicalJournalFixture()
+})
 
 describe("session explanation review regressions", () => {
   it("keeps specialist information in named disclosures without a global expert choice", async () => {

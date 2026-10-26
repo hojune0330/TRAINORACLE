@@ -2,6 +2,7 @@ import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-
 import { createElement } from "react"
 import { cleanup, render, screen } from "@testing-library/react"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
+import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 import { createSelfReportedAthleteRecord, saveAthleteRecord } from "../../domain/athlete-records"
 import { DETAILED_PRESCRIPTION_APPROVALS } from "../../domain/detailed-prescription-approvals"
 import { generatePlanFromDraft } from "../../domain/plan-beta-flow"
@@ -91,4 +92,9 @@ it("does not display duplicate endpoints as 35~35 minutes", () => {
   expect(prescriptionLabel({ day: 1, slot: "AM", role: "EASY", plannedEnergyIntent: "BASE_INTENT",
     prescription: { kind: "RPE_TIME_RANGE", durationMinutes: { minimum: 35, maximum: 35 }, rpe: { minimum: 3, maximum: 4 } } }))
     .toBe("전체 35min @ RPE 3–4")
+})
+
+
+beforeEach(async () => {
+  await initializeCanonicalJournalFixture()
 })
