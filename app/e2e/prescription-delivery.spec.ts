@@ -9,6 +9,8 @@ for (const width of [320, 360, 1280]) {
     await page.setViewportSize({ width, height: 800 })
     const errors: string[] = []
     page.on("pageerror", error => errors.push(error.message))
+    // The catalog choice uses today's date as its seed; keep this fixed example stable.
+    await page.clock.setFixedTime(new Date("2026-10-25T03:00:00Z"))
     await page.goto("/e2e/fixtures/prescription-delivery.html")
     await expect(page.getByRole("list", { name: "훈련 실행 순서" })).toHaveCount(0)
     await page.getByRole("button", { name: "10월 26일 월요일 오전 훈련 내용 보기", exact: true }).click()
