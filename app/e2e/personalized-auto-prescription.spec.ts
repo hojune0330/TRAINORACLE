@@ -234,7 +234,7 @@ for (const viewport of [
     await expect(method).toContainText("2분 30초 조깅")
     await expect(method.getByRole("term").filter({ hasText: /^(준비|정리)$/u })).toHaveCount(0)
     await reader.getByRole("button", { name: "자세히", exact: true }).click()
-    await expect(method).toHaveAttribute("data-view", "explained")
+    await expect(method).toHaveAttribute("data-view", "method")
     await expect(method.getByText("준비", { exact: true })).toBeVisible()
     await expect(method.getByText("정리", { exact: true })).toBeVisible()
     await expect(method).toContainText("5 × 1000m")

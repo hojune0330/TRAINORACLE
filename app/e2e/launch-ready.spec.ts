@@ -17,7 +17,7 @@ async function answerMinimumPlanQuestions(page: Page): Promise<void> {
 }
 
 async function expectInstructionCards(cards: Locator, selectedSteps: string[]): Promise<void> {
-  await expect(cards).toHaveAttribute("data-view", "explained")
+  await expect(cards).toHaveAttribute("data-view", "method")
   await expect(cards.getByRole("term")).toHaveText(["준비", "본운동", "정리"])
   await expect(cards.getByLabel("계획된 전체 시간")).toHaveText("40분 20초 · 준비·회복·정리 포함")
   await expect(cards.getByRole("definition")).toHaveText(selectedSteps)
@@ -177,7 +177,7 @@ test("keeps an evening two-a-day plan after selection and reload", async ({ page
   expect(selectedMain).toMatch(/힘든 정도\(RPE\) 7[–~]8\/10/u)
   expect(selectedMain).toMatch(/사이 \d+(?:분|초) 조깅/u)
   await candidateReader.getByRole("button", { name: "자세히", exact: true }).click()
-  await expect(candidateSteps).toHaveAttribute("data-view", "explained")
+  await expect(candidateSteps).toHaveAttribute("data-view", "method")
   const selectedSteps = await candidateSteps.getByRole("definition").allTextContents()
   await expectInstructionCards(candidateSteps, selectedSteps)
   await candidateReader.getByRole("button", { name: /^(?:달력|하루씩)으로 돌아가기$/u, exact: true }).click()
