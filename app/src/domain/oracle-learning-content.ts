@@ -1,6 +1,7 @@
 import { GLOSSARY, TERM_CATEGORY_LABELS, type TermId } from "./glossary"
 import type { OracleDestination } from "./oracle-content-catalog"
 import { TRAINING_CONTENT_CATALOG, type TrainingContentArticle, type TrainingContentSourceState } from "./training-content-catalog"
+import type { TrainingVisualContentId } from "./training-visual-content"
 
 export type OracleLearningDestination = Extract<OracleDestination, "GLOSSARY" | "EVIDENCE" | "QUIZ" | "EXAMPLE">
 export const ORACLE_LEARNING_TITLES: Readonly<Record<OracleLearningDestination, string>> = {
@@ -14,6 +15,7 @@ export type OracleLearningSource = Readonly<{ label: string; url: string; grade?
 export type OracleLearningPage = Readonly<{
   id: string; title: string; category: string; paragraphs: readonly string[]
   limitation?: string; sources?: readonly OracleLearningSource[]; reviewedAt?: string
+  visual?: TrainingVisualContentId
   table?: Readonly<{ caption: string; columns: readonly string[]; rows: readonly (readonly string[])[] }>
 }>
 
@@ -47,6 +49,7 @@ export const ORACLE_EVIDENCE_PAGES: readonly OracleLearningPage[] = [
       scope: "검색 색인에서 입력 자료·기기별 조건 확인. 직접 HTML 재열기는 본문 없이 푸터만 표시" }] },
   ...TRAINING_CONTENT_CATALOG.map(article => ({ id: article.id, title: article.title, category: article.category,
     paragraphs: [article.summary, article.whatItTrains, ...(article.correctionNotice ? [article.correctionNotice] : [])],
+    visual: article.id === "CRUISE_INTERVALS" ? "CONTINUOUS_AND_CRUISE" as const : undefined,
     limitation: article.useBoundary, sources: [{ label: article.sourceLabel, url: article.sourceUrl,
       grade: article.sourceGrade, state: article.sourceState }], reviewedAt: article.publishedOn })),
 ]
@@ -66,6 +69,7 @@ export const ORACLE_EXAMPLE_PAGES: readonly OracleLearningPage[] = [
     table: { caption: "가상 반복 기록 · 목표 90~94초", columns: ["반복", "실제", "범위 확인"],
       rows: [92, 91, 93, 94, 92, 95].map((seconds, index) => [`${index + 1}회`, `${seconds}초`, seconds <= 94 ? "범위 안" : "범위 밖"]) } },
   { id: "recovery", title: "같은 거리, 다른 회복 구성", category: "합성 예시",
+    visual: "SAME_REPEATS_DIFFERENT_RECOVERY",
     paragraphs: ["400m 4회 사이에 회복 60초를 둔 구성과, 400m 2회씩 두 세트로 나누고 세트 사이 별도 회복을 둔 구성은 구조가 달라요.",
       "두 예시의 운동 거리는 모두 1600m지만 회복이 같다는 뜻은 아니에요."],
     limitation: "구조 설명용 합성 예시이며 개인 처방이 아니에요. 전체 시간과 효과는 제시되지 않은 회복 정보만으로 계산하지 않아요.",

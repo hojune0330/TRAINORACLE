@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { adjustedPlanReviewScopeV3 } from "../../domain/adjusted-plan-review-v3"
 import { adjustedPlanSelectionV3Fixture } from "../../domain/adjusted-plan-selection-v3.test-fixtures"
@@ -31,8 +31,16 @@ it("uses one memo for adjusted execution and retains source structure behind rea
   const paper = screen.getByRole("article", { name: "훈련 메모 미리보기" })
   expect(paper).toBeVisible()
   const model = buildWorkoutMemo(session)!
-  for (const line of model.lines) expect(paper).toHaveTextContent(line.text)
+  expect(paper).toHaveAttribute("data-view", "core")
+  expect(paper).toHaveTextContent(model.lines.find(line => line.label === "본운동")!.text)
+  for (const line of model.lines.filter(line => line.label === "준비" || line.label === "정리")) {
+    expect(paper).not.toHaveTextContent(line.text)
+  }
   expect(model.totalDuration).not.toBeNull()
+  expect(paper).not.toHaveTextContent(model.totalDuration!)
+  fireEvent.click(screen.getByRole("button", { name: "자세히" }))
+  expect(paper).toHaveAttribute("data-view", "explained")
+  for (const line of model.lines) expect(paper).toHaveTextContent(line.text)
   expect(paper).toHaveTextContent(model.totalDuration!)
   expect(execution.querySelector(".prescription-structure__nodes")).not.toBeNull()
 

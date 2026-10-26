@@ -9,6 +9,8 @@ import { WorkoutMemoSheet } from "./WorkoutMemoSheet"
 import { CompanionStampPicker } from "./CompanionStampPicker"
 import type { CompanionStamp } from "../domain/training-companions"
 import { DEFAULT_WORKOUT_READING, useWorkoutReadingPreferences, type WorkoutReadingPreferences } from "../hooks/useWorkoutReadingPreferences"
+import { buildWorkoutVisualGuide } from "../domain/workout-visual-guide"
+import { VisualTrainingGuide } from "./VisualTrainingGuide"
 import "../styles/workout-memo.css"
 
 type WorkoutMemoProps = {
@@ -66,6 +68,8 @@ function WorkoutMemoExporter({ session, date, state = "PREVIEW", reviewedExplana
     else { setLocalWording(value.wording); setLocalGroup(value.group) }
   }
   const memo = React.useMemo(() => buildWorkoutMemo(session, { date, state, reviewedExplanation }, wording), [session, date, state, reviewedExplanation, wording])
+  const visualGuide = React.useMemo(() => reading ? buildWorkoutVisualGuide(session, { date, state, reviewedExplanation }, { detail: group === "detail", wording }) : null,
+    [session, date, state, reviewedExplanation, wording, group, Boolean(reading)])
   const [paper, setPaper] = React.useState<MemoPaper>("yellow")
   const [stamp, setStamp] = React.useState<CompanionStamp | null>(null)
   const view = group === "brief" ? "core" : "explained"
@@ -166,6 +170,7 @@ function WorkoutMemoExporter({ session, date, state = "PREVIEW", reviewedExplana
     <div id={panelId} hidden={!open}>
     {open && <div className="workout-memo-tool__body">
       <WorkoutMemoSheet memo={presentation} paper={paper} stamp={stamp} />
+      {visualGuide && <VisualTrainingGuide guide={visualGuide} disabled={busy || exporting} />}
       {primaryAction && <div className="plan-session-record-action">{primaryAction}</div>}
       {reading && allowExport && <button className="workout-memo-tool__export-entry" type="button" ref={entry} aria-expanded={exporting} aria-controls={exportId}
         onClick={() => exporting ? closeExport() : setExporting(true)}><Download size={18} aria-hidden="true" />{exporting ? "가져가기 닫기" : "메모 가져가기"}</button>}

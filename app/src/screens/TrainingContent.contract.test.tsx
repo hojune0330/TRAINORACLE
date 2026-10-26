@@ -63,7 +63,7 @@ describe("training content reader", () => {
     fireEvent.click(screen.getByRole("button", { name: /크루즈 인터벌은 지속주와/u }))
 
     expect(screen.getByText("훈련 개념")).toBeVisible()
-    expect(container.querySelector('img[src$="running-shoe-v2.webp"]')).toBeNull()
+    expect(screen.getByRole("region", { name: "계속 달리기와 나누어 달리기" })).toBeVisible()
     expect(screen.getByRole("heading", { level: 1 })).toHaveClass("app-heading--screen", "app-heading--accent")
     expect(container.querySelectorAll(".app-heading--accent")).toHaveLength(1)
     const boundary = screen.getByRole("heading", { level: 2, name: "따라 하기 전에" })

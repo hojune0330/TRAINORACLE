@@ -1,5 +1,7 @@
 import React from "react"
 import { AppHeading } from "../components/AppHeading"
+import { VisualTrainingGuide } from "../components/VisualTrainingGuide"
+import { trainingVisualContent } from "../domain/training-visual-content"
 import { ArrowLeft, ArrowRight, Check, ExternalLink, RotateCcw } from "lucide-react"
 import { ORACLE_EVIDENCE_PAGES, ORACLE_EXAMPLE_PAGES, ORACLE_GLOSSARY_PAGES, ORACLE_LEARNING_QUIZ,
   ORACLE_LEARNING_TITLES, ORACLE_SOURCE_GRADE_LABELS, ORACLE_SOURCE_STATE_LABELS, ORACLE_SYNTHETIC_NOTICE,
@@ -17,6 +19,7 @@ export function OracleLearningReader(props: OracleLearningReaderProps) {
 function PageContent({ page }: { page: OracleLearningPage }) {
   return <>
     {page.paragraphs.map(paragraph => <p key={paragraph}>{paragraph}</p>)}
+    {page.visual && <VisualTrainingGuide guide={trainingVisualContent(page.visual)} />}
     {page.table && <table><caption>{page.table.caption}</caption><thead><tr>{page.table.columns.map(column => <th scope="col" key={column}>{column}</th>)}</tr></thead>
       <tbody>{page.table.rows.map((row, index) => <tr key={index}>{row.map((cell, i) => i === 0 ? <th scope="row" key={i}>{cell}</th> : <td key={i}>{cell}</td>)}</tr>)}</tbody></table>}
     {page.limitation && <p className="oracle-learning__boundary">{page.limitation}</p>}
@@ -40,6 +43,8 @@ function LearningContent({ destination, onBack }: OracleLearningReaderProps) {
   const pages = destination === "GLOSSARY" ? ORACLE_GLOSSARY_PAGES : destination === "EVIDENCE" ? ORACLE_EVIDENCE_PAGES : ORACLE_EXAMPLE_PAGES
   const length = isQuiz ? ORACLE_LEARNING_QUIZ.length : pages.length
   const complete = isQuiz && index === length
+  const checkedCount = ORACLE_LEARNING_QUIZ.filter(question => answers[question.id]?.checked).length
+  const allChecked = checkedCount === ORACLE_LEARNING_QUIZ.length
   const quiz = isQuiz ? ORACLE_LEARNING_QUIZ[index] : undefined
   const answer = quiz ? answers[quiz.id] : undefined
   const page = pages[index]
@@ -50,9 +55,10 @@ function LearningContent({ destination, onBack }: OracleLearningReaderProps) {
   const go = (next: number) => { pageChanged.current = true; setIndex(next) }
   return <article className="oracle-learning" aria-label={ORACLE_LEARNING_TITLES[destination]}>
     <header><p className="oracle-learning__meta">{complete ? "퀴즈 마침" : `${index + 1} / ${length} · ${isQuiz ? "학습 퀴즈" : page?.category}`}</p>
-      <AppHeading as="h2" variant="screen" accent ref={heading} tabIndex={-1}>{complete ? "문제 풀이를 마쳤어요" : quiz?.question ?? page?.title}</AppHeading></header>
+      <AppHeading as="h2" variant="screen" accent ref={heading} tabIndex={-1}>{complete ? allChecked ? "문제 풀이를 마쳤어요" : "퀴즈를 둘러봤어요" : quiz?.question ?? page?.title}</AppHeading></header>
     {(isQuiz || destination === "EXAMPLE") && <p className="oracle-learning__notice">{ORACLE_SYNTHETIC_NOTICE}</p>}
-    {isQuiz ? complete ? <><p>답과 정답 수는 저장하지 않아요. 퀴즈 결과는 신체 능력이나 훈련 수준 평가가 아니에요.</p>
+    {isQuiz ? complete ? <><p>답 확인 {checkedCount} / {length}문제{allChecked ? " · 모든 문제의 해설을 확인했어요." : " · 이전으로 돌아가 남은 답을 확인할 수 있어요."}</p>
+      <p>답과 정답 수는 저장하지 않아요. 퀴즈 결과는 신체 능력이나 훈련 수준 평가가 아니에요.</p>
       <button type="button" onClick={() => { setAnswers({}); go(0) }}><RotateCcw size={16} aria-hidden="true" />다시 풀기</button></> : quiz && <>
       <fieldset disabled={answer?.checked}><legend>답 선택</legend>{quiz.choices.map((choice, choiceIndex) => <label key={choice}>
         <input type="radio" name={radioName} value={choiceIndex} checked={answer?.selected === choiceIndex}

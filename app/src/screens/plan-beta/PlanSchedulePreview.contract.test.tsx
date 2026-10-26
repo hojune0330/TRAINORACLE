@@ -8,6 +8,7 @@ import { ALL_WORKOUT_CATALOG, type WorkoutCalculationInputs } from "@impl/prescr
 import { formatPaceSeconds } from "@impl/prescription/record-pace"
 import { formatTrainingSeconds, prescriptionLabel } from "./labels"
 import { catalogWorkoutReader } from "../../domain/catalog-workout-reader"
+import { setActiveLocalAccount } from "../../domain/account/local-journal-ownership"
 import { PlanSchedulePreview, type PlanScheduleDay } from "./PlanSchedulePreview"
 
 const sessions: readonly PlanSession[] = [
@@ -44,6 +45,8 @@ const sessions: readonly PlanSession[] = [
 
 const originalShowModal = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "showModal")
 beforeEach(() => {
+  // Reading preferences survive reopening within one scope; each case starts a new device scope.
+  setActiveLocalAccount("plan-schedule-reading-reset"); setActiveLocalAccount(null)
   Object.defineProperty(HTMLDialogElement.prototype, "showModal", { configurable: true, value: function (this: HTMLDialogElement) { this.setAttribute("open", "") } })
 })
 afterEach(() => {
@@ -365,12 +368,18 @@ describe("plan schedule preview", () => {
     expect(within(reader).getByText(reading.phases.main)).toBeVisible()
     expect(within(reader).getByText(reading.phases.main)).toHaveTextContent("고르게 유지 · 힘든 정도(RPE) 6–7/10")
     const warmup = within(reader).getByRole("article", { name: "훈련 메모 미리보기" })
+    expect(warmup).toHaveAttribute("data-view", "core")
+    expect(warmup).not.toHaveTextContent("15분")
+    expect(warmup).not.toHaveTextContent(reading.phases.cooldown)
+    expect(reader).not.toHaveTextContent("기준: 체감 강도 기준")
+    await user.click(within(reader).getByRole("button", { name: "자세히" }))
+    expect(warmup).toHaveAttribute("data-view", "explained")
     expect(warmup).toHaveTextContent("15분")
     expect(warmup).toHaveTextContent("힘든 정도(RPE) 2–3/10")
     expect(warmup).toHaveTextContent("20초 가속 달리기 4번 (전력질주 아님) · 사이 40초 걷기 · 마지막 뒤 1분 걷기")
     expect(within(reader).getByText(reading.phases.cooldown, { exact: false })).toBeVisible()
     expect(reader.querySelector(".training-instruction-cards")).toBeNull()
-    expect(reader).not.toHaveTextContent("기준: 체감 강도 기준")
+    expect(warmup).toHaveTextContent("기준: 체감 강도 기준 · 경기 기록 환산 아님")
     expect(reader).toHaveTextContent("통증·어지럼·자세 무너짐")
     expect(JSON.stringify(catalog)).toBe(original)
   })
@@ -402,6 +411,10 @@ describe("plan schedule preview", () => {
     expect(reader).toHaveTextContent(/22분.*2분 걷기.*23분/)
     expect(reader).toHaveTextContent("힘든 정도(RPE) 3–4/10")
     expect(within(reader).getByText("중간에 걷는 조깅")).toBeVisible()
+    expect(within(reader).getByRole("article", { name: "훈련 메모 미리보기" })).toHaveAttribute("data-view", "core")
+    expect(within(reader).queryByRole("combobox", { name: "메모 표현 방식" })).toBeNull()
+    await user.click(within(reader).getByRole("button", { name: "자세히" }))
+    expect(within(reader).getByRole("article", { name: "훈련 메모 미리보기" })).toHaveAttribute("data-view", "explained")
     await user.selectOptions(within(reader).getByRole("combobox", { name: "메모 표현 방식" }), "COACH")
     expect(within(reader).getByRole("article", { name: "훈련 메모 미리보기" })).toHaveTextContent("RPE 3–4")
     expect(within(reader).getByText("중간 걷기 조깅 · Split Easy")).toBeVisible()

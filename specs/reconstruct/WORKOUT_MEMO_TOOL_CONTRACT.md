@@ -169,6 +169,32 @@ not prescription quantities, execution status, storage or export permission.
   another default decision. Date/slot, numeric-pace provenance, unsafe/incomplete
   state, stop instructions and account/export cancellation boundaries are retained.
 
+## Owner Follow-Up: Visual Overview and Mari Explanation (2026-10-26)
+
+The owner approved the reviewed visual-guide plan after two running explainer
+references. Preserve MAIN-first reading, existing quantities and explicit exports.
+This narrow presentation extension supersedes the original no-generated-asset and
+no-additional-modal wording only for the voluntary explanation described here.
+
+- A compact `한눈에 보기` uses the validated prescription sequence. Core shows
+  MAIN; detailed includes its stored preparation/cooldown. No display-string
+  parsing, missing-time inference or new physiological/prescription calculation.
+- Optional generated segment artwork and existing Mari explain artwork accompany
+  live text. Failed images leave the names, numbers and controls usable.
+- Selecting a block changes the selected explanation only. `마리 설명` opens one
+  accessible, dismissible sheet using existing browser Back coordination; its
+  dismissal must not close the parent reader or change the prescription.
+- Playback is explicitly started, stops at the last segment and pauses on opening
+  explanation, collapse, hidden document, disabled state and reduced motion.
+  It is labelled a sequence preview, never a workout timer or completion record.
+- Actual amounts remain visible. Equal-size blocks are explicitly non-proportional.
+  Notes and sources reuse the existing reviewed explanation; social-media numbers
+  do not become personal thresholds, predictions or dose rules.
+- The visual guide is outside the memo export surface. Text/PNG still share the
+  selected immutable memo presentation, including its existing export restrictions.
+- Date/prescription/account changes close stale explanations. No new persistent
+  tracking, account writes, rewards, AI calls or private text inputs are added.
+
 ## Checks
 
 Verify decimals, AM/PM and real weekdays, repeat/set recovery, mixed structures,

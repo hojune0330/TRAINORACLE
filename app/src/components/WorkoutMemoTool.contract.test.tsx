@@ -3,6 +3,8 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testi
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { WorkoutMemoTool } from "./WorkoutMemoTool"
 import { memoSessionFixture } from "../domain/workout-memo.test-fixtures"
+import { buildWorkoutMemo } from "../domain/workout-memo"
+import { presentWorkoutMemo, workoutMemoPresentationText } from "../domain/workout-memo-presentation"
 import { downloadMemo, renderWorkoutMemoPng } from "../domain/workout-memo-export"
 import { More } from "../screens/More"
 
@@ -32,6 +34,27 @@ const open = () => fireEvent.click(screen.getByRole("button", { name: "자세히
 const openCustomization = () => fireEvent.click(screen.getByText("꾸미기"))
 
 describe("workout memo read-only actions", () => {
+  it("matches visual depth to the reader while keeping diagram controls out of copy and PNG export", async () => {
+    const session = memoSessionFixture(), date = "2026-09-20"
+    render(<WorkoutMemoTool session={session} mode="reader" date={date} state="PLAN" />)
+    const paper = screen.getByRole("article", { name: "훈련 메모 미리보기" })
+    const guide = screen.getByRole("region", { name: "한눈에 보기" })
+    expect(paper).not.toContainElement(guide)
+    expect(within(guide).queryByRole("list", { name: "준비" })).toBeNull()
+    expect(within(guide).queryByRole("list", { name: "정리" })).toBeNull()
+    fireEvent.click(screen.getByRole("button", { name: "자세히" }))
+    const detailedGuide = screen.getByRole("region", { name: "한눈에 보기" })
+    expect(within(detailedGuide).getByRole("list", { name: "준비" })).toBeVisible()
+    expect(within(detailedGuide).getByRole("list", { name: "정리" })).toBeVisible()
+    fireEvent.click(screen.getByRole("button", { name: "메모 가져가기" }))
+    expect(screen.getByRole("button", { name: "마리 설명" })).toBeDisabled()
+    const memo = buildWorkoutMemo(session, { date, state: "PLAN" }, "PLAIN")!
+    fireEvent.click(screen.getByRole("button", { name: "텍스트 복사" }))
+    await waitFor(() => expect(navigator.clipboard.writeText).toHaveBeenCalledWith(workoutMemoPresentationText(presentWorkoutMemo(memo, "explained"))))
+    fireEvent.click(screen.getByRole("button", { name: "이미지 저장" }))
+    await waitFor(() => expect(renderWorkoutMemoPng).toHaveBeenCalledWith(memo, "yellow", "explained", null))
+    expect(screen.getAllByRole("article", { name: "훈련 메모 미리보기" })).toHaveLength(1)
+  })
   it("retains reading depth and wording across dates, slots and reopening, then clears them on account change", () => {
     const session = memoSessionFixture()
     const first = render(<WorkoutMemoTool session={session} mode="reader" date="2026-09-20" state="PLAN" />)
@@ -84,7 +107,7 @@ describe("workout memo read-only actions", () => {
     expect(screen.getByRole("button", { name: "간단히" })).toHaveAttribute("aria-pressed", "true")
     expect(screen.queryByRole("button", { name: "메모 접기" })).toBeNull()
     expect(screen.queryByRole("button", { name: "핵심만" })).toBeNull()
-    expect(screen.queryByRole("button", { name: "기본", exact: true })).toBeNull()
+    expect(screen.queryByRole("button", { name: /^기본$/ })).toBeNull()
     expect(screen.getByRole("article")).not.toHaveTextContent("준비")
     expect(screen.getByRole("article")).not.toHaveTextContent("정리")
     expect(screen.getByRole("article")).not.toHaveTextContent("실제 수행 아님")

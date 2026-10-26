@@ -14,6 +14,8 @@ import type { TrainingMethodCompatibilityStatus } from "../domain/training-metho
 import { InfoDisclosure } from "../components/InfoDisclosure"
 import { ContextualIllustration } from "../components/ContextualIllustration"
 import { AppHeading } from "../components/AppHeading"
+import { VisualTrainingGuide } from "../components/VisualTrainingGuide"
+import { trainingVisualForArticle } from "../domain/training-visual-content"
 import { CategoryCard } from "../components/CategoryCard"
 import { TrainingLexicon } from "./TrainingLexicon"
 import { useTaskFlowBack } from "../hooks/useTaskFlowBack"
@@ -78,6 +80,7 @@ export function TrainingContent({ onBack, backOwner = "screen" }: {
 
   if (selected !== null) {
     const article = trainingContentById(selected)
+    const visualGuide = trainingVisualForArticle(article.id)
     const isSaved = saved.includes(selected)
     const compatibility = deriveTrainingMethodCompatibility({
       article,
@@ -110,6 +113,7 @@ export function TrainingContent({ onBack, backOwner = "screen" }: {
             <AppHeading as="h2" variant="section">무엇을 훈련하나요?</AppHeading>
             <p>{article.whatItTrains}</p>
           </section>
+          {visualGuide && <VisualTrainingGuide guide={visualGuide} />}
           <section className="training-content-article__compatibility" aria-labelledby="training-method-compatibility-title">
             <div className="training-content-article__compatibility-head">
               <Scale aria-hidden="true" size={18} />

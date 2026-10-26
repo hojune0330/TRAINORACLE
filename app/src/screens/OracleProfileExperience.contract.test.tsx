@@ -5,6 +5,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { OracleProfileExperience, type OracleProfileExperienceProps } from "./OracleProfileExperience"
 import { ORACLE_CONTENT_CATALOG } from "../domain/oracle-content-catalog"
 import { ORACLE_QUESTIONS } from "../domain/oracle-profile-v2"
+import { buildOracleContentReading } from "../domain/oracle-content-reader"
 
 vi.mock("../hooks/useReaderDialog", () => ({ useReaderDialog: (ref: React.RefObject<HTMLDialogElement>, close: () => void) => {
   React.useEffect(() => { ref.current?.showModal() }, [ref])
@@ -47,6 +48,22 @@ function openManagerReading(id: string) {
   fireEvent.click(within(openTopics()).getByRole("radio", { name: topic.group === "B" ? "경기 기록" : "훈련" }))
   fireEvent.click(screen.getByRole("button", { name: topic.title }))
 }
+it("keeps guide gestures inside the current article while preserving ordinary article swipes", () => {
+  render(<OracleProfileExperience {...props({ initialView: "library", readTopic: id => {
+    const evidence = buildOracleContentReading(id, { today: "2026-10-26" })
+    return { state: "EDUCATION", facts: [], paragraphs: evidence.paragraphs, limitations: evidence.limitations, evidence }
+  } })} />)
+  fireEvent.click(within(openTopics()).getByRole("radio", { name: "훈련법" }))
+  fireEvent.click(screen.getByRole("button", { name: "운동과 회복의 순서" }))
+  const guide = within(dialog()).getByRole("region", { name: "계속 달리기와 나누어 달리기" })
+  fireEvent.touchStart(guide, { touches: [{ clientX: 240, clientY: 180 }] })
+  fireEvent.touchEnd(guide, { changedTouches: [{ clientX: 100, clientY: 185 }] })
+  expect(within(dialog()).getByRole("heading", { name: "운동과 회복의 순서" })).toBeVisible()
+  const article = guide.closest("article")!
+  fireEvent.touchStart(article, { touches: [{ clientX: 240, clientY: 180 }] })
+  fireEvent.touchEnd(article, { changedTouches: [{ clientX: 100, clientY: 185 }] })
+  expect(within(dialog()).getByRole("heading", { name: "이만큼 쉬는 이유" })).toBeVisible()
+})
 it("moves the current domain destination between reading and preferences without losing the topic or draft", () => {
   const onOpenTraining = vi.fn()
   const p = props({ draftAnswers: { STRUCTURE_1: 4 }, draftState: "EDITING", onOpenTraining })

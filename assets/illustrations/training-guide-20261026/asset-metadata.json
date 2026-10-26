@@ -1,0 +1,52 @@
+[
+  {
+    "name": "training-walk-v1",
+    "sourceSize": [
+      1254,
+      1254
+    ],
+    "sourceMode": "RGBA",
+    "sourceAlphaRange": [
+      0,
+      255
+    ],
+    "webpSize": [
+      256,
+      256
+    ],
+    "webpMode": "RGBA",
+    "webpAlphaRange": [
+      0,
+      255
+    ],
+    "sourceBytes": 857869,
+    "webpBytes": 13178,
+    "sourceSha256": "6841fd9fae1219727b91c6020b655293060a04192594ffe3c38780fa5b9a45d3",
+    "webpSha256": "a9a21a6d1051821acff4b4f81913284cb5ab7fc82b428a5fcee61e37382d2641"
+  },
+  {
+    "name": "training-recovery-v1",
+    "sourceSize": [
+      1254,
+      1254
+    ],
+    "sourceMode": "RGBA",
+    "sourceAlphaRange": [
+      0,
+      255
+    ],
+    "webpSize": [
+      256,
+      256
+    ],
+    "webpMode": "RGBA",
+    "webpAlphaRange": [
+      0,
+      255
+    ],
+    "sourceBytes": 807465,
+    "webpBytes": 9182,
+    "sourceSha256": "530c415ae1e523d80aa1c2e9c3fd1d325d3abd4af794cd27044682b8c34d70b4",
+    "webpSha256": "df25e698f080581e6ffe654af1df5333568c4109e1d7a1c5c8503bf8ae318ed4"
+  }
+]

@@ -473,7 +473,7 @@ export function GoalTrainingProgramFlow({ onClose, onOpenActive }: {
           const position = `${day.date}:${session.slot}`
           const progress = !preview && actual && stored?.cycles.find(cycle => cycle.cycle === actual.cycle)?.latestPlan
             ?.progress.find(item => item.sessionDay === actual.session.day && item.sessionSlot === session.slot)?.state
-          return <React.Fragment key={position}><GoalProgramSession session={session} date={day.date}
+          return <React.Fragment key={position}><GoalProgramSession session={session} date={day.date} state={preview ? "PREVIEW" : "PLAN"}
             label={preview && first?.date === day.date ? "첫 훈련" : session.role === "QUALITY" ? "주요 훈련" : "쉬운 훈련"}
             disabled={busy || safetyFor !== null} stepIndex={stepByDate[position] ?? 0}
             onStepChange={index => setStepByDate(previous => ({ ...previous, [position]: index }))} />
