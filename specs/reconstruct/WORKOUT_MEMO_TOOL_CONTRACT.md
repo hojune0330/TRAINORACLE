@@ -147,6 +147,28 @@ This narrow display decision supersedes the unconditional visible-basis rule abo
   including through the method tab. Revoking export cancels pending export work.
 - No new training dose, record reload, journal/account write or release authority.
 
+## Owner Follow-Up: MAIN First, One Paper (2026-10-26)
+
+This supersedes the previous nested depth controls, always-visible support steps,
+white reader surface and separate export draft presentation. It changes display,
+not prescription quantities, execution status, storage or export permission.
+
+- Use the existing memo paper as the reader itself. Opening export reveals only
+  wording/decoration/actions below it, never another paper or a second depth bar.
+- Public choices are only `간단히` (core, default) and `자세히` (full with explanation).
+  Legacy standard/method layout inputs remain supported but are not public subchoices.
+- Core contains MAIN, its targets/repetitions/sets/recoveries and actual warnings.
+  Preparation, cooldown and verified whole-session duration belong to detailed view.
+  They remain immutable in the source; neither a view switch nor export removes them
+  from the stored prescription. No support duration becomes the MAIN target.
+- Screen, copy and PNG use that same selected content. The optional export help
+  names detailed view as the route for including preparation and cooldown.
+- Ordinary PLAN has no repeated planned/not-performed sentence. PREVIEW and
+  HISTORICAL retain short `적용 전 계획안` and `당시 계획` context labels.
+- Wording is available in detailed view or export controls; it does not require
+  another default decision. Date/slot, numeric-pace provenance, unsafe/incomplete
+  state, stop instructions and account/export cancellation boundaries are retained.
+
 ## Checks
 
 Verify decimals, AM/PM and real weekdays, repeat/set recovery, mixed structures,

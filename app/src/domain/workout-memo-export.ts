@@ -44,7 +44,7 @@ export async function renderWorkoutMemoPng(source: WorkoutMemo, paper: MemoPaper
   const background = token(MEMO_PAPERS.find(item => item.id === paper)!.token)
   const blocks = [
     { text: `${memo.dateLabel} · ${memo.slotLabel}`, size: 32, weight: 700 },
-    { text: memo.stateLabel, size: 26, weight: 500 },
+    ...(memo.stateLabel ? [{ text: memo.stateLabel, size: 26, weight: 500 }] : []),
     { text: memo.title, size: 38, weight: 700 },
     ...(memo.totalDuration ? [{ text: memo.totalDuration, size: 26, weight: 500 }] : []),
     ...(memo.layout === "full" ? [{ text: memoExecutionOrder(memo), size: 26, weight: 600 }] : []),

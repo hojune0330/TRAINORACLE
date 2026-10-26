@@ -48,5 +48,5 @@ it("shows the actual source and prepared workout side by side before final save"
   expect(onSaved).not.toHaveBeenCalled()
   expect(screen.queryByRole("button", { name: "메모 가져가기" })).toBeNull()
   expect(screen.queryByRole("button", { name: "이미지 저장" })).toBeNull()
-  expect(within(screen.getByRole("region", { name: "변경 후 구성" })).getAllByRole("article")[0]).toHaveTextContent("계획안 · 아직 적용 전")
+  expect(within(screen.getByRole("region", { name: "변경 후 구성" })).getAllByRole("article")[0]).toHaveTextContent("적용 전 계획안")
 })

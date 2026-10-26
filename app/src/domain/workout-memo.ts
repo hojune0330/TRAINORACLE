@@ -147,7 +147,7 @@ function projectMemo(session: WorkoutMemoSession, context: WorkoutMemoContext, w
   }
   return { date, dateLabel: date ? `${date.replaceAll("-", ".")} (${new Intl.DateTimeFormat("ko-KR", { weekday: "short", timeZone: "UTC" }).format(new Date(`${date}T12:00:00Z`))})` : `${session.day}일차 · 날짜 미지정`,
     slotLabel: session.slot === "AM" ? "오전" : "오후",
-    stateLabel: context.state === "PLAN" ? "계획한 훈련 · 실제 수행 아님" : context.state === "HISTORICAL" ? "당시 계획 · 실제 수행 기록 아님" : "계획안 · 아직 적용 전",
+    stateLabel: context.state === "PLAN" ? "" : context.state === "HISTORICAL" ? "당시 계획" : "적용 전 계획안",
     title: p.kind === "REST" ? "휴식" : p.kind === "RPE_TIME_RANGE" && p.catalogWorkout && !resolveCatalogBinding(p.catalogWorkout)
       ? "저장된 훈련" : sessionWorkoutName(session, wording === "COACH"), lines, basis,
     basisSummary: p.kind === "ADJUSTED_METHOD" || p.kind === "ADJUSTED_METHOD_V3"
@@ -201,5 +201,5 @@ function memoExplanation(session: WorkoutMemoSession, context: WorkoutMemoContex
 export function workoutMemoText(memo: WorkoutMemo): string {
   return ["TRAINORACLE", `${memo.dateLabel} · ${memo.slotLabel}`, memo.stateLabel, memo.title,
     ...(memo.totalDuration ? [`총 시간: ${memo.totalDuration}`] : []),
-    ...memo.lines.map(line => `${line.label}: ${line.text}`), ...(memo.basis ? [`기준: ${memo.basis}`] : []), ...memo.warnings].join("\n")
+    ...memo.lines.map(line => `${line.label}: ${line.text}`), ...(memo.basis ? [`기준: ${memo.basis}`] : []), ...memo.warnings].filter(Boolean).join("\n")
 }

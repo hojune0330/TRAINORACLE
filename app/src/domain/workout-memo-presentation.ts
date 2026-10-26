@@ -22,7 +22,7 @@ export type WorkoutMemoPresentation = WorkoutMemo & { readonly layout: WorkoutMe
 /** Legacy layout inputs remain aliases. Depth never changes the immutable prescription. */
 export function presentWorkoutMemo(memo: WorkoutMemo, selection: WorkoutMemoView | WorkoutMemoLayout = "standard"): WorkoutMemoPresentation {
   const view = selection === "full" ? "method" : selection === "compact" ? "standard" : selection
-  return { ...memo, view, layout: WORKOUT_MEMO_VIEWS.find(item => item.id === view)!.layout }
+  return { ...memo, totalDuration: view === "core" ? null : memo.totalDuration, view, layout: WORKOUT_MEMO_VIEWS.find(item => item.id === view)!.layout }
 }
 
 export function workoutMemoPresentationText(memo: WorkoutMemoPresentation): string {
@@ -52,12 +52,11 @@ export function memoLineEmphasis(memo: WorkoutMemoPresentation, index: number): 
 export function memoDisplayLines(memo: WorkoutMemoPresentation): readonly WorkoutMemoLine[] {
   if (memo.view === "core") {
     const main = memo.lines.find(line => line.label === "본운동")
-    if (!main) return memo.lines
+    if (!main) return memo.lines.filter(line => line.label !== "준비" && line.label !== "정리")
     const targets = memo.lines.filter(line => line.label === "목표" || line.label === "1회 목표")
     const support = memo.lines.filter(line => line.label === "준비" || line.label === "정리")
     return [{ ...main, text: [main.text, ...targets.map(line => `${line.label}: ${line.text}`)].join(" · ") },
-      ...memo.lines.filter(line => line !== main && !targets.includes(line) && !support.includes(line)),
-      ...(support.length ? [{ label: "준비·정리", text: support.map(line => `${line.label}: ${line.text}`).join("\n") }] : [])]
+      ...memo.lines.filter(line => line !== main && !targets.includes(line) && !support.includes(line))]
   }
   if (memo.layout === "full") return [
     ...memo.lines.filter(line => line.label === "준비"),

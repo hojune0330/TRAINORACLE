@@ -5,13 +5,12 @@
 .workout-memo-tool[data-mode="reader"] .workout-memo-paper header { border: 0; padding-bottom: 0; }
 .workout-memo-tool[data-mode="reader"] .workout-memo-paper__basis { border: 0; padding-top: 0; }
 .workout-memo-tool__reading-options { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; max-width: 480px; margin-bottom: 12px; }
-.workout-memo-tool__reading-options .workout-memo-tool__layouts { flex: 1 1 160px; }
+.workout-memo-tool__wording { display: flex; align-items: center; gap: 8px; }
 .workout-memo-tool__wording select { min-height: 44px; max-width: 100%; padding: 8px; border: 1px solid var(--line-2); border-radius: 4px; background: var(--surface); color: var(--ink); font: inherit; }
 .workout-memo-tool__export-entry { display: flex; align-items: center; gap: 8px; min-height: 44px; margin-block: 12px; border: 0; background: transparent; color: var(--ink-2); font: inherit; }
 .workout-memo-tool__export-panel { max-width: 480px; }
-.workout-memo-tool[data-mode="reader"] > .plan-session-record-action { margin-block: 16px 8px; }
-.workout-memo-tool[data-mode="reader"] > .workout-memo-paper { border: 0; padding-inline: 0; }
-.workout-memo-tool[data-mode="reader"] > .workout-memo-paper > footer { display: none; }
+.workout-memo-tool[data-mode="reader"] .plan-session-record-action { margin-block: 4px; }
+.workout-memo-tool__export-panel { display: grid; gap: 12px; }
 .workout-memo-tool__wording select:focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; }
 .workout-memo-tool[data-mode="reader"] .workout-memo-paper [data-emphasis] dd { font-size: var(--fs-h3); }
 .workout-memo-paper .workout-memo-paper__total { margin-block: 0 16px; font-size: var(--fs-body-sm); line-height: 1.5; }
@@ -26,9 +25,6 @@
 .workout-memo-tool__layouts button + button { border-left: 1px solid var(--line-2); }
 .workout-memo-tool__layouts button[aria-pressed="true"] { background: var(--ink); color: var(--surface); font-weight: 700; }
 .workout-memo-tool__options { display: grid; gap: 8px; max-width: 480px; padding-top: 8px; }
-.workout-memo-tool__subchoices { margin: 0; }
-.workout-memo-tool__subchoices button { padding-inline: 8px; font-size: var(--fs-body-sm); }
-.workout-memo-tool__subchoices button[aria-pressed="true"] { background: var(--surface-2); color: var(--ink); text-decoration: underline; text-underline-offset: 4px; }
 .workout-memo-tool__papers { display: flex; gap: 8px; }
 .workout-memo-tool__swatch { width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid var(--line-2); border-radius: 4px; color: var(--ink); }
 .workout-memo-tool__swatch[aria-pressed="true"] { outline: 2px solid var(--ink); outline-offset: 2px; }
@@ -39,6 +35,7 @@
 .workout-memo-paper header { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; font-size: var(--fs-body); padding-bottom: 12px; border-bottom: 1px solid var(--ink); }
 .workout-memo-paper .workout-memo-paper__state { font-size: var(--fs-caption); margin-block: 8px 16px; }
 .workout-memo-paper h3 { font-size: var(--fs-h3); line-height: 1.4; margin-block: 0 16px; }
+.workout-memo-paper header + h3 { margin-top: 16px; }
 .workout-memo-paper dl { margin: 0; display: grid; gap: 16px; }
 .workout-memo-paper dt { font-size: var(--fs-caption); margin-bottom: 4px; }
 .workout-memo-paper dd { margin: 0; font-size: var(--fs-body); font-weight: 600; line-height: 1.5; white-space: pre-wrap; }

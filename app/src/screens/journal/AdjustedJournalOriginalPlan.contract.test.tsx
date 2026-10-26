@@ -60,7 +60,6 @@ it("opens the saved adjusted structure and reasons from the journal, not origina
   expect(screen.getByText(/본운동 거리: 800m/)).toBeVisible()
   expect(screen.getByText(/반복 사이: 17초/)).toBeVisible()
   fireEvent.click(screen.getByRole("button", { name: "자세히" }))
-  fireEvent.click(screen.getByRole("button", { name: "설명까지" }))
   expect(screen.getByText("TEST work")).toBeVisible()
   expect(screen.getByText("TEST recovery")).toBeVisible()
   expect(screen.queryByText("DO-NOT-DISPLAY-RAW-NOTE")).toBeNull()

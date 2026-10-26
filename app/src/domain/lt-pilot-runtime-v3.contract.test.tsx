@@ -157,7 +157,6 @@ it("preserves exact time and effort on home and details with historical raw-RPE 
   expect(screen.getByText("템포런 · Tempo Run")).toBeVisible()
   expect(screen.queryByText(explanation.purpose)).toBeNull()
   fireEvent.click(screen.getByRole("button", { name: "자세히" }))
-  fireEvent.click(screen.getByRole("button", { name: "설명까지" }))
   expect(screen.getByText(explanation.purpose)).toBeVisible()
   expect(screen.getByText(explanation.recoveryRationale)).toBeVisible()
   expect(paper).toHaveTextContent("준비")

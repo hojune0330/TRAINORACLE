@@ -8,7 +8,7 @@ import "../styles/training-companions.css"
 export function WorkoutMemoSheet({ memo, paper, stamp = null }: { readonly memo: WorkoutMemoPresentation; readonly paper: MemoPaper; readonly stamp?: CompanionStamp | null }) {
   return <article className="workout-memo-paper" data-paper={paper} data-layout={memo.layout} data-view={memo.view} data-wording={memo.wording} aria-label="훈련 메모 미리보기">
     <header><strong>{memo.dateLabel}</strong><span>{memo.slotLabel}</span></header>
-    <p className="workout-memo-paper__state">{memo.stateLabel}</p>
+    {memo.stateLabel && <p className="workout-memo-paper__state">{memo.stateLabel}</p>}
     <h3>{memo.title}</h3>
     {memo.totalDuration && <p className="workout-memo-paper__total" aria-label="계획된 전체 시간">{memo.totalDuration}</p>}
     {memo.layout === "full" && <p className="workout-memo-paper__order">{memoExecutionOrder(memo)}</p>}

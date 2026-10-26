@@ -91,7 +91,7 @@ describe("workout memo snapshot contract", () => {
     const before = buildWorkoutMemo(session, { state: "HISTORICAL" })!
     localStorage.setItem("some-new-record", JSON.stringify({ seconds: 60, memo: "PRIVATE_RAW_NOTE" }))
     expect(buildWorkoutMemo(session, { state: "HISTORICAL" })).toEqual(before)
-    expect(workoutMemoText(before)).toContain("당시 계획 · 실제 수행 기록 아님")
+    expect(workoutMemoText(before)).toContain("당시 계획")
     expect(workoutMemoText(before)).not.toContain("PRIVATE_RAW_NOTE")
   })
   it("keeps unknown dates and stale catalog bindings explicit without inventing a pace", () => {
@@ -138,7 +138,7 @@ describe("workout memo snapshot contract", () => {
   })
   it("marks unapplied changes and does not guess today's date", () => {
     const memo = buildWorkoutMemo(rpe, { state: "PREVIEW" })!
-    expect(memo.stateLabel).toBe("계획안 · 아직 적용 전")
+    expect(memo.stateLabel).toBe("적용 전 계획안")
     expect(memoFileName(memo)).toBe("trainoracle-workout-undated-am.png")
   })
   it("handles corrupt or absent prescriptions without crashing the reader", () => {
@@ -229,16 +229,20 @@ describe("workout memo snapshot contract", () => {
     expect(lines.some(line => line.includes("정도(RPE)"))).toBe(true)
     expect(lines.some(line => line.includes("4:10/km"))).toBe(true)
   })
-  it("preserves every prescription value and stop rule in all four depth views", () => {
+  it("preserves MAIN and stop rules in brief, and all support steps in detailed and legacy views", () => {
     const memo = buildWorkoutMemo(memoSessionFixture())!
     for (const view of ["core", "standard", "method", "explained"] as const) {
       const presentation = presentWorkoutMemo(memo, view), text = workoutMemoPresentationText(presentation)
-      for (const line of memo.lines) expect(text).toContain(line.text)
+      for (const line of memo.lines) {
+        if (view === "core" && (line.label === "준비" || line.label === "정리")) expect(text).not.toContain(`${line.label}:`)
+        else expect(text).toContain(line.text)
+      }
       for (const warning of memo.warnings) expect(text).toContain(warning)
       expect(text).toContain(memo.stateLabel)
       expect(text).toContain(memo.basis!)
     }
     expect(memoDisplayLines(presentWorkoutMemo(memo, "core")).length).toBeLessThan(memo.lines.length)
+    expect(presentWorkoutMemo(memo, "core").totalDuration).toBeNull()
     expect(memoDisplayLines(presentWorkoutMemo(memo, "method"))[0]!.label).toBe("준비")
     expect(workoutMemoPresentationText(presentWorkoutMemo(memo, "standard"))).not.toContain("에너지 공급:")
     expect(workoutMemoPresentationText(presentWorkoutMemo(memo, "explained"))).toContain("에너지 공급:")

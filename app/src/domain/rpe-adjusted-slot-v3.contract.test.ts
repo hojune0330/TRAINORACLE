@@ -643,7 +643,6 @@ it("retains a multi-plan journal original and reads the exact slot after the act
   fireEvent(details, new Event("toggle"))
   expect(screen.queryByText("저장 당시 기록으로 계산한 참고 시간")).toBeNull()
   fireEvent.click(screen.getByRole("button", { name: "자세히" }))
-  fireEvent.click(screen.getByRole("button", { name: "설명까지" }))
   const purposeSection = screen.getByRole("heading", { name: "목적" }).closest("section")!
   const recoverySection = screen.getByRole("heading", { name: "회복" }).closest("section")!
   expect(purposeSection).toBeVisible()

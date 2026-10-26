@@ -59,7 +59,7 @@ test("archives the original in the real plan flow and compares it from its journ
   await opener.click()
   const reader = page.getByRole("dialog")
   await expect(reader.getByRole("article", { name: "훈련 메모 미리보기" })).toBeVisible()
-  await expect(reader.getByRole("article", { name: "훈련 메모 미리보기" })).toContainText("당시 계획 · 실제 수행 기록 아님")
+  await expect(reader.getByRole("article", { name: "훈련 메모 미리보기" })).toContainText("당시 계획")
   await reader.getByRole("tab", { name: "주기·기록" }).click()
   await expect(reader.getByText("계획의 일부를 수행한 기록", { exact: true })).toBeVisible()
   await expect(reader.getByText("3.2km", { exact: true })).toBeVisible()
