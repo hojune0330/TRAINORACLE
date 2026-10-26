@@ -142,3 +142,8 @@
   }
   .app-shell--results .oracle-v2__self--results .preference-radar__table { grid-column: 1 / -1; }
 }
+.oracle-context-editor .oracle-context-editor__many-choices { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.oracle-context-editor .oracle-v2__choices > button { display: grid; grid-template-columns: minmax(0, 1fr) 16px; gap: var(--space-2); padding: var(--space-3); font-size: max(var(--fs-body), 16px); color: var(--ink); }
+.oracle-context-editor__choice-mark { display: flex; align-items: center; justify-content: center; width: 16px; min-height: 16px; }
+.oracle-context-editor > .oracle-v2__reader-body > h1:has(+ .oracle-context-editor__choice-hint) { margin-bottom: var(--space-2); }
+.oracle-context-editor__choice-hint { margin: 0 0 var(--space-4); font-size: max(var(--fs-caption), 14px); color: var(--ink-2); }

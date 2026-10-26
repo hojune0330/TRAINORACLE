@@ -129,8 +129,19 @@ function WorkoutMemoExporter({ session, date, state = "PREVIEW", reviewedExplana
       if (!dialog && !(event.target instanceof Node && activeRoot.contains(event.target))) return
       event.preventDefault(); event.stopImmediatePropagation(); closeExport()
     }
+    // Disabling a busy copy/download button can move focus to the document.
+    // Native Escape still cancels its dialog; close this export layer first.
+    const ownerDialog = root.current?.closest("dialog")
+    const cancel = (event: Event) => {
+      if (event.target !== ownerDialog || !isMemoActive(root.current)) return
+      event.preventDefault(); event.stopImmediatePropagation(); closeExport()
+    }
     document.addEventListener("keydown", escape, true)
-    return () => document.removeEventListener("keydown", escape, true)
+    ownerDialog?.addEventListener("cancel", cancel, true)
+    return () => {
+      document.removeEventListener("keydown", escape, true)
+      ownerDialog?.removeEventListener("cancel", cancel, true)
+    }
   }, [exporting])
   if (invalidated) return null
   if (!memo || !presentation) return <p role="status">훈련 내용을 확인할 수 없어요. 계획을 다시 확인해 주세요.</p>

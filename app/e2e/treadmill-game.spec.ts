@@ -448,7 +448,8 @@ test("clears three stages with real keys, shows trade-offs and resets the build"
       }
       await page.clock.runFor(2500)
       await expect(page.getByRole("heading", { name: "어떤 능력을 키울까요?" })).toBeVisible()
-      await expect(page.getByText("대신 회복과 대시 충전이 느려요")).toBeVisible()
+      await expect(page.getByRole("button", { name: /일정한 박자/ })).toContainText("회복 속도")
+      await expect(page.getByRole("button", { name: /일정한 박자/ })).toContainText("대시 대기")
       const time = await page.getByLabel("경기 진행 시간").textContent()
       await page.clock.runFor(2000)
       await expect(page.getByLabel("경기 진행 시간")).toHaveText(time!)
@@ -457,8 +458,13 @@ test("clears three stages with real keys, shows trade-offs and resets the build"
         expect(await noSideScroll(page)).toBe(true)
         await page.screenshot({ path: info.outputPath("checkpoint.png"), fullPage: true })
       }
-      // One tap: the pick starts the next stage; its name is announced during a short still countdown.
+      // A card previews the actual change; only the explicit equip action starts the countdown.
       await page.getByRole("button", { name: /일정한 박자/ }).click()
+      await expect(page.locator(".treadmill-game")).toHaveAttribute("data-mode", "upgrade")
+      await expect(page.getByRole("button", { name: /일정한 박자/ })).toHaveAttribute("aria-pressed", "true")
+      await expect(page.getByText("미리보기 · 아직 적용 전")).toBeVisible()
+      if (checkpoints === 0) await page.screenshot({ path: info.outputPath("upgrade-preview.png"), fullPage: true })
+      await page.getByRole("button", { name: "장착하고 출발", exact: true }).click()
       await expect(page.getByRole("heading", { name: "어떤 능력을 키울까요?" })).toHaveCount(0)
       await expect(page.getByRole("list", { name: `코스 ${checkpoints + 2}/3 · ${checkpoints === 0 ? "진흙" : "가시밭"}` })).toBeVisible()
       await expect(page.getByRole("button", { name: "계속", exact: true })).toHaveCount(0)
@@ -477,11 +483,14 @@ test("clears three stages with real keys, shows trade-offs and resets the build"
   await page.getByText("이번 판 기록").click()
   const aidReceipt = page.locator(".treadmill-game__stats div").filter({ hasText: "보급소 이용" })
   await expect(aidReceipt).toContainText(/[1-6]회/)
-  await expect(page.getByText("강화: 일정한 박자 · 일정한 박자")).toBeVisible()
+  const applied = page.getByRole("region", { name: "이번 판에 적용된 강화" })
+  await expect(applied).toContainText("일정한 박자")
+  await expect(applied).toContainText("2회 적용")
+  await expect(applied.getByRole("listitem")).toHaveCount(1)
   await page.screenshot({ path: info.outputPath("clear.png"), fullPage: true })
   await page.getByRole("button", { name: "처음부터" }).click()
   await expect(page.getByRole("list", { name: "코스 1/3 · 트랙" })).toBeVisible()
-  await expect(page.getByText(/^강화:/)).toHaveCount(0)
+  await expect(page.getByRole("region", { name: "이번 판에 적용된 강화" })).toHaveCount(0)
   await expect(page.getByLabel("게임 에너지", { exact: true })).toHaveText("에너지 100")
 })
 
@@ -507,7 +516,7 @@ test("focus loss pauses, Esc pauses, and reduced motion preserves movement and c
   expect(await noSideScroll(page)).toBe(true)
 })
 
-/** Replays a planned run with real keys, picking "일정한 박자" at each checkpoint (the pick starts the next stage).
+/** Replays a planned run with real keys, previewing and equipping "일정한 박자" at each checkpoint.
  * `afterResume` may run the clock; it returns the milliseconds it used so the replay stays on plan. */
 async function replay(page: Page, plan: Step[], afterResume?: (index: number) => Promise<number>) {
   let now = 0, checkpoints = 0
@@ -521,6 +530,7 @@ async function replay(page: Page, plan: Step[], afterResume?: (index: number) =>
       await page.clock.runFor(2500)
       await expect(page.getByRole("heading", { name: "어떤 능력을 키울까요?" })).toBeVisible()
       await page.getByRole("button", { name: /일정한 박자/ }).click()
+      await page.getByRole("button", { name: "장착하고 출발", exact: true }).click()
       now += (await afterResume?.(checkpoints)) ?? 0
       checkpoints += 1
     }
@@ -536,7 +546,12 @@ test("a later-stage failure offers 'retry this stage' with the same build, cappe
   let now = 0
   for (const step of plan) {
     if (step.at > now) { await page.clock.runFor(Math.round(step.at - now)); now = step.at }
-    if (step.key === "upgrade") { await page.keyboard.up("ArrowRight"); await page.clock.runFor(2500); await page.getByRole("button", { name: /스프링 밑창/ }).click(); break }
+    if (step.key === "upgrade") {
+      await page.keyboard.up("ArrowRight"); await page.clock.runFor(2500)
+      await page.getByRole("button", { name: /스프링 밑창/ }).click()
+      await page.getByRole("button", { name: "장착하고 출발", exact: true }).click()
+      break
+    }
     if (step.key === "run-down") await page.keyboard.down("ArrowRight")
     else if (step.key === "run-up") await page.keyboard.up("ArrowRight")
     else if (step.key === "jump") await page.keyboard.press("Space")
@@ -782,6 +797,12 @@ test("navigation keeps the chosen upgrade when saving and resuming a later stage
   await page.keyboard.up("ArrowRight")
   await page.clock.runFor(2500)
   await page.getByRole("button", { name: /스프링 밑창/ }).click()
+  await expect(page.locator(".treadmill-game")).toHaveAttribute("data-mode", "upgrade")
+  await expect(page.getByLabel("점프 에너지", { exact: true })).toHaveText("↗ 점프 ⚡7")
+  await page.getByRole("button", { name: "미리보기 취소", exact: true }).click()
+  await expect(page.getByRole("button", { name: "장착하고 출발", exact: true })).toHaveCount(0)
+  await page.getByRole("button", { name: /스프링 밑창/ }).click()
+  await page.getByRole("button", { name: "장착하고 출발", exact: true }).click()
   await expect(page.getByLabel("점프 에너지", { exact: true })).toHaveText("↗ 점프 ⚡3")
   const savedJumpCost = await page.getByLabel("점프 에너지", { exact: true }).textContent()
   await page.getByRole("button", { name: "일시정지", exact: true }).click()

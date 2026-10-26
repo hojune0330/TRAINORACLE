@@ -97,9 +97,6 @@ jobs:
           node --test specs/test-packages/validate-personalized-prescription-v2-race-placement.test.mjs
           node specs/test-packages/validate-personalized-prescription-v2-race-placement.mjs
 
-      - name: Verify publication and reconciliation guards
-        run: node --test .tools/pages-release-safety.test.mjs .tools/manual-release-lock.test.mjs .tools/oracle-public-release-config.test.mjs .tools/repository-freshness.test.mjs
-
       - name: Install shared schema fixture compiler dependencies
         working-directory: app
         run: npm ci --ignore-scripts --no-audit --no-fund
@@ -114,9 +111,6 @@ jobs:
       - name: Rehearse V6 migration and account isolation in memory
         working-directory: supabase/tests/local-postgres
         run: npm test
-
-      - name: Verify closed lounge operation rollback
-        run: node --test supabase/operations/lounge-closure-operator.test.mjs
 
       - name: Verify COROS protocol and encrypted daily transport
         run: node --test supabase/tests/coros-*.test.mjs

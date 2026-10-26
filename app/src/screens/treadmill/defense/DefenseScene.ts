@@ -6,6 +6,7 @@ import {VIEW_WIDTH, VIEW_HEIGHT} from './world-camera'
 import type {WorldCamera} from './world-camera'
 import {readDefensePalette} from './palette'
 import type {DefensePalette} from './palette'
+import {tdGrowthShapes,tdTowerSize} from '../TowerDefenseGrowth'
 
 export type DefenseBridge = {
  state: () => TowerDefense | null
@@ -31,6 +32,7 @@ export class DefenseScene extends Phaser.Scene {
  private enemies = new Map<number, Actor>()
  private enemyDirections = new Map<number, number>()
  private towers = new Map<number, Actor>()
+ private towerGrowth = new Map<number, {back:Phaser.GameObjects.Graphics;front:Phaser.GameObjects.Graphics;key:string}>()
  private lastBuild = new Map<number, string>()
  private buildAt = new Map<number, number>()
  private effects!: Phaser.GameObjects.Graphics
@@ -134,6 +136,26 @@ export class DefenseScene extends Phaser.Scene {
   if(this.textures.exists(kind))actor.image.setTexture(kind,row*8+directionFrame(angle))
   else if(kind in TD_TOWERS)actor.image.setRotation(angle+Math.PI/2)
  }
+ private paintGrowth(pad:number,x:number,y:number,level:number,branch:'power'|'reach'|null) {
+  const key=`${level}-${branch}`,size=tdTowerSize(level),scale=size/128
+  let parts=this.towerGrowth.get(pad)
+  if(parts?.key===key)return
+  if(!parts){parts={back:this.add.graphics(),front:this.add.graphics(),key};this.towerGrowth.set(pad,parts)}
+  parts.key=key;parts.back.clear().setDepth(y+1);parts.front.clear().setDepth(y+6)
+  const colors={metal:this.palette.color.foundation,power:this.palette.color.cannon,reach:this.palette.color.range,final:this.palette.color.level}
+  const point=(px:number,py:number)=>({x:x+(px-64)*scale,y:y+(py-128*.68)*scale})
+  for(const shape of tdGrowthShapes(level,branch)){
+   const g=parts[shape.layer],color=colors[shape.tone]
+   g.fillStyle(color).lineStyle(2.5*scale,this.palette.color.outline)
+   if(shape.type==='circle'){
+    const p=point(shape.x,shape.y);g.fillCircle(p.x,p.y,shape.r*scale).strokeCircle(p.x,p.y,shape.r*scale)
+   }else{
+    const points=shape.points.map(([px,py])=>point(px,py))
+    if(shape.type==='line')g.lineStyle(3*scale,color).strokePoints(points,false)
+    else g.fillPoints(points,true).strokePoints(points,true)
+   }
+  }
+ }
  private playSound(id:string, volume:number) {
   if(!this.bridge.sound()||!this.cache.audio.exists(`sound-${id}`))return
   this.sound.play(`sound-${id}`, {volume})
@@ -160,9 +182,11 @@ export class DefenseScene extends Phaser.Scene {
   }
   this.range.lineStyle(8,this.palette.color.selection,1).strokeEllipse(pad.x,pad.y+3,116,72)
   for(const t of s.towers) {
-   const p=fieldPoint(map.pads[t.pad]!),key=`${t.kind}-${t.level}`
+   const p=fieldPoint(map.pads[t.pad]!),key=`${t.kind}-${t.level}-${t.branch}`,size=tdTowerSize(t.level)
    let a=this.towers.get(t.pad)
    if(!a){a=this.actor(t.kind,p.x,p.y,212);this.towers.set(t.pad,a)}
+   this.paintGrowth(t.pad,p.x,p.y,t.level,t.branch)
+   a.image.setDisplaySize(size,size);a.shadow.setDisplaySize(size*.48,size*.18)
    if(this.lastBuild.get(t.pad)!==key){this.lastBuild.set(t.pad,key);this.buildAt.set(t.pad,now);if(!paused)this.playSound('build',.18)}
    const since=effectTime-(t.lastFiredAt??-10)
    if(t.lastFiredAt!==undefined && this.lastShotSound.get(t.pad)!==t.lastFiredAt){this.lastShotSound.set(t.pad,t.lastFiredAt);if(!paused&&now-this.lastSound>65){this.playSound('shot',t.kind==='rapid'?.04:.08);this.lastSound=now}}
@@ -181,7 +205,7 @@ export class DefenseScene extends Phaser.Scene {
    const age=(now-(this.buildAt.get(t.pad)??-1000))/600
    if(age<1&&!reduced)this.effects.lineStyle(5,this.palette.color.level,1-age).strokeEllipse(p.x,p.y,100+age*90,60+age*45)
   }
-  for(const [id,a] of this.towers)if(!s.towers.some(t=>t.pad===id)){a.image.destroy();a.shadow.destroy();this.towers.delete(id);this.lastBuild.delete(id)}
+  for(const [id,a] of this.towers)if(!s.towers.some(t=>t.pad===id)){a.image.destroy();a.shadow.destroy();this.towers.delete(id);this.lastBuild.delete(id);const parts=this.towerGrowth.get(id);parts?.back.destroy();parts?.front.destroy();this.towerGrowth.delete(id)}
   for(const e of s.enemies) {
    const p=fieldPoint(routePoint(e.distance,map.id)),ahead=fieldPoint(routePoint(e.distance+.08,map.id))
    const size=e.kind==='boss'?224:e.kind==='armored'?172:148
@@ -249,7 +273,8 @@ export class DefenseScene extends Phaser.Scene {
   for(const a of [...this.enemies.values(),...this.towers.values()]){a.image.destroy();a.shadow.destroy()}
   for(const a of this.corpse.values())a.destroy()
   for(const a of this.damageText.values())a.destroy()
-  this.enemies.clear();this.enemyDirections.clear();this.towers.clear();this.corpse.clear();this.damageText.clear();this.seenEvents.clear();this.lastBuild.clear();this.buildAt.clear();this.lastShotSound.clear();this.stamp=0;this.endedAt=0
+  for(const parts of this.towerGrowth.values()){parts.back.destroy();parts.front.destroy()}
+  this.towerGrowth.clear();this.enemies.clear();this.enemyDirections.clear();this.towers.clear();this.corpse.clear();this.damageText.clear();this.seenEvents.clear();this.lastBuild.clear();this.buildAt.clear();this.lastShotSound.clear();this.stamp=0;this.endedAt=0
  }
 }
 

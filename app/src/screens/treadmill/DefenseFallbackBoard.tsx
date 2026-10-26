@@ -1,6 +1,7 @@
 import {getTDMap,getTDWaveEntry,TD_TOWERS,TD_ENEMIES,routePoint,towerStats} from '../../domain/minigame/tower-defense'
 import type {TowerDefense} from '../../domain/minigame/tower-defense'
-import {TDSprite,tdTile,tdTowerArtwork,tdEnemyArtwork} from './TowerDefenseArtwork'
+import {TDSprite,TDTowerSprite,tdTile,tdEnemyArtwork} from './TowerDefenseArtwork'
+import {tdTowerSize,tdBranchName} from './TowerDefenseGrowth'
 export {tdTile} from './TowerDefenseArtwork'
 export function TowerDefenseBoard({state,selected,buildEffect}:{state:TowerDefense;selected:number;buildEffect?:{pad:number;at:number}|null}){
  const map=getTDMap(state),path=map.path.map(p=>`${p.x*100},${p.y*100}`).join(' '),width=map.bounds.width*100,height=map.bounds.height*100
@@ -16,7 +17,7 @@ export function TowerDefenseBoard({state,selected,buildEffect}:{state:TowerDefen
    {active&&pad&&<circle data-testid="tower-range" cx={pad.x*100} cy={pad.y*100} r={towerStats(active).range*100} className="td-range"/>}
    {map.pads.map((p,i)=>{const tower=state.towers.find(t=>t.pad===i);return <g key={i} transform={`translate(${p.x*100},${p.y*100})`}>
     <TDSprite id="td-build-pad" x={-82} y={-62} width={164} height={125} fallback={<><circle r="58" className="td-foundation"/><image href={tdTile(180)} x="-70" y="-70" width="140" height="140"/></>}/>
-    {tower&&<><TDSprite id={tdTowerArtwork(tower.kind,tower.level)} x={-104} y={-138} width={208} height={208} fallback={<><circle r="36" className={`td-tower-${tower.kind}`}/><image href={tdTile(TD_TOWERS[tower.kind].tile)} x="-95" y="-95" width="190" height="190" transform={`rotate(${tower.angle*180/Math.PI})`}/></>}/><text x="-30" y="94" className="td-level">Lv.{tower.level}</text></>}
+    {tower&&<><TDTowerSprite kind={tower.kind} level={tower.level} branch={tower.branch} x={-tdTowerSize(tower.level)/2} y={-tdTowerSize(tower.level)*.68} width={tdTowerSize(tower.level)} fallback={<><circle r="36" className={`td-tower-${tower.kind}`}/><image href={tdTile(TD_TOWERS[tower.kind].tile)} x="-95" y="-95" width="190" height="190" transform={`rotate(${tower.angle*180/Math.PI})`}/></>}/><text x="0" y="94" textAnchor="middle" className="td-level">Lv.{tower.level} {tower.branch?tdBranchName(tower.branch):''}</text></>}
     {selected===i&&<ellipse data-testid="tower-selection" cx="0" cy="22" rx="70" ry="38" className="td-selection-ring"/>}
     {buildEffect?.pad===i&&<TDSprite key={buildEffect.at} id="fx-upgrade-burst" x={-120} y={-150} width={240} className="td-build-effect"/>}
    </g>})}
