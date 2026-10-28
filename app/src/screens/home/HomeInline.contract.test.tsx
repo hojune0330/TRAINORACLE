@@ -65,6 +65,19 @@ it("keeps memo and optional workout entry in one region and excludes every examp
   expect(loadEntries()).toHaveLength(0)
 })
 
+it("leaves no notice children when both truthy announcement components render null", () => {
+  const HiddenNotice = () => null
+  const model = buildTrainingHomeViewModel([], [], null, "2026-10-27")
+  const view = render(<TrainingHome model={model} announcement={<HiddenNotice />} installSuggestion={<HiddenNotice />} />)
+  const notices = screen.getByRole("complementary", { name: "소식과 설치 안내" })
+  expect(notices.matches(":empty")).toBe(true)
+  view.rerender(<TrainingHome model={model} announcement={<p role="status">합성 소식</p>} installSuggestion={<HiddenNotice />} />)
+  expect(within(notices).getByRole("status")).toHaveTextContent("합성 소식")
+  expect(notices.matches(":empty")).toBe(false)
+  view.rerender(<TrainingHome model={model} announcement={<HiddenNotice />} installSuggestion={<HiddenNotice />} />)
+  expect(notices.matches(":empty")).toBe(true)
+})
+
 it.each([ ["PENDING", "계정 저장을 기다리고"], ["CONFLICT", "수정과 겹쳤어요"], ["AUTH_REQUIRED", "다시 로그인"], ["INVALID", "계획을 확인할 수 없어요"], ["REJECTED", "계획을 저장하지 못했어요"] ] as const)("keeps %s plan state explicit and hides executable guidance", (status, message) => {
   render(<TrainingHome model={buildTrainingHomeViewModel([], [], plan, "2026-10-27")} planReadiness={status} />)
   expect(screen.getByText(new RegExp(message))).toBeVisible()
@@ -117,7 +130,8 @@ it("keeps one save after memo purpose and optional condition inputs", () => {
   expect(screen.getByText("공유·분석에 쓰지 않아요")).toBeVisible()
   expect(screen.getByText("저장 전 내용을 자동 확인해요")).toBeVisible()
   expect(screen.queryByText("보관 방식 자세히")).toBeNull()
-  expect(save.compareDocumentPosition(screen.getByText("새로고침 전 저장해 주세요.")) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
+  expect(screen.queryByText("새로고침 전 저장해 주세요.")).toBeNull()
+  expect(conditions.closest("details")).not.toHaveAttribute("open")
   expect(screen.getByRole("radio", { name: "나만의 메모" })).not.toBeChecked()
   expect(screen.getByRole("radio", { name: "훈련 메모" })).not.toBeChecked()
   fireEvent.click(screen.getByRole("radio", { name: "훈련 메모" }))

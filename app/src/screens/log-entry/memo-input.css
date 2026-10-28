@@ -1,3 +1,18 @@
+.memo-input__purpose { min-width: 0; border: 0; margin: 0 0 10px; padding: 0; }
+.memo-input__purpose legend { margin-bottom: var(--space-2); color: var(--ink-2); font-size: var(--fs-body-sm); line-height: 1.5; }
+.memo-input__purpose-options { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); }
+.memo-input__purpose-option { display: flex; align-items: flex-start; gap: 7px; min-height: 44px; padding: 9px 10px; border: 1px solid var(--line); border-radius: var(--r-action); background: transparent; color: var(--ink); font: var(--fs-body) var(--sans); cursor: pointer; }
+.memo-input__purpose-option[data-selected="true"] { border-color: var(--ink); background: var(--surface); }
+.memo-input__purpose-title { font-size: var(--fs-body); }
+.memo-input__purpose-copy small { display: block; margin-top: var(--space-1); color: var(--ink-2); font-size: var(--fs-body-sm); font-weight: 400; line-height: 1.5; overflow-wrap: anywhere; }
+.memo-input--compact .memo-input__purpose { margin-bottom: var(--space-2); }
+.memo-input--compact .memo-input__purpose-options { grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr)); }
+.memo-input--compact .memo-input__purpose-option { box-sizing: border-box; gap: var(--space-2); min-width: 0; min-height: var(--app-touch-min); padding: var(--space-3); }
+.memo-input--compact .memo-input__purpose-option > input { flex: 0 0 auto; margin: .25em 0 0; accent-color: var(--brand); }
+.memo-input--compact .memo-input__purpose-copy { min-width: 0; word-break: keep-all; overflow-wrap: break-word; }
+.memo-input--compact .memo-input__purpose-title { display: block; font-weight: 600; line-height: 1.5; }
+.memo-input--compact .memo-input__purpose-option[data-selected="true"] .memo-input__purpose-title { font-weight: 700; }
+.memo-input--compact .memo-input__purpose-copy small { overflow-wrap: break-word; text-wrap: balance; }
 .memo-input__explanation { color: var(--ink-2); font-size: var(--fs-body-sm); line-height: 1.55; margin-bottom: var(--space-3); }
 .memo-input__explanation p { margin: var(--space-2) 0; }
 .memo-input summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; text-decoration: underline; }

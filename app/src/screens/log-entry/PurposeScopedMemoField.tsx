@@ -179,19 +179,19 @@ export function PurposeScopedMemoField({
         className="paper-grid"
         style={{
         ...inputStyle(), fontFamily: "var(--sans)",
-          fontSize: 18, lineHeight: 1.4, color: "var(--ink-blue)", resize: "none",
+          fontSize: compactLabel ? "max(16px, var(--fs-body))" : 18, lineHeight: compactLabel ? 1.5 : 1.4, color: "var(--ink-blue)", resize: "none",
         }}
       />
   </>
   return (
-    <div className="memo-input">
+    <div className={`memo-input${compactLabel ? " memo-input--compact" : ""}`}>
       {textFirst && memoTextField}
-      <fieldset aria-describedby={describedBy} style={{ border: 0, margin: "0 0 10px", padding: 0 }}>
-        <legend style={{ fontSize: "var(--fs-body-sm)", color: "var(--ink-2)", marginBottom: 8 }}>
+      <fieldset className="memo-input__purpose" aria-describedby={describedBy}>
+        <legend>
           메모 용도
         </legend>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-          <label style={optionStyle(controller.purpose === MEMO_PURPOSE.privateSelfOnly)}>
+        <div className="memo-input__purpose-options">
+          <label className="memo-input__purpose-option" data-selected={controller.purpose === MEMO_PURPOSE.privateSelfOnly}>
             <input
               ref={controller.privateOptionRef}
               type="radio"
@@ -201,9 +201,9 @@ export function PurposeScopedMemoField({
               checked={controller.purpose === MEMO_PURPOSE.privateSelfOnly}
               onChange={() => controller.choosePurpose(MEMO_PURPOSE.privateSelfOnly)}
             />
-            <span>나만의 메모<small id={`${fieldId}-private-helper`} style={optionHelperStyle}>공유·분석에 쓰지 않아요</small></span>
+            <span className="memo-input__purpose-copy"><span className="memo-input__purpose-title">나만의 메모</span><small id={`${fieldId}-private-helper`}>공유·분석에 쓰지 않아요</small></span>
           </label>
-          <label style={optionStyle(controller.purpose === MEMO_PURPOSE.analyzableTrainingNote)}>
+          <label className="memo-input__purpose-option" data-selected={controller.purpose === MEMO_PURPOSE.analyzableTrainingNote}>
             <input
               type="radio"
               aria-label="훈련 메모"
@@ -212,7 +212,7 @@ export function PurposeScopedMemoField({
               checked={controller.purpose === MEMO_PURPOSE.analyzableTrainingNote}
               onChange={() => controller.choosePurpose(MEMO_PURPOSE.analyzableTrainingNote)}
             />
-            <span>훈련 메모<small id={`${fieldId}-training-helper`} style={optionHelperStyle}>저장 전 내용을 자동 확인해요</small></span>
+            <span className="memo-input__purpose-copy"><span className="memo-input__purpose-title">훈련 메모</span><small id={`${fieldId}-training-helper`}>저장 전 내용을 자동 확인해요</small></span>
           </label>
         </div>
       </fieldset>
@@ -260,14 +260,3 @@ function purposeExplanation(purpose: MemoPurpose | undefined, accountEnabled: bo
   }
   return "글을 적는다면 용도를 먼저 선택해 주세요. 원문은 이 기기에만 남아요."
 }
-
-function optionStyle(selected: boolean): React.CSSProperties {
-  return {
-    display: "flex", alignItems: "flex-start", gap: 7, minHeight: 44, padding: "9px 10px",
-    border: selected ? "1px solid var(--ink)" : "1px solid var(--line)",
-    background: selected ? "var(--surface)" : "transparent",
-    borderRadius: "var(--r-action)", fontFamily: "var(--sans)", fontSize: "var(--fs-body)", color: "var(--ink)", cursor: "pointer",
-  }
-}
-
-const optionHelperStyle: React.CSSProperties = { display: "block", marginTop: 4, color: "var(--ink-2)", fontSize: "var(--fs-body-sm)", fontWeight: 400, lineHeight: 1.5, overflowWrap: "anywhere" }

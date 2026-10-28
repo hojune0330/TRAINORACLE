@@ -2,11 +2,9 @@ import React from "react"
 import { JournalWritingDecorationPreview } from "../journal/JournalDecorationPreview"
 import { FormInputDraftBoundary, useFormInputDraft, useRecoveredFormInput } from "./useFormInputDraft"
 import { accountJournalRecordsEnabled } from "../../domain/account/account-journal-record-service"
-import { accountJournalPreviewEnabled } from "../../domain/account/account-journal-api"
-import { activeLocalAccount } from "../../domain/account/local-journal-ownership"
 import { FormFinalizationRecovery, useFormFinalization } from "./useFormFinalization"
 import { MoodStrip } from "../../components/JournalPrimitives"
-import { ChevronRight, HeartPulse, Smile, Moon, Pencil, Activity } from "lucide-react"
+import { ChevronDown, ChevronRight, HeartPulse, Smile, Moon, Pencil, Activity } from "lucide-react"
 import { compactDate, dowOf } from "../../domain/dates"
 import { explicitOrMissing } from "../../domain/field-provenance"
 import {
@@ -491,12 +489,11 @@ function EveningCheckinEditor({ onBack, onExit, onDone, targetDate, initialEntry
         {!homeInline && saveNotice && <p role="status">{saveNotice}</p>}
         {!homeInline && accountEnabled && saveError && <p role="alert">{accountNotice ?? "계정 저장을 완료하지 못했어요. 입력은 그대로 남아 있어요. 연결과 로그인 상태를 확인한 뒤 다시 저장해 주세요."}</p>}
       </Step>
-      {homeInline && <div className="home-hub__memo-actions">
-        {step !== "choose" && <button type="button" className="quick-log__secondary" onClick={() => navigateTo({ step: "choose", editGroup: null })}>다른 항목</button>}
+      {homeInline && step !== "choose" && <div className="home-hub__memo-actions">
+        <button type="button" className="quick-log__secondary" onClick={() => navigateTo({ step: "choose", editGroup: null })}>다른 항목</button>
       </div>}
       {homeInline && <div className="home-hub__memo-actions evening-checkin__home-save">
         <button type="button" className="home-hub__primary" onClick={() => void persist()}>{saving ? "저장 중…" : "저장"}</button>
-        {(!accountJournalPreviewEnabled() || activeLocalAccount() === null) && <p className="evening-checkin__draft-notice">새로고침 전 저장해 주세요.</p>}
         {emptyNotice && !hasInput && <p role="alert">아직 입력한 내용이 없어요. 남길 항목 하나를 골라 주세요.</p>}
         {saveNotice && <p role="status">{saveNotice}</p>}
         {saveError && <p ref={homeSaveErrorRef} role="alert" tabIndex={-1}>{accountEnabled ? accountNotice ?? "계정 저장을 완료하지 못했어요. 입력은 그대로 남아 있어요. 연결과 로그인 상태를 확인한 뒤 다시 저장해 주세요." : "저장하지 못했어요. 입력은 그대로 남아 있어요. 다시 저장해 주세요."}</p>}
@@ -509,6 +506,6 @@ function EveningCheckinEditor({ onBack, onExit, onDone, targetDate, initialEntry
 /** Home is a free reading/writing surface; opening it must not focus or scroll
  * to an optional question. The full-screen form retains its task navigation. */
 function HomeInlineStep({ stepKey, title, children, busy }: React.ComponentProps<typeof TaskFlowStep>) {
-  if (stepKey.startsWith("choose:")) return <details className="home-hub__condition-options evening-checkin__home-condition"><summary>{title}</summary>{children}</details>
+  if (stepKey.startsWith("choose:")) return <details className="home-hub__condition-options evening-checkin__home-condition"><summary>{title}<ChevronDown size={16} aria-hidden="true" /></summary>{children}</details>
   return <section className="home-hub__condition-input evening-checkin__home-condition" aria-busy={busy} aria-label={title}><h3>{title}</h3>{children}</section>
 }

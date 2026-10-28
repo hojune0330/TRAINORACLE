@@ -76,7 +76,6 @@
 .home-hub__notice p { margin:0; line-height:1.5; overflow-wrap:break-word; }
 .home-hub__notice strong { display:block; margin-bottom:4px; }
 .home-hub__notice button { min-height:44px; max-width:100%; margin-top:4px; padding:8px 0; border:0; background:none; color:var(--brand); font-weight:700; overflow-wrap:break-word; }
-.home-hub__shortcuts { margin-top:var(--space-3); }
 /* Home destinations are compact rows; preserve the 40px icon, text wrapping,
    all destinations and larger text rather than hiding secondary navigation. */
 .home-hub button.category-card { min-height:var(--app-touch-min); padding-block:var(--space-2); }
@@ -123,17 +122,26 @@
 .home-hub__memo-receipt-actions button { min-height:var(--app-touch-min); }
 .evening-checkin--home .evening-checkin__home-save { margin-top:var(--space-3); }
 .evening-checkin--home .evening-checkin__home-condition { margin-top:var(--space-4); padding-top:var(--space-3); border-top:1px solid var(--line); }
-.evening-checkin--home .evening-checkin__draft-notice { margin-block:var(--space-2); line-height:1.5; }
-.home-hub__condition-options { margin-top:var(--space-3); }
-.home-hub__condition-options > summary { display:flex; align-items:center; min-height:44px; cursor:pointer; font-weight:600; }
-.home-hub__condition-options > summary::after { content:"＋"; margin-left:auto; }
-.home-hub__condition-options[open] > summary::after { content:"−"; }
+.evening-checkin--home details.evening-checkin__home-condition { margin-top:var(--space-2); padding-top:0; border-top:0; }
+.home-hub__condition-options > summary { display:inline-flex; align-items:center; gap:var(--space-2); min-height:var(--app-touch-min); max-width:100%; color:var(--ink-2); font-size:var(--fs-body-sm); line-height:1.5; cursor:pointer; list-style:none; }
+.home-hub__condition-options > summary::-webkit-details-marker { display:none; }
+.home-hub__condition-options > summary svg { flex-shrink:0; }
+.home-hub__condition-options[open] > summary svg { transform:rotate(180deg); }
+.home-hub__condition-options > summary:focus-visible { outline:2px solid var(--brand); outline-offset:2px; border-radius:var(--r-action); }
 .home-hub__condition-input h3 { font-size:var(--fs-body); margin-block:var(--space-3); }
 .evening-checkin--home .evening-checkin__choices { padding:0; }
 .evening-checkin--home .evening-checkin__body-date { padding:var(--space-2) 0; }
 .evening-checkin--home .memo-input > textarea { margin-bottom:var(--space-3); }
 .evening-checkin--home .evening-checkin__choices { grid-template-columns:repeat(2,minmax(0,1fr)); }
-.home-hub__announcements { display:grid; gap:var(--space-4); margin-top:var(--space-6); padding:var(--space-4); border:1px solid var(--line); border-radius:var(--r-task-surface); background:var(--surface-2); }
+.home-hub__shortcuts { grid-template-columns:repeat(auto-fit,minmax(min(100%,7.5rem),1fr)); margin-top:var(--space-5); gap:var(--space-3); }
+.home-hub__shortcuts > .category-shortcut { flex-direction:row; justify-content:flex-start; gap:var(--space-2); min-height:56px; padding:var(--space-2) var(--space-3); text-align:left; }
+.home-hub__shortcuts .category-icon, .home-hub__shortcuts > .category-shortcut > .category-shortcut__illustration { flex:0 0 32px; width:32px; height:32px; }
+.home-hub__shortcuts .category-icon svg { width:18px; height:18px; }
+.home-hub__shortcuts .category-shortcut__label { min-width:0; font-size:var(--fs-body); line-height:1.5; }
+.home-hub__announcements { display:grid; gap:var(--space-4); margin-top:var(--space-5); }
+/* React elements can be truthy while their components render null. Only the
+   actual notice owns a surface; a dismissed pair leaves no visual shell. */
+.home-hub__announcements:empty { display:none; }
 .home-hub__announcements .product-announcement { margin:0; }
 /* Fit the actual content width, including enlarged text. The fixed app shell
    stays single-column even when the desktop viewport is wide. */
