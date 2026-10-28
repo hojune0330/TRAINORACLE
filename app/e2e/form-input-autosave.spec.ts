@@ -76,6 +76,46 @@ test.beforeEach(async ({ context }) => {
   })
 })
 
+test("home inline recovers the exact encrypted owner/date draft and excludes completed input after reload", async ({ page, context }) => {
+  await context.route("**/domain/account/account-journal-api.ts", route => route.fulfill({
+    contentType: "application/javascript", body: `
+      export function accountJournalPreviewEnabled() { return true }
+      export function accountBodyPartMetadataSupported() { return false }
+      export async function checkAccountJournalBodyPartSupport() { return false }
+      async function request(owner, value, current) {
+        if (!current()) return {ok:false,code:'AUTH_REQUIRED'};
+        if (value.action !== 'save') return {ok:false,code:'NOT_FOUND'};
+        return {ok:true,data:{kind:'saved',documentId:value.documentId,operationId:value.operationId,revision:value.expectedRevision+1}};
+      }
+      export const requestAccountDocument = request;
+      export const requestAccountJournal = request;`,
+  }))
+  await page.goto("/__form_input__?homeInline=1")
+  const text = page.getByRole("textbox", { name: "오늘의 메모" })
+  await text.fill("SYNTHETIC_HOME_UNFINISHED")
+  await expect.poll(async () => (await page.evaluate(() => window.formInputHarness.input())).find(body => JSON.parse(body.context)[1] === "2026-09-08")?.input)
+    .toMatchObject({ kind: "evening", memo: "SYNTHETIC_HOME_UNFINISHED", purpose: null })
+  expect(await page.evaluate(() => window.formInputHarness.encryptedAtRest())).toEqual({ noPlaintext: true, nativeKey: true, nonextractable: true })
+  await page.reload()
+  await expect(text).toHaveValue("SYNTHETIC_HOME_UNFINISHED")
+  await expect(page.getByRole("radio", { name: "훈련 메모" })).not.toBeChecked()
+  await page.evaluate(() => window.formInputHarness.switchOwner("22222222-2222-4222-8222-222222222222"))
+  await expect(text).toHaveValue("")
+  await page.evaluate(() => window.formInputHarness.switchOwner("11111111-1111-4111-8111-111111111111"))
+  await expect(text).toHaveValue("SYNTHETIC_HOME_UNFINISHED")
+  await page.goto("/__form_input__?homeInline=1&date=2026-09-09")
+  await expect(text).toHaveValue("")
+  await page.goto("/__form_input__?homeInline=1")
+  await expect(text).toHaveValue("SYNTHETIC_HOME_UNFINISHED")
+  await page.getByRole("radio", { name: "훈련 메모" }).check()
+  await page.getByRole("button", { name: "저장", exact: true }).click()
+  await expect.poll(async () => (await page.evaluate(() => window.formInputHarness.input())).find(body => JSON.parse(body.context)[1] === "2026-09-08")?.completed).toBe(true)
+  await page.reload()
+  await expect(text).toHaveValue("")
+  await expect(page.getByRole("radio", { name: "훈련 메모" })).not.toBeChecked()
+  expect((await page.evaluate(() => window.formInputHarness.input())).find(body => JSON.parse(body.context)[1] === "2026-09-08")?.completed).toBe(true)
+})
+
 test("native encrypted form input survives reload, protects account switch, and fits mobile and desktop", async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 375, height: 667 })
   await page.goto("/__form_input__")

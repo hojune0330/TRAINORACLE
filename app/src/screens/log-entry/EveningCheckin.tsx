@@ -2,6 +2,8 @@ import React from "react"
 import { JournalWritingDecorationPreview } from "../journal/JournalDecorationPreview"
 import { FormInputDraftBoundary, useFormInputDraft, useRecoveredFormInput } from "./useFormInputDraft"
 import { accountJournalRecordsEnabled } from "../../domain/account/account-journal-record-service"
+import { accountJournalPreviewEnabled } from "../../domain/account/account-journal-api"
+import { activeLocalAccount } from "../../domain/account/local-journal-ownership"
 import { FormFinalizationRecovery, useFormFinalization } from "./useFormFinalization"
 import { MoodStrip } from "../../components/JournalPrimitives"
 import { ChevronRight, HeartPulse, Smile, Moon, Pencil, Activity } from "lucide-react"
@@ -30,6 +32,7 @@ import { TaskFlowStep } from "../../components/TaskFlowStep"
 import { useJournalFormNavigation } from "./useJournalFormNavigation"
 import "./EveningCheckin.css"
 import "../../styles/category-cards.css"
+import { registerUnsavedDraftGuard } from "../../domain/unsaved-draft-navigation"
 
 const SleepInnEntry = React.lazy(() => import("../sleep-inn/SleepInnEntry").then(module => ({ default: module.SleepInnEntry })))
 
@@ -56,15 +59,30 @@ export function EveningCheckin(props: EntryFormProps) {
   </FormInputDraftBoundary></JournalWritingDecorationPreview>
 }
 
-function EveningCheckinEditor({ onBack, onExit, onDone, targetDate, initialEntry, initialBodyPartId, initialSection, embedded, onNavigationReady }: EntryFormProps) {
+function EveningCheckinEditor({ onBack, onExit, onDone, targetDate, initialEntry, initialBodyPartId, initialSection, embedded, presentation, onNavigationReady, onDraftRestored, onCanRollDateChange, onNavigationBusyChange }: EntryFormProps) {
+  const homeInline = presentation === "home-inline"
   const recovered = useRecoveredFormInput("evening")
+  const restored = recovered !== null
+  React.useEffect(() => onDraftRestored?.(restored), [onDraftRestored, restored])
   const input = recovered?.input
   const initial = initialEntry?.kind === "evening" ? initialEntry : undefined
   const isEditing = initial !== undefined
   const [entryId] = React.useState(() => recovered?.entryId ?? initial?.id ?? newEntryId())
   const lastSavedAt = React.useRef(recovered?.baseSavedAt ?? initial?.savedAt)
   const persistInFlight = React.useRef(false)
+  const composing = React.useRef(false)
+  const [compositionActive, setCompositionActive] = React.useState(false)
+  const [touched, setTouched] = React.useState(false)
+  const [saveNotice, setSaveNotice] = React.useState<string | null>(null)
   const [saving, setSaving] = React.useState(false)
+  React.useEffect(() => homeInline ? registerUnsavedDraftGuard({
+    isUnsafe: () => persistInFlight.current || composing.current,
+    onBlocked: () => setSaveNotice("입력이나 저장을 마친 뒤 이동해 주세요."),
+  }) : undefined, [homeInline])
+  React.useLayoutEffect(() => {
+    onNavigationBusyChange?.(saving || compositionActive)
+    return () => onNavigationBusyChange?.(false)
+  }, [saving, compositionActive, onNavigationBusyChange])
   const accountEnabled = accountJournalRecordsEnabled()
   const finalization = useFormFinalization(entryId, accountEnabled, lastSavedAt)
   const entryDate = initial?.date ?? targetDate ?? todayISO()
@@ -92,12 +110,34 @@ function EveningCheckinEditor({ onBack, onExit, onDone, targetDate, initialEntry
   const weightInvalid = !validOptionalMeasurement(weight)
   const hrInvalid = !validOptionalMeasurement(hr)
   const [saveError, setSaveError] = React.useState(false)
+  const homeSaveErrorRef = React.useRef<HTMLParagraphElement>(null)
+  const homeSaveErrorFocused = React.useRef(false)
   const [emptyNotice, setEmptyNotice] = React.useState(false)
   const [accountNotice, setAccountNotice] = React.useState<string | null>(null)
   const [sleepInnOpen, setSleepInnOpen] = React.useState(false)
   const note = usePurposeScopedMemo(input?.memo ?? initial?.note ?? "", input ? input.purpose ?? undefined : initial?.memoPurpose)
-  const draft = useFormInputDraft({ kind: "evening", sleep, quality, mood, painParts, ...(bodyPartMetadata ? { bodyPartMetadata } : {}), weight, hr,
-    memo: note.text, purpose: note.purpose ?? null }, entryId, true, lastSavedAt.current, sleepInputError)
+  const formInput = { kind: "evening" as const, sleep, quality, mood, painParts, ...(bodyPartMetadata ? { bodyPartMetadata } : {}), weight, hr,
+    memo: note.text, purpose: note.purpose ?? null }
+  const latestInput = React.useRef(JSON.stringify(formInput))
+  latestInput.current = JSON.stringify(formInput)
+  const initialInput = React.useRef(latestInput.current)
+  const inputChanged = latestInput.current !== initialInput.current
+  React.useLayoutEffect(() => { if (inputChanged) setTouched(true) }, [inputChanged])
+  // The canonical session initializes its baseline without writing. Keep that
+  // hydration call so the very first edit is protected by the draft buffer.
+  const draft = useFormInputDraft(formInput, entryId, true, lastSavedAt.current, sleepInputError)
+  React.useEffect(() => {
+    if (!saveError || saving) { homeSaveErrorFocused.current = false; return }
+    if (homeInline && !homeSaveErrorFocused.current && draft.current()) {
+      homeSaveErrorRef.current?.focus()
+      homeSaveErrorFocused.current = true
+    }
+  }, [homeInline, saveError, saving, draft])
+  const canRollDate = !restored && !isEditing && !touched && !inputChanged && !compositionActive && !saving && !sleepInputError && draft.current() && !draft.hasChanges()
+  React.useLayoutEffect(() => {
+    onCanRollDateChange?.(canRollDate)
+    return () => onCanRollDateChange?.(false)
+  }, [canRollDate, onCanRollDateChange])
   const hasInput = initial?.bodyPartMetadata !== undefined || sleep > 0 || quality > 0 || mood > 0 || Object.values(painSignals).some(level => level > 0)
     || weight.trim() !== "" || hr.trim() !== "" || note.text.trim() !== ""
 
@@ -148,7 +188,7 @@ function EveningCheckinEditor({ onBack, onExit, onDone, targetDate, initialEntry
     if (!validateMetrics()) return
     const preparation = note.prepareForSave()
     if (!preparation.ready) {
-      if (step !== "memo") navigateTo({ step: "memo", editGroup: "memo", returnToReview: true })
+      if (!homeInline && step !== "memo") navigateTo({ step: "memo", editGroup: "memo", returnToReview: true })
       return
     }
     navigateTo({ step: "review", editGroup: null })
@@ -168,6 +208,9 @@ function EveningCheckinEditor({ onBack, onExit, onDone, targetDate, initialEntry
 
   const persist = async () => {
     if (persistInFlight.current || !draft.current()) return
+    if (composing.current) { setSaveNotice("글자 입력을 마친 뒤 저장해 주세요."); return }
+    const submittedInput = latestInput.current
+    setSaveNotice(null)
     if (sleepInputError) {
       if (step !== "sleep") navigateTo({ step: "sleep", editGroup: "sleep", returnToReview: true })
       window.requestAnimationFrame(() => sleepInputRef.current?.focus())
@@ -179,7 +222,7 @@ function EveningCheckinEditor({ onBack, onExit, onDone, targetDate, initialEntry
     setEmptyNotice(false)
     const notePreparation = note.prepareForSave()
     if (!notePreparation.ready) {
-      if (step !== "memo") navigateTo({ step: "memo", editGroup: "memo", returnToReview: true })
+      if (!homeInline && step !== "memo") navigateTo({ step: "memo", editGroup: "memo", returnToReview: true })
       return
     }
     let entry: JournalEntry = {
@@ -216,10 +259,22 @@ function EveningCheckinEditor({ onBack, onExit, onDone, targetDate, initialEntry
         setAccountNotice(accountResult.storage === "CONFLICT" ? "수정 충돌 확인 필요 · 기기 보관됨 · 기록 미완료" : "계정 전송 대기 · 기기 보관됨 · 기록 미완료")
         setSaveError(true); return
       }
-      if (accountEnabled) await draft.complete()
-      else void draft.complete()
+      // A delayed result acknowledges only the submitted snapshot. A queued IME
+      // change or another accepted input must remain an unfinished draft.
+      if (latestInput.current !== submittedInput) {
+        lastSavedAt.current = entry.savedAt
+        setSaveNotice("이전 입력은 저장됐지만 작성 중 내용이 바뀌었어요. 현재 입력을 확인하고 다시 저장해 주세요.")
+        return
+      }
+      const completed = await draft.complete(submittedInput)
       if (!draft.current()) return
       lastSavedAt.current = entry.savedAt
+      if (!completed) {
+        setSaveNotice(latestInput.current !== submittedInput
+          ? "이전 입력은 저장됐지만 작성 중 내용이 바뀌었어요. 현재 입력을 확인하고 다시 저장해 주세요."
+          : "기록은 저장됐지만 초안 정리를 마치지 못했어요. 입력을 유지했어요. 다시 저장하면 같은 기록의 상태를 확인해요.")
+        return
+      }
       const saved = accountResult?.ok ? { ...entry, syncState: accountResult.storage === "ACCOUNT" ? "synced" as const : "local" as const } : entry
       const storageMessage = !accountResult?.ok ? null : accountResult.storage === "ACCOUNT"
         ? isPrivateMemo ? "비밀 일지를 계정에 저장했어요. 공유·분석에는 사용하지 않아요." : "일지를 계정에 저장했어요."
@@ -281,12 +336,15 @@ function EveningCheckinEditor({ onBack, onExit, onDone, targetDate, initialEntry
             : memoPreview.length > 0
     return hasValue ? "수정" : "입력"
   }
+  const Step = homeInline ? HomeInlineStep : TaskFlowStep
 
   return (
-    <div className="evening-checkin" style={{ paddingBottom: 100 }} aria-busy={saving}>
+    <div className={`evening-checkin${homeInline ? " evening-checkin--home" : ""}`} style={{ paddingBottom: homeInline ? 0 : 100 }} aria-busy={saving}
+      onChangeCapture={() => setTouched(true)}
+      onCompositionStartCapture={() => { setTouched(true); setCompositionActive(true) }} onCompositionEndCapture={() => setCompositionActive(false)}>
       <fieldset disabled={saving} style={{ border: 0, margin: 0, padding: 0, minWidth: 0 }}>
-      <TopBar onBack={flow.history.length > 0 ? goBackFlow : navigation.back} onExit={navigation.exit}>컨디션·메모</TopBar>
-      {!embedded && <button type="button" className="quick-log__secondary" style={{ minHeight: 44 }} onClick={() => setSleepInnOpen(true)}>
+      {!homeInline && <TopBar onBack={flow.history.length > 0 ? goBackFlow : navigation.back} onExit={navigation.exit}>컨디션·메모</TopBar>}
+      {!embedded && !homeInline && <button type="button" className="quick-log__secondary" style={{ minHeight: 44 }} onClick={() => setSleepInnOpen(true)}>
         <Moon size={18} aria-hidden="true" /> 펫과 함께 자기
       </button>}
       {sleepInnOpen && <React.Suspense fallback={<p role="status">여관을 여는 중이에요.</p>}>
@@ -296,15 +354,18 @@ function EveningCheckinEditor({ onBack, onExit, onDone, targetDate, initialEntry
       </React.Suspense>}
       {navigation.dialog}
       <FormFinalizationRecovery recovery={finalization} onBack={draft.back(onBack)} />
-      <p className="evening-checkin__body-date">
+      {homeInline && <>
+        <PurposeScopedMemoField controller={note} fieldId="home-evening-note" label="오늘의 메모" placeholder="운동이나 오늘의 느낌을 남겨 보세요" textFirst compactLabel autoGrowMaxRows={8} onComposingChange={value => { composing.current = value }} />
+      </>}
+      {!homeInline && <p className="evening-checkin__body-date">
         <time dateTime={entryDate}>{compactDate(entryDate)}</time>
         <span>{dowOf(entryDate)}</span>
-      </p>
-      {step === "review" && emptyNotice && !hasInput && <p role="alert">아직 입력한 내용이 없어요. 남길 항목 하나를 골라 주세요.</p>}
-      <TaskFlowStep stepKey={`${step}:${editGroup ?? "flow"}`} title={stepTitle[step]}
+      </p>}
+      {!homeInline && step === "review" && emptyNotice && !hasInput && <p role="alert">아직 입력한 내용이 없어요. 남길 항목 하나를 골라 주세요.</p>}
+      <Step stepKey={`${step}:${editGroup ?? "flow"}`} title={homeInline && step === "choose" ? "컨디션 추가" : stepTitle[step]}
         className={step === "condition" ? "evening-checkin__body-step" : undefined}
         busy={saving}
-        actions={step === "review" ? hasInput || isEditing ? <StickyBar onSave={persist} error={saveError && !accountEnabled}
+        actions={homeInline ? undefined : step === "review" ? hasInput || isEditing ? <StickyBar onSave={persist} error={saveError && !accountEnabled}
           label={saving ? "저장 중" : isEditing ? "수정 저장" : undefined} /> : undefined : step === "choose" ? undefined : step === "condition" ? (
           <button type="button" className="evening-checkin__body-review" onClick={enterReview}>입력 확인</button>
         ) : (
@@ -314,7 +375,7 @@ function EveningCheckinEditor({ onBack, onExit, onDone, targetDate, initialEntry
         {step === "choose" && <nav className="evening-checkin__choices" aria-label="남길 항목">
           {([
             ["condition", "몸 상태", HeartPulse], ["mood", "기분", Smile], ["sleep", "수면", Moon], ["metrics", "체중·심박", Activity], ["memo", "메모 쓰기", Pencil],
-          ] as const).map(([key, label, Icon]) => <button key={key} type="button" data-category="body"
+          ] as const).filter(([key]) => !homeInline || key !== "memo").map(([key, label, Icon]) => <button key={key} type="button" data-category="body"
             data-entry-choice={key}
             className={`evening-checkin__choice category-card${key === "memo" ? " evening-checkin__choice--memo" : ""}`}
             onClick={() => navigateTo({ step: key, editGroup: key, returnToReview: true })}>
@@ -417,18 +478,37 @@ function EveningCheckinEditor({ onBack, onExit, onDone, targetDate, initialEntry
           </div>
         </FormSec>}
 
-        {step === "memo" && <FormSec compact lb="오늘의 한 줄 · 선택">
+        {step === "memo" && !homeInline && <FormSec compact lb="오늘의 한 줄 · 선택">
           <PurposeScopedMemoField
             controller={note}
             fieldId="evening-note"
             label="오늘의 메모"
             placeholder="메모만 남겨도 괜찮아요"
+            onComposingChange={value => { composing.current = value }}
           />
         </FormSec>}
 
-        {accountEnabled && saveError && <p role="alert">{accountNotice ?? "계정 저장을 완료하지 못했어요. 입력은 그대로 남아 있어요. 연결과 로그인 상태를 확인한 뒤 다시 저장해 주세요."}</p>}
-      </TaskFlowStep>
+        {!homeInline && saveNotice && <p role="status">{saveNotice}</p>}
+        {!homeInline && accountEnabled && saveError && <p role="alert">{accountNotice ?? "계정 저장을 완료하지 못했어요. 입력은 그대로 남아 있어요. 연결과 로그인 상태를 확인한 뒤 다시 저장해 주세요."}</p>}
+      </Step>
+      {homeInline && <div className="home-hub__memo-actions">
+        {step !== "choose" && <button type="button" className="quick-log__secondary" onClick={() => navigateTo({ step: "choose", editGroup: null })}>다른 항목</button>}
+      </div>}
+      {homeInline && <div className="home-hub__memo-actions evening-checkin__home-save">
+        <button type="button" className="home-hub__primary" onClick={() => void persist()}>{saving ? "저장 중…" : "저장"}</button>
+        {(!accountJournalPreviewEnabled() || activeLocalAccount() === null) && <p className="evening-checkin__draft-notice">새로고침 전 저장해 주세요.</p>}
+        {emptyNotice && !hasInput && <p role="alert">아직 입력한 내용이 없어요. 남길 항목 하나를 골라 주세요.</p>}
+        {saveNotice && <p role="status">{saveNotice}</p>}
+        {saveError && <p ref={homeSaveErrorRef} role="alert" tabIndex={-1}>{accountEnabled ? accountNotice ?? "계정 저장을 완료하지 못했어요. 입력은 그대로 남아 있어요. 연결과 로그인 상태를 확인한 뒤 다시 저장해 주세요." : "저장하지 못했어요. 입력은 그대로 남아 있어요. 다시 저장해 주세요."}</p>}
+      </div>}
       </fieldset>
     </div>
   )
+}
+
+/** Home is a free reading/writing surface; opening it must not focus or scroll
+ * to an optional question. The full-screen form retains its task navigation. */
+function HomeInlineStep({ stepKey, title, children, busy }: React.ComponentProps<typeof TaskFlowStep>) {
+  if (stepKey.startsWith("choose:")) return <details className="home-hub__condition-options evening-checkin__home-condition"><summary>{title}</summary>{children}</details>
+  return <section className="home-hub__condition-input evening-checkin__home-condition" aria-busy={busy} aria-label={title}><h3>{title}</h3>{children}</section>
 }

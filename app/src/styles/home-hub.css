@@ -86,6 +86,63 @@
 .home-hub__announcement { margin-top:var(--space-3); }
 .home-hub__next-prescription { display:block; color:var(--ink-2); margin-top:var(--space-1); }
 .home-hub__next-role { color:var(--category-training); font-weight:600; }
+.home-hub__training { container-type:inline-size; }
+.home-hub__training-days { display:grid; gap:0; border:1px solid var(--line); border-radius:var(--r-task-surface); background:var(--surface); }
+.home-hub__training-day { min-width:0; padding:var(--space-4); }
+.home-hub__training-day + .home-hub__training-day { border-top:1px solid var(--line); }
+.home-hub__training-day h3 { display:flex; flex-wrap:wrap; align-items:baseline; gap:var(--space-2); margin:0 0 var(--space-3); font-size:var(--fs-h3); }
+.home-hub__training-day time { color:var(--ink-2); font-size:var(--fs-body-sm); font-weight:400; }
+.home-hub__training-slot + .home-hub__training-slot { border-top:1px solid var(--line); margin-top:var(--space-3); padding-top:var(--space-3); }
+.home-hub__training-meta { display:flex; flex-wrap:wrap; justify-content:space-between; gap:var(--space-2); color:var(--ink-2); font-size:var(--fs-body-sm); line-height:1.5; }
+.home-hub__training-role { display:inline-flex; flex-wrap:wrap; align-items:center; gap:var(--space-1); padding:var(--space-1) var(--space-2); border-radius:var(--r-action); color:var(--ink); background:var(--calendar-unclassified); }
+.home-hub__training-role[data-tone="main"] { background:var(--calendar-main); font-weight:700; }
+.home-hub__training-role[data-tone="base"] { background:var(--calendar-base); }
+.home-hub__training-role[data-tone="recovery"] { background:var(--calendar-recovery); }
+.home-hub__training-role[data-tone="off"] { background:var(--calendar-off); }
+.home-hub__training-role svg { flex-shrink:0; }
+.home-hub__training-slot--rest .home-hub__training-meta { align-items:center; }
+.home-hub__training-slot h4 { margin:var(--space-2) 0; font-size:var(--fs-body); line-height:1.5; }
+.home-hub__training-main, .home-hub__training-empty { margin:0; line-height:1.65; overflow-wrap:anywhere; }
+.home-hub__work-area { margin-top:var(--space-5); padding-top:var(--space-4); border-top:1px solid var(--line); }
+.home-hub__workout-entry { margin-top:var(--space-4); padding-top:var(--space-3); border-top:1px solid var(--line); }
+.home-hub__memo-actions { display:grid; gap:var(--space-2); margin-top:var(--space-3); }
+.home-hub__inline-memo { min-width:0; overflow-wrap:anywhere; }
+.home-hub__inline-memo textarea { box-sizing:border-box; width:100%; }
+.home-hub__memo-label { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; border:0; }
+.home-hub__memo-context { margin:var(--space-2) 0; color:var(--ink-2); font-size:var(--fs-body-sm); line-height:1.5; }
+.home-hub__memo-receipt { padding-block:var(--space-3); }
+.home-hub__memo-receipt-heading { display:flex; align-items:center; gap:var(--space-3); }
+.home-hub__memo-receipt-heading > div { min-width:0; flex:1; }
+.home-hub__save-character { flex:0 0 32px; width:32px; height:32px; }
+.home-hub__save-character img { display:block; width:32px; height:32px; object-fit:contain; animation:home-memo-saved-bob 200ms ease-out 1; }
+.app-shell[data-reduced-motion="true"] .home-hub__save-character img { animation:none; }
+@keyframes home-memo-saved-bob { 0%, 100% { transform:translateY(0); } 50% { transform:translateY(-4px); } }
+.home-hub__receipt-storage summary { display:flex; align-items:center; min-height:44px; color:var(--ink-2); cursor:pointer; }
+.home-hub__memo-receipt-heading p { margin:var(--space-1) 0; line-height:1.5; }
+.home-hub__memo-receipt-actions { display:flex; flex-wrap:wrap; gap:var(--space-2) var(--space-4); }
+.home-hub__memo-receipt-actions button { min-height:var(--app-touch-min); }
+.evening-checkin--home .evening-checkin__home-save { margin-top:var(--space-3); }
+.evening-checkin--home .evening-checkin__home-condition { margin-top:var(--space-4); padding-top:var(--space-3); border-top:1px solid var(--line); }
+.evening-checkin--home .evening-checkin__draft-notice { margin-block:var(--space-2); line-height:1.5; }
+.home-hub__condition-options { margin-top:var(--space-3); }
+.home-hub__condition-options > summary { display:flex; align-items:center; min-height:44px; cursor:pointer; font-weight:600; }
+.home-hub__condition-options > summary::after { content:"＋"; margin-left:auto; }
+.home-hub__condition-options[open] > summary::after { content:"−"; }
+.home-hub__condition-input h3 { font-size:var(--fs-body); margin-block:var(--space-3); }
+.evening-checkin--home .evening-checkin__choices { padding:0; }
+.evening-checkin--home .evening-checkin__body-date { padding:var(--space-2) 0; }
+.evening-checkin--home .memo-input > textarea { margin-bottom:var(--space-3); }
+.evening-checkin--home .evening-checkin__choices { grid-template-columns:repeat(2,minmax(0,1fr)); }
+.home-hub__announcements { display:grid; gap:var(--space-4); margin-top:var(--space-6); padding:var(--space-4); border:1px solid var(--line); border-radius:var(--r-task-surface); background:var(--surface-2); }
+.home-hub__announcements .product-announcement { margin:0; }
+/* Fit the actual content width, including enlarged text. The fixed app shell
+   stays single-column even when the desktop viewport is wide. */
+@media (min-width:768px) {
+@container (min-width:40rem) {
+  .home-hub__training-days { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .home-hub__training-day + .home-hub__training-day { border-top:0; border-left:1px solid var(--line); }
+}
+}
 .home-hub button:focus-visible { outline:3px solid var(--brand); outline-offset:3px; }
 @media (max-width:380px) {
   /* Keep the first actions usable when a platform scrollbar narrows content.

@@ -1,6 +1,7 @@
-import { BookOpen, CalendarDays, ChartColumn, CheckCircle2, ChevronRight, LayoutGrid, NotebookPen, PencilLine } from "lucide-react"
+import { BookOpen, ChevronRight, LayoutGrid, NotebookPen } from "lucide-react"
 import { useId, useRef, type ReactNode } from "react"
-import { CategoryCard, type AppCategory } from "../../components/CategoryCard"
+import { CategoryCard } from "../../components/CategoryCard"
+import { CalendarRoleIcon } from "../../components/CalendarTrainingMark"
 import { CategoryShortcuts, type CategoryShortcutItem } from "../../components/CategoryShortcuts"
 import type { HomeSession, TrainingHomeViewModel } from "../../domain/home-view-model"
 import { AppHeading } from "../../components/AppHeading"
@@ -8,13 +9,16 @@ import type { OracleTopicId } from "../../domain/oracle-exploration"
 import { sessionWorkoutNotation } from "../../domain/workout-notation"
 import { resolveCatalogBinding } from "@impl/prescription/catalog-session-binding"
 import { CALENDAR_TRAINING_LABELS, plannedCalendarTone } from "../../domain/calendar-training-presentation"
-import { formatTrainingSeconds, sessionLabel, sessionSlotLabel } from "../plan-beta/labels"
+import { sessionLabel, sessionSlotLabel, PROGRESS_LABELS } from "../plan-beta/labels"
 import type { LogEntryType } from "../log-entry/shared"
 import type { CalendarReadiness } from "../../domain/calendar-context"
-import { HomeIdentityArtwork, HomeIntroduction, useHomeIntroduction } from "./HomeIntroduction"
+import { HomeIdentityArtwork } from "./HomeIntroduction"
+import type { AccountPlanStatus } from "../../domain/account/account-plan-service"
 import "../../styles/home-hub.css"
 
 export function nextTrainingPrescriptionLabel(session: HomeSession): string {
+  const p = session.prescription
+  if (p.kind === "RPE_TIME_RANGE" && p.catalogWorkout && !resolveCatalogBinding(p.catalogWorkout)) return "훈련 내용 확인 필요"
   return sessionWorkoutNotation(session, "PLAIN")
 }
 
@@ -31,6 +35,7 @@ type TrainingHomeProps = {
   readonly onOpenContent?: () => void
   readonly onOpenRewards?: () => void
   readonly onOpenNextTraining?: () => void
+  readonly onOpenTrainingSession?: (session: HomeSession) => void
   readonly safetyNotice?: ReactNode
   readonly announcement?: ReactNode
   readonly oraclePreview?: ReactNode
@@ -39,29 +44,25 @@ type TrainingHomeProps = {
   readonly accountEntry?: ReactNode
   readonly recentJournal?: ReactNode
   readonly installSuggestion?: ReactNode
+  readonly inlineMemo?: ReactNode
+  readonly planReadiness?: AccountPlanStatus | "ERROR" | "EVIDENCE_REQUIRED"
   readonly journalReadiness?: CalendarReadiness
   readonly introductionAllowed?: boolean
   readonly introductionReady?: boolean
 }
 
 export function TrainingHome({
-  model, onWriteLog, onOpenArchive, onOpenToday, onOpenGuide, onOpenPlan, onOpenTrends,
-  onOpenOracle, onOpenMore, onOpenContent, onOpenRewards, onOpenNextTraining,
-  safetyNotice, announcement, oraclePreview, recordStart, accountEntry, recentJournal, installSuggestion,
-  journalReadiness = "READY", introductionAllowed = true, introductionReady = true,
+  model, onWriteLog, onOpenArchive, onOpenToday, onOpenPlan,
+  onOpenOracle, onOpenMore, onOpenContent, onOpenRewards, onOpenTrainingSession,
+  safetyNotice, announcement, accountEntry, recentJournal, installSuggestion, inlineMemo, planReadiness = "READY",
+  journalReadiness = "READY",
 }: TrainingHomeProps) {
-  const next = model.nextTraining
-  const nextAction = onOpenNextTraining ?? onOpenPlan
   // The model requests the first-record example only when no dated journal is visible.
   const hasJournalHistory = !model.showMinjiPrompt
   const welcome = model.homeMode === "WELCOME"
-  const introduction = useHomeIntroduction(introductionAllowed && introductionReady && journalReadiness === "READY")
   const title = useRef<HTMLHeadingElement>(null)
-  const analysisEntry = oraclePreview ? oraclePreview
-    : onOpenOracle && <section className="home-hub__oracle"><CategoryCard category="oracle" title="오라클 결과 보기" onClick={() => onOpenOracle("level")} /></section>
+  const analysisEntry = onOpenOracle && <section className="home-hub__oracle"><CategoryCard variant="row" category="oracle" title="내 기록 분석" onClick={() => onOpenOracle("level")} /></section>
   const shortcuts: CategoryShortcutItem[] = []
-  if (onOpenTrends) shortcuts.push({ id: "trends", category: "oracle", icon: ChartColumn, label: "훈련량", accessibleLabel: "훈련량·변화 보기", onClick: onOpenTrends })
-  if (onOpenGuide) shortcuts.push({ id: "example", category: "journal", label: "일지 예시", accessibleLabel: "일지 예시 보기", onClick: onOpenGuide })
   if (onOpenContent) shortcuts.push({ id: "training-guide", category: "training", icon: BookOpen, label: "훈련법", accessibleLabel: "훈련법 읽기", onClick: onOpenContent })
   if (onOpenRewards) shortcuts.push({ id: "decoration", category: "journal", icon: NotebookPen, label: "꾸미기", accessibleLabel: "일지 꾸미기", onClick: onOpenRewards })
 
@@ -83,21 +84,18 @@ export function TrainingHome({
       {safetyNotice}
 
       <section className="home-hub__intro" aria-labelledby="home-hub-title">
-        <AppHeading ref={title} tabIndex={-1} id="home-hub-title" variant="hero" accent>{welcome ? "운동 분석과 훈련 계획" : model.homeMode === "TRAINING" ? "훈련과 기록" : "내 기록"}</AppHeading>
+        <AppHeading ref={title} tabIndex={-1} id="home-hub-title" variant="hero" accent>훈련과 기록</AppHeading>
       </section>
 
-      {welcome ? <WelcomeToday onWriteLog={onWriteLog} onOpenPlan={onOpenPlan} analysisEntry={analysisEntry} /> : <>
-        {next !== null && <NextTrainingCard next={next} onOpen={nextAction} />}
-        <TodaySection model={model} readiness={journalReadiness} onWriteLog={onWriteLog} onOpenToday={onOpenToday} />
-      </>}
-
-      {installSuggestion}
-
-      {introduction.expanded && <HomeIntroduction onDismiss={() => {
-        introduction.dismiss()
-        const actions = title.current?.closest(".home-hub")?.querySelectorAll<HTMLButtonElement>(".home-hub__today button")
-        actions?.[actions.length - 1]?.focus({ preventScroll: true })
-      }} />}
+      <DatedTraining model={model} readiness={planReadiness} onOpenPlan={onOpenPlan} onOpenSession={onOpenTrainingSession} />
+      <section className="home-hub__work-area" aria-labelledby="home-record-title">
+        <div className="home-hub__section-heading"><AppHeading as="h2" variant="section" id="home-record-title">오늘의 기록</AppHeading>
+          {journalReadiness === "READY" && model.todayRecordCount > 0 && <button type="button" onClick={onOpenToday}>남긴 기록 {model.todayRecordCount}개<ChevronRight aria-hidden="true" size={16} /></button>}
+        </div>
+        {journalReadiness === "READY" && model.briefing !== "" && <p className="home-hub__briefing" aria-label="오늘 기록 요약">{model.briefing}</p>}
+        {inlineMemo}
+        {onWriteLog && <div className="home-hub__workout-entry"><CategoryCard variant="row" category="record" title="운동 내용도 기록하기" onClick={() => onWriteLog("quick-session")} /></div>}
+      </section>
 
       {model.homeMode !== "WELCOME" && hasJournalHistory && <section className="home-hub__summary">
         {!recentJournal && <div className="home-hub__section-heading">
@@ -105,102 +103,45 @@ export function TrainingHome({
           {onOpenArchive && <button type="button" onClick={onOpenArchive}>전체 기록 보기<ChevronRight aria-hidden="true" size={16} /></button>}
         </div>}
         {recentJournal}
-        {!recentJournal && <SummaryRow category="journal" label="최근 기록" detail={model.journalSummary} onClick={onOpenArchive} />}
+        {!recentJournal && <CategoryCard variant="row" category="journal" title="최근 기록" description={model.journalSummary} onClick={onOpenArchive} />}
       </section>}
 
-      {!welcome && analysisEntry}
-      {recordStart && journalReadiness === "READY" && recordStart}
+      {analysisEntry}
 
       <CategoryShortcuts className="home-hub__shortcuts" label="홈 바로가기" items={shortcuts} />
 
-      {announcement && <div className="home-hub__announcement">{announcement}</div>}
+      {(announcement || installSuggestion) && <aside className="home-hub__announcements" aria-label="소식과 설치 안내">{announcement}{installSuggestion}</aside>}
 
     </div>
   )
 }
 
-function WelcomeToday({ onWriteLog, onOpenPlan, analysisEntry }: { onWriteLog?: (entryType?: LogEntryType) => void; onOpenPlan?: () => void; analysisEntry: ReactNode }) {
-  return <section className="home-hub__today home-hub__today--welcome" aria-label="오늘의 활동">
-    <nav aria-label="훈련 계획과 운동 분석">
-      <button className="home-hub__primary home-hub__primary--plan" type="button" onClick={onOpenPlan}><CalendarDays aria-hidden="true" size={20} /><span>훈련 계획 받기</span><ChevronRight aria-hidden="true" size={18} /></button>
-      {analysisEntry}
-    </nav>
-    <div className="home-hub__welcome-record"><CategoryCard category="record" title="오늘 운동 기록 쓰기" onClick={() => onWriteLog?.("quick-session")} /></div>
-    <OptionalDailyEntries onWriteLog={onWriteLog} />
-  </section>
-}
-
-function NextTrainingCard({ next, onOpen }: { next: NonNullable<TrainingHomeViewModel["nextTraining"]>; onOpen?: () => void }) {
-  const descriptionId = useId()
-  const role = CALENDAR_TRAINING_LABELS[plannedCalendarTone(next.session)]
-  const prescription = nextTrainingPreview(next.session)
-  const accessibleName = `다음 훈련 · ${sessionLabel(next.session)} · ${nextTrainingDateLabel(next.date)} · ${sessionSlotLabel(next.session.slot)} · ${role}`
-  return <section className="home-hub__next" aria-labelledby="home-hub-next">
-    <div className="home-hub__next-heading">
-      <AppHeading as="h2" variant="section" id="home-hub-next" className="home-hub__section-label">다음 훈련</AppHeading>
-      <time dateTime={next.date}>{nextTrainingDateLabel(next.date, true)}</time>
-    </div>
-    <CategoryCard category="training" title={sessionLabel(next.session)}
-      description={<span id={descriptionId} className="home-hub__next-prescription">{next.session.role === "QUALITY" && <span className="home-hub__next-role">{role} · </span>}{prescription}</span>}
-      onClick={onOpen} aria-label={accessibleName} aria-describedby={descriptionId} />
-  </section>
-}
-
-/** Home is a destination preview, not the execution instructions. Read the
- * verified full-session total; never substitute an old envelope for a broken
- * binding or guess the missing time of distance-based work. */
-function nextTrainingPreview(session: HomeSession): string {
-  const prescription = session.prescription
-  if (prescription.kind === "RPE_TIME_RANGE") {
-    if (prescription.catalogWorkout) {
-      const workout = resolveCatalogBinding(prescription.catalogWorkout)
-      if (!workout) return "훈련 내용 확인 필요"
-      const total = workout.totals.seconds
-      if (!total) return "시간 확인 필요"
-      return `총 ${formatTrainingSeconds(total.minimum)}${total.minimum === total.maximum ? "" : `–${formatTrainingSeconds(total.maximum)}`}`
-    }
-    // Legacy quality envelopes are not a continuous-work prescription. Keep
-    // their existing instructions until the full structure can be verified.
-    if (session.role === "QUALITY") return nextTrainingPrescriptionLabel(session)
-    const { minimum, maximum } = prescription.durationMinutes
-    return `총 ${minimum}${minimum === maximum ? "" : `–${maximum}`}분`
+function DatedTraining({ model, readiness, onOpenPlan, onOpenSession }: { model: TrainingHomeViewModel; readiness: NonNullable<TrainingHomeProps["planReadiness"]>; onOpenPlan?: () => void; onOpenSession?: ((session: HomeSession) => void) | undefined }) {
+  const id = useId()
+  const notices: Partial<Record<NonNullable<TrainingHomeProps["planReadiness"]>, string>> = {
+    EVIDENCE_REQUIRED: "보관한 계획의 출처 확인이 필요해요. 원본과 진행 기록을 먼저 확인해 주세요.",
+    IDLE: "훈련 계획을 확인하고 있어요.", LOADING: "훈련 계획을 확인하고 있어요.",
+    PENDING: "계획의 계정 저장을 기다리고 있어요. 아직 계정 저장이 완료되지 않았어요.",
+    CONFLICT: "다른 기기의 계획 수정과 겹쳤어요. 계획에서 사용할 내용을 확인해 주세요.",
+    AUTH_REQUIRED: "계획을 확인하려면 다시 로그인해 주세요.",
+    INVALID: "보관한 계획을 확인할 수 없어요. 계획에서 원본을 확인해 주세요.",
+    REJECTED: "계정에 계획을 저장하지 못했어요. 계획에서 보관 상태를 확인해 주세요.",
+    FAILED: "훈련 계획을 읽지 못했어요. 계획에서 다시 확인해 주세요.",
+    ERROR: "훈련 계획을 읽지 못했어요. 계획에서 다시 확인해 주세요.",
   }
-  return nextTrainingPrescriptionLabel(session)
-}
-
-function TodaySection({ model, readiness, onWriteLog, onOpenToday }: { model: TrainingHomeViewModel; readiness: CalendarReadiness; onWriteLog?: (entryType?: LogEntryType) => void; onOpenToday?: () => void }) {
-  const confirmedTodayRecordCount = readiness === "READY" ? model.todayRecordCount : 0
-  const confirmedBriefing = readiness === "READY" ? model.briefing : ""
-  return <section className={`home-hub__today${confirmedTodayRecordCount === 0 ? " home-hub__today--record-action" : ""}`} aria-label="오늘">
-    {confirmedTodayRecordCount > 0 ? <div className="home-hub__today-complete">
-      <div className="home-hub__status"><CheckCircle2 aria-hidden="true" size={21} /><strong>오늘 남긴 기록 {confirmedTodayRecordCount}개</strong></div>
-      {confirmedBriefing !== "" && <p className="home-hub__briefing" aria-label="오늘 기록 요약">{confirmedBriefing}</p>}
-      <div className="home-hub__today-actions"><button className="home-hub__text-action" type="button" onClick={onOpenToday}>오늘 기록 보기<ChevronRight aria-hidden="true" size={17} /></button><button className="home-hub__text-action" type="button" onClick={() => onWriteLog?.()}>기록 더 남기기<ChevronRight aria-hidden="true" size={17} /></button></div>
-    </div> : <><button className="home-hub__primary" type="button" onClick={() => onWriteLog?.("quick-session")}><PencilLine aria-hidden="true" size={19} /><span>오늘 운동 기록 쓰기</span><ChevronRight aria-hidden="true" size={18} /></button>{confirmedBriefing !== "" && <p className="home-hub__briefing" aria-label="아침 브리핑">{confirmedBriefing}</p>}</>}
-    <OptionalDailyEntries onWriteLog={onWriteLog} />
+  return <section className="home-hub__training" aria-labelledby={`${id}-heading`}>
+    <div className="home-hub__section-heading"><AppHeading as="h2" variant="section" id={`${id}-heading`}>오늘과 내일 훈련</AppHeading>
+      {onOpenPlan && <button type="button" onClick={onOpenPlan}>전체 계획<ChevronRight aria-hidden="true" size={16} /></button>}
+    </div>
+    {readiness !== "READY" && readiness !== "EMPTY" ? <p role={readiness === "IDLE" || readiness === "LOADING" || readiness === "PENDING" || readiness === "EVIDENCE_REQUIRED" ? "status" : "alert"}>{notices[readiness]}</p>
+      : model.hasPlan === false ? <button type="button" className="home-hub__text-action" onClick={onOpenPlan}>훈련 계획 만들기<ChevronRight size={16} aria-hidden="true" /></button>
+      : <div className="home-hub__training-days">{model.trainingDays?.map((day, index) => <article className="home-hub__training-day" key={day.date} aria-label={`${index === 0 ? "오늘" : "내일"} 훈련`}>
+        <h3>{index === 0 ? "오늘" : "내일"}<time dateTime={day.date}>{Number(day.date.slice(5, 7))}월 {Number(day.date.slice(8))}일</time></h3>
+        {day.sessions.length === 0 ? <p className="home-hub__training-empty">예정된 훈련이 없어요.</p> : day.sessions.map(({ session, progress }) => <div className={`home-hub__training-slot${session.role === "REST" ? " home-hub__training-slot--rest" : ""}`} key={`${session.day}:${session.slot}`}>
+          <div className="home-hub__training-meta"><span className="home-hub__training-role" data-tone={plannedCalendarTone(session)}><CalendarRoleIcon tone={plannedCalendarTone(session)} />{sessionSlotLabel(session.slot)} · {CALENDAR_TRAINING_LABELS[plannedCalendarTone(session)]}</span>{progress !== null && <strong>{PROGRESS_LABELS[progress as keyof typeof PROGRESS_LABELS] ?? `진행 상태 · ${progress}`}</strong>}</div>
+          {session.role !== "REST" && <><h4>{sessionLabel(session)}</h4><p className="home-hub__training-main">{nextTrainingPrescriptionLabel(session)}</p></>}
+          {session.role !== "REST" && onOpenSession && <button type="button" className="home-hub__text-action" aria-label={`${day.date} ${sessionSlotLabel(session.slot)} 훈련 상세`} onClick={() => onOpenSession(session)}>훈련 상세<ChevronRight size={16} aria-hidden="true" /></button>}
+        </div>)}
+      </article>)}</div>}
   </section>
-}
-
-function OptionalDailyEntries({ onWriteLog }: { onWriteLog?: (entryType?: LogEntryType) => void }) {
-  if (!onWriteLog) return null
-  return <div className="home-hub__optional-records" role="group" aria-label="선택해서 남기는 기록">
-    <CategoryCard variant="row" category="body" title="컨디션·메모" onClick={() => onWriteLog("evening")} />
-  </div>
-}
-
-function SummaryRow({ category, label, detail, onClick }: { category: AppCategory; label: string; detail?: string; onClick?: () => void }) {
-  const descriptionId = useId()
-  return <CategoryCard variant="row" category={category} title={label}
-    description={detail ? <span id={descriptionId}>{detail}</span> : undefined}
-    onClick={onClick} aria-label={label} aria-describedby={detail ? descriptionId : undefined} />
-}
-
-function nextTrainingDateLabel(iso: string, compact = false): string {
-  const [year, month, day] = iso.split("-")
-  const base = `${Number(month)}월 ${Number(day)}일`
-  const today = new Date(); const target = new Date(`${iso}T00:00:00`); const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate())
-  const diffDays = Math.round((target.getTime() - startOfToday.getTime()) / 86400000)
-  if (diffDays === 0) return compact ? "오늘" : `오늘(${base})`
-  if (diffDays === 1) return compact ? "내일" : `내일(${base})`
-  return Number(year) === today.getFullYear() ? base : `${year}년 ${base}`
 }

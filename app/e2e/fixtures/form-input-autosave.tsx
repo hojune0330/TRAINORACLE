@@ -14,9 +14,14 @@ import { initializeCanonicalJournalBrowserFixture } from "./canonical-journal-br
 await initializeCanonicalJournalBrowserFixture()
 const owner = "11111111-1111-4111-8111-111111111111"
 setActiveLocalAccount(owner)
-const kind = new URLSearchParams(location.search).get("kind") ?? "evening"
+const params = new URLSearchParams(location.search)
+const kind = params.get("kind") ?? "evening"
+const homeInline = params.get("homeInline") === "1"
+const targetDate = params.get("date") === "2026-09-09" ? "2026-09-09" : "2026-09-08"
 const Component = kind === "race" ? RaceForm : kind === "post-session" ? PostSessionForm : kind === "quick" ? QuickSessionForm : EveningCheckin
-createRoot(document.getElementById("root")!).render(<React.StrictMode><Component targetDate="2026-09-08" /></React.StrictMode>)
+createRoot(document.getElementById("root")!).render(<React.StrictMode>{homeInline && kind === "evening"
+  ? <EveningCheckin targetDate={targetDate} presentation="home-inline" />
+  : <Component targetDate="2026-09-08" />}</React.StrictMode>)
 
 window.formInputHarness = {
   switchOwner: setActiveLocalAccount,

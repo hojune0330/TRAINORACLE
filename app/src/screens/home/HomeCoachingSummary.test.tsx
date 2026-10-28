@@ -59,21 +59,17 @@ it("does not interrupt general reading on unrelated journal revisions", () => {
   expect(screen.getByRole("dialog")).toBeVisible()
 })
 
-it("shows plan and analysis before optional recording on welcome without a second entry wrapper", () => {
-  const model: TrainingHomeViewModel = { homeMode: "WELCOME", todayMessage: "", todayRecordCount: 0, journalSummary: "", flowSummary: "", planSummary: "저장된 계획 없음", analysisSummary: "", showMinjiPrompt: true, nextTraining: null, briefing: "" }
-  render(<TrainingHome model={model} onOpenOracle={vi.fn()} oraclePreview={<h2>오라클 미리보기</h2>} />)
-  const plan = screen.getByRole("button", { name: "훈련 계획 받기" })
-  const write = screen.getByRole("button", { name: "오늘 운동 기록 쓰기" })
-  const preview = screen.getByRole("heading", { name: "오라클 미리보기" })
+it("keeps welcome focused on training and inline work without a second coaching or example wrapper", () => {
+  const model: TrainingHomeViewModel = { homeMode: "WELCOME", hasPlan: false, todayMessage: "", todayRecordCount: 0, journalSummary: "", flowSummary: "", planSummary: "저장된 계획 없음", analysisSummary: "", showMinjiPrompt: true, nextTraining: null, briefing: "" }
+  render(<TrainingHome model={model} onOpenPlan={vi.fn()} onWriteLog={vi.fn()} onOpenOracle={vi.fn()} oraclePreview={<h2>오라클 미리보기</h2>} />)
+  const plan = screen.getByRole("button", { name: "훈련 계획 만들기" })
+  const write = screen.getByRole("button", { name: "운동 내용도 기록하기" })
   expect(plan).toBeVisible()
   expect(write).toBeVisible()
-  expect(preview.closest("details")).toBeNull()
-  expect(preview).toBeVisible()
-  expect(plan.compareDocumentPosition(preview) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
-  expect(preview.compareDocumentPosition(write) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  expect(screen.queryByRole("heading", { name: "오라클 미리보기" })).toBeNull()
+  expect(plan.compareDocumentPosition(write) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   expect(screen.queryByRole("heading", { name: "훈련 코칭" })).toBeNull()
   expect(screen.queryByRole("heading", { name: "더 살펴보기" })).toBeNull()
-  expect(screen.queryByText("내 훈련, 무엇부터 개선할까요?")).toBeNull()
 })
 
 it("refreshes the date filter after the tab resumes across midnight", () => {

@@ -20,6 +20,8 @@ export type NextTraining = {
 }
 
 export type TrainingHomeViewModel = {
+  readonly hasPlan?: boolean
+  readonly trainingDays?: readonly HomeTrainingDay[]
   readonly homeMode: "WELCOME" | "TRAINING" | "JOURNAL"
   readonly todayMessage: string
   readonly todayRecordCount: number
@@ -53,6 +55,8 @@ export function buildTrainingHomeViewModel(
       : "JOURNAL"
 
   return {
+    hasPlan: plan !== null,
+    trainingDays: [trainingDayFor(plan, today), trainingDayFor(plan, isoShift(today, 1))],
     homeMode,
     todayMessage: todayCount === 0
       ? "아직 오늘 기록이 없어요."
@@ -80,6 +84,22 @@ export function buildTrainingHomeViewModel(
     nextTraining,
     briefing,
   }
+}
+
+export type HomeTrainingDay = {
+  readonly date: string
+  readonly sessions: readonly { readonly session: HomeSession; readonly progress: string | null }[]
+}
+
+/** A dated reading projection, including rest and every recorded slot. Progress
+ * must never remove a planned session from today's or tomorrow's overview. */
+export function trainingDayFor(plan: HomePlan | null, date: string): HomeTrainingDay {
+  const start = plan?.intake.startDate
+  if (!plan || !start || !isValidIsoDate(start)) return { date, sessions: [] }
+  return { date, sessions: plan.activePlan.sessions
+    .filter(session => isoShift(start, session.day - 1) === date)
+    .sort((a, b) => a.slot.localeCompare(b.slot))
+    .map(session => ({ session, progress: plan.progress?.find(item => item.sessionDay === session.day && item.sessionSlot === session.slot)?.state ?? null })) }
 }
 
 function nextTrainingFor(plan: HomePlan | null, today: string): NextTraining | null {

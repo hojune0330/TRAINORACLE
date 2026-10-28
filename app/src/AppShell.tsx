@@ -35,6 +35,7 @@ import type { JournalEntry } from "./domain/journal-store"
 import { awardJournalEntry, type EngagementAwardResult } from "./domain/engagement"
 import { ACCOUNT_REWARD_EVENT, accountRewardsEnabled, accountRewardStatus, readAccountRewardSummary, hydrateAccountRewards } from "./domain/account/account-reward-service"
 import { createSavedFactReceipt } from "./domain/save-receipt"
+import { homeMemoReceiptStorageStatus, resolveHomeMemoReceipt, type HomeMemoReceipt } from "./domain/home-memo-receipt"
 import { analysisNavigationForReceipt, type AnalysisNavigation, type AnalysisSection } from "./domain/analysis-navigation"
 import { buildOraclePersonalResult } from "./domain/oracle-personal-result"
 import { loadPlanBetaState, readPlanBetaStateFromStorage } from "./domain/plan-beta-store"
@@ -225,6 +226,10 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
   const [allowHomeIntroduction] = React.useState(() => v.tab === "home" && !v.accountOpen
     && !oracleEntry.requested && readRecoveryTab() === null && isPlainHomeEntry(window.location))
   const [savedToast, setSavedToast] = React.useState<ShellToastState | null>(null)
+  const [homeMemoReceipt, setHomeMemoReceipt] = React.useState<HomeMemoReceipt | null>(null)
+  const [homeMemoNotice, setHomeMemoNotice] = React.useState<string | null>(null)
+  const homeMemoReceiptRef = React.useRef(homeMemoReceipt)
+  homeMemoReceiptRef.current = homeMemoReceipt
   const confirmedSaveEffects = React.useRef<{
     entryId: string; savedAt: string; scope: number; rewardMessage: string; rewardRetry?: boolean
   } | null>(null)
@@ -636,7 +641,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
       pendingJournalSection.current = null
       analysisReturnContext.current = undefined
       setOracleHubSection("training")
-      pendingReward.current = null; confirmedSaveEffects.current = null; oracleInputRef.current = null; decorationReturn.current = null; setDecorationInitialDate(undefined); setSavedToast(null); setAnalysisContext(undefined)
+      pendingReward.current = null; confirmedSaveEffects.current = null; oracleInputRef.current = null; decorationReturn.current = null; setDecorationInitialDate(undefined); setSavedToast(null); setHomeMemoReceipt(null); setHomeMemoNotice(null); setAnalysisContext(undefined)
       oraclePlanForwardRef.current = null
       paceRequestRef.current = null
       if (overlayRef.current?.kind === "pace") {
@@ -710,6 +715,10 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
     return confirmed
   }
   const goHomeAfterSave = (savedEntry: JournalEntry, reviewMessage?: string, detailDate?: string, storageMessage?: string, completionAlreadyShown = false) => {
+    setHomeMemoReceipt(current => current?.scopeGeneration === localJournalScopeGeneration() && current.id === savedEntry.id
+      ? { scopeGeneration: current.scopeGeneration, id: savedEntry.id, kind: savedEntry.kind, date: savedEntry.date, savedAt: savedEntry.savedAt,
+        storage: storageMessage ?? current.storage, storageStatus: homeMemoReceiptStorageStatus(savedEntry),
+        ...(reviewMessage ? { review: reviewMessage } : {}) } : current)
     const { rewardMessage, rewardRetry } = confirmSavedJournalEffects(savedEntry)
     const receipt = createSavedFactReceipt(savedEntry)
     runViewTransition("replace", () => {
@@ -830,6 +839,39 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
     setSavedToast(null)
     recordingOrigin.current = null
   }, false)
+  const openHomeMemo = (decorate: boolean) => {
+    const receipt = homeMemoReceipt
+    if (!receipt) return
+    const scope = localJournalScopeGeneration()
+    let target: Pick<JournalEntry, "id" | "date"> | null = null
+    const isCurrent = () => {
+      // Reject stale producers before resolving or publishing a notice in a new scope.
+      if (scope !== localJournalScopeGeneration() || homeMemoReceiptRef.current !== receipt) return false
+      if (decorate && receipt.review !== undefined) return false
+      let resolved: ReturnType<typeof resolveHomeMemoReceipt>
+      try { resolved = resolveHomeMemoReceipt(receipt) }
+      catch { resolved = { status: "UNAVAILABLE" } }
+      if (scope !== localJournalScopeGeneration() || homeMemoReceiptRef.current !== receipt) return false
+      if (resolved.status !== "READY") {
+        setHomeMemoNotice(resolved.status === "UNAVAILABLE" ? "기록을 확인하지 못했어요. 일지에서 보관 상태를 확인해 주세요." : "기록이 바뀌었어요. 일지에서 다시 확인해 주세요.")
+        return false
+      }
+      target = { id: resolved.entry.id, date: resolved.entry.date }
+      return true
+    }
+    // The target must be usable before asking about, or discarding, another draft.
+    if (!isCurrent()) return
+    runDraftSafeNavigation(() => {
+      const entry = target
+      if (!entry) return
+      setHomeMemoNotice(null)
+      if (decorate) openDecorationStudio(entry.date)
+      else runViewTransition("push", () => {
+        setHomeDetailOrigin("home")
+        setV(current => ({ ...current, detailDate: entry.date, detailEntryId: entry.id }))
+      })
+    }, false, isCurrent)
+  }
   const closeDecorationStudio = () => runViewTransition("pop", () => {
     const origin = decorationReturn.current
     decorationReturn.current = null; setDecorationInitialDate(undefined)
@@ -1404,6 +1446,18 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
       }), true)
       : (
         <Home
+          memoReceipt={homeMemoReceipt}
+          memoNotice={homeMemoNotice}
+          onMemoSaved={(entry, review, storage) => {
+            confirmSavedJournalEffects(entry)
+            setHomeMemoNotice(null)
+            setHomeMemoReceipt({ scopeGeneration: localJournalScopeGeneration(), id: entry.id, kind: entry.kind,
+              date: entry.date, savedAt: entry.savedAt, storage: storage ?? "메모·컨디션을 이 기기에 저장했어요.",
+              storageStatus: homeMemoReceiptStorageStatus(entry), ...(review ? { review } : {}) })
+          }}
+          onOpenMemoRecord={() => openHomeMemo(false)}
+          onDecorateMemo={() => openHomeMemo(true)}
+          onJournalSaved={confirmSavedJournalEffects}
           introductionAllowed={allowHomeIntroduction && overlay === null}
           oraclePreview={homeOraclePreview}
           oraclePreviewLabel={homeCandidate ? "내 기록으로 본 오라클" : homeSourceUnavailable ? "오라클 기록 상태" : homePlanState ? "오라클" : "오라클 결과 예시 보기"}

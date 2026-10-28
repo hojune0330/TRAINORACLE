@@ -7,12 +7,59 @@ const flag = vi.hoisted(() => ({ enabled: true }))
 vi.mock("../../domain/account/account-journal-record-service", () => ({ accountJournalRecordsEnabled: () => flag.enabled }))
 import { PurposeScopedMemoField, usePurposeScopedMemo } from "./PurposeScopedMemoField"
 
-function Fixture({ purpose, text = "" }: { purpose?: MemoPurpose; text?: string }) {
+function Fixture({ purpose, text = "", autoGrow = false }: { purpose?: MemoPurpose; text?: string; autoGrow?: boolean }) {
   const controller = usePurposeScopedMemo(text, purpose)
-  return <PurposeScopedMemoField controller={controller} fieldId="synthetic-note" label="시험 메모" />
+  return <PurposeScopedMemoField controller={controller} fieldId="synthetic-note" label="시험 메모" {...(autoGrow ? { autoGrowMaxRows: 8 } : {})} />
 }
 beforeEach(() => { flag.enabled = true })
-afterEach(cleanup)
+afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals() })
+
+it("exposes each purpose's meaning before selection with a distinct accessible description", () => {
+  render(<Fixture />)
+  expect(screen.getByRole("radio", { name: "나만의 메모" })).toHaveAccessibleDescription("공유·분석에 쓰지 않아요")
+  expect(screen.getByRole("radio", { name: "훈련 메모" })).toHaveAccessibleDescription("저장 전 내용을 자동 확인해요")
+  expect(screen.getByRole("radio", { name: "훈련 메모" })).not.toBeChecked()
+})
+
+it("grows between three and eight rows, scrolls beyond the cap and ignores height-only observer notifications", () => {
+  let notify!: (entries: Array<{ contentRect: { width: number } }>) => void
+  const disconnect = vi.fn()
+  vi.stubGlobal("ResizeObserver", class {
+    constructor(callback: typeof notify) { notify = callback }
+    observe() {}
+    disconnect() { disconnect() }
+  })
+  const actualStyle = window.getComputedStyle.bind(window)
+  vi.spyOn(window, "getComputedStyle").mockImplementation(element => element.tagName !== "TEXTAREA" ? actualStyle(element) : ({
+    lineHeight: "20px", paddingTop: "10px", paddingBottom: "10px", borderTopWidth: "1px", borderBottomWidth: "1px",
+  } as CSSStyleDeclaration))
+  let contentHeight = 80
+  const measure = vi.spyOn(HTMLTextAreaElement.prototype, "scrollHeight", "get").mockImplementation(() => contentHeight)
+  const view = render(<Fixture autoGrow />)
+  const input = screen.getByRole("textbox") as HTMLTextAreaElement
+  expect(input.style.height).toBe("82px")
+  expect(input.style.overflowY).toBe("hidden")
+  contentHeight = 140
+  fireEvent.change(input, { target: { value: "합성 다섯 줄" } })
+  expect(input.style.height).toBe("142px")
+  contentHeight = 300
+  fireEvent.change(input, { target: { value: "합성 긴 내용" } })
+  expect(input.style.height).toBe("182px")
+  expect(input.style.overflowY).toBe("auto")
+  notify([{ contentRect: { width: 280 } }])
+  measure.mockClear()
+  notify([{ contentRect: { width: 280 } }])
+  expect(measure).not.toHaveBeenCalled()
+  contentHeight = 120
+  notify([{ contentRect: { width: 380 } }])
+  expect(input.style.height).toBe("122px")
+  expect(input.style.overflowY).toBe("hidden")
+  contentHeight = 20
+  fireEvent.change(input, { target: { value: "" } })
+  expect(input.style.height).toBe("82px")
+  view.unmount()
+  expect(disconnect).toHaveBeenCalled()
+})
 
 it.each([undefined, "PRIVATE_SELF_ONLY", "ANALYZABLE_TRAINING_NOTE"] as const)(
   "describes account encryption and private exclusions for purpose %s without claiming device-only storage", purpose => {

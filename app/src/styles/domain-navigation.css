@@ -30,5 +30,9 @@
 .app-navigation-dock .app-tab-bar__button[data-active="true"]::before { content: none; }
 .app-navigation-dock .app-tab-bar__button[data-active="true"] svg { animation: none; }
 .app-navigation-dock .app-navigation-dock__exit { color: var(--ink-2); }
+.app-tab-bar.app-navigation-dock .app-tab-bar__button:not([data-active="true"]) { color: var(--ink-2); }
+.app-tab-bar.app-navigation-dock .app-tab-bar__button:not([data-active="true"]) > svg { color: var(--ink-2); }
+.app-tab-bar.app-navigation-dock .app-tab-bar__button[data-active="true"] { color: var(--category-ink, var(--brand)); }
+.app-tab-bar.app-navigation-dock .app-tab-bar__record { border: var(--bw-line) solid var(--line); background: var(--surface-2); font-weight:700; }
 .app-shell[data-reduced-motion="true"] .app-navigation-dock .app-tab-bar__button { transition: none; }
 @media (prefers-reduced-motion: reduce) { .app-navigation-dock .app-tab-bar__button { transition: none; } }

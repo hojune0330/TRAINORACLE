@@ -17,6 +17,10 @@ export interface EntryFormProps {
   readonly initialBodyPartId?: string | undefined
   readonly initialSection?: "sleep" | undefined
   readonly embedded?: boolean | undefined
+  readonly presentation?: "home-inline" | undefined
+  readonly onDraftRestored?: ((restored: boolean) => void) | undefined
+  readonly onCanRollDateChange?: ((canRoll: boolean) => void) | undefined
+  readonly onNavigationBusyChange?: ((busy: boolean) => void) | undefined
   readonly onNavigationReady?: ((exit: (() => void) | null) => void) | undefined
   readonly plannedSessionLink?: PlannedSessionLink
 }

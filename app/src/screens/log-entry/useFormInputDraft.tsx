@@ -16,7 +16,7 @@ import { StickyBar } from "./StickyBar"
 type Session = {
   recovered: FormDraftBody | null
   change: (input: FormInput, entryId: string, baseSavedAt?: string) => void
-  complete: () => Promise<void>
+  complete: (expectedInput?: string) => Promise<boolean>
   current: () => boolean
 }
 const DraftContext = React.createContext<Session | null>(null)
@@ -95,10 +95,13 @@ export function useFormInputDraft(input: FormInput, entryId: string, capture = t
       if (!allowed && current()) volatile.current.dirty = previousDirty
       return allowed
     },
-    complete: async () => {
-      if (session) await session.complete()
+    complete: async (expectedInput?: string) => {
+      if (expectedInput !== undefined && volatile.current.latest !== expectedInput) return false
+      if (session && !(await session.complete(expectedInput))) return false
+      if (expectedInput !== undefined && volatile.current.latest !== expectedInput) return false
       volatile.current.baseline = volatile.current.latest
       volatile.current.dirty = false
+      return true
     },
     back: (callback?: () => void) => () => runDraftSafeNavigation(() => callback?.()),
   }
@@ -245,11 +248,17 @@ function ScopedFormInputDraft({ owner, enabled, context, date, kind, onExit, chi
           baseline = value
           write({ format: "TRAINORACLE_FORM_INPUT_V1", context, entryId, baseSavedAt: baseSavedAt ?? null, completed: false, input })
         },
-        async complete() {
-          if (!controller.current()) return
+        async complete(expectedInput) {
+          if (!controller.current()) return false
           await writes
-          if (!controller.current() || failed) return
+          if (!controller.current()) return false
+          const matches = () => expectedInput === undefined || expectedInput === (latest ? JSON.stringify(latest.input) : baseline)
+          if (!matches()) return false
+          // Complete only the exact submitted snapshot. While this write/flush
+          // waits, change() may queue a newer unfinished input; never mark that
+          // newer snapshot completed or report its draft as cleared.
           if (latest) { write({ ...latest, completed: true }); await writes; await flush(true) }
+          return controller.current() && !failed && matches() && (!latest || latest.completed)
         },
       }
       setSession(controller)

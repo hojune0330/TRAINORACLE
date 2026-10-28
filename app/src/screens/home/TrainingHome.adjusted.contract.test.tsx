@@ -25,11 +25,11 @@ it("keeps the adjusted prescription unchanged and opens it through the concise h
   expect(nextTrainingPrescriptionLabel(session)).not.toContain("1000m")
   const open = vi.fn()
   render(<TrainingHome model={model} onOpenPlan={open} />)
-  const button = screen.getByRole("button", { name: /^다음 훈련/ })
+  const button = screen.getByRole("article", { name: "오늘 훈련" })
   expect(button).not.toHaveTextContent("오후 훈련도 있어요")
   expect(button).toHaveTextContent("2 × 400m")
   expect(button).toHaveTextContent("반복 사이 17초 서서 쉬기")
-  fireEvent.click(button)
+  fireEvent.click(screen.getByRole("button", { name: "전체 계획" }))
   expect(open).toHaveBeenCalledOnce()
   const after = buildTrainingHomeViewModel([], [], { ...selected.state,
     progress: [{ sessionDay: session.day, sessionSlot: session.slot, state: "COMPLETED" }] }, date)

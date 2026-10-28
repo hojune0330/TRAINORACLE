@@ -18,14 +18,25 @@ import { LatestJournalDay } from "./home/LatestJournalDay"
 import { LOCAL_JOURNALS_CHANGED } from "../domain/journal-change-events"
 import type { LogEntryType } from "./log-entry/shared"
 import type { OracleTopicId } from "../domain/oracle-exploration"
-import { onLocalJournalScopeChange } from "../domain/account/local-journal-ownership"
+import { localJournalScopeGeneration, onLocalJournalScopeChange } from "../domain/account/local-journal-ownership"
+import { EveningCheckin } from "./log-entry/EveningCheckin"
+import { todayISO, type JournalEntry } from "../domain/journal-store"
+import { homeMemoReceiptStorageStatus, type HomeMemoReceipt } from "../domain/home-memo-receipt"
+import { runDraftSafeNavigation } from "../domain/unsaved-draft-navigation"
 import { accountJournalProjectionStatus, readAccountJournalProjection, readCurrentConfirmedAccountJournalProjection } from "../domain/account/account-journal-projection"
 import { RecordStartActions } from "../components/RecordStartActions"
 import { ProductAnnouncement } from "../components/ProductAnnouncement"
 import { MINIGAME_ANNOUNCEMENT } from "../domain/product-announcements"
 import { createPlannedSessionLogDraft, type PlannedSessionLink } from "../domain/planned-session-link"
+import { companionMotionPoster } from "../domain/training-companions"
 
 export type HomeProps = {
+  readonly memoReceipt?: HomeMemoReceipt | null
+  readonly memoNotice?: string | null
+  readonly onMemoSaved?: (entry: JournalEntry, review?: string, storage?: string) => void
+  readonly onOpenMemoRecord?: () => void
+  readonly onDecorateMemo?: () => void
+  readonly onJournalSaved?: (entry: JournalEntry) => void
   readonly onWriteLog?: (entryType?: LogEntryType) => void
   readonly onOpenDay?: (date: string, entryId?: string) => void
   readonly onOpenArchive?: () => void
@@ -50,7 +61,7 @@ export type HomeProps = {
 export function Home({
   onWriteLog, onOpenDay, onOpenArchive, onOpenGuide, onOpenPlan,
   onOpenNextTraining, onOpenTrends, onOpenImport, onOpenRecords, onOpenOracle, oraclePreview, oraclePreviewLabel, onOpenMore, onOpenMinigame, onOpenAccount, onOpenContent, onOpenRewards,
-  introductionAllowed = true,
+  introductionAllowed = true, onJournalSaved, memoReceipt, memoNotice, onMemoSaved, onOpenMemoRecord, onDecorateMemo,
 }: HomeProps) {
   const [, setRevision] = React.useState(0)
   const journalSnapshot = useCalendarSnapshot()
@@ -149,11 +160,23 @@ export function Home({
     }
     onOpenPlan?.()
   }
+  const openTrainingSession = (session: HomeSession) => {
+    if (homePlan !== null && !needsPlanReview && onOpenNextTraining) {
+      const draft = createPlannedSessionLogDraft<HomeSession>(homePlan, session, new Date().toISOString())
+      if (draft !== null) { onOpenNextTraining(draft.link); return }
+    }
+    onOpenPlan?.()
+  }
 
   return (
     <div className="training-home-screen">
       <TrainingHome
         model={model}
+        planReadiness={accountCurrent?.kind === "evidence_required" ? "EVIDENCE_REQUIRED"
+          : planRead.kind === "invalid" || planRead.kind === "storage_error" ? "ERROR"
+          : accountPlansEnabled() ? accountPlanSnapshot?.status ?? "FAILED" : "READY"}
+        inlineMemo={<HomeInlineMemo key={localJournalScopeGeneration()} today={today} onJournalSaved={onJournalSaved} onOpenDay={onOpenDay}
+          receipt={memoReceipt} notice={memoNotice} onOpenJournal={onOpenArchive} onMemoSaved={onMemoSaved} onOpenMemoRecord={onOpenMemoRecord} onDecorateMemo={onDecorateMemo} />}
         introductionAllowed={introductionAllowed}
         introductionReady={journalSnapshot.status === "READY" && athleteRecords.status === "READY"
           && planRead.kind !== "invalid" && planRead.kind !== "storage_error" && safetyNotice === undefined
@@ -170,6 +193,7 @@ export function Home({
         onOpenGuide={onOpenGuide}
         onOpenPlan={onOpenPlan}
         onOpenNextTraining={openNextTraining}
+        onOpenTrainingSession={openTrainingSession}
         onOpenOracle={onOpenOracle}
         onOpenTrends={onOpenTrends}
         onOpenMore={onOpenMore}
@@ -184,6 +208,73 @@ export function Home({
       />
     </div>
   )
+}
+
+function HomeInlineMemo({ today, onJournalSaved, onOpenDay, receipt, notice, onOpenJournal, onMemoSaved, onOpenMemoRecord, onDecorateMemo }: {
+  today: string; onJournalSaved?: ((entry: JournalEntry) => void) | undefined; onOpenDay?: ((date: string, entryId?: string) => void) | undefined
+  receipt?: HomeMemoReceipt | null | undefined; onMemoSaved?: HomeProps["onMemoSaved"]
+  notice?: string | null | undefined
+  onOpenJournal?: (() => void) | undefined
+  onOpenMemoRecord?: (() => void) | undefined; onDecorateMemo?: (() => void) | undefined
+}) {
+  // Midnight cannot transfer an unsaved memo to another date. Keep its writing
+  // date visible until the user explicitly starts today's record.
+  const [date, setDate] = React.useState(today)
+  const [version, setVersion] = React.useState(0)
+  const [restored, setRestored] = React.useState(false)
+  const [localReceipt, setLocalReceipt] = React.useState<HomeMemoReceipt | null>(null)
+  const [saveCharacterEvent, setSaveCharacterEvent] = React.useState<string | null>(null)
+  const recent = receipt === undefined ? localReceipt : receipt
+  const receiptConfirmed = recent !== null && recent !== undefined
+    && recent.scopeGeneration === localJournalScopeGeneration()
+    && (recent.storageStatus === "LOCAL" || (recent.storageStatus === "ACCOUNT" && accountJournalProjectionStatus() === "READY"))
+  React.useEffect(() => {
+    if (saveCharacterEvent === null) return
+    const timeout = window.setTimeout(() => setSaveCharacterEvent(null), 2000)
+    return () => window.clearTimeout(timeout)
+  }, [saveCharacterEvent])
+  const [canRollDate, setCanRollDate] = React.useState(false)
+  const [navigationBusy, setNavigationBusy] = React.useState(false)
+  React.useEffect(() => {
+    if (date !== today && canRollDate) setDate(today)
+  }, [date, today, canRollDate])
+  return <div className="home-hub__inline-memo">
+    {restored && <p className="home-hub__memo-context">작성 중 메모 · 아직 기록 미완료 · {compactDate(date)}</p>}
+    {date !== today && <div role="status"><p>{compactDate(date)}에 쓰기 시작한 기록이에요. 저장하면 이 날짜에 남아요.</p><button type="button" className="home-hub__text-action" disabled={navigationBusy}
+      onClick={() => runDraftSafeNavigation(() => { setDate(todayISO()); setVersion(value => value + 1); setRestored(false); setCanRollDate(false) })}>오늘 날짜로 새로 쓰기</button></div>}
+    <EveningCheckin key={`${date}:${version}`} targetDate={date} presentation="home-inline" onDraftRestored={setRestored} onCanRollDateChange={setCanRollDate} onNavigationBusyChange={setNavigationBusy}
+      onDone={(_kind, entry, review, storage) => {
+        const saved = { scopeGeneration: localJournalScopeGeneration(), id: entry.id, kind: entry.kind, date: entry.date, savedAt: entry.savedAt,
+          storage: storage ?? "메모·컨디션을 이 기기에 저장했어요.", storageStatus: homeMemoReceiptStorageStatus(entry), ...(review ? { review } : {}) }
+        setLocalReceipt(saved)
+        if (!review && saved.storageStatus !== "UNKNOWN") setSaveCharacterEvent(`${entry.id}:${entry.savedAt}`)
+        if (onMemoSaved) onMemoSaved(entry, review, storage)
+        else onJournalSaved?.(entry)
+        setDate(todayISO()); setVersion(value => value + 1); setRestored(false); setCanRollDate(false)
+      }} />
+    {recent && <div className="home-hub__memo-receipt">
+      {notice && <p role="alert">{notice}</p>}
+      <div className="home-hub__memo-receipt-heading"><div role={recent.review ? "alert" : "status"}>
+        <p>{receiptConfirmed ? `저장됨 · ${receiptSavedTime(recent.savedAt)}` : "저장 상태 확인 필요"}{recent.date !== today && ` · ${compactDate(recent.date)}`}</p>
+        {receiptConfirmed && !notice && !recent.review ? <details className="home-hub__receipt-storage"><summary>보관 상태</summary><p>{recent.storage}</p></details> : <p>{recent.storage}</p>}
+        {recent.review && <p>{recent.review}</p>}</div>
+        <span className="home-hub__save-character" aria-hidden="true">{receiptConfirmed && !recent.review && saveCharacterEvent === `${recent.id}:${recent.savedAt}` && <HomeMemoSavedCharacter key={saveCharacterEvent} />}</span></div>
+      <div className="home-hub__memo-receipt-actions">
+        {notice && onOpenJournal && <button type="button" className="home-hub__text-action" disabled={navigationBusy} onClick={() => runDraftSafeNavigation(onOpenJournal)}>일지 확인</button>}
+        {(onOpenMemoRecord || onOpenDay) && <button type="button" className="home-hub__text-action" aria-label="최근 저장한 기록 보기" disabled={navigationBusy} onClick={() => onOpenMemoRecord ? onOpenMemoRecord() : runDraftSafeNavigation(() => onOpenDay?.(recent.date, recent.id))}>기록 보기</button>}
+        {!recent.review && onDecorateMemo && <button type="button" className="home-hub__text-action" aria-label="최근 저장한 일지 꾸미기" disabled={navigationBusy} onClick={onDecorateMemo}>꾸미기</button>}
+      </div></div>}
+  </div>
+}
+
+function HomeMemoSavedCharacter() {
+  const [failed, setFailed] = React.useState(false)
+  return failed ? null : <img src={companionMotionPoster("idle")} width={32} height={32} alt="" aria-hidden="true" decoding="async" onError={() => setFailed(true)} />
+}
+
+function receiptSavedTime(savedAt: string): string {
+  const date = new Date(savedAt)
+  return Number.isNaN(date.getTime()) ? "시간 확인 필요" : `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`
 }
 
 function recentPainReviewDates(entries: readonly AnalysisJournalEntry[], today: string): readonly string[] {

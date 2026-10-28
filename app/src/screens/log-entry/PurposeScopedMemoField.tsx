@@ -98,15 +98,51 @@ export function PurposeScopedMemoField({
   label,
   placeholder,
   rows = 3,
+  textFirst = false,
+  compactLabel = false,
+  autoGrowMaxRows,
+  onComposingChange,
 }: {
   readonly controller: PurposeScopedMemoController
   readonly fieldId: string
   readonly label: string
   readonly placeholder?: string
   readonly rows?: number
+  readonly textFirst?: boolean
+  readonly compactLabel?: boolean
+  readonly autoGrowMaxRows?: number
+  readonly onComposingChange?: ((composing: boolean) => void) | undefined
 }) {
   const accountEnabled = accountJournalRecordsEnabled()
   const textareaRef = React.useRef<HTMLTextAreaElement>(null)
+  React.useLayoutEffect(() => {
+    const field = textareaRef.current
+    if (!field || autoGrowMaxRows === undefined) return
+    const resize = () => {
+      const style = window.getComputedStyle(field)
+      const lineHeight = Number.parseFloat(style.lineHeight) || 25.2
+      const padding = (Number.parseFloat(style.paddingTop) || 0) + (Number.parseFloat(style.paddingBottom) || 0)
+      const borders = (Number.parseFloat(style.borderTopWidth) || 0) + (Number.parseFloat(style.borderBottomWidth) || 0)
+      const minimum = rows * lineHeight + padding + borders
+      const maximum = Math.max(rows, autoGrowMaxRows) * lineHeight + padding + borders
+      field.style.height = "auto"
+      field.style.height = `${Math.min(maximum, Math.max(minimum, field.scrollHeight + borders))}px`
+      field.style.overflowY = field.scrollHeight + borders > maximum ? "auto" : "hidden"
+    }
+    resize()
+    // Our height write also produces an observer notification. Re-measure only
+    // a changed content width so growing the textarea cannot feed back forever.
+    let observedWidth: number | undefined
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(entries => {
+      const width = entries[0]?.contentRect.width
+      if (width === undefined || width === observedWidth) return
+      observedWidth = width
+      resize()
+    })
+    observer?.observe(field)
+    window.addEventListener("resize", resize)
+    return () => { observer?.disconnect(); window.removeEventListener("resize", resize) }
+  }, [controller.text, autoGrowMaxRows, rows])
   const revealMemo = () => {
     const field = textareaRef.current
     const saveBar = field?.closest(".app-scroll-region")?.querySelector(".entry-sticky-bar")
@@ -119,48 +155,12 @@ export function PurposeScopedMemoField({
   const describedBy = controller.purposeError === null
     ? explanationId
     : `${explanationId} ${errorId}`
+  const briefExplanation = <div id={explanationId}>
+    {controller.purpose === MEMO_PURPOSE.analyzableTrainingNote && <p>이 기기에서 확인하며, 훈련 계획의 근거로 쓰지 않아요.</p>}
+  </div>
 
-  return (
-    <div className="memo-input">
-      <fieldset aria-describedby={describedBy} style={{ border: 0, margin: "0 0 10px", padding: 0 }}>
-        <legend style={{ fontSize: "var(--fs-body-sm)", color: "var(--ink-2)", marginBottom: 8 }}>
-          메모 용도
-        </legend>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
-          <label style={optionStyle(controller.purpose === MEMO_PURPOSE.privateSelfOnly)}>
-            <input
-              ref={controller.privateOptionRef}
-              type="radio"
-              name={`${fieldId}-purpose`}
-              checked={controller.purpose === MEMO_PURPOSE.privateSelfOnly}
-              onChange={() => controller.choosePurpose(MEMO_PURPOSE.privateSelfOnly)}
-            />
-            나만의 메모
-          </label>
-          <label style={optionStyle(controller.purpose === MEMO_PURPOSE.analyzableTrainingNote)}>
-            <input
-              type="radio"
-              name={`${fieldId}-purpose`}
-              checked={controller.purpose === MEMO_PURPOSE.analyzableTrainingNote}
-              onChange={() => controller.choosePurpose(MEMO_PURPOSE.analyzableTrainingNote)}
-            />
-            훈련 메모
-          </label>
-        </div>
-      </fieldset>
-      <div id={explanationId} className="memo-input__explanation">
-        <p>{controller.purpose === MEMO_PURPOSE.privateSelfOnly ? "공유·분석에 쓰지 않는 메모예요."
-          : controller.purpose === MEMO_PURPOSE.analyzableTrainingNote ? "저장 전 이 기기에서 내용을 자동 확인해요. 훈련 계획의 근거로 쓰지 않아요."
-            : "메모를 남길 방법을 골라 주세요."} {accountEnabled ? "계정에 보관해요." : "이 기기에 보관해요."}</p>
-        <details><summary>보관 방식 자세히</summary><p>{purposeExplanation(controller.purpose, accountEnabled)}</p></details>
-        {controller.needsPrivateSetup && <p>처음 한 번, 비밀 메모를 암호화해 보관할 복구 코드가 필요해요.</p>}
-      </div>
-      {controller.purposeError !== null && (
-        <div id={errorId} role="alert" style={{ fontSize: "var(--fs-body-sm)", color: "var(--pain-5)", marginBottom: 8 }}>
-          {controller.purposeError}
-        </div>
-      )}
-      <label htmlFor={fieldId} style={{ display: "block", fontSize: "var(--fs-body-sm)", color: "var(--ink-2)", marginBottom: 8 }}>
+  const memoTextField = <>
+<label htmlFor={fieldId} className={compactLabel ? "home-hub__memo-label" : undefined} style={compactLabel ? undefined : { display: "block", fontSize: "var(--fs-body-sm)", color: "var(--ink-2)", marginBottom: 8 }}>
         {label}
       </label>
       <textarea
@@ -170,6 +170,10 @@ export function PurposeScopedMemoField({
         onFocus={revealMemo}
         onChange={(event) => controller.updateText(event.target.value)}
         onBlur={controller.reviewIfNeeded}
+        onCompositionStart={() => onComposingChange?.(true)}
+        onCompositionEnd={() => onComposingChange?.(false)}
+        aria-describedby={describedBy}
+        aria-invalid={controller.purposeError !== null}
         placeholder={placeholder}
         rows={rows}
         className="paper-grid"
@@ -178,6 +182,50 @@ export function PurposeScopedMemoField({
           fontSize: 18, lineHeight: 1.4, color: "var(--ink-blue)", resize: "none",
         }}
       />
+  </>
+  return (
+    <div className="memo-input">
+      {textFirst && memoTextField}
+      <fieldset aria-describedby={describedBy} style={{ border: 0, margin: "0 0 10px", padding: 0 }}>
+        <legend style={{ fontSize: "var(--fs-body-sm)", color: "var(--ink-2)", marginBottom: 8 }}>
+          메모 용도
+        </legend>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+          <label style={optionStyle(controller.purpose === MEMO_PURPOSE.privateSelfOnly)}>
+            <input
+              ref={controller.privateOptionRef}
+              type="radio"
+              aria-label="나만의 메모"
+              aria-describedby={`${fieldId}-private-helper`}
+              name={`${fieldId}-purpose`}
+              checked={controller.purpose === MEMO_PURPOSE.privateSelfOnly}
+              onChange={() => controller.choosePurpose(MEMO_PURPOSE.privateSelfOnly)}
+            />
+            <span>나만의 메모<small id={`${fieldId}-private-helper`} style={optionHelperStyle}>공유·분석에 쓰지 않아요</small></span>
+          </label>
+          <label style={optionStyle(controller.purpose === MEMO_PURPOSE.analyzableTrainingNote)}>
+            <input
+              type="radio"
+              aria-label="훈련 메모"
+              aria-describedby={`${fieldId}-training-helper`}
+              name={`${fieldId}-purpose`}
+              checked={controller.purpose === MEMO_PURPOSE.analyzableTrainingNote}
+              onChange={() => controller.choosePurpose(MEMO_PURPOSE.analyzableTrainingNote)}
+            />
+            <span>훈련 메모<small id={`${fieldId}-training-helper`} style={optionHelperStyle}>저장 전 내용을 자동 확인해요</small></span>
+          </label>
+        </div>
+      </fieldset>
+      <div className="memo-input__explanation">
+        {briefExplanation}<details><summary>{textFirst ? "메모 보관 안내" : "보관 방식 자세히"}</summary><p>{purposeExplanation(controller.purpose, accountEnabled)}</p></details>
+        {controller.needsPrivateSetup && <p>처음 한 번, 비밀 메모를 암호화해 보관할 복구 코드가 필요해요.</p>}
+      </div>
+      {controller.purposeError !== null && (
+        <div id={errorId} role="alert" style={{ fontSize: "var(--fs-body-sm)", color: "var(--pain-5)", marginBottom: 8 }}>
+          {controller.purposeError}
+        </div>
+      )}
+      {!textFirst && memoTextField}
       {!accountEnabled && controller.purpose === MEMO_PURPOSE.privateSelfOnly && controller.text.trim() !== "" && (
         <PrivateMemoSaveSetup onReady={() => {
           controller.clearPreparationError()
@@ -215,9 +263,11 @@ function purposeExplanation(purpose: MemoPurpose | undefined, accountEnabled: bo
 
 function optionStyle(selected: boolean): React.CSSProperties {
   return {
-    display: "flex", alignItems: "center", gap: 7, minHeight: 44, padding: "9px 10px",
+    display: "flex", alignItems: "flex-start", gap: 7, minHeight: 44, padding: "9px 10px",
     border: selected ? "1px solid var(--ink)" : "1px solid var(--line)",
     background: selected ? "var(--surface)" : "transparent",
     borderRadius: "var(--r-action)", fontFamily: "var(--sans)", fontSize: "var(--fs-body)", color: "var(--ink)", cursor: "pointer",
   }
 }
+
+const optionHelperStyle: React.CSSProperties = { display: "block", marginTop: 4, color: "var(--ink-2)", fontSize: "var(--fs-body-sm)", fontWeight: 400, lineHeight: 1.5, overflowWrap: "anywhere" }
