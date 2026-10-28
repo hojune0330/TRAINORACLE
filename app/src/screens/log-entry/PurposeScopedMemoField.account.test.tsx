@@ -7,9 +7,9 @@ const flag = vi.hoisted(() => ({ enabled: true }))
 vi.mock("../../domain/account/account-journal-record-service", () => ({ accountJournalRecordsEnabled: () => flag.enabled }))
 import { PurposeScopedMemoField, usePurposeScopedMemo } from "./PurposeScopedMemoField"
 
-function Fixture({ purpose, text = "", autoGrow = false }: { purpose?: MemoPurpose; text?: string; autoGrow?: boolean }) {
+function Fixture({ purpose, text = "", autoGrow = false, compact = false }: { purpose?: MemoPurpose; text?: string; autoGrow?: boolean; compact?: boolean }) {
   const controller = usePurposeScopedMemo(text, purpose)
-  return <PurposeScopedMemoField controller={controller} fieldId="synthetic-note" label="시험 메모" {...(autoGrow ? { autoGrowMaxRows: 8 } : {})} />
+  return <PurposeScopedMemoField controller={controller} fieldId="synthetic-note" label="시험 메모" compactLabel={compact} textFirst={compact} {...(autoGrow ? { autoGrowMaxRows: 8 } : {})} />
 }
 beforeEach(() => { flag.enabled = true })
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals() })
@@ -19,6 +19,36 @@ it("exposes each purpose's meaning before selection with a distinct accessible d
   expect(screen.getByRole("radio", { name: "나만의 메모" })).toHaveAccessibleDescription("공유·분석에 쓰지 않아요")
   expect(screen.getByRole("radio", { name: "훈련 메모" })).toHaveAccessibleDescription("저장 전 내용을 자동 확인해요")
   expect(screen.getByRole("radio", { name: "훈련 메모" })).not.toBeChecked()
+})
+
+it("keeps home purpose meanings and account storage in one optional guide while retaining native radio descriptions", () => {
+  render(<Fixture compact />)
+  const guide = screen.getByText("메모 안내").closest("details")!
+  expect(guide.open).toBe(false)
+  expect(screen.getByText("공유·분석에 쓰지 않아요")).not.toBeVisible()
+  for (const radio of screen.getAllByRole("radio")) {
+    expect(radio).not.toBeChecked()
+    expect(document.getElementById(radio.getAttribute("aria-describedby")!)).not.toBeNull()
+  }
+  expect(screen.getByRole("radio", { name: "나만의 메모" })).toHaveAccessibleDescription("공유·분석에 쓰지 않아요")
+  expect(screen.getByRole("textbox").style.background).toBe("")
+  expect(screen.getByRole("textbox")).toHaveClass("memo-input__home-paper")
+  fireEvent.click(screen.getByText("메모 안내"))
+  expect(screen.getByText("공유·분석에 쓰지 않아요")).toBeVisible()
+  expect(screen.getByText("저장 전 내용을 자동 확인해요")).toBeVisible()
+  expect(guide).toHaveTextContent("서비스가 복호화할 수 있으며 종단간 암호화(E2EE)는 아니에요")
+})
+
+it("keeps home private recovery and actual safety review outside its closed guide", () => {
+  flag.enabled = false
+  const view = render(<Fixture compact purpose="PRIVATE_SELF_ONLY" text="합성 개인 메모" />)
+  expect(screen.getByText("처음 한 번, 비밀 메모를 암호화해 보관할 복구 코드가 필요해요.")).toBeVisible()
+  view.unmount()
+  render(<Fixture compact purpose="ANALYZABLE_TRAINING_NOTE" text="무릎이 아파" />)
+  fireEvent.blur(screen.getByRole("textbox"))
+  expect(screen.getByRole("status")).toBeVisible()
+  expect(screen.getByRole("status").closest("details")).toBeNull()
+  expect(screen.getByText("메모 안내").closest("details")).not.toHaveAttribute("open")
 })
 
 it("grows between three and eight rows, scrolls beyond the cap and ignores height-only observer notifications", () => {

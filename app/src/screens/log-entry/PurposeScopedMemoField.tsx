@@ -1,4 +1,5 @@
 import React from "react"
+import { ChevronDown } from "lucide-react"
 import { accountJournalRecordsEnabled } from "../../domain/account/account-journal-record-service"
 import { MEMO_PURPOSE } from "../../domain/journal-schema"
 import type { MemoPurpose } from "../../domain/journal-schema"
@@ -101,6 +102,7 @@ export function PurposeScopedMemoField({
   textFirst = false,
   compactLabel = false,
   autoGrowMaxRows,
+  optionalTools,
   onComposingChange,
 }: {
   readonly controller: PurposeScopedMemoController
@@ -111,6 +113,7 @@ export function PurposeScopedMemoField({
   readonly textFirst?: boolean
   readonly compactLabel?: boolean
   readonly autoGrowMaxRows?: number
+  readonly optionalTools?: React.ReactNode
   readonly onComposingChange?: ((composing: boolean) => void) | undefined
 }) {
   const accountEnabled = accountJournalRecordsEnabled()
@@ -155,6 +158,7 @@ export function PurposeScopedMemoField({
   const describedBy = controller.purposeError === null
     ? explanationId
     : `${explanationId} ${errorId}`
+  const fieldDescribedBy = compactLabel ? controller.purposeError === null ? undefined : errorId : describedBy
   const briefExplanation = <div id={explanationId}>
     {controller.purpose === MEMO_PURPOSE.analyzableTrainingNote && <p>이 기기에서 확인하며, 훈련 계획의 근거로 쓰지 않아요.</p>}
   </div>
@@ -172,21 +176,22 @@ export function PurposeScopedMemoField({
         onBlur={controller.reviewIfNeeded}
         onCompositionStart={() => onComposingChange?.(true)}
         onCompositionEnd={() => onComposingChange?.(false)}
-        aria-describedby={describedBy}
+        aria-describedby={fieldDescribedBy}
         aria-invalid={controller.purposeError !== null}
         placeholder={placeholder}
         rows={rows}
-        className="paper-grid"
+        className={compactLabel ? "memo-input__home-paper" : "paper-grid"}
         style={{
         ...inputStyle(), fontFamily: "var(--sans)",
-          fontSize: compactLabel ? "max(16px, var(--fs-body))" : 18, lineHeight: compactLabel ? 1.5 : 1.4, color: "var(--ink-blue)", resize: "none",
+          ...(compactLabel ? { background: undefined, borderColor: "var(--paper-edge)", padding: "var(--space-3)", fontSize: "max(16px, var(--fs-body))", lineHeight: "var(--home-memo-line-height)" } : { fontSize: 18, lineHeight: 1.4 }),
+          color: "var(--ink-blue)", resize: "none",
         }}
       />
   </>
   return (
     <div className={`memo-input${compactLabel ? " memo-input--compact" : ""}`}>
       {textFirst && memoTextField}
-      <fieldset className="memo-input__purpose" aria-describedby={describedBy}>
+      <fieldset className="memo-input__purpose" aria-describedby={fieldDescribedBy}>
         <legend>
           메모 용도
         </legend>
@@ -201,7 +206,7 @@ export function PurposeScopedMemoField({
               checked={controller.purpose === MEMO_PURPOSE.privateSelfOnly}
               onChange={() => controller.choosePurpose(MEMO_PURPOSE.privateSelfOnly)}
             />
-            <span className="memo-input__purpose-copy"><span className="memo-input__purpose-title">나만의 메모</span><small id={`${fieldId}-private-helper`}>공유·분석에 쓰지 않아요</small></span>
+            <span className="memo-input__purpose-copy"><span className="memo-input__purpose-title">나만의 메모</span>{!compactLabel && <small id={`${fieldId}-private-helper`}>공유·분석에 쓰지 않아요</small>}</span>
           </label>
           <label className="memo-input__purpose-option" data-selected={controller.purpose === MEMO_PURPOSE.analyzableTrainingNote}>
             <input
@@ -212,14 +217,25 @@ export function PurposeScopedMemoField({
               checked={controller.purpose === MEMO_PURPOSE.analyzableTrainingNote}
               onChange={() => controller.choosePurpose(MEMO_PURPOSE.analyzableTrainingNote)}
             />
-            <span className="memo-input__purpose-copy"><span className="memo-input__purpose-title">훈련 메모</span><small id={`${fieldId}-training-helper`}>저장 전 내용을 자동 확인해요</small></span>
+            <span className="memo-input__purpose-copy"><span className="memo-input__purpose-title">훈련 메모</span>{!compactLabel && <small id={`${fieldId}-training-helper`}>저장 전 내용을 자동 확인해요</small>}</span>
           </label>
         </div>
       </fieldset>
-      <div className="memo-input__explanation">
+      {compactLabel ? <div className="memo-input__tools">
+        {optionalTools}
+        <details className="memo-input__guide"><summary>메모 안내<ChevronDown size={16} aria-hidden="true" /></summary>
+          <div id={explanationId} className="memo-input__guide-content">
+            <dl><div><dt>나만의 메모</dt><dd id={`${fieldId}-private-helper`}>공유·분석에 쓰지 않아요</dd></div>
+              <div><dt>훈련 메모</dt><dd id={`${fieldId}-training-helper`}>저장 전 내용을 자동 확인해요</dd></div></dl>
+            <p>훈련 메모는 이 기기에서 확인하며, 훈련 계획의 근거로 쓰지 않아요.</p>
+            <p>{purposeExplanation(controller.purpose, accountEnabled)}</p>
+          </div>
+        </details>
+      </div> : <div className="memo-input__explanation">
         {briefExplanation}<details><summary>{textFirst ? "메모 보관 안내" : "보관 방식 자세히"}</summary><p>{purposeExplanation(controller.purpose, accountEnabled)}</p></details>
         {controller.needsPrivateSetup && <p>처음 한 번, 비밀 메모를 암호화해 보관할 복구 코드가 필요해요.</p>}
-      </div>
+      </div>}
+      {compactLabel && controller.needsPrivateSetup && <p className="memo-input__private-notice">처음 한 번, 비밀 메모를 암호화해 보관할 복구 코드가 필요해요.</p>}
       {controller.purposeError !== null && (
         <div id={errorId} role="alert" style={{ fontSize: "var(--fs-body-sm)", color: "var(--pain-5)", marginBottom: 8 }}>
           {controller.purposeError}

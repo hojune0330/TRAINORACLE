@@ -335,6 +335,18 @@ function EveningCheckinEditor({ onBack, onExit, onDone, targetDate, initialEntry
     return hasValue ? "수정" : "입력"
   }
   const Step = homeInline ? HomeInlineStep : TaskFlowStep
+  const conditionChoices = <nav className="evening-checkin__choices" aria-label="남길 항목">
+    {([
+      ["condition", "몸 상태", HeartPulse], ["mood", "기분", Smile], ["sleep", "수면", Moon], ["metrics", "체중·심박", Activity], ["memo", "메모 쓰기", Pencil],
+    ] as const).filter(([key]) => !homeInline || key !== "memo").map(([key, label, Icon]) => <button key={key} type="button" data-category="body"
+      data-entry-choice={key}
+      className={`evening-checkin__choice category-card${key === "memo" ? " evening-checkin__choice--memo" : ""}`}
+      onClick={() => navigateTo({ step: key, editGroup: key, returnToReview: true })}>
+      <span className="evening-checkin__choice-icon category-icon" aria-hidden="true"><Icon size={20} /></span>
+      <span className="evening-checkin__choice-label category-card__copy category-card__title">{label}</span>
+      <ChevronRight size={18} aria-hidden="true" />
+    </button>)}
+  </nav>
 
   return (
     <div className={`evening-checkin${homeInline ? " evening-checkin--home" : ""}`} style={{ paddingBottom: homeInline ? 0 : 100 }} aria-busy={saving}
@@ -353,7 +365,9 @@ function EveningCheckinEditor({ onBack, onExit, onDone, targetDate, initialEntry
       {navigation.dialog}
       <FormFinalizationRecovery recovery={finalization} onBack={draft.back(onBack)} />
       {homeInline && <>
-        <PurposeScopedMemoField controller={note} fieldId="home-evening-note" label="오늘의 메모" placeholder="운동이나 오늘의 느낌을 남겨 보세요" textFirst compactLabel autoGrowMaxRows={8} onComposingChange={value => { composing.current = value }} />
+        <PurposeScopedMemoField controller={note} fieldId="home-evening-note" label="오늘의 메모" placeholder="운동이나 오늘의 느낌을 남겨 보세요" textFirst compactLabel autoGrowMaxRows={8}
+          optionalTools={step === "choose" ? <details className="home-hub__condition-options evening-checkin__home-condition"><summary>컨디션 추가<ChevronDown size={16} aria-hidden="true" /></summary>{conditionChoices}</details> : undefined}
+          onComposingChange={value => { composing.current = value }} />
       </>}
       {!homeInline && <p className="evening-checkin__body-date">
         <time dateTime={entryDate}>{compactDate(entryDate)}</time>
@@ -370,18 +384,7 @@ function EveningCheckinEditor({ onBack, onExit, onDone, targetDate, initialEntry
           <button type="button" className="evening-checkin__body-review" onClick={enterReview}>입력 확인으로</button>
         )}>
 
-        {step === "choose" && <nav className="evening-checkin__choices" aria-label="남길 항목">
-          {([
-            ["condition", "몸 상태", HeartPulse], ["mood", "기분", Smile], ["sleep", "수면", Moon], ["metrics", "체중·심박", Activity], ["memo", "메모 쓰기", Pencil],
-          ] as const).filter(([key]) => !homeInline || key !== "memo").map(([key, label, Icon]) => <button key={key} type="button" data-category="body"
-            data-entry-choice={key}
-            className={`evening-checkin__choice category-card${key === "memo" ? " evening-checkin__choice--memo" : ""}`}
-            onClick={() => navigateTo({ step: key, editGroup: key, returnToReview: true })}>
-            <span className="evening-checkin__choice-icon category-icon" aria-hidden="true"><Icon size={20} /></span>
-            <span className="evening-checkin__choice-label category-card__copy category-card__title">{label}</span>
-            <ChevronRight size={18} aria-hidden="true" />
-          </button>)}
-        </nav>}
+        {step === "choose" && !homeInline && conditionChoices}
 
         {step === "review" && <div className="post-session-review" aria-label="저장 전 입력 확인">
           {!hasInput && !isEditing && <p>남길 항목을 골라 주세요.</p>}
@@ -506,6 +509,6 @@ function EveningCheckinEditor({ onBack, onExit, onDone, targetDate, initialEntry
 /** Home is a free reading/writing surface; opening it must not focus or scroll
  * to an optional question. The full-screen form retains its task navigation. */
 function HomeInlineStep({ stepKey, title, children, busy }: React.ComponentProps<typeof TaskFlowStep>) {
-  if (stepKey.startsWith("choose:")) return <details className="home-hub__condition-options evening-checkin__home-condition"><summary>{title}<ChevronDown size={16} aria-hidden="true" /></summary>{children}</details>
+  if (stepKey.startsWith("choose:")) return null
   return <section className="home-hub__condition-input evening-checkin__home-condition" aria-busy={busy} aria-label={title}><h3>{title}</h3>{children}</section>
 }
