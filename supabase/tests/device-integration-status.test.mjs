@@ -1,0 +1,10 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import vm from 'node:vm';
+const source=await readFile(new URL('../functions/device-integration-status/index.ts',import.meta.url),'utf8');
+let handler; vm.runInNewContext(source,{Deno:{serve(fn){handler=fn}},Response,JSON});
+test('GET reports confirmed Starter submission but not approval or linking',async()=>{const r=handler(new Request('https://example.invalid/'));assert.equal(r.status,200);const b=await r.json();assert.equal(b.applicationEvidence.garmin.submittedAt,'2026-10-29');assert.equal(b.applicationEvidence.garmin.receiptConfirmed,true);assert.equal(b.applicationEvidence.garmin.approvalConfirmed,false);assert.equal(b.publicUserLinking,false);assert.equal(b.dataIngestion,'FAIL_CLOSED');assert.equal(b.providers.coros,'APPLICATION_PENDING');assert.equal(b.applicationEvidence.coros.alternative,'MCP_REQUIRES_USER_OAUTH');assert.equal(b.updatedAt,'2026-10-29');assert.equal(r.headers.get('cache-control'),'no-store');});
+test('HEAD returns metadata without a body',async()=>{const r=handler(new Request('https://example.invalid/',{method:'HEAD'}));assert.equal(r.status,200);assert.equal(await r.text(),'');});
+test('mutation methods cannot enable linking',async()=>{for(const method of ['POST','PUT','PATCH','DELETE','OPTIONS']){const r=handler(new Request('https://example.invalid/',{method}));assert.equal(r.status,405);assert.equal(r.headers.get('allow'),'GET, HEAD');assert.deepEqual(await r.json(),{error:'METHOD_NOT_ALLOWED'});}});
+test('public status contains no contact details or credentials',async()=>{const body=await handler(new Request('https://example.invalid/')).text();assert.doesNotMatch(body,/@|client_secret|access_token|refresh_token|hojune|삼성로|06094/i);});
