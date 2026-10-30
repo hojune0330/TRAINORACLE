@@ -167,10 +167,11 @@ export function ReviewStage({ drafts, result, selected, intents, onIntent, onTog
     || analysisEnabled && draft.requiresIdentityChoice && intent.kind === "SAVE_SEPARATE" && !intent.confirmedSeparate
   const missingIntent = drafts.some((draft, index) => selected.has(index) && needsChoice(draft, intents.get(index)))
   return (
-    <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 14 }}>
-      <p style={{ fontFamily: "var(--sans)", fontSize: "var(--fs-body-sm)", lineHeight: 1.65, color: "var(--ink-2)", margin: 0 }}>
+    <div className="import-review">
+      <p className="import-review__intro">
         운동 <b>{drafts.length}건</b>을 읽었어요. 저장할 것만 골라 주세요.
       </p>
+      <p className="import-review__selection" aria-live="polite">{drafts.length}건 중 <strong>{chosenCount}건 선택</strong> · 아직 저장 전</p>
       {result.skipped > 0 && (
         <div data-testid="import-skipped" style={{ ...mono, fontSize: "var(--fs-body-sm)", color: "var(--ink-3)", lineHeight: 1.6, border: "1px solid var(--line)", padding: "9px 12px" }}>
           날짜나 기록을 읽지 못한 활동 {result.skipped}건은 목록에서 빠졌어요. 없는 값을 채워 넣지 않으려고 일부러 건너뛰어요.
@@ -190,19 +191,15 @@ export function ReviewStage({ drafts, result, selected, intents, onIntent, onTog
         </p>)}
         <p>읽지 못한 값은 추측해서 채우지 않아요. 원본 파일은 바뀌지 않아요.</p>
       </InfoDisclosure>}
-      <div style={{ borderTop: "1px solid var(--ink)", borderBottom: "1px solid var(--ink)" }}>
+      <div className="import-review__rows">
         {drafts.map((draft, index) => {
           const { activity } = draft
           const intent = intents.get(index)
           const facts = importedActivityFactLabels(activity)
           const choiceLabel = `운동 ${index + 1}, ${compactDate(activity.date)} ${activity.name}, 거리 ${facts.distance}, ${facts.timeLabel} ${facts.duration}`
           return (
-            <div key={`${activity.date}-${index}`} data-testid="import-draft-row" style={{
-              display: "grid", gridTemplateColumns: "44px 1fr", gap: 10,
-              alignItems: "start", padding: "12px 2px", minHeight: 44,
-              borderBottom: index < drafts.length - 1 ? "1px dashed var(--hair)" : 0,
-            }}>
-              <label style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 44, height: 44, cursor: "pointer" }}>
+            <div key={`${activity.date}-${index}`} data-testid="import-draft-row" className="import-review__row" data-selected={selected.has(index)}>
+              <label className="import-review__choice">
                 <input
                   type="checkbox"
                   disabled={busy}
@@ -211,10 +208,10 @@ export function ReviewStage({ drafts, result, selected, intents, onIntent, onTog
                   aria-label={`${choiceLabel} 가져오기`}
                   style={{ width: 20, height: 20, margin: 0 }}
                 />
-              </label>
-              <div style={{ minWidth: 0 }}>
-                <span style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
-                  <span style={{ ...mono, fontSize: "var(--fs-body-sm)", color: "var(--ink-3)", letterSpacing: "0.1em" }}>{compactDate(activity.date)}</span>
+                <span className="import-review__identity">
+                <span className="import-review__date">운동 {index + 1} · {compactDate(activity.date)}</span>
+                <strong>{activity.name}</strong>
+                <span className="import-review__choice-state">{selected.has(index) ? "선택됨" : "선택 안 함"}</span>
                   {draft.duplicateOf !== null && (
                     <span data-testid="import-duplicate-flag" style={{
                       ...mono, fontSize: "var(--fs-body-sm)", color: "var(--ink)", lineHeight: 1.5, letterSpacing: "0.06em",
@@ -222,7 +219,8 @@ export function ReviewStage({ drafts, result, selected, intents, onIntent, onTog
                     }}>이미 있는 것 같아요</span>
                   )}
                 </span>
-                <span style={{ display: "block", fontFamily: "var(--sans)", fontSize: "var(--fs-body)", fontWeight: 500, marginTop: 3 }}>{activity.name}</span>
+              </label>
+              <div className="import-review__body">
                 <ImportedActivityFacts activity={activity} />
                 {selected.has(index) && <select
                   disabled={busy}
@@ -278,21 +276,24 @@ export function ReviewStage({ drafts, result, selected, intents, onIntent, onTog
           ? "계정에 저장된 달리기 거리는 누적 거리에 포함해요. 시간과 페이스는 시간의 뜻을 확인한 항목끼리만 비교해요."
           : "가져온 숫자를 다시 입력해서 분석에 넣을 필요는 없어요. 저장한 거리·시간은 오라클의 가져온 기록에서 먼저 볼 수 있어요."}</p>
       </InfoDisclosure>
+      <div className="import-review__save">
       <button type="button" style={primaryBtn} disabled={busy || chosenCount === 0 || missingIntent} onClick={onSave}>
         {chosenCount === 0 ? "저장할 활동을 골라 주세요" : missingIntent ? "저장 방식을 골라 주세요"
           : saveCount === 0 ? `고른 ${excludedCount}건 가져오기에서 제외`
             : excludedCount > 0 ? `${saveCount}건 저장 · ${excludedCount}건 제외` : `고른 ${saveCount}건 일지에 저장`}
       </button>
       {busy && <p role="status">계정 저장 확인 중</p>}
+      </div>
       <button type="button" style={secondaryBtn} disabled={busy} onClick={onRestart}>다른 파일 고르기</button>
     </div>
   )
 }
 
-export function SavedStage({ outcome, analysisAvailable = false, onOpenLog, onOpenEntry, onOpenAnalysis, onOpenSummary, onRestart, onRetry, busy = false }: {
+export function SavedStage({ outcome, analysisAvailable = false, onOpenLog, onOpenEntry, onOpenAnalysis, onOpenSummary, onRestart, onReview, onRetry, busy = false }: {
   readonly busy?: boolean
   readonly analysisAvailable?: boolean
   readonly onRetry?: () => void
+  readonly onReview?: () => void
   readonly outcome: ImportSaveResult
   readonly onOpenLog?: () => void
   readonly onOpenEntry?: (date: string, entryId: string) => void
@@ -304,29 +305,38 @@ export function SavedStage({ outcome, analysisAvailable = false, onOpenLog, onOp
   const canAnalyze = confirmed && analysisAvailable
   const needsReview = (outcome.pending ?? 0) > 0 || outcome.failed > 0
     || (outcome.conflicts ?? 0) > 0 || Boolean(outcome.stopReason)
-  const primaryAction = needsReview
+  const primaryAction = (outcome.conflicts ?? 0) > 0 && onReview ? "review" : needsReview
     ? onRetry ? "retry" : confirmed && onOpenSummary ? "summary" : onOpenLog ? "log" : "restart"
     : canAnalyze && onOpenAnalysis ? "analysis" : confirmed && onOpenSummary ? "summary"
       : onOpenLog ? "log" : onRetry ? "retry" : "restart"
   const actions = [
-    { id: "analysis", label: "가져온 기록 분석하기", onClick: canAnalyze ? onOpenAnalysis : undefined },
+    { id: "analysis", label: "전체 가져온 기록 분석", onClick: canAnalyze ? onOpenAnalysis : undefined },
     { id: "summary", label: "가져온 기록 보기", onClick: confirmed ? onOpenSummary : undefined },
-    { id: "retry", label: "저장 상태 다시 확인", onClick: onRetry },
+    { id: "retry", label: "저장 다시 시도", onClick: needsReview ? onRetry : undefined },
+    { id: "review", label: "원래 파일 다시 검토", onClick: needsReview ? onReview : undefined },
     { id: "log", label: "일지에서 확인하기", onClick: onOpenLog },
     { id: "restart", label: "파일 더 가져오기", onClick: onRestart },
   ].filter(action => action.onClick)
   const renderAction = (action: typeof actions[number]) => <button key={action.id} {...nextActionFeedback}
     type="button" className={primaryAction === action.id ? "next-action" : undefined}
     style={primaryAction === action.id ? undefined : secondaryBtn} disabled={busy} onClick={action.onClick}>{action.label}</button>
-  if (outcome.account !== undefined) return <div className="next-action-result" data-testid="import-saved" role="status">
+  if (outcome.account !== undefined) return <div className="next-action-result import-result" data-testid="import-saved" role="status">
     <h2>계정 가져오기 결과</h2>
-    <p>계정에 저장됨 {outcome.account}건 · 연결 대기 {outcome.pending ?? 0}건 · 충돌 확인 {outcome.conflicts ?? 0}건 · 실패 {outcome.failed}건</p>
+    <ul className="import-result__counts" aria-label="저장 상태별 기록 수">
+      <li><span>계정에 저장됨</span>{" "}<strong>{outcome.account}건</strong></li>
+      {(outcome.pending ?? 0) > 0 && <li data-attention="true"><span>저장 확인 대기</span>{" "}<strong>{outcome.pending}건</strong></li>}
+      {(outcome.conflicts ?? 0) > 0 && <li data-attention="true"><span>충돌 확인</span>{" "}<strong>{outcome.conflicts}건</strong></li>}
+      {outcome.failed > 0 && <li data-attention="true"><span>실패</span>{" "}<strong>{outcome.failed}건</strong></li>}
+    </ul>
     {((outcome.reused ?? 0) > 0 || (outcome.excluded ?? 0) > 0) && <p>기존 기록 확인 {outcome.reused ?? 0}건 · 가져오기 제외 {outcome.excluded ?? 0}건</p>}
-    <p>원본 파일은 그대로 보관해 주세요. 연결 대기는 계정 저장 완료가 아니에요.</p>
+    <p>원본 파일은 그대로 보관해 주세요.{(outcome.pending ?? 0) > 0 && " 계정 저장 여부를 아직 확인하지 못했어요. 같은 저장 요청으로 다시 시도해요."}</p>
+    {(outcome.conflicts ?? 0) > 0 && <p>기존 일지와 다른 내용이 있어요. 원래 파일을 다시 검토해 저장할 운동과 방식을 골라 주세요.</p>}
+    {needsReview && <p>아래에는 계정 저장이 확인된 일지만 표시해요.</p>}
     {outcome.stopReason && <p role="alert">나머지 저장을 멈췄어요. 이미 저장된 기록은 그대로 있어요. 연결·로그인·앱 업데이트 상태를 확인한 뒤 다시 시도해 주세요.</p>}
     {confirmed && onOpenEntry && (outcome.confirmedEntries?.length ?? 0) > 0 && <ul className="import-confirmed-entries" aria-label="계정 저장이 확인된 일지">
-      {outcome.confirmedEntries!.map(entry => <li key={entry.id}><button type="button" disabled={busy}
-        onClick={() => onOpenEntry(entry.date, entry.id)}>{compactDate(entry.date)} 저장한 일지 열기</button></li>)}
+      {outcome.confirmedEntries!.map((entry, index) => <li key={entry.id}><button type="button" disabled={busy}
+        aria-label={`${compactDate(entry.date)} 저장한 일지 열기 · 확인된 일지 ${index + 1}`}
+        onClick={() => onOpenEntry(entry.date, entry.id)}><span>{compactDate(entry.date)} · 확인된 일지 {index + 1}</span><strong>저장한 일지 열기</strong></button></li>)}
     </ul>}
     <div className="next-action-group">
       {actions.filter(action => action.id === primaryAction).map(renderAction)}

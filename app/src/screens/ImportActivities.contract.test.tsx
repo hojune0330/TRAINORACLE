@@ -53,7 +53,7 @@ it("opens the imported facts after a confirmed device save without claiming anal
   const view = render(<SavedStage outcome={{ total: 1, saved: 1, failed: 0 }} onOpenSummary={summary} onRestart={() => undefined} />)
   await user.click(screen.getByRole("button", { name: "가져온 기록 보기" }))
   expect(summary).toHaveBeenCalledOnce()
-  expect(screen.queryByRole("button", { name: "가져온 기록 분석하기" })).not.toBeInTheDocument()
+  expect(screen.queryByRole("button", { name: "전체 가져온 기록 분석" })).not.toBeInTheDocument()
   view.rerender(<SavedStage outcome={{ total: 1, saved: 0, failed: 1 }} onOpenSummary={summary} onRestart={() => undefined} />)
   expect(screen.queryByRole("button", { name: "가져온 기록 보기" })).not.toBeInTheDocument()
 })

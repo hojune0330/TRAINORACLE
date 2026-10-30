@@ -1,7 +1,7 @@
 import React from "react"
 import { ActivityParseCancelled, parseActivityFileAsync } from "../domain/import/parse-activity-file-async"
 import type { ActivityParseResult, ImportedActivity } from "../domain/import/activity-file"
-import { buildImportDrafts, confirmImportDrafts } from "../domain/import/import-draft"
+import { buildImportDrafts, confirmImportDrafts, sameFileObservation } from "../domain/import/import-draft"
 import type { ImportDraft, ImportDraftSelection, ImportFormat, ImportSaveIntent, ImportSaveResult } from "../domain/import/import-draft"
 import { PickStage, ReviewStage, SavedStage } from "./import-activities/ImportStages"
 import type { ReadFailure } from "./import-activities/ImportStages"
@@ -50,6 +50,9 @@ export function ImportActivities({ onBack, onOpenLog, onOpenEntry, onOpenAnalysi
   const fileInputRef = React.useRef<HTMLInputElement>(null)
   const readControllerRef = React.useRef<AbortController | null>(null)
   const stageRef = React.useRef<HTMLDivElement>(null)
+  const reviewSnapshot = React.useRef<Extract<Stage, { step: "review" }> | null>(null)
+  const pageRef = React.useRef<HTMLDivElement>(null)
+  const headingRef = React.useRef<HTMLHeadingElement>(null)
   const stageMotion = useOrderedStepMotion(stage.step, ["pick", "review", "saved"])
   useTaskFlowBack({ enabled: onBack !== undefined, busy, onBack: () => {
     const current = captureScope()
@@ -57,9 +60,11 @@ export function ImportActivities({ onBack, onOpenLog, onOpenEntry, onOpenAnalysi
     queueMicrotask(() => { if (current()) onBack?.() })
   } })
   useActiveContentScroll(stage.step, stageRef, undefined, true)
+  useActiveContentScroll("import-entry", pageRef, headingRef)
   const captureScope = useImportOwnerScope(() => {
     readControllerRef.current?.abort(); readControllerRef.current = null
     confirmation.current?.dispose(); confirmation.current = null
+    reviewSnapshot.current = null
     busyRef.current = false; setBusy(false); setStage({ step: "pick" })
     setSelected(new Set()); setIntents(new Map()); setFailure(null); setReviewError(null)
   })
@@ -185,6 +190,8 @@ export function ImportActivities({ onBack, onOpenLog, onOpenEntry, onOpenAnalysi
     })
     const current = captureScope()
     busyRef.current = true; setBusy(true)
+    setReviewError(null)
+    reviewSnapshot.current = stage
     const account = accountJournalRecordsEnabled()
     try {
       if (account) confirmation.current ??= createAccountImportConfirmation(chosen, format)
@@ -209,14 +216,50 @@ export function ImportActivities({ onBack, onOpenLog, onOpenEntry, onOpenAnalysi
       if (!current()) return
       if (!drafts) { setReviewError("계정 기록을 확인하지 못했어요. 앞서 고른 내용은 유지했어요. 다시 시도해 주세요."); return }
       setStage({ ...stage, drafts })
-      setIntents(previous => new Map([...previous].filter(([row, intent]) => row !== index
-        && intent.kind !== "USE_EXISTING" && intent.kind !== "ADD_TO_EXISTING")))
+      const invalidRows: number[] = []
+      const retained = new Map([...intents].filter(([row, intent]) => {
+        if (row === index) return false
+        if (intent.kind !== "USE_EXISTING" && intent.kind !== "ADD_TO_EXISTING") return true
+        const previousDraft = stage.drafts[row], nextDraft = drafts[row]
+        const before = previousDraft?.activity.observation, after = nextDraft?.activity.observation
+        const sameActivity = before && after && before.sourceObservationKey === after.sourceObservationKey && sameFileObservation(before, after)
+        const oldBase = previousDraft?.accountWriteBases?.[intent.entryId], newBase = nextDraft?.accountWriteBases?.[intent.entryId]
+        const sameBase = oldBase?.revision === newBase?.revision && oldBase?.contentFingerprint === newBase?.contentFingerprint
+        const previousKind = previousDraft?.identityCandidates?.find(candidate => candidate.id === intent.entryId)?.kind
+        const candidates = intent.kind === "USE_EXISTING"
+          ? nextDraft?.identityCandidates?.filter(candidate => candidate.kind !== "CORRECTION" && candidate.kind === previousKind)
+          : nextDraft?.reconciliationCandidates
+        const valid = sameActivity && sameBase && candidates?.some(candidate => candidate.id === intent.entryId && candidate.savedAt === intent.expectedSavedAt) === true
+        if (!valid) invalidRows.push(row + 1)
+        return valid
+      }))
+      setIntents(retained)
+      if (invalidRows.length > 0) setReviewError(`운동 ${invalidRows.join(", ")}의 기존 일지가 바뀌었어요. 해당 운동의 저장 방식을 다시 골라 주세요. 나머지 선택은 유지했어요.`)
     } catch { if (current()) setReviewError("기록을 다시 확인하지 못했어요. 앞서 고른 내용은 유지했어요. 연결을 확인하고 다시 골라 주세요.") }
     finally { if (current()) { busyRef.current = false; setBusy(false) } }
   }
 
+  const reviewSavedFile = async () => {
+    const original = reviewSnapshot.current
+    if (busyRef.current || !original) return
+    const current = captureScope()
+    busyRef.current = true; setBusy(true)
+    try {
+      const activities = original.drafts.map(draft => draft.activity)
+      const drafts = accountJournalRecordsEnabled() ? await buildAccountImportDrafts(activities) : buildImportDrafts(activities)
+      if (!current()) return
+      if (!drafts) { setReviewError("기존 일지를 확인하지 못했어요. 저장 결과는 유지했어요. 다시 시도해 주세요."); return }
+      confirmation.current?.dispose(); confirmation.current = null
+      setSelected(new Set()); setIntents(new Map())
+      setStage({ ...original, drafts })
+      setReviewError("기존 일지와 다시 비교했어요. 저장할 운동과 방식을 새로 골라 주세요. 이미 저장된 기록은 그대로예요.")
+    } catch {
+      if (current()) setReviewError("기존 일지를 확인하지 못했어요. 저장 결과는 유지했어요. 다시 시도해 주세요.")
+    } finally { if (current()) { busyRef.current = false; setBusy(false) } }
+  }
+
   return (
-    <div style={{ padding: "18px 20px 90px" }}>
+    <div ref={pageRef} className="import-flow" style={{ padding: "18px 20px 90px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         {onBack && (
           <button
@@ -225,7 +268,7 @@ export function ImportActivities({ onBack, onOpenLog, onOpenEntry, onOpenAnalysi
           >←</button>
         )}
         <div>
-          <AppHeading as="h1" variant="screen" accent className="import-activities__title">
+          <AppHeading ref={headingRef} tabIndex={-1} as="h1" variant="screen" accent className="import-activities__title">
             운동 기록 가져오기
           </AppHeading>
         </div>
@@ -237,6 +280,10 @@ export function ImportActivities({ onBack, onOpenLog, onOpenEntry, onOpenAnalysi
         className="active-stage-content active-content-scroll-target"
         data-flow-direction={stageMotion}
       >
+        <ol className="import-flow__steps" aria-label="기록 가져오기 순서">
+          {([["pick", "파일 선택"], ["review", "운동 확인"], ["saved", "저장 결과"]] as const).map(([step, label], index) =>
+            <li key={step} aria-current={stage.step === step ? "step" : undefined}><span aria-hidden="true">{index + 1}</span>{label}</li>)}
+        </ol>
         {reviewError && <p role="alert">{reviewError}</p>}
         {stage.step === "pick" && (
           <PickStage
@@ -271,10 +318,12 @@ export function ImportActivities({ onBack, onOpenLog, onOpenEntry, onOpenAnalysi
         {stage.step === "saved" && (
           <SavedStage
             busy={busy}
+            onReview={() => { void reviewSavedFile() }}
             onRetry={confirmation.current ? async () => {
               if (busyRef.current) return
               const current = captureScope()
               busyRef.current = true; setBusy(true)
+              setReviewError(null)
               try {
                 const outcome = await confirmation.current!.confirm()
                 if (current() && outcome) setStage({ ...stage, outcome })

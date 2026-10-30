@@ -10,10 +10,14 @@ The user can find file import inside the app, review the meaning of each value,
 save only selected records, and open the exact acknowledged journal. Unrelated
 pending records remain intact. Normal account synchronization is unchanged.
 
-The user explicitly removed personal TCX/account round-trip testing from this
-delivery. No personal data was requested or transmitted. Synthetic checks do
-not establish real-device or real-account success; that is a limitation, not a
-pending consent or delivery blocker. Public Pages continues with account OFF.
+The user's later request to validate their existing integration supersedes the
+earlier blanket exclusion of personal round-trip testing. Read-only discovery
+has not established a reusable personal health connection or its existing
+consent. The coordinator is clarifying which existing integration is intended;
+new login, permission expansion and health-data transfer are not inferred from
+that request. No personal data was transmitted by this implementation. Synthetic
+checks do not establish real-device or real-account success. This separate
+unverified action does not block the approved account-OFF Pages delivery.
 
 ## Implementation
 
@@ -31,6 +35,15 @@ pending consent or delivery blocker. Public Pages continues with account OFF.
 - Different lineage under the same source ID is a correction/conflict candidate,
   never silent reuse. Existing identifiers are not rekeyed. API/HealthKit/Health
   Connect provenance cannot be relabeled as a file upload.
+- Review now emphasizes distance and correctly labelled time, separates selection
+  from saving, and shows the three actual steps. Updating one row retains other
+  valid choices only while source facts, candidate meaning and write base match.
+- Pending means acknowledgment is unknown, not that the server has not saved.
+  Conflicts offer a fresh read-only review. Confirmed links have visible distinct
+  journal numbers; the analysis action explicitly opens all imported records.
+
+Official Apple/Garmin principles, adopted components and bounded visual evidence
+are mapped in `DELIVERY_CONNECTED_DATA_UX_2026-10-30.md`.
 
 Provider implementation and deployed minimal compatibility evidence are in
 `DELIVERY_CONNECTED_DATA_STORAGE_REVIEW_2026-10-30.md` and

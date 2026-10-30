@@ -102,7 +102,8 @@ test("counts an imported journal without treating its numbers as analysis eviden
   await page.getByRole("button", { name: "← 뒤로", exact: true }).click()
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "홈", exact: true }).click()
   await expect(page.getByRole("button", { name: /기록 1개 보기/u })).toContainText("가져온 기록 포함")
-  await page.getByRole("button", { name: "훈련량·변화 보기", exact: true }).click()
+  await page.getByRole("navigation", { name: "주 탭", exact: true }).getByRole("button", { name: "오라클", exact: true }).click()
+  await page.getByRole("navigation", { name: "오라클 메뉴", exact: true }).getByRole("button", { name: "분석", exact: true }).click()
   await page.getByRole("region", { name: "기간별 훈련 리포트" }).locator("summary", { hasText: "집계 기준·출처" }).click()
   await expect(page.getByTestId("trends-excluded-imported")).toContainText("가져온 일지 1개의 외부 수치 중 확인되지 않은 값은 분석에서 제외했어요")
 })
@@ -180,7 +181,7 @@ test("reconciles a detailed continuation and keeps subjective editing available"
   expect(merged[0]).toMatchObject({ id: original.id, distanceKm: "8", durationMin: "40", avgPace: "", rpe: 6, objectiveDataState: "CONFIRMED" })
 
   await page.goto("/?app=1")
-  await page.getByRole("button", { name: "오늘 기록 보기", exact: true }).click()
+  await page.getByRole("button", { name: /기록 1개 보기/u }).click()
   await page.getByTestId("journal-manage-toggle").click()
   await page.getByTestId(`journal-edit-${original.id}`).click()
   await page.getByRole("button", { name: "거리와 시간 수정", exact: true }).click()

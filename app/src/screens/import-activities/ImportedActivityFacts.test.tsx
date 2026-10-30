@@ -38,6 +38,7 @@ it("uses confirmed time meaning without rewriting source facts and never generat
   const original = JSON.stringify(item.observation)
   const view = render(<ImportedActivityFacts activity={item} />)
   expect(screen.getByText("타이머 시간 기준 페이스")).toBeVisible()
+  expect(screen.getByText(/원본 시간 · 파일의 시간 · 종류 미확인/)).toHaveTextContent("내가 확인한 기준 · 타이머 시간")
   expect(JSON.stringify(item.observation)).toBe(original)
   view.rerender(<ImportedActivityFacts activity={activity({ durationSeconds: 0 })} />)
   expect(screen.queryByText(/\/km/u)).toBeNull()
