@@ -48,6 +48,8 @@ import { requestVerifiedAccountScopeRefresh } from "../domain/account/verified-a
 import { isAccountDeletionClosed, onAccountDeletionBoundaryChange } from "../domain/account/account-deletion-boundary"
 import { activeLocalAccount, setActiveLocalAccount } from "../domain/account/local-journal-ownership"
 import { setAccountAuthState } from "../domain/account/account-auth-state"
+import { SelfHostedCoachingPanel } from "../components/SelfHostedCoachingPanel"
+import { coachingEndpoint } from "../domain/coaching-self-hosted"
 
 type SetupState = "checking" | "not-required" | "saving" | "needs-profile" | "ready" | "failed"
 
@@ -60,10 +62,12 @@ function authenticatedMethod(user: AccountUser): AuthMethod | null {
     : null
 }
 
-export function Account({ onBack, onOpenImport, onOpenRestore, loungeRequested = false }: {
+export function Account({ onBack, onOpenImport, onOpenRestore, onOpenJournal, onOpenPlan, loungeRequested = false }: {
   readonly onBack?: () => void
   readonly onOpenImport?: () => void
   readonly onOpenRestore?: () => void
+  readonly onOpenJournal?: () => void
+  readonly onOpenPlan?: () => void
   readonly loungeRequested?: boolean
 }) {
   const config = accountConfig()
@@ -610,6 +614,12 @@ export function Account({ onBack, onOpenImport, onOpenRestore, loungeRequested =
             가입 정보를 다시 확인하고 있어요. 확인이 끝나기 전에는 계정 기록을 열지 않아요.
           </p>
         </div>
+      )}
+
+      {!loading && user !== null && !unverifiedAccountSessionOpen && !deletedAccountSessionOpen
+        && coachingEndpoint() && (
+        <SelfHostedCoachingPanel key={`coaching-rights-${user.id}`} ownerId={user.id} mode="manage"
+          onReviewJournal={() => onOpenJournal?.()} onReviewPlan={() => onOpenPlan?.()} />
       )}
 
       {!loading && user !== null && !unverifiedAccountSessionOpen && !deletedAccountSessionOpen

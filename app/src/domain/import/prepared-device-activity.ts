@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { providerDataLineageSchema } from "../provider-data-rights"
 
 const nonNegative = z.number().finite().nonnegative().nullable()
 const interval = z.object({
@@ -8,6 +9,7 @@ const interval = z.object({
 })
 const activity = z.object({
   provider: z.enum(["COROS", "GARMIN", "HEALTHKIT", "HEALTH_CONNECT"]),
+  dataLineage: providerDataLineageSchema.optional(),
   sourceId: z.string().trim().min(1).max(200),
   sourceVersion: z.string().max(100).nullable(),
   sport: z.enum(["RUNNING", "WALKING", "CYCLING", "OTHER", "UNKNOWN"]),
@@ -30,5 +32,13 @@ export type PreparedDeviceActivity = z.infer<typeof activity> & {
 export function prepareDeviceActivity(candidate: unknown): PreparedDeviceActivity | null {
   const parsed = activity.safeParse(candidate)
   if (!parsed.success) return null
+  const { dataLineage, provider } = parsed.data
+  if (dataLineage) {
+    const transport = provider === "HEALTHKIT" || provider === "HEALTH_CONNECT" ? provider : "PROVIDER_API"
+    if (dataLineage.sources.some(source => source.transport !== transport)) return null
+    // An intermediary does not identify the manufacturer. A direct provider may not be relabelled.
+    if ((provider === "GARMIN" || provider === "COROS") && Object.values(dataLineage.fieldSources)
+      .some(ids => !ids.some(id => dataLineage.sources.some(source => source.sourceId === id && source.originProvider === provider)))) return null
+  }
   return { ...parsed.data, schemaVersion: "PREPARED_DEVICE_ACTIVITY_V1", analysisEligible: false }
 }

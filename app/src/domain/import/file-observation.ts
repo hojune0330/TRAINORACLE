@@ -1,5 +1,6 @@
 import { z } from "zod"
 import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identity"
+import { providerDataLineageSchema } from "../provider-data-rights"
 
 // Operational budgets, not physiological limits.
 export const FILE_OBSERVATION_LIMITS = {
@@ -36,6 +37,8 @@ const lap = z.strictObject({
 const fields = z.strictObject({
   schemaVersion: z.literal(1),
   source: z.literal("FILE_UPLOAD"),
+  // Legacy observations remain readable. Missing lineage never grants AI use.
+  dataLineage: providerDataLineageSchema.optional(),
   format: z.enum(["tcx", "csv", "json", "gpx"]),
   sourceProfile: z.enum(["TCX_ACTIVITY_V1", "CSV_COLUMNS_V1", "JSON_COLUMNS_V1", "GPX_TRACK_V1"]),
   parserVersion: z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$/u),
@@ -78,6 +81,7 @@ function completenessOf(laps: readonly z.infer<typeof lap>[]): ObservationFields
 }
 
 function validFacts(value: ObservationFields): boolean {
+  if (value.dataLineage?.sources.some(source => source.transport !== "FILE_UPLOAD")) return false
   if (profiles[value.format] !== value.sourceProfile) return false
   if (value.laps.some((entry, index) => entry.sourceIndex !== index)) return false
   const missing = completenessOf(value.laps)

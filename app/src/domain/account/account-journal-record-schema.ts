@@ -138,7 +138,7 @@ export function correctAccountJournalImportedObservation(
     const original = previous.entry.fileObservation
     if (original.contentRevisionFingerprint !== previousContentRevisionFingerprint) return null
     const immutable = ["schemaVersion", "source", "format", "sourceProfile", "parserVersion", "sourceActivityId", "date",
-      "sourceIdentityFingerprint", "sourceObservationKey"] as const
+      "sourceIdentityFingerprint", "sourceObservationKey", "dataLineage"] as const
     if (immutable.some(field => !sameJson(original[field], replacement[field]))) return null
     const changed = FILE_OBSERVATION_CORRECTION_FIELDS.filter(field => !sameJson(original[field], replacement[field]))
     if (changed.length === 0 || !sameJson([...confirmedChangedFields].sort(), [...changed].sort())) return null

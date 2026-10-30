@@ -1,0 +1,24 @@
+✔ real HTTP -> authenticated SQL -> AES-GCM projection -> company inference -> verified grounded response (3172.2657ms)
+✔ missing provider grant denies before model while status reports pending source (130.4131ms)
+✔ unknown, user-declared third-party and mixed indirect Garmin sources cannot bypass grant (153.3521ms)
+✔ direct user source can work without Garmin grant and is not mislabeled Garmin (209.5294ms)
+✔ consent withdrawal persists and blocks inference; stale revision cannot re-enable consent (247.1841ms)
+✔ revocation during inference suppresses response (148.0959ms)
+✔ grant revocation or operations kill during inference suppresses response (226.6538ms)
+✔ another account, invalid token, supplied metrics and untrusted origins never call model (149.7437ms)
+✔ model invented numbers/actions, redirects and oversized responses fail closed (275.8979ms)
+✔ operations off preserves actual consent status and withdrawal (132.2099ms)
+✔ database rights are inaccessible to authenticated client and unsigned RPC fails (33.3325ms)
+✔ configuration rejects non-company origin, insecure remote and unsupported endpoint paths (42.8494ms)
+✔ status selection revision and consent source snapshot cannot silently change (118.6035ms)
+✔ owner intake uses separate key, dry run and canonical revision recheck (193.8011ms)
+✔ company model timeout fails closed within bounded request duration (75.8188ms)
+✔ canonical TCX owner intake -> explicit consent -> grouped inference; disabled format and source erasure denied (398.755ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6355.19

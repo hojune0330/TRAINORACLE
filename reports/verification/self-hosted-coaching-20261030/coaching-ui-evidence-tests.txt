@@ -1,0 +1,8 @@
+
+ RUN  v4.1.10 D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app
+
+
+ Test Files  4 passed (4)
+      Tests  62 passed (62)
+   Start at  15:53:08
+   Duration  5.95s (transform 1.43s, setup 394ms, import 3.82s, tests 2.77s, environment 3.30s)

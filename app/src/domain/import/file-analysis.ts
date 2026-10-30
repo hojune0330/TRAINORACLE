@@ -1,6 +1,7 @@
 import { isValidIsoDate } from "../dates"
 import { parseFileObservation, type FileObservationV1 } from "./file-observation"
 import { FILE_ANALYSIS_POLICY_VERSION, fileAnalysisFormats, type FileAnalysisFormat } from "./file-analysis-policy"
+import { deriveProviderDataLineage, providerLineageFingerprint, type ProviderDataField, type ProviderDataLineage } from "../provider-data-rights"
 
 export const FILE_ANALYSIS_FORMULA_VERSION = "FILE_DESCRIPTIVE_SUM_V1" as const
 export type FileAnalysisSourceContext = "ACCOUNT_CONFIRMED" | "DEVICE_PREVIEW"
@@ -30,6 +31,7 @@ type Sport = FileObservationV1["sport"]
 export type ProjectedFileObservation = {
   readonly policyVersion: typeof FILE_ANALYSIS_POLICY_VERSION
   readonly source: "FILE_UPLOAD"
+  readonly dataLineage?: ProviderDataLineage
   readonly journalEntryId: string
   readonly sourceObservationKey: string
   readonly contentRevisionFingerprint: string
@@ -81,6 +83,7 @@ export function projectFileObservation(
     parsed.contentRevisionFingerprint, entry.date, parsed.confirmation !== null,
     parsed.confirmation?.sport ?? parsed.sport, parsed.confirmation?.durationMeaning ?? parsed.durationMeaning,
     parsed.confirmation?.durationMeaning !== null && parsed.confirmation?.durationMeaning !== undefined,
+    ...(parsed.dataLineage ? [providerLineageFingerprint(parsed.dataLineage)] : []),
   ]) }
   if (!isValidIsoDate(entry.date) || parsed.date !== entry.date) return exclude("DATE_MISMATCH")
   if (parsed.confirmation === null) return exclude("CONFIRMATION_REQUIRED")
@@ -89,6 +92,7 @@ export function projectFileObservation(
   const observation: ProjectedFileObservation = Object.freeze({
     policyVersion: FILE_ANALYSIS_POLICY_VERSION,
     source: "FILE_UPLOAD",
+    ...(parsed.dataLineage ? { dataLineage: parsed.dataLineage } : {}),
     journalEntryId: entry.id,
     sourceObservationKey: parsed.sourceObservationKey,
     contentRevisionFingerprint: parsed.contentRevisionFingerprint,
@@ -120,10 +124,12 @@ export function fileObservationAnalysisSignature(observation: ProjectedFileObser
   return JSON.stringify([
     observation.contentRevisionFingerprint, observation.date, observation.sport,
     observation.durationMeaning, observation.durationMeaningConfirmed,
+    ...(observation.dataLineage ? [providerLineageFingerprint(observation.dataLineage)] : []),
   ])
 }
 
 export type FileMetricSummary = {
+  readonly dataLineage?: ProviderDataLineage
   readonly value: number | null
   readonly sampleCount: number
   readonly excludedCount: number
@@ -193,6 +199,12 @@ function metric(values: readonly number[], reasons: readonly FileAnalysisExclusi
   }
 }
 
+function metricLineage(observations: readonly ProjectedFileObservation[], fields: readonly ProviderDataField[],
+  output: ProviderDataField): { readonly dataLineage?: ProviderDataLineage } {
+  const dataLineage = deriveProviderDataLineage(observations.map(observation => ({ lineage: observation.dataLineage, fields })), [output])
+  return dataLineage ? { dataLineage } : {}
+}
+
 function timeSummary(observations: readonly ProjectedFileObservation[], meaning: DurationMeaning): FileTimeSummary {
   const durations: number[] = []
   const durationExclusions: FileAnalysisExclusion[] = []
@@ -239,17 +251,24 @@ function timeSummary(observations: readonly ProjectedFileObservation[], meaning:
     durationMeaning: meaning,
     referenceOnly: isReferenceOnly(meaning),
     reportedDurationSampleCount: observations.filter(value => value.durationMeaning === meaning && value.durationSeconds !== null).length,
-    durationSeconds: metric(durations, durationExclusions),
+    durationSeconds: { ...metric(durations, durationExclusions),
+      ...metricLineage(observations.filter(value => !isReferenceOnly(meaning) && value.durationMeaning === meaning
+        && value.durationSeconds !== null), ["durationSeconds"], "durationSeconds") },
     paceSecondsPerKm: {
       value: paceValue,
       sampleCount: pairedDistances.length,
       excludedCount: paceExclusions.length,
       exclusions: counts(paceExclusions),
       reasonCodes: paceValue === null && pairedDistances.length > 0 ? ["NON_FINITE_RESULT"] : [],
+      ...metricLineage(observations.filter(value => !isReferenceOnly(meaning) && value.durationMeaning === meaning
+        && value.durationSeconds !== null && value.durationSeconds > 0 && value.distanceMeters !== null
+        && value.distanceMeters > 0), ["distanceMeters", "durationSeconds"], "avgPace"),
     },
     pairedDistanceMeters: meters,
     pairedDurationSeconds: seconds,
-    lapDurationSeconds: metric(lapDurations, lapExclusions),
+    lapDurationSeconds: { ...metric(lapDurations, lapExclusions),
+      ...metricLineage(observations.filter(value => !isReferenceOnly(meaning)
+        && value.laps.some(lap => lap.durationMeaning === meaning && lap.durationSeconds !== null)), ["laps"], "durationSeconds") },
     missingDurationLapCount,
   }
 }
@@ -302,7 +321,8 @@ export function buildFileAnalysisReport(
     const distances = values.flatMap(value => value.distanceMeters === null ? [] : [value.distanceMeters])
     return [{
       sport, sampleCount: values.length,
-      distanceMeters: metric(distances, values.filter(value => value.distanceMeters === null).map(() => "MISSING_DISTANCE")),
+      distanceMeters: { ...metric(distances, values.filter(value => value.distanceMeters === null).map(() => "MISSING_DISTANCE")),
+        ...metricLineage(values.filter(value => value.distanceMeters !== null), ["distanceMeters"], "distanceMeters") },
       timeSummaries: meanings.filter(meaning => values.some(value => value.durationMeaning === meaning
         || value.laps.some(lap => lap.durationMeaning === meaning))).map(meaning => timeSummary(values, meaning)),
     }]

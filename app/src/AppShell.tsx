@@ -1365,6 +1365,8 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
     screen = (
       <DeferredMobileScreens.Account
         loungeRequested={loungeEntryIntent().requested}
+        onOpenJournal={() => goTab("journal")}
+        onOpenPlan={() => goTab("plan")}
         onBack={() => runViewTransition("pop", () => {
           setOracleEntry({ requested: false, invitation: null }); clearOracleInvitationReturn()
           setV(s => ({ ...s, accountOpen: false }))

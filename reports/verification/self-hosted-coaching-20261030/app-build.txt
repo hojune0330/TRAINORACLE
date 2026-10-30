@@ -1,0 +1,136 @@
+
+> trainoracle-app@0.1.0 prebuild
+> node scripts/check-build-runtime.mjs
+
+
+> trainoracle-app@0.1.0 build
+> tsc --noEmit && vite build --emptyOutDir=false
+
+vite v6.4.3 building for production...
+transforming...
+
+fonts/PretendardVariable.woff2 referenced in fonts/PretendardVariable.woff2 didn't resolve at build time, it will remain unchanged to be resolved at runtime
+✓ 2895 modules transformed.
+rendering chunks...
+[plugin vite:reporter]
+(!) D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/domain/decoration-store.ts is dynamically imported by D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/domain/account/account-decoration-service.ts, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/domain/account/account-decoration-service.ts but also statically imported by D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/domain/account/device-training-data-connection.ts, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/domain/calendar-decoration-store.ts, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/domain/decorations.ts, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/screens/JournalRewards.tsx, dynamic import will not move module into another chunk.
+
+[plugin vite:reporter]
+(!) D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/domain/journal-store.ts is dynamically imported by D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/domain/account/account-journal-record-service.ts, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/domain/account/account-journal-record-service.ts but also statically imported by D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/AppShell.tsx, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/DesktopWorkspace.tsx, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/components/AppChrome.tsx, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/components/OracleResume.tsx, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/domain/account/account-goal-program-service.ts, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/domain/account/sync-guard.ts, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/domain/account/sync-preview.ts, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/domain/account/sync-recovery.ts, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/domain/account/sync-run.ts, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/domain/active-plan-edit-store.ts, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/domain/adjusted-plan-continuity.ts, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/domain/aggregates.ts, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/domain/catalog-cycle-draft.ts, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/domain/erase-local-data.ts, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/domain/execution-replan-store.ts, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/domain/goal-training-program-store.ts, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/domain/home-memo-receipt.ts, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/domain/import/import-draft.ts, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/domain/journal-plan-progress.ts, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/domain/journal-update.ts, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/domain/oracle-report.ts, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/domain/plan-beta-flow.ts, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/domain/private-memo-preparation.ts, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/domain/restore/backup-file.ts, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/hooks/useCalendarEntries.ts, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/hooks/useLocalToday.ts, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/hooks/usePlanEvidenceHistory.ts, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/screens/CycleArchive.tsx, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/screens/Home.tsx, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/screens/JournalRewards.tsx, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/screens/LogDetail.tsx, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/screens/OracleProfileV2.tsx, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/screens/PaceCalculator.tsx, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/screens/PlanBeta.tsx, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/screens/PublicProfilePage.tsx, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/screens/RunningProfile.tsx, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/screens/TrainingContent.tsx, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/screens/Trends.tsx, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/screens/account/AccountSyncPanel.tsx, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/screens/account/DeviceJournalOwnershipPanel.tsx, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/screens/account/PublicProfileSettings.tsx, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/screens/account/SwitchAccountPanel.tsx, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/screens/home/DeviceJournal.tsx, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/screens/home/HomeCoachingSummary.tsx, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/screens/home/JournalThenNow.tsx, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/screens/home/TrashBin.tsx, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/screens/journal/JournalDecorationPreview.tsx, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/screens/journal/JournalDecorationSurface.tsx, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/screens/journal/JournalOriginalPlan.tsx, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/screens/log-entry/EntryChooser.tsx, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/screens/log-entry/EveningCheckin.tsx, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/screens/log-entry/PostSessionForm.tsx, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/screens/log-entry/QuickSessionForm.tsx, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/screens/log-entry/RaceForm.tsx, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/screens/plan-beta/ActivePlan.tsx, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/screens/plan-beta/ActivePlanRebuildEditor.tsx, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/screens/plan-beta/AdjustedPlanNextFlow.tsx, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/screens/plan-beta/AdjustedPlanNextFlowV3.tsx, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/screens/plan-beta/AdjustedPlanSchedule.tsx, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/screens/plan-beta/AdjustedPlanScheduleV3.tsx, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/screens/plan-beta/CatalogPaceReferences.tsx, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/screens/plan-beta/CatalogWorkoutPicker.tsx, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/screens/plan-beta/GoalTrainingProgramFlow.tsx, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/screens/plan-beta/InitialRecordPaceOffer.tsx, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/screens/plan-beta/MultiAdjustedPlanNextFlowV3.tsx, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/screens/plan-beta/MultiAdjustedPlanScheduleV3.tsx, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/screens/plan-beta/PaceEvidenceFlow.tsx, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/screens/plan-beta/PlanActiveState.tsx, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/screens/plan-beta/PlanAdaptationFlow.tsx, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/screens/plan-beta/PlanCandidates.tsx, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/screens/plan-beta/PlanIntake.tsx, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/screens/plan-beta/PrecisionPlanIntake.tsx, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/screens/plan-beta/instant-plan-today-context.ts, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/screens/plan-beta/plan-selection.ts, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/screens/sleep-inn/SleepInnEntry.tsx, D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/src/screens/trends/FileAnalysisPanel.tsx, dynamic import will not move module into another chunk.
+
+computing gzip size...
+dist/index.html                                              3.62 kB │ gzip:   1.27 kB
+dist/assets/activity-file.worker-Ce9FR1De.js                95.70 kB
+dist/assets/TaskGuide-DPOuIH9J.css                           0.50 kB │ gzip:   0.29 kB
+dist/assets/AthleteRecords-wtCNSPsd.css                      1.45 kB │ gzip:   0.61 kB
+dist/assets/RewardActionButton-HC8qht3K.css                  1.55 kB │ gzip:   0.59 kB
+dist/assets/home-menu-C6gddF5C.css                           1.86 kB │ gzip:   0.68 kB
+dist/assets/AccountPlanStorageControls-B-lwtXEn.css          2.14 kB │ gzip:   0.67 kB
+dist/assets/DeviceJournal-DWoI-Oq3.css                       2.22 kB │ gzip:   0.82 kB
+dist/assets/CalendarDecorationFrame-DY-b27RK.css             2.27 kB │ gzip:   0.73 kB
+dist/assets/More-D8jWK508.css                                2.37 kB │ gzip:   0.78 kB
+dist/assets/OracleSectionNavigation-R6ASkYcR.css             2.79 kB │ gzip:   0.91 kB
+dist/assets/next-action-BLSh1fKB.css                         2.84 kB │ gzip:   0.96 kB
+dist/assets/SelfHostedCoachingPanel-BliER-Un.css             3.24 kB │ gzip:   0.95 kB
+dist/assets/JournalShareTool-gzJ6TQ17.css                    3.45 kB │ gzip:   0.87 kB
+dist/assets/file-analysis-CjWrgQ95.css                       3.73 kB │ gzip:   1.06 kB
+dist/assets/BodyHistory-Bry4Ua0_.css                         4.27 kB │ gzip:   1.06 kB
+dist/assets/RunningProfile-BsZKT7vc.css                      4.55 kB │ gzip:   1.23 kB
+dist/assets/plan-day-reader-Bej9fh_y.css                     4.85 kB │ gzip:   1.42 kB
+dist/assets/PaceCalculator-1s1bjfmS.css                      4.91 kB │ gzip:   1.38 kB
+dist/assets/CalendarDecorationEditor-C04NXAKY.css            5.05 kB │ gzip:   1.17 kB
+dist/assets/CalendarJournalDetails-CEy002nY.css              5.45 kB │ gzip:   1.34 kB
+dist/assets/VisualTrainingGuide-CREmX226.css                 5.86 kB │ gzip:   1.52 kB
+dist/assets/ExecutionReview-4aqmf9zc.css                     5.89 kB │ gzip:   1.33 kB
+dist/assets/RecordReadingOracle-Cnc-cJ9U.css                 6.87 kB │ gzip:   1.65 kB
+dist/assets/PlanActiveState-Bfq2-_fI.css                     7.32 kB │ gzip:   1.28 kB
+dist/assets/SessionExplanation-BEv2BJ4B.css                  7.47 kB │ gzip:   1.77 kB
+dist/assets/GoalTrainingProgramFlow-DdrMaOSq.css             7.59 kB │ gzip:   1.83 kB
+dist/assets/LogDetail-BHgXLDpK.css                           8.68 kB │ gzip:   1.80 kB
+dist/assets/OracleExplore-BFrE9U8g.css                       9.41 kB │ gzip:   1.75 kB
+dist/assets/AdjustedPrescriptionV3-CAvIUs_e.css             10.52 kB │ gzip:   2.11 kB
+dist/assets/quick-journal-PnIQBEF6.css                      21.04 kB │ gzip:   3.59 kB
+dist/assets/OracleProfileV2-a2_Sz_nZ.css                    26.69 kB │ gzip:   4.66 kB
+dist/assets/Trends-B1mqFcxz.css                             32.98 kB │ gzip:   5.24 kB
+dist/assets/PlanBeta-BtkyRaGs.css                           41.74 kB │ gzip:   6.62 kB
+dist/assets/SleepInnEntry-qfRvcR7b.css                      66.99 kB │ gzip:  12.99 kB
+dist/assets/TreadmillGame-BxuhzMGl.css                     101.02 kB │ gzip:  16.03 kB
+dist/assets/index-BSiG2pXb.css                             340.12 kB │ gzip:  50.47 kB
+dist/assets/RewardActionButton-BG-qd6-1.js                   0.26 kB │ gzip:   0.21 kB
+dist/assets/feedback-config-KX7luq0R.js                      0.39 kB │ gzip:   0.30 kB
+dist/assets/session-prescription-sequence-zDAZe3bh.js        0.45 kB │ gzip:   0.29 kB
+dist/assets/TaskGuide-DQBBoSEs.js                            0.52 kB │ gzip:   0.33 kB
+dist/assets/next-action-DVdVUNB7.js                          0.58 kB │ gzip:   0.27 kB
+dist/assets/OracleSectionNavigation-CXEFbytp.js              0.96 kB │ gzip:   0.51 kB
+dist/assets/JournalPageNavigator-BW1wrZuo.js                 1.80 kB │ gzip:   0.71 kB
+dist/assets/useJournalPageTurn-B8KSBfQk.js                   1.91 kB │ gzip:   0.92 kB
+dist/assets/JournalDayReader-DyjIxFb6.js                     2.17 kB │ gzip:   1.08 kB
+dist/assets/PlanDayReader-7vzexiYw.js                        3.30 kB │ gzip:   1.51 kB
+dist/assets/useEligibleAccountPaceRecords-CbKyKJ0x.js        3.75 kB │ gzip:   1.80 kB
+dist/assets/session-explanation-evidence-CUA6MeCF.js         3.86 kB │ gzip:   1.62 kB
+dist/assets/goal-program-calendar-CW7bFmFF.js                4.16 kB │ gzip:   1.89 kB
+dist/assets/BodyHistory-BiOan8tx.js                          4.73 kB │ gzip:   1.79 kB
+dist/assets/AccountJournalHistory-DtdmiX00.js                4.78 kB │ gzip:   2.27 kB
+dist/assets/AccountPlanStorageControls-DvbydEX7.js           4.87 kB │ gzip:   2.18 kB
+dist/assets/CalendarDecorationFrame-BS3isDfG.js              4.97 kB │ gzip:   2.04 kB
+dist/assets/account-running-profile-service-DI_loez5.js      5.36 kB │ gzip:   1.96 kB
+dist/assets/PlanProposalInbox-CkgF0NuO.js                    5.41 kB │ gzip:   2.32 kB
+dist/assets/DesktopWorkspace-DA8uqDJ6.js                     6.07 kB │ gzip:   2.40 kB
+dist/assets/PublicProfilePage-CTOTA9BO.js                    7.16 kB │ gzip:   2.92 kB
+dist/assets/DeviceJournal-BaG5ruaR.js                        7.44 kB │ gzip:   3.15 kB
+dist/assets/execution-replan-DDTM2qEI.js                     7.52 kB │ gzip:   3.13 kB
+dist/assets/VisualTrainingGuide-B2dIGlEw.js                  8.28 kB │ gzip:   3.13 kB
+dist/assets/CalendarDecorationEditor-DIC6wbwR.js             8.52 kB │ gzip:   3.08 kB
+dist/assets/plan-execution-review-CJ9dyQXs.js                8.97 kB │ gzip:   3.74 kB
+dist/assets/ExecutionReview-SzyShb00.js                      9.40 kB │ gzip:   3.57 kB
+dist/assets/FeedbackBoard-CdRdoX66.js                        9.43 kB │ gzip:   3.70 kB
+dist/assets/TrainingLexicon-hjBTD6n1.js                      9.53 kB │ gzip:   3.44 kB
+dist/assets/quick-journal-CMFqlyim.js                        9.94 kB │ gzip:   4.21 kB
+dist/assets/public-profile-WMyAeXic.js                      10.12 kB │ gzip:   4.15 kB
+dist/assets/OracleExplore-okcdQSJz.js                       10.20 kB │ gzip:   3.18 kB
+dist/assets/CalendarJournalDetails-BBeEhaff.js              10.41 kB │ gzip:   4.40 kB
+dist/assets/JournalRewards-BcnGJFDF.js                      12.10 kB │ gzip:   4.73 kB
+dist/assets/RecordReadingOracle-Tmqu_67L.js                 12.70 kB │ gzip:   4.56 kB
+dist/assets/useImportOwnerScope-EvIAxjHF.js                 13.28 kB │ gzip:   4.62 kB
+dist/assets/PaceCalculator-ClHOnHvF.js                      13.61 kB │ gzip:   5.11 kB
+dist/assets/More-PP3wd-Q_.js                                14.41 kB │ gzip:   5.08 kB
+dist/assets/RunningProfile-BdBTgK8B.js                      14.63 kB │ gzip:   5.27 kB
+dist/assets/workout-memo-export-BbS92TPI.js                 17.39 kB │ gzip:   7.02 kB
+dist/assets/SelfHostedCoachingPanel-BOt9NNgI.js             17.70 kB │ gzip:   6.52 kB
+dist/assets/file-analysis-CXJNhm8T.js                       17.93 kB │ gzip:   6.78 kB
+dist/assets/account-goal-program-schema-C2-5BGuq.js         19.85 kB │ gzip:   7.08 kB
+dist/assets/AthleteRecords-CY4QX2um.js                      21.23 kB │ gzip:   7.20 kB
+dist/assets/TrainingContent-D8xrHNP3.js                     22.06 kB │ gzip:   8.70 kB
+dist/assets/AccessibleTrendTable-C95g_nrA.js                23.43 kB │ gzip:   9.47 kB
+dist/assets/Guide-BSwZxUFD.js                               23.99 kB │ gzip:   8.72 kB
+dist/assets/SessionExplanation-DNJ1cFSl.js                  26.45 kB │ gzip:   9.11 kB
+dist/assets/JournalArchive-D6MM-fbF.js                      27.73 kB │ gzip:   9.86 kB
+dist/assets/ImportActivities-C370VvG8.js                    28.07 kB │ gzip:   9.96 kB
+dist/assets/active-plan-edit-store-DDnCrG_q.js              28.93 kB │ gzip:   9.44 kB
+dist/assets/index-C5ucu0V8.js                               31.25 kB │ gzip:  10.71 kB
+dist/assets/AdjustedPrescriptionV3-Cf8Tn3M6.js              35.02 kB │ gzip:  11.27 kB
+dist/assets/RestoreBackup-D-Zm3MKh.js                       45.13 kB │ gzip:  12.68 kB
+dist/assets/JournalShareTool-B9QWFWD1.js                    50.03 kB │ gzip:  16.41 kB
+dist/assets/plan-beta-flow-R0EUcMAz.js                      54.27 kB │ gzip:  16.93 kB
+dist/assets/vendor-icons-XqQfCdOp.js                        62.32 kB │ gzip:  12.13 kB
+dist/assets/GoalTrainingProgramFlow-DiirNsYK.js             73.19 kB │ gzip:  21.47 kB
+dist/assets/vendor-validation-CCqsw5w9.js                   78.80 kB │ gzip:  20.97 kB
+dist/assets/PlanActiveState-Dtyu0t3i.js                     83.42 kB │ gzip:  24.75 kB
+dist/assets/LogDetail-DeVUQViy.js                           89.12 kB │ gzip:  28.20 kB
+dist/assets/Account-BixuzFw0.js                            119.03 kB │ gzip:  34.70 kB
+dist/assets/Trends-CVUUzudY.js                             121.96 kB │ gzip:  37.43 kB
+dist/assets/vendor-react-cnlGvdjV.js                       143.37 kB │ gzip:  45.97 kB
+dist/assets/SleepInnEntry-Btb7fV96.js                      153.71 kB │ gzip:  47.48 kB
+dist/assets/index-DEBcp-uF.js                              215.47 kB │ gzip:  55.90 kB
+dist/assets/OracleProfileV2-Bdmu504R.js                    253.27 kB │ gzip:  80.87 kB
+dist/assets/TreadmillGame-CxhHd47I.js                      298.12 kB │ gzip:  98.67 kB
+dist/assets/PlanBeta-5AIroB4-.js                           474.06 kB │ gzip: 135.91 kB
+dist/assets/DefenseScene-CeK9mRCo.js                     1,498.84 kB │ gzip: 345.68 kB
+dist/assets/index-CcGehKw2.js                            1,946.30 kB │ gzip: 467.56 kB
+dist/assets/index-COBkpfsK.js                            2,605.90 kB │ gzip: 723.30 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 15.98s

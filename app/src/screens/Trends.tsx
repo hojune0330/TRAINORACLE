@@ -24,6 +24,8 @@ import { FileAnalysisPanel } from "./trends/FileAnalysisPanel"
 import { readAccountJournalProjection, readCurrentConfirmedAccountJournalProjection } from "../domain/account/account-journal-projection"
 import { OracleTopicGrid } from "../components/OracleTopicGrid"
 import { OracleResume } from "../components/OracleResume"
+import { SelfHostedCoachingPanel } from "../components/SelfHostedCoachingPanel"
+import { activeLocalAccount } from "../domain/account/local-journal-ownership"
 import type { OracleTopicId } from "../domain/oracle-exploration"
 import type { AnalysisNavigation, AnalysisSection } from "../domain/analysis-navigation"
 import { fileAnalysisFormats } from "../domain/import/file-analysis-policy"
@@ -246,6 +248,9 @@ export function Trends({ onBack, onWriteLog, onOpenImport, onOpenRecords, onWrit
           <OracleTopicGrid onSelectTopic={topic => onOpenOracle(topic, reportSource === "example" ? "example" : "personal")} title="경기·계획·훈련 비교하기" compact />
         </div>}
         {section === "training" && detail === "summary" && onOpenRecords && <div className="trends-hub__explore"><RecordStartActions onRecords={onOpenRecords} /></div>}
+        {section === "training" && detail === "summary" && reportSource === "my" && onOpenCoachingDay && onOpenPlan && (
+          <SelfHostedCoachingPanel ownerId={activeLocalAccount()} onReviewJournal={source => onOpenCoachingDay(source.date, source.journalEntryId)} onReviewPlan={onOpenPlan} />
+        )}
         {section === "training" && detail === "summary" && reportSource === "my" && <div className="trends-hub__recovery">
           <CategoryCard category="body" title="몸 상태·회복 기록" aria-expanded={recoveryOpen} aria-controls="trends-recovery" onClick={() => setRecoveryOpen(open => !open)} />
           <div id="trends-recovery">{recoveryOpen && <RecoveryRecordPanel today={today} entries={entries} observations={observations}

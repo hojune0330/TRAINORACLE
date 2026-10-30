@@ -1,0 +1,29 @@
+Subject: TrainOracle - written permission for company-hosted LLM inference and coaching scope
+
+Hello Garmin Connect Developer Program team,
+
+Please associate this request with TrainOracle / Infinite Opportunity (인피니트 오퍼튜니티), registered contact hojune.jang@trainoracle.io, and our Business Starter application of 29 October 2026. We have received the program welcome and are reviewing the v9 agreement before activating an integration. Earlier support references were 227272 and 228092.
+
+Our previous application excluded external generative-AI transmission. We now request written clarification/authorization for the following planned, additional use case; this is not a statement that these features are already operational or authorized.
+
+Proposed architecture:
+- Activity API data enters a TrainOracle-controlled endpoint and encrypted, account-isolated storage. Users review imported records. We retain original provider attribution even for file imports or intermediate health platforms.
+- A pretrained LLM would run only on servers managed by our company. Inference would not use a third-party hosted LLM API. Any infrastructure/hosting contractors and processing locations would be disclosed before activation; final host/model/location are not yet selected.
+- Only a user-selected, minimized window of structured activity facts and permitted derived metrics would be processed. No Garmin credentials, GPS tracks, private journal text or symptom narratives would enter model prompts.
+- Inference only: no Garmin data or derived prompts, responses, summaries or recommendations would be used for model training, fine-tuning, evaluation, benchmarking, model improvement, shared vector stores or AI knowledge bases. No prompt/response telemetry or training cache. Any user-visible saved summaries would remain encrypted, attributable and subject to withdrawal/deletion controls.
+- Intended functionality is individualized running-history explanations, training feedback and, if explicitly authorized, recommendations/adjustments using our existing rule-based training engine. Safety checks and user confirmation remain outside model control; no autonomous workout publication.
+
+Please answer the following separately and, where necessary, provide express written authorization or the appropriate addendum:
+1. Is this company-hosted inference permitted under sections 15.10/15.11, including 15.11(c), and what precise conditions/exception apply? Does deterministic selection of recent account history for each request require separate knowledge-base permission?
+2. May TrainOracle provide personalized running coaching and rule-based training recommendations using Garmin data under the approved-use and competition provisions, including 5.1(m)/(n), 5.2(t) and 15.11(d)? Please distinguish factual explanations from recommendations/plan adjustments.
+3. Which fields, derived metrics, output retention, hosting providers/locations and end-user consent/withdrawal requirements are permitted? How should we register/disclose our company-operated inference infrastructure?
+4. How do these conditions apply to user-uploaded Garmin FIT/TCX files and Garmin-origin records received through HealthKit/Health Connect or blended with manual/other-provider records?
+5. May users send independently created training plans (including AI-assisted plans generated without Garmin inputs) through Training API? Please clarify section 4.6 rights over our submitted workout content and whether our proprietary coaching methods remain outside that grant when not transmitted.
+6. Please confirm our actual Starter Activity/Training API entitlements, user limit (our forecast was 100-1,000), historical-data availability, fees, and the notice/review process for new Garmin-attributed coaching screens under 6.6.
+
+We will keep any unapproved data processing disabled until the scope and conditions are confirmed. This inquiry does not accept new fees, an agreement or a paid upgrade. Please reply to hojune.jang@trainoracle.io and advise if a different review channel is required.
+
+Thank you,
+Hojune Jang (장호준)
+TrainOracle / Infinite Opportunity
+https://trainoracle.io

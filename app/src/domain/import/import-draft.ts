@@ -15,6 +15,7 @@ import { legacyJournalWritesBlocked, loadEntries, newEntryId, saveEntry, updateE
 import { canEditJournalEntry } from "../journal-edit-policy"
 import type { AccountJournalWriteBase } from "../account/account-journal-record-service"
 import { parseFileObservation, toFileObservationSummary, type FileObservationV1 } from "./file-observation"
+import { providerLineageFingerprint } from "../provider-data-rights"
 
 /** 가져오기 파생 입력 토큰 — 일지 필드가 아니라 "파일에서 왔다"는 표시 */
 export const IMPORT_DERIVED_FROM = ["import:activity-file"] as const
@@ -93,6 +94,7 @@ function looksLikeSameActivity(existing: PostSessionEntry, activity: ImportedAct
 export function sameFileObservation(left: FileObservationV1, right: FileObservationV1): boolean {
   const confirmation = (value: FileObservationV1) => value.confirmation ?? { durationMeaning: null, sport: null }
   return left.contentRevisionFingerprint === right.contentRevisionFingerprint
+    && providerLineageFingerprint(left.dataLineage) === providerLineageFingerprint(right.dataLineage)
     && confirmation(left).durationMeaning === confirmation(right).durationMeaning
     && confirmation(left).sport === confirmation(right).sport
 }
