@@ -225,6 +225,16 @@ describe("ImportActivities — 고르기 단계", () => {
     expect(window.localStorage.getItem(JOURNAL_KEY)).toBeNull()
   })
 
+  it.each([
+    ['<?xml version="1.0"?><TrainingCenterDatabase><Activities /></TrainingCenterDatabase>', "파일은 읽었지만 일지로 옮길 활동을 찾지 못했어요"],
+    ["<TrainingCenterDatabase><Activities></TrainingCenterDatabase>", "이 파일을 읽지 못했어요"],
+  ])("distinguishes valid empty TCX from malformed XML: %s", async (text, message) => {
+    render(<ImportActivities />)
+    await pickFile(userEvent.setup(), upload(text))
+    expect(await screen.findByTestId("import-failure")).toHaveTextContent(message)
+    expect(loadEntries()).toEqual([])
+  })
+
   it("큰 파일은 내용을 읽기 전에 거절하고 같은 파일을 다시 고를 수 있게 한다", async () => {
     const user = userEvent.setup()
     render(<ImportActivities />)

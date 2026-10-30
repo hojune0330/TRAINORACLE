@@ -15,6 +15,7 @@ import { useImportOwnerScope } from "./import-activities/useImportOwnerScope"
 import { fileAnalysisFormats } from "../domain/import/file-analysis-policy"
 import { AppHeading } from "../components/AppHeading"
 import { useTaskFlowBack } from "../hooks/useTaskFlowBack"
+import { requestBrowserBackLayer } from "../navigation/browserNavigation"
 import { readCurrentConfirmedAccountJournalProjection } from "../domain/account/account-journal-projection"
 import { buildFileAnalysisReport } from "../domain/import/file-analysis"
 import type { FileObservationV1 } from "../domain/import/file-observation"
@@ -119,7 +120,8 @@ export function ImportActivities({ onBack, onOpenLog, onOpenEntry, onOpenAnalysi
           : codes.includes("ACTIVITY_LIMIT_EXCEEDED") ? "too-many-records"
             : codes.includes("POINT_LIMIT_EXCEEDED") || codes.includes("LAP_LIMIT_EXCEEDED") ? "too-many-segments"
               : codes.includes("UNSUPPORTED_FORMAT") ? "unsupported-format"
-              : result.skipped > 0 ? "empty" : "unreadable")
+              : codes.includes("INVALID_FILE") ? "unreadable"
+                : result.skipped > 0 || result.format !== "unknown" ? "empty" : "unreadable")
         setStage({ step: "pick" }); return
       }
       const drafts = accountJournalRecordsEnabled()
@@ -263,7 +265,7 @@ export function ImportActivities({ onBack, onOpenLog, onOpenEntry, onOpenAnalysi
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         {onBack && (
           <button
-            type="button" onClick={onBack} disabled={busy} aria-label="뒤로"
+            type="button" onClick={() => { if (!requestBrowserBackLayer()) onBack?.() }} disabled={busy} aria-label="뒤로"
             style={{ ...secondaryBtn, width: 44, minWidth: 44, minHeight: 44, fontSize: 18 }}
           >←</button>
         )}

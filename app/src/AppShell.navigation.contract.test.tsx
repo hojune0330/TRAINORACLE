@@ -47,15 +47,19 @@ describe("AppShell origin-preserving navigation", { timeout: 15000 }, () => {
     await waitFor(() => expect(screen.getByRole("button", { name })).toHaveFocus())
     expect(region.scrollTop).toBe(280)
   })
-  it("returns native browser Back from watch import to its More opener", async () => {
+  it.each(["browser", "button"])("returns %s Back from watch import to its More opener and position", async kind => {
     const user = userEvent.setup()
     render(<AppShell />)
     await user.click(screen.getByRole("button", { name: "더보기" }))
+    const region = document.querySelector<HTMLElement>(".app-scroll-region")!
+    region.scrollTop = 280
     await user.click(await screen.findByRole("button", { name: "워치 파일 가져오기" }))
     expect(await screen.findByRole("heading", { name: "운동 기록 가져오기" })).toBeVisible()
-    act(() => window.history.back())
+    if (kind === "browser") act(() => window.history.back())
+    else await user.click(screen.getByRole("button", { name: "뒤로", exact: true }))
     await waitFor(() => expect(screen.getByRole("heading", { name: "더보기" })).toBeVisible())
     await waitFor(() => expect(screen.getByRole("button", { name: "워치 파일 가져오기" })).toHaveFocus())
+    expect(region.scrollTop).toBe(280)
   })
   it("returns native Back from training vocabulary and articles through their list to More", async () => {
     const user = userEvent.setup()
