@@ -1490,7 +1490,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
           onOpenGuide={() => openGuide("minji")}
           onOpenPlan={() => goTab("plan")}
           onOpenTrends={() => goTab("trends", { section: "distance" })}
-          onOpenOracle={openOracle}
+          onOpenOracle={topic => openOracle(topic, "personal")}
           onOpenMore={() => runViewTransition("push", () => setUtilityView("more"))}
           onOpenMinigame={() => runViewTransition("push", () => enterDomain("games"), false)}
           onOpenAccount={accountEnabled ? () => runViewTransition("push", () => setV(s => ({ ...s, accountOpen: true }))) : undefined}

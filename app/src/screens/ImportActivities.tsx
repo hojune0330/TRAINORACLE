@@ -135,6 +135,7 @@ export function ImportActivities({ onBack, onOpenLog, onOpenEntry, onOpenAnalysi
       ))
       setSelected(new Set(separate))
       setIntents(new Map(separate.map((index) => [index, { kind: "SAVE_SEPARATE" }])))
+      reviewSnapshot.current = null
       setStage({ step: "review", drafts, result })
     } catch (error) {
       if (current() && readControllerRef.current === controller) {
@@ -291,6 +292,11 @@ export function ImportActivities({ onBack, onOpenLog, onOpenEntry, onOpenAnalysi
         </ol>
         {reviewError && <p role="alert">{reviewError}</p>}
         {stage.step === "pick" && (
+          <>
+          {reviewSnapshot.current && <button type="button" style={{ ...secondaryBtn, marginTop: "var(--space-4)" }} disabled={busy}
+            onClick={() => { if (reviewSnapshot.current) { setFailure(null); setStage(reviewSnapshot.current) } }}>
+            확인하던 운동 {reviewSnapshot.current.drafts.length}건 이어보기
+          </button>}
           <PickStage
             busy={busy}
             failure={failure}
@@ -298,6 +304,7 @@ export function ImportActivities({ onBack, onOpenLog, onOpenEntry, onOpenAnalysi
             onFile={handleFile}
             onCancel={cancelRead}
           />
+          </>
         )}
 
         {stage.step === "review" && (
@@ -316,7 +323,7 @@ export function ImportActivities({ onBack, onOpenLog, onOpenEntry, onOpenAnalysi
             onToggle={toggle}
             onActivityChange={(index, activity) => { void changeActivity(index, activity) }}
             onSave={handleSave}
-            onRestart={() => { setStage({ step: "pick" }); setSelected(new Set()) }}
+            onRestart={() => { reviewSnapshot.current = stage; setStage({ step: "pick" }); setFailure(null) }}
           />
         )}
 
@@ -341,7 +348,10 @@ export function ImportActivities({ onBack, onOpenLog, onOpenEntry, onOpenAnalysi
             onOpenEntry={onOpenEntry}
             onOpenAnalysis={onOpenAnalysis}
             onOpenSummary={onOpenSummary}
-            onRestart={() => { setStage({ step: "pick" }); setSelected(new Set()); setFailure(null) }}
+            onRestart={() => {
+              confirmation.current?.dispose(); confirmation.current = null; reviewSnapshot.current = null
+              setStage({ step: "pick" }); setSelected(new Set()); setIntents(new Map()); setFailure(null); setReviewError(null)
+            }}
           />
         )}
       </div>

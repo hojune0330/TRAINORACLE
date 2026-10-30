@@ -21,6 +21,14 @@ describe("past journal preservation before revisit work", () => {
 
   afterEach(() => vi.restoreAllMocks())
 
+  it("reports a missing exact destination without opening another same-day journal", () => {
+    expect(saveEntry(toImportedEntry({ date: DATE, name: "Other synthetic activity", sport: "running",
+      distanceKm: "3", durationMin: "15", avgPace: "5:00" }, "json")).ok).toBe(true)
+    render(<LogDetail date={DATE} initialEntryId="missing-exact-entry" />)
+    expect(screen.getByRole("alert")).toHaveTextContent("선택한 일지를 찾지 못했어요")
+    expect(screen.getByRole("button", { name: /Other synthetic activity.*펼쳐보기/u })).toHaveAttribute("aria-expanded", "false")
+  })
+
   it("does not fill a note-only journal with empty running metrics", () => {
     expect(saveEntry({ id: ENTRY_ID, kind: "post-session", date: DATE,
       savedAt: "2026-07-20T09:00:00.000Z", syncState: "local", system: "", title: "Just a note",

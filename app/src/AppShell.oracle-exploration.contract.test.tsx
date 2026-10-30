@@ -14,7 +14,7 @@ vi.mock("./screens/Home", () => ({
     <section>
       <h1>홈 출발 화면</h1>
       <input aria-label="홈 화면 선택" defaultValue="" />
-      <button type="button" onClick={() => onOpenOracle("level")}>홈 현재 수준 예시</button>
+      <button type="button" onClick={() => onOpenOracle("level")}>홈 내 기록 분석</button>
     </section>
   ),
 }))
@@ -100,6 +100,17 @@ function storageSnapshot(storage: Storage) {
 }
 
 describe("AppShell oracle exploration navigation", () => {
+  it("opens the personal empty result from Home and shows examples only after explicit selection", async () => {
+    const user = userEvent.setup()
+    render(<AppShell />)
+    await user.click(screen.getByRole("button", { name: "홈 내 기록 분석" }))
+    expect(screen.getByRole("button", { name: "내 기록" })).toHaveAttribute("aria-pressed", "true")
+    expect(screen.getByRole("heading", { name: "level 개인 결과" })).toBeVisible()
+    expect(screen.queryByRole("heading", { name: "level 가상 예시 결과" })).toBeNull()
+    await user.click(screen.getByRole("button", { name: "예시" }))
+    expect(screen.getByRole("heading", { name: "level 가상 예시 결과" })).toBeVisible()
+    expect(screen.getByText("내 기록을 분석한 결과가 아니에요")).toBeVisible()
+  })
   it.each(["LOADING", "FAILED"] as const)("uses the actual athlete-record recovery boundary for a %s level read", async status => {
     const user = userEvent.setup()
     vi.spyOn(athleteService, "accountAthleteRecordsEnabled").mockReturnValue(true)
@@ -108,7 +119,7 @@ describe("AppShell oracle exploration navigation", () => {
     })
     render(<AppShell />)
     act(() => setActiveLocalAccount("account-a"))
-    await user.click(screen.getByRole("button", { name: "홈 현재 수준 예시" }))
+    await user.click(screen.getByRole("button", { name: "홈 내 기록 분석" }))
 
     expect(screen.queryByRole("button", { name: "다시 확인" })).toBeNull()
     if (status === "LOADING") {
@@ -137,7 +148,7 @@ describe("AppShell oracle exploration navigation", () => {
     const build = vi.spyOn(oracleResults, "buildOraclePersonalResult")
     render(<AppShell />)
     act(() => setActiveLocalAccount("account-a"))
-    await user.click(screen.getByRole("button", { name: "홈 현재 수준 예시" }))
+    await user.click(screen.getByRole("button", { name: "홈 내 기록 분석" }))
     expect(screen.getByText("계정의 경기 기록을 불러오고 있어요.")).toBeVisible()
     const record = { schemaVersion: 1 as const, id: "late", purpose: "PERSONAL_BEST" as const, eventDistanceM: 5000,
       performanceSeconds: 1000, achievedOn: "2024-03-10", seasonId: null, enteredBy: "ATHLETE" as const,
@@ -149,7 +160,7 @@ describe("AppShell oracle exploration navigation", () => {
     expect(screen.getByRole("combobox", { name: "살펴볼 주제" })).toBeVisible()
   })
   it.each([
-    { origin: "홈", heading: "홈 출발 화면", openLabel: "홈 현재 수준 예시", topic: "level", next: "focus" },
+    { origin: "홈", heading: "홈 출발 화면", openLabel: "홈 내 기록 분석", topic: "level", next: "focus" },
     { origin: "분석", heading: "분석 출발 화면", openLabel: "분석 훈련 비교 예시", topic: "compare", next: "change" },
   ] as const)("opens from $origin and browser Back restores the previous topic then the untouched origin", async ({ origin, heading, openLabel, topic, next }) => {
     const user = userEvent.setup()
@@ -159,6 +170,7 @@ describe("AppShell oracle exploration navigation", () => {
     if (origin === "분석") await user.type(screen.getByRole("textbox", { name: `${origin} 화면 선택` }), "선택 유지")
 
     await user.click(screen.getByRole("button", { name: openLabel }))
+    if (origin === "홈") await user.click(screen.getByRole("button", { name: "예시" }))
 
     expect(screen.getByRole("heading", { name: `${topic} 가상 예시 결과` })).toBeVisible()
     expect(screen.getByText("내 기록을 분석한 결과가 아니에요")).toBeVisible()
@@ -192,7 +204,7 @@ describe("AppShell oracle exploration navigation", () => {
   ] as const)("routes the $action personal action to its actual destination", async ({ topicId, action, heading, tab }) => {
     const user = userEvent.setup()
     render(<AppShell />)
-    await user.click(screen.getByRole("button", { name: "홈 현재 수준 예시" }))
+    await user.click(screen.getByRole("button", { name: "홈 내 기록 분석" }))
     await user.selectOptions(screen.getByRole("combobox", { name: "살펴볼 주제" }), topicId)
     const topic = getOracleTopic(topicId)
     expect(topic.personalAction).toBe(action)
@@ -209,7 +221,7 @@ describe("AppShell oracle exploration navigation", () => {
   it("keeps active domain reselect a no-op and exits a directly targeted example to Home", async () => {
     const user = userEvent.setup()
     render(<AppShell />)
-    await user.click(screen.getByRole("button", { name: "홈 현재 수준 예시" }))
+    await user.click(screen.getByRole("button", { name: "홈 내 기록 분석" }))
 
     await user.click(oracleTabs().getByRole("button", { name: "분석" }))
     expect(screen.getByRole("combobox", { name: "살펴볼 주제" })).toBeVisible()
@@ -222,7 +234,7 @@ describe("AppShell oracle exploration navigation", () => {
   it("returns to the original topic after athlete-records save", async () => {
     const user = userEvent.setup()
     render(<AppShell />)
-    await user.click(screen.getByRole("button", { name: "홈 현재 수준 예시" }))
+    await user.click(screen.getByRole("button", { name: "홈 내 기록 분석" }))
     await user.click(screen.getByRole("button", { name: "결과 행동" }))
     expect(screen.getByRole("heading", { name: "내 종목 기록" })).toBeVisible()
 
@@ -234,7 +246,7 @@ describe("AppShell oracle exploration navigation", () => {
   it("does not carry a personal-result mode across account scope changes", async () => {
     const user = userEvent.setup()
     render(<AppShell />)
-    await user.click(screen.getByRole("button", { name: "홈 현재 수준 예시" }))
+    await user.click(screen.getByRole("button", { name: "홈 내 기록 분석" }))
     await user.click(screen.getByRole("button", { name: "결과 행동" }))
     expect(screen.getByRole("heading", { name: "내 종목 기록" })).toBeVisible()
     expect(screen.getByRole("button", { name: "오라클로" })).toBeVisible()
@@ -252,7 +264,7 @@ describe("AppShell oracle exploration navigation", () => {
   it("does not reopen an abandoned topic over another tab after browser Back", async () => {
     const user = userEvent.setup()
     render(<AppShell />)
-    await user.click(screen.getByRole("button", { name: "홈 현재 수준 예시" }))
+    await user.click(screen.getByRole("button", { name: "홈 내 기록 분석" }))
     await user.selectOptions(screen.getByRole("combobox", { name: "살펴볼 주제" }), "focus")
     await user.click(oracleTabs().getByRole("button", { name: "오라클 나가기" }))
     await screen.findByRole("heading", { name: "홈 출발 화면" })
@@ -279,8 +291,9 @@ describe("AppShell oracle exploration navigation", () => {
       return originalRead.call(this, key)
     })
     render(<AppShell />)
-    await user.click(screen.getByRole("button", { name: "홈 현재 수준 예시" }))
+    await user.click(screen.getByRole("button", { name: "홈 내 기록 분석" }))
     await user.selectOptions(screen.getByRole("combobox", { name: "살펴볼 주제" }), topicId)
+    await user.click(screen.getByRole("button", { name: "예시" }))
     expect(screen.getByRole("heading", { name: `${topicId} 가상 예시 결과` })).toBeVisible()
     expect(screen.queryByRole("button", { name: "결과 행동" })).toBeNull()
 
@@ -301,7 +314,8 @@ describe("AppShell oracle exploration navigation", () => {
     const remove = vi.spyOn(Storage.prototype, "removeItem")
     const clear = vi.spyOn(Storage.prototype, "clear")
 
-    await user.click(screen.getByRole("button", { name: "홈 현재 수준 예시" }))
+    await user.click(screen.getByRole("button", { name: "홈 내 기록 분석" }))
+    await user.click(screen.getByRole("button", { name: "예시" }))
     for (const topic of ORACLE_TOPICS) {
       await user.selectOptions(screen.getByRole("combobox", { name: "살펴볼 주제" }), topic.id)
       expect(screen.getByRole("heading", { name: `${topic.id} 가상 예시 결과` })).toBeVisible()

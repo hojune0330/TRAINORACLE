@@ -197,6 +197,20 @@ export function ReviewStage({ drafts, result, selected, intents, onIntent, onTog
           const intent = intents.get(index)
           const facts = importedActivityFactLabels(activity)
           const choiceLabel = `운동 ${index + 1}, ${compactDate(activity.date)} ${activity.name}, 거리 ${facts.distance}, ${facts.timeLabel} ${facts.duration}`
+          const choiceValue = needsChoice(draft, intent) ? "" : intent?.kind === "SAVE_SEPARATE" ? "separate"
+            : intent?.kind === "EXCLUDE" ? "exclude" : intent?.kind === "USE_EXISTING" ? `use:${intent.entryId}`
+              : intent?.kind === "ADD_TO_EXISTING" ? intent.entryId : ""
+          const choices = [
+            { value: "", label: "저장 방식 선택" },
+            { value: "separate", label: "새 일지로 저장" },
+            { value: "exclude", label: "이번 가져오기에서 제외" },
+            ...(analysisEnabled ? (draft.identityCandidates ?? []).map(candidate => ({ value: `use:${candidate.id}`,
+              disabled: candidate.kind === "CORRECTION",
+              label: `${candidate.kind === "REUSE" ? "같은 기록으로 확인" : candidate.kind === "ATTACH" ? "기존 일지에 파일 근거 연결" : "기존 일지 정정 필요"} · ${candidate.activitySlot === "AM" ? "오전" : candidate.activitySlot === "PM" ? "오후" : "시간 미지정"} · ${candidate.title}`,
+            })) : []),
+            ...draft.reconciliationCandidates.map(candidate => ({ value: candidate.id,
+              label: `기존 일지 보완 · ${candidate.activitySlot === "AM" ? "오전" : candidate.activitySlot === "PM" ? "오후" : "시간 미지정"} · ${candidate.title}` })),
+          ]
           return (
             <div key={`${activity.date}-${index}`} data-testid="import-draft-row" className="import-review__row" data-selected={selected.has(index)}>
               <label className="import-review__choice">
@@ -221,13 +235,11 @@ export function ReviewStage({ drafts, result, selected, intents, onIntent, onTog
                 </span>
               </label>
               <div className="import-review__body">
-                <ImportedActivityFacts activity={activity} />
-                {selected.has(index) && <select
-                  disabled={busy}
+                <ImportedActivityFacts activity={activity} showTimeNotice={false} />
+                <select
+                  disabled={busy || !selected.has(index)}
                   aria-label={`${choiceLabel} 저장 방식`}
-                  value={needsChoice(draft, intent) ? "" : intent?.kind === "SAVE_SEPARATE" ? "separate"
-                    : intent?.kind === "EXCLUDE" ? "exclude" : intent?.kind === "USE_EXISTING" ? `use:${intent.entryId}`
-                      : intent?.kind === "ADD_TO_EXISTING" ? intent.entryId : ""}
+                  value={choiceValue}
                   onChange={(event) => {
                     const value = event.target.value
                     const target = draft.reconciliationCandidates.find((candidate) => candidate.id === value)
@@ -242,18 +254,12 @@ export function ReviewStage({ drafts, result, selected, intents, onIntent, onTog
                     border: "1px solid var(--line)", borderRadius: "var(--r-action)", background: "var(--surface)", color: "var(--ink)",
                     padding: "var(--space-2) var(--space-3)", fontFamily: "var(--sans)", fontSize: "var(--fs-body-sm)" }}
                 >
-                  <option value="">저장 방식 선택</option>
-                  <option value="separate">새 일지로 저장</option>
-                  <option value="exclude">이번 가져오기에서 제외</option>
-                  {analysisEnabled && draft.identityCandidates?.map(candidate => <option key={`use:${candidate.id}`}
-                    value={`use:${candidate.id}`} disabled={candidate.kind === "CORRECTION"}>
-                    {candidate.kind === "REUSE" ? "같은 기록으로 확인" : candidate.kind === "ATTACH" ? "기존 일지에 파일 근거 연결" : "기존 일지 정정 필요"}
-                    {" · "}{candidate.activitySlot === "AM" ? "오전" : candidate.activitySlot === "PM" ? "오후" : "시간 미지정"} · {candidate.title}
-                  </option>)}
-                  {draft.reconciliationCandidates.map((candidate) => <option key={candidate.id} value={candidate.id}>
-                    기존 일지 보완 · {candidate.activitySlot === "AM" ? "오전" : candidate.activitySlot === "PM" ? "오후" : "시간 미지정"} · {candidate.title}
-                  </option>)}
-                </select>}
+                  {choices.map(choice => <option key={choice.value} value={choice.value}
+                    disabled={"disabled" in choice && choice.disabled}>{choice.label}</option>)}
+                </select>
+                {choiceValue !== "" && choiceValue !== "separate" && <p className="import-review__intent" aria-hidden="true">
+                  {choices.find(choice => choice.value === choiceValue)?.label}
+                </p>}
                 {analysisEnabled && draft.batchDuplicateOf !== undefined && <p style={{ fontSize: "var(--fs-body-sm)", color: "var(--ink-3)", lineHeight: 1.6 }}>
                   이 파일의 운동 {draft.batchDuplicateOf + 1}과 기록 값이 같고 원본 ID가 없어요. 서로 다른 운동인지 확인해 주세요.
                 </p>}
@@ -266,6 +272,10 @@ export function ReviewStage({ drafts, result, selected, intents, onIntent, onTog
           )
         })}
       </div>
+      {drafts.some(({ activity }) => {
+        const { file, meaning } = importedActivityFactLabels(activity)
+        return file && (meaning === "UNKNOWN" || meaning === "SOURCE_DEFINED")
+      }) && <p className="import-review__time-notice">시간 종류를 몰라도 저장할 수 있어요. 시간 비교와 페이스 계산은 보류해요.</p>}
       <p style={{ fontFamily: "var(--sans)", fontSize: "var(--fs-body-sm)", color: "var(--ink-2)", lineHeight: 1.6, margin: 0 }}>
         {analysisEnabled ? "가져오기만으로 최고기록·훈련 목표·강도는 바뀌지 않아요." : "새 일지는 읽기 전용이에요. 가져온 숫자는 주간 통계·추이·훈련계획에는 들어가지 않아요."}
       </p>
@@ -282,7 +292,7 @@ export function ReviewStage({ drafts, result, selected, intents, onIntent, onTog
           : saveCount === 0 ? `고른 ${excludedCount}건 가져오기에서 제외`
             : excludedCount > 0 ? `${saveCount}건 저장 · ${excludedCount}건 제외` : `고른 ${saveCount}건 일지에 저장`}
       </button>
-      {busy && <p role="status">계정 저장 확인 중</p>}
+      {busy && <p role="status">{accountJournalRecordsEnabled() ? "계정 저장 확인 중" : "이 브라우저에 저장 중"}</p>}
       </div>
       <button type="button" style={secondaryBtn} disabled={busy} onClick={onRestart}>다른 파일 고르기</button>
     </div>
@@ -360,6 +370,7 @@ export function SavedStage({ outcome, analysisAvailable = false, onOpenLog, onOp
         <div style={{ fontFamily: "var(--sans)", fontSize: 16, fontWeight: 500, marginTop: 5 }}>
           {onlyExcluded ? `${outcome.excluded}건 가져오기에서 제외` : <>새 일지 {outcome.saved}건 저장 · 기존 일지 {outcome.merged ?? 0}건 보완</>}
         </div>
+        {completed > 0 && <p>이 브라우저에 저장했어요. 계정에 동기화되지는 않아요.</p>}
         {onlyExcluded && <div style={{ ...mono, fontSize: "var(--fs-body-sm)", color: "var(--ink-3)", lineHeight: 1.6, marginTop: 4 }}>
           새로 저장한 일지는 없어요. 기존 일지는 그대로예요.
         </div>}
@@ -378,8 +389,9 @@ export function SavedStage({ outcome, analysisAvailable = false, onOpenLog, onOp
           가져온 값에는 <b>가져옴</b> 표시가 붙어요. 기존 일지에 직접 입력한 RPE<TermHelp term="rpe" />는 분석에 쓸 수 있고, 가져온 값과 메모 원문은 분석에 포함되지 않아요.
         </div>}
       </div>
-      {onOpenSummary && completed > 0 && <button type="button" style={primaryBtn} onClick={onOpenSummary}>가져온 기록 보기</button>}
-      {onOpenLog && <button type="button" style={onOpenSummary && completed > 0 ? secondaryBtn : primaryBtn} onClick={onOpenLog}>일지에서 확인하기</button>}
+      {needsReview && onReview && <button type="button" style={primaryBtn} disabled={busy} onClick={onReview}>원래 파일 다시 검토</button>}
+      {onOpenSummary && completed > 0 && <button type="button" style={needsReview && onReview ? secondaryBtn : primaryBtn} disabled={busy} onClick={onOpenSummary}>가져온 기록 보기</button>}
+      {onOpenLog && <button type="button" style={needsReview && onReview || onOpenSummary && completed > 0 ? secondaryBtn : primaryBtn} disabled={busy} onClick={onOpenLog}>일지에서 확인하기</button>}
       <button type="button" style={secondaryBtn} onClick={onRestart}>파일 더 가져오기</button>
     </div>
   )

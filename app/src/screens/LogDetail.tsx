@@ -472,6 +472,9 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, onJournalSave
       {!snapshot.complete && <p role="status">
         기록을 아직 모두 확인하지 못했어요. {entries.length > 0 ? "현재 불러온 내용만 표시해요." : "기록이 없는 상태로 표시하지 않아요."}
       </p>}
+      {snapshot.complete && initialEntryId !== undefined && targetKey === undefined && <p role="alert">
+        선택한 일지를 찾지 못했어요. 삭제되었거나 지금 계정에서 볼 수 없는 기록일 수 있어요.
+      </p>}
       {snapshot.complete && entries.length === 0 && (
         <div className="journal-empty-state">
           <div className="hand" style={{ fontSize: 22, color: "var(--pencil)", lineHeight: 1.35 }}>
