@@ -70,9 +70,32 @@ The local original artifacts are retained outside Playwright's cleanup tree in
 `tools/rea-aside/ux-candidate-evidence-20261030` at the workspace root. These are
 synthetic account screenshots, not personal account or phone observations.
 
-Provider peer review is bound to the three unchanged TSX file hashes in the
-candidate manifest, with no unresolved findings in that contract scope. Aside
-independent visual acceptance, final required CI and G3 remain in progress.
+Provider peer review is bound to the product hashes in the candidate manifest,
+with no unresolved findings in that contract scope. Aside independently accepted
+the observed 320/375/430px hierarchy, selection feedback, 200% DOM text enlargement
+and the three synthetic account screenshots. This is not native browser zoom,
+Dynamic Type, live-account execution or a whole-application accessibility audit.
+
+Aside found two remaining concrete problems: valid empty TCX was labelled as an
+unreadable file, and internal Back lost the More opener/scroll while native Back
+restored them. The first now distinguishes recognized empty input from INVALID_FILE.
+Internal Back now consumes the existing browser-back layer before restoring the
+parent. Shared routing, storage and parser contracts were not rewritten. Aside
+reloaded and confirmed empty/malformed distinction and exact opener/scroll restore
+at 320px (622px) and 375px (536px). No mandatory UX finding remained in its observed
+scope. A separate nonblocking keyboard-focus improvement moves focus to the result
+region; its focused contract checks Enter, no write for exclusion, and the next Tab.
+
+Five focused cases passed for those boundaries (16 seconds). The initial CI then
+found an unsupported `exact` option in the new Testing Library test; that option
+was removed without a product change. The final candidate must still pass required
+CI. The product acceptance binds to `ImportActivities` SHA256
+`710EA735E8299A5F05E7A16BE848CF850549B08EB924A61F50DB0815965610F9`
+and CSS `AD725CFF73283033BEA1A0072EF7FB1D520F1A130F8A5395B25DBB7425DCF9F5`.
+
+Conflict/partial-save/account-switch screens were not directly exercised by Aside;
+their focused contract and peer code evidence remain separately identified.
+Required CI, G3, normal merge and account-OFF Pages publication are separate gates.
 This report is not a merge or deployment receipt.
 
 Operational evidence uses synthetic records and de-identified stage outcomes.

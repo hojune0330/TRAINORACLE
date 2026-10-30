@@ -56,7 +56,7 @@ describe("AppShell origin-preserving navigation", { timeout: 15000 }, () => {
     await user.click(await screen.findByRole("button", { name: "워치 파일 가져오기" }))
     expect(await screen.findByRole("heading", { name: "운동 기록 가져오기" })).toBeVisible()
     if (kind === "browser") act(() => window.history.back())
-    else await user.click(screen.getByRole("button", { name: "뒤로", exact: true }))
+    else await user.click(screen.getByRole("button", { name: "뒤로" }))
     await waitFor(() => expect(screen.getByRole("heading", { name: "더보기" })).toBeVisible())
     await waitFor(() => expect(screen.getByRole("button", { name: "워치 파일 가져오기" })).toHaveFocus())
     expect(region.scrollTop).toBe(280)
