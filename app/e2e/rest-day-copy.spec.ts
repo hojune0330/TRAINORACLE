@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test"
 
 test.use({ timezoneId: "Asia/Seoul" })
-test("offers a rest-day path without pressuring the athlete to log more", async ({ page }) => {
+test("offers a rest-day path without requiring another workout entry", async ({ page }) => {
   // Exercise the KST/UTC date boundary instead of depending on the runner's wall clock.
   await page.clock.setFixedTime(new Date("2026-09-08T15:30:00.000Z"))
   await page.addInitScript(() => {
@@ -24,13 +24,13 @@ test("offers a rest-day path without pressuring the athlete to log more", async 
   })
   await page.goto("/?app=1")
 
-  await expect(page.getByText("오늘 남긴 기록 1개", { exact: true })).toBeVisible()
-  await expect(page.getByRole("button", { name: "오늘 운동 기록 쓰기" })).toHaveCount(0)
+  await expect(page.getByRole("button", { name: "남긴 기록 1개", exact: true })).toBeVisible()
+  await expect(page.getByRole("button", { name: "운동 내용도 기록하기", exact: true })).toBeVisible()
   await expect(page.getByRole("button", { name: "컨디션·메모 기록하기" })).toHaveCount(0)
   await expect(page.getByText(/일만 더 쓰면/u)).toHaveCount(0)
 
   // 추가 기록은 완료 상태를 깨지 않고 보조 동작으로만 열 수 있다.
-  await page.getByRole("button", { name: "기록 더 남기기" }).click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "기록하기", exact: true }).click()
   await page.getByRole("button", { name: /컨디션·메모.*수면·몸 상태·기분·메모/u }).click()
   await expect(page.getByRole("heading", { name: "무엇을 남길까요?" })).toBeVisible()
   await page.getByRole("button", { name: "수면", exact: true }).click()
@@ -45,7 +45,7 @@ test("offers a rest-day path without pressuring the athlete to log more", async 
   await expect(page.getByRole("heading", { name: "무엇을 기록할까요?", exact: true })).toBeVisible()
   await expect(page.locator(".app-tab-bar")).toHaveCount(0)
   await page.getByRole("button", { name: "← 뒤로", exact: true }).click()
-  await expect(page.getByText("오늘 남긴 기록 1개", { exact: true })).toBeVisible()
+  await expect(page.getByRole("button", { name: "남긴 기록 1개", exact: true })).toBeVisible()
 
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "오라클" }).click()
   const distance = page.getByRole("region", { name: "기간별 훈련 리포트" })

@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises"
 
 test("previews, decorates and downloads the same example image without saving a journal", async ({ page }, testInfo) => {
   await page.goto("/?app=1")
+  await page.getByRole("button", { name: "더보기", exact: true }).click()
   await page.getByRole("button", { name: "일지 예시 보기", exact: true }).click()
   const storage = await page.evaluate(() => JSON.stringify({ ...localStorage }))
   await expect(page.getByRole("button", { name: "내 일지 쓰기", exact: true })).toBeVisible()

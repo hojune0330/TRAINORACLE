@@ -21,7 +21,7 @@ test.beforeEach(async ({ page, baseURL }, testInfo) => {
 
 async function openReader(page: Page): Promise<void> {
   await page.goto("/?app=1")
-  await page.getByRole("button", { name: "오늘 기록 보기", exact: true }).click()
+  await page.getByRole("button", { name: "남긴 기록 8개", exact: true }).click()
   await expect(page.locator(".journal-day-reader")).toBeVisible()
 }
 

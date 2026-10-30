@@ -48,16 +48,20 @@ for (const width of [320, 375]) {
   })
 }
 
-test("optional home content exposes its state and works without a pointer", async ({ page }) => {
+test("optional analysis examples remain opt-in and work without a pointer from home", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 740 })
   await page.emulateMedia({ reducedMotion: "reduce" })
   await page.route("**/*", route => new URL(route.request().url()).hostname === "127.0.0.1" ? route.continue() : route.abort())
   await page.goto("/?app=1")
-  const example = page.getByRole("region", { name: "오라클 · 예시 결과", exact: true })
-  await expect(example).toBeVisible()
-  const action = example.getByRole("button", { name: "운동 분석 예시 보기", exact: true })
+  await expect(page.getByRole("region", { name: "오라클 · 예시 결과", exact: true })).toHaveCount(0)
+  const action = page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "오라클", exact: true })
   await action.focus()
   await expect(action).toBeFocused()
   await page.keyboard.press("Enter")
-  await expect(page.getByRole("region", { name: "기간별 훈련 리포트" })).toHaveAttribute("data-source", "example")
+  const report = page.getByRole("region", { name: "기간별 훈련 리포트" })
+  await expect(report).not.toHaveAttribute("data-source", "example")
+  const example = report.getByRole("button", { name: "예시 결과 보기", exact: true })
+  await example.focus()
+  await page.keyboard.press("Enter")
+  await expect(report).toHaveAttribute("data-source", "example")
 })

@@ -41,23 +41,25 @@ test("keeps the welcome home clear and usable on narrow phones", async ({ page }
     await page.goto("/")
 
     await expect(page.getByRole("heading", {
-      name: "운동 분석과 훈련 계획",
+      name: "훈련과 기록",
     })).toBeVisible()
     await expect(page.getByText("모든 데이터는 이 기기에만 저장돼요.")).toHaveCount(0)
     await expect(page.getByRole("navigation", { name: "주 탭" })).toBeVisible()
-    await expect(page.getByRole("button", { name: "오늘 운동 기록 쓰기", exact: true })).toBeInViewport({ ratio: 1 })
-    await page.getByRole("button", { name: "오늘 운동 기록 쓰기" }).scrollIntoViewIfNeeded()
-    await expect(page.getByRole("button", { name: "오늘 운동 기록 쓰기" })).toBeInViewport({ ratio: 1 })
-    const result = page.getByRole("region", { name: "오라클 · 예시 결과", exact: true })
-    await expect(result).toBeVisible()
-    await expect(result).toContainText("예시")
+    const homeMemo = page.getByRole("textbox", { name: "오늘의 메모", exact: true })
+    await expect(homeMemo).toHaveAttribute("placeholder", "운동이나 오늘의 느낌을 남겨 보세요")
+    await expect(homeMemo).toBeInViewport({ ratio: 1 })
+    const writeWorkout = page.getByRole("button", { name: "운동 내용도 기록하기", exact: true })
+    await writeWorkout.scrollIntoViewIfNeeded()
+    await expect(writeWorkout).toBeInViewport({ ratio: 1 })
+    expect((await writeWorkout.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44)
+    await expect(page.getByRole("region", { name: "오라클 · 예시 결과", exact: true })).toHaveCount(0)
+    await expect(page.getByRole("button", { name: "일지 예시 보기", exact: true })).toHaveCount(0)
     await expect(page.getByRole("region", { name: "더 살펴보기", exact: true })).toHaveCount(0)
     await expect(page.getByRole("navigation", { name: "홈 바로가기" })).toBeVisible()
     const services = page.getByRole("navigation", { name: "홈 바로가기" })
     for (const name of ["훈련법 읽기", "일지 꾸미기"]) {
       await expect(services.getByRole("button", { name })).toBeVisible()
     }
-    await expect(page.getByRole("button", { name: "일지 예시 보기" })).toBeVisible()
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
     await page.screenshot({
       path: testInfo.outputPath(`first-screen-${viewport.width}x${viewport.height}.png`),
@@ -65,14 +67,14 @@ test("keeps the welcome home clear and usable on narrow phones", async ({ page }
     })
   }
 
-  await page.getByRole("button", { name: "오늘 운동 기록 쓰기" }).click()
+  await page.getByRole("button", { name: "운동 내용도 기록하기", exact: true }).click()
   await expect(page.getByRole("heading", { name: "오늘 운동은 어떻게 됐나요?" })).toBeVisible()
   await expect(page.getByRole("button", { name: "← 뒤로" })).toBeInViewport()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
   // Active recording hides the main tabs; leave the blank task before reopening the chooser.
   await expect(page.getByRole("navigation", { name: "주 탭" })).toHaveCount(0)
   await page.getByRole("button", { name: "← 뒤로", exact: true }).click()
-  await expect(page.getByRole("button", { name: "오늘 운동 기록 쓰기", exact: true })).toBeVisible()
+  await expect(page.getByRole("button", { name: "운동 내용도 기록하기", exact: true })).toBeVisible()
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "기록하기" }).click()
   const heading = page.getByRole("heading", { name: "무엇을 기록할까요?" })
   await expect(heading).toBeFocused()

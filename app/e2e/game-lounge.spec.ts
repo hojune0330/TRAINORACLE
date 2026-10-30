@@ -21,7 +21,7 @@ test('shared lounge link opens the catalog directly and returns home', async ({ 
   await page.getByRole('button', { name: '다른 게임 보기', exact: true }).first().click()
   await expect(page.getByRole('heading', { name: '게임 라운지', exact: true })).toBeVisible()
   await page.getByRole('navigation', { name: '게임 라운지 메뉴' }).getByRole('button', { name: '홈', exact: true }).click()
-  await expect(page.getByRole('button', { name: '오늘 운동 기록 쓰기', exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: '운동 내용도 기록하기', exact: true })).toBeVisible()
 })
 
 test('catalog finds real games, preserves choice and returns keyboard focus', async ({ page }, info) => {

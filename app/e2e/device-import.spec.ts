@@ -149,7 +149,7 @@ test("shows a duplicate warning unchecked instead of merging silently", async ({
 
 test("reconciles a detailed continuation and keeps subjective editing available", async ({ page }, testInfo) => {
   await page.goto("/?app=1")
-  await page.getByRole("button", { name: "오늘 운동 기록 쓰기" }).click()
+  await page.getByRole("button", { name: "운동 내용도 기록하기", exact: true }).click()
   await page.getByRole("button", { name: "운동을 마쳤어요" }).click()
   await page.getByRole("button", { name: "오후", exact: true }).click()
   await page.getByRole("button", { name: /힘든 정도 6\/10,/u }).click()

@@ -13,7 +13,7 @@ test.beforeEach(async ({ page, baseURL }) => {
 })
 
 test("keeps unsaved guest writing on cancelled task exit and browser back", async ({ page }, testInfo) => {
-  await page.getByRole("button", { name: "오늘 운동 기록 쓰기" }).click()
+  await page.getByRole("button", { name: "운동 내용도 기록하기" }).click()
   await page.getByRole("button", { name: "오늘은 쉬었어요" }).click()
   await page.getByRole("button", { name: "글 추가", exact: true }).click()
   await page.getByRole("radio", { name: "나만의 메모", exact: true }).check()
@@ -55,7 +55,7 @@ test("keeps unsaved guest writing on cancelled task exit and browser back", asyn
   await back.click()
   await exit.getByRole("button", { name: "저장 없이 나가기", exact: true }).click()
   await expect(exit).not.toBeVisible()
-  await page.getByRole("button", { name: "오늘 운동 기록 쓰기" }).click()
+  await page.getByRole("button", { name: "운동 내용도 기록하기" }).click()
   await expect(page.getByRole("heading", { name: "오늘 운동은 어떻게 됐나요?" })).toBeVisible()
 })
 
@@ -63,11 +63,11 @@ test("does not ask to discard a blank or successfully saved guest journal", asyn
   const dialogs: string[] = []
   page.on("dialog", async dialog => { dialogs.push(dialog.message()); await dialog.dismiss() })
   const home = page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "홈", exact: true })
-  await page.getByRole("button", { name: "오늘 운동 기록 쓰기" }).click()
+  await page.getByRole("button", { name: "운동 내용도 기록하기" }).click()
   await expect(page.getByRole("navigation", { name: "주 탭" })).toHaveCount(0)
   await page.getByRole("button", { name: "← 뒤로", exact: true }).click()
-  await expect(page.getByRole("button", { name: "오늘 운동 기록 쓰기", exact: true })).toBeVisible()
-  await page.getByRole("button", { name: "오늘 운동 기록 쓰기" }).click()
+  await expect(page.getByRole("button", { name: "운동 내용도 기록하기", exact: true })).toBeVisible()
+  await page.getByRole("button", { name: "운동 내용도 기록하기" }).click()
   await page.getByRole("button", { name: "오늘은 쉬었어요" }).click()
   await page.getByRole("button", { name: "이대로 저장", exact: true }).click()
   await expect(page.getByRole("heading", { name: "오늘 기록을 남겼어요." })).toBeVisible()
@@ -99,7 +99,7 @@ test("shows an executable record-based workout and opens its same stored method"
     performanceSeconds: 1111, achievedOn: "2026-09-20", seasonId: null, enteredBy: "ATHLETE",
     verificationState: "SELF_REPORTED", sourceRef: "athlete-record:synthetic-followup-5k", savedAt: "2026-09-20T12:00:00Z",
   }])))
-  await page.getByRole("button", { name: "훈련 계획 받기", exact: true }).click()
+  await page.getByRole("button", { name: "훈련 계획 만들기", exact: true }).click()
   await completeDetailedPlan(page, { event: /^5000m/, experience: /빠른 훈련과 쉬운 훈련을 나눠 꾸준히 해왔어요/,
     focus: /유산소 반복 훈련/, template: /5000m 경기 페이스 상세 훈련 포함/ })
   await page.getByRole("button", { name: "기준 기록 확인하기", exact: true }).click()

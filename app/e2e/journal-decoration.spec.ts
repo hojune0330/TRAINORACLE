@@ -47,7 +47,7 @@ test("keeps a zero-point starter decoration on the real diary through refresh an
 
   await page.setViewportSize({ width: 320, height: 568 })
   await page.goto("/?app=1")
-  await page.getByRole("button", { name: "오늘 기록 보기", exact: true }).click()
+  await page.getByRole("button", { name: "남긴 기록 1개", exact: true }).click()
   await page.getByRole("button", { name: "일지 꾸미기 열기" }).click()
   await page.getByRole("button", { name: "모든 꾸미기 도구" }).click()
   await page.getByRole("button", { name: "맑은 날 붙이기" }).click()
@@ -62,7 +62,7 @@ test("keeps a zero-point starter decoration on the real diary through refresh an
   }, DECORATION_KEY_V3)).toBe(true)
 
   await page.reload()
-  await page.getByRole("button", { name: "오늘 기록 보기", exact: true }).click()
+  await page.getByRole("button", { name: "남긴 기록 1개", exact: true }).click()
   await expect(page.getByTestId("journal-decoration-item-0")).toBeVisible()
 
   await page.getByRole("button", { name: "일지 꾸미기 열기" }).click()
@@ -89,7 +89,7 @@ test("uses a three-column material drawer with inline purchase and temporary hov
 
   await page.setViewportSize({ width: 320, height: 568 })
   await page.goto("/?app=1")
-  await page.getByRole("button", { name: "오늘 기록 보기", exact: true }).click()
+  await page.getByRole("button", { name: "남긴 기록 1개", exact: true }).click()
   await page.getByRole("button", { name: "일지 꾸미기 열기" }).click()
   await page.getByRole("button", { name: "모든 꾸미기 도구" }).click()
 
@@ -141,7 +141,7 @@ test("opens the cute sticker subcollection and buys one at the fixed 4P price", 
 
   await page.setViewportSize({ width: 320, height: 568 })
   await page.goto("/?app=1")
-  await page.getByRole("button", { name: "오늘 기록 보기", exact: true }).click()
+  await page.getByRole("button", { name: "남긴 기록 1개", exact: true }).click()
   await page.getByRole("button", { name: "일지 꾸미기 열기" }).click()
   await page.getByRole("button", { name: "꾸미기 재료 도구" }).click()
 
@@ -178,7 +178,7 @@ test("stacks three emoji stickers as free items without breaking the page layout
 
   await page.setViewportSize({ width: 320, height: 568 })
   await page.goto("/?app=1")
-  await page.getByRole("button", { name: "오늘 기록 보기", exact: true }).click()
+  await page.getByRole("button", { name: "남긴 기록 1개", exact: true }).click()
   await page.getByRole("button", { name: "일지 꾸미기 열기" }).click()
   await page.getByRole("button", { name: "이모지 스티커 도구" }).click()
   await page.getByRole("button", { name: "불꽃 이모지 붙이기" }).click()
@@ -226,7 +226,7 @@ test("adds the same emoji twice instead of treating the palette as a destructive
 
   await page.setViewportSize({ width: 375, height: 667 })
   await page.goto("/?app=1")
-  await page.getByRole("button", { name: "오늘 기록 보기", exact: true }).click()
+  await page.getByRole("button", { name: "남긴 기록 1개", exact: true }).click()
   await page.getByRole("button", { name: "일지 꾸미기 열기" }).click()
   await page.getByRole("button", { name: "이모지 스티커 도구" }).click()
   await page.getByRole("button", { name: /불꽃 이모지 붙이기/u }).click()
@@ -248,7 +248,7 @@ test("keeps the mobile canvas visible, traps focus, and keeps all topbar actions
 
   await page.setViewportSize({ width: 375, height: 667 })
   await page.goto("/?app=1")
-  await page.getByRole("button", { name: "오늘 기록 보기", exact: true }).click()
+  await page.getByRole("button", { name: "남긴 기록 1개", exact: true }).click()
   await page.getByRole("button", { name: "일지 꾸미기 열기" }).click()
 
   const editor = page.getByRole("dialog", { name: "일지 꾸미기", exact: true })
@@ -302,7 +302,7 @@ test("reorders, copies, and pastes the selected decoration with explicit canvas 
 
   await page.setViewportSize({ width: 375, height: 667 })
   await page.goto("/?app=1")
-  await page.getByRole("button", { name: "오늘 기록 보기", exact: true }).click()
+  await page.getByRole("button", { name: "남긴 기록 1개", exact: true }).click()
   await page.getByRole("button", { name: "일지 꾸미기 열기" }).click()
   await page.getByRole("button", { name: "이모지 스티커 도구" }).click()
   await page.getByRole("button", { name: /불꽃 이모지 붙이기/u }).click()
@@ -328,7 +328,7 @@ test("drags and resizes a decoration on the full-screen diary canvas and keeps i
 
   await page.setViewportSize({ width: 375, height: 667 })
   await page.goto("/?app=1")
-  await page.getByRole("button", { name: "오늘 기록 보기", exact: true }).click()
+  await page.getByRole("button", { name: "남긴 기록 1개", exact: true }).click()
   await page.getByRole("button", { name: "일지 꾸미기 열기" }).click()
   await page.getByRole("button", { name: "모든 꾸미기 도구" }).click()
   await page.getByRole("button", { name: "맑은 날 붙이기" }).click()
@@ -381,7 +381,7 @@ test("drags and resizes a decoration on the full-screen diary canvas and keeps i
   }, DECORATION_KEY_V3)
   await page.getByRole("button", { name: "꾸미기 완료" }).click()
   await page.reload()
-  await page.getByRole("button", { name: "오늘 기록 보기", exact: true }).click()
+  await page.getByRole("button", { name: "남긴 기록 1개", exact: true }).click()
   await expect(page.locator(".decorated-journal-page__free-item--readonly")).toBeVisible()
   expect(await page.evaluate((key) => {
     const raw = window.localStorage.getItem(key)
@@ -395,7 +395,7 @@ test("deletes a selected decoration on the canvas and deselects on empty-space t
 
   await page.setViewportSize({ width: 375, height: 667 })
   await page.goto("/?app=1")
-  await page.getByRole("button", { name: "오늘 기록 보기", exact: true }).click()
+  await page.getByRole("button", { name: "남긴 기록 1개", exact: true }).click()
   await page.getByRole("button", { name: "일지 꾸미기 열기" }).click()
   await page.getByRole("button", { name: "모든 꾸미기 도구" }).click()
   await page.getByRole("button", { name: "맑은 날 붙이기" }).click()
@@ -445,7 +445,7 @@ test("snaps a dragged decoration to the center guideline magnet", async ({ page 
 
   await page.setViewportSize({ width: 375, height: 667 })
   await page.goto("/?app=1")
-  await page.getByRole("button", { name: "오늘 기록 보기", exact: true }).click()
+  await page.getByRole("button", { name: "남긴 기록 1개", exact: true }).click()
   await page.getByRole("button", { name: "일지 꾸미기 열기" }).click()
   await page.getByRole("button", { name: "모든 꾸미기 도구" }).click()
   await page.getByRole("button", { name: "맑은 날 붙이기" }).click()
@@ -507,7 +507,7 @@ test("migrates a v2-only decoration store to v3 on load and preserves the origin
 
   await page.setViewportSize({ width: 375, height: 667 })
   await page.goto("/?app=1")
-  await page.getByRole("button", { name: "오늘 기록 보기", exact: true }).click()
+  await page.getByRole("button", { name: "남긴 기록 1개", exact: true }).click()
 
   /* v2 슬롯 배치가 v3 좌표로 이행되어 그대로 보인다. */
   await expect(page.getByTestId("journal-decoration-item-0")).toBeVisible()
@@ -589,7 +589,7 @@ test("copies a decoration on one date and pastes it onto another, and the clipbo
   await page.goto("/?app=1")
 
   /* 날짜 A(어제)로 이동해 장식을 붙이고 복사한다. */
-  await page.getByRole("button", { name: "오늘 기록 보기", exact: true }).click()
+  await page.getByRole("button", { name: "남긴 기록 1개", exact: true }).click()
   await page.getByRole("button", { name: /이전 일지/u }).click()
   await page.getByRole("button", { name: "일지 꾸미기 열기" }).click()
   await page.getByRole("button", { name: "이모지 스티커 도구" }).click()
@@ -620,7 +620,7 @@ test("copies a decoration on one date and pastes it onto another, and the clipbo
 
   /* 새로고침 = 세션 클립보드 소멸. 선택이 없으면 붙여넣기 경로 자체가 사라진다. */
   await page.reload()
-  await page.getByRole("button", { name: "오늘 기록 보기", exact: true }).click()
+  await page.getByRole("button", { name: "남긴 기록 1개", exact: true }).click()
   await page.getByRole("button", { name: "일지 꾸미기 열기" }).click()
   await expect(page.getByRole("button", { name: "복사한 장식 붙여넣기" })).toHaveCount(0)
   expect(consoleErrors).toEqual([])
@@ -636,7 +636,7 @@ test("does not hijack Ctrl+Z as decoration undo while typing in the text sticker
 
   await page.setViewportSize({ width: 375, height: 667 })
   await page.goto("/?app=1")
-  await page.getByRole("button", { name: "오늘 기록 보기", exact: true }).click()
+  await page.getByRole("button", { name: "남긴 기록 1개", exact: true }).click()
   await page.getByRole("button", { name: "일지 꾸미기 열기" }).click()
   await page.getByRole("button", { name: "이모지 스티커 도구" }).click()
   await page.getByRole("button", { name: /불꽃 이모지 붙이기/u }).click()

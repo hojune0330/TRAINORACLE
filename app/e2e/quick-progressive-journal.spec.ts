@@ -9,7 +9,7 @@ test.beforeEach(async ({ page }) => {
 })
 
 test("finishes a quick journal and deepens the same record without duplication", async ({ page }, testInfo) => {
-  await page.getByRole("button", { name: "오늘 운동 기록 쓰기" }).click()
+  await page.getByRole("button", { name: "운동 내용도 기록하기" }).click()
   await expect(page.getByRole("heading", { name: "오늘 운동은 어떻게 됐나요?" })).toBeVisible()
   await page.screenshot({ path: testInfo.outputPath("quick-journal-start.png"), fullPage: true })
 
@@ -52,7 +52,7 @@ test("finishes a quick journal and deepens the same record without duplication",
 
 test("removes spatial quick-journal motion when reduced motion is requested", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" })
-  await page.getByRole("button", { name: "오늘 운동 기록 쓰기" }).click()
+  await page.getByRole("button", { name: "운동 내용도 기록하기" }).click()
   await page.getByRole("button", { name: "오늘은 쉬었어요" }).click()
   await expect(page.getByRole("heading", { name: "이 내용으로 남길까요?" })).toBeVisible()
   await page.getByRole("button", { name: "이대로 저장", exact: true }).click()
@@ -64,7 +64,7 @@ test("removes spatial quick-journal motion when reduced motion is requested", as
 
 test("keeps each newly opened choice reachable on a 375x667 phone", async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 667 })
-  await page.getByRole("button", { name: "오늘 운동 기록 쓰기" }).click()
+  await page.getByRole("button", { name: "운동 내용도 기록하기" }).click()
   await page.getByRole("button", { name: "운동을 마쳤어요" }).click()
 
   const slot = page.getByRole("button", { name: "오전" })
@@ -80,7 +80,7 @@ test("keeps each newly opened choice reachable on a 375x667 phone", async ({ pag
 
 test("confirms mixed exercises before saving and preserves them when deepening the same journal", async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 320, height: 740 })
-  await page.getByRole("button", { name: "오늘 운동 기록 쓰기" }).click()
+  await page.getByRole("button", { name: "운동 내용도 기록하기" }).click()
   await page.getByRole("button", { name: "운동을 마쳤어요" }).click()
   await page.getByRole("button", { name: "오전", exact: true }).click()
   await page.getByRole("button", { name: /힘든 정도 5\/10,/u }).click()
@@ -134,7 +134,7 @@ test("confirms mixed exercises before saving and preserves them when deepening t
 test("keeps optional exercise controls usable with doubled text and reduced motion", async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 })
   await page.emulateMedia({ reducedMotion: "reduce" })
-  await page.getByRole("button", { name: "오늘 운동 기록 쓰기" }).click()
+  await page.getByRole("button", { name: "운동 내용도 기록하기" }).click()
   await page.getByRole("button", { name: "운동을 마쳤어요" }).click()
   await page.getByRole("button", { name: "시간 미지정", exact: true }).press("Enter")
   await page.getByRole("button", { name: "모르겠어요 · 비워 둘게요", exact: true }).click()

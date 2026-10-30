@@ -98,6 +98,18 @@ their focused contract and peer code evidence remain separately identified.
 Required CI, G3, normal merge and account-OFF Pages publication are separate gates.
 This report is not a merge or deployment receipt.
 
+The 42ce9469 run passed UTC/KST units, app quality, contracts and dedicated
+browser scenarios, but built-preview stopped at three older home selectors.
+A bounded search found the same obsolete entry names in later tests, so the
+affected specifications were reconciled together with the existing home design.
+The first viewport now checks the actual inline memo; structured workout actions
+remain fully reachable after scrolling, with their touch-size checks retained.
+The recent-day summary stays single and adjacent to the editable work area.
+Upcoming-session checks use a fixed local day and open the exact tomorrow session
+without mutating the stored plan. Examples are opened from their current menu,
+preserving explicit opt-in, keyboard access, no-write and recovery assertions.
+These are test-only changes: no product, permission, timeout or CI gate change.
+
 Operational evidence uses synthetic records and de-identified stage outcomes.
 No raw health values, tokens, personal activity IDs, routes or private screenshots
 are collected for this report. Actual personal integration has not been proven.

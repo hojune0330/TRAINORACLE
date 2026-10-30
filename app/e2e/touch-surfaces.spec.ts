@@ -19,16 +19,16 @@ test("audits empty home and chooser touch actions", async ({ page }, testInfo) =
   await expect(page.getByRole("navigation", { name: "홈 바로가기" })).toBeVisible()
   const services = page.getByRole("navigation", { name: "홈 바로가기" })
   await auditTouchTargets(page, [
-    { name: "empty-home.first-entry", locator: page.getByRole("button", { name: "오늘 운동 기록 쓰기" }), heightOnly: true },
-    { name: "empty-home.create-plan", locator: page.getByRole("button", { name: "훈련 계획 받기" }), heightOnly: true },
+    { name: "empty-home.primary-memo", locator: page.getByPlaceholder("운동이나 오늘의 느낌을 남겨 보세요", { exact: true }), heightOnly: true },
+    { name: "empty-home.create-plan", locator: page.getByRole("button", { name: "훈련 계획 만들기" }), heightOnly: true },
     { name: "empty-home.learn", locator: services.getByRole("button", { name: "훈련법 읽기" }), heightOnly: true },
     { name: "empty-home.decorate", locator: services.getByRole("button", { name: "일지 꾸미기" }), heightOnly: true },
     { name: "empty-home.more", locator: page.getByRole("button", { name: "더보기", exact: true }) },
   ])
   await expect(page.getByRole("navigation", { name: "주 탭" })).toBeVisible()
   await expectNoHorizontalOverflow(page)
-  // 홈의 주 행동은 세부 입력 전에 빠른 기록으로 시작한다.
-  await page.getByRole("button", { name: "오늘 운동 기록 쓰기" }).click()
+  // The structured workout entry remains directly reachable below the primary memo.
+  await page.getByRole("button", { name: "운동 내용도 기록하기" }).click()
   await auditTouchTargets(page, [
     { name: "quick.back", locator: page.getByRole("button", { name: "← 뒤로" }) },
     { name: "quick.outcome", locator: page.getByRole("button", { name: /^(운동을 마쳤어요|하던 운동을 일부만 했어요|가볍게 움직였어요|오늘은 쉬었어요|하려던 운동을 건너뛰었어요)$/u }), count: 5, heightOnly: true },
@@ -54,8 +54,8 @@ test("audits populated home, detail, and trends actions", async ({ page, baseURL
   await page.goto("/?app=1")
   const entries = page.getByRole("region", { name: "최근 하루 기록" }).getByRole("button", { name: /기록 2개 보기/u })
   await auditTouchTargets(page, [
-    { name: "populated-home.open-today", locator: page.getByRole("button", { name: "오늘 기록 보기" }), heightOnly: true },
-    { name: "populated-home.add", locator: page.getByRole("button", { name: "기록 더 남기기" }), heightOnly: true },
+    { name: "populated-home.open-today", locator: page.getByRole("button", { name: "남긴 기록 2개", exact: true }), heightOnly: true },
+    { name: "populated-home.add", locator: page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "기록하기", exact: true }), heightOnly: true },
     { name: "populated-home.entries", locator: entries, count: 1, heightOnly: true },
     { name: "populated-home.tabs", locator: page.getByRole("navigation", { name: "주 탭" }).getByRole("button"), count: 5 },
   ])
@@ -125,7 +125,7 @@ test("audits populated home, detail, and trends actions", async ({ page, baseURL
     await page.screenshot({ path: testInfo.outputPath("touch-targets-320.png") })
   }
   await page.getByRole("navigation", { name: "오라클 메뉴" }).getByRole("button", { name: "오라클 나가기", exact: true }).click()
-  await expect(page.getByRole("button", { name: "오늘 기록 보기" })).toBeVisible()
+  await expect(page.getByRole("button", { name: "남긴 기록 2개", exact: true })).toBeVisible()
   await expect(oracleEntry).toBeFocused()
   await expect(page.getByRole("navigation", { name: "오라클 메뉴" })).toHaveCount(0)
   await expect.poll(() => page.locator("main.app-scroll-region").evaluate(element => element.scrollTop)).toBe(homeScrollTop)

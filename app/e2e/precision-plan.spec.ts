@@ -6,7 +6,7 @@ test.use({ serviceWorkers: "block" })
 
 test("precision choices stay readable and save only after the chosen candidate starts", async ({ page }, info) => {
   await page.goto("/?app=1&uitest=1")
-  await page.getByRole("button", { name: "훈련 계획 받기", exact: true }).click()
+  await page.getByRole("button", { name: "훈련 계획 만들기", exact: true }).click()
   await page.getByRole("button", { name: "직접 설정", exact: true }).click()
   await enterPlanWithoutRecord(page)
   const answer = async (name: string | RegExp) => {

@@ -13,7 +13,7 @@ for (const [event, minutes, seconds] of [
   test(`${event}: actual intake, explicit pace application and local reload`, async ({ page }) => {
     await page.setViewportSize({ width: 360, height: 800 })
     await page.goto("/?app=1")
-    await page.getByRole("button", { name: "훈련 계획 받기", exact: true }).click()
+    await page.getByRole("button", { name: "훈련 계획 만들기", exact: true }).click()
     await page.getByRole("button", { name: event, exact: true }).click()
     await page.getByRole("button", { name: /내 기록/ }).first().click()
     await page.getByLabel("분", { exact: true }).fill(String(minutes))
@@ -50,7 +50,7 @@ for (const [event, minutes, seconds] of [
 test("compact first recommendation remains readable at narrow widths and text zoom", async ({ page }, info) => {
   await page.setViewportSize({ width: 360, height: 800 })
   await page.goto("/?app=1")
-  await page.getByRole("button", { name: "훈련 계획 받기", exact: true }).click()
+  await page.getByRole("button", { name: "훈련 계획 만들기", exact: true }).click()
   await page.getByRole("button", { name: "5km", exact: true }).click()
   await page.getByRole("button", { name: /기록 없이/ }).click()
   await page.getByRole("button", { name: /훈련 계획에 맞춰 달려 본 경험/ }).press("Enter")

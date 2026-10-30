@@ -9,7 +9,7 @@ for (const width of [320, 375]) {
       await page.route("**/*", route => new URL(route.request().url()).hostname === "127.0.0.1" ? route.continue() : route.abort())
       await page.goto("/?app=1&uitest=1")
       const click = (name: string) => page.getByRole("button", { name, exact: true }).click()
-      await click("오늘 운동 기록 쓰기")
+      await click("운동 내용도 기록하기")
       await page.getByText("메모·운동 내용 먼저 쓰기", { exact: true }).click()
       await click("메모 먼저 쓰기")
       await page.getByRole("radio", { name: "훈련 메모", exact: true }).check()
