@@ -298,6 +298,24 @@ async function openComparison(page: Page) {
   await expect(page.getByRole("region", { name: "다른 계획 비교", exact: true })).toBeVisible()
 }
 
+test("saved receipt opens the exact journal among two records on the same date", async ({ page, context }) => {
+  const account = await mockAccount()
+  await account.install(context)
+  await openImport(page, { format: "tcx", mimeType: "application/xml", confirmedMeaning: "TIMER",
+    content: tcx.replaceAll("01:00:00", "00:00:00").replace("<DistanceMeters>9000</DistanceMeters>", "<DistanceMeters>1000</DistanceMeters>") })
+  await page.getByRole("button", { name: /고른 1건 일지에 저장/u }).click()
+  await expect(page.getByTestId("import-saved")).toContainText("계정에 저장됨 1건")
+  await openImport(page)
+  await page.getByRole("button", { name: /고른 1건 일지에 저장/u }).click()
+  await expect(page.getByTestId("import-saved")).toContainText("계정에 저장됨 1건")
+  expect(account.documents.size).toBe(2)
+  await page.getByRole("list", { name: "계정 저장이 확인된 일지" }).getByRole("button").click()
+  const opened = page.locator(".journal-entry-disclosure__body:not([hidden])")
+  await expect(opened).toHaveCount(1)
+  await expect(opened.locator(".journal-entry-metric").filter({ hasText: "거리" })).toContainText("10")
+  await expect(page.locator(".journal-entry-disclosure__body[hidden]")).toHaveCount(1)
+})
+
 test("TCX account acknowledgement -> report -> pace plan saved/reopened -> confirmed original comparison saved/reloaded", async ({ page, context, browser }, testInfo) => {
   const account = await mockAccount()
   await account.install(context)

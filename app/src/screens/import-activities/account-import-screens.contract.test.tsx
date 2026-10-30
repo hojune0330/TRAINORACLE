@@ -24,6 +24,8 @@ vi.mock("../../domain/account/account-calendar-decoration-service", () => ({
 }))
 vi.mock("../../domain/account/account-journal-record-service", () => ({
   accountJournalRecordsEnabled: () => true, hydrateAccountJournalRecords: api.hydrate,
+  refreshAccountJournalRecordsForImport: api.hydrate,
+  retryAccountJournalFileImport: async () => null,
   persistAccountJournalRecord: api.persist, accountJournalDeletedDocuments: () => [],
   accountJournalDocumentId: async (_owner: string, id: string) => id,
   readAccountJournalWriteBase: async () => ({ entry: null, revision: 0, contentFingerprint: null }),

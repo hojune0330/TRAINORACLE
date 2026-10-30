@@ -121,7 +121,7 @@ it("does not advertise tools whose callbacks are unavailable", () => {
   const about = screen.getByRole("button", { name: "앱 정보·개인정보·문의" })
   expect(about).not.toHaveAccessibleDescription()
   fireEvent.click(about)
-  expect(screen.getByRole("link", { name: /^기기 연동 상태/ })).toBeVisible()
+  expect(screen.getByRole("button", { name: /^기기 연동 상태/ })).toBeVisible()
 })
 
 it("returns each management view to More without leaving the screen", () => {

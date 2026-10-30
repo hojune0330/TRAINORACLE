@@ -51,17 +51,15 @@ test(`uses the diary flow with ${hasEarnedHistory ? "previously earned" : "no ba
 
   await page.goto("/?app=1&uitest=1")
 
-  // Home now opens the condition journal; legacy DailyContextTags remain
-  // covered by their component contract, not a nonexistent home control.
-  await page.getByRole("button", { name: "컨디션·메모", exact: true }).click()
+  // The redesigned home keeps condition inputs in the memo's optional guide.
+  await page.getByText("컨디션 추가", { exact: true }).click()
   await page.getByRole("button", { name: "기분", exact: true }).click()
   const goodMood = page.getByRole("button", { name: "기분 4 좋음", exact: true })
   await goodMood.click()
   await expect(goodMood).toHaveAttribute("aria-pressed", "true")
   await page.getByRole("button", { name: "기분 입력 안 함", exact: true }).click()
   await expect(goodMood).toHaveAttribute("aria-pressed", "false")
-  await page.getByRole("button", { name: "← 뒤로", exact: true }).click()
-  await page.getByRole("button", { name: "← 뒤로", exact: true }).click()
+  await page.getByRole("button", { name: "다른 항목", exact: true }).click()
 
   // Historical entries stay visible; only a stored award history supplies past points.
   const balance = `베타 포인트 · 사용 가능 ${hasEarnedHistory ? 32 : 0}P`
@@ -72,7 +70,7 @@ test(`uses the diary flow with ${hasEarnedHistory ? "previously earned" : "no ba
   await editor.getByRole("button", { name: "꾸미기 재료 도구" }).click()
   await expect(editor.getByText(balance, { exact: true })).toBeVisible()
   await editor.getByRole("button", { name: "꾸미기 완료" }).click()
-  await expect(page.getByRole("heading", { name: "내 기록", exact: true })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "훈련과 기록", exact: true })).toBeVisible()
 
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "일지", exact: true }).click()
   await page.getByRole("radio", { name: "기록 묶음" }).click()
@@ -85,7 +83,7 @@ test(`uses the diary flow with ${hasEarnedHistory ? "previously earned" : "no ba
   await expect(cycleRange).not.toHaveText(previousRange ?? "")
 
   await page.getByRole("navigation", { name: "일지 메뉴" }).getByRole("button", { name: "일지 나가기" }).click()
-  await expect(page.getByRole("heading", { name: "내 기록", exact: true })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "훈련과 기록", exact: true })).toBeVisible()
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "홈" }).click()
   await page.getByRole("button", { name: "더보기", exact: true }).click()
   await expect(page.getByRole("heading", { name: "배우기", exact: true })).toBeVisible()

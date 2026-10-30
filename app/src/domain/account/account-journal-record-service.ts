@@ -490,6 +490,27 @@ export async function retryAccountJournalFileObservation(entryId: string): Promi
   }, failedSave)
 }
 
+/** Explicitly selected file only: replay its durable save, never another edit or mutation. */
+export async function retryAccountJournalFileImport(entryId: string, observation: FileObservationV1): Promise<SaveResult> {
+  let ctx: ReturnType<typeof context>, selected: FileObservationV1
+  try { ctx = context(); selected = structuredClone(observation) } catch { return failedSave }
+  if (!ctx) return failedSave
+  const current = ctx
+  const normalized = (value: FileObservationV1) => ({ ...value,
+    confirmation: value.confirmation ?? { durationMeaning: null, sport: null } })
+  return serialize<SaveResult>(current, async () => {
+    const documentId = await accountJournalDocumentId(current.ownerId, entryId)
+    if (!current.current() || lifecycleRequests.has(documentId) || deleted.has(documentId)) return failedSave
+    const view = await current.buffer.read(current.ownerId, documentId)
+    if (!current.current() || !view?.pending || view.blocked || view.resolvedDeletion
+      || view.pending.mutation || view.pending.writePurpose !== "FILE_OBSERVATION"
+      || view.pending.sequence !== view.localSequence || !sameValue(view.pending.draft, view.draft)
+      || view.draft.entry.kind !== "post-session" || !view.draft.entry.fileObservation
+      || !sameValue(normalized(view.draft.entry.fileObservation), normalized(selected))) return failedSave
+    return flushObservationCorrection(current, documentId)
+  }, failedSave)
+}
+
 type ComparisonMutation = Exclude<AccountJournalMutation, { action: "correctImportedObservation" }>
 type WriteBase = Pick<AccountJournalWriteBase, "revision" | "contentFingerprint">
 
@@ -573,6 +594,15 @@ export async function hydrateAccountJournalRecords() {
   try { return await run } finally { if (hydration === run) hydration = null }
 }
 
+/** A fresh import review never sends the account's unrelated durable outbox. */
+export async function refreshAccountJournalRecordsForImport(): Promise<boolean> {
+  let ctx: ReturnType<typeof context>
+  try { ctx = context() } catch { return false }
+  if (!ctx) return false
+  const current = ctx
+  return serialize(current, () => hydrate(current, false), false)
+}
+
 /**
  * Export-time freshness gate. Unlike the runtime hydration entry point, this
  * always queues a new authenticated list read after any work already in
@@ -592,7 +622,7 @@ export async function refreshAccountJournalRecordsForExport(): Promise<boolean> 
   return serialize(current, () => hydrate(current), false)
 }
 
-async function hydrate(ctx: Context) {
+async function hydrate(ctx: Context, replayPending = true) {
   try {
     await checkAccountJournalBodyPartSupport(ctx.ownerId, ctx.current)
     if (!ctx.current()) return false
@@ -629,7 +659,7 @@ async function hydrate(ctx: Context) {
       if (!ctx.current()) return false
       await applyTombstone(ctx, item.documentId, item.revision)
     }
-    for (const item of local) {
+    for (const item of replayPending ? local : []) {
       if (!ctx.current()) return false
       if (!deleted.has(item.documentId) && !lifecycleRequests.has(item.documentId)
         && !item.blocked && item.state !== "DRAFT_ACKNOWLEDGED") {
@@ -643,6 +673,17 @@ async function hydrate(ctx: Context) {
       if (!ctx.current()) return false
       if (item.revision <= (deleted.get(item.documentId) ?? 0)) throw new Error("Stale remote revision")
       const before = await ctx.buffer.read(ctx.ownerId, item.documentId)
+      if (!ctx.current()) return false
+      if (!replayPending && before && before.state !== "DRAFT_ACKNOWLEDGED") {
+        if (item.revision < before.serverRevision) throw new Error("Stale remote revision")
+        // A newer list body can be the result of a lost ACK. Keep the immutable
+        // pending operation until explicit selected replay (or normal autosync).
+        markCurrent(ctx, item.document, item.revision)
+        if (!ctx.current()) return false
+        confirmAccountJournalProjection(ctx.ownerId, { ...item.document.entry, syncState: "synced" })
+        publish(ctx, before)
+        continue
+      }
       // The replay above may already have acknowledged a newer revision.
       if (!before || item.revision >= before.serverRevision) {
         await ctx.buffer.importRemote(ctx.ownerId, item.documentId, item.document, item.revision)

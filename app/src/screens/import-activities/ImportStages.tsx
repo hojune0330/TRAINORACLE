@@ -10,6 +10,7 @@ import { InfoDisclosure } from "../../components/InfoDisclosure"
 import { accountJournalRecordsEnabled } from "../../domain/account/account-journal-record-service"
 import { fileAnalysisFormats } from "../../domain/import/file-analysis-policy"
 import { FileObservationReview } from "./FileObservationReview"
+import { ImportedActivityFacts, importedActivityFactLabels } from "./ImportedActivityFacts"
 import type { ImportedActivity } from "../../domain/import/activity-file"
 import "./file-analysis.css"
 import { nextActionFeedback } from "../../components/next-action"
@@ -193,6 +194,8 @@ export function ReviewStage({ drafts, result, selected, intents, onIntent, onTog
         {drafts.map((draft, index) => {
           const { activity } = draft
           const intent = intents.get(index)
+          const facts = importedActivityFactLabels(activity)
+          const choiceLabel = `운동 ${index + 1}, ${compactDate(activity.date)} ${activity.name}, 거리 ${facts.distance}, ${facts.timeLabel} ${facts.duration}`
           return (
             <div key={`${activity.date}-${index}`} data-testid="import-draft-row" style={{
               display: "grid", gridTemplateColumns: "44px 1fr", gap: 10,
@@ -205,7 +208,7 @@ export function ReviewStage({ drafts, result, selected, intents, onIntent, onTog
                   disabled={busy}
                   checked={selected.has(index)}
                   onChange={() => onToggle(index)}
-                  aria-label={`${compactDate(activity.date)} ${activity.name} 가져오기`}
+                  aria-label={`${choiceLabel} 가져오기`}
                   style={{ width: 20, height: 20, margin: 0 }}
                 />
               </label>
@@ -220,16 +223,10 @@ export function ReviewStage({ drafts, result, selected, intents, onIntent, onTog
                   )}
                 </span>
                 <span style={{ display: "block", fontFamily: "var(--sans)", fontSize: "var(--fs-body)", fontWeight: 500, marginTop: 3 }}>{activity.name}</span>
-                <span style={{ display: "block", ...mono, fontSize: "var(--fs-body-sm)", color: "var(--ink-3)", lineHeight: 1.6, marginTop: 2 }}>
-                  {[
-                    activity.distanceKm === "" ? null : `${Number(activity.distanceKm).toLocaleString("ko-KR", { maximumFractionDigits: 3 })}km`,
-                    activity.durationMin === "" ? null : `${Number(activity.durationMin).toLocaleString("ko-KR", { maximumFractionDigits: 2 })}분`,
-                    activity.avgPace === "" ? null : `${activity.avgPace}/km`,
-                  ].filter((part) => part !== null).join(" · ") || "기록 값 없음"}
-                </span>
+                <ImportedActivityFacts activity={activity} />
                 {selected.has(index) && <select
                   disabled={busy}
-                  aria-label={`${activity.name} 저장 방식`}
+                  aria-label={`${choiceLabel} 저장 방식`}
                   value={needsChoice(draft, intent) ? "" : intent?.kind === "SAVE_SEPARATE" ? "separate"
                     : intent?.kind === "EXCLUDE" ? "exclude" : intent?.kind === "USE_EXISTING" ? `use:${intent.entryId}`
                       : intent?.kind === "ADD_TO_EXISTING" ? intent.entryId : ""}
@@ -292,12 +289,13 @@ export function ReviewStage({ drafts, result, selected, intents, onIntent, onTog
   )
 }
 
-export function SavedStage({ outcome, analysisAvailable = false, onOpenLog, onOpenAnalysis, onOpenSummary, onRestart, onRetry, busy = false }: {
+export function SavedStage({ outcome, analysisAvailable = false, onOpenLog, onOpenEntry, onOpenAnalysis, onOpenSummary, onRestart, onRetry, busy = false }: {
   readonly busy?: boolean
   readonly analysisAvailable?: boolean
   readonly onRetry?: () => void
   readonly outcome: ImportSaveResult
   readonly onOpenLog?: () => void
+  readonly onOpenEntry?: (date: string, entryId: string) => void
   readonly onOpenAnalysis?: () => void
   readonly onOpenSummary?: (() => void) | undefined
   readonly onRestart: () => void
@@ -326,6 +324,10 @@ export function SavedStage({ outcome, analysisAvailable = false, onOpenLog, onOp
     {((outcome.reused ?? 0) > 0 || (outcome.excluded ?? 0) > 0) && <p>기존 기록 확인 {outcome.reused ?? 0}건 · 가져오기 제외 {outcome.excluded ?? 0}건</p>}
     <p>원본 파일은 그대로 보관해 주세요. 연결 대기는 계정 저장 완료가 아니에요.</p>
     {outcome.stopReason && <p role="alert">나머지 저장을 멈췄어요. 이미 저장된 기록은 그대로 있어요. 연결·로그인·앱 업데이트 상태를 확인한 뒤 다시 시도해 주세요.</p>}
+    {confirmed && onOpenEntry && (outcome.confirmedEntries?.length ?? 0) > 0 && <ul className="import-confirmed-entries" aria-label="계정 저장이 확인된 일지">
+      {outcome.confirmedEntries!.map(entry => <li key={entry.id}><button type="button" disabled={busy}
+        onClick={() => onOpenEntry(entry.date, entry.id)}>{compactDate(entry.date)} 저장한 일지 열기</button></li>)}
+    </ul>}
     <div className="next-action-group">
       {actions.filter(action => action.id === primaryAction).map(renderAction)}
       <div className="next-action-alternatives">

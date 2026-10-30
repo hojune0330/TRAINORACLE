@@ -32,9 +32,10 @@ type Stage =
   | { readonly step: "review"; readonly drafts: readonly ImportDraft[]; readonly result: ActivityParseResult }
   | { readonly step: "saved"; readonly outcome: ImportSaveResult; readonly format: ImportFormat; readonly analysisCandidates: readonly ImportAnalysisCandidate[] }
 
-export function ImportActivities({ onBack, onOpenLog, onOpenAnalysis, onOpenSummary }: {
+export function ImportActivities({ onBack, onOpenLog, onOpenEntry, onOpenAnalysis, onOpenSummary }: {
   readonly onBack?: () => void
   readonly onOpenLog?: () => void
+  readonly onOpenEntry?: (date: string, entryId: string) => void
   readonly onOpenAnalysis?: () => void
   readonly onOpenSummary?: () => void
 }) {
@@ -283,6 +284,7 @@ export function ImportActivities({ onBack, onOpenLog, onOpenAnalysis, onOpenSumm
             outcome={stage.outcome}
             analysisAvailable={hasConfirmedImportAnalysis(stage)}
             onOpenLog={onOpenLog}
+            onOpenEntry={onOpenEntry}
             onOpenAnalysis={onOpenAnalysis}
             onOpenSummary={onOpenSummary}
             onRestart={() => { setStage({ step: "pick" }); setSelected(new Set()); setFailure(null) }}

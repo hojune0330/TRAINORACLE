@@ -1,6 +1,6 @@
 import type { JournalEntry, PostSessionEntry } from "../journal-schema"
 import { activeLocalAccount, onLocalJournalScopeChange } from "../account/local-journal-ownership"
-import { accountJournalDeletedDocuments, accountJournalDocumentId, accountJournalEntryFingerprint, accountJournalRecordsEnabled, hydrateAccountJournalRecords, persistAccountJournalRecord, readAccountJournalWriteBase, type AccountJournalWriteBase } from "../account/account-journal-record-service"
+import { accountJournalDeletedDocuments, accountJournalDocumentId, accountJournalEntryFingerprint, accountJournalRecordsEnabled, refreshAccountJournalRecordsForImport, retryAccountJournalFileImport, persistAccountJournalRecord, readAccountJournalWriteBase, type AccountJournalWriteBase } from "../account/account-journal-record-service"
 import { readAccountJournalPrivateEntry, readAccountJournalProjection } from "../account/account-journal-projection"
 import { buildImportDrafts, confirmedFileActivity, fileImportCandidateKind, importedProvenance, isWaitingCandidate, sameFileObservation, toImportedEntry } from "./import-draft"
 import type { ImportDraftSelection, ImportFormat, ImportSaveResult } from "./import-draft"
@@ -30,18 +30,22 @@ export async function isAccountImportDeleted(ownerId: string, entryId: string) {
 export async function buildAccountImportDrafts(activities: readonly ImportedActivity[]) {
   const scope = createAccountImportScope()
   try {
-    if (!scope.current() || !await hydrateAccountJournalRecords() || !scope.current()) return null
+    if (!scope.current() || !await refreshAccountJournalRecordsForImport() || !scope.current()) return null
     const drafts = buildImportDrafts(activities, readAccountJournalProjection().map(entry => ({ ...entry, syncState: "local" })))
     const bases = new Map<string, WriteBase>()
     for (const candidate of drafts.flatMap(draft => [...draft.reconciliationCandidates, ...(draft.identityCandidates ?? [])])) {
       if (bases.has(candidate.id)) continue
       const base = await readAccountJournalWriteBase(candidate.id)
-      if (!scope.current() || !base?.entry || base.entry.savedAt !== candidate.savedAt) return null
+      if (!scope.current()) return null
+      // Pending receipt recovery is an explicit selection action. A missing
+      // clean base is never overwrite authority and must not block other rows.
+      if (!base?.entry) continue
+      if (base.entry.savedAt !== candidate.savedAt) return null
       bases.set(candidate.id, { revision: base.revision, contentFingerprint: base.contentFingerprint })
     }
     return drafts.map((draft, sourceIndex) => ({ ...draft, sourceIndex,
       accountWriteBases: Object.fromEntries([...draft.reconciliationCandidates, ...(draft.identityCandidates ?? [])]
-        .map(candidate => [candidate.id, bases.get(candidate.id)!])),
+        .filter(candidate => bases.has(candidate.id)).map(candidate => [candidate.id, bases.get(candidate.id)!])),
     }))
   } finally { scope.dispose() }
 }
@@ -94,14 +98,18 @@ export function createAccountImportConfirmation(selections: readonly ImportDraft
     })
   }
   const run = async (): Promise<ImportSaveResult | null> => {
-    const result = { account: 0, pending: 0, saved: 0, merged: 0, reused: 0, excluded: 0, conflicts: 0, failed: 0, total: chosen.length }
+    const confirmedEntries: { id: string; date: string }[] = []
+    const confirmEntry = (entry: JournalEntry) => {
+      if (!confirmedEntries.some(item => item.id === entry.id)) confirmedEntries.push({ id: entry.id, date: entry.date })
+    }
+    const result = { account: 0, pending: 0, saved: 0, merged: 0, reused: 0, excluded: 0, conflicts: 0, failed: 0, total: chosen.length, confirmedEntries }
     const pendingRows = new Set<number>()
     if (!scope.current()) return null
     if (chosen.every(row => row.intent.kind === "EXCLUDE")) {
       lastResult = { ...result, excluded: chosen.length }
       return lastResult
     }
-    if (!await hydrateAccountJournalRecords()) return scope.current()
+    if (!await refreshAccountJournalRecordsForImport()) return scope.current()
       ? { ...(lastResult ?? { ...result, failed: chosen.length }), stopReason: "ACCOUNT_UNAVAILABLE" } : null
     const freshDrafts = includeFileObservation ? buildImportDrafts(chosen.filter(row => row.intent.kind !== "EXCLUDE")
       .map(row => row.draft.activity), readAccountJournalProjection()) : []
@@ -134,13 +142,21 @@ export function createAccountImportConfirmation(selections: readonly ImportDraft
         const sourceMatches = observation?.sourceActivityId != null ? readAccountJournalProjection().filter((entry): entry is PostSessionEntry =>
           entry.kind === "post-session" && entry.fileObservation?.sourceObservationKey === observation.sourceObservationKey) : []
         if (sourceMatches.length > 1) item.legacyConflict = true
-        const matchedSource = sourceMatches[0]
+        const matchedSource = sourceMatches.length === 1 ? sourceMatches[0] : undefined
         if (matchedSource) {
           id = matchedSource.id
           const sameFacts = sameFileObservation(matchedSource.fileObservation!, observation!)
           if (!sameFacts) item.legacyConflict = true
           else {
-            const base = await readAccountJournalWriteBase(id)
+            let base = await readAccountJournalWriteBase(id)
+            if (!base && scope.current()) {
+              const replay = await retryAccountJournalFileImport(id, observation!)
+              if (!scope.current()) return null
+              if (replay.ok && replay.storage === "PENDING") { pendingRows.add(index); result.pending++; continue }
+              if (replay.ok && replay.storage === "ACCOUNT" && await refreshAccountJournalRecordsForImport() && scope.current()) {
+                base = await readAccountJournalWriteBase(id)
+              }
+            }
             if (!scope.current()) return null
             if (!base?.entry || base.entry.kind !== "post-session" || !base.entry.fileObservation
               || base.entry.fileObservation.sourceObservationKey !== observation!.sourceObservationKey
@@ -167,12 +183,13 @@ export function createAccountImportConfirmation(selections: readonly ImportDraft
       if (item?.legacyConflict) { result.conflicts++; continue }
       if (acknowledged.has(index)) {
         result.account++; if (item?.alreadyConfirmed) result.reused++; else if (item?.merged) result.merged++; else result.saved++
+        if (item) confirmEntry(item.entry)
         continue
       }
       const entryId = "entryId" in intent ? intent.entryId : item?.entry.id
       if (!entryId) { result.failed++; continue }
       // Rehydrate immediately before overwriting, including on retry.
-      if ("entryId" in intent && !await hydrateAccountJournalRecords()) {
+      if ("entryId" in intent && !await refreshAccountJournalRecordsForImport()) {
         if (!scope.current()) return null
         result.failed++; continue
       }
@@ -181,7 +198,7 @@ export function createAccountImportConfirmation(selections: readonly ImportDraft
       if (!scope.current()) return null
       if (deleted) { result.conflicts++; continue }
       if (item?.alreadyConfirmed) {
-        acknowledged.add(index); result.account++; result.reused++; continue
+        acknowledged.add(index); result.account++; result.reused++; confirmEntry(item.entry); continue
       }
       if (!item && "entryId" in intent) {
         const observation = includeFileObservation ? draft.activity.observation : undefined
@@ -189,8 +206,19 @@ export function createAccountImportConfirmation(selections: readonly ImportDraft
           && entry.kind === "post-session" && entry.fileObservation?.sourceObservationKey === observation.sourceObservationKey)) {
           result.conflicts++; continue
         }
-        const expectedBase = draft.accountWriteBases?.[intent.entryId]
-        const base = await readAccountJournalWriteBase(intent.entryId)
+        let expectedBase = draft.accountWriteBases?.[intent.entryId]
+        let base = await readAccountJournalWriteBase(intent.entryId)
+        if (!base && !expectedBase && observation && intent.kind === "USE_EXISTING"
+          && draft.identityCandidates?.some(candidate => candidate.id === intent.entryId && candidate.kind === "REUSE")) {
+          const replay = await retryAccountJournalFileImport(intent.entryId, observation)
+          if (!scope.current()) return null
+          if (replay.ok && replay.storage === "PENDING") { pendingRows.add(index); result.pending++; continue }
+          if (replay.ok && replay.storage === "ACCOUNT" && await refreshAccountJournalRecordsForImport() && scope.current()) {
+            base = await readAccountJournalWriteBase(intent.entryId)
+            if (base?.entry?.kind === "post-session" && base.entry.fileObservation
+              && sameFileObservation(base.entry.fileObservation, observation)) expectedBase = base
+          }
+        }
         if (!scope.current()) return null
         if (!expectedBase || !base || base.revision !== expectedBase.revision
           || base.contentFingerprint !== expectedBase.contentFingerprint) { result.conflicts++; continue }
@@ -205,7 +233,7 @@ export function createAccountImportConfirmation(selections: readonly ImportDraft
         }
         if (intent.kind === "USE_EXISTING" && candidateKind === "REUSE") {
           prepared.set(index, { entry: current, merged: false, identified: true, alreadyConfirmed: true })
-          acknowledged.add(index); result.account++; result.reused++; continue
+          acknowledged.add(index); result.account++; result.reused++; confirmEntry(current); continue
         }
         const source = includeFileObservation && draft.activity.observation !== undefined
           ? confirmedFileActivity(draft.activity, format) : draft.activity
@@ -246,7 +274,7 @@ export function createAccountImportConfirmation(selections: readonly ImportDraft
         }
         else if (saved.storage === "CONFLICT") result.conflicts++
         else if (saved.storage === "PENDING") { pendingRows.add(index); result.pending++ }
-        else { acknowledged.add(index); result.account++; if (item.merged) result.merged++; else result.saved++ }
+        else { acknowledged.add(index); result.account++; confirmEntry(item.entry); if (item.merged) result.merged++; else result.saved++ }
       } catch { if (!scope.current()) return null; result.failed++ }
     }
     lastResult = { ...result }

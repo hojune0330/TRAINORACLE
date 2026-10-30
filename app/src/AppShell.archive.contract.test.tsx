@@ -142,18 +142,17 @@ describe("AppShell journal archive routing", () => {
     expect(screen.queryByRole("button", { name: "일지 다시 불러오기" })).toBeNull()
   })
 
-  it("returns a Minji example opened from home back to home", async () => {
+  it("returns a Minji example opened from More back to More", async () => {
     window.localStorage.clear()
     await initializeCanonicalJournalFixture()
     const user = userEvent.setup()
     render(<AppShell />)
 
-    await user.click(screen.getByRole("button", { name: "일지 예시 보기" }))
+    await user.click(screen.getByRole("button", { name: "더보기" }))
+    await user.click(await screen.findByRole("button", { name: "일지 예시 보기" }))
     await user.click(await screen.findByRole("button", { name: /돌아가기/u }))
 
-    expect(screen.getByRole("heading", {
-      name: "운동 분석과 훈련 계획",
-    })).toBeVisible()
+    expect(screen.getByRole("heading", { name: "더보기" })).toBeVisible()
   })
 
   it("opens the journal archive from the dedicated journal tab", async () => {
@@ -229,10 +228,8 @@ describe("AppShell journal archive routing", () => {
     const user = userEvent.setup()
     render(<AppShell />)
 
-    expect(screen.getByRole("heading", {
-      name: "운동 분석과 훈련 계획",
-    })).toBeVisible()
-    expect(screen.getByRole("button", { name: "오늘 운동 기록 쓰기" })).toBeVisible()
+    expect(screen.getByRole("heading", { name: "훈련과 기록" })).toBeVisible()
+    expect(screen.getByRole("button", { name: "운동 내용도 기록하기" })).toBeVisible()
     expect(screen.getByRole("button", { name: "일지" })).toBeVisible()
     expect(screen.queryByRole("button", { name: "오늘 방문 확인 +1P" })).not.toBeInTheDocument()
     const decorate = screen.getByRole("button", { name: "일지 꾸미기" })

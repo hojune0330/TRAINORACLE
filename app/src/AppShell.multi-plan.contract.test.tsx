@@ -55,7 +55,7 @@ it("keeps the supplied V6 evidence reader deferred when a stored V3 next-trainin
   const resolver = vi.fn(() => null), readEvidence = vi.fn(() => [])
   planMode.actual = true
   render(<AppShell multiPlanRuntime={{ multiAdjustmentResolverV3: resolver, readMultiAdjustedEvidenceV3: readEvidence }} />)
-  const nextTraining = screen.getByRole("button", { name: /^다음 훈련 ·/u })
+  const nextTraining = screen.getByRole("button", { name: new RegExp(`^${startDate} 오전 훈련 상세$`, "u") })
   expect(readEvidence).not.toHaveBeenCalled()
   fireEvent.click(nextTraining)
   expect(planProps.mock.calls.at(-1)![0].returnToSession).toMatchObject({ plannedDate: startDate, sessionDay: 1, sessionSlot: "AM" })

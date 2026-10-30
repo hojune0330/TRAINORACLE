@@ -12,16 +12,19 @@ import "../styles/home-menu.css"
 import { captureReaderPosition, restoreReaderPosition, type ReaderPosition } from "../navigation/readerPosition"
 import { useNavigationReturnFrame } from "../hooks/useNavigationReturnFrame"
 import { AppIntroduction } from "./AppIntroduction"
+import { DeviceConnections } from "./DeviceConnections"
 
-export type MoreView = "tools" | "learning" | "account" | "backup" | "about" | "introduction"
+export type MoreView = "tools" | "learning" | "account" | "backup" | "about" | "introduction" | "connections"
 
 const VIEW_TITLES: Record<MoreView, string> = {
   tools: "더보기", learning: "훈련 배우기", account: "계정·기록 보관",
   backup: "백업·복원·휴지통", about: "앱 정보·개인정보·문의", introduction: "앱 소개",
+  connections: "기기 연동 상태",
 }
 
 export type MoreProps = {
   readonly view?: MoreView
+  readonly connectionOrigin?: MoreView
   readonly onViewChange?: (view: MoreView) => void
   readonly onBack: () => void
   readonly onOpenMinji: () => void
@@ -46,6 +49,7 @@ export type MoreProps = {
 
 export function More({
   view,
+  connectionOrigin: suppliedConnectionOrigin,
   onViewChange,
   onBack,
   onOpenMinji,
@@ -73,10 +77,19 @@ export function More({
   const heading = React.useRef<HTMLHeadingElement>(null)
   const previousView = React.useRef<MoreView | null>(null)
   const menuReturn = React.useRef<ReaderPosition | null>(null)
+  const connectionOrigin = React.useRef<MoreView>("tools")
+  if (suppliedConnectionOrigin) connectionOrigin.current = suppliedConnectionOrigin
+  const connectionReturn = React.useRef<ReaderPosition | null>(null)
+  const connectionStartsAtTop = React.useRef(false)
   const { schedule } = useNavigationReturnFrame()
   const readerRegion = () => heading.current?.closest<HTMLElement>(".app-scroll-region") ?? heading.current?.closest<HTMLElement>(".more-screen") ?? null
   const changeView = (next: MoreView) => {
     const region = readerRegion()
+    if (next === "connections") {
+      connectionOrigin.current = activeView
+      connectionReturn.current = captureReaderPosition(region)
+      connectionStartsAtTop.current = true
+    }
     if (activeView === "tools" && next !== "tools") menuReturn.current = captureReaderPosition(region)
     setInternalView(next)
     onViewChange?.(next)
@@ -86,7 +99,20 @@ export function More({
   }
   React.useEffect(() => {
     if (previousView.current === activeView) return
+    const fromConnection = previousView.current === "connections" && activeView === connectionOrigin.current
     previousView.current = activeView
+    if (activeView === "connections" && connectionStartsAtTop.current) {
+      connectionStartsAtTop.current = false
+      const region = readerRegion()
+      if (region) region.scrollTop = 0
+    }
+    if (fromConnection && connectionReturn.current) {
+      const position = connectionReturn.current
+      connectionReturn.current = null
+      if (activeView === "tools") menuReturn.current = null
+      schedule(() => restoreReaderPosition(readerRegion(), position))
+      return
+    }
     if (activeView === "tools" && menuReturn.current) {
       const position = menuReturn.current
       menuReturn.current = null
@@ -97,7 +123,7 @@ export function More({
   return (
     <div className="more-screen">
       <header className="utility-header">
-        <button type="button" onClick={() => activeView === "tools" ? onBack() : changeView("tools")} aria-label={activeView === "tools" ? "홈으로 돌아가기" : "더보기로 돌아가기"} title="뒤로">
+        <button type="button" onClick={() => activeView === "tools" ? onBack() : changeView(activeView === "connections" ? connectionOrigin.current : "tools")} aria-label={activeView === "tools" ? "홈으로 돌아가기" : activeView === "connections" && connectionOrigin.current === "about" ? "앱 정보로 돌아가기" : "더보기로 돌아가기"} title="뒤로">
           <ArrowLeft aria-hidden="true" size={19} />
         </button>
         <div>
@@ -121,6 +147,7 @@ export function More({
         {(onOpenImport || onOpenRecords) && <MenuGroup title="기록 도구">
           {onOpenRecords && <MenuAction category="record" icon={Flag} label="경기 기록 추가·수정" onClick={onOpenRecords} />}
           {onOpenImport && <MenuAction category="record" icon={Watch} label="워치 파일 가져오기" onClick={onOpenImport} />}
+          <MenuAction category="record" icon={Watch} label="기기 연동 상태" onClick={() => changeView("connections")} />
         </MenuGroup>}
         <MenuGroup title="배우기">
           <MenuAction category="journal" icon={BookOpen} label="일지 예시 보기" onClick={onOpenMinji} />
@@ -134,6 +161,7 @@ export function More({
           <MenuAction icon={Info} label={VIEW_TITLES.about} onClick={() => changeView("about")} />
         </MenuGroup>
         </>}
+        {activeView === "connections" && <DeviceConnections onOpenImport={onOpenImport} />}
         {activeView === "introduction" && <AppIntroduction
           onOpenPlan={onOpenPlan} onOpenJournal={onOpenJournal} onOpenRewards={onOpenRewards}
           onOpenAnalysis={onOpenAnalysis} onOpenPaceCalculator={onOpenPaceCalculator}
@@ -173,7 +201,7 @@ export function More({
         ) : (
           <MenuAction icon={MessageSquareText} label="문의 게시판" detail={feedbackAvailable ? undefined : "준비 중"} onClick={onOpenFeedback} />
         )}
-        <MenuAction icon={Watch} label="기기 연동 상태" detail="Garmin · COROS" href="./support.html" target="_blank" />
+        <MenuAction icon={Watch} label="기기 연동 상태" detail="Garmin · COROS" onClick={() => changeView("connections")} />
         </MenuGroup>
         <MenuGroup title="개인정보와 이용 안내">
           <MenuAction icon={ShieldCheck} label="개인정보처리방침" href="./legal/privacy.html" target="_blank" />

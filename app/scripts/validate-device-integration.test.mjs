@@ -145,10 +145,10 @@ test("public endpoints are configured without JWT but push authentication remain
   assert.doesNotMatch(pushFunction, /console\.(log|info|debug|warn|error)/u)
 })
 
-test("callback and status endpoints make the application-pending state explicit", () => {
+test("callback retains its held state and public status describes release availability", () => {
   assert.match(callbackFunction, /authorizationAttempt \? 409 : 200/u)
   assert.doesNotMatch(callbackFunction, /accesstoken|client_secret|refresh_token/iu)
-  assert.match(statusFunction, /APPLICATION_PENDING/u)
+  assert.match(statusFunction, /CONNECTIONS_NOT_ENABLED/u)
   assert.match(statusFunction, /publicUserLinking: false/u)
   assert.match(statusFunction, /dataIngestion: "FAIL_CLOSED"/u)
 })

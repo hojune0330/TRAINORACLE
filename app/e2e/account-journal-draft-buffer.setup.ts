@@ -1,14 +1,17 @@
 import { fileURLToPath } from "node:url"
+import type { FullConfig } from "@playwright/test"
 import { createServer } from "vite"
 
 // Keep Vite in the runner process: Windows shell-tree teardown can hang even
 // after all tests pass. This owns only the dedicated loopback port, never a UI server.
-export default async function setup() {
+export default async function setup(config: FullConfig) {
   const server = await createServer({
     root: fileURLToPath(new URL("..", import.meta.url)),
     configLoader: "runner",
+    // Playwright clears outputDir before a run, including the shared test-results root.
+    // Keep optimizer files outside that tree so another test config cannot remove them.
     cacheDir: process.env.ACCOUNT_BROWSER_TEST_VITE_CACHE_DIR
-      ?? fileURLToPath(new URL("../test-results/account-draft-buffer-vite-cache", import.meta.url)),
+      ?? fileURLToPath(new URL("../node_modules/.vite/account-browser-tests", import.meta.url)),
     // Scan the actual browser harnesses, not retained dist-* HTML and bundles.
     // Explicit dynamic-import entries avoid discovering harness dependencies mid-test.
     optimizeDeps: {
@@ -54,7 +57,18 @@ export default async function setup() {
     server: { host: "127.0.0.1", port: 4381, strictPort: true },
     clearScreen: false,
   })
-  try { await server.listen() }
+  try {
+    await server.listen()
+    const includesRecordService = config.projects.some((project) =>
+      (Array.isArray(project.testMatch) ? project.testMatch : [project.testMatch])
+        .some((match) => match === "account-journal-record-service.spec.ts"))
+    if (includesRecordService) {
+      // Resolve the actual static fixture graph before the per-test timeout starts.
+      // warmupRequest reports transform errors; the browser tests still verify execution.
+      await server.warmupRequest("/e2e/fixtures/account-journal-record-service.ts")
+      await server.waitForRequestsIdle()
+    }
+  }
   catch (error) { await server.close(); throw error }
   return async () => { await server.close() }
 }
