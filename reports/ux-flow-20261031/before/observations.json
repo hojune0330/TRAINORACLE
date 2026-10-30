@@ -1,0 +1,28 @@
+{
+  "analysisMode": "false",
+  "measurements": [
+    {
+      "width": 320,
+      "selectedHeight": 292.859375,
+      "unselectedHeight": 240.859375,
+      "followingRowMovement": -52,
+      "overflow": false
+    },
+    {
+      "width": 375,
+      "selectedHeight": 272.0625,
+      "unselectedHeight": 220.0625,
+      "followingRowMovement": -52,
+      "overflow": false
+    },
+    {
+      "width": 430,
+      "selectedHeight": 272.0625,
+      "unselectedHeight": 220.0625,
+      "followingRowMovement": -52,
+      "overflow": false
+    }
+  ],
+  "journalBefore": null,
+  "writes": []
+}

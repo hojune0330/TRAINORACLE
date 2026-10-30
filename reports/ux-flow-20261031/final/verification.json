@@ -1,0 +1,86 @@
+{
+  "checks": [
+    "Home opens own empty result; examples require explicit selection; exit returns Home",
+    "Unavailable connections remain unavailable; import Back restores exact opener focus",
+    "Selections 2/1/0; retained exclusion and choices after malformed replacement; keyboard Space; no implicit writes",
+    "200% DOM text at 320px: no overflow or row movement; Enter saves exactly one; device scope and result focus; no account analysis"
+  ],
+  "sizes": [
+    {
+      "width": 320,
+      "followingRowMovement": 0,
+      "overflow": false,
+      "metricValuesTop": [
+        284.84375,
+        284.84375
+      ],
+      "targets": [
+        {
+          "tag": "LABEL",
+          "width": 276,
+          "height": 93.46875
+        },
+        {
+          "tag": "SELECT",
+          "width": 244,
+          "height": 44
+        }
+      ]
+    },
+    {
+      "width": 375,
+      "followingRowMovement": 0,
+      "overflow": false,
+      "metricValuesTop": [
+        265.34375,
+        265.34375
+      ],
+      "targets": [
+        {
+          "tag": "LABEL",
+          "width": 331,
+          "height": 93.46875
+        },
+        {
+          "tag": "SELECT",
+          "width": 299,
+          "height": 44
+        }
+      ]
+    },
+    {
+      "width": 430,
+      "followingRowMovement": 0,
+      "overflow": false,
+      "metricValuesTop": [
+        265.34375,
+        265.34375
+      ],
+      "targets": [
+        {
+          "tag": "LABEL",
+          "width": 386,
+          "height": 93.46875
+        },
+        {
+          "tag": "SELECT",
+          "width": 354,
+          "height": 44
+        }
+      ]
+    }
+  ],
+  "largeMovement": 0,
+  "fonts": [
+    {
+      "family": "Pretendard Variable",
+      "status": "loaded"
+    }
+  ],
+  "journalCount": 1,
+  "posts": [],
+  "limitations": [
+    "DOM text enlargement, not browser zoom or Dynamic Type",
+    "Synthetic local records, no personal account or native vendor app"
+  ]
+}

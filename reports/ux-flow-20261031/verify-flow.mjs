@@ -1,0 +1,115 @@
+import { chromium } from '../../app/node_modules/playwright-core/index.mjs'
+import { mkdir, writeFile } from 'node:fs/promises'
+import { fileURLToPath } from 'node:url'
+import assert from 'node:assert/strict'
+const directory = fileURLToPath(new URL('./final/', import.meta.url))
+await mkdir(directory, { recursive: true })
+const browser = await chromium.launch({ channel: 'chrome', headless: true })
+const context = await browser.newContext({ viewport: { width: 320, height: 812 }, reducedMotion: 'reduce' })
+const page = await context.newPage()
+const posts = []
+page.on('request', request => { if (request.method() === 'POST') posts.push(request.url()) })
+const journal = () => page.evaluate(() => JSON.parse(localStorage.getItem('to-local-journal.journal.v2') ?? '[]'))
+const checks = []
+try {
+  await page.goto('http://127.0.0.1:5183/?app=1')
+  const fonts = await page.evaluate(async () => {
+    await document.fonts.load('14px "Pretendard Variable"')
+    await document.fonts.ready
+    return [...document.fonts].map(font => ({ family: font.family, status: font.status }))
+  })
+  await page.getByRole('button', { name: '내 기록 분석', exact: true }).click()
+  const personal = page.getByRole('group', { name: '결과 종류' }).getByRole('button', { name: '내 기록', exact: true })
+  await personal.waitFor()
+  assert.equal(await personal.getAttribute('aria-pressed'), 'true')
+  await page.getByRole('heading', { name: '경기 기록이 아직 없어요', exact: true }).waitFor()
+  await page.getByRole('button', { name: '예시', exact: true }).click()
+  await page.getByText('내 기록을 분석한 결과가 아니에요', { exact: true }).waitFor()
+  await page.getByRole('navigation', { name: '오라클 메뉴' }).getByRole('button', { name: '오라클 나가기' }).click()
+  await page.getByRole('button', { name: '내 기록 분석', exact: true }).waitFor()
+  checks.push('Home opens own empty result; examples require explicit selection; exit returns Home')
+
+  await page.getByRole('button', { name: '더보기', exact: true }).click()
+  await page.getByRole('button', { name: '기기 연동 상태', exact: true }).click()
+  await page.getByRole('heading', { name: '파일로 먼저 가져오세요' }).waitFor()
+  assert.equal(await page.getByText('연결 미제공', { exact: true }).count(), 3)
+  await page.getByRole('button', { name: '워치 파일 가져오기', exact: true }).click()
+  await page.getByRole('button', { name: '뒤로', exact: true }).click()
+  await page.getByRole('heading', { name: '파일로 먼저 가져오세요' }).waitFor()
+  await page.waitForFunction(() => document.activeElement?.textContent?.includes('워치 파일 가져오기'))
+  checks.push('Unavailable connections remain unavailable; import Back restores exact opener focus')
+  await page.getByRole('button', { name: '워치 파일 가져오기', exact: true }).click()
+
+  const input = `<TrainingCenterDatabase><Activities>${[2000, 3000].map((distance, i) => `<Activity Sport="Running"><Id>2026-10-16T0${i + 1}:00:00Z</Id><Lap StartTime="2026-10-16T0${i + 1}:00:00Z"><TotalTimeSeconds>${distance / 10 * 3}</TotalTimeSeconds><DistanceMeters>${distance}</DistanceMeters></Lap></Activity>`).join('')}</Activities></TrainingCenterDatabase>`
+  const fileInput = () => page.getByLabel('가져올 운동 파일 선택', { exact: true })
+  await fileInput().setInputFiles({ name: 'synthetic-two.tcx', mimeType: 'application/xml', buffer: Buffer.from(input) })
+  const rows = page.getByTestId('import-draft-row')
+  await rows.nth(1).waitFor()
+  const sizes = []
+  for (const width of [320, 375, 430]) {
+    await page.setViewportSize({ width, height: 812 })
+    const before = await rows.nth(1).boundingBox()
+    await rows.first().getByRole('checkbox').uncheck()
+    const after = await rows.nth(1).boundingBox()
+    assert.ok(Math.abs(before.y - after.y) < 1, `row movement at ${width}px`)
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)
+    assert.equal(overflow, false)
+    const metricRows = await rows.first().locator('.metric-summary__value').evaluateAll(nodes => nodes.map(node => node.getBoundingClientRect().top))
+    assert.ok(Math.abs(metricRows[0] - metricRows[1]) < 1)
+    const targets = await rows.first().locator('label, select').evaluateAll(nodes => nodes.map(node => ({ tag: node.tagName, width: node.getBoundingClientRect().width, height: node.getBoundingClientRect().height })))
+    assert.ok(targets.every(target => target.height >= 44 && target.width >= 44))
+    sizes.push({ width, followingRowMovement: after.y - before.y, overflow, metricValuesTop: metricRows, targets })
+    await page.screenshot({ path: `${directory}review-${width}.png` })
+    await rows.first().getByRole('checkbox').check()
+  }
+  await rows.nth(1).getByRole('combobox').selectOption('exclude')
+  await rows.nth(1).getByRole('checkbox').uncheck()
+  await page.getByRole('button', { name: '다른 파일 고르기', exact: true }).click()
+  await fileInput().setInputFiles({ name: 'broken.tcx', mimeType: 'application/xml', buffer: Buffer.from('<broken>') })
+  await page.getByTestId('import-failure').waitFor()
+  await page.getByRole('button', { name: '확인하던 운동 2건 이어보기', exact: true }).click()
+  assert.equal(await rows.nth(1).getByRole('combobox').inputValue(), 'exclude')
+  assert.equal(await rows.nth(1).getByRole('checkbox').isChecked(), false)
+  await rows.first().getByRole('checkbox').uncheck()
+  assert.equal(await page.getByRole('button', { name: '저장할 활동을 골라 주세요', exact: true }).isDisabled(), true)
+  await rows.first().getByRole('checkbox').focus()
+  await page.keyboard.press('Space')
+  assert.equal(await rows.first().getByRole('checkbox').isChecked(), true)
+  assert.equal((await journal()).length, 0)
+  checks.push('Selections 2/1/0; retained exclusion and choices after malformed replacement; keyboard Space; no implicit writes')
+
+  await page.setViewportSize({ width: 320, height: 812 })
+  await page.locator('.import-flow').evaluate(root => {
+    const elements = [root, ...root.querySelectorAll('*')]
+    const sizes = elements.map(el => [el, parseFloat(getComputedStyle(el).fontSize)])
+    for (const [el, size] of sizes) if (el instanceof HTMLElement) el.style.fontSize = `${size * 2}px`
+  })
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false)
+  const beforeLarge = await rows.nth(1).boundingBox()
+  await rows.first().getByRole('checkbox').uncheck()
+  const afterLarge = await rows.nth(1).boundingBox()
+  const largeMovement = afterLarge.y - beforeLarge.y
+  assert.ok(Math.abs(largeMovement) < 1, `large-text row movement: ${largeMovement}`)
+  await rows.first().getByRole('checkbox').check()
+  await page.screenshot({ path: `${directory}large-text-320.png` })
+  await rows.nth(1).getByRole('combobox').scrollIntoViewIfNeeded()
+  await page.screenshot({ path: `${directory}large-text-control-320.png` })
+  await page.locator('.import-flow').evaluate(root => {
+    for (const el of [root, ...root.querySelectorAll('*')]) if (el instanceof HTMLElement) el.style.removeProperty('font-size')
+  })
+  const save = page.getByRole('button', { name: '고른 1건 일지에 저장', exact: true })
+  await save.focus()
+  await page.keyboard.press('Enter')
+  await page.getByTestId('import-saved').waitFor()
+  await page.waitForFunction(() => document.activeElement?.getAttribute('aria-label') === '가져오기 결과')
+  assert.equal((await journal()).length, 1)
+  assert.equal(await page.getByText('이 브라우저에 저장했어요. 계정에 동기화되지는 않아요.', { exact: true }).isVisible(), true)
+  assert.equal(await page.getByRole('button', { name: '전체 가져온 기록 분석', exact: true }).count(), 0)
+  await page.screenshot({ path: `${directory}device-saved-320.png` })
+  await page.getByRole('button', { name: '일지에서 확인하기', exact: true }).click()
+  await page.getByRole('navigation', { name: '일지 메뉴' }).waitFor()
+  checks.push('200% DOM text at 320px: no overflow or row movement; Enter saves exactly one; device scope and result focus; no account analysis')
+  assert.deepEqual(posts, [])
+  await writeFile(`${directory}verification.json`, JSON.stringify({ checks, sizes, largeMovement, fonts, journalCount: (await journal()).length, posts, limitations: ['DOM text enlargement, not browser zoom or Dynamic Type', 'Synthetic local records, no personal account or native vendor app'] }, null, 2))
+  console.log(JSON.stringify({ checks, sizes, largeMovement, posts }))
+} finally { await browser.close() }

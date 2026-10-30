@@ -1,0 +1,10 @@
+
+Running 3 tests using 1 worker
+
+(node:7264) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 e2e\file-analysis-flow.spec.ts:301:1 ??saved receipt opens the exact journal among two records on the same date (7.1s)
+  ok 2 e2e\file-analysis-flow.spec.ts:550:1 ??pending account file is excluded until a validated retry acknowledgement (2.6s)
+  ok 3 e2e\file-analysis-flow.spec.ts:607:1 ??a real replacement TCX candidate saves a validated correction and reopens with immutable source identity (5.5s)
+
+  3 passed (20.4s)
