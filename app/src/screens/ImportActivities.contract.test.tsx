@@ -347,6 +347,20 @@ describe("ImportActivities — 저장", () => {
     await initializeCanonicalJournalFixture()
   })
 
+  it("keeps keyboard focus in the result after explicitly excluding a record", async () => {
+    const user = userEvent.setup()
+    render(<ImportActivities />)
+    await pickFile(user, upload(tcxFile([tcxLap("2026-07-20T06:00:00Z", 5000, 1500)])))
+    await user.selectOptions(await screen.findByRole("combobox", { name: /저장 방식/ }), "exclude")
+    screen.getByRole("button", { name: "고른 1건 가져오기에서 제외" }).focus()
+    await user.keyboard("{Enter}")
+    await waitFor(() => expect(screen.getByRole("region", { name: "가져오기 결과" })).toHaveFocus())
+    expect(screen.getByTestId("import-saved")).toHaveTextContent("가져오기 제외 완료")
+    expect(loadEntries()).toEqual([])
+    await user.tab()
+    expect(screen.getByRole("button", { name: "파일 더 가져오기" })).toHaveFocus()
+  })
+
   it("고른 활동만 이 기기 일지에 저장하고 분석에서는 제외한다", async () => {
     // Given
     const user = userEvent.setup()

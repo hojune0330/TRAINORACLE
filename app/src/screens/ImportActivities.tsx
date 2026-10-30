@@ -59,7 +59,7 @@ export function ImportActivities({ onBack, onOpenLog, onOpenEntry, onOpenAnalysi
     // The shell's POP listener invalidates old return frames. Restore only after it ran.
     queueMicrotask(() => { if (current()) onBack?.() })
   } })
-  useActiveContentScroll(stage.step, stageRef, undefined, true)
+  useActiveContentScroll(stage.step, stageRef, stage.step === "saved" ? stageRef : undefined, true)
   useActiveContentScroll("import-entry", pageRef, headingRef)
   const captureScope = useImportOwnerScope(() => {
     readControllerRef.current?.abort(); readControllerRef.current = null
@@ -277,6 +277,9 @@ export function ImportActivities({ onBack, onOpenLog, onOpenEntry, onOpenAnalysi
       <div
         key={stage.step}
         ref={stageRef}
+        role={stage.step === "saved" ? "region" : undefined}
+        aria-label={stage.step === "saved" ? "가져오기 결과" : undefined}
+        tabIndex={stage.step === "saved" ? -1 : undefined}
         className="active-stage-content active-content-scroll-target"
         data-flow-direction={stageMotion}
       >
