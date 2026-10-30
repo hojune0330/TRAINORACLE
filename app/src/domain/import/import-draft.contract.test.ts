@@ -96,7 +96,7 @@ describe("file identity candidate review", () => {
     const incoming = { ...source, observation: { ...source.observation!, ...(origin === null ? {} : { dataLineage: lineage(origin) }) } }
     const draft = buildImportDrafts([incoming], [previous])[0]!
     expect(draft.identityCandidates).toMatchObject([{ id: previous.id, kind: "CORRECTION" }])
-    expect(draft.identityCandidates.some(candidate => candidate.kind === "REUSE")).toBe(false)
+    expect(draft.identityCandidates?.some(candidate => candidate.kind === "REUSE")).toBe(false)
     expect(JSON.stringify(previous)).toBe(before)
   })
 
