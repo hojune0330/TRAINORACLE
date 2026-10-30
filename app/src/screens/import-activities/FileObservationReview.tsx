@@ -51,7 +51,8 @@ export function FileObservationReview({ activity, disabled, onChange, allowDateC
         </select>
       </label>}
       {observation.startedAt && allowDateChange ? <label>운동 날짜 기준 · {activity.date}
-        <select disabled={disabled} value={observation.timeZone ?? zones[0]} onChange={event => changeZone(event.target.value)}>
+        <select disabled={disabled} value={observation.timeZone ?? ""} onChange={event => { if (event.target.value) changeZone(event.target.value) }}>
+          {!observation.timeZone && <option value="">지역 시간대 미확인 · 파일 날짜 유지</option>}
           {zones.map(zone => <option key={zone} value={zone}>{zone}</option>)}
         </select>
       </label> : !observation.startedAt ? <p>원본에 정확한 시각·시간대가 없어 파일의 날짜만 보관해요. 하루 안의 운동 순서는 판단하지 않아요.</p> : <p>저장된 날짜: {activity.date} · {observation.timeZone ?? "시간대 미확인"}</p>}

@@ -12,7 +12,7 @@ test("enlarged AM/PM reader, nested records, back restoration and linked writing
   })
   await page.clock.setFixedTime(new Date(2026, 8, 27, 12))
   await page.goto("/?app=1&uitest=1")
-  await page.getByRole("button", { name: "훈련 계획 받기", exact: true }).click()
+  await page.getByRole("button", { name: "훈련 계획 만들기", exact: true }).click()
   await completeQuickPlan(page, { days: /^매일/u })
   await refinePlan(page, "하루 두 번", /하루 두 번 운동할게요/u)
   await page.getByRole("button", { name: "이 일정으로 시작" }).click()

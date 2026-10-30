@@ -20,6 +20,15 @@ function input(patch: Partial<FileObservationInput> = {}): FileObservationInput 
 }
 
 describe("file and prepared provider boundary", () => {
+  it.each(["PROVIDER_API", "HEALTHKIT", "HEALTH_CONNECT"])("rejects %s provenance relabeled as a file upload", transport => {
+    const value = buildFileObservation(input())
+    expect(parseFileObservation({ ...value, dataLineage: {
+      schemaVersion: "PROVIDER_DATA_LINEAGE_V1",
+      sources: [{ sourceId: "original", originProvider: "UNKNOWN", transport, assurance: "UNKNOWN" }],
+      fieldSources: { distanceMeters: ["original"] },
+    } })).toBeNull()
+  })
+
   const provider = () => ({
     provider: "COROS", sourceId: "synthetic-provider", sourceVersion: null, sport: "RUNNING",
     startedAt: "2026-09-18T23:30:00Z", timeZone: "Asia/Seoul", distanceMeters: 5000.125,

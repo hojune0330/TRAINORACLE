@@ -11,7 +11,7 @@ test.beforeEach(async ({ page, baseURL }) => {
 
 test("one question, retained answers, native Back and a single Quick completion", async ({ page }, info) => {
   await page.setViewportSize({ width: 375, height: 667 })
-  await page.getByRole("button", { name: "오늘 운동 기록 쓰기", exact: true }).click()
+  await page.getByRole("button", { name: "운동 내용도 기록하기", exact: true }).click()
   await expect(page.getByRole("navigation", { name: "주 탭" })).toHaveCount(0)
   await expect(page.getByRole("button", { name: "오전", exact: true })).toHaveCount(0)
   await page.getByRole("button", { name: "운동을 마쳤어요", exact: true }).click()
@@ -43,7 +43,7 @@ test("one question, retained answers, native Back and a single Quick completion"
 test("large text and narrow screens keep the current choices operable", async ({ page }, info) => {
   await page.setViewportSize({ width: 320, height: 740 })
   await page.emulateMedia({ reducedMotion: "reduce" })
-  await page.getByRole("button", { name: "오늘 운동 기록 쓰기", exact: true }).click()
+  await page.getByRole("button", { name: "운동 내용도 기록하기", exact: true }).click()
   await page.evaluate(() => {
     const sizes = [...document.querySelectorAll<HTMLElement>(".task-flow *")]
       .map(element => ({ element, size: parseFloat(getComputedStyle(element).fontSize) }))
@@ -61,7 +61,7 @@ test("large text and narrow screens keep the current choices operable", async ({
 
 test("plan native Back returns one question and preserves unsent record input", async ({ page }, info) => {
   await page.setViewportSize({ width: 1440, height: 900 })
-  await page.getByRole("button", { name: "훈련 계획 받기", exact: true }).click()
+  await page.getByRole("button", { name: "훈련 계획 만들기", exact: true }).click()
   expect((await page.locator(".app-shell").boundingBox())!.width).toBeGreaterThan(520)
   await page.getByRole("button", { name: "1500m", exact: true }).click()
   await page.getByRole("button", { name: "내 기록", exact: true }).click()

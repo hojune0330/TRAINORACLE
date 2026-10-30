@@ -29,7 +29,7 @@ for (const persona of personas) {
       let actions = 0
       const click = async (locator: Locator) => { await locator.click(); actions++ }
       const nav = page.getByRole("navigation", { name: "주 탭" })
-      await expect(page.getByRole("button", { name: "오늘 운동 기록 쓰기" })).toBeInViewport()
+      await expect(page.getByPlaceholder("운동이나 오늘의 느낌을 남겨 보세요", { exact: true })).toBeInViewport()
       await click(nav.getByRole("button", { name: "오라클", exact: true }))
       await expect(page.getByRole("heading", { name: "내 훈련", exact: true, level: 2 })).toBeVisible()
       await expect(page.getByRole("button", { name: "훈련량", exact: true })).toBeVisible()
@@ -77,7 +77,7 @@ for (const persona of personas) {
       await expect(page.getByRole("heading", { name: "지난 일지", exact: true })).toBeVisible()
       await click(page.getByRole("navigation", { name: "일지 메뉴" }).getByRole("button", { name: "일지 나가기", exact: true }))
       await click(nav.getByRole("button", { name: "홈", exact: true }))
-      await expect(page.getByRole("button", { name: "오늘 운동 기록 쓰기" })).toBeVisible()
+      await expect(page.getByPlaceholder("운동이나 오늘의 느낌을 남겨 보세요", { exact: true })).toBeInViewport()
       await noHorizontalOverflow(page)
       await info.attach("synthetic-actions", { body: JSON.stringify({ persona, actions }), contentType: "application/json" })
     })
@@ -110,7 +110,7 @@ for (const persona of personas) {
     })
 
     test("saves a short journal and opens it from the calendar", async ({ page }, info) => {
-      await page.getByRole("button", { name: "오늘 운동 기록 쓰기", exact: true }).click()
+      await page.getByRole("button", { name: "운동 내용도 기록하기", exact: true }).click()
       await page.getByRole("button", { name: "운동을 마쳤어요", exact: true }).click()
       await page.getByRole("button", { name: "오후", exact: true }).click()
       await page.getByRole("button", { name: /힘든 정도 6\/10,/u }).click()

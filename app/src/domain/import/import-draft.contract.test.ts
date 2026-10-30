@@ -84,6 +84,22 @@ describe("file identity candidate review", () => {
     expect(draft.identityCandidates).toEqual([])
   })
 
+  it.each(["COROS", "UNKNOWN", null] as const)("holds same source ID with %s lineage for explicit conflict review", origin => {
+    const source = observed("same-provider-id")
+    const lineage = (provider: "GARMIN" | "COROS" | "UNKNOWN") => ({
+      schemaVersion: "PROVIDER_DATA_LINEAGE_V1" as const,
+      sources: [{ sourceId: "file-origin", originProvider: provider, transport: "FILE_UPLOAD" as const, assurance: "UNKNOWN" as const }],
+      fieldSources: { distanceMeters: ["file-origin"], durationSeconds: ["file-origin"] },
+    })
+    const previous = toImportedEntry({ ...source, observation: { ...source.observation!, dataLineage: lineage("GARMIN") } }, "tcx", { includeFileObservation: true })
+    const before = JSON.stringify(previous)
+    const incoming = { ...source, observation: { ...source.observation!, ...(origin === null ? {} : { dataLineage: lineage(origin) }) } }
+    const draft = buildImportDrafts([incoming], [previous])[0]!
+    expect(draft.identityCandidates).toMatchObject([{ id: previous.id, kind: "CORRECTION" }])
+    expect(draft.identityCandidates?.some(candidate => candidate.kind === "REUSE")).toBe(false)
+    expect(JSON.stringify(previous)).toBe(before)
+  })
+
   it("does not arbitrarily select among repeated journal IDs", () => {
     const source = observed(), previous = toImportedEntry(source, "tcx", { includeFileObservation: true })
     const draft = buildImportDrafts([source], [previous, { ...previous, title: "SYNTHETIC_OTHER" }])[0]!

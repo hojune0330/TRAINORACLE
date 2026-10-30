@@ -15,6 +15,9 @@ import type { ComparisonRelationV1 } from "../../src/domain/import/comparison-re
 import { projectStructuredJournalObservations } from "../../src/domain/journal-observation"
 import { acceptsFileDistance } from "../../src/domain/analysis-field-eligibility"
 import { buildFileAnalysisReport } from "../../src/domain/import/file-analysis"
+import * as accountImport from "../../src/domain/import/account-import"
+import { parseActivityFile } from "../../src/domain/import/activity-file"
+import { evaluateProviderDataUse } from "../../src/domain/provider-data-rights"
 import { initializeCanonicalJournalBrowserFixture } from "./canonical-journal-browser"
 
 await initializeCanonicalJournalBrowserFixture()
@@ -53,7 +56,19 @@ export function setup(ownerId = owner) {
   const privateRecord = { ...privateEntry("private", "SYNTHETIC_PRIVATE_BODY"),
     rpe: 4, fieldProvenance: { rpe: { provenance: "EXPLICIT" as const } } }
   if (!parseJournalEntryForWrite(ordinary) || !parseJournalEntryForWrite(privateRecord)) throw new Error("Invalid existing fixture")
-  const harness = { ...service, ...projection, owner, otherOwner, ordinary, privateRecord,
+  const harness = { ...service, ...projection, ...accountImport, owner, otherOwner, ordinary, privateRecord,
+    evaluateProviderDataUse,
+    currentFileAnalysisForDate(date: string) {
+      return buildFileAnalysisReport(projection.readCurrentConfirmedAccountJournalProjection(), {
+        formats: ["tcx"], sourceContext: "ACCOUNT_CONFIRMED", startDate: date, endDate: date,
+      })
+    },
+    importConfirmation: null as ReturnType<typeof accountImport.createAccountImportConfirmation> | null,
+    importActivity() {
+      const parsed = parseActivityFile(`<TrainingCenterDatabase xmlns="http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2"><Activities><Activity Sport="Running"><Id>2026-10-30T07:00:00Z</Id><Lap StartTime="2026-10-30T07:00:00Z"><TotalTimeSeconds>1500</TotalTimeSeconds><DistanceMeters>5000</DistanceMeters></Lap></Activity></Activities></TrainingCenterDatabase>`, "UTC")
+      if (parsed.activities.length !== 1 || !parsed.activities[0]?.observation) throw new Error("Invalid synthetic import fixture")
+      return parsed.activities[0]
+    },
     currentFileAnalysis() {
       const cached = projection.readAccountJournalProjection(), current = projection.readCurrentConfirmedAccountJournalProjection()
       return { accepted: projectStructuredJournalObservations(cached, { formats: ["tcx"] }).some(acceptsFileDistance),
@@ -109,6 +124,11 @@ export function setup(ownerId = owner) {
     },
     legacyWritesBlocked: () => legacyJournalWritesBlocked(ownerId),
     legacyRaw: () => localStorage.getItem(JOURNAL_STORAGE_KEY),
+    async rawRecord(id: string) {
+      const documentId = await service.accountJournalDocumentId(ownerId, id)
+      return (await rawRecords()).find(record => typeof record === "object" && record !== null
+        && "documentId" in record && record.documentId === documentId) ?? null
+    },
     view, rawRecords, pending: null as Promise<unknown> | null }
   window.accountRecordHarness = harness
   return harness

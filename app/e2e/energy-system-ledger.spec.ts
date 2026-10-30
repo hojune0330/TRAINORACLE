@@ -48,11 +48,10 @@ test("keeps explicit energy records separate from legacy defaults across home an
   })
 
   await page.goto("/?app=1")
-  const analysisEntry = page.getByRole("button", { name: "훈련량·변화 보기", exact: true })
   await expect(page.getByRole("region", { name: "최근 하루 기록" })).toContainText("오늘 · 기록 2개")
-  await expect(analysisEntry).toBeVisible()
-  await analysisEntry.click()
+  await page.getByRole("navigation", { name: "주 탭", exact: true }).getByRole("button", { name: "오라클", exact: true }).click()
   const detailMenu = page.getByRole("group", { name: "훈련 분석 자세히 보기" })
+  await expect(detailMenu).toBeVisible()
   await detailMenu.getByRole("button", { name: "훈련량", exact: true }).click()
   const distance = page.getByRole("region", { name: "기간별 훈련 리포트", exact: true })
   await expect(distance.getByRole("img", { name: /내 기록.*월별 누적 거리.*8 km/u })).toBeVisible()

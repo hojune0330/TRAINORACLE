@@ -1,0 +1,6 @@
+.device-connections { display: grid; gap: 28px; font: 400 var(--fs-body) / 1.6 var(--sans); min-width: 0; word-break: keep-all; overflow-wrap: anywhere; }
+.device-connections p { margin: 10px 0 16px; }
+.device-connections__detail { color: var(--ink-2); font-size: var(--fs-body-sm); }
+.device-connections__providers { margin: 16px 0; padding: 0; list-style: none; }
+.device-connections__providers li { display: grid; grid-template-columns: 24px minmax(0, 1fr); column-gap: 12px; row-gap: 4px; padding: 16px 0; border-bottom: 1px solid var(--line); align-items: center; }
+.device-connections__providers li span { grid-column: 2; color: var(--ink-2); font-size: var(--fs-body-sm); }

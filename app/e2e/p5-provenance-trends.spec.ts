@@ -98,10 +98,7 @@ test("shows provenance-safe trends without leaking private memo signals", async 
   }, privateText)
 
   await page.goto("/?app=1")
-  const analysis = page.getByRole("navigation", { name: "홈 바로가기" })
-    .getByRole("button", { name: "훈련량·변화 보기", exact: true })
-  await expect(analysis).toHaveText("훈련량")
-  await analysis.click()
+  await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "오라클", exact: true }).click()
   const detailMenu = page.getByRole("group", { name: "훈련 분석 자세히 보기" })
   await detailMenu.getByRole("button", { name: "훈련량", exact: true }).click()
 

@@ -294,6 +294,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
   const overlayScrollTopRef = React.useRef(0)
   const overlayReturnPosition = React.useRef<ReaderPosition | null>(null)
   const moreReturnPosition = React.useRef<ReaderPosition | null>(null)
+  const moreConnectionReturn = React.useRef<{ view: MoreView; position: ReaderPosition | null } | null>(null)
   const overlayHistoryOwnerRef = React.useRef(`shell-${Date.now()}-${Math.random().toString(36).slice(2)}`)
   const restoreReturnRef = React.useRef<ShellReturnPoint | null>(null)
   const importReturnRef = React.useRef<RecordingOrigin | null>(null)
@@ -314,6 +315,13 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
     })
   }, [scheduleReturnFrame])
   React.useEffect(() => {
+    const connection = moreConnectionReturn.current
+    if (utilityView === "more" && connection && moreView === connection.view) {
+      moreConnectionReturn.current = null
+      if (moreView === "tools") moreReturnPosition.current = null
+      scheduleReturnFrame(() => restoreReaderPosition(scrollRegionRef.current, connection.position))
+      return
+    }
     if (utilityView !== "more" || moreView !== "tools" || !moreReturnPosition.current) return
     const position = moreReturnPosition.current
     moreReturnPosition.current = null
@@ -590,7 +598,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
       } else if (moreVisibleRef.current) {
         const marker = event.state?.[MORE_HISTORY_KEY]
         const section = marker?.owner === overlayHistoryOwnerRef.current ? marker.view : "tools"
-        if (["tools", "learning", "account", "backup", "about", "introduction"].includes(section)) setMoreView(section)
+        if (["tools", "learning", "account", "backup", "about", "introduction", "connections"].includes(section)) setMoreView(section)
       }
     }
     window.addEventListener("popstate", onPopState)
@@ -634,6 +642,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
       guideOrigin.current = null
       overlayReturnPosition.current = null
       moreReturnPosition.current = null
+      moreConnectionReturn.current = null
       importReturnRef.current = null
       setGuestOracleSession(null)
       setProfileNavigationState(undefined)
@@ -1379,11 +1388,13 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
     screen = (
       <DeferredMobileScreens.More
         view={moreView}
-        onViewChange={next => runViewTransition(next === "tools" ? "pop" : "push", () => {
+        connectionOrigin={moreConnectionReturn.current?.view}
+        onViewChange={next => runViewTransition(next === "tools" || moreView === "connections" && next === "about" ? "pop" : "push", () => {
           if (moreView === "tools" && next !== "tools") moreReturnPosition.current = captureReaderPosition(scrollRegionRef.current)
+          if (next === "connections") moreConnectionReturn.current = { view: moreView, position: captureReaderPosition(scrollRegionRef.current) }
           const state = window.history.state ?? {}
           const marker = state[MORE_HISTORY_KEY]
-          if (next === "tools" && marker?.owner === overlayHistoryOwnerRef.current && marker.view !== "tools") {
+          if ((next === "tools" || moreView === "connections" && next === "about") && marker?.owner === overlayHistoryOwnerRef.current && marker.view !== "tools") {
             window.history.back()
             return
           }
@@ -1392,6 +1403,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
             window.history.pushState({ ...state, [MORE_HISTORY_KEY]: { owner: overlayHistoryOwnerRef.current, view: next } }, "", window.location.href)
           }
           setMoreView(next)
+          if (next === "connections") scheduleReturnFrame(() => { if (scrollRegionRef.current) scrollRegionRef.current.scrollTop = 0 })
         })}
         onBack={() => runViewTransition("pop", () => { moreReturnPosition.current = null; setUtilityView(null) })}
         onOpenMinji={() => openGuide("minji")}
@@ -1594,6 +1606,9 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
       <DeferredMobileScreens.ImportActivities
         onBack={closeImport}
         onOpenLog={() => goTab("journal")}
+        onOpenEntry={(date, entryId) => runViewTransition("push", () => {
+          setV({ ...viewForTab("journal"), detailDate: date, detailEntryId: entryId })
+        })}
         onOpenAnalysis={() => goTab("trends", { section: "files" })}
         onOpenSummary={() => goTab("trends", { section: "summary" })}
       />

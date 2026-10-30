@@ -12,16 +12,25 @@ Deno.serve((request) => {
   }
 
   const body = JSON.stringify({
+    schemaVersion: 2,
     service: "TrainOracle device integration",
-    stage: "APPLICATION_PENDING",
-    operational: true,
+    stage: "CONNECTIONS_NOT_ENABLED",
+    endpointAvailable: true,
     publicUserLinking: false,
     providers: {
-      garmin: "APPLICATION_PENDING",
-      coros: "APPLICATION_PENDING",
+      garmin: "CONNECTION_NOT_ENABLED",
+      coros: "CONNECTION_NOT_ENABLED",
     },
+    // Public release metadata cannot attest personal OAuth, application approval,
+    // received records, or permission to use a provider's data for AI coaching.
+    providerDetails: Object.fromEntries(["GARMIN", "COROS"].map(provider => [provider, {
+      apiAvailability: "NOT_ENABLED",
+      accountConnection: "NOT_DISCLOSED",
+      applicationStatus: "NOT_REPORTED",
+      requiresUserAuthorization: true,
+    }])),
     dataIngestion: "FAIL_CLOSED",
-    updatedAt: "2026-08-29",
+    updatedAt: "2026-10-30",
   })
   return new Response(request.method === "HEAD" ? null : body, { status: 200, headers })
 })

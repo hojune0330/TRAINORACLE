@@ -36,7 +36,7 @@ async function seedEntry(page: import("@playwright/test").Page, id: string, titl
 
 async function openEditor(page: import("@playwright/test").Page, title: string) {
   await page.goto("/?app=1")
-  await page.getByRole("button", { name: "오늘 기록 보기", exact: true }).click()
+  await page.getByRole("button", { name: "남긴 기록 1개", exact: true }).click()
   await page.getByRole("button", { name: "일지 꾸미기 열기" }).click()
 }
 
@@ -81,7 +81,7 @@ test("attaches, moves, re-edits and deletes a text sticker across a refresh", as
 
   // 새로고침 후 유지
   await page.reload()
-  await page.getByRole("button", { name: "오늘 기록 보기", exact: true }).click()
+  await page.getByRole("button", { name: "남긴 기록 1개", exact: true }).click()
   await expect(page.getByTestId("journal-decoration-asset-0")).toHaveText("오늘도 완주")
 
   // 재편집: 연필 손잡이 (U5 — 더블탭 대체 경로)

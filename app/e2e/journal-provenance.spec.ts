@@ -55,7 +55,7 @@ test("shows a legacy journal entry without allowing it into home totals or trend
   await day.click()
   await expect(page.getByText("legacy tempo", { exact: true })).toBeVisible()
   await page.getByRole("button", { name: "홈으로 돌아가기", exact: true }).click()
-  await expect(page.getByRole("button", { name: "훈련량·변화 보기", exact: true })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "훈련과 기록", exact: true })).toBeVisible()
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "오라클" }).click()
   const distance = page.getByRole("region", { name: "기간별 훈련 리포트" })
   const detailMenu = page.getByRole("group", { name: "훈련 분석 자세히 보기" })

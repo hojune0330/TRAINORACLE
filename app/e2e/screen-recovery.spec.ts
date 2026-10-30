@@ -2,6 +2,8 @@ import { expect, test } from "@playwright/test"
 
 async function openHomeLearning(page: import("@playwright/test").Page) {
   await expect(page.getByRole("navigation", { name: "홈 바로가기" })).toBeVisible()
+  await page.getByRole("button", { name: "더보기", exact: true }).click()
+  await expect(page.getByRole("button", { name: "일지 예시 보기", exact: true })).toBeVisible()
 }
 
 test.describe("screen asset recovery", () => {

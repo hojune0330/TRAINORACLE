@@ -11,7 +11,7 @@ test.beforeEach(async ({ page, baseURL }) => {
 
 test("question motion is local, does not overflow, and respects the app preference", async ({ page }, info) => {
   await page.setViewportSize({ width: 375, height: 812 })
-  await page.getByRole("button", { name: "오늘 운동 기록 쓰기", exact: true }).click()
+  await page.getByRole("button", { name: "운동 내용도 기록하기", exact: true }).click()
   const choice = page.getByRole("button", { name: "운동을 마쳤어요", exact: true })
   await expect(choice).toHaveCSS("border-radius", "16px")
   await page.screenshot({ path: info.outputPath("record-choice-375.png"), fullPage: true })
@@ -43,7 +43,7 @@ test("question motion is local, does not overflow, and respects the app preferen
 
 test("plan entry stays focused on its question and preserves an answer on return", async ({ page }, info) => {
   await page.setViewportSize({ width: 320, height: 740 })
-  await page.getByRole("button", { name: "훈련 계획 받기", exact: true }).click()
+  await page.getByRole("button", { name: "훈련 계획 만들기", exact: true }).click()
   const illustration = page.locator('img[src$="plan-notebook-v2.webp"]')
   await expect(page.getByRole("heading", { name: "어떤 종목을 준비하세요?" })).toBeVisible()
   await expect(illustration).toHaveCount(0)

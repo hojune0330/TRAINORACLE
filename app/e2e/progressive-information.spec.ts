@@ -11,15 +11,16 @@ test.beforeEach(async ({ page, baseURL }) => {
       ? route.continue() : route.abort()
   })
   await page.goto("/?app=1&uitest=1")
-  await expect(page.getByRole("button", { name: "오늘 운동 기록 쓰기", exact: true })).toBeVisible()
+  await expect(page.getByRole("button", { name: "운동 내용도 기록하기", exact: true })).toBeVisible()
 })
 
 for (const width of [320, 375]) {
   test(`shows the primary action and plan entry without requiring a fixed first viewport at ${width}px`, async ({ page }, testInfo) => {
     await page.setViewportSize({ width, height: width === 320 ? 568 : 667 })
     await page.evaluate(() => document.fonts.ready)
-    await expect(page.getByRole("button", { name: "오늘 운동 기록 쓰기", exact: true })).toBeInViewport({ ratio: 1 })
-    for (const name of ["오늘 운동 기록 쓰기", "훈련 계획 받기"]) {
+    // The first recording action is the inline memo; structured exercise entry follows it.
+    await expect(page.getByPlaceholder("운동이나 오늘의 느낌을 남겨 보세요")).toBeInViewport({ ratio: 1 })
+    for (const name of ["운동 내용도 기록하기", "훈련 계획 만들기"]) {
       const button = page.getByRole("button", { name, exact: true })
       await button.scrollIntoViewIfNeeded()
       await expect(button).toBeInViewport({ ratio: 1 })
@@ -27,7 +28,7 @@ for (const width of [320, 375]) {
     }
     await expect(page.getByText("모든 데이터는 이 기기에만 저장돼요.")).toHaveCount(0)
     await page.screenshot({ path: testInfo.outputPath(`home-${width}.png`) })
-    await page.getByRole("button", { name: "오늘 운동 기록 쓰기", exact: true }).click()
+    await page.getByRole("button", { name: "운동 내용도 기록하기", exact: true }).click()
     await expect(page.locator(".quick-log__paper")).toHaveCount(0)
     const outcomes = page.locator(".quick-log__choices").first().getByRole("button")
     await expect(outcomes).toHaveCount(5)
@@ -39,7 +40,7 @@ for (const width of [320, 375]) {
 
   test(`shows seven event choices and puts previous answers in an editable summary at ${width}px`, async ({ page }, testInfo) => {
     await page.setViewportSize({ width, height: width === 320 ? 568 : 667 })
-    await page.getByRole("button", { name: "훈련 계획 받기", exact: true }).click()
+    await page.getByRole("button", { name: "훈련 계획 만들기", exact: true }).click()
     const choices = page.getByRole("group", { name: "어떤 종목을 준비하세요?" })
     await expect(choices.getByRole("button")).toHaveCount(7)
     await expect(choices.getByRole("button").first()).toBeInViewport({ ratio: 1 })
@@ -95,7 +96,7 @@ test("keeps empty analysis focused and opens examples and help with the keyboard
 
 test("keeps saved results visible and does not turn missing RPE into a value", async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 375, height: 667 })
-  await page.getByRole("button", { name: "오늘 운동 기록 쓰기", exact: true }).click()
+  await page.getByRole("button", { name: "운동 내용도 기록하기", exact: true }).click()
   await page.getByRole("button", { name: "운동을 마쳤어요", exact: true }).click()
   await expect(page.getByRole("region", { name: "현재까지 답한 내용" })).toContainText("운동 완료")
   await page.getByRole("button", { name: "오전", exact: true }).click()
@@ -113,9 +114,8 @@ test("keeps saved results visible and does not turn missing RPE into a value", a
   expect(saved[0].fieldProvenance.rpe.provenance).toBe("MISSING")
   await page.screenshot({ path: testInfo.outputPath("quick-saved.png") })
   await page.getByRole("button", { name: "완료", exact: true }).click()
-  await expect(page.getByText("오늘 남긴 기록 1개", { exact: true })).toBeVisible()
-  await expect(page.getByRole("button", { name: "기록 더 남기기", exact: true })).toBeVisible()
-  await expect(page.getByRole("button", { name: "오늘 운동 기록 쓰기", exact: true })).toHaveCount(0)
+  await expect(page.getByRole("button", { name: "남긴 기록 1개", exact: true })).toBeVisible()
+  await expect(page.getByRole("button", { name: "운동 내용도 기록하기", exact: true })).toBeVisible()
 })
 
 test("keeps learning content and its application limits available without a developer introduction", async ({ page }, testInfo) => {
@@ -143,7 +143,7 @@ test("wraps text at double size without horizontal clipping and respects reduced
   })
   expect(await page.locator(".app-scroll-region").evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true)
   await expect(page.getByRole("navigation", { name: "홈 바로가기" })).toBeVisible()
-  for (const label of ["훈련 계획 받기", "훈련법 읽기", "일지 꾸미기"]) {
+  for (const label of ["훈련 계획 만들기", "훈련법 읽기", "일지 꾸미기"]) {
     const button = page.getByRole("button", { name: label, exact: true })
     expect(await button.evaluate(el => el.scrollWidth <= el.clientWidth && el.scrollHeight <= el.clientHeight)).toBe(true)
   }

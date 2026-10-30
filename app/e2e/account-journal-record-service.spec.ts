@@ -730,6 +730,191 @@ test("lost success receipt replays immutable operation without duplicate server 
   expect([...server.documents.values()].map(doc => doc.revision)).toEqual([1])
 })
 
+test.describe("explicit file import preserves unrelated pending work", () => {
+  test.beforeEach(async ({ page }) => {
+    // Override only build configuration. The parser, import service, encrypted
+    // native IndexedDB buffer and API validation remain the production modules.
+    await page.route("**/src/domain/import/file-analysis-policy.ts", async route => {
+      const response = await route.fetch(), body = await response.text()
+      const target = "env = import.meta.env"
+      if (body.split(target).length !== 2) throw new Error("File analysis configuration target changed")
+      await route.fulfill({ response, body: body.replace(target, 'env = { VITE_FEATURE_FILE_ANALYSIS_TCX: "true" }') })
+    })
+    await loadRecordHarness(page)
+  })
+
+  for (const reloadBeforeRetry of [false, true]) {
+    test(`B review, lost ACK and ${reloadBeforeRetry ? "reload/reselection" : "same-batch retry"} leave pending A unchanged`, async ({ page }) => {
+      server.offline(true)
+      const a = await page.evaluate(async () => {
+        const h = window.accountRecordHarness
+        const result = await h.persistAccountJournalRecord({ ...h.ordinary, id: "unrelated-pending", date: "2026-08-20" })
+        return { result, raw: await h.rawRecord("unrelated-pending"), view: await h.view("unrelated-pending") }
+      })
+      expect(a.result).toEqual({ ok: true, storage: "PENDING" })
+      expect(a.raw).not.toBeNull()
+      expect(a.view?.pending).not.toBeNull()
+      server.offline(false)
+      const writesBeforeReview = server.calls.filter(call => call.request.action === "save").length
+      const prepared = await page.evaluate(async () => {
+        const h = window.accountRecordHarness
+        const drafts = await h.buildAccountImportDrafts([h.importActivity()])
+        if (drafts?.length !== 1) throw new Error("Expected one reviewable import")
+        h.importConfirmation = h.createAccountImportConfirmation([{ draft: drafts[0]!, intent: { kind: "SAVE_SEPARATE" } }], "tcx")
+        return { source: drafts[0]!.activity.observation?.sourceObservationKey, rawA: await h.rawRecord("unrelated-pending") }
+      })
+      expect(prepared.source).toMatch(/^sha256:/)
+      expect(prepared.rawA).toEqual(a.raw)
+      expect(server.calls.filter(call => call.request.action === "save")).toHaveLength(writesBeforeReview)
+
+      server.loseReceipt("save")
+      expect(await page.evaluate(() => window.accountRecordHarness.importConfirmation!.confirm()))
+        .toMatchObject({ account: 0, pending: 1, failed: 0, conflicts: 0 })
+      expect(server.documents.size).toBe(1)
+      const b = [...server.documents.values()][0]!
+      const beforeRetry = await page.evaluate(async entryId => {
+        const h = window.accountRecordHarness
+        return { a: await h.rawRecord("unrelated-pending"), b: await h.rawRecord(entryId), viewB: await h.view(entryId),
+          current: h.readCurrentConfirmedAccountJournalProjection(), analysis: h.currentFileAnalysisForDate(h.importActivity().date) }
+      }, b.document.entry.id)
+      expect(beforeRetry.a).toEqual(a.raw)
+      expect(beforeRetry.viewB).toMatchObject({ state: "PENDING", serverRevision: 0, blocked: null })
+      expect(beforeRetry.current).toEqual([])
+      expect(beforeRetry.analysis.includedSourceCount).toBe(0)
+      expect(beforeRetry.viewB?.draft.entry).toMatchObject({ id: b.document.entry.id, date: "2026-10-30", avgPace: "",
+        fileObservation: { sport: "RUNNING", distanceMeters: 5000, durationSeconds: 1500, durationMeaning: "SOURCE_DEFINED",
+          confirmation: { durationMeaning: null } } })
+      const writesBeforeRejectedReplay = server.calls.filter(call => call.request.action === "save").length
+      const rejectedReplay = await page.evaluate(async entryId => {
+        const h = window.accountRecordHarness, observation = h.importActivity().observation!
+        return {
+          generic: await h.retryAccountJournalFileImport("unrelated-pending", observation),
+          changedMeaning: await h.retryAccountJournalFileImport(entryId,
+            { ...observation, confirmation: { durationMeaning: "TIMER", sport: null } }),
+          rawA: await h.rawRecord("unrelated-pending"), rawB: await h.rawRecord(entryId),
+          current: h.readCurrentConfirmedAccountJournalProjection(),
+        }
+      }, b.document.entry.id)
+      expect(rejectedReplay.generic).toEqual({ ok: false, storage: "FAILED" })
+      expect(rejectedReplay.changedMeaning).toEqual({ ok: false, storage: "FAILED" })
+      expect(rejectedReplay.rawA).toEqual(a.raw)
+      expect(rejectedReplay.rawB).toEqual(beforeRetry.b)
+      expect(rejectedReplay.current).toEqual([])
+      expect(server.calls.filter(call => call.request.action === "save")).toHaveLength(writesBeforeRejectedReplay)
+
+      const listsBeforeFreshRead = server.calls.filter(call => call.request.action === "list").length
+      const sourceChecked = await page.evaluate(async entryId => {
+        const h = window.accountRecordHarness
+        const refreshed = await h.refreshAccountJournalRecordsForImport()
+        const journal = h.readAccountJournalPrivateEntry(entryId)
+        const observation = journal?.kind === "post-session" ? journal.fileObservation : undefined
+        return { refreshed, journal, rawB: await h.rawRecord(entryId), report: h.currentFileAnalysisForDate(h.importActivity().date),
+          outsideWindow: h.currentFileAnalysisForDate("2026-10-29"),
+          ai: h.evaluateProviderDataUse({ lineage: observation?.dataLineage, requestedFields: ["distanceMeters"],
+            purpose: "SELF_HOSTED_INFERENCE", hosting: "COMPANY_SELF_HOSTED", consentActive: true,
+            grants: [], now: "2026-10-30T12:00:00Z" }) }
+      }, b.document.entry.id)
+      expect(sourceChecked.refreshed).toBe(true)
+      expect(server.calls.filter(call => call.request.action === "list")).toHaveLength(listsBeforeFreshRead + 1)
+      expect(sourceChecked.rawB).toEqual(beforeRetry.b)
+      expect(sourceChecked.journal).toEqual(beforeRetry.viewB?.draft.entry)
+      expect(sourceChecked.report.includedSourceCount).toBe(1)
+      expect(sourceChecked.report.observations).toHaveLength(1)
+      expect(sourceChecked.report.observations[0]).toMatchObject({ journalEntryId: b.document.entry.id, date: "2026-10-30",
+        source: "FILE_UPLOAD", sport: "RUNNING", durationMeaning: "SOURCE_DEFINED", sourceDurationMeaning: "SOURCE_DEFINED",
+        durationMeaningConfirmed: false })
+      expect(sourceChecked.report.sports).toMatchObject([{ sport: "RUNNING", distanceMeters: { value: 5000, sampleCount: 1 },
+        timeSummaries: [{ durationMeaning: "SOURCE_DEFINED", referenceOnly: true, durationSeconds: { value: null },
+          paceSecondsPerKm: { value: null, sampleCount: 0, exclusions: [{ reasonCode: "TIME_MEANING_UNCONFIRMED", count: 1 }] } }] }])
+      expect(sourceChecked.outsideWindow.includedSourceCount).toBe(0)
+      expect(sourceChecked.ai).toEqual({ allowed: false, reason: "MISSING_LINEAGE" })
+      expect(server.calls.filter(call => call.request.action === "save")).toHaveLength(writesBeforeRejectedReplay)
+
+      if (reloadBeforeRetry) {
+        await page.reload(); await loadRecordHarness(page)
+        const reviewed = await page.evaluate(async entryId => {
+          const h = window.accountRecordHarness
+          const drafts = await h.buildAccountImportDrafts([h.importActivity()])
+          if (drafts?.length !== 1) throw new Error("Pending import must remain reviewable after reload")
+          const candidate = drafts[0]!.identityCandidates?.find(item => item.id === entryId)
+          if (!candidate) throw new Error("Pending original must remain an explicit identity candidate")
+          h.importConfirmation = h.createAccountImportConfirmation([{ draft: drafts[0]!, intent: {
+            kind: "USE_EXISTING", entryId, expectedSavedAt: candidate.savedAt,
+          } }], "tcx")
+          return { rawA: await h.rawRecord("unrelated-pending"), rawB: await h.rawRecord(entryId), viewB: await h.view(entryId) }
+        }, b.document.entry.id)
+        expect(reviewed.rawA).toEqual(a.raw)
+        expect(reviewed.rawB).toEqual(beforeRetry.b)
+        expect(reviewed.viewB).toMatchObject({ state: "PENDING", blocked: null })
+      }
+
+      const replayed = await page.evaluate(() => window.accountRecordHarness.importConfirmation!.confirm())
+      expect(replayed).toMatchObject({ account: 1, pending: 0, conflicts: 0, failed: 0 })
+      const refreshed = await page.evaluate(async entryId => {
+        const h = window.accountRecordHarness
+        return { refreshed: await h.refreshAccountJournalRecordsForImport(), rawA: await h.rawRecord("unrelated-pending"),
+          viewA: await h.view("unrelated-pending"), viewB: await h.view(entryId),
+          current: h.readCurrentConfirmedAccountJournalProjection().filter(entry => entry.id === entryId) }
+      }, b.document.entry.id)
+      expect(refreshed.refreshed).toBe(true)
+      expect(refreshed.rawA).toEqual(a.raw)
+      expect(refreshed.viewA).toEqual(a.view)
+      expect(refreshed.viewB).toMatchObject({ state: "DRAFT_ACKNOWLEDGED", serverRevision: 1, pending: null, blocked: null })
+      expect(refreshed.current.map(entry => ({ id: entry.id, date: entry.date })))
+        .toEqual([{ id: b.document.entry.id, date: b.document.entry.date }])
+      const bSaves = server.calls.filter(call => call.request.action === "save" && call.request.documentId === b.documentId)
+      expect(bSaves).toHaveLength(2)
+      expect(bSaves[1]!.request).toEqual(bSaves[0]!.request)
+      expect(server.calls.filter(call => call.request.action === "save")).toHaveLength(writesBeforeReview + 2)
+      expect([...server.documents.values()].map(document => document.revision)).toEqual([1])
+
+      // Positive control: scoped import reads did not disable ordinary autosync.
+      expect(await page.evaluate(() => window.accountRecordHarness.hydrateAccountJournalRecords())).toBe(true)
+      expect(await page.evaluate(() => window.accountRecordHarness.view("unrelated-pending")))
+        .toMatchObject({ state: "DRAFT_ACKNOWLEDGED", serverRevision: 1, pending: null })
+      const aSaves = server.calls.filter(call => call.request.action === "save" && call.request.document.entry.id === "unrelated-pending")
+      expect(aSaves).toHaveLength(2)
+      expect(aSaves[1]!.request).toEqual(aSaves[0]!.request)
+      expect(server.documents.size).toBe(2)
+    })
+  }
+
+  test("scoped read drops a pending record's confirmation when its notification switches A-B-A", async ({ page }) => {
+    server.loseReceipt("save")
+    expect(await page.evaluate(() => { const h = window.accountRecordHarness; return h.persistAccountJournalRecord(h.fileRecord().entry, undefined, "FILE_OBSERVATION") }))
+      .toEqual({ ok: true, storage: "PENDING" })
+    const rawBefore = await page.evaluate(() => window.accountRecordHarness.rawRecords())
+    const savesBefore = server.calls.filter(call => call.request.action === "save").length
+    const result = await page.evaluate(async () => {
+      const h = window.accountRecordHarness
+      let switched = false, initialize: Promise<unknown> | null = null
+      const switchOnConfirmation = () => {
+        if (!h.readCurrentConfirmedAccountJournalProjection().some(entry => entry.id === "ordinary")) return
+        window.removeEventListener("trainoracle:account-journals-changed", switchOnConfirmation)
+        switched = true
+        h.setActiveLocalAccount(h.otherOwner); h.setActiveLocalAccount(h.owner)
+        // Initialize the new A generation synchronously. Its missing-document
+        // read cannot supply an old generation's confirmation or write anything.
+        initialize = h.readAccountJournalWriteBase("synthetic-absent-after-switch")
+      }
+      window.addEventListener("trainoracle:account-journals-changed", switchOnConfirmation)
+      try {
+        const refreshed = await h.refreshAccountJournalRecordsForImport()
+        await initialize
+        return { switched, refreshed, current: h.readCurrentConfirmedAccountJournalProjection(),
+          cached: h.readAccountJournalProjection(), raw: await h.rawRecords(), view: await h.view("ordinary") }
+      } finally { window.removeEventListener("trainoracle:account-journals-changed", switchOnConfirmation) }
+    })
+    expect(result.switched).toBe(true)
+    expect(result.refreshed).toBe(false)
+    expect(result.current).toEqual([])
+    expect(result.cached).toEqual([])
+    expect(result.raw).toEqual(rawBefore)
+    expect(result.view).toMatchObject({ state: "PENDING", serverRevision: 0, blocked: null })
+    expect(server.calls.filter(call => call.request.action === "save")).toHaveLength(savesBefore)
+  })
+})
+
 test("duplicate creates and simultaneous stale edits cannot overwrite the winning savedAt CAS", async ({ page }) => {
   const result = await page.evaluate(async () => {
     const h = window.accountRecordHarness

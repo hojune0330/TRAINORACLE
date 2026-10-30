@@ -53,7 +53,7 @@ it("opens the imported facts after a confirmed device save without claiming anal
   const view = render(<SavedStage outcome={{ total: 1, saved: 1, failed: 0 }} onOpenSummary={summary} onRestart={() => undefined} />)
   await user.click(screen.getByRole("button", { name: "가져온 기록 보기" }))
   expect(summary).toHaveBeenCalledOnce()
-  expect(screen.queryByRole("button", { name: "가져온 기록 분석하기" })).not.toBeInTheDocument()
+  expect(screen.queryByRole("button", { name: "전체 가져온 기록 분석" })).not.toBeInTheDocument()
   view.rerender(<SavedStage outcome={{ total: 1, saved: 0, failed: 1 }} onOpenSummary={summary} onRestart={() => undefined} />)
   expect(screen.queryByRole("button", { name: "가져온 기록 보기" })).not.toBeInTheDocument()
 })
@@ -225,6 +225,16 @@ describe("ImportActivities — 고르기 단계", () => {
     expect(window.localStorage.getItem(JOURNAL_KEY)).toBeNull()
   })
 
+  it.each([
+    ['<?xml version="1.0"?><TrainingCenterDatabase><Activities /></TrainingCenterDatabase>', "파일은 읽었지만 일지로 옮길 활동을 찾지 못했어요"],
+    ["<TrainingCenterDatabase><Activities></TrainingCenterDatabase>", "이 파일을 읽지 못했어요"],
+  ])("distinguishes valid empty TCX from malformed XML: %s", async (text, message) => {
+    render(<ImportActivities />)
+    await pickFile(userEvent.setup(), upload(text))
+    expect(await screen.findByTestId("import-failure")).toHaveTextContent(message)
+    expect(loadEntries()).toEqual([])
+  })
+
   it("큰 파일은 내용을 읽기 전에 거절하고 같은 파일을 다시 고를 수 있게 한다", async () => {
     const user = userEvent.setup()
     render(<ImportActivities />)
@@ -345,6 +355,20 @@ describe("ImportActivities — 저장", () => {
   beforeEach(async () => {
     window.localStorage.clear()
     await initializeCanonicalJournalFixture()
+  })
+
+  it("keeps keyboard focus in the result after explicitly excluding a record", async () => {
+    const user = userEvent.setup()
+    render(<ImportActivities />)
+    await pickFile(user, upload(tcxFile([tcxLap("2026-07-20T06:00:00Z", 5000, 1500)])))
+    await user.selectOptions(await screen.findByRole("combobox", { name: /저장 방식/ }), "exclude")
+    screen.getByRole("button", { name: "고른 1건 가져오기에서 제외" }).focus()
+    await user.keyboard("{Enter}")
+    await waitFor(() => expect(screen.getByRole("region", { name: "가져오기 결과" })).toHaveFocus())
+    expect(screen.getByTestId("import-saved")).toHaveTextContent("가져오기 제외 완료")
+    expect(loadEntries()).toEqual([])
+    await user.tab()
+    expect(screen.getByRole("button", { name: "파일 더 가져오기" })).toHaveFocus()
   })
 
   it("고른 활동만 이 기기 일지에 저장하고 분석에서는 제외한다", async () => {

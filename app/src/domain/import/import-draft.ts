@@ -48,6 +48,8 @@ export type ImportSaveIntent =
 export type ImportDraftSelection = { readonly draft: ImportDraft; readonly intent: ImportSaveIntent }
 
 export type ImportSaveResult = {
+  /** Only per-record server confirmations or verified existing records, never aggregate guesses. */
+  readonly confirmedEntries?: readonly { readonly id: string; readonly date: string }[]
   readonly account?: number
   readonly pending?: number
   readonly saved: number

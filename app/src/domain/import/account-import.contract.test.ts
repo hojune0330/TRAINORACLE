@@ -12,10 +12,11 @@ import type { ImportDraftSelection, ImportSaveIntent } from "./import-draft"
 import { ReviewStage, SavedStage } from "../../screens/import-activities/ImportStages"
 import { initializeCanonicalJournalFixture } from "../../test/canonical-journal-fixture"
 
-const api = vi.hoisted(() => ({ hydrate: vi.fn(), persist: vi.fn(), deleted: vi.fn(), base: vi.fn(), fingerprint: vi.fn() }))
+const api = vi.hoisted(() => ({ hydrate: vi.fn(), replay: vi.fn(), persist: vi.fn(), deleted: vi.fn(), base: vi.fn(), fingerprint: vi.fn() }))
 vi.mock("../account/account-journal-record-service", () => ({
   accountJournalRecordsEnabled: () => true,
-  hydrateAccountJournalRecords: api.hydrate,
+  refreshAccountJournalRecordsForImport: api.hydrate,
+  retryAccountJournalFileImport: api.replay,
   persistAccountJournalRecord: api.persist,
   accountJournalDeletedDocuments: api.deleted,
   readAccountJournalWriteBase: api.base, accountJournalEntryFingerprint: api.fingerprint,
@@ -50,6 +51,7 @@ function observedBatch(selections: readonly ImportDraftSelection[]) {
 beforeEach(() => {
   vi.resetAllMocks(); setActiveLocalAccount("A"); resetAccountJournalProjection("A")
   api.hydrate.mockResolvedValue(true); api.deleted.mockReturnValue([])
+  api.replay.mockResolvedValue({ ok: false, storage: "FAILED" })
   api.persist.mockResolvedValue({ ok: true, storage: "ACCOUNT" })
   api.fingerprint.mockImplementation(async ({ syncState: _transport, ...entry }) => JSON.stringify(entry))
   api.base.mockImplementation(async (id: string) => {
@@ -61,6 +63,47 @@ afterEach(() => { cleanup(); batches.splice(0).forEach(batch => batch.dispose())
 
 describe("explicit file identity choices", () => {
   beforeEach(() => vi.stubEnv("VITE_FEATURE_FILE_ANALYSIS_TCX", "true"))
+
+  it("keeps pending candidates reviewable and replays only an explicitly selected identical file", async () => {
+    const source = observedActivity(), stored = toImportedEntry(source, "tcx", { includeFileObservation: true })
+    putAccountJournalProjection("A", stored)
+    const cleanBase = { entry: stored, revision: 1, contentFingerprint: await api.fingerprint(stored) }
+    api.base.mockResolvedValue(null)
+    const draft = (await buildAccountImportDrafts([source]))![0]!
+    expect(draft.accountWriteBases).toEqual({})
+    expect(api.replay).not.toHaveBeenCalled()
+    api.replay.mockImplementation(async () => {
+      api.base.mockResolvedValue(cleanBase)
+      return { ok: true, storage: "ACCOUNT" }
+    })
+    const result = await observedBatch([{ draft, intent: { kind: "USE_EXISTING", entryId: stored.id, expectedSavedAt: stored.savedAt } }]).confirm()
+    expect(result).toMatchObject({ account: 1, reused: 1, confirmedEntries: [{ id: stored.id, date: stored.date }] })
+    expect(api.replay).toHaveBeenCalledExactlyOnceWith(stored.id, source.observation)
+    expect(api.persist).not.toHaveBeenCalled()
+  })
+
+  it("does not turn a missing reviewed base into permission to attach a file", async () => {
+    const source = observedActivity(), stored = waiting()
+    putAccountJournalProjection("A", stored)
+    api.base.mockResolvedValue(null)
+    const draft = (await buildAccountImportDrafts([source]))![0]!
+    expect(await observedBatch([{ draft, intent: { kind: "ADD_TO_EXISTING", entryId: stored.id, expectedSavedAt: stored.savedAt } }]).confirm())
+      .toMatchObject({ account: 0, conflicts: 1, confirmedEntries: [] })
+    expect(api.replay).not.toHaveBeenCalled()
+    expect(api.persist).not.toHaveBeenCalled()
+  })
+
+  it("never replays one pending record when multiple records claim the selected source", async () => {
+    const source = observedActivity(), stored = toImportedEntry(source, "tcx", { includeFileObservation: true })
+    putAccountJournalProjection("A", { ...stored, id: "ambiguous-a" })
+    putAccountJournalProjection("A", { ...stored, id: "ambiguous-b" })
+    api.base.mockResolvedValue(null)
+    const draft = (await buildAccountImportDrafts([source]))![0]!
+    expect(await observedBatch([{ draft, intent: { kind: "SAVE_SEPARATE" } }]).confirm())
+      .toMatchObject({ account: 0, conflicts: 1, confirmedEntries: [] })
+    expect(api.replay).not.toHaveBeenCalled()
+    expect(api.persist).not.toHaveBeenCalled()
+  })
 
   it("never silently reuses a no-ID observation on a separate import", async () => {
     const source = observedActivity(null)

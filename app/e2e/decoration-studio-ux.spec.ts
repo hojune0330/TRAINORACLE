@@ -146,7 +146,7 @@ test("routes the home decoration card into the real journal editor with points",
 
   /* 편집기 열림 상태는 일회성 UI 상태 — 새로고침 뒤에는 저절로 열리지 않는다. */
   await page.reload()
-  await page.getByRole("button", { name: "오늘 기록 보기", exact: true }).click()
+  await page.getByRole("button", { name: /기록 1개 보기/u }).click()
   await expect(page.getByRole("dialog", { name: "일지 꾸미기", exact: true })).toHaveCount(0)
   await expect(page.getByRole("button", { name: "일지 꾸미기 열기" })).toBeVisible()
 
