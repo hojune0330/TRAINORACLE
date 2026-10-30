@@ -156,6 +156,7 @@
   /* Keep the first actions usable when a platform scrollbar narrows content.
      Preserve text size, 44px targets and wrapping for enlarged text. */
   .home-hub { padding-inline:var(--space-4, 16px); }
+  .home-hub__header { column-gap:var(--space-2, 8px); }
   .home-hub__today--welcome nav { column-gap:var(--space-2, 8px); }
   .home-hub__intro { margin-block:var(--space-5, 20px) var(--space-4, 16px); }
 }

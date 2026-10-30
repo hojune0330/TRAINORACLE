@@ -110,6 +110,28 @@ without mutating the stored plan. Examples are opened from their current menu,
 preserving explicit opt-in, keyboard access, no-write and recovery assertions.
 These are test-only changes: no product, permission, timeout or CI gate change.
 
+### Narrow home header correction (2026-10-31 KST)
+
+The ecad41a6 CI run reached the complete built-preview scenarios and exposed a
+real narrow-layout issue, separate from the obsolete test entries. With a 320px
+viewport and 15px reserved scrollbar space, the Linux CI screenshot showed the
+More button wrapping below the brand. Its 16px horizontal header gap contributed
+to the wrap; total home height increased from 1206px to 1275px, exceeding the
+unchanged 1250px limit. Reduced-motion, touch-narrow and mobile lanes each reported
+only this failure (313, 338 and 333 other tests passed respectively).
+
+At widths up to 380px, the header now uses the existing 8px spacing token. Text,
+button dimensions, available actions and natural wrapping at enlarged text stay
+unchanged. The existing reserved-gutter test passed locally in all four browser
+projects, including 44px targets, keyboard focus, 200% text and no horizontal
+overflow. Each local run measured 1206px before the gutter and 1223px after it;
+the resulting screenshot keeps the brand and More button on one row. These are
+Windows measurements, not a claim that the corrected Linux CI has passed.
+
+The accepted import-flow files remain unchanged. This one home CSS correction
+has separate focused evidence; final-head required CI and release verification
+still apply. No test height limit, retry policy, timeout, skip or workflow changed.
+
 Operational evidence uses synthetic records and de-identified stage outcomes.
 No raw health values, tokens, personal activity IDs, routes or private screenshots
 are collected for this report. Actual personal integration has not been proven.
