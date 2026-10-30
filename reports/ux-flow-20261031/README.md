@@ -38,7 +38,7 @@
 - 최종 공통 UI와 기존 시각 계약: 2파일 20개 통과 (`shared-final.log`). TypeScript 통과 (`typecheck-final.log`). 계정 OFF 로컬 빌드 통과 (`build-final.log`); 기존 대형 번들 경고는 남아 있다.
 - 실제 Chromium의 기존 합성 인증·HTTP 검사 3개: 정확한 ID/date 일지, ACK 대기 후 같은 요청 재시도, 원본 식별자를 유지한 파일 수정 저장. 최종 후보에서 모두 통과 (`account-browser-final.log`). 실제 계정 성공의 근거가 아니다.
 - `verify-flow.mjs`: 홈→개인 빈 상태→명시적 예시→홈, 연결 상태→가져오기→Back의 원래 버튼 포커스, 선택 0/1/2·제외, 깨진 교체 파일→검토 복원, Space·Enter, 실제 1건 로컬 저장→일지 메뉴 이동을 통과했다. 저장 전 일지 0건, 저장 후 1건, 외부 POST 0건.
-- 320/375/430px, DOM 글자 200%, reduced-motion: 가로 넘침 없음, 선택 전후 다음 행 이동 0px, 거리/시간 값의 상단 일치, 실제 label/select 최소 높이 44px. self-hosted Pretendard Variable의 `loaded` 상태 확인. [수치](final/verification.json).
+- 보통 글씨 320/375/430px, 200% 글씨는 320px, reduced-motion: 가로 넘침 없음, 선택 전후 다음 행 이동 0px, 거리/시간 값의 상단 일치, 실제 label/select 최소 높이 44px. self-hosted Pretendard Variable의 `loaded` 상태 확인. [수치](final/verification.json).
 - 새 회귀 검사에 결함 네 개를 주입하자 개인 결과 진입·선택 복원·로컬 저장 문구·정확한 목적지 누락의 네 검사가 각각 이름으로 실패했다. 제품 파일은 바이트 단위 복구했고 이후 관련 검사들이 통과했다 (`mutation-result.log`, `mutation.log`).
 
 계정 전환 A-B-A의 늦은 응답 배제, 계정 충돌의 읽기 전용 재검토/읽기 실패 시 결과 보존, 부분 성공·실패의 정직한 표시, pending/충돌의 분석 제외는 위 집중 단위/화면 계약으로 검증했다. 이 상태 모두를 실제 브라우저나 실계정에서 직접 실행했다고 보고하지 않는다. OS Dynamic Type·물리 기기·브라우저 자체 확대가 아닌 DOM 글자 확대다.
