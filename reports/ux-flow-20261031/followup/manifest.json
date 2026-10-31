@@ -269,9 +269,9 @@
     },
     {
       "file": "README.md",
-      "bytes": 15433,
-      "sha256": "d824c55d395df04dc830eead74dc1f59e263696ce20ee29f563d7983f9617afb",
-      "sha256Lf": "d824c55d395df04dc830eead74dc1f59e263696ce20ee29f563d7983f9617afb"
+      "bytes": 15939,
+      "sha256": "ea91cbcc70f067ff508ba495af7eff7243af23140caf6e9f26595d67be329472",
+      "sha256Lf": "ea91cbcc70f067ff508ba495af7eff7243af23140caf6e9f26595d67be329472"
     },
     {
       "file": "account-browser.log",
