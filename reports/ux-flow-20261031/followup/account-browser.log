@@ -1,0 +1,11 @@
+
+Running 4 tests using 1 worker
+
+(node:39336) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 e2e\file-analysis-flow.spec.ts:314:1 ??saved receipt opens the exact journal among two records on the same date (11.6s)
+  ok 2 e2e\file-analysis-flow.spec.ts:563:1 ??pending account file is excluded until a validated retry acknowledgement (3.6s)
+  ok 3 e2e\file-analysis-flow.spec.ts:591:1 ??persisted ACK cache stays displayable but cannot authorize file analysis after failed hydration (5.8s)
+  ok 4 e2e\file-analysis-flow.spec.ts:622:1 ??a real replacement TCX candidate saves a validated correction and reopens with immutable source identity (6.9s)
+
+  4 passed (35.4s)

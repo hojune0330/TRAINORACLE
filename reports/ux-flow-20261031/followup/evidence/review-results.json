@@ -1,0 +1,52 @@
+{
+  "selection": [
+    0,
+    1,
+    2,
+    1,
+    0,
+    1
+  ],
+  "widths": [
+    {
+      "width": 320,
+      "nextRowMovement": 0,
+      "overflow": false
+    },
+    {
+      "width": 375,
+      "nextRowMovement": 0,
+      "overflow": false
+    },
+    {
+      "width": 430,
+      "nextRowMovement": 0,
+      "overflow": false
+    }
+  ],
+  "errors": [
+    {
+      "id": "empty",
+      "text": "파일에 활동이 없어요\n파일은 읽었지만 일지로 옮길 활동을 찾지 못했어요. 날짜·거리·시간이 비어 있는 파일일 수 있어요.\n기존 일지는 그대로 있어요."
+    },
+    {
+      "id": "malformed",
+      "text": "파일을 확인해 주세요\n이 파일을 읽지 못했어요. .csv, .json, .tcx 또는 .gpx 파일인지 확인해 주세요.\n기존 일지는 그대로 있어요."
+    }
+  ],
+  "posts": [],
+  "density": {
+    "first": 208,
+    "last": 1854,
+    "span": 1646
+  },
+  "large": {
+    "width": 320,
+    "overflow": false,
+    "nextRowMovement": 0,
+    "longDuration": "1,256.78분",
+    "longNumberLines": 1,
+    "unitMayWrap": true
+  },
+  "savedCount": 0
+}

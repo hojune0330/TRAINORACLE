@@ -1,0 +1,47 @@
+{
+  "checks": [
+    "Upper Back/reopen restores three review rows, exact selection and exclusion",
+    "Browser Back/reopen restores exclusion, exact control focus and nonzero review scroll",
+    "All three records visible; second same-day record opens exact detail; time/kind uncertainty survives; Back restores row focus",
+    "Different-day exact detail; 200% DOM text at 320px; list Back restores original save result/opener without another write",
+    "New import discards old result; one-record save/list/Back restores one-record receipt; all four stored journals unchanged by navigation",
+    "Synthetic account lifetime change clears prior result/review and cannot reopen old imported overlay"
+  ],
+  "widths": [
+    {
+      "width": 320,
+      "overflow": false
+    },
+    {
+      "width": 375,
+      "overflow": false
+    },
+    {
+      "width": 430,
+      "overflow": false
+    }
+  ],
+  "reviewScroll": 627,
+  "restoredReviewScroll": 627,
+  "largeTextWidth": 320,
+  "initialStoredCount": 3,
+  "finalStoredCount": 4,
+  "syntheticIdentities": [
+    {
+      "id": "b94a5038-c116-4b82-bd00-7bdd56702f44",
+      "date": "2026-10-16",
+      "distanceKm": "2"
+    },
+    {
+      "id": "4ef582e7-0064-40d9-beaf-8aa80866b483",
+      "date": "2026-10-16",
+      "distanceKm": "3"
+    },
+    {
+      "id": "e90cb597-7bc6-482f-891c-8f408ebd0e05",
+      "date": "2026-10-15",
+      "distanceKm": "4"
+    }
+  ],
+  "posts": []
+}

@@ -1,0 +1,33 @@
+
+ RUN  v4.1.10 C:/Users/admin/Documents/Codex/2026-10-31/task-3/trainoracle-flow/app
+
+ ❯ src/screens/ImportedRecords.contract.test.tsx (3 tests | 1 failed | 2 skipped) 120ms
+   × requires an exact current account acknowledgement and never promotes pending copies 119ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 skipped (3)
+   Start at  03:21:44
+   Duration  5.66s (transform 2.67s, setup 171ms, import 3.66s, tests 120ms, environment 1.50s)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/screens/ImportedRecords.contract.test.tsx > requires an exact current account acknowledgement and never promotes pending copies
+AssertionError: expected [ <li>…(1)</li>, <li>…(1)</li> ] to have a length of 1 but got 2
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ src/screens/ImportedRecords.contract.test.tsx:44:43
+     42|   const props = { entries: [confirmed, pending], readComplete: false, …
+     43|   const view = render(<ImportedRecords {...props} />)
+     44|   expect(screen.getAllByRole("listitem")).toHaveLength(1)
+       |                                           ^
+     45|   expect(screen.queryByRole("button", { name: /3km/u })).toBeNull()
+     46|   setActiveLocalAccount("B")
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

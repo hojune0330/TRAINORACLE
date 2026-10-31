@@ -1,0 +1,33 @@
+{
+  "cases": [
+    {
+      "file": "app/src/screens/ImportedRecords.tsx",
+      "name": "lists every actual imported journal and opens an exact same-day or different-day identity without writing",
+      "detected": true,
+      "exitCode": 1,
+      "sha256": "58eec83d3c45de4b7e189579c49afa383c7e7901800efafbe3036742a1df0637"
+    },
+    {
+      "file": "app/src/screens/LogDetail.tsx",
+      "name": "keeps unconfirmed imported time and kind honest without changing legacy stored values",
+      "detected": true,
+      "exitCode": 1,
+      "sha256": "a5a53dd29b37834881fe3746942e5370407bbaba20b1a1a6fcb9c37d6d053cb9"
+    },
+    {
+      "file": "app/src/screens/ImportActivities.tsx",
+      "name": "restores a same-scope review across unmounts but refuses an A-B-A lifetime",
+      "detected": true,
+      "exitCode": 1,
+      "sha256": "4355b691e8d5731820d58ac373d4ebaeaea2f533c17dabd1ac8947eb3cc6d686"
+    },
+    {
+      "file": "app/src/screens/ImportedRecords.tsx",
+      "name": "requires an exact current account acknowledgement and never promotes pending copies",
+      "detected": true,
+      "exitCode": 1,
+      "sha256": "58eec83d3c45de4b7e189579c49afa383c7e7901800efafbe3036742a1df0637"
+    }
+  ],
+  "exactBytesRestored": true
+}

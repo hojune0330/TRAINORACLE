@@ -1,0 +1,33 @@
+
+ RUN  v4.1.10 C:/Users/admin/Documents/Codex/2026-10-31/task-3/trainoracle-flow/app
+
+ ❯ src/screens/ImportedRecords.contract.test.tsx (3 tests | 1 failed | 2 skipped) 118ms
+   × lists every actual imported journal and opens an exact same-day or different-day identity without writing 117ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 skipped (3)
+   Start at  03:21:27
+   Duration  5.53s (transform 2.66s, setup 173ms, import 3.65s, tests 118ms, environment 1.37s)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/screens/ImportedRecords.contract.test.tsx > lists every actual imported journal and opens an exact same-day or different-day identity without writing
+AssertionError: expected [ <li><button …(2)>…(4)</button></li> ] to have a length of 3 but got 1
+
+- Expected
++ Received
+
+- 3
++ 1
+
+ ❯ src/screens/ImportedRecords.contract.test.tsx:16:43
+     14|   const entries = [entry("a", "2026-10-16", "2"), entry("b", "2026-10-…
+     15|   render(<ImportedRecords entries={entries} readComplete onOpenEntry={…
+     16|   expect(screen.getAllByRole("listitem")).toHaveLength(3)
+       |                                           ^
+     17|   await user.click(screen.getByRole("button", { name: /3km.*15분/u }))
+     18|   expect(open).toHaveBeenLastCalledWith("2026-10-16", "b")
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

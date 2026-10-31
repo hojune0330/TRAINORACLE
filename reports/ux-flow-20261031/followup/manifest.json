@@ -1,0 +1,526 @@
+{
+  "createdAt": "2026-10-31T03:32:12.672Z",
+  "baseCommit": "1702188ddd26eaf1ef33fdd6481a49df4ac23635",
+  "productCommit": "1f29f76541b611fcb415838e6b20bb6b39c397b0",
+  "commonSourceCommit": "afc43a23641692294ee681bf85ca7fd3b5fac2f6",
+  "hashBasis": "sha256 and bytes: workspace raw bytes; sha256Lf: UTF-8 text with CRLF normalized to LF for Git checkout portability",
+  "vendorNativeDirectUse": {
+    "apple": 0,
+    "garmin": 0
+  },
+  "viewport": {
+    "regular": [
+      320,
+      375,
+      430
+    ],
+    "domFont200Percent": [
+      320
+    ]
+  },
+  "accountOffBrowser": {
+    "checks": [
+      "Upper Back/reopen restores three review rows, exact selection and exclusion",
+      "Browser Back/reopen restores exclusion, exact control focus and nonzero review scroll",
+      "All three records visible; second same-day record opens exact detail; time/kind uncertainty survives; Back restores row focus",
+      "Different-day exact detail; 200% DOM text at 320px; list Back restores original save result/opener without another write",
+      "New import discards old result; one-record save/list/Back restores one-record receipt; all four stored journals unchanged by navigation",
+      "Synthetic account lifetime change clears prior result/review and cannot reopen old imported overlay"
+    ],
+    "widths": [
+      {
+        "width": 320,
+        "overflow": false
+      },
+      {
+        "width": 375,
+        "overflow": false
+      },
+      {
+        "width": 430,
+        "overflow": false
+      }
+    ],
+    "reviewScroll": 627,
+    "restoredReviewScroll": 627,
+    "largeTextWidth": 320,
+    "initialStoredCount": 3,
+    "finalStoredCount": 4,
+    "syntheticIdentities": [
+      {
+        "id": "b94a5038-c116-4b82-bd00-7bdd56702f44",
+        "date": "2026-10-16",
+        "distanceKm": "2"
+      },
+      {
+        "id": "4ef582e7-0064-40d9-beaf-8aa80866b483",
+        "date": "2026-10-16",
+        "distanceKm": "3"
+      },
+      {
+        "id": "e90cb597-7bc6-482f-891c-8f408ebd0e05",
+        "date": "2026-10-15",
+        "distanceKm": "4"
+      }
+    ],
+    "posts": []
+  },
+  "reviewBrowser": {
+    "selection": [
+      0,
+      1,
+      2,
+      1,
+      0,
+      1
+    ],
+    "widths": [
+      {
+        "width": 320,
+        "nextRowMovement": 0,
+        "overflow": false
+      },
+      {
+        "width": 375,
+        "nextRowMovement": 0,
+        "overflow": false
+      },
+      {
+        "width": 430,
+        "nextRowMovement": 0,
+        "overflow": false
+      }
+    ],
+    "errors": [
+      {
+        "id": "empty",
+        "text": "파일에 활동이 없어요\n파일은 읽었지만 일지로 옮길 활동을 찾지 못했어요. 날짜·거리·시간이 비어 있는 파일일 수 있어요.\n기존 일지는 그대로 있어요."
+      },
+      {
+        "id": "malformed",
+        "text": "파일을 확인해 주세요\n이 파일을 읽지 못했어요. .csv, .json, .tcx 또는 .gpx 파일인지 확인해 주세요.\n기존 일지는 그대로 있어요."
+      }
+    ],
+    "posts": [],
+    "density": {
+      "first": 208,
+      "last": 1854,
+      "span": 1646
+    },
+    "large": {
+      "width": 320,
+      "overflow": false,
+      "nextRowMovement": 0,
+      "longDuration": "1,256.78분",
+      "longNumberLines": 1,
+      "unitMayWrap": true
+    },
+    "savedCount": 0
+  },
+  "regressionProbes": {
+    "cases": [
+      {
+        "file": "app/src/screens/ImportedRecords.tsx",
+        "name": "lists every actual imported journal and opens an exact same-day or different-day identity without writing",
+        "detected": true,
+        "exitCode": 1,
+        "sha256": "58eec83d3c45de4b7e189579c49afa383c7e7901800efafbe3036742a1df0637"
+      },
+      {
+        "file": "app/src/screens/LogDetail.tsx",
+        "name": "keeps unconfirmed imported time and kind honest without changing legacy stored values",
+        "detected": true,
+        "exitCode": 1,
+        "sha256": "a5a53dd29b37834881fe3746942e5370407bbaba20b1a1a6fcb9c37d6d053cb9"
+      },
+      {
+        "file": "app/src/screens/ImportActivities.tsx",
+        "name": "restores a same-scope review across unmounts but refuses an A-B-A lifetime",
+        "detected": true,
+        "exitCode": 1,
+        "sha256": "4355b691e8d5731820d58ac373d4ebaeaea2f533c17dabd1ac8947eb3cc6d686"
+      },
+      {
+        "file": "app/src/screens/ImportedRecords.tsx",
+        "name": "requires an exact current account acknowledgement and never promotes pending copies",
+        "detected": true,
+        "exitCode": 1,
+        "sha256": "58eec83d3c45de4b7e189579c49afa383c7e7901800efafbe3036742a1df0637"
+      }
+    ],
+    "exactBytesRestored": true
+  },
+  "productFiles": [
+    {
+      "file": "app/e2e/file-analysis-flow.spec.ts",
+      "bytes": 61417,
+      "sha256": "f8da1132c302178e8929dd87846556dbcdf72f432e33bb3ccfc19bf4921b54ec",
+      "sha256Lf": "b2baeb9fffbe3b4c2d2502184a120b469ec32f37a4c2b84df62b273d2ae55fc6"
+    },
+    {
+      "file": "app/src/AppShell.tsx",
+      "bytes": 115310,
+      "sha256": "45cde194b9317ab3d6f515f9b28e13bb7ed681f7ba7c3e71f67bfb23c491acb7",
+      "sha256Lf": "de19a63816ad3e27150276ae04f6c8dc2ffc5531dea7940984241af7f6fe7e1d"
+    },
+    {
+      "file": "app/src/components/RecordUI.contract.test.tsx",
+      "bytes": 11127,
+      "sha256": "06e9c4f3bc2878f90b080078cfa1c7768681760d0d6e0610482359bda14b88c6",
+      "sha256Lf": "f49c87ba45c1a15b686376ee6fa4cdd0f19a0c4e551d17a2658a1c3f1f1fc673"
+    },
+    {
+      "file": "app/src/components/RecordUI.tsx",
+      "bytes": 9869,
+      "sha256": "b1027360f3d58104e26fda5518fb7761910fc2dd2b70f4a05d77b3ad678fc3d1",
+      "sha256Lf": "7ecb6b2f4e3b202da213052da0b544ad0b9d99b07ffde9e83ff2e438768e2f8d"
+    },
+    {
+      "file": "app/src/components/record-ui.css",
+      "bytes": 7109,
+      "sha256": "d0d8f17f449f4ccebb54d66a110f2967b0171b403f2c2ecf0e85bc7415c7c128",
+      "sha256Lf": "a4d2f56009e1ecedd6f6186c0b41987b820a8b58cf6e066f222e30bf0557f13d"
+    },
+    {
+      "file": "app/src/components/record-ui.tokens.css",
+      "bytes": 400,
+      "sha256": "8ebbfb8ae01b4096ea5f0db9c0210d9a1bd90c63baddb34794ec742e5ea4966f",
+      "sha256Lf": "0a9e9507a9925d0180c5efdd9498ebf8e73d3c7f60bb6fdf0db52ed347b1d287"
+    },
+    {
+      "file": "app/src/screens/DeviceConnections.tsx",
+      "bytes": 2062,
+      "sha256": "bbcf00a197893cba829358ece9ca31ed7fb24955e01519b810666f0592f652cf",
+      "sha256Lf": "4fb38bad38412bc8d65a4f65984bb9d204330e47006204348c6ff6b3075be713"
+    },
+    {
+      "file": "app/src/screens/ImportActivities.flow.contract.test.tsx",
+      "bytes": 5081,
+      "sha256": "5b79291d99208a9fbb689874c377c5fe46574cac6f46c3a97bf4cf45b56c057d",
+      "sha256Lf": "5b79291d99208a9fbb689874c377c5fe46574cac6f46c3a97bf4cf45b56c057d"
+    },
+    {
+      "file": "app/src/screens/ImportActivities.tsx",
+      "bytes": 23649,
+      "sha256": "4355b691e8d5731820d58ac373d4ebaeaea2f533c17dabd1ac8947eb3cc6d686",
+      "sha256Lf": "88692ab6ffca91a97da772887d903b921386b443150fef3a38c0ec11f03d8839"
+    },
+    {
+      "file": "app/src/screens/ImportedRecords.contract.test.tsx",
+      "bytes": 3491,
+      "sha256": "ca761f75201a3cfb999e9487c91b6bf64ea5ccc94a128d72eaeb4fa9e0aaf2ea",
+      "sha256Lf": "ca761f75201a3cfb999e9487c91b6bf64ea5ccc94a128d72eaeb4fa9e0aaf2ea"
+    },
+    {
+      "file": "app/src/screens/ImportedRecords.tsx",
+      "bytes": 5120,
+      "sha256": "58eec83d3c45de4b7e189579c49afa383c7e7901800efafbe3036742a1df0637",
+      "sha256Lf": "58eec83d3c45de4b7e189579c49afa383c7e7901800efafbe3036742a1df0637"
+    },
+    {
+      "file": "app/src/screens/LogDetail.revisit-preservation.contract.test.tsx",
+      "bytes": 15888,
+      "sha256": "3628ca99679abbba6657ce93e63a9fca2460743f2262930bb335343c30f3a243",
+      "sha256Lf": "6f2ea2bd61e8bcb5f2f1c6440d5d135959dd43d8221ba0bd5b276b79382b5db0"
+    },
+    {
+      "file": "app/src/screens/LogDetail.tsx",
+      "bytes": 35646,
+      "sha256": "a5a53dd29b37834881fe3746942e5370407bbaba20b1a1a6fcb9c37d6d053cb9",
+      "sha256Lf": "6bb4dfed4d8975cf8b370de0ed11363fd9780a503c339396be4a3a0753e4a58b"
+    },
+    {
+      "file": "app/src/screens/import-activities/ImportStages.tsx",
+      "bytes": 28975,
+      "sha256": "9c3d536fa6eaeeef90b953a06732b7569a60bacc76937c3eb72d767c325c7e7d",
+      "sha256Lf": "37076aa90c15361be42f70826c7d0eae517da706f29578e122e413ebd0de0e5a"
+    },
+    {
+      "file": "app/src/screens/import-activities/ImportedActivityFacts.tsx",
+      "bytes": 2649,
+      "sha256": "3eec95edb359f6fb53e9c64ba7c387da8641f5243766191abc769d01757a47f0",
+      "sha256Lf": "35671908c0bc09c3993243241d7ba68b9802deeb01b802e189711e04a8ab5c9d"
+    },
+    {
+      "file": "app/src/screens/import-activities/account-import-screens.contract.test.tsx",
+      "bytes": 20904,
+      "sha256": "84cd5cbb805cd2c0d443bdd79988f3dae57f19ce27200d7335dc8f02b452012b",
+      "sha256Lf": "f092881c2a460195269e07bf5e890e5e09a03917a87364bdb29269b6ff6e239f"
+    },
+    {
+      "file": "app/src/screens/import-activities/file-analysis.css",
+      "bytes": 7637,
+      "sha256": "4080bb86a2ab57e77ae16999304db58b9a8c8d51b1201258b0a5ae4e188f17db",
+      "sha256Lf": "4ef494273c67d33c4ffc2ca6bf6a2e48167f5ab1ff591bf2e8f2fe03bd1ed91a"
+    },
+    {
+      "file": "app/src/screens/imported-records.css",
+      "bytes": 1607,
+      "sha256": "ca82bdd28c757d2d32341c2558635d26992910894ada73a8733f136b057ec9e5",
+      "sha256Lf": "ca82bdd28c757d2d32341c2558635d26992910894ada73a8733f136b057ec9e5"
+    }
+  ],
+  "evidenceFiles": [
+    {
+      "file": ".gitignore",
+      "bytes": 44,
+      "sha256": "2cc10cd5411867f70981308ee8a730e49da7324dbaecaa3090860cf72de39e85",
+      "sha256Lf": "2cc10cd5411867f70981308ee8a730e49da7324dbaecaa3090860cf72de39e85"
+    },
+    {
+      "file": "README.md",
+      "bytes": 15433,
+      "sha256": "d824c55d395df04dc830eead74dc1f59e263696ce20ee29f563d7983f9617afb",
+      "sha256Lf": "d824c55d395df04dc830eead74dc1f59e263696ce20ee29f563d7983f9617afb"
+    },
+    {
+      "file": "account-browser.log",
+      "bytes": 788,
+      "sha256": "0b92f9b0ba84c017f0fe23ba51279989d1b86330423c0c8edfdc9e41aeea9746",
+      "sha256Lf": "6886eaad9783cd906485119330fd216c0153248c0f1e739eb29558f0845a00ff"
+    },
+    {
+      "file": "account-style-final.log",
+      "bytes": 350,
+      "sha256": "5ab6afd40c2493e2c096afad67962906956182fee9cb84e2f3a3092bbdb68266",
+      "sha256Lf": "38dffd16a191e6c03acd906963ffbea94800fc1cd83f9dc676611600931e65f4"
+    },
+    {
+      "file": "browser.log",
+      "bytes": 786,
+      "sha256": "174b901921183f7b7ccaf864f1a2445fb67a458f30cb6e00eb68f06d4b65f46b",
+      "sha256Lf": "d17ddb85bd6e875156f76d33fc121ebeb722e4829f73ff43352a5eb94c560b06"
+    },
+    {
+      "file": "build.log",
+      "bytes": 23773,
+      "sha256": "8a3832af0caf0b2baa2d622e693e81422f7664fcf7100ba63f29bdb63102eb91",
+      "sha256Lf": "0c3851ed44d2595dff3337130f0746f69d3f795cd260f97843dc909b049ef89c"
+    },
+    {
+      "file": "defect-1.log",
+      "bytes": 1409,
+      "sha256": "1e9949a07fd0f5ee49dfca6dd1bafc36deaae799853316a4e94268dd326a63ac",
+      "sha256Lf": "1e9949a07fd0f5ee49dfca6dd1bafc36deaae799853316a4e94268dd326a63ac"
+    },
+    {
+      "file": "defect-2.log",
+      "bytes": 21798,
+      "sha256": "94eb0f852bcc4c76cb1202db4b8c20ee68826e550a356210bcec171ae8767fe7",
+      "sha256Lf": "94eb0f852bcc4c76cb1202db4b8c20ee68826e550a356210bcec171ae8767fe7"
+    },
+    {
+      "file": "defect-3.log",
+      "bytes": 14101,
+      "sha256": "35f87caa4c4ec28117da74edb7d19c292b548f3019bdf959ff3490c87e804d9f",
+      "sha256Lf": "35f87caa4c4ec28117da74edb7d19c292b548f3019bdf959ff3490c87e804d9f"
+    },
+    {
+      "file": "defect-4.log",
+      "bytes": 1304,
+      "sha256": "71860fed1a1c272951587e82196f4d22cd4b25fa03c41f48260e7e54ced27df5",
+      "sha256Lf": "71860fed1a1c272951587e82196f4d22cd4b25fa03c41f48260e7e54ced27df5"
+    },
+    {
+      "file": "defect-check.log",
+      "bytes": 42,
+      "sha256": "8614146cbad070c534ec0523f868c79b4fa7a4575ed7488a77d3fba104d2827d",
+      "sha256Lf": "fd650743fa66fceb125d92d224fa15d26dad255bdd493314fad663faa74b7c96"
+    },
+    {
+      "file": "defect-results.json",
+      "bytes": 1239,
+      "sha256": "49b0c1a8660ece4c6639fb03073a152d85d708c924038903db45162bf7c358e7",
+      "sha256Lf": "49b0c1a8660ece4c6639fb03073a152d85d708c924038903db45162bf7c358e7"
+    },
+    {
+      "file": "evidence/account/import-confirmed-375.png",
+      "bytes": 34192,
+      "sha256": "fddf5f39e276fdb2d75898c99aa9940ed8df1df0f4c1c46e53435f46e5c92300"
+    },
+    {
+      "file": "evidence/account/import-pending-320.png",
+      "bytes": 51438,
+      "sha256": "10f2e08b591d98a94a95b268502eb2dd7f72ba4d6f0e1299cce550c0ac686643"
+    },
+    {
+      "file": "evidence/account/import-review-375.png",
+      "bytes": 69976,
+      "sha256": "ca53ea8d8bdff81ebf23610d42faf4d6bb3ed96de7412435dc908746164fe67f"
+    },
+    {
+      "file": "evidence/account/real-parser-correction-reopened.png",
+      "bytes": 50389,
+      "sha256": "98390e6b78d803009f08f8341796e9459392dd371f77797687a19b4ccce0ee95"
+    },
+    {
+      "file": "evidence/account/stale-ack-analysis-excluded.png",
+      "bytes": 40952,
+      "sha256": "58f1483513bfe558188d3d4b9a69394d75ed33e89e27f4f7958bbe66f00592d8"
+    },
+    {
+      "file": "evidence/before/back-reopen-lost-review-320.png",
+      "bytes": 48605,
+      "sha256": "ebe269efda01e3375e5b6bd55090b7fe141cffee7c8fd9aaf90950c1201f604e"
+    },
+    {
+      "file": "evidence/before/import-view-destination-top-320.png",
+      "bytes": 37118,
+      "sha256": "a060eba5ae1e17351dec0e8ca3447cce6ef081d376d35299bf57e9b0a17971e4"
+    },
+    {
+      "file": "evidence/before/individual-journal-320.png",
+      "bytes": 47639,
+      "sha256": "43dcc2fde3a8fe9024113e721a9bfa4d123e173357a426eb5c66a7ea2c78a074"
+    },
+    {
+      "file": "evidence/before/six-record-review-320.png",
+      "bytes": 44941,
+      "sha256": "fa3a23c32679bfa8f4d90a925a8280248d460ad748f4ede595c52acc9689fe28"
+    },
+    {
+      "file": "evidence/common-error-empty-320.png",
+      "bytes": 58649,
+      "sha256": "80746fb272f502d7b49dd566414c45454a39abd65a3221756f9499c2c1a45b32"
+    },
+    {
+      "file": "evidence/common-error-malformed-320.png",
+      "bytes": 56521,
+      "sha256": "e03d361467e0635b0aecc50a3a25c4d17116cd894eaeb7d0571891506fa88671"
+    },
+    {
+      "file": "evidence/connections-common-320.png",
+      "bytes": 48283,
+      "sha256": "98f3fe54504c35304f5c18fb0377ded14608fbbd909b6a1f344854b22e1e673a"
+    },
+    {
+      "file": "evidence/exact-first-detail-430.png",
+      "bytes": 43010,
+      "sha256": "38cb01412c7e9f586287c4119e675c79686172ec3dbeda48199262dacc9e2bc8"
+    },
+    {
+      "file": "evidence/exact-second-detail-430.png",
+      "bytes": 41243,
+      "sha256": "6a0bba28f4f1ae700061ad07bc4c068078f473dc93982e2e4cf414fd8ed094f4"
+    },
+    {
+      "file": "evidence/records-320.png",
+      "bytes": 37369,
+      "sha256": "ed9580e5112b4547b5ae00622145e683051635b42da3c803e8b31a64081616f5"
+    },
+    {
+      "file": "evidence/records-375.png",
+      "bytes": 37485,
+      "sha256": "40da05c8568f4a58b75db144ef520dd2d1229b2d87359d13f7f21cfb5b86fe9d"
+    },
+    {
+      "file": "evidence/records-430.png",
+      "bytes": 37413,
+      "sha256": "0a865e8405a41995bdab6e7c792bb189030b1f7c6c3d3eeef056e1d4546735d8"
+    },
+    {
+      "file": "evidence/records-large-text-320.png",
+      "bytes": 38422,
+      "sha256": "3060943e4c92ca9e8d987feb70e05c46ec34d7fcb632b846ab476744a9a482db"
+    },
+    {
+      "file": "evidence/restored-save-result-320.png",
+      "bytes": 40553,
+      "sha256": "27194a182bcf3ee79a1406222364c617eb2371614d7959c8af59099554628acb"
+    },
+    {
+      "file": "evidence/results.json",
+      "bytes": 1424,
+      "sha256": "91cebec5c1897ffad365608787e5adac88e50204a43ea31bb1f086f549239946",
+      "sha256Lf": "91cebec5c1897ffad365608787e5adac88e50204a43ea31bb1f086f549239946"
+    },
+    {
+      "file": "evidence/review-long-200-320.png",
+      "bytes": 32746,
+      "sha256": "1cc5343e3001fa9b7f935fd6b394f7f99d6ffabbbaeb30a1af78d28ec618e12a"
+    },
+    {
+      "file": "evidence/review-results.json",
+      "bytes": 1112,
+      "sha256": "30d7e8aca485149e386bb950614fb215fffb271cdf6520f37a6a69b33382d6ee",
+      "sha256Lf": "30d7e8aca485149e386bb950614fb215fffb271cdf6520f37a6a69b33382d6ee"
+    },
+    {
+      "file": "evidence/review-six-common-320.png",
+      "bytes": 48387,
+      "sha256": "2e457868c5da10c0da77b0e5fe7da63c6e7e08d45e7c3a4c771f2ac6ecc788a9"
+    },
+    {
+      "file": "final-focused-kst.log",
+      "bytes": 272,
+      "sha256": "7b1a53d269225fbd6b13b9b0c4371fc797a5d5d17c732efc5e0b1d65b39c3191",
+      "sha256Lf": "659afa1857449ee4c9b4fe5d9345e6595a9693ff3dcf9bbf8196339d13f42140"
+    },
+    {
+      "file": "final-focused-utc.log",
+      "bytes": 272,
+      "sha256": "e76e2b6e2f26dc8b61536cbc65ce933db2ddfbb785b630f005c672b618c517bb",
+      "sha256Lf": "134166d7b9fc01d9e3a558bdb552c05f11a8d13b60f1a2db328f9285c7449a51"
+    },
+    {
+      "file": "make-manifest.mjs",
+      "bytes": 2791,
+      "sha256": "544922b03aca91ff2a405759ba9b02284b5fa94da9ee467fb42070f22db09c22",
+      "sha256Lf": "544922b03aca91ff2a405759ba9b02284b5fa94da9ee467fb42070f22db09c22"
+    },
+    {
+      "file": "personal-states-kst.log",
+      "bytes": 270,
+      "sha256": "631a505f44c247590028ac63554e00fbefba427483dd51d28c17895d0ab9d0d2",
+      "sha256Lf": "1d1d1fcdc2d543f5120dbb4cfc3e6508caeae8b983f33dc88ea896cb775c7b18"
+    },
+    {
+      "file": "personal-states-utc.log",
+      "bytes": 270,
+      "sha256": "80f9c3a3c1454de2acdb19a18df61f00bb618c1ea952cc107d33b8a6a4eeb9dd",
+      "sha256Lf": "fc4a967e6d427d60c87800cb4d19a2bc98ced68934d115006efc81d1a9b78a18"
+    },
+    {
+      "file": "review-browser.log",
+      "bytes": 840,
+      "sha256": "8b7bb5c0ed58dec3f7fd56a5f14af288e228112bd57774e81cd395475c46ce99",
+      "sha256Lf": "c15f392c9bd5f495379a52f9bee9b454e0cbfd78120b5cad091577be6ace1cc1"
+    },
+    {
+      "file": "typecheck.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sha256Lf": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "unit-kst.log",
+      "bytes": 278,
+      "sha256": "e3ce8e3ea86a4659197e58e9b4ba99b40b9a916fafebacd0117a4854f1364b37",
+      "sha256Lf": "905b920eed918f96bec8065622ecb1235fa17302b444e4a9575ec689cc2b885d"
+    },
+    {
+      "file": "unit-utc.log",
+      "bytes": 278,
+      "sha256": "9e636fa0284c4c25c5876ae17579563dd328079f392ae28c0677bcbcfbae99ad",
+      "sha256Lf": "0f0bb62862692850b3accabd7206daf7a4394d9c50186dc8dd32474f91cb723a"
+    },
+    {
+      "file": "verify-defects.mjs",
+      "bytes": 3176,
+      "sha256": "a85cf1c41827fd4049c1d0516b1590daf3d27fa0d4abca09f1f9555f6b438bed",
+      "sha256Lf": "a85cf1c41827fd4049c1d0516b1590daf3d27fa0d4abca09f1f9555f6b438bed"
+    },
+    {
+      "file": "verify-review.mjs",
+      "bytes": 7356,
+      "sha256": "dd6c8386f81a8dfdcd3bf2e25b1dd2cec63a2952b323ed42b08d0419d4fb97d8",
+      "sha256Lf": "dd6c8386f81a8dfdcd3bf2e25b1dd2cec63a2952b323ed42b08d0419d4fb97d8"
+    },
+    {
+      "file": "verify.mjs",
+      "bytes": 10864,
+      "sha256": "da57b7d8ad1443e050f7b492f8670958bacb3a1a02a7f25a077450014783dcc2",
+      "sha256Lf": "da57b7d8ad1443e050f7b492f8670958bacb3a1a02a7f25a077450014783dcc2"
+    }
+  ]
+}
