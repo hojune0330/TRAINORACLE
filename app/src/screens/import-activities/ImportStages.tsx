@@ -4,7 +4,7 @@ import { ContextualIllustration } from "../../components/ContextualIllustration"
 import { compactDate } from "../../domain/dates"
 import type { ActivityParseResult } from "../../domain/import/activity-file"
 import type { ImportDraft, ImportSaveIntent, ImportSaveResult } from "../../domain/import/import-draft"
-import { mono, primaryBtn, secondaryBtn } from "./styles"
+import { mono, secondaryBtn } from "./styles"
 import { TermHelp } from "../../components/TermHelp"
 import { InfoDisclosure } from "../../components/InfoDisclosure"
 import { accountJournalRecordsEnabled } from "../../domain/account/account-journal-record-service"
@@ -13,7 +13,8 @@ import { FileObservationReview } from "./FileObservationReview"
 import { ImportedActivityFacts, importedActivityFactLabels } from "./ImportedActivityFacts"
 import type { ImportedActivity } from "../../domain/import/activity-file"
 import "./file-analysis.css"
-import { nextActionFeedback } from "../../components/next-action"
+import { RecordAction, RecordChoice, RecordNotice, RecordStateList } from "../../components/RecordUI"
+import "../../components/next-action.css"
 
 export type ReadFailure = "unreadable" | "unsupported-format" | "empty" | "too-large" | "too-many-records" | "too-many-segments" | "cancelled" | "account-unavailable" | null
 
@@ -37,9 +38,9 @@ export function PickStage({ busy, failure, fileInputRef, onFile, onCancel }: {
         {!busy && failure === null && <ContextualIllustration image="watch-file-v2" size="medium" />}
       </div>
 
-      <button type="button" style={primaryBtn} disabled={busy} onClick={() => fileInputRef.current?.click()}>
+      <RecordAction disabled={busy} onClick={() => fileInputRef.current?.click()}>
         <Upload size={18} aria-hidden="true" /> 파일이 있어요 · 바로 선택
-      </button>
+      </RecordAction>
 
       <section aria-label="운동 파일 준비" className="import-preparation">
         <button type="button" ref={preparationButton} className="app-choice-control import-preparation__toggle"
@@ -122,7 +123,7 @@ export function PickStage({ busy, failure, fileInputRef, onFile, onCancel }: {
       )}
 
       {failure !== null && (
-        <div role="alert" data-testid="import-failure" style={{ border: "1px solid var(--pain-5)", background: "var(--surface)", padding: "10px 13px" }}>
+        <RecordNotice kind={failure === "empty" ? "empty" : failure === "cancelled" ? "blocked" : "error"} title={failure === "empty" ? "파일에 활동이 없어요" : failure === "cancelled" ? "가져오기를 취소했어요" : "파일을 확인해 주세요"} headingLevel={2} announce="assertive" data-testid="import-failure">
           <div style={{ ...mono, fontSize: "var(--fs-body)", color: "var(--ink)", lineHeight: 1.6 }}>
             {failure === "unsupported-format" ? "아직 지원하지 않는 파일 형식이에요. 건강앱의 전체 ZIP·XML 백업이나 FIT 대신 운동 기록의 TCX·GPX 또는 지원하는 CSV·JSON을 골라 주세요." : failure === "account-unavailable" ? "계정 기록을 조회하지 못했어요. 연결과 로그인을 확인한 뒤 다시 시도해 주세요." : failure === "empty"
               ? "파일은 읽었지만 일지로 옮길 활동을 찾지 못했어요. 날짜·거리·시간이 비어 있는 파일일 수 있어요."
@@ -135,7 +136,7 @@ export function PickStage({ busy, failure, fileInputRef, onFile, onCancel }: {
                   : "이 파일을 읽지 못했어요. .csv, .json, .tcx 또는 .gpx 파일인지 확인해 주세요."}
             <br />기존 일지는 그대로 있어요.
           </div>
-        </div>
+        </RecordNotice>
       )}
 
       <div data-testid="oauth-status">
@@ -212,30 +213,16 @@ export function ReviewStage({ drafts, result, selected, intents, onIntent, onTog
               label: `기존 일지 보완 · ${candidate.activitySlot === "AM" ? "오전" : candidate.activitySlot === "PM" ? "오후" : "시간 미지정"} · ${candidate.title}` })),
           ]
           return (
-            <div key={`${activity.date}-${index}`} data-testid="import-draft-row" className="import-review__row" data-selected={selected.has(index)}>
-              <label className="import-review__choice">
-                <input
-                  type="checkbox"
-                  disabled={busy}
-                  checked={selected.has(index)}
-                  onChange={() => onToggle(index)}
-                  aria-label={`${choiceLabel} 가져오기`}
-                  style={{ width: 20, height: 20, margin: 0 }}
-                />
-                <span className="import-review__identity">
-                <span className="import-review__date">운동 {index + 1} · {compactDate(activity.date)}</span>
-                <strong>{activity.name}</strong>
-                <span className="import-review__choice-state">{selected.has(index) ? "선택됨" : "선택 안 함"}</span>
+            <RecordChoice key={`${activity.date}-${index}`} data-testid="import-draft-row" className="import-review__row" density="row"
+              checked={selected.has(index)} onChange={() => onToggle(index)} inputLabel={`${choiceLabel} 가져오기`}
+              title={activity.name} context={`운동 ${index + 1} · ${compactDate(activity.date)}`} busy={busy} disabled={busy} disabledReasonId="import-write-state">
                   {draft.duplicateOf !== null && (
                     <span data-testid="import-duplicate-flag" style={{
                       ...mono, fontSize: "var(--fs-body-sm)", color: "var(--ink)", lineHeight: 1.5, letterSpacing: "0.06em",
                       border: "1px solid var(--warn, var(--line))", padding: "1px 5px",
                     }}>이미 있는 것 같아요</span>
                   )}
-                </span>
-              </label>
-              <div className="import-review__body">
-                <ImportedActivityFacts activity={activity} showTimeNotice={false} />
+                <ImportedActivityFacts activity={activity} showTimeNotice={false} compact />
                 <select
                   disabled={busy || !selected.has(index)}
                   aria-label={`${choiceLabel} 저장 방식`}
@@ -267,8 +254,7 @@ export function ReviewStage({ drafts, result, selected, intents, onIntent, onTog
                   && <p style={{ fontSize: "var(--fs-body-sm)", color: "var(--ink-3)", lineHeight: 1.6 }}>기존 원본 기록과 값이 달라요. 같은 운동이면 기존 일지에서 정정해 주세요.</p>}
                 {analysisEnabled && onActivityChange && <FileObservationReview activity={activity} disabled={busy}
                   onChange={next => onActivityChange(index, next)} />}
-              </div>
-            </div>
+            </RecordChoice>
           )
         })}
       </div>
@@ -287,14 +273,14 @@ export function ReviewStage({ drafts, result, selected, intents, onIntent, onTog
           : "가져온 숫자를 다시 입력해서 분석에 넣을 필요는 없어요. 저장한 거리·시간은 오라클의 가져온 기록에서 먼저 볼 수 있어요."}</p>
       </InfoDisclosure>
       <div className="import-review__save">
-      <button type="button" style={primaryBtn} disabled={busy || chosenCount === 0 || missingIntent} onClick={onSave}>
+      <RecordAction disabled={busy || chosenCount === 0 || missingIntent} onClick={onSave}>
         {chosenCount === 0 ? "저장할 활동을 골라 주세요" : missingIntent ? "저장 방식을 골라 주세요"
           : saveCount === 0 ? `고른 ${excludedCount}건 가져오기에서 제외`
             : excludedCount > 0 ? `${saveCount}건 저장 · ${excludedCount}건 제외` : `고른 ${saveCount}건 일지에 저장`}
-      </button>
-      {busy && <p role="status">{accountJournalRecordsEnabled() ? "계정 저장 확인 중" : "이 브라우저에 저장 중"}</p>}
+      </RecordAction>
+      {busy && <p id="import-write-state" role="status">{accountJournalRecordsEnabled() ? "계정 저장 확인 중" : "이 브라우저에 저장 중"}</p>}
       </div>
-      <button type="button" style={secondaryBtn} disabled={busy} onClick={onRestart}>다른 파일 고르기</button>
+      <RecordAction priority="secondary" disabled={busy} onClick={onRestart}>다른 파일 고르기</RecordAction>
     </div>
   )
 }
@@ -327,9 +313,9 @@ export function SavedStage({ outcome, analysisAvailable = false, onOpenLog, onOp
     { id: "log", label: "일지에서 확인하기", onClick: onOpenLog },
     { id: "restart", label: "파일 더 가져오기", onClick: onRestart },
   ].filter(action => action.onClick)
-  const renderAction = (action: typeof actions[number]) => <button key={action.id} {...nextActionFeedback}
-    type="button" className={primaryAction === action.id ? "next-action" : undefined}
-    style={primaryAction === action.id ? undefined : secondaryBtn} disabled={busy} onClick={action.onClick}>{action.label}</button>
+  const renderAction = (action: typeof actions[number]) => <RecordAction key={action.id}
+    priority={primaryAction === action.id ? "primary" : "secondary"}
+    disabled={busy} onClick={action.onClick}>{action.label}</RecordAction>
   if (outcome.account !== undefined) return <div className="next-action-result import-result" data-testid="import-saved" role="status">
     <h2>계정 가져오기 결과</h2>
     <ul className="import-result__counts" aria-label="저장 상태별 기록 수">
@@ -339,8 +325,9 @@ export function SavedStage({ outcome, analysisAvailable = false, onOpenLog, onOp
       {outcome.failed > 0 && <li data-attention="true"><span>실패</span>{" "}<strong>{outcome.failed}건</strong></li>}
     </ul>
     {((outcome.reused ?? 0) > 0 || (outcome.excluded ?? 0) > 0) && <p>기존 기록 확인 {outcome.reused ?? 0}건 · 가져오기 제외 {outcome.excluded ?? 0}건</p>}
-    <p>원본 파일은 그대로 보관해 주세요.{(outcome.pending ?? 0) > 0 && " 계정 저장 여부를 아직 확인하지 못했어요. 같은 저장 요청으로 다시 시도해요."}</p>
-    {(outcome.conflicts ?? 0) > 0 && <p>기존 일지와 다른 내용이 있어요. 원래 파일을 다시 검토해 저장할 운동과 방식을 골라 주세요.</p>}
+    <p>원본 파일은 그대로 보관해 주세요.</p>
+    {(outcome.pending ?? 0) > 0 && <RecordNotice kind="unknown" title="계정 저장 여부를 아직 확인하지 못했어요"><p>같은 저장 요청으로 다시 시도해요.</p></RecordNotice>}
+    {(outcome.conflicts ?? 0) > 0 && <RecordNotice kind="conflict" title="다른 수정본 확인 필요"><p>기존 일지와 다른 내용이 있어요. 원래 파일을 다시 검토해 저장할 운동과 방식을 골라 주세요.</p></RecordNotice>}
     {needsReview && <p>아래에는 계정 저장이 확인된 일지만 표시해요.</p>}
     {outcome.stopReason && <p role="alert">나머지 저장을 멈췄어요. 이미 저장된 기록은 그대로 있어요. 연결·로그인·앱 업데이트 상태를 확인한 뒤 다시 시도해 주세요.</p>}
     {confirmed && onOpenEntry && (outcome.confirmedEntries?.length ?? 0) > 0 && <ul className="import-confirmed-entries" aria-label="계정 저장이 확인된 일지">
@@ -370,7 +357,7 @@ export function SavedStage({ outcome, analysisAvailable = false, onOpenLog, onOp
         <div style={{ fontFamily: "var(--sans)", fontSize: 16, fontWeight: 500, marginTop: 5 }}>
           {onlyExcluded ? `${outcome.excluded}건 가져오기에서 제외` : <>새 일지 {outcome.saved}건 저장 · 기존 일지 {outcome.merged ?? 0}건 보완</>}
         </div>
-        {completed > 0 && <p>이 브라우저에 저장했어요. 계정에 동기화되지는 않아요.</p>}
+        {completed > 0 && <RecordStateList label="파일 일지 보관 상태" items={[{ id: "device", state: { phase: "storage", status: "device" }, detail: "이 브라우저에 저장했어요. 계정에 동기화되지는 않아요." }]} />}
         {onlyExcluded && <div style={{ ...mono, fontSize: "var(--fs-body-sm)", color: "var(--ink-3)", lineHeight: 1.6, marginTop: 4 }}>
           새로 저장한 일지는 없어요. 기존 일지는 그대로예요.
         </div>}
@@ -389,10 +376,10 @@ export function SavedStage({ outcome, analysisAvailable = false, onOpenLog, onOp
           가져온 값에는 <b>가져옴</b> 표시가 붙어요. 기존 일지에 직접 입력한 RPE<TermHelp term="rpe" />는 분석에 쓸 수 있고, 가져온 값과 메모 원문은 분석에 포함되지 않아요.
         </div>}
       </div>
-      {needsReview && onReview && <button type="button" style={primaryBtn} disabled={busy} onClick={onReview}>원래 파일 다시 검토</button>}
-      {onOpenSummary && completed > 0 && <button type="button" style={needsReview && onReview ? secondaryBtn : primaryBtn} disabled={busy} onClick={onOpenSummary}>가져온 기록 보기</button>}
-      {onOpenLog && <button type="button" style={needsReview && onReview || onOpenSummary && completed > 0 ? secondaryBtn : primaryBtn} disabled={busy} onClick={onOpenLog}>일지에서 확인하기</button>}
-      <button type="button" style={secondaryBtn} onClick={onRestart}>파일 더 가져오기</button>
+      {needsReview && onReview && <RecordAction disabled={busy} onClick={onReview}>원래 파일 다시 검토</RecordAction>}
+      {onOpenSummary && completed > 0 && <RecordAction priority={needsReview && onReview ? "secondary" : "primary"} disabled={busy} onClick={onOpenSummary}>가져온 기록 보기</RecordAction>}
+      {onOpenLog && <RecordAction priority={needsReview && onReview || onOpenSummary && completed > 0 ? "secondary" : "primary"} disabled={busy} onClick={onOpenLog}>일지에서 확인하기</RecordAction>}
+      <RecordAction priority="secondary" disabled={busy} onClick={onRestart}>파일 더 가져오기</RecordAction>
     </div>
   )
 }

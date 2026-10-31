@@ -1,7 +1,7 @@
-import { useState } from "react"
+import { createRef, useState } from "react"
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import { afterEach, expect, it, vi } from "vitest"
-import { RecordChoice, RecordMetrics, RecordNotice, RecordSource, RecordStateList } from "./RecordUI"
+import { RecordAction, RecordChoice, RecordMetrics, RecordNotice, RecordSource, RecordStateList } from "./RecordUI"
 
 afterEach(cleanup)
 
@@ -93,4 +93,85 @@ it("exposes errors, confirmed empty results and explicit retry without automatic
 it("does not emit an empty metrics or states surface", () => {
   const view = render(<><RecordMetrics items={[]} /><RecordStateList label="상태" items={[]} /></>)
   expect(view.container).toBeEmptyDOMElement()
+})
+
+it("keeps the exact activity facts name, native input and row body when adopting a compact list", () => {
+  const change = vi.fn()
+  const name = "운동 2, 2026·10·16 같은 이름, 거리 3km, 파일의 시간 · 종류 미확인 15분 가져오기"
+  const view = render(<RecordChoice checked={false} title="같은 이름" context="운동 2 · 2026·10·16"
+    inputLabel={name} onChange={change} density="row" data-testid="import-draft-row">
+    <label>저장 방식<select defaultValue="exclude"><option value="exclude">이번 가져오기에서 제외</option></select></label>
+  </RecordChoice>)
+  expect(screen.getByRole("checkbox", { name })).not.toBeChecked()
+  expect(screen.getByTestId("import-draft-row")).toHaveAttribute("data-density", "row")
+  fireEvent.click(screen.getByRole("checkbox"))
+  expect(change).toHaveBeenCalledWith(true)
+  view.rerender(<RecordChoice checked={true} title="같은 이름" inputLabel={name} onChange={change} density="row">
+    <label>저장 방식<select defaultValue="exclude"><option value="exclude">이번 가져오기에서 제외</option></select></label>
+  </RecordChoice>)
+  expect(screen.getByRole("checkbox", { name })).toBeChecked()
+  expect(screen.getByRole("combobox", { name: "저장 방식" })).toHaveValue("exclude")
+})
+
+it("accepts a runtime busy boolean with its visible reason without treating busy as a save", () => {
+  function Example({ busy }: { busy: boolean }) {
+    return <RecordChoice checked={true} onChange={vi.fn()} title="운동 1" busy={busy} disabled={busy} disabledReason="현재 저장 결과를 확인하고 있어요." />
+  }
+  const view = render(<Example busy={true} />)
+  expect(screen.getByRole("checkbox")).toBeDisabled()
+  expect(screen.getByRole("checkbox")).toHaveAccessibleDescription(/현재 저장 결과/)
+  view.rerender(<Example busy={false} />)
+  expect(screen.getByRole("checkbox")).toBeEnabled()
+  expect(screen.queryByText("현재 저장 결과를 확인하고 있어요.")).toBeNull()
+})
+
+it("uses one native record action contract for device/account next steps and forwards focus", () => {
+  const action = vi.fn(), ref = createRef<HTMLButtonElement>()
+  const view = render(<RecordAction ref={ref} onClick={action} aria-describedby="reason">저장 다시 시도</RecordAction>)
+  const button = screen.getByRole("button", { name: "저장 다시 시도" })
+  expect(button).toHaveAttribute("type", "button")
+  expect(button).toHaveAttribute("data-priority", "primary")
+  ref.current?.focus()
+  expect(button).toHaveFocus()
+  expect(action).not.toHaveBeenCalled()
+  fireEvent.click(button)
+  expect(action).toHaveBeenCalledTimes(1)
+  view.rerender(<RecordAction priority="secondary" onClick={action} disabled>저장 다시 시도</RecordAction>)
+  expect(button).toHaveAttribute("data-priority", "secondary")
+  fireEvent.click(button)
+  expect(action).toHaveBeenCalledTimes(1)
+})
+
+it("allows assertive file errors with correct heading while keeping actions outside live content", () => {
+  const retry = vi.fn()
+  render(<RecordNotice kind="error" title="파일을 읽지 못했어요" headingLevel={2} announce="assertive" data-testid="import-failure"
+    action={{ label: "다른 파일 고르기", onClick: retry }}><p>이전 선택은 그대로예요.</p></RecordNotice>)
+  expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent("파일을 읽지 못했어요")
+  expect(screen.getByTestId("import-failure")).toBeVisible()
+  expect(screen.getByRole("alert")).toHaveAttribute("aria-live", "assertive")
+  expect(within(screen.getByRole("alert")).queryByRole("button")).toBeNull()
+  expect(retry).not.toHaveBeenCalled()
+})
+
+it("names providers or result partitions while preserving the independent state meaning", () => {
+  render(<RecordStateList label="연결 및 저장 상태" items={[
+    { id: "garmin", label: "Garmin", state: { phase: "connection", status: "unavailable" } },
+    { id: "local", label: "기기 보관", state: { phase: "storage", status: "device" }, detail: "1건" },
+    { id: "unknown", label: "확인 불가", state: { phase: "storage", status: "unknown" }, detail: "기존 요청 확인 필요" },
+  ]} />)
+  expect(screen.getByText("Garmin").parentElement).toHaveTextContent("연결 미제공")
+  expect(screen.getByText("기기 보관").parentElement).toHaveTextContent("기기에 보관됨1건")
+  expect(screen.getByText("확인 불가").parentElement).toHaveTextContent("저장 결과 확인 불가")
+  expect(screen.queryByText("계정 저장 확인됨")).toBeNull()
+})
+
+it("uses one existing flow reason for multiple disabled choices without repeating it per row", () => {
+  render(<><p id="flow-pending" role="status">저장 상태 확인 중에는 선택을 유지해요.</p>
+    {[1, 2].map(index => <RecordChoice key={index} checked title={`운동 ${index}`} onChange={vi.fn()} disabled disabledReasonId="flow-pending" />)}
+  </>)
+  expect(screen.getAllByText("저장 상태 확인 중에는 선택을 유지해요.")).toHaveLength(1)
+  for (const input of screen.getAllByRole("checkbox")) {
+    expect(input).toBeDisabled()
+    expect(input).toHaveAccessibleDescription(/저장 상태 확인 중에는 선택을 유지해요/)
+  }
 })

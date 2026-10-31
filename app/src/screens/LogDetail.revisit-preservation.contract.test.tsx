@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { loadTombstones } from "../domain/account/tombstone"
 import { entriesForDate, replaceAllEntries, saveEntry } from "../domain/journal-store"
 import { toImportedEntry } from "../domain/import/import-draft"
+import { buildFileObservation } from "../domain/import/file-observation"
 import { LogDetail } from "./LogDetail"
 
 const DATE = "2026-07-20"
@@ -20,6 +21,30 @@ describe("past journal preservation before revisit work", () => {
   })
 
   afterEach(() => vi.restoreAllMocks())
+
+  it("keeps unconfirmed imported time and kind honest without changing legacy stored values", () => {
+    const imported = toImportedEntry({ date: DATE, name: "Synthetic import", sport: "running", distanceKm: "3", durationMin: "15", avgPace: "" }, "tcx")
+    expect(saveEntry(imported).ok).toBe(true)
+    const before = JSON.stringify(entriesForDate(DATE))
+    const view = render(<LogDetail date={DATE} initialEntryId={imported.id} />)
+    expect(screen.getByText("훈련 종류 미확인", { exact: true })).toBeVisible()
+    expect(screen.getByText("파일 시간 · 종류 미확인", { exact: true })).toBeVisible()
+    expect(screen.queryByText("기초 지구력", { exact: true })).toBeNull()
+    expect(JSON.stringify(entriesForDate(DATE))).toBe(before)
+    const stored = entriesForDate(DATE)[0]
+    expect(stored?.kind === "post-session" && stored.system).toBe("base")
+    const observation = buildFileObservation({ format: "tcx", sourceProfile: "TCX_ACTIVITY_V1", parserVersion: "v1",
+      sourceActivityId: "synthetic", date: DATE, startedAt: null, timeZone: null, sport: "RUNNING",
+      distanceMeters: 3000, durationSeconds: 900, durationMeaning: "SOURCE_DEFINED",
+      confirmation: { sport: null, durationMeaning: "TIMER" },
+      laps: [{ sourceIndex: 0, distanceMeters: 3000, durationSeconds: 900, durationMeaning: "SOURCE_DEFINED", kind: "UNKNOWN" }] })
+    const sourceBefore = JSON.stringify(observation)
+    view.rerender(<LogDetail date={DATE} initialEntryId={imported.id} entries={[{ ...imported, objectiveDataState: "CONFIRMED", fileObservation: observation }]} readComplete />)
+    expect(screen.getByText("기초 지구력", { exact: true })).toBeVisible()
+    expect(screen.getByText("타이머 시간", { exact: true })).toBeVisible()
+    expect(JSON.stringify(observation)).toBe(sourceBefore)
+    expect(JSON.stringify(entriesForDate(DATE))).toBe(before)
+  })
 
   it("reports a missing exact destination without opening another same-day journal", () => {
     expect(saveEntry(toImportedEntry({ date: DATE, name: "Other synthetic activity", sport: "running",

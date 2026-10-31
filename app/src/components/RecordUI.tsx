@@ -1,5 +1,5 @@
 import { Check, CircleAlert, CircleHelp, Clock3, FileCheck2, Link2, Link2Off } from "lucide-react"
-import { useId, type ComponentProps, type ReactNode } from "react"
+import { forwardRef, useId, type ButtonHTMLAttributes, type ComponentProps, type ReactNode } from "react"
 import { MetricSummary } from "./MetricSummary"
 import "./record-ui.css"
 
@@ -27,26 +27,35 @@ export function RecordSource({ source, format, dateBasis, originalTimeMeaning, c
   </div>
 }
 
-type Availability = { readonly disabled?: false; readonly disabledReason?: never }
-  | { readonly disabled: true; readonly disabledReason: string }
+type Availability = { readonly disabled?: false; readonly disabledReason?: string }
+  | { readonly disabled: boolean; readonly disabledReason: string }
+type ChoiceAvailability =
+  | { readonly disabled?: false; readonly disabledReason?: string; readonly disabledReasonId?: string }
+  | { readonly disabled: boolean; readonly disabledReason: string; readonly disabledReasonId?: never }
+  | { readonly disabled: boolean; readonly disabledReasonId: string; readonly disabledReason?: never }
 
 /** Controlled native checkbox. Body never mounts/unmounts on selection; no persistence. */
-export function RecordChoice({ checked, onChange, title, context, children, disabled = false, disabledReason, inputId, busy = false }: {
+export function RecordChoice({ checked, onChange, title, context, children, disabled = false, disabledReason, disabledReasonId, inputId, inputLabel, busy = false, density = "card", className = "", "data-testid": testId }: {
   readonly checked: boolean
   readonly onChange: (checked: boolean) => void
   readonly title: string
   readonly context?: string
   readonly children?: ReactNode
   readonly inputId?: string
+  /** Preserve the screen's exact ordinal/date/facts identity without duplicating visible copy. */
+  readonly inputLabel?: string
   readonly busy?: boolean
-} & Availability) {
+  readonly density?: "card" | "row"
+  readonly className?: string
+  readonly "data-testid"?: string
+} & ChoiceAvailability) {
   const generatedId = useId()
   const id = inputId ?? generatedId
   const stateId = `${id}-state`
-  const reasonId = `${id}-reason`
-  return <div className="record-ui record-choice" data-selected={checked} data-disabled={disabled} aria-busy={busy || undefined}>
+  const reasonId = disabledReasonId ?? `${id}-reason`
+  return <div className={`record-ui record-choice ${className}`.trim()} data-testid={testId} data-density={density} data-selected={checked} data-disabled={disabled} aria-busy={busy || undefined}>
     <label className="record-choice__label" htmlFor={id}>
-      <span className="record-choice__control"><input id={id} type="checkbox" checked={checked} disabled={disabled}
+      <span className="record-choice__control"><input id={id} type="checkbox" checked={checked} disabled={disabled} aria-label={inputLabel}
         aria-describedby={[stateId, disabled ? reasonId : ""].filter(Boolean).join(" ")}
         onChange={event => onChange(event.target.checked)} /></span>
       <span className="record-choice__identity">
@@ -58,7 +67,7 @@ export function RecordChoice({ checked, onChange, title, context, children, disa
         </span>
       </span>
     </label>
-    {disabled && <p id={reasonId} className="record-choice__reason">{disabledReason}</p>}
+    {disabled && disabledReason !== undefined && <p id={reasonId} className="record-choice__reason">{disabledReason}</p>}
     {children != null && <div className="record-choice__body">{children}</div>}
   </div>
 }
@@ -95,14 +104,14 @@ function statePresentation(state: RecordState) {
 /** Static facts by default; callers own any single live announcement at flow level. */
 export function RecordStateList({ items, label }: {
   readonly label: string
-  readonly items: readonly { readonly id: string; readonly state: RecordState; readonly detail?: ReactNode }[]
+  readonly items: readonly { readonly id: string; readonly label?: string; readonly state: RecordState; readonly detail?: ReactNode }[]
 }) {
   if (items.length === 0) return null
   return <dl className="record-ui record-states" aria-label={label}>
-    {items.map(({ id, state, detail }) => {
+    {items.map(({ id, label: itemLabel, state, detail }) => {
       const { label: stateLabel, tone, Icon } = statePresentation(state)
       return <div key={id} data-phase={state.phase} data-state={state.status} data-tone={tone}>
-        <dt>{PHASE_LABELS[state.phase]}</dt>
+        <dt>{itemLabel ?? PHASE_LABELS[state.phase]}</dt>
         <dd><span className="record-states__value"><Icon size={18} aria-hidden="true" />{stateLabel}</span>
           {detail != null && <span className="record-states__detail">{detail}</span>}</dd>
       </div>
@@ -112,24 +121,35 @@ export function RecordStateList({ items, label }: {
 
 export type RecordNoticeKind = "pending" | "error" | "empty" | "conflict" | "unknown" | "blocked" | "confirmed"
 
+/** One record-flow action role across device/account results. Native event/ref owner stays the screen. */
+export const RecordAction = forwardRef<HTMLButtonElement, ButtonHTMLAttributes<HTMLButtonElement> & {
+  readonly priority?: "primary" | "secondary"
+}>(function RecordAction({ priority = "primary", className = "", children, ...button }, ref) {
+  return <button {...button} ref={ref} type="button" className={`record-ui record-action ${className}`.trim()} data-priority={priority}>{children}</button>
+})
+
 /** Context + actual outcome + one explicit next action. No automatic retry or saving. */
-export function RecordNotice({ kind, title, children, action, announce = false }: {
+export function RecordNotice({ kind, title, children, action, announce = false, headingLevel = 3, className = "", "data-testid": testId }: {
   readonly kind: RecordNoticeKind
   readonly title: string
   readonly children: ReactNode
   readonly action?: { readonly label: string; readonly onClick: () => void } & Availability
-  readonly announce?: boolean
+  readonly announce?: boolean | "assertive"
+  readonly headingLevel?: 2 | 3
+  readonly className?: string
+  readonly "data-testid"?: string
 }) {
   const id = useId()
+  const Heading = headingLevel === 2 ? "h2" : "h3"
   const Icon = kind === "pending" ? Clock3 : kind === "confirmed" ? FileCheck2
     : kind === "empty" || kind === "blocked" ? CircleHelp : CircleAlert
-  return <section className="record-ui record-notice" data-kind={kind} aria-labelledby={id}>
-    <div className="record-notice__message" role={announce ? "status" : undefined} aria-live={announce ? "polite" : undefined}>
-      <h3 id={id}><Icon size={20} aria-hidden="true" />{title}</h3>
+  return <section className={`record-ui record-notice ${className}`.trim()} data-testid={testId} data-kind={kind} aria-labelledby={id}>
+    <div className="record-notice__message" role={announce === "assertive" ? "alert" : announce ? "status" : undefined} aria-live={announce === "assertive" ? "assertive" : announce ? "polite" : undefined}>
+      <Heading id={id}><Icon size={20} aria-hidden="true" />{title}</Heading>
       <div className="record-notice__detail">{children}</div>
     </div>
-    {action && <><button className="record-notice__action" type="button" disabled={action.disabled}
-      aria-describedby={action.disabled ? `${id}-reason` : undefined} onClick={action.onClick}>{action.label}</button>
+    {action && <><RecordAction className="record-notice__action" disabled={action.disabled}
+      aria-describedby={action.disabled ? `${id}-reason` : undefined} onClick={action.onClick}>{action.label}</RecordAction>
       {action.disabled && <p id={`${id}-reason`}>{action.disabledReason}</p>}</>}
   </section>
 }

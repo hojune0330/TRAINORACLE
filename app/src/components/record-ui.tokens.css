@@ -7,4 +7,5 @@
   --record-inset: var(--space-4);
   --record-touch-min: var(--app-touch-min, 44px);
   --record-radius: var(--r-task-surface);
+  --record-action-min: 48px;
 }

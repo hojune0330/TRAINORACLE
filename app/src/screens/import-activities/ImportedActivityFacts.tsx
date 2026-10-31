@@ -16,12 +16,14 @@ export function importedActivityFactLabels(activity: ImportedActivity) {
 }
 
 /** Display facts and their meaning without promoting them to analysis evidence. */
-export function ImportedActivityFacts({ activity, showTimeNotice = true }: { readonly activity: ImportedActivity; readonly showTimeNotice?: boolean }) {
+export function ImportedActivityFacts({ activity, showTimeNotice = true, compact = false }: { readonly activity: ImportedActivity; readonly showTimeNotice?: boolean; readonly compact?: boolean }) {
   const { file, summary, meaning, timeLabel, distance, duration } = importedActivityFactLabels(activity)
+  const unknownTime = meaning !== "TIMER" && meaning !== "MOVING" && meaning !== "ELAPSED"
   return <div className="import-record-facts">
     <RecordMetrics category="record" items={[
       { id: "distance", label: "거리", value: distance },
-      { id: "duration", label: timeLabel, value: duration },
+      { id: "duration", label: compact && unknownTime ? "파일 시간" : timeLabel, value: duration,
+        ...(compact && unknownTime ? { detail: "종류 미확인" } : {}) },
       ...(file && summary.avgPace !== "" ? [{ id: "pace", label: `${timeLabel} 기준 페이스`, value: `${summary.avgPace}/km` }] : []),
     ]} />
     <RecordSource source="파일에서 가져옴" {...(file ? { format: file.format.toUpperCase(), dateBasis: file.timeZone ?? "지역 시간대 미확인" } : {})}

@@ -16,17 +16,9 @@
 .import-review__selection strong { color: var(--ink); }
 .import-review__time-notice { margin: 0; color: var(--ink-2); font: 400 var(--fs-body-sm) / 1.6 var(--sans); }
 .import-review__intent { margin: var(--space-2) 0 0; color: var(--ink-2); font: 400 var(--fs-body-sm) / 1.6 var(--sans); }
-.import-review__rows { display: grid; gap: var(--space-4); }
-.import-review__row { min-width: 0; border: 1px solid var(--line); border-radius: var(--r-task-surface); background: var(--surface); }
-.import-review__row[data-selected="true"] { border-color: var(--brand); background: color-mix(in srgb, var(--brand) 5%, var(--surface)); }
-.import-review__choice { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: var(--space-2); align-items: start; padding: var(--space-3); cursor: pointer; min-height: 44px; }
-.import-review__choice > input { justify-self: center; align-self: center; accent-color: var(--brand); }
-.import-review__identity { display: grid; gap: var(--space-1); min-width: 0; font-size: var(--fs-body); }
-.import-review__identity > strong { font-weight: 700; }
-.import-review__date, .import-review__choice-state { color: var(--ink-2); font-size: var(--fs-body-sm); line-height: 1.5; }
-.import-review__row[data-selected="true"] .import-review__choice-state { color: var(--brand); font-weight: 700; }
-.import-review__body { min-width: 0; padding: 0 var(--space-4) var(--space-4); }
-.import-review__body .import-record-facts > .record-metrics { margin: 0 0 var(--space-4); padding-top: var(--space-3); border-top: 1px solid var(--line); }
+.import-review__rows { display: grid; gap: var(--space-2); }
+.import-review__row .import-record-facts > .record-metrics { margin: 0; }
+.import-review__row .record-metrics > .metric-summary { grid-template-columns: repeat(auto-fit, minmax(min(100%, 6.5em), 1fr)); }
 .import-review__save { display: grid; gap: var(--space-2); padding-block: var(--space-3); border-top: 1px solid var(--line); }
 .import-review__save > button { width: 100%; }
 .import-result__counts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr)); gap: var(--space-4); list-style: none; padding: 0; margin: 0; }

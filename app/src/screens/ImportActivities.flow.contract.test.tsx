@@ -5,6 +5,8 @@ import { initializeCanonicalJournalFixture } from "../test/canonical-journal-fix
 import { loadEntries } from "../domain/journal-store"
 import { ImportActivities } from "./ImportActivities"
 import { ReviewStage, SavedStage } from "./import-activities/ImportStages"
+import type { ImportReviewSession } from "./ImportActivities"
+import { localJournalScopeGeneration, setActiveLocalAccount } from "../domain/account/local-journal-ownership"
 
 const records = new File([JSON.stringify([
   { date: "2026-10-16", sport: "running", distanceKm: "2", durationMin: "10" },
@@ -59,4 +61,25 @@ it("does not label a device write as account confirmation", () => {
     onIntent={vi.fn()} onToggle={vi.fn()} onSave={vi.fn()} onRestart={vi.fn()} />)
   expect(screen.getByRole("status")).toHaveTextContent("이 브라우저에 저장 중")
   expect(screen.queryByText("계정 저장 확인 중")).toBeNull()
+})
+
+it("restores a same-scope review across unmounts but refuses an A-B-A lifetime", async () => {
+  const user = userEvent.setup()
+  const session: ImportReviewSession = { scope: localJournalScopeGeneration(), review: null, position: null }
+  const first = render(<ImportActivities reviewSession={session} />)
+  await user.upload(screen.getByLabelText("가져올 운동 파일 선택"), records)
+  const choices = await screen.findAllByRole("combobox", { name: /저장 방식/u })
+  await user.selectOptions(choices[1]!, "exclude")
+  await user.click(screen.getAllByRole("checkbox")[1]!)
+  first.unmount()
+  const restored = render(<ImportActivities reviewSession={session} />)
+  expect(screen.getAllByRole("checkbox")[0]).toBeChecked()
+  expect(screen.getAllByRole("checkbox")[1]).not.toBeChecked()
+  expect(screen.getAllByRole("combobox", { name: /저장 방식/u })[1]).toHaveValue("exclude")
+  restored.unmount()
+  setActiveLocalAccount("synthetic-other")
+  setActiveLocalAccount(null)
+  render(<ImportActivities reviewSession={session} />)
+  expect(screen.queryByTestId("import-draft-row")).toBeNull()
+  expect(loadEntries()).toEqual([])
 })
