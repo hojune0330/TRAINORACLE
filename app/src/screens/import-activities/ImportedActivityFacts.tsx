@@ -1,5 +1,6 @@
 import type { ImportedActivity } from "../../domain/import/activity-file"
 import { toFileObservationSummary } from "../../domain/import/file-observation"
+import { RecordMetrics, RecordSource } from "../../components/RecordUI"
 
 const durationLabel = (meaning: string | undefined) => meaning === "TIMER" ? "타이머 시간" : meaning === "MOVING" ? "이동 시간"
   : meaning === "ELAPSED" ? "전체 경과 시간" : "파일의 시간 · 종류 미확인"
@@ -15,17 +16,18 @@ export function importedActivityFactLabels(activity: ImportedActivity) {
 }
 
 /** Display facts and their meaning without promoting them to analysis evidence. */
-export function ImportedActivityFacts({ activity }: { readonly activity: ImportedActivity }) {
+export function ImportedActivityFacts({ activity, showTimeNotice = true, compact = false }: { readonly activity: ImportedActivity; readonly showTimeNotice?: boolean; readonly compact?: boolean }) {
   const { file, summary, meaning, timeLabel, distance, duration } = importedActivityFactLabels(activity)
+  const unknownTime = meaning !== "TIMER" && meaning !== "MOVING" && meaning !== "ELAPSED"
   return <div className="import-record-facts">
-    <dl>
-      <div><dt>거리</dt><dd>{distance}</dd></div>
-      <div><dt>{timeLabel}</dt><dd>{duration}</dd></div>
-      {file && summary.avgPace !== "" && <div><dt>{timeLabel} 기준 페이스</dt><dd>{summary.avgPace}/km</dd></div>}
-    </dl>
-    <p className="import-record-facts__source">파일에서 가져옴{file ? ` · ${file.format.toUpperCase()}` : ""}</p>
-    {file?.confirmation?.durationMeaning && <p className="import-record-facts__source">원본 시간 · {durationLabel(file.durationMeaning)}<br />내가 확인한 기준 · {timeLabel}</p>}
-    {file && <p className="import-record-facts__source">날짜 기준 · {file.timeZone ?? "지역 시간대 미확인"}</p>}
-    {file && (meaning === "UNKNOWN" || meaning === "SOURCE_DEFINED") && <p>시간 종류를 몰라도 저장할 수 있어요. 시간 비교와 페이스 계산은 보류해요.</p>}
+    <RecordMetrics category="record" items={[
+      { id: "distance", label: "거리", value: distance },
+      { id: "duration", label: compact && unknownTime ? "파일 시간" : timeLabel, value: duration,
+        ...(compact && unknownTime ? { detail: "종류 미확인" } : {}) },
+      ...(file && summary.avgPace !== "" ? [{ id: "pace", label: `${timeLabel} 기준 페이스`, value: `${summary.avgPace}/km` }] : []),
+    ]} />
+    <RecordSource source="파일에서 가져옴" {...(file ? { format: file.format.toUpperCase(), dateBasis: file.timeZone ?? "지역 시간대 미확인" } : {})}
+      {...(file?.confirmation?.durationMeaning ? { originalTimeMeaning: durationLabel(file.durationMeaning), confirmedTimeMeaning: timeLabel } : {})} />
+    {showTimeNotice && file && (meaning === "UNKNOWN" || meaning === "SOURCE_DEFINED") && <p>시간 종류를 몰라도 저장할 수 있어요. 시간 비교와 페이스 계산은 보류해요.</p>}
   </div>
 }

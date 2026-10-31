@@ -53,8 +53,8 @@ describe("next action follows account import confirmation", () => {
     const retry = vi.fn(), analysis = vi.fn()
     const { container } = render(<SavedStage outcome={{ total: account + pending + failed, saved: 0, merged: 0, account, pending, failed, conflicts: 0 }}
       analysisAvailable onRetry={retry} onOpenAnalysis={analysis} onRestart={vi.fn()} />)
-    const next = container.querySelector<HTMLButtonElement>("button.next-action")!
-    expect(container.querySelectorAll("button.next-action")).toHaveLength(1)
+    const next = container.querySelector<HTMLButtonElement>('button.record-action[data-priority="primary"]')!
+    expect(container.querySelectorAll('button.record-action[data-priority="primary"]')).toHaveLength(1)
     expect(next).toHaveAccessibleName(name)
     expect(retry).not.toHaveBeenCalled()
     expect(analysis).not.toHaveBeenCalled()
@@ -67,7 +67,7 @@ describe("next action follows account import confirmation", () => {
     const retry = vi.fn(), summary = vi.fn(), analysis = vi.fn()
     const { container } = render(<SavedStage outcome={{ total: 1, saved: 0, account: 1, pending: 0, failed: 0 }}
       onRetry={retry} onOpenAnalysis={analysis} onOpenSummary={summary} onRestart={vi.fn()} />)
-    const next = container.querySelector<HTMLButtonElement>("button.next-action")!
+    const next = container.querySelector<HTMLButtonElement>('button.record-action[data-priority="primary"]')!
     expect(next).toHaveAccessibleName("가져온 기록 보기")
     await userEvent.setup().click(next)
     expect(summary).toHaveBeenCalledTimes(1)
@@ -184,7 +184,8 @@ describe("account import and restore screens", () => {
     await user.click(await screen.findByRole("button", { name: "고른 1건 일지에 저장" }))
     await screen.findByTestId("import-saved")
     const review = screen.getByRole("button", { name: "원래 파일 다시 검토" })
-    expect(review).toHaveClass("next-action")
+    expect(review).toHaveClass("record-action")
+    expect(review).toHaveAttribute("data-priority", "primary")
     const readsBeforeReview = api.hydrate.mock.calls.length
     api.hydrate.mockResolvedValueOnce(false)
     await user.click(review)

@@ -5,8 +5,8 @@ import { resetAccountJournalProjection } from "./domain/account/account-journal-
 import { JOURNAL_STORAGE_KEY } from "./domain/journal-storage-keys"
 import { initializeCanonicalJournalFixture } from "./test/canonical-journal-fixture"
 
-vi.mock("./screens/Home", () => ({ Home: ({ onOpenOracle }: { onOpenOracle: (topic: "mix", mode: "example") => void }) =>
-  <button onClick={() => onOpenOracle("mix", "example")}>오라클 예시 열기</button> }))
+vi.mock("./screens/Home", () => ({ Home: ({ onOpenOracle }: { onOpenOracle: (topic: "mix") => void }) =>
+  <button onClick={() => onOpenOracle("mix")}>내 기록 분석 열기</button> }))
 vi.mock("./DeferredMobileScreens", async () => {
   const { OracleExplore } = await import("./screens/OracleExplore")
   return { DeferredMobileScreens: { OracleExplore, Trends: () => null, PlanProposalInbox: () => null } }
@@ -30,8 +30,8 @@ it.each([false, true])("rereads the parent source from the open Oracle result (f
   render(<AppShell />)
   failed = true
   act(() => window.dispatchEvent(new Event("focus")))
-  fireEvent.click(screen.getByRole("button", { name: "오라클 예시 열기" }))
-  fireEvent.click(screen.getByRole("button", { name: "내 기록 확인" }))
+  fireEvent.click(screen.getByRole("button", { name: "내 기록 분석 열기" }))
+  expect(screen.getByRole("button", { name: "내 기록" })).toHaveAttribute("aria-pressed", "true")
   expect(screen.getByRole("alert")).toHaveTextContent("기록을 모두 확인하지 못했어요.")
   expect(screen.queryByRole("button", { name: "훈련 기록 남기기" })).toBeNull()
   const write = vi.spyOn(Storage.prototype, "setItem")

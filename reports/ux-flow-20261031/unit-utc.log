@@ -1,0 +1,9 @@
+
+ RUN  v4.1.10 C:/Users/admin/Documents/Codex/2026-10-31/task-3/trainoracle-flow/app
+
+
+ Test Files  10 passed (10)
+      Tests  209 passed (209)
+   Start at  23:01:35
+   Duration  46.91s (transform 3.81s, setup 1.58s, import 10.17s, tests 18.35s, environment 14.64s)
+

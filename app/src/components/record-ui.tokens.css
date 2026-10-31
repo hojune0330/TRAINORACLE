@@ -1,0 +1,11 @@
+/* TrainOracle role aliases, not Apple/Garmin measurements. Opt-in only. */
+.record-ui {
+  --record-metric-size: 1.5rem;
+  --record-body-size: var(--fs-body);
+  --record-meta-size: var(--fs-body-sm);
+  --record-gap: var(--space-3);
+  --record-inset: var(--space-4);
+  --record-touch-min: var(--app-touch-min, 44px);
+  --record-radius: var(--r-task-surface);
+  --record-action-min: 48px;
+}

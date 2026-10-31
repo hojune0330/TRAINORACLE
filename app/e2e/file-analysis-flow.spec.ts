@@ -12,6 +12,19 @@ const origin = "http://127.0.0.1:4497"
 const owner = "11111111-1111-4111-8111-111111111111"
 const now = "2026-09-19T03:00:00.000Z"
 const privateMarker = "SYNTHETIC_PRIVATE_PROSE_NOT_ANALYSIS"
+
+async function expectSharedRecordAction(page: Page, label: string) {
+  const button = page.getByRole("button", { name: label, exact: true })
+  await expect(button).toHaveClass(/record-action/u)
+  await expect(button).toHaveAttribute("data-priority", "primary")
+  expect(await button.evaluate(element => {
+    const probe = document.createElement("span")
+    probe.style.color = "var(--brand)"; document.body.append(probe)
+    const style = getComputedStyle(element), brand = getComputedStyle(probe).color
+    probe.remove()
+    return { brand: style.backgroundColor === brand, minHeight: style.minHeight }
+  })).toEqual({ brand: true, minHeight: "48px" })
+}
 const tcx = `<?xml version="1.0" encoding="UTF-8"?>
 <TrainingCenterDatabase><Activities><Activity Sport="Running">
 <Id>2026-09-19T01:00:00Z</Id><Notes>${privateMarker}</Notes>
@@ -558,6 +571,7 @@ test("pending account file is excluded until a validated retry acknowledgement",
   await expect(page.getByTestId("import-saved")).toContainText("계정에 저장됨 0건")
   await expect(page.getByTestId("import-saved")).toContainText("계정 저장 여부를 아직 확인하지 못했어요")
   await page.setViewportSize({ width: 320, height: 812 })
+  await expectSharedRecordAction(page, "저장 다시 시도")
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true)
   await page.screenshot({ path: testInfo.outputPath("import-pending-320.png") })
   expect(account.documents.size).toBe(0)
@@ -568,6 +582,7 @@ test("pending account file is excluded until a validated retry acknowledgement",
   await page.getByRole("button", { name: "저장 다시 시도" }).click()
   await expect(page.getByTestId("import-saved")).toContainText("계정에 저장됨 1건")
   await page.setViewportSize({ width: 375, height: 812 })
+  await expectSharedRecordAction(page, "전체 가져온 기록 분석")
   await page.screenshot({ path: testInfo.outputPath("import-confirmed-375.png") })
   await expect.poll(() => confirmedCount(page)).toBe(1)
   expect(await sharedDistance(page)).toEqual({ totalKm: 10, includedSourceCount: 1 })

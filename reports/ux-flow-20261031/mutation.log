@@ -1,0 +1,661 @@
+
+ RUN  v4.1.10 C:/Users/admin/Documents/Codex/2026-10-31/task-3/trainoracle-flow/app
+
+ ❯ src/AppShell.oracle-exploration.contract.test.tsx (20 tests | 1 failed | 19 skipped) 253ms
+     × opens the personal empty result from Home and shows examples only after explicit selection 252ms
+ ❯ src/screens/LogDetail.revisit-preservation.contract.test.tsx (10 tests | 1 failed | 9 skipped) 265ms
+     × reports a missing exact destination without opening another same-day journal 264ms
+ ❯ src/screens/ImportActivities.flow.contract.test.tsx (3 tests | 2 failed | 1 skipped) 557ms
+   × retains exact choices and excludes across file preparation, a failed replacement and resume without saving 540ms
+   × does not label a device write as account confirmation 16ms
+
+ Test Files  3 failed (3)
+      Tests  4 failed | 29 skipped (33)
+   Start at  07:59:48
+   Duration  12.62s (transform 3.36s, setup 631ms, import 5.85s, tests 1.08s, environment 4.43s)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/AppShell.oracle-exploration.contract.test.tsx > AppShell oracle exploration navigation > opens the personal empty result from Home and shows examples only after explicit selection
+Error: expect(element).toHaveAttribute("aria-pressed", "true") // element.getAttribute("aria-pressed") === "true"
+
+Expected the element to have attribute:
+  aria-pressed="true"
+Received:
+  aria-pressed="false"
+ ❯ src/AppShell.oracle-exploration.contract.test.tsx:107:58
+    105|     render(<AppShell />)
+    106|     await user.click(screen.getByRole("button", { name: "홈 내 기록 분석" }))
+    107|     expect(screen.getByRole("button", { name: "내 기록" })).toHaveAttribu…
+       |                                                          ^
+    108|     expect(screen.getByRole("heading", { name: "level 개인 결과" })).toBeV…
+    109|     expect(screen.queryByRole("heading", { name: "level 가상 예시 결과" })).…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/screens/ImportActivities.flow.contract.test.tsx > retains exact choices and excludes across file preparation, a failed replacement and resume without saving
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "확인하던 운동 2건 이어보기"
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "운동 기록 가져오기":
+  [36m<h1[39m
+    [33mclass[39m=[32m"app-heading app-heading--screen app-heading--accent import-activities__title"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  list:
+
+  Name "기록 가져오기 순서":
+  [36m<ol[39m
+    [33maria-label[39m=[32m"기록 가져오기 순서"[39m
+    [33mclass[39m=[32m"import-flow__steps"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<li[39m
+    [33maria-current[39m=[32m"step"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<li />[39m
+
+  Name "":
+  [36m<li />[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "파일이 있어요 · 바로 선택":
+  [36m<button[39m
+    [33mstyle[39m=[32m"width: 100%; min-height: 48px; font-size: 15px; font-weight: 600; font-family: var(--sans); border: 1px solid var(--brand); border-radius: var(--r-action); background: var(--brand); color: var(--bg); cursor: pointer;"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "파일 준비하기":
+  [36m<button[39m
+    [33maria-controls[39m=[32m"import-preparation-steps"[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33mclass[39m=[32m"app-choice-control import-preparation__toggle"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "가민·코로스·WHOOP·스트라바 자동 연동은 준비 중이에요":
+  [36m<summary[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33mrole[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  region:
+
+  Name "운동 파일 준비":
+  [36m<section[39m
+    [33maria-label[39m=[32m"운동 파일 준비"[39m
+    [33mclass[39m=[32m"import-preparation"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"import-preparation__formats"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p />[39m
+
+  --------------------------------------------------
+  alert:
+
+  Name "":
+  [36m<div[39m
+    [33mdata-testid[39m=[32m"import-failure"[39m
+    [33mrole[39m=[32m"alert"[39m
+    [33mstyle[39m=[32m"border: 1px solid var(--pain-5); background: var(--surface); padding: 10px 13px;"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  group:
+
+  Name "":
+  [36m<details[39m
+    [33mclass[39m=[32m"info-disclosure"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"import-flow"[39m
+      [33mstyle[39m=[32m"padding: 18px 20px 90px;"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mstyle[39m=[32m"display: flex; align-items: center; gap: 10px;"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"app-heading app-heading--screen app-heading--accent import-activities__title"[39m
+            [33mtabindex[39m=[32m"-1"[39m
+          [36m>[39m
+            [0m운동 기록 가져오기[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"active-stage-content active-content-scroll-target"[39m
+        [33mdata-flow-direction[39m=[32m"replace"[39m
+      [36m>[39m
+        [36m<ol[39m
+          [33maria-label[39m=[32m"기록 가져오기 순서"[39m
+          [33mclass[39m=[32m"import-flow__steps"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33maria-current[39m=[32m"step"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+            [36m>[39m
+              [0m1[0m
+            [36m</span>[39m
+            [0m파일 선택[0m
+          [36m</li>[39m
+          [36m<li>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+            [36m>[39m
+              [0m2[0m
+            [36m</span>[39m
+            [0m운동 확인[0m
+          [36m</li>[39m
+          [36m<li>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+            [36m>[39m
+              [0m3[0m
+            [36m</span>[39m
+            [0m저장 결과[0m
+          [36m</li>[39m
+        [36m</ol>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"margin-top: 20px; display: flex; flex-direction: column; gap: 14px;"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"contextual-entry-intro"[39m
+          [36m/>[39m
+          [36m<button[39m
+            [33mstyle[39m=[32m"width: 100%; min-height: 48px; font-size: 15px; font-weight: 600; font-family: var(--sans); border: 1px solid var(--brand); border-radius: var(--r-action); background: var(--brand); color: var(--bg); cursor: pointer;"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-upload"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"18"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"18"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"[39m
+              [36m/>[39m
+              [36m<polyline[39m
+                [33mpoints[39m=[32m"17 8 12 3 7 8"[39m
+              [36m/>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"12"[39m
+                [33mx2[39m=[32m"12"[39m
+                [33my1[39m=[32m"3"[39m
+                [33my2[39m=[32m"15"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m 파일이 있어요 · 바로 선택[0m
+          [36m</button>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"운동 파일 준비"[39m
+            [33mclass[39m=[32m"import-preparation"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-controls[39m=[32m"import-preparation-steps"[39m
+              [33maria-expanded[39m=[32m"false"[39m
+              [33mclass[39m=[32m"app-choice-control import-preparation__toggle"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0m파일 준비하기[0m
+            [36m</button>[39m
+            [36m<p>[39m
+              [0m계정 자동 연결 대신 파일을 가져와요. 원본 기록은 바뀌지 않아요.[0m
+            [36m</p>[39m
+          [36m</section>[39m
+          [36m<div[39m
+            [33mdata-testid[39m=[32m"import-privacy-notice"[39m
+            [33mstyle[39m=[32m"border: 1px solid var(--line); background: var(--surface); padding: 10px 13px;"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"font-family: var(--mono); font-size: var(--fs-caption); font-weight: 600; color: var(--ink-3); letter-spacing: 0.04em;"[39m
+            [36m>[39m
+              [0m파일은 이 기기에서만 읽어요[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"font-family: var(--mono); font-size: var(--fs-body-sm); color: var(--ink-2); line-height: 1.65; margin-top: 5px;"[39m
+            [36m>[39m
+              [0m고른 파일은 서버로 올라가지 않아요. 이 화면에서 내용을 읽어 일지 초안만 만들고, [0m
+              [36m<b>[39m
+                [0m저장을 누른 것만[0m
+              [36m</b>[39m
+              [0m 이 브라우저의 일지에 들어가요.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<label[39m
+            [33mfor[39m=[32m"import-file"[39m
+            [33mhidden[39m=[32m""[39m
+          [36m>[39m
+            [0m가져올 운동 파일 선택[0m
+          [36m</label>[39m
+          [36m<input[39m
+            [33maccept[39m=[32m".csv,.json,.tcx,.gpx,text/csv,application/json,application/xml,text/xml"[39m
+            [33mhidden[39m=[32m""[39m
+            [33mid[39m=[32m"import-file"[39m
+            [33mtype[39m=[32m"file"[39m
+          [36m/>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"import-preparation__formats"[39m
+          [36m>[39m
+            [0mTCX · GPX · 지원 CSV·JSON / 한 번에 파일 1개, 최대 10MB[0m
+          [36m</p>[39m
+          [36m<div[39m
+            [33mdata-testid[39m=[32m"import-failure"[39m
+            [33mrole[39m=[32m"alert"[39m
+            [33mstyle[39m=[32m"border: 1px solid var(--pain-5); background: var(--surface); padding: 10px 13px;"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"font-family: var(--mono); font-size: var(--fs-body); color: var(--ink); line-height: 1.6;"[39m
+            [36m>[39m
+              [0m이 파일을 읽지 못했어요. .csv, .json, .tcx 또는 .gpx 파일인지 확인해 주세요.[0m
+              [36m<br />[39m
+              [0m기존 일지는 그대로 있어요.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mdata-testid[39m=[32m"oauth-status"[39m
+          [36m>[39m
+            [36m<details[39m
+              [33mclass[39m=[32m"info-disclosure"[39m
+            [36m>[39m
+              [36m<summary[39m
+                [33maria-expanded[39m=[32m"false"[39m
+                [33mrole[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-circle-help"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"16"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"16"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"12"[39m
+                    [33mcy[39m=[32m"12"[39m
+                    [33mr[39m=[32m"10"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 17h.01"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [36m<span>[39m
+                  [36m<span>[39m
+                    [0m가민·코로스·WHOOP·스트라바 자동 연동은 준비 중이에요[0m
+                  [36m</span>[39m
+                [36m</span>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-chevron-down info-disclosure__chevron"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"16"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"16"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m6 9 6 6 6-6"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</summary>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"info-disclosure__content"[39m
+              [36m>[39m
+                [36m<p>[39m
+                  [0m지금은 파일을 골라 기록을 가져올 수 있어요. 계정을 연결해 자동으로 받는 기능의 시작 날짜는 아직 정해지지 않았어요.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</details>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/screens/ImportActivities.flow.contract.test.tsx:32:27
+     30|   await user.upload(screen.getByLabelText("가져올 운동 파일 선택"), new File(["…
+     31|   expect(await screen.findByTestId("import-failure")).toBeVisible()
+     32|   await user.click(screen.getByRole("button", { name: "확인하던 운동 2건 이어보기…
+       |                           ^
+     33|   expect(screen.getAllByRole("checkbox")[0]).toBeChecked()
+     34|   expect(screen.getAllByRole("checkbox")[1]).not.toBeChecked()
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  src/screens/ImportActivities.flow.contract.test.tsx > does not label a device write as account confirmation
+Error: expect(element).toHaveTextContent()
+
+Expected element to have text content:
+  이 브라우저에 저장 중
+Received:
+  계정 저장 확인 중
+ ❯ src/screens/ImportActivities.flow.contract.test.tsx:59:38
+     57|   render(<ReviewStage busy drafts={[]} result={{ activities: [], forma…
+     58|     onIntent={vi.fn()} onToggle={vi.fn()} onSave={vi.fn()} onRestart={…
+     59|   expect(screen.getByRole("status")).toHaveTextContent("이 브라우저에 저장 중")
+       |                                      ^
+     60|   expect(screen.queryByText("계정 저장 확인 중")).toBeNull()
+     61| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  src/screens/LogDetail.revisit-preservation.contract.test.tsx > past journal preservation before revisit work > reports a missing exact destination without opening another same-day journal
+TestingLibraryElementError: Unable to find an accessible element with the role "alert"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "우리 집 친구들":
+  [36m<button[39m
+    [33mclass[39m=[32m"quick-log__secondary"[39m
+    [33mstyle[39m=[32m"min-height: 44px;"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "← 뒤로":
+  [36m<button[39m
+    [33mstyle[39m=[32m"background: transparent; border: 0px; cursor: pointer; padding: 4px; min-width: 64px; min-height: 44px; font-family: var(--mono); font-size: 11px; color: var(--ink-2); letter-spacing: 0.06em;"[39m
+  [36m/>[39m
+
+  Name "일지 꾸미기 열기":
+  [36m<button[39m
+    [33maria-label[39m=[32m"일지 꾸미기 열기"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "장식 잠시 숨기기":
+  [36m<button[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "1번째 기록 · 훈련 · Other synthetic activity · 3 km · 15분 · 5:00/km · 07:59 · 가져온 기록 · 펼쳐보기":
+  [36m<button[39m
+    [33maria-controls[39m=[32m"journal-entry-panel-0"[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33maria-label[39m=[32m"1번째 기록 · 훈련 · Other synthetic activity · 3 km · 15분 · 5:00/km · 07:59 · 가져온 기록 · 펼쳐보기"[39m
+    [33mclass[39m=[32m"journal-entry-summary"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "공유 카드 만들기":
+  [36m<button[39m
+    [33maria-controls[39m=[32m":r3:"[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33mclass[39m=[32m"journal-share-tool__entry"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  group:
+
+  Name "":
+  [36m<details />[39m
+
+  --------------------------------------------------
+  presentation:
+
+  Name "":
+  [36m<img[39m
+    [33malt[39m=[32m""[39m
+    [33mclass[39m=[32m"decorated-journal-page__theme"[39m
+    [33mdata-testid[39m=[32m"journal-page-theme"[39m
+    [33msrc[39m=[32m"/decorations/theme-track-notebook.webp"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "2026년 7월 20일 월요일 일지":
+  [36m<div[39m
+    [33maria-label[39m=[32m"2026년 7월 20일 월요일 일지"[39m
+    [33maria-level[39m=[32m"1"[39m
+    [33mclass[39m=[32m"journal-detail-page__date"[39m
+    [33mrole[39m=[32m"heading"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  strong:
+
+  Name "":
+  [36m<strong />[39m
+
+  Name "":
+  [36m<strong />[39m
+
+  --------------------------------------------------
+  time:
+
+  Name "":
+  [36m<time[39m
+    [33mdatetime[39m=[32m"2026-10-30T22:59:57.886Z"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  region:
+
+  Name "일지 공유 카드":
+  [36m<section[39m
+    [33maria-label[39m=[32m"일지 공유 카드"[39m
+    [33mclass[39m=[32m"journal-share-tool"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"journal-detail-page journal-detail-page--reader"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"quick-log__secondary"[39m
+        [33mstyle[39m=[32m"min-height: 44px;"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m우리 집 친구들[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33mstyle[39m=[32m"padding: 12px 16px; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: 64px minmax(0, 1fr) 64px; align-items: center; background: var(--bg);"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mstyle[39m=[32m"background: transparent; border: 0px; cursor: pointer; padding: 4px; min-width: 64px; min-height: 44px; font-family: var(--mono); font-size: 11px; color: var(--ink-2); letter-spacing: 0.06em;"[39m
+        [36m>[39m
+          [0m← 뒤로[0m
+        [36m</button>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"min-width: 0px; font-family: var(--mono); font-size: 11px; font-weight: 600; color: var(--ink); letter-spacing: 0.14em; text-transform: uppercase; text-align: center;"[39m
+        [36m>[39m
+          [0m일지[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33maria-hidden[39m=[32m"true"[39m
+        [36m/>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"journal-decoration-workspace"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"journal-decoration-unified__entry"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"journal-decoration-launch"[39m
+            [33mdata-decoration-interaction[39m=[32m"true"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"일지 꾸미기 열기"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-palette"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"16"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"16"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"13.5"[39m
+                  [33mcy[39m=[32m"6.5"[39m
+                  [33mfill[39m=[32m"currentColor"[39m
+                  [33mr[39m=[32m".5"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"17.5"[39m
+                  [33mcy[39m=[32m"10.5"[39m
+                  [33mfill[39m=[32m"currentColor"[39m
+                  [33mr[39m=[32m".5"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"8.5"[39m
+                  [33mcy[39m=[32m"7.5"[39m
+                  [33mfill[39m=[32m"currentColor"[39m
+                  [33mr[39m=[32m".5"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"6.5"[39m
+                  [33mcy[39m=[32m"12.5"[39m
+                  [33mfill[39m=[32m"currentColor"[39m
+                  [33mr[39m=[32m".5"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m꾸미기[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0m더보기[0m
+            [36m</summary>[39m
+            [36m<button[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0m장식 잠시 숨기기[0m
+            [36m</button>[39m
+          [36m</details>[39m
+        [36m</div>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"decorated-journal-page"[39m
+          [33mdata-ink-id[39m=[32m"INK_NAVY"[39m
+          [33mdata-theme-id[39m=[32m"THEME_TRACK_NOTEBOOK"[39m
+        [36m>[39m
+          [36m<img[39m
+            [33malt[39m=[32m""[39m
+            [33mclass[39m=[32m"decorated-journal-page__theme"[39m
+            [33mdata-testid[39m=[32m"journal-page-theme"[39m
+            [33msrc[39m=[32m"/decorations/theme-track-notebook.webp"[39m
+          [36m/>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"decorated-journal-page__body"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"decorated-journal-page__content journal-reader-page journal-page-scroll-target"[39m
+              [33mdata-testid[39m=[32m"decorated-journal-content"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33maria-label[39m=[32m"2026년 7월 20일 월요일 일지"[39m
+                [33maria-level[39m=[32m"1"[39m
+                [33mclass[39m=[32m"journal-detail-page__date"[39m
+                [33mrole[39m=[32m"heading"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mstyle[39m=[32m"background: var(--surface); border: 1px solid var(--ink); padding: 11px 14px; display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: baseline;"[39m
+                [36m>[39m
+                  [36m<div>[39m
+                    [36m<div[39m
+                      [33mstyle[39m=[32m"font-family: var(--mono); font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink);"[39m
+                    [36m>[39m
+                      [0m2026 · 07 · 20[0m
+                    [36m</div>[39m
+                    [36m<div[39m
+                      [33mstyle[39m=[32m"font-family: var(--mono); font-size: 9.5px; color: var(--ink-3); letter-spacing: 0.12em; text-transform: uppercase; margin-top: 2px;"[39m
+                    [36m>[39m
+                      [0mMON[0m
+                    [36m</div>[39m
+                  [36m</div>[39m
+                  [36m<div[39m
+                    [33mstyle[39m=[32m"font-family: var(--mono); font-size: 10px; color: var(--ink-3); letter-spacing: 0.06em; text-align: right; line-height: 1.5;"[39m
+                  [36m>[39m
+                    [36m<div>[39m
+                      [0m2026 summer[0m
+                    [36m</div>[39m
+                  [36m</div>[39m
+            ...
+ ❯ Object.getElementError D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/screens/LogDetail.revisit-preservation.contract.test.tsx:28:19
+     26|       distanceKm: "3", durationMin: "15", avgPace: "5:00" }, "json")).…
+     27|     render(<LogDetail date={DATE} initialEntryId="missing-exact-entry"…
+     28|     expect(screen.getByRole("alert")).toHaveTextContent("선택한 일지를 찾지 못했…
+       |                   ^
+     29|     expect(screen.getByRole("button", { name: /Other synthetic activit…
+     30|   })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+

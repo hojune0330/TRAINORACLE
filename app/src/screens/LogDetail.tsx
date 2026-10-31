@@ -18,7 +18,7 @@ import { journalRpeLabel } from "../domain/quick-journal"
 import { entriesForDate, loadJournalEntriesSnapshot, deleteEntry, restoreDeletedEntry } from "../domain/journal-store"
 import { LOCAL_JOURNALS_CHANGED } from "../domain/journal-change-events"
 import { TRASH_RETENTION_DAYS } from "../domain/journal-trash"
-import { hasImportedField } from "../domain/field-provenance"
+import { hasImportedField, isImportedField } from "../domain/field-provenance"
 import { painLevelsRequireReview } from "../safety/memo-safety"
 import { cardDate, dowOf, seasonOf } from "../domain/dates"
 import { RaceSelfCheckSummary, SavedMemo } from "./log-entry/SavedEntryContext"
@@ -110,10 +110,17 @@ function sessionSummary(entry: PostSessionEntry): string {
   const shownRpe = journalRpeLabel(entry)
   return compactSummary([
     entry.distanceKm ? `${entry.distanceKm} km` : null,
-    entry.durationMin ? `${entry.durationMin}분` : null,
+    entry.durationMin ? `${isImportedField("durationMin", entry.fieldProvenance) ? `${importedTimeLabel(entry)} ` : ""}${entry.durationMin}분` : null,
     entry.avgPace ? `${entry.avgPace}/km` : null,
     shownRpe === null ? null : `힘든 정도 ${shownRpe}/10`,
   ])
+}
+
+function importedTimeLabel(entry: PostSessionEntry): string {
+  if (!isImportedField("durationMin", entry.fieldProvenance)) return "시간"
+  const meaning = entry.fileObservation?.confirmation?.durationMeaning ?? entry.fileObservation?.durationMeaning
+  return meaning === "TIMER" ? "타이머 시간" : meaning === "MOVING" ? "이동 시간"
+    : meaning === "ELAPSED" ? "전체 경과 시간" : "파일 시간 · 종류 미확인"
 }
 
 function raceSummary(entry: RaceEntry): string {
@@ -472,6 +479,9 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, onJournalSave
       {!snapshot.complete && <p role="status">
         기록을 아직 모두 확인하지 못했어요. {entries.length > 0 ? "현재 불러온 내용만 표시해요." : "기록이 없는 상태로 표시하지 않아요."}
       </p>}
+      {snapshot.complete && initialEntryId !== undefined && targetKey === undefined && <p role="alert">
+        선택한 일지를 찾지 못했어요. 삭제되었거나 지금 계정에서 볼 수 없는 기록일 수 있어요.
+      </p>}
       {snapshot.complete && entries.length === 0 && (
         <div className="journal-empty-state">
           <div className="hand" style={{ fontSize: 22, color: "var(--pencil)", lineHeight: 1.35 }}>
@@ -494,17 +504,22 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, onJournalSave
         const storageLabel = journalStorageLabel(entry)
 
         if (entry.kind === "post-session") {
-          const meta = entry.system === ""
+          const imported = hasImportedField(entry.fieldProvenance)
+          // Legacy standalone imports used BASE as a storage default, not a classification.
+          // A reconciled, previously classified journal keeps its existing classification.
+          const unknownImportedKind = imported && entry.fieldProvenance?.system?.provenance !== "EXPLICIT"
+            && (entry.system === "" || entry.system === "base" && entry.objectiveDataState === undefined)
+          const meta = unknownImportedKind ? { c: "FILE", n: "훈련 종류 미확인", cls: "rest", term: null }
+            : entry.system === ""
             ? { c: "LOG", n: "빠른 기록", cls: "rest", term: null }
             : SYSTEM_META[entry.system] ?? { c: "??", n: entry.system, cls: "rest", term: null }
           const shownRpe = journalRpeLabel(entry)
           const metrics = ([
             ["거리", entry.distanceKm, "km"],
-            ["시간", entry.durationMin, "분"],
+            [importedTimeLabel(entry), entry.durationMin, "분"],
             ["평균 페이스", entry.avgPace, "/km"],
             ["힘든 정도", shownRpe, "/10"],
           ] as const).filter(([, value]) => value !== "" && value !== null)
-          const imported = hasImportedField(entry.fieldProvenance)
           return (
             <JournalEntryDisclosure
               key={viewKey}

@@ -1,0 +1,350 @@
+
+ RUN  v4.1.10 C:/Users/admin/Documents/Codex/2026-10-31/task-3/trainoracle-flow/app
+
+ ❯ src/screens/ImportActivities.flow.contract.test.tsx (4 tests | 1 failed | 3 skipped) 385ms
+   × restores a same-scope review across unmounts but refuses an A-B-A lifetime 384ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 skipped (4)
+   Start at  03:21:39
+   Duration  4.38s (transform 1.53s, setup 169ms, import 2.23s, tests 385ms, environment 1.39s)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/screens/ImportActivities.flow.contract.test.tsx > restores a same-scope review across unmounts but refuses an A-B-A lifetime
+TestingLibraryElementError: Unable to find an accessible element with the role "checkbox"
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "운동 기록 가져오기":
+  [36m<h1[39m
+    [33mclass[39m=[32m"app-heading app-heading--screen app-heading--accent import-activities__title"[39m
+    [33mtabindex[39m=[32m"-1"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  list:
+
+  Name "기록 가져오기 순서":
+  [36m<ol[39m
+    [33maria-label[39m=[32m"기록 가져오기 순서"[39m
+    [33mclass[39m=[32m"import-flow__steps"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<li[39m
+    [33maria-current[39m=[32m"step"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<li />[39m
+
+  Name "":
+  [36m<li />[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "파일이 있어요 · 바로 선택":
+  [36m<button[39m
+    [33mclass[39m=[32m"record-ui record-action"[39m
+    [33mdata-priority[39m=[32m"primary"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "파일 준비하기":
+  [36m<button[39m
+    [33maria-controls[39m=[32m"import-preparation-steps"[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33mclass[39m=[32m"app-choice-control import-preparation__toggle"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "가민·코로스·WHOOP·스트라바 자동 연동은 준비 중이에요":
+  [36m<summary[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33mrole[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  region:
+
+  Name "운동 파일 준비":
+  [36m<section[39m
+    [33maria-label[39m=[32m"운동 파일 준비"[39m
+    [33mclass[39m=[32m"import-preparation"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"import-preparation__formats"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p />[39m
+
+  --------------------------------------------------
+  group:
+
+  Name "":
+  [36m<details[39m
+    [33mclass[39m=[32m"info-disclosure"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"import-flow"[39m
+      [33mstyle[39m=[32m"padding: 18px 20px 90px;"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mstyle[39m=[32m"display: flex; align-items: center; gap: 10px;"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"app-heading app-heading--screen app-heading--accent import-activities__title"[39m
+            [33mtabindex[39m=[32m"-1"[39m
+          [36m>[39m
+            [0m운동 기록 가져오기[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"active-stage-content active-content-scroll-target"[39m
+        [33mdata-flow-direction[39m=[32m"initial"[39m
+      [36m>[39m
+        [36m<ol[39m
+          [33maria-label[39m=[32m"기록 가져오기 순서"[39m
+          [33mclass[39m=[32m"import-flow__steps"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33maria-current[39m=[32m"step"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+            [36m>[39m
+              [0m1[0m
+            [36m</span>[39m
+            [0m파일 선택[0m
+          [36m</li>[39m
+          [36m<li>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+            [36m>[39m
+              [0m2[0m
+            [36m</span>[39m
+            [0m운동 확인[0m
+          [36m</li>[39m
+          [36m<li>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+            [36m>[39m
+              [0m3[0m
+            [36m</span>[39m
+            [0m저장 결과[0m
+          [36m</li>[39m
+        [36m</ol>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"margin-top: 20px; display: flex; flex-direction: column; gap: 14px;"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"contextual-entry-intro"[39m
+          [36m>[39m
+            [36m<img[39m
+              [33malt[39m=[32m""[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"contextual-illustration contextual-illustration--medium"[39m
+              [33mdecoding[39m=[32m"async"[39m
+              [33mdraggable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"80"[39m
+              [33mloading[39m=[32m"lazy"[39m
+              [33msrc[39m=[32m"/illustrations/watch-file-v2.webp"[39m
+              [33mwidth[39m=[32m"80"[39m
+            [36m/>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"record-ui record-action"[39m
+            [33mdata-priority[39m=[32m"primary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-upload"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"18"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"18"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"[39m
+              [36m/>[39m
+              [36m<polyline[39m
+                [33mpoints[39m=[32m"17 8 12 3 7 8"[39m
+              [36m/>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"12"[39m
+                [33mx2[39m=[32m"12"[39m
+                [33my1[39m=[32m"3"[39m
+                [33my2[39m=[32m"15"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m 파일이 있어요 · 바로 선택[0m
+          [36m</button>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"운동 파일 준비"[39m
+            [33mclass[39m=[32m"import-preparation"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-controls[39m=[32m"import-preparation-steps"[39m
+              [33maria-expanded[39m=[32m"false"[39m
+              [33mclass[39m=[32m"app-choice-control import-preparation__toggle"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0m파일 준비하기[0m
+            [36m</button>[39m
+            [36m<p>[39m
+              [0m계정 자동 연결 대신 파일을 가져와요. 원본 기록은 바뀌지 않아요.[0m
+            [36m</p>[39m
+          [36m</section>[39m
+          [36m<div[39m
+            [33mdata-testid[39m=[32m"import-privacy-notice"[39m
+            [33mstyle[39m=[32m"border: 1px solid var(--line); background: var(--surface); padding: 10px 13px;"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"font-family: var(--mono); font-size: var(--fs-caption); font-weight: 600; color: var(--ink-3); letter-spacing: 0.04em;"[39m
+            [36m>[39m
+              [0m파일은 이 기기에서만 읽어요[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"font-family: var(--mono); font-size: var(--fs-body-sm); color: var(--ink-2); line-height: 1.65; margin-top: 5px;"[39m
+            [36m>[39m
+              [0m고른 파일은 서버로 올라가지 않아요. 이 화면에서 내용을 읽어 일지 초안만 만들고, [0m
+              [36m<b>[39m
+                [0m저장을 누른 것만[0m
+              [36m</b>[39m
+              [0m 이 브라우저의 일지에 들어가요.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<label[39m
+            [33mfor[39m=[32m"import-file"[39m
+            [33mhidden[39m=[32m""[39m
+          [36m>[39m
+            [0m가져올 운동 파일 선택[0m
+          [36m</label>[39m
+          [36m<input[39m
+            [33maccept[39m=[32m".csv,.json,.tcx,.gpx,text/csv,application/json,application/xml,text/xml"[39m
+            [33mhidden[39m=[32m""[39m
+            [33mid[39m=[32m"import-file"[39m
+            [33mtype[39m=[32m"file"[39m
+          [36m/>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"import-preparation__formats"[39m
+          [36m>[39m
+            [0mTCX · GPX · 지원 CSV·JSON / 한 번에 파일 1개, 최대 10MB[0m
+          [36m</p>[39m
+          [36m<div[39m
+            [33mdata-testid[39m=[32m"oauth-status"[39m
+          [36m>[39m
+            [36m<details[39m
+              [33mclass[39m=[32m"info-disclosure"[39m
+            [36m>[39m
+              [36m<summary[39m
+                [33maria-expanded[39m=[32m"false"[39m
+                [33mrole[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-circle-help"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"16"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"16"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"12"[39m
+                    [33mcy[39m=[32m"12"[39m
+                    [33mr[39m=[32m"10"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 17h.01"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [36m<span>[39m
+                  [36m<span>[39m
+                    [0m가민·코로스·WHOOP·스트라바 자동 연동은 준비 중이에요[0m
+                  [36m</span>[39m
+                [36m</span>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-chevron-down info-disclosure__chevron"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"16"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"16"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m6 9 6 6 6-6"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</summary>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"info-disclosure__content"[39m
+              [36m>[39m
+                [36m<p>[39m
+                  [0m지금은 파일을 골라 기록을 가져올 수 있어요. 계정을 연결해 자동으로 받는 기능의 시작 날짜는 아직 정해지지 않았어요.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</details>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/node_modules/@testing-library/dom/dist/query-helpers.js:109:15
+ ❯ src/screens/ImportActivities.flow.contract.test.tsx:76:17
+     74|   first.unmount()
+     75|   const restored = render(<ImportActivities reviewSession={session} />)
+     76|   expect(screen.getAllByRole("checkbox")[0]).toBeChecked()
+       |                 ^
+     77|   expect(screen.getAllByRole("checkbox")[1]).not.toBeChecked()
+     78|   expect(screen.getAllByRole("combobox", { name: /저장 방식/u })[1]).toHav…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

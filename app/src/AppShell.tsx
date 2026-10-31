@@ -78,6 +78,8 @@ import { isReadingStage, type ReadingStage } from "./domain/record-reading-oracl
 import { isRunningProfileStage, type RunningProfileStage } from "./domain/running-profile"
 import { isPaceToolStage, type PaceToolRequest } from "./domain/pace-tools"
 import { isEligiblePaceRecordCurrent } from "./domain/account/eligible-account-pace-records"
+import type { ImportReviewSession } from "./screens/ImportActivities"
+const ImportedRecords = React.lazy(() => import("./screens/ImportedRecords").then(module => ({ default: module.ImportedRecords })))
 const JOURNAL_REWARD_MESSAGE = {
   AWARDED: "기록한 날 +4P가 반영됐어요.",
   ALREADY_AWARDED: "오늘의 다른 기록도 함께 모였어요. 이 날짜의 4P는 이미 반영돼 있어요.",
@@ -120,6 +122,7 @@ function initialOracleEntry(): { requested: boolean; invitation: string | null }
 }
 
 type AppOverlay =
+  | { readonly kind: "imported-records"; readonly date?: string; readonly entryId?: string }
   | { readonly kind: "pace"; readonly stage: import("./domain/pace-tools").PaceToolStage; readonly token: string; readonly depth: number; readonly scrollTop?: number }
   | { readonly kind: "running-profile"; readonly stage: RunningProfileStage; readonly initialView?: "result" | "library" }
   | { readonly kind: "record-reading"; readonly stage: ReadingStage }
@@ -182,6 +185,9 @@ function overlayHistoryMarker(state: unknown, owner: string): AppOverlay | null 
     ...(typeof value.scrollTop === "number" && Number.isFinite(value.scrollTop) && value.scrollTop >= 0 ? { scrollTop: value.scrollTop } : {}),
   }
   if (value.kind === "feedback") return { kind: "feedback" }
+  if (value.kind === "imported-records") return { kind: "imported-records",
+    ...(typeof value.date === "string" && /^\d{4}-\d{2}-\d{2}$/u.test(value.date) && typeof value.entryId === "string" && value.entryId.length > 0 && value.entryId.length < 256
+      ? { date: value.date, entryId: value.entryId } : {}) }
   if (value.kind === "athlete-records") return { kind: "athlete-records", ...(value.initialPurpose === "PERSONAL_BEST" ? { initialPurpose: "PERSONAL_BEST" } : {}) }
   if (value.kind === "record-reading" && isReadingStage(value.stage)) return { kind: "record-reading", stage: value.stage }
   if (value.kind === "running-profile" && isRunningProfileStage(value.stage)) return { kind: "running-profile", stage: value.stage,
@@ -298,6 +304,12 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
   const overlayHistoryOwnerRef = React.useRef(`shell-${Date.now()}-${Math.random().toString(36).slice(2)}`)
   const restoreReturnRef = React.useRef<ShellReturnPoint | null>(null)
   const importReturnRef = React.useRef<RecordingOrigin | null>(null)
+  const importReviewSession = React.useRef<ImportReviewSession>({ scope: localJournalScopeGeneration(), review: null, position: null })
+  const importedListPosition = React.useRef<ReaderPosition | null>(null)
+  React.useEffect(() => onLocalJournalScopeChange(() => {
+    importReviewSession.current.scope = localJournalScopeGeneration(); importReviewSession.current.review = null; importReviewSession.current.position = null
+    importedListPosition.current = null
+  }), [])
   const pendingScreenMotionRef = React.useRef<Exclude<AppScreenMotion, "initial" | "none"> | null>(null)
   const { schedule: scheduleReturnFrame, invalidate: invalidateReturnFrame } = useNavigationReturnFrame()
   const restoreCalendarOriginal = React.useCallback((origin: NonNullable<typeof calendarOriginalReturn.current>) => {
@@ -358,6 +370,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
       scrollRegion.scrollTop = next === null ? overlayScrollTopRef.current : next.kind === "oracle" || next.kind === "pace" ? next.scrollTop ?? 0 : 0
       scrollRegion.scrollLeft = 0
       if (next === null) restoreReaderPosition(scrollRegion, overlayReturnPosition.current)
+      if (next?.kind === "imported-records" && !next.entryId && importedListPosition.current) restoreReaderPosition(scrollRegion, importedListPosition.current)
       if (leavingPace && pace?.opener?.isConnected) pace.opener.focus({ preventScroll: true })
     })
   }, [scheduleReturnFrame])
@@ -382,6 +395,8 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
       && next.kind === "oracle" && overlayRef.current.topic !== next.topic
     const addsReadingHistory = overlayRef.current?.kind === "record-reading"
       && next.kind === "record-reading" && overlayRef.current.stage !== next.stage
+    const addsImportedHistory = overlayRef.current?.kind === "imported-records"
+      && (next.kind !== "imported-records" || overlayRef.current.entryId !== next.entryId)
     const addsPaceHistory = next.kind === "pace" && (overlayRef.current?.kind !== "pace" || overlayRef.current.stage !== next.stage)
     const resultStages = ["preferences", "records", "training", "changes"]
     const addsProfileHistory = overlayRef.current?.kind === "running-profile"
@@ -390,7 +405,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
     const oracleSibling = next.kind === "running-profile" && next.stage === "overview" && oracleV2Enabled()
       && domainVisit.current?.domain === "oracle" && (overlayRef.current === null
         || overlayRef.current.kind === "running-profile" && overlayRef.current.stage === "overview")
-    const method = replaceCurrent || oracleSibling ? "replaceState" : overlayRef.current === null || addsTermHistory || addsOracleHistory || addsReadingHistory || addsProfileHistory || addsPaceHistory ? "pushState" : "replaceState"
+    const method = replaceCurrent || oracleSibling ? "replaceState" : overlayRef.current === null || addsTermHistory || addsOracleHistory || addsReadingHistory || addsProfileHistory || addsPaceHistory || addsImportedHistory ? "pushState" : "replaceState"
     if ((addsOracleHistory && overlayRef.current?.kind === "oracle") || (addsPaceHistory && overlayRef.current !== null)) {
       window.history.replaceState({ ...currentState, [OVERLAY_HISTORY_KEY]: {
         ...overlayRef.current, owner: overlayHistoryOwnerRef.current, version: 1,
@@ -653,7 +668,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
       pendingReward.current = null; confirmedSaveEffects.current = null; oracleInputRef.current = null; decorationReturn.current = null; setDecorationInitialDate(undefined); setSavedToast(null); setHomeMemoReceipt(null); setHomeMemoNotice(null); setAnalysisContext(undefined)
       oraclePlanForwardRef.current = null
       paceRequestRef.current = null
-      if (overlayRef.current?.kind === "pace") {
+      if (overlayRef.current?.kind === "pace" || overlayRef.current?.kind === "imported-records") {
         overlayHistoryOwnerRef.current = `shell-${Date.now()}-${Math.random().toString(36).slice(2)}`
         applyOverlay(null)
       }
@@ -1490,7 +1505,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
           onOpenGuide={() => openGuide("minji")}
           onOpenPlan={() => goTab("plan")}
           onOpenTrends={() => goTab("trends", { section: "distance" })}
-          onOpenOracle={openOracle}
+          onOpenOracle={topic => openOracle(topic, "personal")}
           onOpenMore={() => runViewTransition("push", () => setUtilityView("more"))}
           onOpenMinigame={() => runViewTransition("push", () => enterDomain("games"), false)}
           onOpenAccount={accountEnabled ? () => runViewTransition("push", () => setV(s => ({ ...s, accountOpen: true }))) : undefined}
@@ -1604,13 +1619,12 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
   } else if (v.tab === "log" && v.importOpen) {
     screen = (
       <DeferredMobileScreens.ImportActivities
+        reviewSession={importReviewSession.current}
         onBack={closeImport}
         onOpenLog={() => goTab("journal")}
-        onOpenEntry={(date, entryId) => runViewTransition("push", () => {
-          setV({ ...viewForTab("journal"), detailDate: date, detailEntryId: entryId })
-        })}
+        onOpenEntry={(date, entryId) => openOverlay({ kind: "imported-records", date, entryId })}
         onOpenAnalysis={() => goTab("trends", { section: "files" })}
-        onOpenSummary={() => goTab("trends", { section: "summary" })}
+        onOpenSummary={() => { importedListPosition.current = null; openOverlay({ kind: "imported-records" }) }}
       />
     )
   } else if (v.tab === "log") {
@@ -1777,6 +1791,13 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
         {/* Loading a reader must not suspend the retained draft's layout effects
             and dispose its native Back layer underneath the new overlay entry. */}
         <React.Suspense fallback={<AppLoadingState />}>
+        {overlay?.kind === "imported-records" && <ImportedRecords entries={calendarSnapshot.entries} readComplete={calendarSnapshot.status === "READY"}
+          readUnavailable={calendarSnapshot.status === "STALE" || calendarSnapshot.status === "ERROR"} onRetry={calendarSnapshot.retry}
+          selected={overlay.date && overlay.entryId ? { date: overlay.date, id: overlay.entryId } : undefined}
+          onBack={closeOverlay} onOpenEntry={(date, entryId) => {
+            importedListPosition.current = captureReaderPosition(scrollRegionRef.current)
+            openOverlay({ kind: "imported-records", date, entryId })
+          }} />}
         {overlay?.kind === "athlete-records" && <DeferredMobileScreens.AthleteRecords initialPurpose={overlay.initialPurpose}
           backLabel={utilityView === "more" ? "더보기로" : v.tab === "trends" ? "오라클로" : "홈으로"} onBack={closeOverlay} />}
         {overlay?.kind === "pace" && paceRequestRef.current?.token === overlay.token && (

@@ -1,0 +1,243 @@
+{
+  "baseCommit": "e6dee00269e69fe956fdf12357ceb6d6e94674f6",
+  "commonSourceCommit": "fe1f333d70ac89a86a6e797107232b42a5f09d25",
+  "commonIntegrationCommit": "74e348740ceabe28b4cb3f885c4ba0188fe0049e",
+  "productCommit": "50c6de793a268c26ac6fd1e6846e34488dfae574",
+  "branch": "ux/flow-20261031",
+  "createdAtUTC": "2026-10-30T23:10:12.6401156Z",
+  "privacy": "Synthetic records only; no personal health data, account login or vendor assets in product",
+  "productFiles": [
+    {
+      "path": "app/src/AppShell.tsx",
+      "sha256": "B1E425A843EAD6C8BA5ABECAA656CD39FE8A13D09866CBBFCE76A3342AE48D3F"
+    },
+    {
+      "path": "app/src/screens/ImportActivities.tsx",
+      "sha256": "945D06B299658A34EF1F8F9B0293CC0911843741BDB4F4F8F5B1E09E10DE8E6D"
+    },
+    {
+      "path": "app/src/screens/LogDetail.tsx",
+      "sha256": "C1C4239C3764CD25C02AC3EEC3BE252639B275E46BEBD82C8F99992F618C4A05"
+    },
+    {
+      "path": "app/src/screens/import-activities/ImportStages.tsx",
+      "sha256": "724CA47F053FB3FF05FBBF88EBC9670F90971B384CC2C8C6812D18512549B0DB"
+    },
+    {
+      "path": "app/src/screens/import-activities/ImportedActivityFacts.tsx",
+      "sha256": "693C8E2499BD4AB67CF43E6DE508DCF3B5CF8A70D18AC5DEA446A757094DA112"
+    },
+    {
+      "path": "app/src/screens/import-activities/file-analysis.css",
+      "sha256": "9A2EA5848E9FD1A3FD42C7682D1093C5F21E5D810EDC2EA019F79E40427B08F0"
+    },
+    {
+      "path": "app/src/components/RecordUI.tsx",
+      "sha256": "EA71162F298FC7C4554542F6003AB1EA18E28A1EFAEF31669E70656C69968020"
+    },
+    {
+      "path": "app/src/components/record-ui.css",
+      "sha256": "ED8031F2FE9FC8AFB7C7E399B6FAA9A668AAF1B9BF5125D0AD49F215D2CF2A97"
+    },
+    {
+      "path": "app/src/components/record-ui.tokens.css",
+      "sha256": "F1404CF1C39DE73F95E14EF856CB40B6CE67783727B5F5594A68B422A72AFD50"
+    },
+    {
+      "path": "app/src/components/RecordUI.contract.test.tsx",
+      "sha256": "31EDABA7631DB82E70B1F91B7CB218676739C773BEFF1AE9AD9269AECC01B8B5"
+    }
+  ],
+  "evidenceFiles": [
+    {
+      "path": "reports/ux-flow-20261031/account-browser-final.log",
+      "bytes": 636,
+      "sha256": "A096775A88C378653B36CFBAA7DCC14D35068514D62784738A0A6927A5A70320"
+    },
+    {
+      "path": "reports/ux-flow-20261031/account/import-confirmed-375.png",
+      "bytes": 34394,
+      "sha256": "8A5E453F3BDA784BFA12026C73A8AC4C89371FF776E23DA5399AC9CF178F0463"
+    },
+    {
+      "path": "reports/ux-flow-20261031/account/import-pending-320.png",
+      "bytes": 52683,
+      "sha256": "56C0386E0D2BD8111EE681AF67FB27ED2BCF9B62345507EFB364F00E6C8CB55E"
+    },
+    {
+      "path": "reports/ux-flow-20261031/account/import-review-375.png",
+      "bytes": 66486,
+      "sha256": "91CA9E716FAAF959094375E44A8B68BC180D57C5BB5024FF92F10289510A309E"
+    },
+    {
+      "path": "reports/ux-flow-20261031/account/real-parser-correction-reopened.png",
+      "bytes": 50421,
+      "sha256": "8EC2E15D3680C9A1A83E5B50EA8CE8B98617F8C09828399F0E3193CE0A682D83"
+    },
+    {
+      "path": "reports/ux-flow-20261031/after/analysis-320.png",
+      "bytes": 41942,
+      "sha256": "AD75816B4E329E09F45968586D9546EC38E1D0F4DD5DE5A423DB9B0C862505E3"
+    },
+    {
+      "path": "reports/ux-flow-20261031/after/observations.json",
+      "bytes": 577,
+      "sha256": "A39B443043B503989CBC3050DB9061615DA80DB760B9B26BB6D973A138EA7B3B"
+    },
+    {
+      "path": "reports/ux-flow-20261031/after/review-320.png",
+      "bytes": 44755,
+      "sha256": "9A9739BED489D29F01750C2A643402D8800C0E004F3D16ED64EA64DCFB0DEC34"
+    },
+    {
+      "path": "reports/ux-flow-20261031/after/review-375.png",
+      "bytes": 46682,
+      "sha256": "6EC2559959125DC343C53748B3D3647FFAC8A60BFC2A94E79ED9DD58199858D5"
+    },
+    {
+      "path": "reports/ux-flow-20261031/after/review-430.png",
+      "bytes": 46705,
+      "sha256": "33286F0710C41D4DB7ED50AE70F9EBE3A1B6791726698726F5E05422F275C913"
+    },
+    {
+      "path": "reports/ux-flow-20261031/before/analysis-320.png",
+      "bytes": 40788,
+      "sha256": "F44DD942567F923893BEFA29CE5EC7F8D7CB84E735A0290062AA20E6B96DED5B"
+    },
+    {
+      "path": "reports/ux-flow-20261031/before/observations.json",
+      "bytes": 584,
+      "sha256": "A8B928F45FF7E2F8EDAF20F5FEBD49AF3DA1E53E1B0E19A55992F1AA7D45DEE8"
+    },
+    {
+      "path": "reports/ux-flow-20261031/before/review-320.png",
+      "bytes": 44328,
+      "sha256": "036F8BF31341916E99002D0395D97650647C2C933ABFDDD4B4141AD9F5579992"
+    },
+    {
+      "path": "reports/ux-flow-20261031/before/review-375.png",
+      "bytes": 44777,
+      "sha256": "3D4316A456299C5F0BA70EECFF1257B0BF9AAF8C3DAB1634DCF987EFAF8E969B"
+    },
+    {
+      "path": "reports/ux-flow-20261031/before/review-430.png",
+      "bytes": 44802,
+      "sha256": "83A10A89BCCF74BFE4CBB7D4C0372EE597AC84FD2C2430D672E54D8DF8A36F41"
+    },
+    {
+      "path": "reports/ux-flow-20261031/build-final.log",
+      "bytes": 23305,
+      "sha256": "778C6AB7F894FF057CD27AEFF829377D72285218075C482CB9BCD44F66E63B29"
+    },
+    {
+      "path": "reports/ux-flow-20261031/build.mjs",
+      "bytes": 544,
+      "sha256": "1D449D1AE0E3F9E26D6BF3544FC3D19BBB7CA5175AFDF1986ED21BD6D759084E"
+    },
+    {
+      "path": "reports/ux-flow-20261031/device-browser.log",
+      "bytes": 1056,
+      "sha256": "24DF87C8DFB1AF12348E3B396AFD62BA91D47D0F2E28E644319E482A1C162EF4"
+    },
+    {
+      "path": "reports/ux-flow-20261031/final/device-saved-320.png",
+      "bytes": 38549,
+      "sha256": "43E2257CC3DDEAD4886422A987C5EA1598EBE7F108087F8C88E065BAA8B82B7A"
+    },
+    {
+      "path": "reports/ux-flow-20261031/final/large-text-320.png",
+      "bytes": 41195,
+      "sha256": "6C27172B4F758A1001FB53299F347AA43546F646DE3245B1AF14BD1ACF59CB81"
+    },
+    {
+      "path": "reports/ux-flow-20261031/final/large-text-control-320.png",
+      "bytes": 54686,
+      "sha256": "1ECFD9C83C6B517BA3A811203980343E107066F9A4B3E911EF459D7310CE2811"
+    },
+    {
+      "path": "reports/ux-flow-20261031/final/review-320.png",
+      "bytes": 47046,
+      "sha256": "932A99722354C84301E758099BC5B721BA13263F1B96A6B5D03925284AE480F0"
+    },
+    {
+      "path": "reports/ux-flow-20261031/final/review-375.png",
+      "bytes": 49736,
+      "sha256": "77E2782CF7C6771D21841E38B5C9E897FD355307EB63ABDB9CA48E968F2B15FC"
+    },
+    {
+      "path": "reports/ux-flow-20261031/final/review-430.png",
+      "bytes": 54155,
+      "sha256": "2DB401036DD4C25AA65FA38790E49916949419D8C16E5E710BDFCDFA1CCCAFA2"
+    },
+    {
+      "path": "reports/ux-flow-20261031/final/verification.json",
+      "bytes": 1940,
+      "sha256": "132B09D95F8C85AB34AFDBD1A08B5ADCA93500FBAF23D63D64617F47D5E20AF1"
+    },
+    {
+      "path": "reports/ux-flow-20261031/mutation-check.mjs",
+      "bytes": 2772,
+      "sha256": "35531D577D7436CF502275B5E5FC1FE83255FC1915C29F3E03418F5B9A2E7891"
+    },
+    {
+      "path": "reports/ux-flow-20261031/mutation-result.log",
+      "bytes": 441,
+      "sha256": "E7E7C5F42F95DC85B089F5BFBB18C8548FF82D58CEB53691CC81E9B97BB29BF6"
+    },
+    {
+      "path": "reports/ux-flow-20261031/mutation.log",
+      "bytes": 29051,
+      "sha256": "14F11B19FBCB327A86D052331BADCCFD9D45821080B383077B047995561209C4"
+    },
+    {
+      "path": "reports/ux-flow-20261031/observe.mjs",
+      "bytes": 2953,
+      "sha256": "D8D34DA57DA90595F3A06409DF3E70BB1EE40C07EFFC922E5399F61157ED4D90"
+    },
+    {
+      "path": "reports/ux-flow-20261031/README.md",
+      "bytes": 9103,
+      "sha256": "ED0987C355903E8A01B8465904B10C2CA6DE0B8685DEA559F010CC8BE316DD55"
+    },
+    {
+      "path": "reports/ux-flow-20261031/serve.mjs",
+      "bytes": 800,
+      "sha256": "F679F81D118BE5620F40E9720AAE288D598F8657152FC696EAA6C34E0B39FE33"
+    },
+    {
+      "path": "reports/ux-flow-20261031/shared-final.log",
+      "bytes": 268,
+      "sha256": "7B8365F575DF7466DB1E54DF98F132B22651644CD579225D0B9A3FA56B7B904F"
+    },
+    {
+      "path": "reports/ux-flow-20261031/typecheck-final.log",
+      "bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "reports/ux-flow-20261031/unit-final-kst.log",
+      "bytes": 272,
+      "sha256": "D9E2444407C7CEC09D7CA29D69EE33A001F67ADDCD057FAEFC21E49E68EBBE0F"
+    },
+    {
+      "path": "reports/ux-flow-20261031/unit-final-utc.log",
+      "bytes": 273,
+      "sha256": "C950DA2E62720C32CB7A12FE61B7700ACF1D5AB22A213859F9CA4F6B1563A00C"
+    },
+    {
+      "path": "reports/ux-flow-20261031/unit-kst.log",
+      "bytes": 277,
+      "sha256": "0C2EF035A6031698E5BE140DF621BA26A793FD68B548947699BA6C02B88CF2A1"
+    },
+    {
+      "path": "reports/ux-flow-20261031/unit-utc.log",
+      "bytes": 277,
+      "sha256": "C7C0525E5A46D1A257FD361FADD674D05EA3C4DAADF5E4AEEB224E1F0E246994"
+    },
+    {
+      "path": "reports/ux-flow-20261031/verify-flow.mjs",
+      "bytes": 8621,
+      "sha256": "151F5D8A40BF0CF4996C5217C69403302ECE26BF3CA4165F9766212F210263F5"
+    }
+  ]
+}

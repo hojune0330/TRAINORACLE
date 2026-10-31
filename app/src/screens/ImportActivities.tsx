@@ -19,6 +19,9 @@ import { requestBrowserBackLayer } from "../navigation/browserNavigation"
 import { readCurrentConfirmedAccountJournalProjection } from "../domain/account/account-journal-projection"
 import { buildFileAnalysisReport } from "../domain/import/file-analysis"
 import type { FileObservationV1 } from "../domain/import/file-observation"
+import { localJournalScopeGeneration } from "../domain/account/local-journal-ownership"
+import { captureReaderPosition, restoreReaderPosition, type ReaderPosition } from "../navigation/readerPosition"
+import { useNavigationReturnFrame } from "../hooks/useNavigationReturnFrame"
 
 type ImportAnalysisCandidate = {
   readonly entryId: string | null
@@ -33,18 +36,27 @@ type Stage =
   | { readonly step: "review"; readonly drafts: readonly ImportDraft[]; readonly result: ActivityParseResult }
   | { readonly step: "saved"; readonly outcome: ImportSaveResult; readonly format: ImportFormat; readonly analysisCandidates: readonly ImportAnalysisCandidate[] }
 
-export function ImportActivities({ onBack, onOpenLog, onOpenEntry, onOpenAnalysis, onOpenSummary }: {
+/** One shell/account lifetime, memory only. Never put file contents in history or storage. */
+export type ImportReviewSession = {
+  scope: number
+  review: { readonly stage: Extract<Stage, { step: "review" }>; readonly selected: ReadonlySet<number>; readonly intents: ReadonlyMap<number, ImportSaveIntent> } | null
+  position: ReaderPosition | null
+}
+
+export function ImportActivities({ onBack, onOpenLog, onOpenEntry, onOpenAnalysis, onOpenSummary, reviewSession }: {
   readonly onBack?: () => void
   readonly onOpenLog?: () => void
   readonly onOpenEntry?: (date: string, entryId: string) => void
   readonly onOpenAnalysis?: () => void
   readonly onOpenSummary?: () => void
+  readonly reviewSession?: ImportReviewSession
 }) {
-  const [stage, setStage] = React.useState<Stage>({ step: "pick" })
+  const restored = React.useRef(reviewSession?.scope === localJournalScopeGeneration() ? reviewSession.review : null).current
+  const [stage, setStage] = React.useState<Stage>(restored?.stage ?? { step: "pick" })
   const [failure, setFailure] = React.useState<ReadFailure>(null)
   const [reviewError, setReviewError] = React.useState<string | null>(null)
-  const [selected, setSelected] = React.useState<ReadonlySet<number>>(new Set())
-  const [intents, setIntents] = React.useState<ReadonlyMap<number, ImportSaveIntent>>(new Map())
+  const [selected, setSelected] = React.useState<ReadonlySet<number>>(restored?.selected ?? new Set())
+  const [intents, setIntents] = React.useState<ReadonlyMap<number, ImportSaveIntent>>(restored?.intents ?? new Map())
   const [busy, setBusy] = React.useState(false)
   const busyRef = React.useRef(false)
   const confirmation = React.useRef<ReturnType<typeof createAccountImportConfirmation> | null>(null)
@@ -54,15 +66,43 @@ export function ImportActivities({ onBack, onOpenLog, onOpenEntry, onOpenAnalysi
   const reviewSnapshot = React.useRef<Extract<Stage, { step: "review" }> | null>(null)
   const pageRef = React.useRef<HTMLDivElement>(null)
   const headingRef = React.useRef<HTMLHeadingElement>(null)
+  const rememberReviewPosition = React.useCallback(() => {
+    const page = pageRef.current
+    if (!page || page.closest("[hidden]") || !reviewSession?.review || reviewSession.scope !== localJournalScopeGeneration()) return
+    // Native Back can move focus before popstate. Retain the last control while it is active.
+    if (page.contains(document.activeElement)) reviewSession.position = captureReaderPosition(page.closest<HTMLElement>(".app-scroll-region"))
+  }, [reviewSession])
+  React.useLayoutEffect(() => {
+    const region = pageRef.current?.closest<HTMLElement>(".app-scroll-region")
+    region?.addEventListener("scroll", rememberReviewPosition, { passive: true })
+    return () => region?.removeEventListener("scroll", rememberReviewPosition)
+  }, [rememberReviewPosition])
   const stageMotion = useOrderedStepMotion(stage.step, ["pick", "review", "saved"])
   useTaskFlowBack({ enabled: onBack !== undefined, busy, onBack: () => {
     const current = captureScope()
+    rememberReviewPosition()
     // The shell's POP listener invalidates old return frames. Restore only after it ran.
     queueMicrotask(() => { if (current()) onBack?.() })
   } })
   useActiveContentScroll(stage.step, stageRef, stage.step === "saved" ? stageRef : undefined, true)
-  useActiveContentScroll("import-entry", pageRef, headingRef)
+  useActiveContentScroll(restored ? null : "import-entry", pageRef, headingRef)
+  const { schedule: restoreReviewPosition } = useNavigationReturnFrame()
+  React.useLayoutEffect(() => {
+    if (restored && reviewSession?.position) restoreReviewPosition(() => restoreReaderPosition(pageRef.current?.closest<HTMLElement>(".app-scroll-region") ?? null, reviewSession.position))
+  }, [restored, reviewSession, restoreReviewPosition])
+  React.useLayoutEffect(() => {
+    if (!reviewSession || reviewSession.scope !== localJournalScopeGeneration()) return
+    reviewSession.review = stage.step === "review" ? { stage, selected, intents }
+      : stage.step === "pick" && reviewSnapshot.current ? { stage: reviewSnapshot.current, selected, intents } : null
+  }, [stage, selected, intents, reviewSession])
+  React.useLayoutEffect(() => () => {
+    const region = pageRef.current?.closest<HTMLElement>(".app-scroll-region")
+    if (region && pageRef.current?.contains(document.activeElement) && reviewSession?.review && reviewSession.scope === localJournalScopeGeneration()) {
+      reviewSession.position = captureReaderPosition(region)
+    }
+  }, [reviewSession])
   const captureScope = useImportOwnerScope(() => {
+    if (reviewSession) { reviewSession.scope = localJournalScopeGeneration(); reviewSession.review = null; reviewSession.position = null }
     readControllerRef.current?.abort(); readControllerRef.current = null
     confirmation.current?.dispose(); confirmation.current = null
     reviewSnapshot.current = null
@@ -135,6 +175,7 @@ export function ImportActivities({ onBack, onOpenLog, onOpenEntry, onOpenAnalysi
       ))
       setSelected(new Set(separate))
       setIntents(new Map(separate.map((index) => [index, { kind: "SAVE_SEPARATE" }])))
+      reviewSnapshot.current = null
       setStage({ step: "review", drafts, result })
     } catch (error) {
       if (current() && readControllerRef.current === controller) {
@@ -261,7 +302,7 @@ export function ImportActivities({ onBack, onOpenLog, onOpenEntry, onOpenAnalysi
   }
 
   return (
-    <div ref={pageRef} className="import-flow" style={{ padding: "18px 20px 90px" }}>
+    <div ref={pageRef} className="import-flow" onFocusCapture={rememberReviewPosition} style={{ padding: "18px 20px 90px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         {onBack && (
           <button
@@ -291,6 +332,11 @@ export function ImportActivities({ onBack, onOpenLog, onOpenEntry, onOpenAnalysi
         </ol>
         {reviewError && <p role="alert">{reviewError}</p>}
         {stage.step === "pick" && (
+          <>
+          {reviewSnapshot.current && <button type="button" style={{ ...secondaryBtn, marginTop: "var(--space-4)" }} disabled={busy}
+            onClick={() => { if (reviewSnapshot.current) { setFailure(null); setStage(reviewSnapshot.current) } }}>
+            확인하던 운동 {reviewSnapshot.current.drafts.length}건 이어보기
+          </button>}
           <PickStage
             busy={busy}
             failure={failure}
@@ -298,6 +344,7 @@ export function ImportActivities({ onBack, onOpenLog, onOpenEntry, onOpenAnalysi
             onFile={handleFile}
             onCancel={cancelRead}
           />
+          </>
         )}
 
         {stage.step === "review" && (
@@ -316,7 +363,7 @@ export function ImportActivities({ onBack, onOpenLog, onOpenEntry, onOpenAnalysi
             onToggle={toggle}
             onActivityChange={(index, activity) => { void changeActivity(index, activity) }}
             onSave={handleSave}
-            onRestart={() => { setStage({ step: "pick" }); setSelected(new Set()) }}
+            onRestart={() => { reviewSnapshot.current = stage; setStage({ step: "pick" }); setFailure(null) }}
           />
         )}
 
@@ -341,7 +388,10 @@ export function ImportActivities({ onBack, onOpenLog, onOpenEntry, onOpenAnalysi
             onOpenEntry={onOpenEntry}
             onOpenAnalysis={onOpenAnalysis}
             onOpenSummary={onOpenSummary}
-            onRestart={() => { setStage({ step: "pick" }); setSelected(new Set()); setFailure(null) }}
+            onRestart={() => {
+              confirmation.current?.dispose(); confirmation.current = null; reviewSnapshot.current = null
+              setStage({ step: "pick" }); setSelected(new Set()); setIntents(new Map()); setFailure(null); setReviewError(null)
+            }}
           />
         )}
       </div>

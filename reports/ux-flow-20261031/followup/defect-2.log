@@ -1,0 +1,417 @@
+
+ RUN  v4.1.10 C:/Users/admin/Documents/Codex/2026-10-31/task-3/trainoracle-flow/app
+
+ ❯ src/screens/LogDetail.revisit-preservation.contract.test.tsx (11 tests | 1 failed | 10 skipped) 120ms
+     × keeps unconfirmed imported time and kind honest without changing legacy stored values 119ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 10 skipped (11)
+   Start at  03:21:33
+   Duration  5.50s (transform 2.61s, setup 176ms, import 3.58s, tests 120ms, environment 1.40s)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/screens/LogDetail.revisit-preservation.contract.test.tsx > past journal preservation before revisit work > keeps unconfirmed imported time and kind honest without changing legacy stored values
+TestingLibraryElementError: Unable to find an element with the text: 훈련 종류 미확인. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"journal-detail-page journal-detail-page--reader"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"quick-log__secondary"[39m
+        [33mstyle[39m=[32m"min-height: 44px;"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0m우리 집 친구들[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33mstyle[39m=[32m"padding: 12px 16px; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: 64px minmax(0, 1fr) 64px; align-items: center; background: var(--bg);"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mstyle[39m=[32m"background: transparent; border: 0px; cursor: pointer; padding: 4px; min-width: 64px; min-height: 44px; font-family: var(--mono); font-size: 11px; color: var(--ink-2); letter-spacing: 0.06em;"[39m
+        [36m>[39m
+          [0m← 뒤로[0m
+        [36m</button>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"min-width: 0px; font-family: var(--mono); font-size: 11px; font-weight: 600; color: var(--ink); letter-spacing: 0.14em; text-transform: uppercase; text-align: center;"[39m
+        [36m>[39m
+          [0m일지[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33maria-hidden[39m=[32m"true"[39m
+        [36m/>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"journal-decoration-workspace"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"journal-decoration-unified__entry"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"journal-decoration-launch"[39m
+            [33mdata-decoration-interaction[39m=[32m"true"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"일지 꾸미기 열기"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-palette"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"16"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"16"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"13.5"[39m
+                  [33mcy[39m=[32m"6.5"[39m
+                  [33mfill[39m=[32m"currentColor"[39m
+                  [33mr[39m=[32m".5"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"17.5"[39m
+                  [33mcy[39m=[32m"10.5"[39m
+                  [33mfill[39m=[32m"currentColor"[39m
+                  [33mr[39m=[32m".5"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"8.5"[39m
+                  [33mcy[39m=[32m"7.5"[39m
+                  [33mfill[39m=[32m"currentColor"[39m
+                  [33mr[39m=[32m".5"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"6.5"[39m
+                  [33mcy[39m=[32m"12.5"[39m
+                  [33mfill[39m=[32m"currentColor"[39m
+                  [33mr[39m=[32m".5"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m꾸미기[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<details>[39m
+            [36m<summary>[39m
+              [0m더보기[0m
+            [36m</summary>[39m
+            [36m<button[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0m장식 잠시 숨기기[0m
+            [36m</button>[39m
+          [36m</details>[39m
+        [36m</div>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"decorated-journal-page"[39m
+          [33mdata-ink-id[39m=[32m"INK_NAVY"[39m
+          [33mdata-theme-id[39m=[32m"THEME_TRACK_NOTEBOOK"[39m
+        [36m>[39m
+          [36m<img[39m
+            [33malt[39m=[32m""[39m
+            [33mclass[39m=[32m"decorated-journal-page__theme"[39m
+            [33mdata-testid[39m=[32m"journal-page-theme"[39m
+            [33msrc[39m=[32m"/decorations/theme-track-notebook.webp"[39m
+          [36m/>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"decorated-journal-page__body"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"decorated-journal-page__content journal-reader-page journal-page-scroll-target"[39m
+              [33mdata-testid[39m=[32m"decorated-journal-content"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33maria-label[39m=[32m"2026년 7월 20일 월요일 일지"[39m
+                [33maria-level[39m=[32m"1"[39m
+                [33mclass[39m=[32m"journal-detail-page__date"[39m
+                [33mrole[39m=[32m"heading"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mstyle[39m=[32m"background: var(--surface); border: 1px solid var(--ink); padding: 11px 14px; display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: baseline;"[39m
+                [36m>[39m
+                  [36m<div>[39m
+                    [36m<div[39m
+                      [33mstyle[39m=[32m"font-family: var(--mono); font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink);"[39m
+                    [36m>[39m
+                      [0m2026 · 07 · 20[0m
+                    [36m</div>[39m
+                    [36m<div[39m
+                      [33mstyle[39m=[32m"font-family: var(--mono); font-size: 9.5px; color: var(--ink-3); letter-spacing: 0.12em; text-transform: uppercase; margin-top: 2px;"[39m
+                    [36m>[39m
+                      [0mMON[0m
+                    [36m</div>[39m
+                  [36m</div>[39m
+                  [36m<div[39m
+                    [33mstyle[39m=[32m"font-family: var(--mono); font-size: 10px; color: var(--ink-3); letter-spacing: 0.06em; text-align: right; line-height: 1.5;"[39m
+                  [36m>[39m
+                    [36m<div>[39m
+                      [0m2026 summer[0m
+                    [36m</div>[39m
+                  [36m</div>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33maria-label[39m=[32m"훈련 1 기록"[39m
+                [33mclass[39m=[32m"journal-day-overview"[39m
+              [36m>[39m
+                [36m<div>[39m
+                  [36m<span>[39m
+                    [0m이날 기록[0m
+                  [36m</span>[39m
+                  [36m<strong>[39m
+                    [0m1[0m
+                    [0m개[0m
+                  [36m</strong>[39m
+                  [36m<small>[39m
+                    [0m훈련 1[0m
+                  [36m</small>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<section[39m
+                [33maria-label[39m=[32m"훈련 · Synthetic import · 03:21 · 가져온 기록"[39m
+                [33mclass[39m=[32m"journal-entry-section"[39m
+                [33mdata-open[39m=[32m"true"[39m
+                [33mdata-single[39m=[32m"true"[39m
+                [33mtabindex[39m=[32m"-1"[39m
+              [36m>[39m
+                [36m<header[39m
+                  [33mclass[39m=[32m"journal-entry-single-meta"[39m
+                [36m>[39m
+                  [36m<strong>[39m
+                    [0m훈련[0m
+                  [36m</strong>[39m
+                  [36m<span>[39m
+                    [0m가져옴[0m
+                  [36m</span>[39m
+                  [36m<time[39m
+                    [33mdatetime[39m=[32m"2026-10-31T03:21:38.912Z"[39m
+                  [36m>[39m
+                    [0m03:21[0m
+                  [36m</time>[39m
+                [36m</header>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"journal-entry-disclosure__body"[39m
+                  [33mid[39m=[32m"journal-entry-panel-0"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"journal-entry-card journal-entry-card--session"[39m
+                  [36m>[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"journal-entry-card__meta"[39m
+                    [36m>[39m
+                      [36m<span[39m
+                        [33mclass[39m=[32m"etag base"[39m
+                      [36m>[39m
+                        [36m<span[39m
+                          [33mclass[39m=[32m"d"[39m
+                        [36m/>[39m
+                        [36m<span[39m
+                          [33mclass[39m=[32m"c"[39m
+                        [36m>[39m
+                          [0mBASE[0m
+                        [36m</span>[39m
+                        [36m<span[39m
+                          [33mclass[39m=[32m"n"[39m
+                        [36m>[39m
+                          [0m기초 지구력[0m
+                        [36m</span>[39m
+                      [36m</span>[39m
+                      [36m<span[39m
+                        [33mstyle[39m=[32m"position: relative; display: inline-flex; align-items: center; flex-shrink: 0;"[39m
+                      [36m>[39m
+                        [36m<button[39m
+                          [33maria-expanded[39m=[32m"false"[39m
+                          [33maria-label[39m=[32m"기초 지구력 BASE 설명 보기"[39m
+                          [33mstyle[39m=[32m"width: 44px; min-width: 44px; height: 44px; flex-shrink: 0; margin: -9px 0px -9px 1px; padding: 0px; border: 0px; background: transparent; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; vertical-align: middle;"[39m
+                          [33mtype[39m=[32m"button"[39m
+                        [36m>[39m
+                          [36m<span[39m
+                            [33maria-hidden[39m=[32m"true"[39m
+                            [33mstyle[39m=[32m"width: 14px; height: 14px; border: 1px solid var(--ink-3); border-radius: 50%; box-sizing: border-box; background: transparent; color: var(--ink-3); font-family: var(--mono); font-size: 8.5px; font-weight: 700; line-height: 1; display: inline-flex; align-items: center; justify-content: center;"[39m
+                          [36m>[39m
+                            [0m?[0m
+                          [36m</span>[39m
+                        [36m</button>[39m
+                      [36m</span>[39m
+                      [36m<span[39m
+                        [33mstyle[39m=[32m"font-family: var(--mono); font-size: 8.5px; letter-spacing: 0.1em; color: var(--ink-4); border: 1px solid var(--hair); padding: 2px 5px; white-space: nowrap;"[39m
+                      [36m>[39m
+                        [0m이 브라우저에 저장됨[0m
+                      [36m</span>[39m
+                      [36m<span[39m
+                        [33mdata-testid[39m=[32m"imported-chip"[39m
+                        [33mstyle[39m=[32m"font-family: var(--mono); font-size: 8.5px; letter-spacing: 0.1em; color: var(--ink-2); border: 1px solid var(--line); padding: 2px 5px; white-space: nowrap;"[39m
+                        [33mtitle[39m=[32m"워치 파일에서 가져온 기록이에요 · 직접 확인한 값만 통계에 들어가요"[39m
+                      [36m>[39m
+                        [0m가져옴[0m
+                      [36m</span>[39m
+                    [36m</div>[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"journal-entry-card__title"[39m
+                    [36m>[39m
+                      [0mSynthetic import[0m
+                    [36m</div>[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"journal-entry-metrics"[39m
+                    [36m>[39m
+                      [36m<div[39m
+                        [33mclass[39m=[32m"journal-entry-metric"[39m
+                      [36m>[39m
+                        [36m<div[39m
+                          [33mclass[39m=[32m"journal-entry-metric__label"[39m
+                        [36m>[39m
+                          [0m거리[0m
+                        [36m</div>[39m
+                        [36m<div[39m
+                          [33mclass[39m=[32m"journal-entry-metric__value"[39m
+                        [36m>[39m
+                          [36m<span[39m
+                            [33mclass[39m=[32m"journal-entry-metric__number"[39m
+                          [36m>[39m
+                            [0m3[0m
+                          [36m</span>[39m
+                          [36m<span[39m
+                            [33mclass[39m=[32m"journal-entry-metric__unit"[39m
+                          [36m>[39m
+                            [0mkm[0m
+                          [36m</span>[39m
+                        [36m</div>[39m
+                      [36m</div>[39m
+                      [36m<div[39m
+                        [33mclass[39m=[32m"journal-entry-metric"[39m
+                        [33mdata-last[39m=[32m"true"[39m
+                      [36m>[39m
+                        [36m<div[39m
+                          [33mclass[39m=[32m"journal-entry-metric__label"[39m
+                        [36m>[39m
+                          [0m파일 시간 · 종류 미확인[0m
+                        [36m</div>[39m
+                        [36m<div[39m
+                          [33mclass[39m=[32m"journal-entry-metric__value"[39m
+                        [36m>[39m
+                          [36m<span[39m
+                            [33mclass[39m=[32m"journal-entry-metric__number"[39m
+                          [36m>[39m
+                            [0m15[0m
+                          [36m</span>[39m
+                          [36m<span[39m
+                            [33mclass[39m=[32m"journal-entry-metric__unit"[39m
+                          [36m>[39m
+                            [0m분[0m
+                          [36m</span>[39m
+                        [36m</div>[39m
+                      [36m</div>[39m
+                    [36m</div>[39m
+                    [36m<div[39m
+                      [33mstyle[39m=[32m"margin-top: 12px; border-top: 1px dashed var(--hair); padding-top: 8px; text-align: right;"[39m
+                    [36m>[39m
+                      [36m<button[39m
+                        [33mid[39m=[32m"journal-delete-c2f75024-c662-4d2d-a01e-64ef1aa10278"[39m
+                        [33mstyle[39m=[32m"background: transparent; border: 0px; cursor: pointer; font-family: var(--mono); font-size: 9.5px; color: var(--ink-4); letter-spacing: 0.1em; padding: 4px 2px; min-height: 44px; text-decoration: underline; text-underline-offset: 3px;"[39m
+                      [36m>[39m
+                        [0m이 일지 지우기[0m
+                      [36m</button>[39m
+                    [36m</div>[39m
+                  [36m</div>[39m
+                [36m</div>[39m
+              [36m</section>[39m
+              [36m<div[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"journal-day-end"[39m
+                [33mdata-testid[39m=[32m"journal-day-end"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0m기록 끝[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"journal-day-share"[39m
+              [36m>[39m
+                [36m<section[39m
+                  [33maria-label[39m=[32m"일지 공유 카드"[39m
+                  [33mclass[39m=[32m"journal-share-tool"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    [33maria-controls[39m=[32m":r3:"[39m
+                    [33maria-expanded[39m=[32m"false"[39m
+                    [33mclass[39m=[32m"journal-share-tool__entry"[39m
+                    [33mtype[39m=[32m"button"[39m
+                  [36m>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mclass[39m=[32m"lucide lucide-share2"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mheight[39m=[32m"18"[39m
+                      [33mstroke[39m=[32m"currentColor"[39m
+                      [33mstroke-linecap[39m=[32m"round"[39m
+                      [33mstroke-linejoin[39m=[32m"round"[39m
+                      [33mstroke-width[39m=[32m"2"[39m
+                      [33mviewBox[39m=[32m"0 0 24 24"[39m
+                      [33mwidth[39m=[32m"18"[39m
+                      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                    [36m>[39m
+                      [36m<circle[39m
+                        [33mcx[39m=[32m"18"[39m
+                        [33mcy[39m=[32m"5"[39m
+                        [33mr[39m=[32m"3"[39m
+                      [36m/>[39m
+                      [36m<circle[39m
+                        [33mcx[39m=[32m"6"[39m
+                        [33mcy[39m=[32m"12"[39m
+                        [33mr[39m=[32m"3"[39m
+                      [36m/>[39m
+                      [36m<circle[39m
+                        [33mcx[39m=[32m"18"[39m
+                        [33mcy[39m=[32m"19"[39m
+                        [33mr[39m=[32m"3"[39m
+                      [36m/>[39m
+                      [36m<line[39m
+                        [33mx1[39m=[32m"8.59"[39m
+                        [33mx2[39m=[32m"15.42"[39m
+                        [33my1[39m=[32m"13.51"[39m
+                        [33my2[39m=[32m"17.49"[39m
+                      [36m/>[39m
+                      [36m<line[39m
+                        [33mx1[39m=[32m"15.41"[39m
+                        [33mx2[39m=[32m"8.59"[39m
+                        [33my1[39m=[32m"6.51"[39m
+                        [33my2[39m=[32m"10.49"[39m
+                      [36m/>[39m
+                    [36m</svg>[39m
+                    [0m공유 카드 만들기[0m
+                  [36m</button>[39m
+                [36m</section>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</section>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ D:/admin/Documents/ChatGPT/트레인 오라클/TRAINORACLE-garmin-selfhosted-20261030/app/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/screens/LogDetail.revisit-preservation.contract.test.tsx:30:19
+     28|     const before = JSON.stringify(entriesForDate(DATE))
+     29|     const view = render(<LogDetail date={DATE} initialEntryId={importe…
+     30|     expect(screen.getByText("훈련 종류 미확인", { exact: true })).toBeVisible…
+       |                   ^
+     31|     expect(screen.getByText("파일 시간 · 종류 미확인", { exact: true })).toBeVi…
+     32|     expect(screen.queryByText("기초 지구력", { exact: true })).toBeNull()
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

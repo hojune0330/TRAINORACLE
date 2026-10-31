@@ -1,0 +1,637 @@
+{
+  "conditions": [
+    {
+      "width": 320,
+      "font": 100,
+      "rows": [
+        {
+          "metrics": [
+            {
+              "label": "거리",
+              "value": "2km",
+              "top": 221.859375,
+              "left": 37,
+              "bottom": 251.859375,
+              "detail": null
+            },
+            {
+              "label": "파일 시간",
+              "value": "10분",
+              "top": 221.859375,
+              "left": 168,
+              "bottom": 251.859375,
+              "detail": "종류 미확인"
+            }
+          ],
+          "source": "파일에서 가져옴 · TCX날짜 기준Asia/Seoul",
+          "sourceTop": 279.359375,
+          "labelHeight": 63.984375,
+          "selectHeight": 44
+        },
+        {
+          "metrics": [
+            {
+              "label": "거리",
+              "value": "3km",
+              "top": 497.4375,
+              "left": 37,
+              "bottom": 527.4375,
+              "detail": null
+            },
+            {
+              "label": "파일 시간",
+              "value": "15분",
+              "top": 497.4375,
+              "left": 168,
+              "bottom": 527.4375,
+              "detail": "종류 미확인"
+            }
+          ],
+          "source": "파일에서 가져옴 · TCX날짜 기준Asia/Seoul",
+          "sourceTop": 554.9375,
+          "labelHeight": 63.984375,
+          "selectHeight": 44
+        },
+        {
+          "metrics": [
+            {
+              "label": "거리",
+              "value": "4km",
+              "top": 773.015625,
+              "left": 37,
+              "bottom": 803.015625,
+              "detail": null
+            },
+            {
+              "label": "파일 시간",
+              "value": "20분",
+              "top": 773.015625,
+              "left": 168,
+              "bottom": 803.015625,
+              "detail": "종류 미확인"
+            }
+          ],
+          "source": "파일에서 가져옴 · TCX날짜 기준Asia/Seoul",
+          "sourceTop": 830.515625,
+          "labelHeight": 63.984375,
+          "selectHeight": 44
+        },
+        {
+          "metrics": [
+            {
+              "label": "거리",
+              "value": "5km",
+              "top": 1048.59375,
+              "left": 37,
+              "bottom": 1078.59375,
+              "detail": null
+            },
+            {
+              "label": "파일 시간",
+              "value": "25분",
+              "top": 1048.59375,
+              "left": 168,
+              "bottom": 1078.59375,
+              "detail": "종류 미확인"
+            }
+          ],
+          "source": "파일에서 가져옴 · TCX날짜 기준Asia/Seoul",
+          "sourceTop": 1106.09375,
+          "labelHeight": 63.984375,
+          "selectHeight": 44
+        },
+        {
+          "metrics": [
+            {
+              "label": "거리",
+              "value": "6km",
+              "top": 1324.171875,
+              "left": 37,
+              "bottom": 1354.171875,
+              "detail": null
+            },
+            {
+              "label": "파일 시간",
+              "value": "30분",
+              "top": 1324.171875,
+              "left": 168,
+              "bottom": 1354.171875,
+              "detail": "종류 미확인"
+            }
+          ],
+          "source": "파일에서 가져옴 · TCX날짜 기준Asia/Seoul",
+          "sourceTop": 1381.671875,
+          "labelHeight": 63.984375,
+          "selectHeight": 44
+        },
+        {
+          "metrics": [
+            {
+              "label": "거리",
+              "value": "7km",
+              "top": 1599.75,
+              "left": 37,
+              "bottom": 1629.75,
+              "detail": null
+            },
+            {
+              "label": "파일 시간",
+              "value": "35분",
+              "top": 1599.75,
+              "left": 168,
+              "bottom": 1629.75,
+              "detail": "종류 미확인"
+            }
+          ],
+          "source": "파일에서 가져옴 · TCX날짜 기준Asia/Seoul",
+          "sourceTop": 1657.25,
+          "labelHeight": 63.984375,
+          "selectHeight": 44
+        }
+      ],
+      "alignment": "same-row",
+      "nextRowMovement": {
+        "unselected": 0,
+        "reselected": 0
+      },
+      "overflow": false,
+      "longNumberLines": null
+    },
+    {
+      "width": 375,
+      "font": 100,
+      "rows": [
+        {
+          "metrics": [
+            {
+              "label": "거리",
+              "value": "2km",
+              "top": -1018.140625,
+              "left": 37,
+              "bottom": -988.140625,
+              "detail": null
+            },
+            {
+              "label": "파일 시간",
+              "value": "10분",
+              "top": -1018.140625,
+              "left": 195.5,
+              "bottom": -988.140625,
+              "detail": "종류 미확인"
+            }
+          ],
+          "source": "파일에서 가져옴 · TCX날짜 기준Asia/Seoul",
+          "sourceTop": -960.640625,
+          "labelHeight": 63.984375,
+          "selectHeight": 44
+        },
+        {
+          "metrics": [
+            {
+              "label": "거리",
+              "value": "3km",
+              "top": -742.5625,
+              "left": 37,
+              "bottom": -712.5625,
+              "detail": null
+            },
+            {
+              "label": "파일 시간",
+              "value": "15분",
+              "top": -742.5625,
+              "left": 195.5,
+              "bottom": -712.5625,
+              "detail": "종류 미확인"
+            }
+          ],
+          "source": "파일에서 가져옴 · TCX날짜 기준Asia/Seoul",
+          "sourceTop": -685.0625,
+          "labelHeight": 63.984375,
+          "selectHeight": 44
+        },
+        {
+          "metrics": [
+            {
+              "label": "거리",
+              "value": "4km",
+              "top": -466.984375,
+              "left": 37,
+              "bottom": -436.984375,
+              "detail": null
+            },
+            {
+              "label": "파일 시간",
+              "value": "20분",
+              "top": -466.984375,
+              "left": 195.5,
+              "bottom": -436.984375,
+              "detail": "종류 미확인"
+            }
+          ],
+          "source": "파일에서 가져옴 · TCX날짜 기준Asia/Seoul",
+          "sourceTop": -409.484375,
+          "labelHeight": 63.984375,
+          "selectHeight": 44
+        },
+        {
+          "metrics": [
+            {
+              "label": "거리",
+              "value": "5km",
+              "top": -191.40625,
+              "left": 37,
+              "bottom": -161.40625,
+              "detail": null
+            },
+            {
+              "label": "파일 시간",
+              "value": "25분",
+              "top": -191.40625,
+              "left": 195.5,
+              "bottom": -161.40625,
+              "detail": "종류 미확인"
+            }
+          ],
+          "source": "파일에서 가져옴 · TCX날짜 기준Asia/Seoul",
+          "sourceTop": -133.90625,
+          "labelHeight": 63.984375,
+          "selectHeight": 44
+        },
+        {
+          "metrics": [
+            {
+              "label": "거리",
+              "value": "6km",
+              "top": 84.171875,
+              "left": 37,
+              "bottom": 114.171875,
+              "detail": null
+            },
+            {
+              "label": "파일 시간",
+              "value": "30분",
+              "top": 84.171875,
+              "left": 195.5,
+              "bottom": 114.171875,
+              "detail": "종류 미확인"
+            }
+          ],
+          "source": "파일에서 가져옴 · TCX날짜 기준Asia/Seoul",
+          "sourceTop": 141.671875,
+          "labelHeight": 63.984375,
+          "selectHeight": 44
+        },
+        {
+          "metrics": [
+            {
+              "label": "거리",
+              "value": "7km",
+              "top": 359.75,
+              "left": 37,
+              "bottom": 389.75,
+              "detail": null
+            },
+            {
+              "label": "파일 시간",
+              "value": "35분",
+              "top": 359.75,
+              "left": 195.5,
+              "bottom": 389.75,
+              "detail": "종류 미확인"
+            }
+          ],
+          "source": "파일에서 가져옴 · TCX날짜 기준Asia/Seoul",
+          "sourceTop": 417.25,
+          "labelHeight": 63.984375,
+          "selectHeight": 44
+        }
+      ],
+      "alignment": "same-row",
+      "nextRowMovement": {
+        "unselected": 0,
+        "reselected": 0
+      },
+      "overflow": false,
+      "longNumberLines": null
+    },
+    {
+      "width": 430,
+      "font": 100,
+      "rows": [
+        {
+          "metrics": [
+            {
+              "label": "거리",
+              "value": "2km",
+              "top": -1018.140625,
+              "left": 37,
+              "bottom": -988.140625,
+              "detail": null
+            },
+            {
+              "label": "파일 시간",
+              "value": "10분",
+              "top": -1018.140625,
+              "left": 223,
+              "bottom": -988.140625,
+              "detail": "종류 미확인"
+            }
+          ],
+          "source": "파일에서 가져옴 · TCX날짜 기준Asia/Seoul",
+          "sourceTop": -960.640625,
+          "labelHeight": 63.984375,
+          "selectHeight": 44
+        },
+        {
+          "metrics": [
+            {
+              "label": "거리",
+              "value": "3km",
+              "top": -742.5625,
+              "left": 37,
+              "bottom": -712.5625,
+              "detail": null
+            },
+            {
+              "label": "파일 시간",
+              "value": "15분",
+              "top": -742.5625,
+              "left": 223,
+              "bottom": -712.5625,
+              "detail": "종류 미확인"
+            }
+          ],
+          "source": "파일에서 가져옴 · TCX날짜 기준Asia/Seoul",
+          "sourceTop": -685.0625,
+          "labelHeight": 63.984375,
+          "selectHeight": 44
+        },
+        {
+          "metrics": [
+            {
+              "label": "거리",
+              "value": "4km",
+              "top": -466.984375,
+              "left": 37,
+              "bottom": -436.984375,
+              "detail": null
+            },
+            {
+              "label": "파일 시간",
+              "value": "20분",
+              "top": -466.984375,
+              "left": 223,
+              "bottom": -436.984375,
+              "detail": "종류 미확인"
+            }
+          ],
+          "source": "파일에서 가져옴 · TCX날짜 기준Asia/Seoul",
+          "sourceTop": -409.484375,
+          "labelHeight": 63.984375,
+          "selectHeight": 44
+        },
+        {
+          "metrics": [
+            {
+              "label": "거리",
+              "value": "5km",
+              "top": -191.40625,
+              "left": 37,
+              "bottom": -161.40625,
+              "detail": null
+            },
+            {
+              "label": "파일 시간",
+              "value": "25분",
+              "top": -191.40625,
+              "left": 223,
+              "bottom": -161.40625,
+              "detail": "종류 미확인"
+            }
+          ],
+          "source": "파일에서 가져옴 · TCX날짜 기준Asia/Seoul",
+          "sourceTop": -133.90625,
+          "labelHeight": 63.984375,
+          "selectHeight": 44
+        },
+        {
+          "metrics": [
+            {
+              "label": "거리",
+              "value": "6km",
+              "top": 84.171875,
+              "left": 37,
+              "bottom": 114.171875,
+              "detail": null
+            },
+            {
+              "label": "파일 시간",
+              "value": "30분",
+              "top": 84.171875,
+              "left": 223,
+              "bottom": 114.171875,
+              "detail": "종류 미확인"
+            }
+          ],
+          "source": "파일에서 가져옴 · TCX날짜 기준Asia/Seoul",
+          "sourceTop": 141.671875,
+          "labelHeight": 63.984375,
+          "selectHeight": 44
+        },
+        {
+          "metrics": [
+            {
+              "label": "거리",
+              "value": "7km",
+              "top": 359.75,
+              "left": 37,
+              "bottom": 389.75,
+              "detail": null
+            },
+            {
+              "label": "파일 시간",
+              "value": "35분",
+              "top": 359.75,
+              "left": 223,
+              "bottom": 389.75,
+              "detail": "종류 미확인"
+            }
+          ],
+          "source": "파일에서 가져옴 · TCX날짜 기준Asia/Seoul",
+          "sourceTop": 417.25,
+          "labelHeight": 63.984375,
+          "selectHeight": 44
+        }
+      ],
+      "alignment": "same-row",
+      "nextRowMovement": {
+        "unselected": 0,
+        "reselected": 0
+      },
+      "overflow": false,
+      "longNumberLines": null
+    },
+    {
+      "width": 320,
+      "font": 200,
+      "rows": [
+        {
+          "metrics": [
+            {
+              "label": "거리",
+              "value": "2km",
+              "top": 850.484375,
+              "left": 37,
+              "bottom": 910.484375,
+              "detail": null
+            },
+            {
+              "label": "파일 시간",
+              "value": "1,256.78분",
+              "top": 961.484375,
+              "left": 37,
+              "bottom": 1081.484375,
+              "detail": "종류 미확인"
+            }
+          ],
+          "source": "파일에서 가져옴 · TCX날짜 기준Asia/Seoul",
+          "sourceTop": 1128.484375,
+          "labelHeight": 195.96875,
+          "selectHeight": 51
+        },
+        {
+          "metrics": [
+            {
+              "label": "거리",
+              "value": "3km",
+              "top": 1546.640625,
+              "left": 37,
+              "bottom": 1606.640625,
+              "detail": null
+            },
+            {
+              "label": "파일 시간",
+              "value": "15분",
+              "top": 1657.640625,
+              "left": 37,
+              "bottom": 1717.640625,
+              "detail": "종류 미확인"
+            }
+          ],
+          "source": "파일에서 가져옴 · TCX날짜 기준Asia/Seoul",
+          "sourceTop": 1764.640625,
+          "labelHeight": 195.96875,
+          "selectHeight": 51
+        },
+        {
+          "metrics": [
+            {
+              "label": "거리",
+              "value": "4km",
+              "top": 2182.796875,
+              "left": 37,
+              "bottom": 2242.796875,
+              "detail": null
+            },
+            {
+              "label": "파일 시간",
+              "value": "20분",
+              "top": 2293.796875,
+              "left": 37,
+              "bottom": 2353.796875,
+              "detail": "종류 미확인"
+            }
+          ],
+          "source": "파일에서 가져옴 · TCX날짜 기준Asia/Seoul",
+          "sourceTop": 2400.796875,
+          "labelHeight": 195.96875,
+          "selectHeight": 51
+        },
+        {
+          "metrics": [
+            {
+              "label": "거리",
+              "value": "5km",
+              "top": 2818.953125,
+              "left": 37,
+              "bottom": 2878.953125,
+              "detail": null
+            },
+            {
+              "label": "파일 시간",
+              "value": "25분",
+              "top": 2929.953125,
+              "left": 37,
+              "bottom": 2989.953125,
+              "detail": "종류 미확인"
+            }
+          ],
+          "source": "파일에서 가져옴 · TCX날짜 기준Asia/Seoul",
+          "sourceTop": 3036.953125,
+          "labelHeight": 195.96875,
+          "selectHeight": 51
+        },
+        {
+          "metrics": [
+            {
+              "label": "거리",
+              "value": "6km",
+              "top": 3455.109375,
+              "left": 37,
+              "bottom": 3515.109375,
+              "detail": null
+            },
+            {
+              "label": "파일 시간",
+              "value": "30분",
+              "top": 3566.109375,
+              "left": 37,
+              "bottom": 3626.109375,
+              "detail": "종류 미확인"
+            }
+          ],
+          "source": "파일에서 가져옴 · TCX날짜 기준Asia/Seoul",
+          "sourceTop": 3673.109375,
+          "labelHeight": 195.96875,
+          "selectHeight": 51
+        },
+        {
+          "metrics": [
+            {
+              "label": "거리",
+              "value": "7km",
+              "top": 4091.265625,
+              "left": 37,
+              "bottom": 4151.265625,
+              "detail": null
+            },
+            {
+              "label": "파일 시간",
+              "value": "35분",
+              "top": 4202.265625,
+              "left": 37,
+              "bottom": 4262.265625,
+              "detail": "종류 미확인"
+            }
+          ],
+          "source": "파일에서 가져옴 · TCX날짜 기준Asia/Seoul",
+          "sourceTop": 4309.265625,
+          "labelHeight": 195.96875,
+          "selectHeight": 51
+        }
+      ],
+      "alignment": "stacked",
+      "nextRowMovement": {
+        "unselected": 0,
+        "reselected": 0
+      },
+      "overflow": false,
+      "longNumberLines": 1
+    }
+  ],
+  "posts": [],
+  "pageErrors": [],
+  "subgridSupported": true,
+  "savedCount": 0,
+  "browser": "155.0.8059.85"
+}
