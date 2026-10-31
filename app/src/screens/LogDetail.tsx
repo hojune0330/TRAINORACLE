@@ -7,6 +7,7 @@ import { canEditJournalEntry } from "../domain/journal-edit-policy"
 import { AccountJournalHistory } from "./account/AccountJournalHistory"
 import { IndexCard, MoodStrip } from "../components/JournalPrimitives"
 import { BodyRecordSummary } from "../components/BodyRecordSummary"
+import { ImportedActivityDetail } from "../components/ImportedActivityDetail"
 import { journalPainPartsForSafety } from "../domain/body-part-metadata"
 import { calendarDayLabel } from "../components/MonthCalendar"
 import { JournalConfirmationDialog } from "../components/JournalConfirmationDialog"
@@ -554,6 +555,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, onJournalSave
                     </div>
                   ))}
                 </div>}
+                {entry.fileObservation && <ImportedActivityDetail observation={entry.fileObservation} />}
                 <BodyRecordSummary entry={entry} />
                 <SavedMemo entry={entry} text={entry.memo} fontSize={19} />
                 <JournalOriginalPlan entry={entry} />

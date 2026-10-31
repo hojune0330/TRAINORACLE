@@ -1,0 +1,1797 @@
+{
+  "schemaVersion": 2,
+  "kind": "implementation-preparation-not-runtime-capabilities",
+  "asOf": "2026-10-31",
+  "baseline": "f6d19aef9cb0635aee77a42c93e97ea8ddc41a36",
+  "readiness": "partial",
+  "definition": "Current app readiness; provider interface existence does not prove authorization or returned fields.",
+  "deliveryStages": [
+    "received",
+    "validated",
+    "persisted",
+    "readBack",
+    "displayed",
+    "interactive",
+    "realSourceCompared"
+  ],
+  "currentPersonalRoundTrip": "not-verified",
+  "items": [
+    {
+      "id": "activity.identity",
+      "label": "운동 정체성",
+      "view": "identity",
+      "representation": "id/type/device/source",
+      "app": {
+        "ingestion": "file-partial",
+        "display": "detail-partial"
+      },
+      "priority": "P0",
+      "caveat": "기기 출처와 전달 경로 구분",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "category-only-exact-field-unverified",
+          "sourceRefs": [
+            "https://support.garmin.com/en-PH/?faq=V0T9hu0HIa8uj2gi0ea9aA",
+            "https://developer.garmin.com/gc-developer-program/enterprise/activity-api/",
+            "https://developer.garmin.com/fit/articles/file-types/activity.html"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "type-or-related-data-documented-payload-unverified",
+          "sourceRefs": [
+            "https://support.apple.com/ko-kr/guide/watch/apd1f24d4d35/27/watchos/27",
+            "https://developer.apple.com/documentation/healthkit/hkworkout"
+          ]
+        }
+      }
+    },
+    {
+      "id": "activity.startedAt",
+      "label": "운동 시작 시각",
+      "view": "identity",
+      "representation": "ISO instant + original offset",
+      "app": {
+        "ingestion": "stored",
+        "display": "candidate-detail"
+      },
+      "priority": "P0",
+      "caveat": "savedAt 대체 금지",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "category-only-exact-field-unverified",
+          "sourceRefs": [
+            "https://support.garmin.com/en-PH/?faq=V0T9hu0HIa8uj2gi0ea9aA",
+            "https://developer.garmin.com/gc-developer-program/enterprise/activity-api/",
+            "https://developer.garmin.com/fit/articles/file-types/activity.html"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "type-or-related-data-documented-payload-unverified",
+          "sourceRefs": [
+            "https://support.apple.com/ko-kr/guide/watch/apd1f24d4d35/27/watchos/27",
+            "https://developer.apple.com/documentation/healthkit/hkworkout"
+          ]
+        }
+      }
+    },
+    {
+      "id": "activity.endedAt",
+      "label": "운동 종료 시각",
+      "view": "identity",
+      "representation": "ISO instant",
+      "app": {
+        "ingestion": "not-captured",
+        "display": "not-implemented"
+      },
+      "priority": "P0",
+      "caveat": "duration 덧셈으로 원본값 발명 금지",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "category-only-exact-field-unverified",
+          "sourceRefs": [
+            "https://support.garmin.com/en-PH/?faq=V0T9hu0HIa8uj2gi0ea9aA",
+            "https://developer.garmin.com/gc-developer-program/enterprise/activity-api/",
+            "https://developer.garmin.com/fit/articles/file-types/activity.html"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "type-or-related-data-documented-payload-unverified",
+          "sourceRefs": [
+            "https://support.apple.com/ko-kr/guide/watch/apd1f24d4d35/27/watchos/27",
+            "https://developer.apple.com/documentation/healthkit/hkworkout"
+          ]
+        }
+      }
+    },
+    {
+      "id": "activity.timeZone",
+      "label": "활동 날짜 기준",
+      "view": "identity",
+      "representation": "IANA zone + local date",
+      "app": {
+        "ingestion": "stored",
+        "display": "candidate-detail"
+      },
+      "priority": "P0",
+      "caveat": "현재 기기 timezone으로 날짜 이동 금지",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "category-only-exact-field-unverified",
+          "sourceRefs": [
+            "https://support.garmin.com/en-PH/?faq=V0T9hu0HIa8uj2gi0ea9aA",
+            "https://developer.garmin.com/gc-developer-program/enterprise/activity-api/",
+            "https://developer.garmin.com/fit/articles/file-types/activity.html"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "exact-field-mapping-needs-verification",
+          "sourceRefs": [
+            "https://support.apple.com/ko-kr/guide/watch/apd1f24d4d35/27/watchos/27",
+            "https://developer.apple.com/documentation/healthkit/data-types"
+          ]
+        }
+      }
+    },
+    {
+      "id": "activity.distance",
+      "label": "전체 거리",
+      "view": "summary",
+      "representation": "m",
+      "app": {
+        "ingestion": "stored",
+        "display": "displayed"
+      },
+      "priority": "P0",
+      "caveat": "불완전한 랩의 부분 합계로 채우지 않음",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "category-only-exact-field-unverified",
+          "sourceRefs": [
+            "https://support.garmin.com/en-PH/?faq=V0T9hu0HIa8uj2gi0ea9aA",
+            "https://developer.garmin.com/gc-developer-program/enterprise/activity-api/",
+            "https://developer.garmin.com/fit/articles/file-types/activity.html"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "type-or-related-data-documented-payload-unverified",
+          "sourceRefs": [
+            "https://support.apple.com/ko-kr/guide/watch/apd1f24d4d35/27/watchos/27",
+            "https://developer.apple.com/documentation/healthkit/data-types"
+          ]
+        }
+      }
+    },
+    {
+      "id": "activity.timer",
+      "label": "타이머 시간",
+      "view": "summary",
+      "representation": "s TIMER",
+      "app": {
+        "ingestion": "single-meaning-only",
+        "display": "displayed-conditional"
+      },
+      "priority": "P0",
+      "caveat": "동시 여러 시간값 확장 필요",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "category-only-exact-field-unverified",
+          "sourceRefs": [
+            "https://support.garmin.com/en-PH/?faq=V0T9hu0HIa8uj2gi0ea9aA",
+            "https://developer.garmin.com/gc-developer-program/enterprise/activity-api/",
+            "https://developer.garmin.com/fit/articles/file-types/activity.html"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "duration-or-events-available-meaning-needs-verification",
+          "sourceRefs": [
+            "https://support.apple.com/ko-kr/guide/watch/apd1f24d4d35/27/watchos/27",
+            "https://developer.apple.com/documentation/healthkit/hkworkout/duration?language=objc"
+          ]
+        }
+      }
+    },
+    {
+      "id": "activity.moving",
+      "label": "이동 시간",
+      "view": "summary",
+      "representation": "s MOVING",
+      "app": {
+        "ingestion": "single-meaning-only",
+        "display": "displayed-conditional"
+      },
+      "priority": "P0",
+      "caveat": "elapsed를 moving으로 간주 금지",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "category-only-exact-field-unverified",
+          "sourceRefs": [
+            "https://support.garmin.com/en-PH/?faq=V0T9hu0HIa8uj2gi0ea9aA",
+            "https://developer.garmin.com/gc-developer-program/enterprise/activity-api/",
+            "https://developer.garmin.com/fit/articles/file-types/activity.html"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "duration-or-events-available-meaning-needs-verification",
+          "sourceRefs": [
+            "https://support.apple.com/ko-kr/guide/watch/apd1f24d4d35/27/watchos/27",
+            "https://developer.apple.com/documentation/healthkit/hkworkout/duration?language=objc"
+          ]
+        }
+      }
+    },
+    {
+      "id": "activity.elapsed",
+      "label": "전체 경과 시간",
+      "view": "summary",
+      "representation": "s ELAPSED",
+      "app": {
+        "ingestion": "single-meaning-only",
+        "display": "displayed-conditional"
+      },
+      "priority": "P0",
+      "caveat": "pause 포함",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "category-only-exact-field-unverified",
+          "sourceRefs": [
+            "https://support.garmin.com/en-PH/?faq=V0T9hu0HIa8uj2gi0ea9aA",
+            "https://developer.garmin.com/gc-developer-program/enterprise/activity-api/",
+            "https://developer.garmin.com/fit/articles/file-types/activity.html"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "duration-or-events-available-meaning-needs-verification",
+          "sourceRefs": [
+            "https://support.apple.com/ko-kr/guide/watch/apd1f24d4d35/27/watchos/27",
+            "https://developer.apple.com/documentation/healthkit/hkworkout/duration?language=objc"
+          ]
+        }
+      }
+    },
+    {
+      "id": "activity.pauses",
+      "label": "일시정지 이벤트",
+      "view": "series",
+      "representation": "start/end",
+      "app": {
+        "ingestion": "not-captured",
+        "display": "not-implemented"
+      },
+      "priority": "P0",
+      "caveat": "차트 축 근거",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "category-only-exact-field-unverified",
+          "sourceRefs": [
+            "https://support.garmin.com/en-PH/?faq=V0T9hu0HIa8uj2gi0ea9aA",
+            "https://developer.garmin.com/gc-developer-program/enterprise/activity-api/",
+            "https://developer.garmin.com/fit/articles/file-types/activity.html"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "duration-or-events-available-meaning-needs-verification",
+          "sourceRefs": [
+            "https://support.apple.com/ko-kr/guide/watch/apd1f24d4d35/27/watchos/27",
+            "https://developer.apple.com/documentation/healthkit/data-types"
+          ]
+        }
+      }
+    },
+    {
+      "id": "activity.averagePace",
+      "label": "전체 평균 페이스",
+      "view": "summary",
+      "representation": "s/km + time basis",
+      "app": {
+        "ingestion": "conditional-derived",
+        "display": "displayed-conditional"
+      },
+      "priority": "P0",
+      "caveat": "확인된 동일 시간 의미",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "category-only-exact-field-unverified",
+          "sourceRefs": [
+            "https://support.garmin.com/en-PH/?faq=V0T9hu0HIa8uj2gi0ea9aA",
+            "https://developer.garmin.com/gc-developer-program/enterprise/activity-api/",
+            "https://developer.garmin.com/fit/articles/file-types/activity.html"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "related-data-available-native-display-parity-unverified",
+          "sourceRefs": [
+            "https://support.apple.com/ko-kr/guide/watch/apd1f24d4d35/27/watchos/27",
+            "https://developer.apple.com/documentation/healthkit/data-types"
+          ]
+        }
+      }
+    },
+    {
+      "id": "activity.instantPace",
+      "label": "순간 페이스",
+      "view": "series",
+      "representation": "s/km + source method",
+      "app": {
+        "ingestion": "not-captured",
+        "display": "not-implemented"
+      },
+      "priority": "P0",
+      "caveat": "랩 평균과 구분",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "category-only-exact-field-unverified",
+          "sourceRefs": [
+            "https://support.garmin.com/en-PH/?faq=V0T9hu0HIa8uj2gi0ea9aA",
+            "https://developer.garmin.com/gc-developer-program/enterprise/activity-api/",
+            "https://developer.garmin.com/fit/articles/file-types/activity.html"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "related-data-available-native-display-parity-unverified",
+          "sourceRefs": [
+            "https://support.apple.com/ko-kr/guide/watch/apd1f24d4d35/27/watchos/27",
+            "https://developer.apple.com/documentation/healthkit/hkquantitytypeidentifier/runningspeed"
+          ]
+        }
+      }
+    },
+    {
+      "id": "activity.speed",
+      "label": "속도",
+      "view": "series",
+      "representation": "m/s",
+      "app": {
+        "ingestion": "not-captured",
+        "display": "not-implemented"
+      },
+      "priority": "P0",
+      "caveat": "원 단위 보존",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "category-only-exact-field-unverified",
+          "sourceRefs": [
+            "https://support.garmin.com/en-PH/?faq=V0T9hu0HIa8uj2gi0ea9aA",
+            "https://developer.garmin.com/gc-developer-program/enterprise/activity-api/",
+            "https://developer.garmin.com/fit/articles/file-types/activity.html"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "type-or-related-data-documented-payload-unverified",
+          "sourceRefs": [
+            "https://support.apple.com/ko-kr/guide/watch/apd1f24d4d35/27/watchos/27",
+            "https://developer.apple.com/documentation/healthkit/hkquantitytypeidentifier/runningspeed"
+          ]
+        }
+      }
+    },
+    {
+      "id": "lap.original",
+      "label": "원본 랩",
+      "view": "segments",
+      "representation": "index/distance/time/kind",
+      "app": {
+        "ingestion": "stored",
+        "display": "candidate-detail"
+      },
+      "priority": "P0",
+      "caveat": "원순서/누락/시간의미",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "category-only-exact-field-unverified",
+          "sourceRefs": [
+            "https://support.garmin.com/en-PH/?faq=V0T9hu0HIa8uj2gi0ea9aA",
+            "https://developer.garmin.com/gc-developer-program/enterprise/activity-api/",
+            "https://developer.garmin.com/fit/articles/file-types/activity.html"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "type-or-related-data-documented-payload-unverified",
+          "sourceRefs": [
+            "https://support.apple.com/ko-kr/guide/watch/apd1f24d4d35/27/watchos/27",
+            "https://developer.apple.com/documentation/healthkit/hkworkouteventtype/lap"
+          ]
+        }
+      }
+    },
+    {
+      "id": "lap.splits",
+      "label": "거리 스플릿",
+      "view": "segments",
+      "representation": "distance/time/bounds",
+      "app": {
+        "ingestion": "not-captured",
+        "display": "not-implemented"
+      },
+      "priority": "P0",
+      "caveat": "원본 랩과 구분",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "category-only-exact-field-unverified",
+          "sourceRefs": [
+            "https://support.garmin.com/en-PH/?faq=V0T9hu0HIa8uj2gi0ea9aA",
+            "https://developer.garmin.com/gc-developer-program/enterprise/activity-api/",
+            "https://developer.garmin.com/fit/articles/file-types/activity.html"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "related-data-available-native-display-parity-unverified",
+          "sourceRefs": [
+            "https://support.apple.com/ko-kr/guide/watch/apd1f24d4d35/27/watchos/27",
+            "https://developer.apple.com/documentation/healthkit/hkworkouteventtype/lap"
+          ]
+        }
+      }
+    },
+    {
+      "id": "lap.manualSegments",
+      "label": "수동 구간",
+      "view": "segments",
+      "representation": "bounds/source kind",
+      "app": {
+        "ingestion": "not-captured",
+        "display": "not-implemented"
+      },
+      "priority": "P0",
+      "caveat": "무근거 자동 매칭 금지",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "category-only-exact-field-unverified",
+          "sourceRefs": [
+            "https://support.garmin.com/en-PH/?faq=V0T9hu0HIa8uj2gi0ea9aA",
+            "https://developer.garmin.com/gc-developer-program/enterprise/activity-api/",
+            "https://developer.garmin.com/fit/articles/file-types/activity.html"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "type-or-related-data-documented-payload-unverified",
+          "sourceRefs": [
+            "https://support.apple.com/ko-kr/guide/watch/apd1f24d4d35/27/watchos/27",
+            "https://developer.apple.com/documentation/healthkit/hkworkoutevent/dateinterval"
+          ]
+        }
+      }
+    },
+    {
+      "id": "heartRate.mean",
+      "label": "평균 심박",
+      "view": "summary",
+      "representation": "bpm",
+      "app": {
+        "ingestion": "not-captured",
+        "display": "not-implemented"
+      },
+      "priority": "P0",
+      "caveat": "source mean vs sample mean",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "category-only-exact-field-unverified",
+          "sourceRefs": [
+            "https://support.garmin.com/en-PH/?faq=V0T9hu0HIa8uj2gi0ea9aA",
+            "https://developer.garmin.com/gc-developer-program/enterprise/activity-api/",
+            "https://developer.garmin.com/fit/articles/file-types/activity.html"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "type-or-related-data-documented-payload-unverified",
+          "sourceRefs": [
+            "https://support.apple.com/ko-kr/guide/watch/apd1f24d4d35/27/watchos/27",
+            "https://developer.apple.com/documentation/healthkit/data-types"
+          ]
+        }
+      }
+    },
+    {
+      "id": "heartRate.max",
+      "label": "최대 심박",
+      "view": "summary",
+      "representation": "bpm",
+      "app": {
+        "ingestion": "not-captured",
+        "display": "not-implemented"
+      },
+      "priority": "P0",
+      "caveat": "원본 통계",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "category-only-exact-field-unverified",
+          "sourceRefs": [
+            "https://support.garmin.com/en-PH/?faq=V0T9hu0HIa8uj2gi0ea9aA",
+            "https://developer.garmin.com/gc-developer-program/enterprise/activity-api/",
+            "https://developer.garmin.com/fit/articles/file-types/activity.html"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "type-or-related-data-documented-payload-unverified",
+          "sourceRefs": [
+            "https://support.apple.com/ko-kr/guide/watch/apd1f24d4d35/27/watchos/27",
+            "https://developer.apple.com/documentation/healthkit/data-types"
+          ]
+        }
+      }
+    },
+    {
+      "id": "heartRate.samples",
+      "label": "심박 시계열",
+      "view": "series",
+      "representation": "timestamp/bpm",
+      "app": {
+        "ingestion": "not-captured",
+        "display": "not-implemented"
+      },
+      "priority": "P0",
+      "caveat": "누락 구간 연결 금지",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "category-only-exact-field-unverified",
+          "sourceRefs": [
+            "https://support.garmin.com/en-PH/?faq=V0T9hu0HIa8uj2gi0ea9aA",
+            "https://developer.garmin.com/gc-developer-program/enterprise/activity-api/",
+            "https://developer.garmin.com/fit/articles/file-types/activity.html"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "type-or-related-data-documented-payload-unverified",
+          "sourceRefs": [
+            "https://support.apple.com/ko-kr/guide/watch/apd1f24d4d35/27/watchos/27",
+            "https://developer.apple.com/documentation/healthkit/data-types"
+          ]
+        }
+      }
+    },
+    {
+      "id": "heartRate.zones",
+      "label": "심박 영역과 체류",
+      "view": "zones",
+      "representation": "bpm bounds/s/method",
+      "app": {
+        "ingestion": "not-captured",
+        "display": "not-implemented"
+      },
+      "priority": "P0",
+      "caveat": "해당 운동시점 설정 보존",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "category-only-exact-field-unverified",
+          "sourceRefs": [
+            "https://support.garmin.com/en-PH/?faq=V0T9hu0HIa8uj2gi0ea9aA",
+            "https://developer.garmin.com/gc-developer-program/enterprise/activity-api/",
+            "https://developer.garmin.com/fit/articles/file-types/activity.html"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "documented-os27-conditional-heart-rate-or-cycling-power-only",
+          "sourceRefs": [
+            "https://support.apple.com/ko-kr/guide/watch/apd1f24d4d35/27/watchos/27",
+            "https://developer.apple.com/documentation/healthkit/accessing-workout-zone-data"
+          ]
+        }
+      }
+    },
+    {
+      "id": "heartRate.recovery",
+      "label": "운동 후 심박 회복",
+      "view": "health",
+      "representation": "bpm + measurement window",
+      "app": {
+        "ingestion": "not-captured",
+        "display": "not-implemented"
+      },
+      "priority": "P1",
+      "caveat": "기기 산출 정의 보존",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "category-only-exact-field-unverified",
+          "sourceRefs": [
+            "https://support.garmin.com/en-IN/?faq=mBRMf4ks7XAQ03qtsbI8J6",
+            "https://developer.garmin.com/gc-developer-program/enterprise/health-api/"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "exact-field-mapping-needs-verification",
+          "sourceRefs": [
+            "https://support.apple.com/guide/iphone/view-your-health-data-iphe3d379c32/26/ios/26",
+            "https://developer.apple.com/documentation/healthkit/data-types"
+          ]
+        }
+      }
+    },
+    {
+      "id": "running.cadence",
+      "label": "러닝 케이던스",
+      "view": "series",
+      "representation": "steps/min + source unit",
+      "app": {
+        "ingestion": "not-captured",
+        "display": "not-implemented"
+      },
+      "priority": "P0",
+      "caveat": "한발/양발 가정 금지",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "category-only-exact-field-unverified",
+          "sourceRefs": [
+            "https://support.garmin.com/en-PH/?faq=V0T9hu0HIa8uj2gi0ea9aA",
+            "https://developer.garmin.com/gc-developer-program/enterprise/activity-api/",
+            "https://developer.garmin.com/fit/articles/file-types/activity.html"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "historic-running-cadence-type-not-confirmed-coremotion-not-substitute",
+          "sourceRefs": [
+            "https://support.apple.com/ko-kr/guide/watch/apd1f24d4d35/27/watchos/27",
+            "https://developer.apple.com/documentation/coremotion/cmpedometerdata/currentcadence"
+          ]
+        }
+      }
+    },
+    {
+      "id": "cycling.cadence",
+      "label": "사이클 케이던스",
+      "view": "series",
+      "representation": "rpm",
+      "app": {
+        "ingestion": "not-captured",
+        "display": "not-implemented"
+      },
+      "priority": "P1",
+      "caveat": "러닝과 분리",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "category-only-exact-field-unverified",
+          "sourceRefs": [
+            "https://support.garmin.com/en-PH/?faq=V0T9hu0HIa8uj2gi0ea9aA",
+            "https://developer.garmin.com/gc-developer-program/enterprise/activity-api/",
+            "https://developer.garmin.com/fit/articles/file-types/activity.html"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "type-or-related-data-documented-payload-unverified",
+          "sourceRefs": [
+            "https://support.apple.com/ko-kr/guide/watch/apd1f24d4d35/27/watchos/27",
+            "https://developer.apple.com/documentation/healthkit/data-types"
+          ]
+        }
+      }
+    },
+    {
+      "id": "running.stride",
+      "label": "보폭",
+      "view": "series",
+      "representation": "m",
+      "app": {
+        "ingestion": "not-captured",
+        "display": "not-implemented"
+      },
+      "priority": "P1",
+      "caveat": "원 측정값",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "category-only-exact-field-unverified",
+          "sourceRefs": [
+            "https://support.garmin.com/en-PH/?faq=V0T9hu0HIa8uj2gi0ea9aA",
+            "https://developer.garmin.com/gc-developer-program/enterprise/activity-api/",
+            "https://developer.garmin.com/fit/articles/file-types/activity.html"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "type-or-related-data-documented-payload-unverified",
+          "sourceRefs": [
+            "https://support.apple.com/ko-kr/guide/watch/apd1f24d4d35/27/watchos/27",
+            "https://developer.apple.com/documentation/healthkit/data-types"
+          ]
+        }
+      }
+    },
+    {
+      "id": "running.verticalOscillation",
+      "label": "수직 진폭",
+      "view": "series",
+      "representation": "m or cm",
+      "app": {
+        "ingestion": "not-captured",
+        "display": "not-implemented"
+      },
+      "priority": "P1",
+      "caveat": "단위 검증",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "category-only-exact-field-unverified",
+          "sourceRefs": [
+            "https://support.garmin.com/en-PH/?faq=V0T9hu0HIa8uj2gi0ea9aA",
+            "https://developer.garmin.com/gc-developer-program/enterprise/activity-api/",
+            "https://developer.garmin.com/fit/articles/file-types/activity.html"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "type-or-related-data-documented-payload-unverified",
+          "sourceRefs": [
+            "https://support.apple.com/ko-kr/guide/watch/apd1f24d4d35/27/watchos/27",
+            "https://developer.apple.com/documentation/healthkit/data-types"
+          ]
+        }
+      }
+    },
+    {
+      "id": "running.groundContactTime",
+      "label": "지면 접촉 시간",
+      "view": "series",
+      "representation": "ms",
+      "app": {
+        "ingestion": "not-captured",
+        "display": "not-implemented"
+      },
+      "priority": "P1",
+      "caveat": "기기별 지원",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "category-only-exact-field-unverified",
+          "sourceRefs": [
+            "https://support.garmin.com/en-PH/?faq=V0T9hu0HIa8uj2gi0ea9aA",
+            "https://developer.garmin.com/gc-developer-program/enterprise/activity-api/",
+            "https://developer.garmin.com/fit/articles/file-types/activity.html"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "type-or-related-data-documented-payload-unverified",
+          "sourceRefs": [
+            "https://support.apple.com/ko-kr/guide/watch/apd1f24d4d35/27/watchos/27",
+            "https://developer.apple.com/documentation/healthkit/data-types"
+          ]
+        }
+      }
+    },
+    {
+      "id": "running.groundContactBalance",
+      "label": "지면 접촉 좌우 균형",
+      "view": "series",
+      "representation": "percent left/right",
+      "app": {
+        "ingestion": "not-captured",
+        "display": "not-implemented"
+      },
+      "priority": "P1",
+      "caveat": "제공시만",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "category-only-exact-field-unverified",
+          "sourceRefs": [
+            "https://support.garmin.com/en-PH/?faq=V0T9hu0HIa8uj2gi0ea9aA",
+            "https://developer.garmin.com/gc-developer-program/enterprise/activity-api/",
+            "https://developer.garmin.com/fit/articles/file-types/activity.html"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "not-confirmed",
+          "apiEvidence": "exact-type-not-confirmed",
+          "sourceRefs": [
+            "https://developer.apple.com/documentation/healthkit/data-types"
+          ]
+        }
+      }
+    },
+    {
+      "id": "running.verticalRatio",
+      "label": "수직 비율",
+      "view": "series",
+      "representation": "percent",
+      "app": {
+        "ingestion": "not-captured",
+        "display": "not-implemented"
+      },
+      "priority": "P1",
+      "caveat": "제공시만",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "category-only-exact-field-unverified",
+          "sourceRefs": [
+            "https://support.garmin.com/en-PH/?faq=V0T9hu0HIa8uj2gi0ea9aA",
+            "https://developer.garmin.com/gc-developer-program/enterprise/activity-api/",
+            "https://developer.garmin.com/fit/articles/file-types/activity.html"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "not-confirmed",
+          "apiEvidence": "exact-type-not-confirmed",
+          "sourceRefs": [
+            "https://developer.apple.com/documentation/healthkit/data-types"
+          ]
+        }
+      }
+    },
+    {
+      "id": "power.summary",
+      "label": "파워 평균/최대",
+      "view": "summary",
+      "representation": "W + method",
+      "app": {
+        "ingestion": "not-captured",
+        "display": "not-implemented"
+      },
+      "priority": "P0",
+      "caveat": "회사별 동일 알고리즘 가정 금지",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "category-only-exact-field-unverified",
+          "sourceRefs": [
+            "https://support.garmin.com/en-PH/?faq=V0T9hu0HIa8uj2gi0ea9aA",
+            "https://developer.garmin.com/gc-developer-program/enterprise/activity-api/",
+            "https://developer.garmin.com/fit/articles/file-types/activity.html"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "type-or-related-data-documented-payload-unverified",
+          "sourceRefs": [
+            "https://support.apple.com/ko-kr/guide/watch/apd1f24d4d35/27/watchos/27",
+            "https://developer.apple.com/documentation/healthkit/hkquantitytypeidentifier/runningpower"
+          ]
+        }
+      }
+    },
+    {
+      "id": "power.samples",
+      "label": "파워 시계열",
+      "view": "series",
+      "representation": "timestamp/W",
+      "app": {
+        "ingestion": "not-captured",
+        "display": "not-implemented"
+      },
+      "priority": "P0",
+      "caveat": "측정/추정 출처",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "category-only-exact-field-unverified",
+          "sourceRefs": [
+            "https://support.garmin.com/en-PH/?faq=V0T9hu0HIa8uj2gi0ea9aA",
+            "https://developer.garmin.com/gc-developer-program/enterprise/activity-api/",
+            "https://developer.garmin.com/fit/articles/file-types/activity.html"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "type-or-related-data-documented-payload-unverified",
+          "sourceRefs": [
+            "https://support.apple.com/ko-kr/guide/watch/apd1f24d4d35/27/watchos/27",
+            "https://developer.apple.com/documentation/healthkit/hkquantitytypeidentifier/runningpower"
+          ]
+        }
+      }
+    },
+    {
+      "id": "power.zones",
+      "label": "파워 영역",
+      "view": "zones",
+      "representation": "W bounds/s/method",
+      "app": {
+        "ingestion": "not-captured",
+        "display": "not-implemented"
+      },
+      "priority": "P1",
+      "caveat": "원 zone config",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "category-only-exact-field-unverified",
+          "sourceRefs": [
+            "https://support.garmin.com/en-PH/?faq=V0T9hu0HIa8uj2gi0ea9aA",
+            "https://developer.garmin.com/gc-developer-program/enterprise/activity-api/",
+            "https://developer.garmin.com/fit/articles/file-types/activity.html"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "documented-os27-conditional-heart-rate-or-cycling-power-only",
+          "sourceRefs": [
+            "https://support.apple.com/ko-kr/guide/watch/apd1f24d4d35/27/watchos/27",
+            "https://developer.apple.com/documentation/healthkit/accessing-workout-zone-data"
+          ]
+        }
+      }
+    },
+    {
+      "id": "cycling.powerDerived",
+      "label": "사이클 특화 파워",
+      "view": "provider-score",
+      "representation": "W/FTP/method",
+      "app": {
+        "ingestion": "not-captured",
+        "display": "not-implemented"
+      },
+      "priority": "P1",
+      "caveat": "provider 산출필드 확인",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "category-only-exact-field-unverified",
+          "sourceRefs": [
+            "https://support.garmin.com/en-IN/?faq=mBRMf4ks7XAQ03qtsbI8J6",
+            "https://developer.garmin.com/gc-developer-program/enterprise/health-api/"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "exact-field-mapping-needs-verification",
+          "sourceRefs": [
+            "https://support.apple.com/guide/iphone/view-your-health-data-iphe3d379c32/26/ios/26",
+            "https://developer.apple.com/documentation/healthkit/data-types"
+          ]
+        }
+      }
+    },
+    {
+      "id": "elevation.samples",
+      "label": "고도 시계열",
+      "view": "series",
+      "representation": "timestamp/m",
+      "app": {
+        "ingestion": "not-captured",
+        "display": "not-implemented"
+      },
+      "priority": "P0",
+      "caveat": "센서/보정 출처",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "category-only-exact-field-unverified",
+          "sourceRefs": [
+            "https://support.garmin.com/en-PH/?faq=V0T9hu0HIa8uj2gi0ea9aA",
+            "https://developer.garmin.com/gc-developer-program/enterprise/activity-api/",
+            "https://developer.garmin.com/fit/articles/file-types/activity.html"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "type-or-related-data-documented-payload-unverified",
+          "sourceRefs": [
+            "https://support.apple.com/ko-kr/guide/watch/apd1f24d4d35/27/watchos/27",
+            "https://developer.apple.com/documentation/healthkit/reading-route-data"
+          ]
+        }
+      }
+    },
+    {
+      "id": "elevation.gainLoss",
+      "label": "상승/하강",
+      "view": "summary",
+      "representation": "m",
+      "app": {
+        "ingestion": "not-captured",
+        "display": "not-implemented"
+      },
+      "priority": "P0",
+      "caveat": "원 통계와 자체 계산 구분",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "category-only-exact-field-unverified",
+          "sourceRefs": [
+            "https://support.garmin.com/en-PH/?faq=V0T9hu0HIa8uj2gi0ea9aA",
+            "https://developer.garmin.com/gc-developer-program/enterprise/activity-api/",
+            "https://developer.garmin.com/fit/articles/file-types/activity.html"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "type-or-related-data-documented-payload-unverified",
+          "sourceRefs": [
+            "https://support.apple.com/ko-kr/guide/watch/apd1f24d4d35/27/watchos/27",
+            "https://developer.apple.com/documentation/healthkit/hkmetadatakeyelevationascended"
+          ]
+        }
+      }
+    },
+    {
+      "id": "route.positions",
+      "label": "GPS 경로",
+      "view": "route",
+      "representation": "lat/lon/timestamp/accuracy",
+      "app": {
+        "ingestion": "discarded-after-gpx-distance",
+        "display": "not-implemented"
+      },
+      "priority": "P0",
+      "caveat": "별도 보호된 보관 필요",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "category-only-exact-field-unverified",
+          "sourceRefs": [
+            "https://support.garmin.com/en-PH/?faq=V0T9hu0HIa8uj2gi0ea9aA",
+            "https://developer.garmin.com/gc-developer-program/enterprise/activity-api/",
+            "https://developer.garmin.com/fit/articles/file-types/activity.html"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "type-or-related-data-documented-payload-unverified",
+          "sourceRefs": [
+            "https://support.apple.com/ko-kr/guide/watch/apd1f24d4d35/27/watchos/27",
+            "https://developer.apple.com/documentation/healthkit/reading-route-data"
+          ]
+        }
+      }
+    },
+    {
+      "id": "energy.active",
+      "label": "활동 에너지",
+      "view": "summary",
+      "representation": "kcal",
+      "app": {
+        "ingestion": "not-captured",
+        "display": "not-implemented"
+      },
+      "priority": "P1",
+      "caveat": "총 에너지와 분리",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "category-only-exact-field-unverified",
+          "sourceRefs": [
+            "https://support.garmin.com/en-PH/?faq=V0T9hu0HIa8uj2gi0ea9aA",
+            "https://developer.garmin.com/gc-developer-program/enterprise/activity-api/",
+            "https://developer.garmin.com/fit/articles/file-types/activity.html"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "type-or-related-data-documented-payload-unverified",
+          "sourceRefs": [
+            "https://support.apple.com/ko-kr/guide/watch/apd1f24d4d35/27/watchos/27",
+            "https://developer.apple.com/documentation/healthkit/data-types"
+          ]
+        }
+      }
+    },
+    {
+      "id": "energy.total",
+      "label": "총 에너지",
+      "view": "summary",
+      "representation": "kcal",
+      "app": {
+        "ingestion": "not-captured",
+        "display": "not-implemented"
+      },
+      "priority": "P1",
+      "caveat": "활동 에너지와 이중합산 금지",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "category-only-exact-field-unverified",
+          "sourceRefs": [
+            "https://support.garmin.com/en-PH/?faq=V0T9hu0HIa8uj2gi0ea9aA",
+            "https://developer.garmin.com/gc-developer-program/enterprise/activity-api/",
+            "https://developer.garmin.com/fit/articles/file-types/activity.html"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "type-or-related-data-documented-payload-unverified",
+          "sourceRefs": [
+            "https://support.apple.com/ko-kr/guide/watch/apd1f24d4d35/27/watchos/27",
+            "https://developer.apple.com/documentation/healthkit/data-types"
+          ]
+        }
+      }
+    },
+    {
+      "id": "daily.steps",
+      "label": "일일 걸음",
+      "view": "daily",
+      "representation": "count",
+      "app": {
+        "ingestion": "not-connected",
+        "display": "not-implemented"
+      },
+      "priority": "P1",
+      "caveat": "일별 출처/중복",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "category-only-exact-field-unverified",
+          "sourceRefs": [
+            "https://support.garmin.com/en-IN/?faq=mBRMf4ks7XAQ03qtsbI8J6",
+            "https://developer.garmin.com/gc-developer-program/enterprise/health-api/"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "type-or-related-data-documented-payload-unverified",
+          "sourceRefs": [
+            "https://support.apple.com/guide/iphone/view-your-health-data-iphe3d379c32/26/ios/26",
+            "https://developer.apple.com/documentation/healthkit/data-types"
+          ]
+        }
+      }
+    },
+    {
+      "id": "daily.activeTime",
+      "label": "활동/운동 시간",
+      "view": "daily",
+      "representation": "min + definition",
+      "app": {
+        "ingestion": "not-connected",
+        "display": "not-implemented"
+      },
+      "priority": "P1",
+      "caveat": "workout duration과 구분",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "category-only-exact-field-unverified",
+          "sourceRefs": [
+            "https://support.garmin.com/en-IN/?faq=mBRMf4ks7XAQ03qtsbI8J6",
+            "https://developer.garmin.com/gc-developer-program/enterprise/health-api/"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "type-or-related-data-documented-payload-unverified",
+          "sourceRefs": [
+            "https://support.apple.com/guide/iphone/view-your-health-data-iphe3d379c32/26/ios/26",
+            "https://developer.apple.com/documentation/healthkit/data-types"
+          ]
+        }
+      }
+    },
+    {
+      "id": "daily.stand",
+      "label": "일어서기",
+      "view": "daily",
+      "representation": "hours/min",
+      "app": {
+        "ingestion": "not-connected",
+        "display": "not-implemented"
+      },
+      "priority": "P1",
+      "caveat": "제공자 정의",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "category-only-exact-field-unverified",
+          "sourceRefs": [
+            "https://support.garmin.com/en-IN/?faq=mBRMf4ks7XAQ03qtsbI8J6",
+            "https://developer.garmin.com/gc-developer-program/enterprise/health-api/"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "exact-field-mapping-needs-verification",
+          "sourceRefs": [
+            "https://support.apple.com/guide/iphone/view-your-health-data-iphe3d379c32/26/ios/26",
+            "https://developer.apple.com/documentation/healthkit/data-types"
+          ]
+        }
+      }
+    },
+    {
+      "id": "sleep.episodes",
+      "label": "수면 에피소드",
+      "view": "sleep",
+      "representation": "start/end/stages",
+      "app": {
+        "ingestion": "not-connected",
+        "display": "not-implemented"
+      },
+      "priority": "P1",
+      "caveat": "자정 경계/각성 구분",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "category-only-exact-field-unverified",
+          "sourceRefs": [
+            "https://support.garmin.com/en-IN/?faq=mBRMf4ks7XAQ03qtsbI8J6",
+            "https://developer.garmin.com/gc-developer-program/enterprise/health-api/"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "type-or-related-data-documented-payload-unverified",
+          "sourceRefs": [
+            "https://support.apple.com/guide/iphone/view-your-health-data-iphe3d379c32/26/ios/26",
+            "https://developer.apple.com/documentation/healthkit/hkcategoryvaluesleepanalysis"
+          ]
+        }
+      }
+    },
+    {
+      "id": "sleep.score",
+      "label": "수면 점수",
+      "view": "provider-score",
+      "representation": "provider score",
+      "app": {
+        "ingestion": "not-connected",
+        "display": "not-implemented"
+      },
+      "priority": "P1",
+      "caveat": "정확 API 제공 확인",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "exact-score-field-unverified",
+          "sourceRefs": [
+            "https://support.garmin.com/en-IN/?faq=mBRMf4ks7XAQ03qtsbI8J6",
+            "https://developer.garmin.com/gc-developer-program/enterprise/health-api/"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "native-result-getter-unverified",
+          "sourceRefs": [
+            "https://support.apple.com/en-mo/guide/watch/apded441a669/26/watchos/26",
+            "https://developer.apple.com/documentation/healthkit/data-types"
+          ]
+        }
+      }
+    },
+    {
+      "id": "health.restingHeartRate",
+      "label": "안정 심박",
+      "view": "health",
+      "representation": "bpm/window",
+      "app": {
+        "ingestion": "not-connected",
+        "display": "not-implemented"
+      },
+      "priority": "P1",
+      "caveat": "측정 기간",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "category-only-exact-field-unverified",
+          "sourceRefs": [
+            "https://support.garmin.com/en-IN/?faq=mBRMf4ks7XAQ03qtsbI8J6",
+            "https://developer.garmin.com/gc-developer-program/enterprise/health-api/"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "type-or-related-data-documented-payload-unverified",
+          "sourceRefs": [
+            "https://support.apple.com/guide/iphone/view-your-health-data-iphe3d379c32/26/ios/26",
+            "https://developer.apple.com/documentation/healthkit/data-types"
+          ]
+        }
+      }
+    },
+    {
+      "id": "health.hrv",
+      "label": "심박 변이도",
+      "view": "health",
+      "representation": "ms/method/window",
+      "app": {
+        "ingestion": "not-connected",
+        "display": "not-implemented"
+      },
+      "priority": "P1",
+      "caveat": "SDNN/RMSSD 합산 금지",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "category-only-exact-field-unverified",
+          "sourceRefs": [
+            "https://support.garmin.com/en-IN/?faq=mBRMf4ks7XAQ03qtsbI8J6",
+            "https://developer.garmin.com/gc-developer-program/enterprise/health-api/"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "type-or-related-data-documented-payload-unverified",
+          "sourceRefs": [
+            "https://support.apple.com/guide/iphone/view-your-health-data-iphe3d379c32/26/ios/26",
+            "https://developer.apple.com/documentation/healthkit/hkquantitytypeidentifier/heartratevariabilitysdnn"
+          ]
+        }
+      }
+    },
+    {
+      "id": "health.respiration",
+      "label": "호흡수",
+      "view": "health",
+      "representation": "breaths/min",
+      "app": {
+        "ingestion": "not-connected",
+        "display": "not-implemented"
+      },
+      "priority": "P1",
+      "caveat": "수면/주간 구분",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "category-only-exact-field-unverified",
+          "sourceRefs": [
+            "https://support.garmin.com/en-IN/?faq=mBRMf4ks7XAQ03qtsbI8J6",
+            "https://developer.garmin.com/gc-developer-program/enterprise/health-api/"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "type-or-related-data-documented-payload-unverified",
+          "sourceRefs": [
+            "https://support.apple.com/guide/iphone/view-your-health-data-iphe3d379c32/26/ios/26",
+            "https://developer.apple.com/documentation/healthkit/data-types"
+          ]
+        }
+      }
+    },
+    {
+      "id": "health.spo2",
+      "label": "산소포화도",
+      "view": "health",
+      "representation": "percent",
+      "app": {
+        "ingestion": "not-connected",
+        "display": "not-implemented"
+      },
+      "priority": "P1",
+      "caveat": "측정 한계/기기별 지원",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "category-only-exact-field-unverified",
+          "sourceRefs": [
+            "https://support.garmin.com/en-IN/?faq=mBRMf4ks7XAQ03qtsbI8J6",
+            "https://developer.garmin.com/gc-developer-program/enterprise/health-api/"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "type-or-related-data-documented-payload-unverified",
+          "sourceRefs": [
+            "https://support.apple.com/guide/iphone/view-your-health-data-iphe3d379c32/26/ios/26",
+            "https://developer.apple.com/documentation/healthkit/data-types"
+          ]
+        }
+      }
+    },
+    {
+      "id": "health.temperature",
+      "label": "온도",
+      "view": "health",
+      "representation": "degC or delta + baseline",
+      "app": {
+        "ingestion": "not-connected",
+        "display": "not-implemented"
+      },
+      "priority": "P1",
+      "caveat": "절대와 기준편차 구분",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "category-only-exact-field-unverified",
+          "sourceRefs": [
+            "https://support.garmin.com/en-IN/?faq=mBRMf4ks7XAQ03qtsbI8J6",
+            "https://developer.garmin.com/gc-developer-program/enterprise/health-api/"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "type-or-related-data-documented-payload-unverified",
+          "sourceRefs": [
+            "https://support.apple.com/guide/iphone/view-your-health-data-iphe3d379c32/26/ios/26",
+            "https://developer.apple.com/documentation/healthkit/data-types"
+          ]
+        }
+      }
+    },
+    {
+      "id": "health.vo2max",
+      "label": "VO2max",
+      "view": "provider-score",
+      "representation": "ml/kg/min",
+      "app": {
+        "ingestion": "not-connected",
+        "display": "not-implemented"
+      },
+      "priority": "P1",
+      "caveat": "제공자 산출값",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "category-only-exact-field-unverified",
+          "sourceRefs": [
+            "https://support.garmin.com/en-IN/?faq=mBRMf4ks7XAQ03qtsbI8J6",
+            "https://developer.garmin.com/gc-developer-program/enterprise/health-api/"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "type-or-related-data-documented-payload-unverified",
+          "sourceRefs": [
+            "https://support.apple.com/guide/iphone/view-your-health-data-iphe3d379c32/26/ios/26",
+            "https://developer.apple.com/documentation/healthkit/data-types"
+          ]
+        }
+      }
+    },
+    {
+      "id": "garmin.bodyBattery",
+      "label": "Body Battery",
+      "view": "provider-score",
+      "representation": "score/time",
+      "app": {
+        "ingestion": "not-connected",
+        "display": "not-implemented"
+      },
+      "priority": "P1",
+      "caveat": "Health API 후 실제 field 검증",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "exact-score-field-unverified",
+          "sourceRefs": [
+            "https://www8.garmin.com/manuals/webhelp/GUID-5D183A14-BB43-4A9B-B441-5F824214CE40/EN-US/GUID-87E1392B-2C55-40B7-A1FF-3AB9252DA0A0.html",
+            "https://developer.garmin.com/gc-developer-program/enterprise/health-api/"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "not-applicable-provider-specific",
+          "apiEvidence": "not-applicable-provider-specific",
+          "sourceRefs": []
+        }
+      }
+    },
+    {
+      "id": "garmin.readiness",
+      "label": "Training Readiness",
+      "view": "provider-score",
+      "representation": "score/components",
+      "app": {
+        "ingestion": "unverified-provider-field",
+        "display": "not-implemented"
+      },
+      "priority": "P1",
+      "caveat": "공개 UI 존재≠API 제공",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "exact-score-field-unverified",
+          "sourceRefs": [
+            "https://www8.garmin.com/manuals/webhelp/GUID-F41EAFB3-6CC9-42DE-9C6C-9E358DBB0671/EN-GB/GUID-C21BE0C8-A08E-4DA1-B6C6-2E0E2DDDB372.html",
+            "https://developer.garmin.com/gc-developer-program/enterprise/health-api/"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "not-applicable-provider-specific",
+          "apiEvidence": "not-applicable-provider-specific",
+          "sourceRefs": []
+        }
+      }
+    },
+    {
+      "id": "garmin.trainingEffect",
+      "label": "Training Effect",
+      "view": "provider-score",
+      "representation": "source scale",
+      "app": {
+        "ingestion": "unverified-provider-field",
+        "display": "not-implemented"
+      },
+      "priority": "P1",
+      "caveat": "원본 반환시만",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "exact-score-field-unverified",
+          "sourceRefs": [
+            "https://support.garmin.com/en-IN/?faq=mBRMf4ks7XAQ03qtsbI8J6",
+            "https://developer.garmin.com/gc-developer-program/enterprise/health-api/"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "not-applicable-provider-specific",
+          "apiEvidence": "not-applicable-provider-specific",
+          "sourceRefs": []
+        }
+      }
+    },
+    {
+      "id": "garmin.load",
+      "label": "Garmin 훈련 부하",
+      "view": "provider-score",
+      "representation": "score/window/method",
+      "app": {
+        "ingestion": "unverified-provider-field",
+        "display": "not-implemented"
+      },
+      "priority": "P1",
+      "caveat": "Apple 부하와 동일값 아님",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "exact-score-field-unverified",
+          "sourceRefs": [
+            "https://support.garmin.com/en-IN/?faq=mBRMf4ks7XAQ03qtsbI8J6",
+            "https://developer.garmin.com/gc-developer-program/enterprise/health-api/"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "not-applicable-provider-specific",
+          "apiEvidence": "not-applicable-provider-specific",
+          "sourceRefs": []
+        }
+      }
+    },
+    {
+      "id": "garmin.recoveryTime",
+      "label": "Garmin 회복 시간",
+      "view": "provider-score",
+      "representation": "duration/asOf",
+      "app": {
+        "ingestion": "unverified-provider-field",
+        "display": "not-implemented"
+      },
+      "priority": "P1",
+      "caveat": "원본 값+갱신시각",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "exact-score-field-unverified",
+          "sourceRefs": [
+            "https://support.garmin.com/en-IN/?faq=mBRMf4ks7XAQ03qtsbI8J6",
+            "https://developer.garmin.com/gc-developer-program/enterprise/health-api/"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "not-applicable-provider-specific",
+          "apiEvidence": "not-applicable-provider-specific",
+          "sourceRefs": []
+        }
+      }
+    },
+    {
+      "id": "apple.effort",
+      "label": "Apple 노력 수준",
+      "view": "subjective",
+      "representation": "score/source/method",
+      "app": {
+        "ingestion": "not-connected",
+        "display": "not-implemented"
+      },
+      "priority": "P1",
+      "caveat": "우리 RPE와 명시적 대응 전 분리",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "not-applicable-provider-specific",
+          "apiEvidence": "not-applicable-provider-specific",
+          "sourceRefs": []
+        },
+        "apple": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "type-or-related-data-documented-payload-unverified",
+          "sourceRefs": [
+            "https://support.apple.com/guide/iphone/view-your-health-data-iphe3d379c32/26/ios/26",
+            "https://developer.apple.com/documentation/healthkit/hkquantitytypeidentifier/workouteffortscore"
+          ]
+        }
+      }
+    },
+    {
+      "id": "apple.trainingLoad",
+      "label": "Apple 훈련 부하",
+      "view": "provider-score",
+      "representation": "window/classification",
+      "app": {
+        "ingestion": "unverified-provider-field",
+        "display": "not-implemented"
+      },
+      "priority": "P1",
+      "caveat": "정확 공개 getter 확인 필요",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "not-applicable-provider-specific",
+          "apiEvidence": "not-applicable-provider-specific",
+          "sourceRefs": []
+        },
+        "apple": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "native-result-getter-unverified",
+          "sourceRefs": [
+            "https://support.apple.com/guide/watch/track-your-training-load-apde4c07a6cf/27/watchos/27",
+            "https://developer.apple.com/documentation/healthkit/data-types"
+          ]
+        }
+      }
+    },
+    {
+      "id": "health.trends",
+      "label": "건강 추세",
+      "view": "health",
+      "representation": "period/coverage/source",
+      "app": {
+        "ingestion": "not-connected",
+        "display": "not-implemented"
+      },
+      "priority": "P1",
+      "caveat": "기존 앱 trend와 원본 통계 구분",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "category-only-exact-field-unverified",
+          "sourceRefs": [
+            "https://support.garmin.com/en-IN/?faq=mBRMf4ks7XAQ03qtsbI8J6",
+            "https://developer.garmin.com/gc-developer-program/enterprise/health-api/"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "native-result-getter-unverified",
+          "sourceRefs": [
+            "https://support.apple.com/guide/iphone/view-your-health-data-iphe3d379c32/26/ios/26",
+            "https://developer.apple.com/documentation/healthkit/data-types"
+          ]
+        }
+      }
+    },
+    {
+      "id": "garmin.hrvStatus",
+      "label": "HRV Status",
+      "view": "provider-score",
+      "representation": "status/7d mean/baseline/asOf",
+      "app": {
+        "ingestion": "unverified-provider-field",
+        "display": "not-implemented"
+      },
+      "priority": "P1",
+      "caveat": "공급자 상태와 원본 HRV/심박 수치 구분; 정확 응답 필드 확인",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "exact-score-field-unverified",
+          "sourceRefs": [
+            "https://www8.garmin.com/manuals/webhelp/GUID-3B607AEB-9EB5-4BF3-A38D-1F9926BB9F65/EN-US/GUID-9282196F-D969-404D-B678-F48A13D8D0CB.html",
+            "https://developer.garmin.com/gc-developer-program/enterprise/health-api/"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "not-applicable-provider-specific",
+          "apiEvidence": "not-applicable-provider-specific",
+          "sourceRefs": []
+        }
+      }
+    },
+    {
+      "id": "garmin.stress",
+      "label": "Garmin Stress",
+      "view": "provider-score",
+      "representation": "score/timestamp/daily summary",
+      "app": {
+        "ingestion": "unverified-provider-field",
+        "display": "not-implemented"
+      },
+      "priority": "P1",
+      "caveat": "공급자 상태와 원본 HRV/심박 수치 구분; 정확 응답 필드 확인",
+      "realSourceCompared": false,
+      "providers": {
+        "garmin": {
+          "uiEvidence": "metric-documented-screen-not-executed",
+          "apiEvidence": "health-category-documented-exact-payload-unverified",
+          "sourceRefs": [
+            "https://support.garmin.com/en-HK/?faq=WT9BmhjacO4ZpxbCc0EKn9",
+            "https://developer.garmin.com/gc-developer-program/enterprise/health-api/"
+          ]
+        },
+        "apple": {
+          "uiEvidence": "not-applicable-provider-specific",
+          "apiEvidence": "not-applicable-provider-specific",
+          "sourceRefs": []
+        }
+      }
+    }
+  ],
+  "evidenceLegend": {
+    "metric-documented-screen-not-executed": "Official metric or feature documentation, not every native screen observed. See research reports for observed images.",
+    "category-only-exact-field-unverified": "API overview category, not authorized schema or received payload.",
+    "type-or-related-data-documented-payload-unverified": "Public API type or related data exists, exact adapter and actual payload unverified."
+  }
+}

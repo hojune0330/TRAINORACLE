@@ -1,0 +1,21 @@
+.imported-activity-detail { display: grid; gap: var(--space-3); min-width: 0; margin-block: var(--space-4); padding-block: var(--space-4); border-block: 1px solid var(--line); }
+.imported-activity-detail :is(h3, h4, p, dl, dd) { margin: 0; }
+.imported-activity-detail h3 { font: 700 var(--fs-body) / 1.5 var(--sans); }
+.imported-activity-detail h4 { font: 650 var(--fs-body) / 1.5 var(--sans); }
+.imported-activity-detail > p, .imported-activity-detail__laps > p { color: var(--ink-2); font-size: var(--fs-body-sm); }
+.imported-activity-detail__context { display: grid; gap: var(--space-2); }
+.imported-activity-detail__context > div { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: var(--space-2); align-items: start; }
+.imported-activity-detail__context dt { color: var(--ink-2); font-size: var(--fs-body-sm); }
+.imported-activity-detail__context dd { min-width: 0; font-size: var(--fs-body-sm); }
+.imported-activity-detail__context time { font-variant-numeric: tabular-nums; }
+.imported-activity-detail__laps { display: grid; gap: var(--space-2); min-width: 0; }
+.imported-activity-detail__table { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: var(--fs-body-sm); }
+.imported-activity-detail__table caption { text-align: left; color: var(--ink-2); padding-block: var(--space-2); }
+.imported-activity-detail__lap-column { width: 25%; }
+.imported-activity-detail__distance-column { width: 30%; }
+.imported-activity-detail__table :is(th, td) { padding: var(--space-3) var(--space-1); border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; overflow-wrap: anywhere; }
+.imported-activity-detail__table thead th { color: var(--ink-2); font-weight: 500; }
+.imported-activity-detail__table tbody th { font-weight: 600; }
+.imported-activity-detail__table small { display: block; color: var(--ink-2); font-size: inherit; font-weight: 400; margin-top: var(--space-1); }
+.imported-activity-detail__value { font-variant-numeric: tabular-nums; }
+.imported-activity-detail__page { text-align: right; }

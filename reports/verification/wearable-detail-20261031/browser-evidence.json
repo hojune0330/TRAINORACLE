@@ -1,0 +1,40 @@
+{
+  "date": "2026-10-31",
+  "scope": "local synthetic component fixture; LogDetail integration covered by contract tests",
+  "personalData": false,
+  "providerCalls": false,
+  "observations": [
+    {
+      "viewport": 375,
+      "documentWidth": 360,
+      "rows": 20
+    },
+    {
+      "action": "show20",
+      "rowsIncludingHeader": 41
+    },
+    {
+      "action": "keyboard-showLast2",
+      "rowsIncludingHeader": 43
+    },
+    {
+      "viewport": 320,
+      "documentWidth": 305,
+      "largeTextDetailFontPx": 26
+    },
+    {
+      "state": "empty",
+      "tableCount": 0,
+      "actualZeroShown": true
+    }
+  ],
+  "screenshots": [
+    "detail-375-top.jpg",
+    "detail-375-final.jpg",
+    "detail-320-large-laps.jpg",
+    "detail-320-empty.jpg"
+  ],
+  "consoleErrors": 0,
+  "consoleNote": "Development fixture hot reload emitted one createRoot warning. Added root disposal; fresh page loaded successfully with zero console errors.",
+  "consoleErrorsBeforeFixtureFix": 1
+}
