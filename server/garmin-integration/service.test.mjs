@@ -43,6 +43,7 @@ before(async()=>{
   await assert.rejects(db.exec(migration),/GARMIN_PREREQUISITE_MISSING/);await db.exec('rollback');
   assert.equal((await db.query("select to_regclass('public.garmin_connections') as name")).rows[0].name,null);
   await db.exec(migration);
+  await db.exec(await readFile(new URL('../../supabase/migrations/20261104231500_garmin_credential_maintenance.sql',import.meta.url),'utf8'));
   assert.equal((await db.query('select count(*)::int as count from public.garmin_integration_keys')).rows[0].count,0);
   assert.equal((await db.query('select count(*)::int as count from public.garmin_integration_controls')).rows[0].count,0);
   await approveSyntheticOracleStorage(db);
@@ -57,13 +58,14 @@ before(async()=>{
     const identity=identities.get(req.headers.authorization?.replace('Bearer ',''));const relay=req.headers.authorization===`Bearer ${serviceToken}`;
     if(!identity&&!relay)return json(res,401,{});
     if(req.url==='/auth/v1/user')return json(res,200,{id:identity?.ownerId});
-    if(req.url!=='/rest/v1/rpc/garmin_integration_attested')return json(res,404,{});
+    const rpc=req.url==='/rest/v1/rpc/garmin_integration_attested'?'garmin_integration_attested':req.url==='/rest/v1/rpc/garmin_maintenance_attested'?'garmin_maintenance_attested':null;
+    if(!rpc)return json(res,404,{});
     let proof;try{proof=JSON.parse(await raw(req));}catch{return json(res,400,{});}
     const work=async()=>{try{
       if(relay){await db.exec('reset role;set role service_role');await db.query("select set_config('request.jwt.claim.sub','',false),set_config('request.jwt.claims',$1,false)",[JSON.stringify({role:'service_role'})]);}
       else await setOracleAuth(db,identity.ownerId,identity.sessionId);
       await db.query("select set_config('request.headers',$1,false)",[JSON.stringify({'x-trainoracle-storage-revision':req.headers['x-trainoracle-storage-revision']??''})]);
-      const result=await db.query('select public.garmin_integration_attested($1,$2,$3) value',[proof.request_text,proof.signature,proof.key_id]);
+      const result=await db.query(`select public.${rpc}($1,$2,$3) value`,[proof.request_text,proof.signature,proof.key_id]);
       if(dropConfirmResponse&&JSON.parse(proof.request_text).action==='confirm'){dropConfirmResponse=false;res.destroy();return;}
       json(res,200,result.rows[0].value);
     }catch(error){if(process.env.GARMIN_SYNTHETIC_SQL_DIAGNOSTICS==='1')process.stderr.write(JSON.stringify({code:error.code,message:error.message,where:error.where})+'\n');json(res,403,{error:'denied',code:error.code});}};
@@ -72,12 +74,13 @@ before(async()=>{
   const dbUrl=await listen(dbServer);
   providerServer=createServer(async(req,res)=>{
     const body=req.method==='POST'?new URLSearchParams(await raw(req)):null;providerCalls.push({url:req.url,body:body?Object.fromEntries(body):null,authorization:req.headers.authorization});
-    if(providerHook)await providerHook();
+    if(providerHook)await providerHook({path:req.url,body});
     if(mode==='redirect'){res.writeHead(302,{location:'http://127.0.0.1:9/never'});return res.end();}
     if(req.url==='/subject')return json(res,200,garminWireMode?{userId:subject}:{subject});
     if(req.url==='/permissions')return json(res,mode==='permissions_error'?503:200,{permissions:['ACTIVITY_EXPORT']});
-    if(req.url==='/revoke'||req.url==='/registration')return json(res,200,{});
+    if(req.url==='/revoke'||req.url==='/registration')return json(res,mode==='revocation_error'?503:200,{});
     if(req.url==='/token'){
+      if(mode==='token_error')return json(res,503,{});
       if(body.get('grant_type')==='authorization_code'&&createHash('sha256').update(body.get('code_verifier')??'').digest('base64url')!==lastChallenge)return json(res,400,{});
       return json(res,200,{access_token:mode==='permissions_error'?'PRIVATE_ROTATED_ACCESS_CANARY':'PRIVATE_ACCESS_TOKEN_CANARY',refresh_token:mode==='permissions_error'?'PRIVATE_ROTATED_REFRESH_CANARY':'PRIVATE_REFRESH_TOKEN_CANARY',refresh_token_expires_in:7775998,token_type:'Bearer',expires_in:3600,scope:garminWireMode?GARMIN_SCOPES.join(' '):mode==='extra_scope'?'activity:read unsafe:scope':'activity:read'});
     }
@@ -233,6 +236,128 @@ test('successful token rotation followed by permission failure retains only the 
   const row=(await admin('select state,credential from public.garmin_connections where user_id=$1',[owner])).rows[0];assert.equal(row.state,'ERROR');
   const current=await vault.open(row.credential,{ownerId:owner,connectionId:c.connection_id,epoch:c.epoch,purpose:'credentials',record:''});assert.equal(current.refreshToken,'PRIVATE_ROTATED_REFRESH_CANARY');
   mode='normal';const disconnected=await call({action:'disconnect'});assert.equal(disconnected.data.remoteRevocationPending,false);assert.equal(providerCalls.filter(x=>x.url==='/revoke').at(-1).body.token,'PRIVATE_ROTATED_REFRESH_CANARY');
+});
+async function expireCredentials(c){const context={ownerId:c.user_id,connectionId:c.connection_id,epoch:c.epoch,purpose:'credentials',record:''};const old=await vault.open(c.credential,context);const credential=await vault.seal({...old,expiresAt:new Date(Date.now()-1000).toISOString()},context);await admin('update public.garmin_connections set credential=$1,maintenance_due_at=clock_timestamp() where user_id=$2',[credential,c.user_id]);}
+test('automatic maintenance uses real signed HTTP/SQL; two workers and manual refresh cannot rotate twice',async()=>{
+  const c=await connect();await expireCredentials(c);let entered,release;
+  const started=new Promise(resolve=>entered=resolve),gate=new Promise(resolve=>release=resolve);
+  providerHook=async({path})=>{if(path==='/token'){entered();await gate;}};
+  const running=relay({},'/internal/garmin/maintenance');await started;
+  try{assert.equal((await relay({},'/internal/garmin/maintenance')).data.checked,0);assert.equal((await call({action:'refresh'})).data.error,'BUSY');}
+  finally{release();}
+  assert.equal((await running).data.refreshed,1);providerHook=null;
+  assert.equal(providerCalls.filter(x=>x.body?.grant_type==='refresh_token').length,1);
+  const row=(await admin('select * from public.garmin_connections where user_id=$1',[owner])).rows[0];
+  assert.equal(row.credential_revision,2);assert.equal(row.refresh_nonce,null);assert.equal(row.rotation_phase,'IDLE');
+  assert.ok(Date.parse(row.maintenance_due_at)>Date.now());assert.equal((await relay({},'/internal/garmin/maintenance')).data.checked,0);
+});
+test('maintenance without approval, matching consent revision or provider permission performs no token HTTP',async()=>{
+  const c=await connect();await expireCredentials(c);providerCalls=[];
+  await admin('update public.garmin_integration_controls set approved=false');assert.equal((await relay({},'/internal/garmin/maintenance')).data.checked,0);
+  await admin('update public.garmin_integration_controls set approved=true');await admin('update public.account_storage_consents set revision=2 where user_id=$1',[owner]);
+  assert.equal((await relay({},'/internal/garmin/maintenance')).data.checked,0);await admin('update public.account_storage_consents set revision=1 where user_id=$1',[owner]);
+  await admin("update public.garmin_connections set permissions='{}' where user_id=$1",[owner]);assert.equal((await relay({},'/internal/garmin/maintenance')).data.checked,0);
+  assert.equal(providerCalls.length,0);
+  await setOracleAuth(db,owner,sid);await assert.rejects(()=>db.query('select public.garmin_maintenance_attested($1,$2,$3)',['{}','0'.repeat(64),'relay']));
+});
+test('disconnect during rotation preserves successor only in existing outbox and blocks reconnect until remote removal',async()=>{
+  const c=await connect();await expireCredentials(c);mode='permissions_error';let entered,release;
+  const started=new Promise(resolve=>entered=resolve),gate=new Promise(resolve=>release=resolve);
+  providerHook=async({path})=>{if(path==='/token'){entered();await gate;}};
+  const running=relay({},'/internal/garmin/maintenance');await started;
+  try{const stopped=await call({action:'disconnect'});assert.equal(stopped.data.remoteRevocationPending,true);assert.equal(stopped.data.connection.state,'REVOKED');assert.equal((await call({action:'connect'})).data.error,'REVOKE_PENDING');}
+  finally{release();}
+  assert.equal((await running).data.refreshed,0);providerHook=null;
+  const rows=(await admin('select * from public.garmin_revocation_outbox')).rows;assert.equal(rows.length,1);assert.equal(rows[0].rotation_phase,'IDLE');
+  const current=await vault.open(rows[0].credential,{ownerId:owner,connectionId:c.connection_id,epoch:c.epoch,purpose:'credentials',record:''});assert.equal(current.refreshToken,'PRIVATE_ROTATED_REFRESH_CANARY');
+  assert.equal((await admin('select credential from public.garmin_connections where user_id=$1',[owner])).rows[0].credential,null);
+  mode='normal';assert.equal((await relay({},'/internal/garmin/revocations')).data.completed,1);
+  assert.equal(providerCalls.filter(x=>x.url==='/revoke').at(-1).body.token,'PRIVATE_ROTATED_REFRESH_CANARY');
+  assert.equal((await call({action:'connect'})).status,200);
+});
+test('purpose withdrawal during automatic exchange erases credentials and prevents a successor from reappearing',async()=>{
+  const c=await connect();await expireCredentials(c);let once=false;
+  providerHook=async({path})=>{if(path!=='/token'||once)return;once=true;await admin('update public.account_storage_consents set health_storage=false where user_id=$1',[owner]);};
+  try{assert.equal((await relay({},'/internal/garmin/maintenance')).data.refreshed,0);assert.equal((await admin('select credential from public.garmin_connections where user_id=$1',[owner])).rows[0].credential,null);assert.equal((await admin('select count(*) n from public.garmin_revocation_outbox')).rows[0].n,0);assert.equal(providerCalls.filter(x=>x.url==='/permissions').length,1);}
+  finally{providerHook=null;await admin('update public.account_storage_consents set health_storage=true where user_id=$1',[owner]);}
+});
+test('manual refresh session revocation retains rotated ciphertext but cannot reactivate the connection',async()=>{
+  await connect();mode='permissions_error';let once=false;
+  providerHook=async({path})=>{if(path!=='/token'||once)return;once=true;await admin("update auth.sessions set not_after=clock_timestamp()-interval '1 second' where id=$1",[sid]);};
+  try{assert.equal((await call({action:'refresh'})).status,409);const row=(await admin('select state,credential_revision,credential from public.garmin_connections where user_id=$1',[owner])).rows[0];assert.equal(row.state,'ERROR');assert.equal(row.credential_revision,2);assert.ok(row.credential);}
+  finally{providerHook=null;await admin("update auth.sessions set not_after=clock_timestamp()+interval '1 hour' where id=$1",[sid]);}
+});
+test('expired revocation access token rotates once, retains successor across DELETE failure and retries safely',async()=>{
+  const c=await connect();await expireCredentials(c);mode='revocation_error';
+  const stopped=await call({action:'disconnect'});assert.equal(stopped.data.remoteRevocationPending,true);
+  assert.equal(providerCalls.filter(x=>x.body?.grant_type==='refresh_token').length,1);
+  let row=(await admin('select * from public.garmin_revocation_outbox')).rows[0];assert.equal(row.rotation_phase,'IDLE');
+  const saved=await vault.open(row.credential,{ownerId:owner,connectionId:c.connection_id,epoch:c.epoch,purpose:'credentials',record:''});assert.ok(Date.parse(saved.expiresAt)>Date.now());
+  mode='normal';await admin("update public.garmin_revocation_outbox set lease_until=clock_timestamp()-interval '1 second'");
+  assert.equal((await relay({},'/internal/garmin/revocations')).data.completed,1);assert.equal(providerCalls.filter(x=>x.body?.grant_type==='refresh_token').length,1);
+  row=(await admin('select * from public.garmin_revocation_outbox')).rows[0];assert.equal(row.credential,null);assert.ok(row.completed_at);
+});
+test('unknown token exchange never retries the same refresh token after worker restart or lease expiry',async()=>{
+  const c=await connect();await expireCredentials(c);mode='token_error';assert.equal((await relay({},'/internal/garmin/maintenance')).status,502);
+  await admin("update public.garmin_connections set refresh_until=clock_timestamp()-interval '1 second'");
+  mode='normal';assert.equal((await relay({},'/internal/garmin/maintenance')).data.refreshed,0);assert.equal(providerCalls.filter(x=>x.body?.grant_type==='refresh_token').length,1);
+});
+
+test('expired pre-exchange claim is recoverable but an interrupted STARTED rotation is never replayed',async()=>{
+  const c=await connect();await expireCredentials(c);
+  const first=(await repository.maintenance({action:'claim',configHash:provider.configHash,lease:randomUUID()})).row;assert.equal(first.rotation_phase,'CLAIMED');
+  await admin("update public.garmin_connections set refresh_until=clock_timestamp()-interval '1 second'");
+  assert.equal((await relay({},'/internal/garmin/maintenance')).data.refreshed,1);
+  const current=(await admin('select * from public.garmin_connections where user_id=$1',[owner])).rows[0];await expireCredentials(current);providerCalls=[];
+  const next=(await repository.maintenance({action:'claim',configHash:provider.configHash,lease:randomUUID()})).row;
+  assert.equal((await repository.maintenance({action:'start',configHash:provider.configHash,ownerId:owner,connectionId:next.connection_id,epoch:next.epoch,credentialRevision:next.credential_revision,lease:next.refresh_nonce})).kind,'started');
+  await admin("update public.garmin_connections set refresh_until=clock_timestamp()-interval '1 second'");
+  const result=await relay({},'/internal/garmin/maintenance');assert.equal(result.data.reconnectRequired,1);assert.equal(providerCalls.length,0);
+  assert.equal((await admin('select state from public.garmin_connections where user_id=$1',[owner])).rows[0].state,'ERROR');
+});
+
+test('ambiguous refresh during remote removal remains pending after lease expiry without a second exchange',async()=>{
+  const c=await connect();await expireCredentials(c);mode='token_error';
+  assert.equal((await call({action:'disconnect'})).data.remoteRevocationPending,true);
+  assert.equal((await admin('select rotation_phase from public.garmin_revocation_outbox')).rows[0].rotation_phase,'STARTED');
+  await admin("update public.garmin_revocation_outbox set lease_until=clock_timestamp()-interval '1 second'");mode='normal';
+  assert.equal((await relay({},'/internal/garmin/revocations')).data.completed,0);assert.equal(providerCalls.filter(x=>x.body?.grant_type==='refresh_token').length,1);
+  assert.equal((await call({action:'connect'})).data.error,'REVOKE_PENDING');
+});
+
+test('disconnect after manual lease acknowledgement but before exchange releases its reserved outbox without rotating',async()=>{
+  await connect();let disconnected;
+  const interleaved={...repository,call:async(auth,input)=>{const result=await repository.call(auth,input);
+    if(input.action==='leaseRefresh')disconnected=await call({action:'disconnect'});return result;}};
+  const server=createNodeServer(createGarminHandler({...options(),repository:interleaved})),url=await listen(server);
+  try{assert.equal((await call({action:'refresh'},{url})).status,409);assert.equal(disconnected.data.remoteRevocationPending,true);
+    assert.equal(providerCalls.filter(x=>x.body?.grant_type==='refresh_token').length,0);
+    assert.equal((await admin('select rotation_phase from public.garmin_revocation_outbox')).rows[0].rotation_phase,'IDLE');
+    assert.equal((await relay({},'/internal/garmin/revocations')).data.completed,1);assert.equal((await call({action:'connect'})).status,200);
+  }finally{await close(server);}
+});
+
+test('ACCOUNT operation stop blocks new use but preserves expired-token remote removal',async()=>{
+  const c=await connect();await expireCredentials(c);await admin("update public.service_feature_controls set enabled=false where feature_key='ACCOUNT'");
+  try{assert.equal((await admin('select public.account_storage_subject_allowed($1) allowed',[owner])).rows[0].allowed,false);
+    assert.equal((await call({action:'disconnect'})).data.remoteRevocationPending,false);
+    assert.equal(providerCalls.filter(x=>x.body?.grant_type==='refresh_token').length,1);
+    assert.equal(providerCalls.filter(x=>x.url==='/revoke').length,1);
+  }finally{await admin("update public.service_feature_controls set enabled=true where feature_key='ACCOUNT'");}
+});
+
+test('ACCOUNT stop during token exchange retains only its encrypted successor for removal and never reactivates',async()=>{
+  const c=await connect();await expireCredentials(c);mode='permissions_error';let once=false;
+  providerHook=async({path})=>{if(path!=='/token'||once)return;once=true;await admin("update public.service_feature_controls set enabled=false where feature_key='ACCOUNT'");};
+  try{
+    const result=await relay({},'/internal/garmin/maintenance');assert.equal(result.data.refreshed,0);assert.equal(result.data.reconnectRequired,1);
+    const row=(await admin('select state,credential,credential_revision from public.garmin_connections where user_id=$1',[owner])).rows[0];
+    assert.equal(row.state,'ERROR');assert.equal(row.credential_revision,2);
+    const saved=await vault.open(row.credential,{ownerId:owner,connectionId:c.connection_id,epoch:c.epoch,purpose:'credentials',record:''});assert.equal(saved.refreshToken,'PRIVATE_ROTATED_REFRESH_CANARY');
+    assert.equal(providerCalls.filter(x=>x.url==='/permissions').length,1);
+    providerHook=null;mode='normal';assert.equal((await call({action:'disconnect'})).data.remoteRevocationPending,false);
+    assert.equal(providerCalls.filter(x=>x.url==='/revoke').at(-1).body.token,'PRIVATE_ROTATED_REFRESH_CANARY');
+  }finally{providerHook=null;await admin("update public.service_feature_controls set enabled=true where feature_key='ACCOUNT'");}
 });
 test('real purpose-consent withdrawal erases new inbox/parts/credentials and old journal; late events remain denied',async()=>{
   const c=await connect(),received=await receive(c);assert.equal((await confirm(received)).status,200);

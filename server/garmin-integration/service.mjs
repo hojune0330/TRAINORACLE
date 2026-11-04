@@ -7,6 +7,7 @@ import { VERSION, UUID, ID, exact, fail, IntegrationError, canonical, sha, sign,
 import { createSupabaseRepository } from './repository.mjs';
 import {createGarminStarterProvider} from './garmin-starter.mjs';
 import {createGarminPushRuntime} from './push.mjs';
+import {createGarminMaintenance} from './maintenance.mjs';
 
 const context=(ownerId,connectionId,epoch,purpose,record='')=>({ownerId,connectionId,epoch,purpose,record});
 const credentialsContext=(ownerId,connectionId,epoch)=>context(ownerId,connectionId,epoch,'credentials');
@@ -41,6 +42,7 @@ export function providerJournalDocument(auth,row,observation,clock=null) {
 export function createGarminHandler({repository,vault,provider,identityKey,relayHttpKey,journalKeyring,journalAttest,push,allowedOrigins=[],enabled=false,now=()=>Date.now()}) {
   const origins=new Set(allowedOrigins);const configHash=provider?.configHash??'0'.repeat(64);
   const ensureProvider=()=>{if(!enabled||!provider||!provider.isCurrent())fail(503,'PROVIDER_CONFIGURATION_PENDING');};
+  const maintenance=repository&&provider&&vault?createGarminMaintenance({repository,provider,vault,now}):null;
   const subjectHash=subject=>sign(identityKey,`garmin-subject-v1:${subject}`);
   async function decode(row){if(!row.encrypted_observation||row.state==='DELETED')return null;return vault.open(row.encrypted_observation,rowContext(row));}
   async function sourceContext(row){return row.encrypted_context?vault.open(row.encrypted_context,context(row.user_id,row.connection_id,row.epoch,'source-context',`${row.inbox_id}:${row.source_revision}`)):null;}
@@ -50,24 +52,23 @@ export function createGarminHandler({repository,vault,provider,identityKey,relay
     const respond=(status,value)=>new Response(JSON.stringify(status<400?{schemaVersion:VERSION,...value}:value),{status,headers});
     try{
       const path=new URL(request.url).pathname;
-      if(!['/api/garmin-integration','/internal/garmin/events','/internal/garmin/revocations','/internal/garmin/process','/webhooks/garmin'].includes(path))return respond(404,{error:'NOT_FOUND'});
+      if(!['/api/garmin-integration','/internal/garmin/events','/internal/garmin/revocations','/internal/garmin/process','/internal/garmin/maintenance','/webhooks/garmin'].includes(path))return respond(404,{error:'NOT_FOUND'});
       if(request.method==='OPTIONS'){if(!origin||!origins.has(origin)||path!=='/api/garmin-integration')return respond(403,{error:'ACCESS_DENIED'});return new Response(null,{status:204,headers:{...headers,'access-control-allow-methods':'POST, OPTIONS','access-control-allow-headers':'authorization, content-type, x-trainoracle-storage-revision','access-control-max-age':'0'}});}
       if(request.method!=='POST')return respond(405,{error:'METHOD_NOT_ALLOWED'});
       if(origin&&!origins.has(origin))fail(403,'ACCESS_DENIED');
       if(!repository||!vault)fail(503,'OPERATIONS_PENDING');
       if(path==='/webhooks/garmin'){if(!push)fail(503,'PROVIDER_CONFIGURATION_PENDING');return respond(200,await push.ingress(request,transport.peerAddress));}
       if(path.startsWith('/internal/')){
-        if(path==='/internal/garmin/events'||path==='/internal/garmin/process')ensureProvider();else if(!provider)fail(503,'PROVIDER_CONFIGURATION_PENDING');
+        if(path!=='/internal/garmin/revocations')ensureProvider();else if(!provider)fail(503,'PROVIDER_CONFIGURATION_PENDING');
         if(origin||!relayHttpKey)fail(403,'ACCESS_DENIED');
         const timestamp=request.headers.get('x-trainoracle-relay-timestamp');if(!/^\d{10,13}$/.test(timestamp??'')||Math.abs(now()-Number(timestamp))>60_000)fail(403,'ACCESS_DENIED');
         const input=await boundedJson(request,6_500_000);
         if(!sameSignature(request.headers.get('x-trainoracle-relay-signature'),sign(relayHttpKey,`${timestamp}\n${path}\n${canonical(input)}`)))fail(403,'ACCESS_DENIED');
         if(path==='/internal/garmin/process'){if(!exact(input,[])||!push)fail(422,'INVALID_INPUT');return respond(200,await push.processOne());}
+        if(path==='/internal/garmin/maintenance'){if(!exact(input,[])||!maintenance)fail(422,'INVALID_INPUT');return respond(200,await maintenance.processOne());}
         if(path==='/internal/garmin/events'&&provider.kind==='GARMIN_STARTER')fail(422,'UNSUPPORTED_GARMIN_FEED');
         if(path==='/internal/garmin/revocations'){
-          if(!exact(input,[]))fail(422,'INVALID_INPUT');const rows=(await repository.relay({action:'revocations',configHash})).rows;let completed=0;
-          for(const row of rows){if(row.config_hash!==configHash)continue;const credentials=await vault.open(row.credential,credentialsContext(row.user_id,row.connection_id,row.epoch));if(!row.lease_id||Date.parse(row.lease_until)-now()<20000)continue;try{if(await provider.revoke(credentials)){await repository.relay({action:'revoked',configHash,id:row.id,lease:row.lease_id});completed++;}}catch{/* Keep encrypted outbox for a later explicitly scheduled retry; no plaintext log. */}}
-          return respond(200,{completed,pending:rows.length-completed});
+          if(!exact(input,[])||!maintenance)fail(422,'INVALID_INPUT');return respond(200,await maintenance.revocations());
         }
         if(!exact(input,['eventId','connectionId','epoch','subject','activityId','revision','kind','observation','detail'])||!ID.test(input.eventId)||!UUID.test(input.connectionId)||!UUID.test(input.epoch)||!ID.test(input.subject)||!ID.test(input.activityId)||!positive(input.revision)||!['UPSERT','DELETE'].includes(input.kind))fail(422,'INVALID_INPUT');
         if(input.kind==='DELETE'&&(input.observation!==null||input.detail!==null))fail(422,'INVALID_INPUT');
@@ -94,7 +95,7 @@ export function createGarminHandler({repository,vault,provider,identityKey,relay
       }
       if(input.action==='disconnect') {
         const result=await call({action:'disconnect'});const revoked=result.revocation;
-        if(revoked&&provider&&revoked.config_hash===configHash){try{const credentials=await vault.open(revoked.credential,credentialsContext(auth.ownerId,revoked.connection_id,revoked.epoch));if(revoked.lease_id&&Date.parse(revoked.lease_until)-now()>=20000&&await provider.revoke(credentials))await call({action:'ackRevocation',id:revoked.id,lease:revoked.lease_id});}catch{/* Local disconnection is durable; remote failure remains explicit. */}}
+        if(revoked&&maintenance&&revoked.config_hash===configHash){try{await maintenance.revoke(revoked);}catch{/* Local disconnection is durable; remote failure remains explicit. */}}
         const pending=await call({action:'revocationStatus'});const status=await call({action:'status'});return respond(200,{connection:connection(status.connection),remoteRevocationPending:pending.pending});
       }
       ensureProvider();
@@ -116,12 +117,9 @@ export function createGarminHandler({repository,vault,provider,identityKey,relay
       }
       if(input.action==='refresh') {
         const lease=randomUUID();const row=await call({action:'leaseRefresh',lease});
-        const credentials=await vault.open(row.credential,credentialsContext(auth.ownerId,row.connectionId,row.epoch));
-        let next;try{next=await provider.refresh(credentials);next.permissions=await provider.permissions(next);if(!next.permissions.includes('ACTIVITY_EXPORT'))fail(409,'PROVIDER_PERMISSION_REQUIRED');}
-        catch(error){try{await call({action:'failRefresh',lease,epoch:row.epoch,credentialRevision:row.credentialRevision,
-          ...(next?{credential:await vault.seal(next,credentialsContext(auth.ownerId,row.connectionId,row.epoch))}:{})});}
-          catch{if(next){try{await provider.revoke(next);}catch{}}}throw error;}
-        await call({action:'finishRefresh',lease,epoch:row.epoch,credentialRevision:row.credentialRevision,permissions:next.permissions,credential:await vault.seal(next,credentialsContext(auth.ownerId,row.connectionId,row.epoch))});
+        const result=await maintenance.rotate({user_id:auth.ownerId,connection_id:row.connectionId,epoch:row.epoch,
+          credential:row.credential,credential_revision:row.credentialRevision,refresh_nonce:lease},{sessionId:auth.sessionId});
+        if(!result.refreshed)fail(409,'OAUTH_RESTART_REQUIRED');
         return respond(200,{connection:connection((await call({action:'status'})).connection)});
       }
       if(input.action==='inbox'){const rows=(await call(input)).rows;const selected=rows.slice(0,20);const items=await Promise.all(selected.map(item));if(selected.length)await call({action:'verify',epoch:selected[0].epoch});return respond(200,{items,nextCursor:rows.length>20?selected.at(-1).inbox_id:null});}

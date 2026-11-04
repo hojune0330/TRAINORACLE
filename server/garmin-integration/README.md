@@ -190,11 +190,32 @@ to retry a remote API; provider-side disconnection may then require the provider
 account interface.
 
 Each remote removal has a 60-second SQL lease shared by immediate disconnect and
-workers. Completion must match its lease; the runtime refuses to start a DELETE
-with less than 20 seconds remaining. This prevents overlapping old/new deployment
+workers. Completion must match its lease; the runtime requires 20 seconds before
+starting the operation and rechecks at least 10 seconds before DELETE. This prevents overlapping deployment
 workers from removing a newly connected grant. Failed attempts remain pending
 until the lease can be retried. A live lease still blocks reconnect if a vendor
 deregistration notice arrives before the leased HTTP call finishes.
+
+The same worker calls signed `POST /internal/garmin/maintenance` with `{}`. It
+selects one due connection using the RELAY-scoped HMAC RPC, matching approved
+configuration, current account/storage consent revision, ACTIVE epoch and
+ACTIVITY_EXPORT permission. Browser sessions remain required for a user-requested
+refresh; background maintenance uses the current server-side subject/consent
+authority and does not require a browser to stay logged in. Credentials are
+checked at most six hours apart and refreshed within five minutes of access or
+refresh expiry. The SQL lease excludes simultaneous manual/worker
+rotation. A crash before remote exchange can be retried; an exchange whose
+outcome is unknown requires reconnect and never reuses its old refresh token.
+
+A successfully rotated credential is encrypted and saved before the permission
+HTTP call. If permission, session or approval changes during the call, the
+connection cannot reactivate. Disconnect during rotation retains the successor
+only in the already-created revocation outbox. Purpose withdrawal or account
+erasure deletes that outbox, so a late response cannot restore credentials.
+Remote removal refreshes an expired access token once and persists its rotating
+successor before DELETE; failed DELETE retries use that successor. An ambiguous
+revocation exchange stays pending for provider-side removal rather than replaying
+an obsolete refresh token. No raw token, HTTP body or user ID enters worker logs.
 
 ## Runtime and review prerequisites
 
@@ -266,6 +287,17 @@ executes the formal migration. Apply only this exact reviewed additive delta to
 the authorized project and record its receipt.
 Never bulk-push 0051–0058 or assume those historical migrations are absent.
 
+Automatic credential maintenance additionally requires
+`supabase/migrations/20261104231500_garmin_credential_maintenance.sql`; its exact
+mirror is `schema-maintenance-candidate.sql`. This separate transaction adds only
+lease/scheduling columns, two epoch/revocation triggers and a RELAY-only attested
+maintenance RPC. It does not rewrite the original migration, alter existing
+keys/flags/consent values or grant table access. Deploy the migration before this
+runtime. Recovery stops provider import/worker operation and preserves these
+columns, encrypted successors and pending outbox rows; do not downgrade to an
+older revocation worker that does not honor rotation state. Consent withdrawal
+is an erasure operation and must never be used as a rollback switch.
+
 The migration is one transaction: nine new Garmin tables, RLS/direct-table grant
 revocation, the scoped attested RPC and a separate purpose-erasure trigger. It
 does not replace existing account functions, modify existing consent/feature rows,
@@ -321,8 +353,9 @@ node server/garmin-integration/worker.mjs
 The operator supplies `TRAINORACLE_GARMIN_WORKER_ENABLED=true` and the existing
 protected `TRAINORACLE_GARMIN_RELAY_HTTP_KEY` through the runtime environment.
 There is no URL/host option: native Node HTTP connects only to `127.0.0.1`, ignores
-proxy environment settings, never follows redirects, and signs only the two fixed
-`/internal/garmin/process` and `/internal/garmin/revocations` paths. The worker does
+proxy environment settings, never follows redirects, and signs only the three fixed
+`/internal/garmin/process`, `/internal/garmin/revocations` and
+`/internal/garmin/maintenance` paths. The worker does
 not receive Supabase tokens, service-role credentials, Garmin client secrets or
 activity payloads. The HMAC key itself is never transmitted.
 
@@ -333,8 +366,9 @@ Optional environment settings are bounded:
 | `TRAINORACLE_GARMIN_WORKER_PORT` | 8789 | 1–65535; must match the local service |
 | `TRAINORACLE_GARMIN_WORKER_PROCESS_INTERVAL_MS` | 5000 | 1000–60000 |
 | `TRAINORACLE_GARMIN_WORKER_REVOCATION_INTERVAL_MS` | 60000 | 60000–1800000 |
+| `TRAINORACLE_GARMIN_WORKER_MAINTENANCE_INTERVAL_MS` | 60000 | 60000–1800000 |
 | `TRAINORACLE_GARMIN_WORKER_REQUEST_TIMEOUT_MS` | 30000 | 1000–30000 |
-| `TRAINORACLE_GARMIN_WORKER_MAX_BACKOFF_MS` | 300000 | 60000–1800000, at least both polling intervals |
+| `TRAINORACLE_GARMIN_WORKER_MAX_BACKOFF_MS` | 300000 | 60000–1800000, at least all polling intervals |
 | `TRAINORACLE_GARMIN_WORKER_MAX_RUN_MS` | 86400000 | 1000–604800000 |
 
 Calls are sequential and awaited. Each task has its own schedule and exponential
@@ -347,7 +381,7 @@ Idle success polls do not produce repeated progress logs.
 
 SIGINT/SIGTERM cancels an active request or sleep and stops scheduling. The whole
 run also ends at its configured deadline; this code does not register a restart
-policy. `--once` attempts each route once and exits with nonzero status if either
+policy. `--once` attempts each route once and exits with nonzero status if any
 attempt failed. With the enable flag absent it prints `WORKER_DISABLED`, performs
 no network calls and exits successfully. A timed-out call has an unknown remote
 outcome; the existing durable job/receipt semantics handle retries. Do not run

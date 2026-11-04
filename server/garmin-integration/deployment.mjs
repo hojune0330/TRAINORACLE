@@ -2,9 +2,10 @@ import {pathToFileURL} from 'node:url';
 import {createNodeServer,runtimeFromEnvironment} from './service.mjs';
 import {runGarminWorker,workerOptionsFromEnvironment} from './worker.mjs';
 import {accountGatewayFromEnvironment} from '../account-gateway/service.mjs';
+import {signedGarminIngressFromEnvironment} from '../garmin-ingress/signed-ingress.mjs';
 
 const PUBLIC_ROUTES=new Set(['/api/garmin-integration','/webhooks/garmin','/api/account-journal']);
-const INTERNAL_ROUTES=new Set(['/internal/garmin/process','/internal/garmin/revocations']);
+const INTERNAL_ROUTES=new Set(['/internal/garmin/process','/internal/garmin/revocations','/internal/garmin/maintenance']);
 const headers={'content-type':'application/json','cache-control':'no-store','pragma':'no-cache','x-content-type-options':'nosniff','referrer-policy':'no-referrer'};
 const json=(status,value)=>new Response(JSON.stringify(value),{status,headers});
 const listen=(server,port,host)=>new Promise((resolve,reject)=>{server.once('error',reject);server.listen(port,host,()=>{server.removeListener('error',reject);resolve(server.address().port);});});
@@ -15,9 +16,9 @@ async function drain(server,deadlineMs){
     timer=setTimeout(()=>{server.closeAllConnections();resolve();},deadlineMs);});
 }
 
-/** Hosting adapter, not a new trust boundary. Public requests reach the same
- * authenticated handler with their real TCP peer; arbitrary forwarding headers
- * never turn a hosting proxy into a verified Garmin sender. */
+/** Public account requests retain their real TCP peer. The optional company
+ * ingress verifies its complete signed envelope before supplying a Garmin IP;
+ * arbitrary forwarding headers never authenticate a hosting proxy. */
 export async function startGarminDeployment({env=process.env,signal,onEvent=()=>{},runtimeFactory=runtimeFromEnvironment,workerRunner=runGarminWorker}={}){
   const emit=value=>{try{onEvent(value);}catch{/* No raw exception logging. */}};
   const rawPort=env.PORT??'10000';if(!/^\d{1,5}$/.test(rawPort)||Number(rawPort)>65535)throw new Error('DEPLOYMENT_CONFIGURATION_INVALID');
@@ -25,6 +26,7 @@ export async function startGarminDeployment({env=process.env,signal,onEvent=()=>
   const rawRevision=env.RENDER_GIT_COMMIT??env.TRAINORACLE_SOURCE_REVISION;
   const sourceRevision=/^[a-f0-9]{40}$/i.test(rawRevision??'')?rawRevision.toLowerCase():null;
   const runtime=await runtimeFactory(env),workerOptions=workerOptionsFromEnvironment(env),accountGateway=accountGatewayFromEnvironment(env);
+  const signedIngress=signedGarminIngressFromEnvironment(runtime.handler,env);
   // An explicitly enabled service must not advertise healthy startup with only a
   // fraction of its protected configuration. SQL approval stays authoritative.
   if((providerEnabled||pushEnabled||workerOptions.enabled)&&!runtime.configured
@@ -50,7 +52,7 @@ export async function startGarminDeployment({env=process.env,signal,onEvent=()=>
       if(stopping)return json(503,{error:'SERVICE_STOPPING'});
       if(!PUBLIC_ROUTES.has(path))return json(404,{error:'NOT_FOUND'});
       if(!['POST','OPTIONS'].includes(request.method))return json(405,{error:'METHOD_NOT_ALLOWED'});
-      return path==='/api/account-journal'?accountGateway.handler(request):runtime.handler(request,transport);
+      return path==='/api/account-journal'?accountGateway.handler(request):path==='/webhooks/garmin'?signedIngress(request,transport):runtime.handler(request,transport);
     });
     const port=await listen(publicServer,Number(rawPort),'0.0.0.0');
     const crashed=()=>{fatal=true;emit({event:'DEPLOYMENT_LISTENER_FAILED'});void stop();};

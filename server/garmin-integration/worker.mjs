@@ -5,9 +5,10 @@ import {keyBytes,sign,VERSION,exact} from './primitives.mjs';
 const TASKS=Object.freeze([
   {name:'PROCESS',path:'/internal/garmin/process',interval:'processIntervalMs'},
   {name:'REVOCATIONS',path:'/internal/garmin/revocations',interval:'revocationIntervalMs'},
+  {name:'MAINTENANCE',path:'/internal/garmin/maintenance',interval:'maintenanceIntervalMs'},
 ]);
 const integer=(value,min,max)=>Number.isSafeInteger(value)&&value>=min&&value<=max;
-const defaultOptions=Object.freeze({port:8789,processIntervalMs:5000,revocationIntervalMs:60000,
+const defaultOptions=Object.freeze({port:8789,processIntervalMs:5000,revocationIntervalMs:60000,maintenanceIntervalMs:60000,
   requestTimeoutMs:30000,maxBackoffMs:300000,maxRunMs:86400000});
 const sleep=(ms,signal)=>new Promise(resolve=>{
   if(signal.aborted)return resolve();
@@ -15,6 +16,11 @@ const sleep=(ms,signal)=>new Promise(resolve=>{
   const timer=setTimeout(finish,ms);signal.addEventListener('abort',finish,{once:true});
 });
 function responseCounts(name,value){
+  if(name==='MAINTENANCE'){
+    if(!exact(value,['schemaVersion','checked','refreshed','reconnectRequired'])||value.schemaVersion!==VERSION
+      ||!integer(value.checked,0,1)||!integer(value.refreshed,0,1)||!integer(value.reconnectRequired,0,1))return null;
+    return {checked:value.checked,refreshed:value.refreshed,reconnectRequired:value.reconnectRequired};
+  }
   if(name==='PROCESS'){
     if(!exact(value,['schemaVersion','processed','reviewRequired','stale'],['schemaVersion','processed','reviewRequired'])
       ||value.schemaVersion!==VERSION||!integer(value.processed,0,1)||!integer(value.reviewRequired,0,1)
@@ -53,7 +59,7 @@ async function callTask(task,options,signal){
   });}finally{clearTimeout(timer);}
 }
 
-/** One explicit worker instance, two independent schedules, no overlapping calls.
+/** One explicit worker instance, three independent schedules, no overlapping calls.
  * Disabling does not require a key and performs no I/O. onEvent receives only
  * fixed strings, attempt counts and validated aggregate counts, never payloads. */
 export async function runGarminWorker(input={}){
@@ -62,7 +68,8 @@ export async function runGarminWorker(input={}){
   const options={...defaultOptions,...input};
   if(!integer(options.port,1,65535)||!Buffer.isBuffer(options.key)||options.key.length!==32
     ||!integer(options.processIntervalMs,1,60000)||!integer(options.revocationIntervalMs,1,1800000)
-    ||!integer(options.requestTimeoutMs,1,30000)||!integer(options.maxBackoffMs,Math.max(options.processIntervalMs,options.revocationIntervalMs),1800000)
+    ||!integer(options.maintenanceIntervalMs,1,1800000)
+    ||!integer(options.requestTimeoutMs,1,30000)||!integer(options.maxBackoffMs,Math.max(options.processIntervalMs,options.revocationIntervalMs,options.maintenanceIntervalMs),1800000)
     ||!integer(options.maxRunMs,1,604800000))throw new Error('WORKER_CONFIGURATION_INVALID');
   const deadline=new AbortController(),timer=setTimeout(()=>deadline.abort(),options.maxRunMs);
   const signal=AbortSignal.any([...(input.signal?[input.signal]:[]),deadline.signal]);
@@ -101,10 +108,11 @@ export function workerOptionsFromEnvironment(env=process.env){
     port:envInteger(env,'TRAINORACLE_GARMIN_WORKER_PORT',8789,1,65535),
     processIntervalMs:envInteger(env,'TRAINORACLE_GARMIN_WORKER_PROCESS_INTERVAL_MS',5000,1000,60000),
     revocationIntervalMs:envInteger(env,'TRAINORACLE_GARMIN_WORKER_REVOCATION_INTERVAL_MS',60000,60000,1800000),
+    maintenanceIntervalMs:envInteger(env,'TRAINORACLE_GARMIN_WORKER_MAINTENANCE_INTERVAL_MS',60000,60000,1800000),
     requestTimeoutMs:envInteger(env,'TRAINORACLE_GARMIN_WORKER_REQUEST_TIMEOUT_MS',30000,1000,30000),
     maxBackoffMs:envInteger(env,'TRAINORACLE_GARMIN_WORKER_MAX_BACKOFF_MS',300000,60000,1800000),
     maxRunMs:envInteger(env,'TRAINORACLE_GARMIN_WORKER_MAX_RUN_MS',86400000,1000,604800000)};
-  if(options.maxBackoffMs<Math.max(options.processIntervalMs,options.revocationIntervalMs))throw new Error('WORKER_CONFIGURATION_INVALID');
+  if(options.maxBackoffMs<Math.max(options.processIntervalMs,options.revocationIntervalMs,options.maintenanceIntervalMs))throw new Error('WORKER_CONFIGURATION_INVALID');
   return options;
 }
 

@@ -9,8 +9,8 @@ export function createSupabaseRepository({url,publishableKey,attestation,relayAt
     if(!response.ok)fail(response.status===401?401:response.status===403?403:503,response.status===401?'AUTH_REQUIRED':response.status===403?'ACCESS_DENIED':'OPERATIONS_PENDING');
     return boundedJson(response,9_000_000);
   }
-  async function invoke(input,auth,relay){const request_text=JSON.stringify({...input,domain:'trainoracle.garmin.integration.v1',expiresAt:Math.floor(Date.now()/1000)+60,...(relay?{}:{ownerId:auth.ownerId,sessionId:auth.sessionId})});
-    const result=await request('/rest/v1/rpc/garmin_integration_attested',relay?serviceRoleKey:auth.token,{request_text,signature:sign(relay?relaySecret:secret,request_text),key_id:relay?relayAttestation.keyId:attestation.keyId},auth?.consentRevision);
+  async function invoke(input,auth,relay,maintenance=false){const request_text=JSON.stringify({...input,domain:maintenance?'trainoracle.garmin.maintenance.v1':'trainoracle.garmin.integration.v1',expiresAt:Math.floor(Date.now()/1000)+60,...(relay?{}:{ownerId:auth.ownerId,sessionId:auth.sessionId})});
+    const result=await request(`/rest/v1/rpc/${maintenance?'garmin_maintenance_attested':'garmin_integration_attested'}`,relay?serviceRoleKey:auth.token,{request_text,signature:sign(relay?relaySecret:secret,request_text),key_id:relay?relayAttestation.keyId:attestation.keyId},auth?.consentRevision);
     if(result?.error){const code=result.error;fail(code==='OPERATIONS_PENDING'?503:409,code);}return result;
   }
   return {
@@ -18,5 +18,6 @@ export function createSupabaseRepository({url,publishableKey,attestation,relayAt
       if(!UUID.test(user.id??'')||claims.sub!==user.id||!UUID.test(claims.session_id??'')||claims.exp*1000<=Date.now())fail(401,'AUTH_REQUIRED');return {ownerId:user.id,sessionId:claims.session_id,token,consentRevision};},
     call:(auth,input)=>invoke({...input,consentRevision:auth.consentRevision},auth,false),
     relay(input){if(!relaySecret||!serviceRoleKey)fail(503,'OPERATIONS_PENDING');return invoke(input,null,true);},
+    maintenance(input){if(!relaySecret||!serviceRoleKey)fail(503,'OPERATIONS_PENDING');return invoke(input,null,true,true);},
   };
 }

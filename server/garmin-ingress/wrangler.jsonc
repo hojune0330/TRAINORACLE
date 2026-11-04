@@ -1,0 +1,16 @@
+{
+  "name": "trainoracle-garmin-ingress",
+  "main": "worker-bundle.mjs",
+  "compatibility_date": "2026-11-05",
+  "workers_dev": true,
+  "preview_urls": false,
+  "observability": {
+    "enabled": false
+  },
+  "vars": {
+    "TRAINORACLE_GARMIN_INGRESS_KEY_ID": "ingress-20261105",
+    "TRAINORACLE_GARMIN_INGRESS_AUDIENCE": "trainoracle-device-gateway",
+    "TRAINORACLE_GARMIN_INGRESS_PUBLIC_URL": "https://trainoracle-garmin-ingress.hojune0330.workers.dev/webhooks/garmin",
+    "TRAINORACLE_GARMIN_INGRESS_ORIGIN_URL": "https://trainoracle-device-gateway.onrender.com/webhooks/garmin"
+  }
+}
