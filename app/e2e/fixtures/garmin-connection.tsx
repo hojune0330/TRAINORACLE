@@ -18,7 +18,7 @@ async function start() {
   }))
   const digest = await garminSamplesDigest(samples)
   const item = { ...syntheticGarminItem, detailManifest: [{ partIndex: 0, sha256: digest, sampleCount: samples.length }] }
-  let mutations = 0
+  let mutations = 0, journalReads = 0
   const transport: GarminTransport = async (_owner, request) => {
     if (request.action === "confirm" && ++mutations === 1) return { ok: false, code: "UNAVAILABLE" }
     const data = request.action === "status" ? { ...syntheticGarminStatus, connection: { ...syntheticGarminStatus.connection, lastSyncAt: "2026-11-04T23:45:00Z" } }
@@ -37,7 +37,10 @@ async function start() {
       <p>개발 검수 · 합성 예시</p><h1 style={{ fontSize: "1.5em" }}>Garmin 연결과 기록</h1><p>실제 계정·건강 자료·Garmin API를 사용하지 않아요.</p>
       <label>검수 화면 <select aria-label="검수 화면" value={mode} onChange={event => setMode(event.target.value)} style={{ minHeight: 44 }}><option value="connections">연결과 받은 기록</option><option value="detail">저장된 원본 상세</option></select></label>
       <label style={{ display: "flex", minHeight: 44, alignItems: "center", gap: 8 }}><input type="checkbox" checked={large} onChange={event => setLarge(event.target.checked)} />200% 글자 검수</label>
-      {mode === "connections" ? <GarminConnectionPanel ownerId={syntheticGarminOwner} configured featureEnabled transport={transport} onOpenJournalRecord={(date, id) => { setOpened(`${date} · ${id}`); setMode("detail") }} /> : <GarminActivityDetail ownerId={syntheticGarminOwner} documentId={syntheticGarminReceipt.documentId} transport={transport} />}
+      {mode === "connections" ? <GarminConnectionPanel ownerId={syntheticGarminOwner} configured featureEnabled transport={transport} onOpenJournalRecord={async (date, id, current) => {
+        if (++journalReads === 1 || !current()) return "UNAVAILABLE"
+        setOpened(`${date} · ${id}`); setMode("detail"); return "OPENED"
+      }} /> : <GarminActivityDetail ownerId={syntheticGarminOwner} documentId={syntheticGarminReceipt.documentId} transport={transport} />}
       {opened && <p>합성 일지 이동: {opened}</p>}
     </main>
   }

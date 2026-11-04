@@ -1,4 +1,5 @@
 import { encryptAccountJournalDocument, decryptAccountJournalDocument } from './account-journal-crypto.mjs';
+import { decodeAccountStoredJson, fileDetailBaseFits, jsonBytes, FILE_DOCUMENT_MAX_BYTES } from './account-file-document-codec.mjs';
 import { createAccountJournalRepository, validateAccountJournalDocument, accountPlanStateNeedsJournalGuard, verifyAccountPaceRecordEdit, verifyAccountPlanPaceRecordSources } from './account-journal-handler.mjs';
 import { validateAccountPlanCollectionIndex, validateAccountPlanCollectionPart,
   joinAccountPlanCollection, validateAccountPlanCollectionUpdate,
@@ -163,12 +164,12 @@ export function createAccountPlanCollectionHandler({ authenticate, getMaterial, 
       if (input.action === 'stage' && (!fits(input.part) || validateAccountPlanCollectionPart(input.part) !== true)) fail(422, 'INVALID_DOCUMENT');
       let material;
       try { material = await getMaterial(); } catch { fail(503, 'KEY_UNAVAILABLE'); }
-      const decode = async (payload, documentId) => {
+      const decode = async (payload, documentId, allowFile = false) => {
         const key = material?.get(payload?.keyId);
         if (!key) fail(503, 'KEY_UNAVAILABLE');
         try {
-          const value = JSON.parse(await decryptAccountJournalDocument(payload, { ownerId, documentId }, key));
-          if (!fits(value)) throw 0;
+          const value = await decodeAccountStoredJson(await decryptAccountJournalDocument(payload, { ownerId, documentId }, key));
+          if (!fits(value) && !(allowFile && fileDetailBaseFits(value) && jsonBytes(value) <= FILE_DOCUMENT_MAX_BYTES)) throw 0;
           return value;
         } catch { fail(503, 'INVALID_STORED_DATA'); }
       };
@@ -285,7 +286,7 @@ export function createAccountPlanCollectionHandler({ authenticate, getMaterial, 
           for (const row of rows) {
             const expected = batch.find(item => item.documentId === row?.document_id);
             if (!expected || row.user_id !== ownerId || row.deleted_at != null || row.revision !== expected.revision) fail(409, 'JOURNALS_CHANGED');
-            const journal = await decode(row.encrypted_payload, row.document_id);
+            const journal = await decode(row.encrypted_payload, row.document_id, true);
             const fact = selected.activePlanEdit ? projectActivePlanEditJournal(journal, replan)
               : selected.catalogReplacement ? projectCatalogReplacementJournal(journal, replan)
               : projectExecutionReplanJournal(journal, replan, sourceContext);

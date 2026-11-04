@@ -16,7 +16,7 @@ export function createGarminPushRuntime({repository,vault,provider,identityKey,e
       if(!enabled||provider?.kind!=='GARMIN_STARTER'||!provider.isCurrent())fail(503,'PROVIDER_CONFIGURATION_PENDING');
       if(request.headers.get('origin'))fail(403,'ACCESS_DENIED');
       authenticateGarminPush(request,peerAddress,{clientId:provider.clientId,trustedProxyAddresses,...(testDeliveryCidrs?{deliveryCidrs:testDeliveryCidrs}:{})});
-      const rows=parseGarminPush(await boundedJson(request,6_500_000));let queued=0,ignored=0;
+      const rows=parseGarminPush(await boundedJson(request,6_500_000),{allowedSummaryFields:provider.allowedSummaryFields});let queued=0,ignored=0;
       for(const row of rows){
         const hashed=subjectHash(row.userId);let connection;
         try{connection=await relay({action:'resolveSubject',subjectHash:hashed});}
@@ -39,7 +39,7 @@ export function createGarminPushRuntime({repository,vault,provider,identityKey,e
       try{
         const chunks=[];for(let i=0;i<job.encrypted_parts.length;i++)chunks.push(Buffer.from(await vault.open(job.encrypted_parts[i],ctx(job.user_id,job.connection_id,job.epoch,'push',`${job.id}:${i}`)),'base64'));
         const row=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(Buffer.concat(chunks)));
-        const mapped=normalizeGarminActivity(row,provider.allowedDetailFields),observation=prepareObservation(mapped.observation),parts=prepareDetail(mapped.detail,provider.allowedDetailFields);
+        const mapped=normalizeGarminActivity(row,provider.allowedDetailFields,provider.allowedSummaryFields),observation=prepareObservation(mapped.observation),parts=prepareDetail(mapped.detail,provider.allowedDetailFields);
         const activityHash=sign(identityKey,`garmin-activity-v1:${row.userId}:${observation.sourceId}`);
         const base=await relay({action:'resolve',connectionId:job.connection_id,epoch:job.epoch,subjectHash:subjectHash(row.userId),activityHash});
         const revision=base.nextRevision,inboxId=stableUuid(['trainoracle.garmin.inbox.v1',job.connection_id,job.epoch,activityHash]);
@@ -47,8 +47,8 @@ export function createGarminPushRuntime({repository,vault,provider,identityKey,e
         // clock/manual/parent are factual source metadata; no activity title/note
         // enters this store or any AI source registry. Exact timing remains in the
         // durable job for conflicts; normalized sensor detail remains independently encrypted.
-        const sourceContext={clock:mapped.clock,manual:mapped.manual,parent:mapped.parent,summaryId:mapped.summaryId,lapStartOffsetsSeconds:mapped.lapStartOffsetsSeconds};
-        const coreDigest=sha(canonical({observation,clock:mapped.clock,manual:mapped.manual,parent:mapped.parent}));
+        const sourceContext={clock:mapped.clock,manual:mapped.manual,parent:mapped.parent,summaryId:mapped.summaryId,lapStartOffsetsSeconds:mapped.lapStartOffsetsSeconds,summary:mapped.summary};
+        const coreDigest=sha(canonical({observation,clock:mapped.clock,manual:mapped.manual,parent:mapped.parent,summary:mapped.summary}));
         const result=await relay({action:'ingestWire',connectionId:job.connection_id,epoch:job.epoch,ownerId:job.user_id,subjectHash:subjectHash(row.userId),activityHash,inboxId,
           sourceRevision:revision,kind:'UPSERT',eventHash:sha(job.id),payloadDigest:sha(canonical(row)),coreDigest,
           contentDigest:sha(canonical({coreDigest,detailManifest,lapStartOffsetsSeconds:mapped.lapStartOffsetsSeconds})),detailManifest,

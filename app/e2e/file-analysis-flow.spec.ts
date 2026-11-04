@@ -141,6 +141,7 @@ async function mockAccount() {
         const { ownerId, request } = route.request().postDataJSON()
         const answer = (body: unknown, status = 200) => route.fulfill({ status, contentType: "application/json", body: JSON.stringify(body) })
         if (ownerId !== owner) return answer({ code: "AUTH_REQUIRED" }, 401)
+        if (request.action === "journalDetailSupport") return answer({ kind: "journal-detail-support", version: 1 })
         // A separately self-reported race is confirmed through the real account
         // service. Imported workout bytes never create this authority or storage.
         if (request.action === "athleteRecordSupport") return answer({ kind: "athlete-record-support", version: 1 })
@@ -172,10 +173,11 @@ async function mockAccount() {
           const previous = documents.get(request.documentId)
           if (!previous || previous.revision !== request.expectedRevision) return answer({ kind: "conflict", documentId: request.documentId,
             operationId: request.operationId, currentRevision: previous?.revision ?? 0 }, 409)
-          if (!request.supportedJournalVersions?.includes(3)) return answer({ error: "UPGRADE_REQUIRED" }, 426)
+          if (!request.supportedJournalVersions?.includes(previous.document.version)) return answer({ error: "UPGRADE_REQUIRED" }, 426)
           const document = schema.correctAccountJournalImportedObservation(previous.document, request.previousContentRevisionFingerprint,
             request.replacementObservation, request.confirmedChangedFields)
           if (!document) return answer({ error: "INVALID_FILE_OBSERVATION" }, 422)
+          if (!request.supportedJournalVersions?.includes(document.version)) return answer({ error: "UPGRADE_REQUIRED" }, 426)
           const revision = previous.revision + 1
           documents.set(request.documentId, { documentId: request.documentId, revision, document })
           return answer({ kind: "saved", documentId: request.documentId, operationId: request.operationId, revision })
@@ -206,10 +208,10 @@ async function mockAccount() {
         }
         if (request.action !== "save") return answer({ code: "UNSUPPORTED_TEST_ACTION" }, 400)
         if (offline) return answer({ code: "UNAVAILABLE" }, 503)
-        // A save acknowledgement is impossible without the real V3 codec and initial-evidence gate.
+        // Both summary and detailed files require the real codec and initial-evidence gate.
         const parsed = schema.parseAccountJournalRecord(request.document)
-        if (!parsed || parsed.version !== 3 || request.writePurpose !== "FILE_OBSERVATION"
-          || !request.supportedJournalVersions?.includes(3) || !schema.validateInitialFileObservationRecord(parsed)) {
+        if (!parsed || ![3, 5].includes(parsed.version) || request.writePurpose !== "FILE_OBSERVATION"
+          || !request.supportedJournalVersions?.includes(parsed.version) || !schema.validateInitialFileObservationRecord(parsed)) {
           return answer({ code: "INVALID_FILE_OBSERVATION" }, 422)
         }
         const previous = documents.get(request.documentId)

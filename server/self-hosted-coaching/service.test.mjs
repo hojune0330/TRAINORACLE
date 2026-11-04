@@ -8,6 +8,7 @@ import { createSupabaseRepository, createCompanyInference, createCoachingHandler
 import { registerReviewedSource } from './register-source.mjs';
 import { buildFileObservation } from './contracts.mjs';
 import { encryptAccountJournalDocument } from '../../supabase/functions/_shared/account-journal-crypto.mjs';
+import { compressFileJson } from '../../supabase/functions/_shared/account-file-document-codec.mjs';
 import { loadOracleMigrationChain, approveSyntheticOracleStorage, admitOracleStorage, setOracleAuth } from '../../supabase/tests/local-postgres/oracle-auth-fixture.mjs';
 
 // The existing project's pinned PGlite dependency. No real credentials, provider,
@@ -103,6 +104,23 @@ async function call(input,options={}) {
   return {status:response.status,data:await response.json()};
 }
 const request=()=>({action:'infer',documentIds:[documentId],consentRevision:1});
+
+test('compressed account storage decodes losslessly without granting model use and retains owner authentication',async()=> {
+  const fileId=randomUUID();
+  const document={version:5,state:'FINALIZED',kind:'JOURNAL',entry:{kind:'post-session',fileObservation:{
+    detail:{samples:Array.from({length:3600},(_,index)=>({sourceIndex:index,heartRateBpm:index%160,powerWatts:index%300})),
+      source:{originProvider:'GARMIN',evidence:'FILE_METADATA'}}}}};
+  const compressed=await compressFileJson(document);
+  const encryptedPayload=await encryptAccountJournalDocument(JSON.stringify(compressed),{ownerId:owner,documentId:fileId},material);
+  assert.deepEqual(await repository.decode({ownerId:owner},{documentId:fileId,encryptedPayload}),document);
+  await assert.rejects(repository.decode({ownerId:randomUUID()},{documentId:fileId,encryptedPayload}));
+  await assert.rejects(repository.decode({ownerId:owner},{documentId:randomUUID(),encryptedPayload}));
+  assert.equal(calls.length,0);
+  const tampered={...compressed,sha256:'0'.repeat(64)};
+  const invalidPayload=await encryptAccountJournalDocument(JSON.stringify(tampered),{ownerId:owner,documentId:fileId},material);
+  await assert.rejects(repository.decode({ownerId:owner},{documentId:fileId,encryptedPayload:invalidPayload}));
+  assert.equal(calls.length,0);
+});
 
 test('real HTTP -> authenticated SQL -> AES-GCM projection -> company inference -> verified grounded response',async()=> {
   const status=await call({action:'status'});assert.equal(status.data.records[0].journalEntryId,'synthetic-journal-entry');

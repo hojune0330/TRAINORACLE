@@ -52,7 +52,7 @@ if (process.env.PLAN_COLLECTION_MUTATION) {
     source = source.replace("'./account-plan-collection-validator.mjs'",
       JSON.stringify(`data:text/javascript;base64,${Buffer.from(broken).toString('base64')}`));
   }
-  for (const file of ['account-journal-crypto.mjs', 'account-journal-handler.mjs', 'account-plan-collection-validator.mjs'])
+  for (const file of ['account-journal-crypto.mjs', 'account-journal-handler.mjs', 'account-plan-collection-validator.mjs', 'account-file-document-codec.mjs'])
     source = source.replace(`'./${file}'`, JSON.stringify(new URL(file, url).href));
   handlerFactory = (await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`)).createAccountPlanCollectionHandler;
 }

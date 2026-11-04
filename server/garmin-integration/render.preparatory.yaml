@@ -1,0 +1,26 @@
+# Preparatory process only. This Blueprint contains no runtime credentials,
+# database changes, provider activation, AI permissions, or paid resources.
+# Select this custom Blueprint path explicitly; do not auto-sync another service.
+services:
+  - type: web
+    name: trainoracle-garmin-preparatory
+    runtime: node
+    plan: free
+    region: singapore
+    branch: main
+    autoDeployTrigger: off
+    buildCommand: node --check server/garmin-integration/deployment.mjs
+    startCommand: node server/garmin-integration/deployment.mjs
+    healthCheckPath: /healthz
+    maxShutdownDelaySeconds: 30
+    envVars:
+      - key: NODE_VERSION
+        value: "24.22.1"
+      - key: TRAINORACLE_GARMIN_ENABLED
+        value: "false"
+      - key: TRAINORACLE_GARMIN_PUSH_ENABLED
+        value: "false"
+      - key: TRAINORACLE_GARMIN_WORKER_ENABLED
+        value: "false"
+      - key: TRAINORACLE_ACCOUNT_GATEWAY_ENABLED
+        value: "false"

@@ -6,13 +6,16 @@ import {boundedJson,canonical,fail,ID,object,sha} from './primitives.mjs';
 export const GARMIN_ENDPOINTS=Object.freeze({authorizationEndpoint:'https://connect.garmin.com/oauth2Confirm',tokenEndpoint:'https://diauth.garmin.com/di-oauth2-service/oauth/token',subjectEndpoint:'https://apis.garmin.com/partner-gateway/rest/user/id',permissionsEndpoint:'https://apis.garmin.com/partner-gateway/rest/user/permissions',registrationEndpoint:'https://apis.garmin.com/partner-gateway/rest/user/registration'});
 export const GARMIN_SCOPES=Object.freeze(['PARTNER_WRITE','PARTNER_READ','CONNECT_READ','CONNECT_WRITE']);
 export const GARMIN_DELIVERY_CIDRS=Object.freeze(['204.77.162.0/23','204.77.163.0/24','98.199.124.0/23','185.132.79.0/24','208.65.206.0/23','185.207.94.0/23','198.233.176.0/24']);
+export const GARMIN_SUMMARY_FIELDS=Object.freeze(['averageBikeCadenceInRoundsPerMinute','averageHeartRateInBeatsPerMinute','averageRunCadenceInStepsPerMinute','averagePushCadenceInPushesPerMinute','averageSpeedInMetersPerSecond','averageSwimCadenceInStrokesPerMinute','averagePaceInMinutesPerKilometer','activeKilocalories','deviceName','maxBikeCadenceInRoundsPerMinute','maxHeartRateInBeatsPerMinute','maxPaceInMinutesPerKilometer','maxRunCadenceInStepsPerMinute','maxPushCadenceInPushesPerMinute','maxSpeedInMetersPerSecond','numberOfActiveLengths','startingLatitudeInDegree','startingLongitudeInDegree','steps','pushes','totalElevationGainInMeters','totalElevationLossInMeters']);
 export function createGarminStarterProvider(settings,{fetchImpl=fetch,now=()=>Date.now(),testEndpoints,allowLocalHttp=false}={}) {
   if(settings.accessLevel!=='STARTER'||typeof settings.clientId!=='string'||!settings.clientId||typeof settings.clientSecret!=='string'||!settings.clientSecret)fail(503,'PROVIDER_CONFIGURATION_PENDING');
   if(testEndpoints&&!allowLocalHttp)fail(503,'CONFIGURATION_INVALID');const endpoints=testEndpoints??GARMIN_ENDPOINTS;
-  const profile={...endpoints,protocol:'OAUTH2_AUTHORIZATION_CODE_PKCE',evidenceReference:settings.evidenceReference,validUntil:settings.validUntil,clientId:settings.clientId,clientSecret:settings.clientSecret,tokenAuth:'client_secret_basic',basicCredentialsEncoding:'RAW',scopes:[...GARMIN_SCOPES],subjectField:'userId',redirectUri:settings.redirectUri,allowedDetailFields:settings.allowedDetailFields??[],revisionSemantics:'NO_SOURCE_REVISION_CONSERVATIVE_CONFLICT',accessLevel:'STARTER'};
+  const allowedSummaryFields=settings.allowedSummaryFields??[];
+  if(!Array.isArray(allowedSummaryFields)||new Set(allowedSummaryFields).size!==allowedSummaryFields.length||allowedSummaryFields.some(field=>!GARMIN_SUMMARY_FIELDS.includes(field)))fail(503,'PROVIDER_CONFIGURATION_PENDING');
+  const profile={...endpoints,protocol:'OAUTH2_AUTHORIZATION_CODE_PKCE',evidenceReference:settings.evidenceReference,validUntil:settings.validUntil,clientId:settings.clientId,clientSecret:settings.clientSecret,tokenAuth:'client_secret_basic',basicCredentialsEncoding:'RAW',scopes:[...GARMIN_SCOPES],subjectField:'userId',redirectUri:settings.redirectUri,allowedDetailFields:settings.allowedDetailFields??[],allowedSummaryFields:[...allowedSummaryFields].sort(),revisionSemantics:'NO_SOURCE_REVISION_CONSERVATIVE_CONFLICT',accessLevel:'STARTER'};
   const adapter=createReviewedProvider(profile,{allowLocalHttp,fetchImpl,now});
   const requireRotation=credentials=>{if(!credentials.refreshToken||!credentials.refreshExpiresAt)fail(502,'PROVIDER_RESPONSE_INVALID');return credentials;};
-  return Object.freeze({...adapter,kind:'GARMIN_STARTER',clientId:settings.clientId,
+  return Object.freeze({...adapter,kind:'GARMIN_STARTER',clientId:settings.clientId,allowedSummaryFields:Object.freeze([...profile.allowedSummaryFields]),
     authorizationUrl(state,challenge){const url=new URL(adapter.authorizationUrl(state,challenge));url.searchParams.delete('scope');return url.href;},
     async exchange(code,verifier){return requireRotation(await adapter.exchange(code,verifier));},
     async refresh(credentials){if(!credentials.refreshExpiresAt||Date.parse(credentials.refreshExpiresAt)<=now())fail(409,'OAUTH_RESTART_REQUIRED');return requireRotation(await adapter.refresh(credentials));},
@@ -40,7 +43,7 @@ const pick=(value,fields)=>Object.fromEntries(fields.filter(k=>value[k]!==undefi
 /** Lightweight ingress minimization only; no analysis or journal write before ACK.
  * Excludes activityName/description, raw account tokens and unknown vendor fields.
  * Files (tokenized callback URL), MoveIQ, PING and historical feeds are excluded. */
-export function parseGarminPush(body){
+export function parseGarminPush(body,{allowedSummaryFields=[]}={}){
   const feeds=['activities','activityDetails','manuallyUpdatedActivities','userPermissionsChange','deregistrations'];
   if(!object(body)||Object.keys(body).length!==1||!feeds.includes(Object.keys(body)[0]))fail(422,'UNSUPPORTED_GARMIN_FEED');
   const feed=Object.keys(body)[0],list=body[feed];if(!Array.isArray(list)||list.length<1||list.length>50)fail(422,'INVALID_INPUT');
@@ -52,7 +55,7 @@ export function parseGarminPush(body){
       return {feed,userId,summaryId:identifier(row.summaryId),permissions:[...new Set(row.permissions)].sort(),changeTimeInSeconds:row.changeTimeInSeconds};
     }
     const summary=feed==='activityDetails'?row.summary:row;if(!object(summary))fail(422,'INVALID_OBSERVATION');
-    const result={feed,userId,summaryId:identifier(row.summaryId??summary.summaryId),summary:pick(summary,summaryFields)};
+    const result={feed,userId,summaryId:identifier(row.summaryId??summary.summaryId),summary:pick(summary,[...summaryFields,...allowedSummaryFields.filter(field=>GARMIN_SUMMARY_FIELDS.includes(field))])};
     if(row.activityId!==undefined)result.summary.activityId=identifier(row.activityId);
     if(feed==='activityDetails'){
       if(row.samples!==undefined&&(!Array.isArray(row.samples)||row.samples.length>100000)||row.laps!==undefined&&(!Array.isArray(row.laps)||row.laps.length>1000))fail(413,'TOO_LARGE');
@@ -62,7 +65,7 @@ export function parseGarminPush(body){
     return result;
   });
 }
-export function normalizeGarminActivity(row,allowedFields=[]){
+export function normalizeGarminActivity(row,allowedFields=[],allowedSummaryFields=[]){
   if(!['activities','activityDetails','manuallyUpdatedActivities'].includes(row.feed))fail(422,'UNSUPPORTED_GARMIN_FEED');
   const s=row.summary,start=number(s.startTimeInSeconds,false),offset=number(s.startTimeOffsetInSeconds,false);
   if(!Number.isSafeInteger(start)||!Number.isInteger(offset)||Math.abs(offset)>=86400)fail(422,'INVALID_OBSERVATION');
@@ -74,7 +77,20 @@ export function normalizeGarminActivity(row,allowedFields=[]){
   const mapping={heartRate:'heartRateBpm',powerInWatts:'powerWatts',stepsPerMinute:'cadenceSpm',speedMetersPerSecond:'speedMetersPerSecond',elevationInMeters:'altitudeMeters',latitudeInDegree:'latitude',longitudeInDegree:'longitude',timerDurationInSeconds:'timerSeconds',clockDurationInSeconds:'clockSeconds',movingDurationInSeconds:'movingSeconds',totalDistanceInMeters:'totalDistanceMeters',bikeCadenceInRPM:'bikeCadenceRpm',swimCadenceInStrokesPerMinute:'swimCadenceSpm',airTemperatureCelcius:'airTemperatureCelsius'};
   const detail=(row.samples??[]).map(sample=>{const at=number(sample.startTimeInSeconds,false);if(!Number.isSafeInteger(at)||at<start)fail(422,'INVALID_DETAIL');return {offsetSeconds:at-start,...Object.fromEntries(Object.entries(mapping).filter(([,field])=>allowedFields.includes(field)).filter(([key])=>Object.hasOwn(sample,key)).map(([key,field])=>[field,number(sample[key])]))};});
   const clock={basis:'DEVICE_OFFSET',offsetSeconds:offset,localDate:deviceLocalDate};
+  const summary={};
+  for(const field of allowedSummaryFields){
+    if(!GARMIN_SUMMARY_FIELDS.includes(field)||!Object.hasOwn(s,field))continue;
+    const value=s[field];
+    if(field==='deviceName'){
+      if(value!==null&&(typeof value!=='string'||value.length>200||/[\u0000-\u001f\u007f]/.test(value)))fail(422,'INVALID_OBSERVATION');
+    }else{
+      if(value!==null&&(typeof value!=='number'||!Number.isFinite(value)))fail(422,'INVALID_OBSERVATION');
+      if(value!==null&&(field==='startingLatitudeInDegree'?Math.abs(value)>90:field==='startingLongitudeInDegree'?Math.abs(value)>180:value<0))fail(422,'INVALID_OBSERVATION');
+    }
+    summary[field]=value;
+  }
   return {observation,detail,clock,summaryId:row.summaryId,manual:s.manual===true||s.isWebUpload===true||row.feed==='manuallyUpdatedActivities',
+    summary,
     // Preserve exact reported timer/moving/clock counters and lap markers separately;
     // they do not become derived lap durations or overwrite UNKNOWN summary time.
     lapStartOffsetsSeconds:(row.laps??[]).map(lap=>{const at=number(lap.startTimeInSeconds,false);if(!Number.isSafeInteger(at)||at<start)fail(422,'INVALID_DETAIL');return at-start;}),

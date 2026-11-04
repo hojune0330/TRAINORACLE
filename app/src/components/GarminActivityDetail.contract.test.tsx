@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { GarminActivityDetail } from "./GarminActivityDetail"
 import { ImportedActivityRoute } from "./ImportedActivityRoute"
 import { garminChartSamples, garminSamplesDigest, loadGarminActivitySamples } from "../domain/account/garmin-activity-detail"
-import { GARMIN_VERSION, type GarminItem, type GarminSample, type GarminTransport } from "../domain/account/garmin-integration"
+import { GARMIN_VERSION, garminItemSchema, type GarminItem, type GarminSample, type GarminTransport } from "../domain/account/garmin-integration"
 import { syntheticGarminOwner as owner, syntheticGarminItem as item, syntheticGarminReceipt as receipt } from "./GarminConnectionPanel.test-fixtures"
 import { setActiveLocalAccount } from "../domain/account/local-journal-ownership"
 import type { ActivityDetailSample } from "../domain/import/file-activity-detail"
@@ -24,6 +24,22 @@ async function example() {
 beforeEach(() => { setActiveLocalAccount(owner) })
 afterEach(() => { cleanup(); setActiveLocalAccount(null); vi.restoreAllMocks() })
 describe("server-stored Garmin details and local route", () => {
+  it("displays retained vendor summary units and precision, distinguishes absent/null/zero, and rejects unknown fields", async () => {
+    const { record } = await example()
+    record.source!.summary = { deviceName: "Synthetic Fenix", averageHeartRateInBeatsPerMinute: null, steps: 0,
+      averagePaceInMinutesPerKilometer: 0.5975272352046997, averageRunCadenceInStepsPerMinute: 177.5, totalElevationGainInMeters: 12.75 }
+    expect(garminItemSchema.safeParse(record).success).toBe(true)
+    expect(garminItemSchema.safeParse({ ...record, source: { ...record.source, summary: { ...record.source!.summary, activityName: "private title" } } }).success).toBe(false)
+    render(<GarminActivityDetail ownerId={owner} item={record} />)
+    expect(screen.getByText("Synthetic Fenix")).toBeInTheDocument()
+    fireEvent.click(screen.getByRole("tab", { name: "전체 수치" }))
+    const table = screen.getByRole("table", { name: "Garmin 원본 요약 수치 · 보관 여부 포함" })
+    expect(within(table).getByRole("row", { name: /평균 심박수/ })).toHaveTextContent("원본 빈값(null)")
+    expect(within(table).getByRole("row", { name: /^스텝 수/ })).toHaveTextContent("0steps")
+    expect(within(table).getByRole("row", { name: /평균 페이스/ })).toHaveTextContent("0.5975272352046997min/km")
+    expect(within(table).getByRole("row", { name: /평균 달리기 스텝/ })).toHaveTextContent("177.5steps/min")
+    expect(within(table).getByRole("row", { name: /활동 칼로리/ })).toHaveTextContent("보관된 값 없음")
+  })
   it("reads the exact confirmed document and verified detail chunks without file provenance or inferred units", async () => {
     const { transport } = await example(), call = vi.fn(transport), before = JSON.stringify(samples)
     render(<GarminActivityDetail ownerId={owner} documentId={receipt.documentId} transport={call} />)

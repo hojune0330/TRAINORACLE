@@ -42,6 +42,9 @@ const fields = z.strictObject({
   // Legacy observations remain readable. Missing lineage never grants AI use.
   dataLineage: providerDataLineageSchema.optional(),
   detail: activityFileDetailSchema.optional(),
+  // A reviewed detail upgrade retains the old unscoped FILE identity. This is
+  // compatibility metadata, never a provider assertion or permission grant.
+  sourceIdentityScope: z.literal("LEGACY_UNSCOPED_V1").optional(),
   format: z.enum(["tcx", "csv", "json", "gpx", "fit"]),
   sourceProfile: z.enum(["TCX_ACTIVITY_V1", "CSV_COLUMNS_V1", "JSON_COLUMNS_V1", "GPX_TRACK_V1", "FIT_ACTIVITY_V1"]),
   parserVersion: z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$/u),
@@ -84,6 +87,7 @@ function completenessOf(laps: readonly z.infer<typeof lap>[]): ObservationFields
 }
 
 function validFacts(value: ObservationFields): boolean {
+  if (value.sourceIdentityScope && (!value.detail || value.sourceActivityId === null)) return false
   if (value.dataLineage?.sources.some(source => source.transport !== "FILE_UPLOAD")) return false
   if (profiles[value.format] !== value.sourceProfile) return false
   if (value.laps.some((entry, index) => entry.sourceIndex !== index)) return false
@@ -132,7 +136,7 @@ function sourceKey(value: ObservationFields, sourceIdentityFingerprint: string):
     }
     : { source: value.source, sourceProfile: value.sourceProfile, sourceActivityId: value.sourceActivityId,
       // Legacy keys remain exact; the new source metadata scope prevents equal IDs crossing declared devices/providers.
-      ...(value.detail ? { sourceNamespace: value.detail.source } : {}),
+      ...(value.detail && !value.sourceIdentityScope ? { sourceNamespace: value.detail.source } : {}),
     })
 }
 
@@ -176,6 +180,25 @@ export function buildFileObservation(input: FileObservationInput): FileObservati
     contentRevisionFingerprint,
     sourceObservationKey: sourceKey(value, sourceIdentityFingerprint),
   }
+}
+
+/** Explicit-review candidate only. New file parsing never invokes this bridge.
+ * Exact stored identity and original facts are required; sensor metadata remains
+ * an unverified file declaration and cannot replace stored provider lineage.
+ */
+export function prepareLegacyFileDetailUpgrade(originalValue: unknown, candidateValue: unknown): FileObservationV1 | null {
+  const original = parseFileObservation(originalValue), candidate = parseFileObservation(candidateValue)
+  if (!original || !candidate || original.detail || original.sourceIdentityScope || !candidate.detail
+    || original.sourceActivityId === null || original.sourceActivityId !== candidate.sourceActivityId
+    || original.format !== candidate.format || original.sourceProfile !== candidate.sourceProfile
+    || contentFingerprint(original) !== contentFingerprint({ ...candidate, detail: undefined })) return null
+  const knownOrigins = original.dataLineage?.sources.map(source => source.originProvider).filter(provider => provider !== "UNKNOWN") ?? []
+  if (knownOrigins.some(provider => provider !== candidate.detail!.source.originProvider)) return null
+  const { schemaVersion: _schema, source: _source, sourceObservationKey: _key,
+    contentRevisionFingerprint: _content, completeness: _completeness, ...input } = original
+  try {
+    return buildFileObservation({ ...input, detail: candidate.detail, sourceIdentityScope: "LEGACY_UNSCOPED_V1" })
+  } catch { return null }
 }
 
 /** Compatibility projection only; this does not attest sport or analysis eligibility. */

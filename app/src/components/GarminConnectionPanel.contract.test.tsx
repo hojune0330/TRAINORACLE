@@ -1,6 +1,6 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { GarminConnectionPanel } from "./GarminConnectionPanel"
+import { GarminConnectionPanel, type GarminJournalOpenResult } from "./GarminConnectionPanel"
 import { GARMIN_VERSION, type GarminRequest, type GarminResult, type GarminTransport } from "../domain/account/garmin-integration"
 import { setActiveLocalAccount } from "../domain/account/local-journal-ownership"
 import { rememberStorageConsentRevision } from "../domain/account/storage-consent-revision"
@@ -37,15 +37,47 @@ describe("Garmin connection and reviewed inbox", () => {
     expect(screen.queryByText("계정 저장 확인됨")).not.toBeInTheDocument()
   })
   it("saves only after review and opens the exact server-confirmed journal date/id", async () => {
-    const transport = vi.fn(exampleTransport()), open = vi.fn()
+    const transport = vi.fn(exampleTransport()), open = vi.fn(async () => "OPENED" as const)
     mount(transport, { onOpenJournalRecord: open })
     fireEvent.click(await screen.findByRole("checkbox", { name: "이 운동의 시작 시각과 수치를 확인했어요" }))
     fireEvent.click(screen.getByRole("button", { name: "일지에 저장" }))
     fireEvent.click(await screen.findByRole("button", { name: "저장한 일지 열기" }))
-    expect(open).toHaveBeenCalledWith("2026-11-05", "garmin-synthetic-entry")
+    expect(open).toHaveBeenCalledWith("2026-11-05", "garmin-synthetic-entry", expect.any(Function))
     const request = transport.mock.calls.find(call => call[1].action === "confirm")![1]
     expect(Object.keys(request).sort()).toEqual(["action", "expectedRevision", "inboxId", "operationId"])
     expect(screen.getByText("계정 저장 확인됨")).toBeInTheDocument()
+  })
+  it("keeps the save receipt and retries only journal reading after a failed open", async () => {
+    const transport = vi.fn(exampleTransport())
+    const open = vi.fn<NonNullable<React.ComponentProps<typeof GarminConnectionPanel>["onOpenJournalRecord"]>>()
+      .mockRejectedValueOnce(new Error("Synthetic read unavailable")).mockResolvedValue("OPENED")
+    mount(transport, { onOpenJournalRecord: open })
+    fireEvent.click(await screen.findByRole("checkbox", { name: "이 운동의 시작 시각과 수치를 확인했어요" }))
+    fireEvent.click(screen.getByRole("button", { name: "일지에 저장" }))
+    fireEvent.click(await screen.findByRole("button", { name: "저장한 일지 열기" }))
+    await screen.findByText("저장된 일지를 아직 열지 못했어요")
+    expect(screen.getByText("계정 저장 확인됨")).toBeVisible()
+    fireEvent.click(screen.getByRole("button", { name: "저장한 일지 다시 열기" }))
+    await waitFor(() => expect(screen.queryByText("저장된 일지를 아직 열지 못했어요")).toBeNull())
+    expect(open).toHaveBeenCalledTimes(2)
+    expect(transport.mock.calls.filter(call => call[1].action === "confirm")).toHaveLength(1)
+  })
+  it("invalidates a pending journal open on account change and ignores its late result", async () => {
+    let resolve!: (result: GarminJournalOpenResult) => void
+    let current!: () => boolean
+    const open = vi.fn<NonNullable<React.ComponentProps<typeof GarminConnectionPanel>["onOpenJournalRecord"]>>()
+      .mockImplementation(async (_date, _id, guard) => { current = guard; return new Promise(done => { resolve = done }) })
+    const transport = exampleTransport(), view = mount(transport, { onOpenJournalRecord: open })
+    fireEvent.click(await screen.findByRole("checkbox", { name: "이 운동의 시작 시각과 수치를 확인했어요" }))
+    fireEvent.click(screen.getByRole("button", { name: "일지에 저장" }))
+    fireEvent.click(await screen.findByRole("button", { name: "저장한 일지 열기" }))
+    expect(screen.getByRole("button", { name: "일지 확인 중…" })).toBeDisabled()
+    expect(current()).toBe(true)
+    view.rerender(<GarminConnectionPanel ownerId={null} configured featureEnabled transport={transport} onOpenJournalRecord={open} />)
+    expect(current()).toBe(false)
+    await act(async () => resolve("UNAVAILABLE"))
+    expect(screen.getByText("계정에서 연결을 관리해요")).toBeVisible()
+    expect(screen.queryByText("저장된 일지를 아직 열지 못했어요")).toBeNull()
   })
   it("keeps an unknown save pending across reload and retries the exact operation", async () => {
     const attempts: GarminRequest[] = []

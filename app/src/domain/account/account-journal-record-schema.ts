@@ -3,7 +3,7 @@ import { parseJournalEntryForWrite } from "../journal-schema"
 import type { JournalEntry } from "../journal-schema"
 import { canEditJournalEntry, keepsImportedObjectiveFacts, preserveJournalProvenance } from "../journal-edit-policy"
 import { samePlannedSessionLink } from "../planned-session-link"
-import { buildFileObservation, parseFileObservation, toFileObservationSummary } from "../import/file-observation"
+import { buildFileObservation, parseFileObservation, prepareLegacyFileDetailUpgrade, toFileObservationSummary } from "../import/file-observation"
 import type { FileObservationV1 } from "../import/file-observation"
 import { confirmComparisonRelationRequestSchema, releaseComparisonRelationRequestSchema } from "../import/comparison-relation"
 import { projectFileObservation } from "../import/file-analysis"
@@ -44,12 +44,15 @@ function canonicalJson(value: unknown, ancestors = new Set<object>()): string {
     if (array && (keys.length !== value.length || keys.some((key, index) => key !== String(index)))) {
       throw new Error("Invalid document")
     }
-    const parts = (keys as string[]).sort().map(key => {
+    // Dense arrays have just been checked to be in exact index order. Sorting
+    // their thousands of sensor keys twice changes no semantics and wastes CPU.
+    const orderedKeys = array ? keys as string[] : (keys as string[]).sort()
+    const parts = orderedKeys.map(key => {
       const descriptor = Object.getOwnPropertyDescriptor(value, key)
       if (!descriptor?.enumerable || !("value" in descriptor)) throw new Error("Invalid document")
       return [key, canonicalJson(descriptor.value, ancestors)] as const
     })
-    if (array) return `[${parts.sort((a, b) => Number(a[0]) - Number(b[0])).map(part => part[1]).join(",")}]`
+    if (array) return `[${parts.map(part => part[1]).join(",")}]`
     return `{${parts.map(([key, item]) => `${JSON.stringify(key)}:${item}`).join(",")}}`
   } finally {
     ancestors.delete(value)
@@ -88,10 +91,13 @@ const sameJson = (left: unknown, right: unknown) => canonicalJson(left ?? null) 
 const objectiveFields = ["distanceKm", "durationMin", "avgPace"] as const
 
 /** File-owned summaries must match; independent explicit facts survive owner backups. */
-export function validateInitialFileObservationRecord(value: unknown): boolean {
+export function validateInitialFileObservationRecord(value: unknown, purpose?: AccountJournalWritePurpose): boolean {
   const record = parseAccountJournalRecord(value)
   if (!record || ![3, 4, 5].includes(record.version) || record.entry.kind !== "post-session" || !record.entry.fileObservation) return false
   const observation = record.entry.fileObservation
+  // Explicit owner backup/migration may restore the preserved legacy identity.
+  // A fresh file/provider import must use the normal namespaced identity.
+  if (observation.sourceIdentityScope !== undefined && purpose !== "MIGRATION") return false
   const summary = toFileObservationSummary(observation)
   return objectiveFields.every(field => record.entry.kind === "post-session"
     && (record.entry.fieldProvenance?.[field]?.provenance === "EXPLICIT" || record.entry[field] === summary[field]))
@@ -139,6 +145,11 @@ export function correctAccountJournalImportedObservation(
     if (!previous || ![3, 4, 5].includes(previous.version) || previous.entry.kind !== "post-session" || !previous.entry.fileObservation || !replacement) return null
     const original = previous.entry.fileObservation
     if (original.contentRevisionFingerprint !== previousContentRevisionFingerprint) return null
+    const detailUpgrade = !original.detail && replacement.detail !== undefined
+    if (detailUpgrade) {
+      const prepared = prepareLegacyFileDetailUpgrade(original, replacement)
+      if (!prepared || !sameJson(prepared, replacement)) return null
+    } else if (!sameJson(original.sourceIdentityScope, replacement.sourceIdentityScope)) return null
     if (original.detail && (!replacement.detail || !sameJson(original.detail.source, replacement.detail.source))) return null
     const immutable = ["schemaVersion", "source", "format", "sourceProfile", "parserVersion", "sourceActivityId", "date",
       "sourceIdentityFingerprint", "sourceObservationKey", "dataLineage"] as const
@@ -165,7 +176,7 @@ export function correctAccountJournalImportedObservation(
         } }
       }
     }
-    return parseAccountJournalRecord({ ...previous, entry })
+    return parseAccountJournalRecord({ ...previous, version: accountJournalRecordVersion(entry, previous.version), entry })
   } catch { return null }
 }
 

@@ -5,7 +5,8 @@ const validatorUrl = new URL("../../../supabase/functions/_shared/account-journa
 const { correctAccountJournalImportedObservation, applyAccountJournalComparisonMutation } = await import(validatorUrl)
 
 const origin = "http://127.0.0.1:4381"
-type Request<T> = AccountJournalRequest<T>
+// The API adds transport capabilities to the immutable application request.
+type Request<T> = AccountJournalRequest<T> & { readonly supportedJournalVersions?: readonly number[] }
 type Stored<T> = { documentId: string; revision: number; document: T }
 type Version<T> = { revision: number; document: T; replacedAt: string; expiresAt: string; reason: "replaced" | "trash" }
 
@@ -69,7 +70,11 @@ export function mockRecordServer<T = AccountJournalRecord>() {
         const key = "documentId" in request ? `${ownerId}:${request.documentId}` : ""
         let status = 200
         let result: unknown
-        if (request.action === "list") {
+        if (request.action === "journalDetailSupport") {
+          // TCX/FIT parsers now preserve structured detail in V5. Advertise the
+          // actual route contract; keep its production preflight and ACK replay.
+          result = { kind: "journal-detail-support", version: 1 }
+        } else if (request.action === "list") {
           result = { kind: "list", documents: [...documents.entries()].filter(([key]) => key.startsWith(`${ownerId}:`)).map(([, value]) => structuredClone(value)),
             deletedDocuments: [...tombstones.entries()].filter(([key]) => key.startsWith(`${ownerId}:`)).map(([, value]) => structuredClone(value)), nextCursor: null }
         } else if (request.action === "read") {

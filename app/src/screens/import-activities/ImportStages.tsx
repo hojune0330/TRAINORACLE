@@ -204,13 +204,15 @@ export function ReviewStage({ drafts, result, selected, intents, onIntent, onTog
           const { activity } = draft
           const intent = intents.get(index)
           const facts = importedActivityFactLabels(activity)
+          const sameStoredSource = detailEnabled && activity.observation?.sourceActivityId != null
+            && draft.identityCandidates?.some(candidate => candidate.kind === "REUSE")
           const choiceLabel = `운동 ${index + 1}, ${compactDate(activity.date)} ${activity.name}, 거리 ${facts.distance}, ${facts.timeLabel} ${facts.duration}`
           const choiceValue = needsChoice(draft, intent) ? "" : intent?.kind === "SAVE_SEPARATE" ? "separate"
             : intent?.kind === "EXCLUDE" ? "exclude" : intent?.kind === "USE_EXISTING" ? `use:${intent.entryId}`
               : intent?.kind === "ADD_TO_EXISTING" ? intent.entryId : ""
           const choices = [
             { value: "", label: "저장 방식 선택" },
-            { value: "separate", label: "새 일지로 저장" },
+            { value: "separate", label: sameStoredSource ? "같은 원본의 저장 결과 확인" : "새 일지로 저장" },
             { value: "exclude", label: "이번 가져오기에서 제외" },
             ...(detailEnabled ? (draft.identityCandidates ?? []).filter(candidate => accountJournalRecordsEnabled() || candidate.kind !== "ATTACH").map(candidate => ({ value: `use:${candidate.id}`,
               disabled: candidate.kind === "CORRECTION",
@@ -261,6 +263,7 @@ export function ReviewStage({ drafts, result, selected, intents, onIntent, onTog
                 {choiceValue !== "" && choiceValue !== "separate" && <p className="import-review__intent" aria-hidden="true">
                   {choices.find(choice => choice.value === choiceValue)?.label}
                 </p>}
+                {sameStoredSource && <p>이미 보관한 원본과 같은 기록이에요. 다시 확인해도 새 일지로 중복 저장하지 않아요.</p>}
                 {detailEnabled && draft.batchDuplicateOf !== undefined && <p style={{ fontSize: "var(--fs-body-sm)", color: "var(--ink-3)", lineHeight: 1.6 }}>
                   이 파일의 운동 {draft.batchDuplicateOf + 1}과 기록 값이 같고 원본 ID가 없어요. 서로 다른 운동인지 확인해 주세요.
                 </p>}

@@ -11,7 +11,7 @@ import {createVault,canonical,sha,sign,prepareObservation,prepareDetail} from '.
 import {createReviewedProvider} from './provider.mjs';
 import {createSupabaseRepository} from './repository.mjs';
 import {createGarminHandler,createNodeServer} from './service.mjs';
-import {createGarminStarterProvider,GARMIN_SCOPES,inCidrs,authenticateGarminPush,normalizeGarminActivity,parseGarminPush} from './garmin-starter.mjs';
+import {createGarminStarterProvider,GARMIN_SCOPES,GARMIN_SUMMARY_FIELDS,inCidrs,authenticateGarminPush,normalizeGarminActivity,parseGarminPush} from './garmin-starter.mjs';
 import {createGarminPushRuntime} from './push.mjs';
 
 // All identities, keys, endpoints and payloads below are synthetic. SQL is the
@@ -36,7 +36,16 @@ const samples=[{offsetSeconds:0,heartRateBpm:120,powerWatts:null},{offsetSeconds
 const options=()=>({repository,vault,provider,identityKey,relayHttpKey,journalKeyring,journalAttest,allowedOrigins:[origin],enabled:true});
 
 before(async()=>{
-  await loadOracleMigrationChain(db);await db.exec(await readFile(new URL('./schema-candidate.sql',import.meta.url),'utf8'));await approveSyntheticOracleStorage(db);
+  await loadOracleMigrationChain(db);
+  const migration=await readFile(new URL('../../supabase/migrations/20261104103908_garmin_integration_runtime.sql',import.meta.url),'utf8');
+  // Prove a missing purpose-erasure prerequisite fails atomically before new tables.
+  await db.exec('begin; alter function public.erase_account_storage_on_withdrawal() rename to synthetic_missing_erasure');
+  await assert.rejects(db.exec(migration),/GARMIN_PREREQUISITE_MISSING/);await db.exec('rollback');
+  assert.equal((await db.query("select to_regclass('public.garmin_connections') as name")).rows[0].name,null);
+  await db.exec(migration);
+  assert.equal((await db.query('select count(*)::int as count from public.garmin_integration_keys')).rows[0].count,0);
+  assert.equal((await db.query('select count(*)::int as count from public.garmin_integration_controls')).rows[0].count,0);
+  await approveSyntheticOracleStorage(db);
   await admin("update public.service_feature_controls set enabled=true where feature_key in ('ACCOUNT','ACCOUNT_JOURNAL_V2','AUTH_OAUTH','DEVICE_INTEGRATION')");
   for(const [u,s]of [[owner,sid],[other,otherSid]]){await admin('insert into auth.users(id,email_confirmed_at)values($1,clock_timestamp())',[u]);await admin("insert into auth.sessions(id,user_id,not_after)values($1,$2,clock_timestamp()+interval '1 hour')",[s,u]);await admitOracleStorage(db,u,s);}
   await admin("insert into public.garmin_integration_keys values('runtime',$1,'RUNTIME',true),('relay',$2,'RELAY',true)",[runtimeKey,relayKey]);
@@ -107,7 +116,7 @@ test('delivery ACK is idempotent; event ID reuse with changed payload fails',asy
 test('monotonic revisions supersede pending data; stale and conflicting revisions cannot silently overwrite',async()=>{const c=await connect(),first=await receive(c);const second=await receive(c,{eventId:'event-2',revision:2,observation:observation({sourceVersion:'2',distanceMeters:11000})});assert.equal(second.inboxId,first.inboxId);assert.equal((await confirm(first)).data.error,'SOURCE_CHANGED');assert.equal((await receive(c,{eventId:'old',revision:1})).kind,'ignored');assert.equal((await receive(c,{eventId:'conflict',revision:2,observation:observation({sourceVersion:'2',distanceMeters:12000})})).kind,'conflict');assert.equal((await confirm(second)).data.error,'REVIEW_REQUIRED');assert.equal((await call({action:'inbox'})).data.items[0].observation.distanceMeters,11000);});
 test('update after confirmation is review-required and never edits the saved journal',async()=>{const c=await connect(),first=await receive(c),saved=await confirm(first);assert.equal(saved.status,200,JSON.stringify(saved));const next=await receive(c,{eventId:'new',revision:2,observation:observation({sourceVersion:'2',distanceMeters:22000})});assert.equal(next.kind,'review_required');assert.equal((await confirm(next)).status,409);const row=(await admin('select revision from public.account_journal_documents where document_id=$1',[saved.data.documentId])).rows[0];assert.equal(row.revision,1);});
 test('provider deletion leaves a tombstone; later upsert cannot resurrect it',async()=>{const c=await connect(),first=await receive(c);const deleted=await receive(c,{eventId:'deleted',revision:2,kind:'DELETE',observation:null,detail:null});assert.equal(deleted.kind,'deleted');assert.equal((await confirm({...first,revision:2})).data.error,'REVIEW_REQUIRED');assert.equal((await receive(c,{eventId:'late',revision:3})).kind,'ignored');assert.equal((await call({action:'inbox'})).data.items[0].observation,null);assert.equal((await admin('select count(*) n from public.garmin_detail_parts')).rows[0].n,0);});
-test('local disconnect invalidates epoch before remote retry and works with operations stopped',async()=>{const c=await connect();await receive(c);await admin('update public.garmin_integration_controls set approved=false');mode='redirect';const disconnected=await call({action:'disconnect'});assert.equal(disconnected.status,200);assert.equal(disconnected.data.connection.state,'REVOKED');assert.equal(disconnected.data.remoteRevocationPending,true);mode='normal';await admin('update public.garmin_integration_controls set approved=true');assert.equal((await relay(event(c,{eventId:'late'}))).data.error,'CONNECTION_CHANGED');const revoke=await relay({},'/internal/garmin/revocations');assert.equal(revoke.data.completed,1);assert.equal(providerCalls.filter(c=>c.url==='/revoke').length,2);});
+test('local disconnect invalidates epoch before remote retry and works with operations stopped',async()=>{const c=await connect();await receive(c);await admin('update public.garmin_integration_controls set approved=false');mode='redirect';const disconnected=await call({action:'disconnect'});assert.equal(disconnected.status,200);assert.equal(disconnected.data.connection.state,'REVOKED');assert.equal(disconnected.data.remoteRevocationPending,true);mode='normal';await admin('update public.garmin_integration_controls set approved=true');assert.equal((await relay(event(c,{eventId:'late'}))).data.error,'CONNECTION_CHANGED');await admin("update public.garmin_revocation_outbox set lease_until=clock_timestamp()-interval '1 second'" );const revoke=await relay({},'/internal/garmin/revocations');assert.equal(revoke.data.completed,1);assert.equal(providerCalls.filter(c=>c.url==='/revoke').length,2);});
 test('refresh lease stores rotated encrypted credentials; replayed/ambiguous lease requires reconnect',async()=>{await connect();assert.equal((await call({action:'refresh'})).status,200);const row=(await admin('select credential_revision from public.garmin_connections where user_id=$1',[owner])).rows[0];assert.equal(row.credential_revision,2);await admin("update public.garmin_connections set refresh_nonce=$1,refresh_until=clock_timestamp()-interval '1 second' where user_id=$2",[randomUUID(),owner]);const result=await call({action:'refresh'});assert.equal(result.data.error,'OAUTH_RESTART_REQUIRED');});
 test('withdrawal during OAuth exchange rejects activation; changed storage revision never adopted automatically',async()=>{const start=await call({action:'connect'});lastChallenge=new URL(start.data.authorizationUrl).searchParams.get('code_challenge');let called=false;providerHook=async()=>{if(called)return;called=true;await admin('update public.account_storage_consents set revision=revision+1 where user_id=$1',[owner]);};const result=await call({action:'complete',state:start.data.state,code:'x'});assert.equal(result.status,409);assert.equal(result.data.error,'CONSENT_CHANGED');await admin('update public.account_storage_consents set revision=1 where user_id=$1',[owner]);});
 test('rejected origin, unsigned relay, stale epoch and scope expansion make no successful import',async()=>{assert.equal((await call({action:'status'},{origin:'https://evil.example'})).status,403);const c=await connect();assert.equal((await relay(event(c),'/internal/garmin/events',{'x-trainoracle-relay-signature':'0'.repeat(64)})).status,403);assert.equal((await relay(event(c,{epoch:randomUUID()}))).data.error,'CONNECTION_CHANGED');assert.equal((await relay(event(c,{subject:'wrong-subject'}))).data.error,'CONNECTION_CHANGED');assert.equal((await admin('select count(*) n from public.garmin_inbox')).rows[0].n,0);});
@@ -147,7 +156,7 @@ test('journal tombstone survives disconnect/reconnect/resync and cannot be resur
 });
 test('issued Starter wire profile fixes default OAuth scopes, verifies ACTIVITY_EXPORT, queues push before processing and saves detail',async()=>{
   garminWireMode=true;
-  const starter=createGarminStarterProvider({accessLevel:'STARTER',clientId:'synthetic-client',clientSecret:'PRIVATE_CLIENT_SECRET_CANARY',evidenceReference:'SYNTHETIC_LOCAL_ONLY',validUntil:'2099-01-01T00:00:00Z',redirectUri:'https://app.example.test/?garmin_callback=1',allowedDetailFields:['heartRateBpm','powerWatts']},{allowLocalHttp:true,testEndpoints:{authorizationEndpoint:`${providerUrl}/authorize`,tokenEndpoint:`${providerUrl}/token`,subjectEndpoint:`${providerUrl}/subject`,permissionsEndpoint:`${providerUrl}/permissions`,registrationEndpoint:`${providerUrl}/registration`}});
+  const starter=createGarminStarterProvider({accessLevel:'STARTER',clientId:'synthetic-client',clientSecret:'PRIVATE_CLIENT_SECRET_CANARY',evidenceReference:'SYNTHETIC_LOCAL_ONLY',validUntil:'2099-01-01T00:00:00Z',redirectUri:'https://app.example.test/?garmin_callback=1',allowedDetailFields:['heartRateBpm','powerWatts'],allowedSummaryFields:GARMIN_SUMMARY_FIELDS},{allowLocalHttp:true,testEndpoints:{authorizationEndpoint:`${providerUrl}/authorize`,tokenEndpoint:`${providerUrl}/token`,subjectEndpoint:`${providerUrl}/subject`,permissionsEndpoint:`${providerUrl}/permissions`,registrationEndpoint:`${providerUrl}/registration`}});
   await admin('update public.garmin_integration_controls set config_hash=$1',[starter.configHash]);
   const push=createGarminPushRuntime({repository,vault,provider:starter,identityKey,enabled:true,allowLocalHttp:true,testDeliveryCidrs:['127.0.0.1/32']});
   const server=createNodeServer(createGarminHandler({...options(),provider:starter,push}));const url=await listen(server);
@@ -157,16 +166,33 @@ test('issued Starter wire profile fixes default OAuth scopes, verifies ACTIVITY_
     const start=await call({action:'connect'},{url});assert.equal(start.status,200);const authorization=new URL(start.data.authorizationUrl);assert.equal(authorization.searchParams.has('scope'),false);lastChallenge=authorization.searchParams.get('code_challenge');assert.equal((await call({action:'complete',state:start.data.state,code:'x'},{url})).status,200);
     assert.ok(providerCalls.some(x=>x.url==='/permissions'));
     const startTime=Date.parse('2026-11-03T23:00:00Z')/1000;
+    const summary=Object.fromEntries(GARMIN_SUMMARY_FIELDS.map((field,index)=>[field,field==='deviceName'?'Synthetic Fenix':field==='averageHeartRateInBeatsPerMinute'?null:field==='steps'?0:field==='averagePaceInMinutesPerKilometer'?0.5975272352046997:index+0.125]));
     const wire={activityDetails:[{userId:subject,summaryId:'official-shape-detail',activityId:123456,summary:{startTimeInSeconds:startTime,startTimeOffsetInSeconds:32400,durationInSeconds:3600,distanceInMeters:10000,activityType:'RUNNING',activityName:'PRIVATE_NOTE_MUST_NOT_PERSIST'},samples:[{startTimeInSeconds:startTime,heartRate:125,powerInWatts:250},{startTimeInSeconds:startTime+1,heartRate:126}],laps:[{startTimeInSeconds:startTime}]}]};
+    Object.assign(wire.activityDetails[0].summary,summary);
     const accepted=await postPush(wire);assert.equal(accepted.status,200,JSON.stringify(accepted));assert.equal((await admin('select count(*) n from public.garmin_inbox')).rows[0].n,0,'ACK only enqueues, never processes activity inline');assert.equal((await admin('select count(*) n from public.garmin_push_jobs')).rows[0].n,1);
     assert.equal((await signedProcess()).data.processed,1);const list=await call({action:'inbox'},{url});assert.equal(list.status,200,JSON.stringify(list));const item=list.data.items[0];assert.equal(item.observation.durationMeaning,'UNKNOWN');assert.equal(item.observation.timeZone,'UTC');assert.equal(item.clock.localDate,'2026-11-04');assert.equal(item.clock.offsetSeconds,32400);
+    assert.deepEqual(item.source.summary,summary);assert.equal(JSON.stringify(item).includes('PRIVATE_NOTE_MUST_NOT_PERSIST'),false);
+    const stored=(await admin('select encrypted_context from public.garmin_inbox where inbox_id=$1',[item.inboxId])).rows[0];assert.equal(JSON.stringify(stored).includes('Synthetic Fenix'),false);
     const detail=await call({action:'detail',inboxId:item.inboxId,expectedRevision:item.revision,partIndex:0},{url});assert.equal(detail.data.samples[0].powerWatts,250);
     const saved=await call({action:'confirm',inboxId:item.inboxId,expectedRevision:item.revision,operationId:randomUUID()},{url});assert.equal(saved.status,200,JSON.stringify(saved));assert.equal(saved.data.date,'2026-11-04');
+    assert.deepEqual((await call({action:'read',documentId:saved.data.documentId},{url})).data.item.source.summary,summary);
     assert.equal((await postPush(wire)).status,200);assert.equal((await signedProcess()).data.processed,0,'same durable job is not replayed after ACK');
     const changed=structuredClone(wire);changed.activityDetails[0].summary.distanceInMeters=11000;assert.equal((await postPush(changed)).status,200);assert.equal((await signedProcess()).data.reviewRequired,1);assert.equal((await call({action:'inbox'},{url})).data.items[0].state,'CONFLICT');
     const permissions={userPermissionsChange:[{userId:subject,summaryId:'permission-change',permissions:[],changeTimeInSeconds:Date.now()/1000|0}]};assert.equal((await postPush(permissions)).status,200);assert.equal((await call({action:'status'},{url})).data.connection.state,'ERROR');assert.equal((await call({action:'inbox'},{url})).status,409);
     assert.equal((await postPush({deregistrations:[{userId:subject}]})).status,200);assert.equal((await call({action:'status'},{url})).data.connection.state,'REVOKED');
   }finally{await close(server);}
+});
+test('official summary allowlist is approval-hash bound and keeps absent/null/zero distinct without title ingestion',()=>{
+  const settings={accessLevel:'STARTER',clientId:'synthetic',clientSecret:'synthetic',evidenceReference:'SYNTHETIC_ONLY',validUntil:'2099-01-01T00:00:00Z',redirectUri:'https://app.example.test/?garmin_callback=1'};
+  const closed=createGarminStarterProvider(settings),allowed=createGarminStarterProvider({...settings,allowedSummaryFields:['averageHeartRateInBeatsPerMinute','steps']});
+  assert.notEqual(closed.configHash,allowed.configHash);assert.deepEqual(closed.allowedSummaryFields,[]);
+  assert.throws(()=>createGarminStarterProvider({...settings,allowedSummaryFields:['activityName']}));
+  const wire={activities:[{userId:'synthetic',summaryId:'summary',startTimeInSeconds:1,startTimeOffsetInSeconds:0,steps:0,averageHeartRateInBeatsPerMinute:null,activeKilocalories:123,activityName:'PRIVATE_TITLE'}]};
+  const row=parseGarminPush(wire,{allowedSummaryFields:allowed.allowedSummaryFields})[0];
+  assert.equal(Object.hasOwn(row.summary,'activeKilocalories'),false);assert.equal(Object.hasOwn(row.summary,'activityName'),false);
+  assert.deepEqual(normalizeGarminActivity(row,[],allowed.allowedSummaryFields).summary,{averageHeartRateInBeatsPerMinute:null,steps:0});
+  assert.deepEqual(normalizeGarminActivity(parseGarminPush(wire)[0]).summary,{});
+  assert.throws(()=>normalizeGarminActivity({...row,summary:{...row.summary,steps:'0'}},[],allowed.allowedSummaryFields));
 });
 test('Garmin delivery peer allowlist never trusts arbitrary forwarded IP or client ID; unsupported PING/file callbacks stay closed',()=>{
   assert.equal(inCidrs('204.77.162.3'),true);assert.equal(inCidrs('127.0.0.1'),false);
@@ -181,6 +207,26 @@ test('pending remote registration removal prevents reconnect and runtime proof c
   await connect();mode='redirect';const stopped=await call({action:'disconnect'});assert.equal(stopped.data.remoteRevocationPending,true);
   const next=await call({action:'connect'});assert.equal(next.status,409);assert.equal(next.data.error,'REVOKE_PENDING');mode='normal';
   const auth=await repository.authenticate(token,1);await assert.rejects(()=>repository.call(auth,{action:'resolveSubject',configHash:provider.configHash,subjectHash:'a'.repeat(64)}),error=>error.code==='ACCESS_DENIED');
+});
+test('disconnect and overlapping deployment workers lease remote DELETE once before permitting reconnect',async()=>{
+  await connect();let entered,release;
+  const pause=()=>{const started=new Promise(resolve=>{entered=resolve;});const gate=new Promise(resolve=>{release=resolve;});providerHook=async()=>{entered();await gate;};return started;};
+  let started=pause(),running=call({action:'disconnect'});await started;
+  try{
+    const otherWorker=await relay({},'/internal/garmin/revocations');assert.equal(otherWorker.data.completed,0);
+    const otherDisconnect=await call({action:'disconnect'});assert.equal(otherDisconnect.data.remoteRevocationPending,true);
+    assert.equal((await call({action:'connect'})).data.error,'REVOKE_PENDING');
+    assert.equal(providerCalls.filter(x=>x.url==='/revoke').length,1);
+  }finally{release();await running;providerHook=null;}
+  await connect();mode='redirect';await call({action:'disconnect'});mode='normal';
+  await admin("update public.garmin_revocation_outbox set lease_until=clock_timestamp()-interval '1 second' where completed_at is null");
+  started=pause();running=relay({},'/internal/garmin/revocations');await started;
+  try{
+    assert.equal((await relay({},'/internal/garmin/revocations')).data.completed,0);
+    assert.equal((await call({action:'connect'})).data.error,'REVOKE_PENDING');
+    assert.equal(providerCalls.filter(x=>x.url==='/revoke').length,3);
+  }finally{release();assert.equal((await running).data.completed,1);providerHook=null;}
+  assert.equal((await call({action:'connect'})).status,200);
 });
 test('successful token rotation followed by permission failure retains only the new encrypted credentials for disconnect',async()=>{
   const c=await connect();mode='permissions_error';const result=await call({action:'refresh'});assert.equal(result.status,502);

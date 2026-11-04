@@ -44,7 +44,7 @@ export function createGarminHandler({repository,vault,provider,identityKey,relay
   const subjectHash=subject=>sign(identityKey,`garmin-subject-v1:${subject}`);
   async function decode(row){if(!row.encrypted_observation||row.state==='DELETED')return null;return vault.open(row.encrypted_observation,rowContext(row));}
   async function sourceContext(row){return row.encrypted_context?vault.open(row.encrypted_context,context(row.user_id,row.connection_id,row.epoch,'source-context',`${row.inbox_id}:${row.source_revision}`)):null;}
-  async function item(row){const source=await sourceContext(row);return {inboxId:row.inbox_id,revision:row.source_revision,state:row.state,provider:'GARMIN',observation:await decode(row),documentId:row.document_id,detailManifest:row.detail_manifest,clock:source?.clock??null,source:source?{manual:source.manual,parent:source.parent,summaryId:source.summaryId,lapStartOffsetsSeconds:source.lapStartOffsetsSeconds}:null};}
+  async function item(row){const source=await sourceContext(row);return {inboxId:row.inbox_id,revision:row.source_revision,state:row.state,provider:'GARMIN',observation:await decode(row),documentId:row.document_id,detailManifest:row.detail_manifest,clock:source?.clock??null,source:source?{manual:source.manual,parent:source.parent,summaryId:source.summaryId,lapStartOffsetsSeconds:source.lapStartOffsetsSeconds,...(source.summary?{summary:source.summary}:{})}:null};}
   return async (request,transport={})=>{
     const origin=request.headers.get('origin');const headers={'content-type':'application/json','cache-control':'no-store','pragma':'no-cache','x-content-type-options':'nosniff','referrer-policy':'no-referrer',...(origin&&origins.has(origin)?{'access-control-allow-origin':origin,'vary':'Origin'}:{})};
     const respond=(status,value)=>new Response(JSON.stringify(status<400?{schemaVersion:VERSION,...value}:value),{status,headers});
@@ -66,7 +66,7 @@ export function createGarminHandler({repository,vault,provider,identityKey,relay
         if(path==='/internal/garmin/events'&&provider.kind==='GARMIN_STARTER')fail(422,'UNSUPPORTED_GARMIN_FEED');
         if(path==='/internal/garmin/revocations'){
           if(!exact(input,[]))fail(422,'INVALID_INPUT');const rows=(await repository.relay({action:'revocations',configHash})).rows;let completed=0;
-          for(const row of rows){if(row.config_hash!==configHash)continue;const credentials=await vault.open(row.credential,credentialsContext(row.user_id,row.connection_id,row.epoch));try{if(await provider.revoke(credentials)){await repository.relay({action:'revoked',configHash,id:row.id});completed++;}}catch{/* Keep encrypted outbox for a later explicitly scheduled retry; no plaintext log. */}}
+          for(const row of rows){if(row.config_hash!==configHash)continue;const credentials=await vault.open(row.credential,credentialsContext(row.user_id,row.connection_id,row.epoch));if(!row.lease_id||Date.parse(row.lease_until)-now()<20000)continue;try{if(await provider.revoke(credentials)){await repository.relay({action:'revoked',configHash,id:row.id,lease:row.lease_id});completed++;}}catch{/* Keep encrypted outbox for a later explicitly scheduled retry; no plaintext log. */}}
           return respond(200,{completed,pending:rows.length-completed});
         }
         if(!exact(input,['eventId','connectionId','epoch','subject','activityId','revision','kind','observation','detail'])||!ID.test(input.eventId)||!UUID.test(input.connectionId)||!UUID.test(input.epoch)||!ID.test(input.subject)||!ID.test(input.activityId)||!positive(input.revision)||!['UPSERT','DELETE'].includes(input.kind))fail(422,'INVALID_INPUT');
@@ -94,7 +94,7 @@ export function createGarminHandler({repository,vault,provider,identityKey,relay
       }
       if(input.action==='disconnect') {
         const result=await call({action:'disconnect'});const revoked=result.revocation;
-        if(revoked&&provider&&revoked.config_hash===configHash){try{const credentials=await vault.open(revoked.credential,credentialsContext(auth.ownerId,revoked.connection_id,revoked.epoch));if(await provider.revoke(credentials))await call({action:'ackRevocation',id:revoked.id});}catch{/* Local disconnection is durable; remote failure remains explicit. */}}
+        if(revoked&&provider&&revoked.config_hash===configHash){try{const credentials=await vault.open(revoked.credential,credentialsContext(auth.ownerId,revoked.connection_id,revoked.epoch));if(revoked.lease_id&&Date.parse(revoked.lease_until)-now()>=20000&&await provider.revoke(credentials))await call({action:'ackRevocation',id:revoked.id,lease:revoked.lease_id});}catch{/* Local disconnection is durable; remote failure remains explicit. */}}
         const pending=await call({action:'revocationStatus'});const status=await call({action:'status'});return respond(200,{connection:connection(status.connection),remoteRevocationPending:pending.pending});
       }
       ensureProvider();
@@ -150,7 +150,7 @@ export function createGarminHandler({repository,vault,provider,identityKey,relay
 }
 
 export function createNodeServer(handler){const server=createServer(async(req,res)=>{try{const request=new Request(`http://localhost${req.url}`,{method:req.method,headers:req.headers,...(['GET','HEAD'].includes(req.method)?{}:{body:req,duplex:'half'})});const result=await handler(request,{peerAddress:req.socket.remoteAddress});res.writeHead(result.status,Object.fromEntries(result.headers));res.end(Buffer.from(await result.arrayBuffer()));}catch{res.writeHead(503,{'content-type':'application/json','cache-control':'no-store'});res.end('{"error":"OPERATIONS_PENDING"}');}});server.requestTimeout=25000;server.headersTimeout=10000;server.maxHeadersCount=40;return server;}
-export async function serviceFromEnvironment(env=process.env){
+export async function runtimeFromEnvironment(env=process.env){
   const enabled=env.TRAINORACLE_GARMIN_ENABLED==='true';let repository,vault,provider,journalKeyring,journalAttest,identityKey,relayHttpKey;
   if(env.SUPABASE_URL&&env.SUPABASE_ANON_KEY&&env.TRAINORACLE_GARMIN_ATTESTATION_JSON&&env.TRAINORACLE_GARMIN_VAULT_JSON){
     repository=createSupabaseRepository({url:env.SUPABASE_URL,publishableKey:env.SUPABASE_ANON_KEY,attestation:JSON.parse(env.TRAINORACLE_GARMIN_ATTESTATION_JSON),relayAttestation:env.TRAINORACLE_GARMIN_RELAY_ATTESTATION_JSON?JSON.parse(env.TRAINORACLE_GARMIN_RELAY_ATTESTATION_JSON):undefined,serviceRoleKey:env.SUPABASE_SERVICE_ROLE_KEY});
@@ -161,6 +161,8 @@ export async function serviceFromEnvironment(env=process.env){
   if(env.TRAINORACLE_GARMIN_REVIEWED_PROFILE_JSON){try{const profile=JSON.parse(env.TRAINORACLE_GARMIN_REVIEWED_PROFILE_JSON);provider=profile.accessLevel==='STARTER'?createGarminStarterProvider(profile):undefined;}catch{provider=undefined;}}
   if(env.TRAINORACLE_JOURNAL_KEYRING_JSON&&env.TRAINORACLE_JOURNAL_ATTESTATION_JSON){journalKeyring=await importJournalKeyring(env.TRAINORACLE_JOURNAL_KEYRING_JSON);journalAttest=await importJournalAttestor(env.TRAINORACLE_JOURNAL_ATTESTATION_JSON);}
   const push=repository&&provider?.kind==='GARMIN_STARTER'?createGarminPushRuntime({repository,vault,provider,identityKey,enabled:enabled&&env.TRAINORACLE_GARMIN_PUSH_ENABLED==='true',trustedProxyAddresses:(env.TRAINORACLE_GARMIN_TRUSTED_PROXY_ADDRESSES??'').split(',').filter(Boolean)}):undefined;
-  return createNodeServer(createGarminHandler({repository,vault,provider,identityKey,relayHttpKey,journalKeyring,journalAttest,push,enabled,allowedOrigins:(env.TRAINORACLE_GARMIN_ALLOWED_ORIGINS??'').split(',').map(s=>s.trim()).filter(Boolean)}));
+  return {handler:createGarminHandler({repository,vault,provider,identityKey,relayHttpKey,journalKeyring,journalAttest,push,enabled,allowedOrigins:(env.TRAINORACLE_GARMIN_ALLOWED_ORIGINS??'').split(',').map(s=>s.trim()).filter(Boolean)}),
+    configured:!!(repository&&vault&&provider?.isCurrent()&&identityKey&&relayHttpKey&&journalKeyring&&journalAttest&&env.TRAINORACLE_GARMIN_RELAY_ATTESTATION_JSON&&env.SUPABASE_SERVICE_ROLE_KEY)};
 }
+export async function serviceFromEnvironment(env=process.env){return createNodeServer((await runtimeFromEnvironment(env)).handler);}
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){try{const server=await serviceFromEnvironment();const port=Number(process.env.PORT??8789);if(!Number.isInteger(port)||port<1||port>65535)throw 0;server.listen(port,'127.0.0.1');}catch{process.stderr.write('GARMIN_INTEGRATION_CONFIGURATION_INVALID\n');process.exitCode=1;}}

@@ -7,6 +7,7 @@ import { accountJournalRecordSchema, correctAccountJournalImportedObservation, F
 import { comparisonRelationSchema, releaseComparisonRelationRequestSchema } from "../import/comparison-relation"
 import { accountCalendarDecorationDocumentSchema } from "./account-calendar-decoration-schema"
 import { accountDeletionBoundaryState, onAccountDeletionBoundaryChange } from "./account-deletion-boundary"
+import { FILE_DOCUMENT_CODEC, FILE_LOCAL_MUTATION_MAX_BYTES, compressFileJson, decompressFileJson, isFileDetailLocalPayload, jsonBytes } from "./account-file-document-codec"
 
 /** Local draft protection only, not authentication or server/account storage.
  * Callers must verify the current authenticated scope before every call and discard
@@ -236,7 +237,9 @@ function aad(ownerId: string, documentId: string, databaseName: string) {
 
 async function encrypt<T>(key: CryptoKey, ownerId: string, documentId: string, draft: T, databaseName: string): Promise<Cipher> {
   const iv = crypto.getRandomValues(new Uint8Array(12))
-  const bytes = new TextEncoder().encode(JSON.stringify(draft))
+  const stored = jsonBytes(draft) > 600_000 && isFileDetailLocalPayload(draft)
+    ? await compressFileJson(draft, FILE_LOCAL_MUTATION_MAX_BYTES) : draft
+  const bytes = new TextEncoder().encode(JSON.stringify(stored))
   try {
     const ciphertext = await crypto.subtle.encrypt({ name: "AES-GCM", iv,
       additionalData: aad(ownerId, documentId, databaseName) }, key, bytes)
@@ -250,7 +253,12 @@ async function decrypt<T>(key: CryptoKey, ownerId: string, documentId: string, e
     bytes = new Uint8Array(await crypto.subtle.decrypt({ name: "AES-GCM",
       iv: new Uint8Array(encrypted.iv), additionalData: aad(ownerId, documentId, databaseName),
     }, key, new Uint8Array(encrypted.ciphertext)))
-    return parseDocument(JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes)), schema)
+    let value = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes))
+    if (value?.format === FILE_DOCUMENT_CODEC) {
+      value = await decompressFileJson(value, FILE_LOCAL_MUTATION_MAX_BYTES)
+      if (!isFileDetailLocalPayload(value)) throw new Error("Invalid file payload")
+    }
+    return parseDocument(value, schema)
   } catch { throw new Error("Cannot decrypt journal draft") }
   finally { bytes?.fill(0) }
 }

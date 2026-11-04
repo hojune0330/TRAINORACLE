@@ -1,5 +1,5 @@
 import { createAccountDocumentBuffer, type AccountJournalConflictBuffer, type AccountJournalDraftView } from "./account-journal-draft-buffer"
-import { accountJournalPreviewEnabled, requestAccountDocument, accountBodyPartMetadataSupported, checkAccountJournalBodyPartSupport, checkAccountJournalDetailSupport } from "./account-journal-api"
+import { accountJournalPreviewEnabled, requestAccountDocument, accountBodyPartMetadataSupported, checkAccountJournalBodyPartSupport, checkAccountJournalDetailSupport, checkAccountJournalLargeFileSupport, accountJournalCorrectionMaxBytes } from "./account-journal-api"
 import { currentStorageConsentRevision, pinStorageOperationRevision } from "./storage-consent-revision"
 import type { AccountJournalRequest } from "./account-journal-api"
 import { accountJournalRecordSchema, accountJournalRecordVersion, validateAccountJournalRecordUpdate, correctAccountJournalImportedObservation, applyAccountJournalComparisonMutation, type AccountJournalRecord } from "./account-journal-record-schema"
@@ -14,7 +14,8 @@ import { markCurrentConfirmedAccountJournalProjection, currentConfirmedAccountJo
 import { canEditJournalEntry, keepsImportedObjectiveFacts, preserveJournalProvenance } from "../journal-edit-policy"
 import { samePlannedSessionLink } from "../planned-session-link"
 import { isAccountJournalWriteRejection, type AccountJournalWriteRejection } from "./account-write-rejection"
-import { accountDocumentFits } from "./account-document-capacity"
+import { accountDocumentFits, ACCOUNT_DOCUMENT_MAX_BYTES } from "./account-document-capacity"
+import { accountFileDocumentFits, isFileDetailMutation, jsonBytes, compressFileJson, FILE_LOCAL_MUTATION_MAX_BYTES, FILE_CORRECTION_MAX_BYTES } from "./account-file-document-codec"
 
 let buffer: AccountJournalConflictBuffer<AccountJournalRecord> | null = null
 let owner: string | null = null
@@ -125,9 +126,15 @@ function flush(ctx: Context, documentId: string) {
   return flushAccountJournalDraft(ctx.buffer, ctx.ownerId, documentId,
     async request => {
       if (request.action === "save" && request.document.version === 4
-        && !await checkAccountJournalBodyPartSupport(ctx.ownerId, ctx.current)) return { ok: false, code: "UPGRADE_REQUIRED" }
-      if (request.action === "save" && request.document.version === 5
-        && !await checkAccountJournalDetailSupport(ctx.ownerId, ctx.current)) return { ok: false, code: "UPGRADE_REQUIRED" }
+        && !await checkAccountJournalBodyPartSupport(ctx.ownerId, ctx.current)) return { ok: false, code: "UNAVAILABLE" }
+      if ((request.action === "save" && request.document.version === 5
+        || request.action === "correctImportedObservation" && !!request.replacementObservation.detail)
+        && !await checkAccountJournalDetailSupport(ctx.ownerId, ctx.current)) return { ok: false, code: "UNAVAILABLE" }
+      // The pending command survives reload, while authenticated capabilities
+      // intentionally do not. Negotiate again without changing its operation,
+      // pinned consent revision, expected revision, or original payload.
+      if (isFileDetailMutation(request) && jsonBytes(request) > ACCOUNT_DOCUMENT_MAX_BYTES
+        && !await checkAccountJournalLargeFileSupport(ctx.ownerId, ctx.current)) return { ok: false, code: "UNAVAILABLE" }
       return requestAccountDocument(ctx.ownerId, request, ctx.current, accountJournalRecordSchema)
     }, ctx.current,
     (document, revision) => markCurrent(ctx, document, revision))
@@ -355,6 +362,10 @@ export async function persistAccountJournalRecord(entry: JournalEntry, expectedS
       let document = accountJournalRecordSchema.parse({ version, state: "FINALIZED", kind: "JOURNAL", entry })
       // Reject before creating a durable outbox item that can never be sent.
       if (!accountDocumentFits(document)) return { ...failedSave, rejection: "DOCUMENT_CAPACITY_EXCEEDED" }
+      if (jsonBytes(document) > ACCOUNT_DOCUMENT_MAX_BYTES) {
+        if (!await accountFileDocumentFits(document)) return { ...failedSave, rejection: "DOCUMENT_CAPACITY_EXCEEDED" }
+        if (!current.current() || !await checkAccountJournalLargeFileSupport(current.ownerId, current.current)) return failedSave
+      }
       const documentId = await accountJournalDocumentId(current.ownerId, document.entry.id)
       if (!current.current() || lifecycleRequests.has(documentId) || deleted.has(documentId)) return failedSave
       const old = await current.buffer.read(current.ownerId, documentId)
@@ -460,11 +471,27 @@ export async function correctAccountJournalFileObservation(entryId: string, repl
       const original = view.pending?.mutation ? view.pending.originalDraft : view.draft
       if (!original || original.entry.id !== entryId || original.entry.kind !== "post-session" || !original.entry.fileObservation
         || view.serverRevision !== base.revision || await accountJournalEntryFingerprint(original.entry) !== base.contentFingerprint) return failedSave
+      if (jsonBytes(original) > FILE_CORRECTION_MAX_BYTES || jsonBytes(replacement) > FILE_CORRECTION_MAX_BYTES) {
+        if (!await checkAccountJournalLargeFileSupport(current.ownerId, current.current) || !current.current()) return failedSave
+      }
+      if (jsonBytes(original) > accountJournalCorrectionMaxBytes(current.ownerId) || jsonBytes(replacement) > accountJournalCorrectionMaxBytes(current.ownerId))
+        return { ...failedSave, rejection: "DOCUMENT_CAPACITY_EXCEEDED" }
       const mutation = { action: "correctImportedObservation" as const,
         previousContentRevisionFingerprint: original.entry.fileObservation.contentRevisionFingerprint,
         replacementObservation: replacement, confirmedChangedFields: fields }
       const proposal = correctAccountJournalImportedObservation(original, mutation.previousContentRevisionFingerprint, replacement, fields)
       if (!proposal || !current.current()) return failedSave
+      if (jsonBytes(proposal) > accountJournalCorrectionMaxBytes(current.ownerId)) return { ...failedSave, rejection: "DOCUMENT_CAPACITY_EXCEEDED" }
+      if (!accountDocumentFits(proposal)) return { ...failedSave, rejection: "DOCUMENT_CAPACITY_EXCEEDED" }
+      if (jsonBytes(proposal) > ACCOUNT_DOCUMENT_MAX_BYTES) {
+        if (!await accountFileDocumentFits(proposal)) return { ...failedSave, rejection: "DOCUMENT_CAPACITY_EXCEEDED" }
+        if (!current.current() || !await checkAccountJournalLargeFileSupport(current.ownerId, current.current)) return failedSave
+      }
+      if (jsonBytes({ mutation, original }) > ACCOUNT_DOCUMENT_MAX_BYTES) {
+        try { await compressFileJson({ mutation, original }, FILE_LOCAL_MUTATION_MAX_BYTES) }
+        catch { return { ...failedSave, rejection: "DOCUMENT_CAPACITY_EXCEEDED" } }
+        if (!current.current()) return failedSave
+      }
       if (view.pending) {
         if (!sameValue(view.pending.mutation, mutation) || !sameValue(view.pending.draft, proposal)) return failedSave
       } else {
@@ -713,15 +740,27 @@ async function hydrate(ctx: Context, replayPending = true) {
   } catch { if (ctx.current()) setAccountJournalProjectionStatus(ctx.ownerId, "FAILED"); return false }
 }
 
-export async function accountJournalRecordHistory(documentId: string) {
+export async function accountJournalRecordHistory(documentId: string, targetRevision?: number) {
   const ctx = context()
   if (!ctx) return null
-  const result = await requestAccountDocument(ctx.ownerId, { action: "history", documentId, collection: "JOURNAL" }, ctx.current, accountJournalRecordSchema)
-  if (!result.ok || result.data.kind !== "history" || !ctx.current()) return null
-  for (const version of result.data.versions) {
-    if (await accountJournalDocumentId(ctx.ownerId, version.document.entry.id) !== documentId || !ctx.current()) return null
-  }
-  return result.data
+  const versions: { revision: number; document: AccountJournalRecord; replacedAt: string; expiresAt: string; reason: "replaced" | "trash" }[] = []
+  let beforeRevision: number | undefined
+  do {
+    const result = await requestAccountDocument(ctx.ownerId, { action: "history", documentId, collection: "JOURNAL",
+      ...(beforeRevision === undefined ? {} : { beforeRevision }), ...(targetRevision === undefined || beforeRevision !== undefined ? {} : { targetRevision }) }, ctx.current, accountJournalRecordSchema)
+    if (!result.ok || result.data.kind !== "history" || !ctx.current()) return null
+    for (const version of result.data.versions) {
+      if (versions.some(old => old.revision === version.revision)
+        || await accountJournalDocumentId(ctx.ownerId, version.document.entry.id) !== documentId || !ctx.current()) return null
+      versions.push(version)
+    }
+    const next = targetRevision !== undefined && result.data.versions.some(version => version.revision === targetRevision)
+      ? undefined : result.data.nextRevision ?? undefined
+    if (next !== undefined && (beforeRevision !== undefined && next >= beforeRevision
+      || result.data.versions.at(-1)?.revision !== next)) return null
+    beforeRevision = next
+  } while (beforeRevision !== undefined)
+  return { kind: "history" as const, documentId, versions }
 }
 
 export async function deleteAccountJournalRecord(entryId: string) {
@@ -792,7 +831,7 @@ export async function restoreAccountJournalVersionResult(documentId: string, sou
       if (!ctx.current()) return stale
       if (!remote?.clean) return failed
       if (remote.data.revision !== expectedRevision) return { ok: false, code: "REMOTE_CHANGED" }
-      const history = await accountJournalRecordHistory(documentId)
+      const history = await accountJournalRecordHistory(documentId, sourceRevision)
       if (!ctx.current()) return stale
       if (!history) return failed
       if (!history.versions.some(version => version.revision === sourceRevision)) return sourceUnavailable()

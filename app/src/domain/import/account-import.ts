@@ -142,7 +142,8 @@ export function createAccountImportConfirmation(selections: readonly ImportDraft
             : await accountJournalDocumentId(scope.ownerId!, JSON.stringify(["file-observation-import-v1", observation.sourceObservationKey]))
           : legacyId
         const sourceMatches = observation?.sourceActivityId != null ? readAccountJournalProjection().filter((entry): entry is PostSessionEntry =>
-          entry.kind === "post-session" && entry.fileObservation?.sourceObservationKey === observation.sourceObservationKey) : []
+          entry.kind === "post-session" && (entry.fileObservation?.sourceObservationKey === observation.sourceObservationKey
+            || entry.fileObservation?.sourceIdentityScope === "LEGACY_UNSCOPED_V1" && fileImportCandidateKind(entry, draft.activity) === "REUSE")) : []
         if (sourceMatches.length > 1) item.legacyConflict = true
         const matchedSource = sourceMatches.length === 1 ? sourceMatches[0] : undefined
         if (matchedSource) {
@@ -161,7 +162,8 @@ export function createAccountImportConfirmation(selections: readonly ImportDraft
             }
             if (!scope.current()) return null
             if (!base?.entry || base.entry.kind !== "post-session" || !base.entry.fileObservation
-              || base.entry.fileObservation.sourceObservationKey !== observation!.sourceObservationKey
+              || (base.entry.fileObservation.sourceObservationKey !== observation!.sourceObservationKey
+                && !(base.entry.fileObservation.sourceIdentityScope === "LEGACY_UNSCOPED_V1" && fileImportCandidateKind(base.entry, draft.activity) === "REUSE"))
               || !sameFileObservation(base.entry.fileObservation, observation!)) item.legacyConflict = true
             else { item.entry = { ...base.entry, syncState: "local" }; item.alreadyConfirmed = true }
           }

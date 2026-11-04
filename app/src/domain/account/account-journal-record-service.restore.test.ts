@@ -15,7 +15,7 @@ vi.mock("./account-journal-projection", () => ({ putAccountJournalProjection: vi
   setAccountJournalProjectionStatus: vi.fn(), suppressAccountJournalLocalCopy: vi.fn(),
   markCurrentConfirmedAccountJournalProjection: vi.fn(), currentConfirmedAccountJournalRevision: vi.fn() }))
 
-import { accountJournalDocumentId, disposeAccountJournalRecords, restoreAccountJournalVersion, restoreAccountJournalVersionResult } from "./account-journal-record-service"
+import { accountJournalDocumentId, accountJournalRecordHistory, disposeAccountJournalRecords, restoreAccountJournalVersion, restoreAccountJournalVersionResult } from "./account-journal-record-service"
 
 let documentId: string
 let remoteRevision: number
@@ -65,6 +65,38 @@ describe("journal restore result and immutable source lifecycle", () => {
     expect(restoreCalls()).toHaveLength(1)
     expect(restoreCalls()[0]).toMatchObject({ sourceRevision: 1, expectedRevision: 2 })
     expect(mocks.importRemote.mock.calls.map(call => call[3])).toEqual([2, 3])
+    expect(mocks.send.mock.calls.find(call => call[1].action === "history")?.[1]).toMatchObject({ targetRevision: 1 })
+  })
+  it("loads bounded history pages without omitting retained revisions", async () => {
+    mocks.send.mockImplementation(async (_owner: string, request: AccountJournalRequest) => {
+      if (request.action !== "history") throw new Error("Unexpected request")
+      const revision = request.beforeRevision === undefined ? 3 : 2
+      return { ok: true, data: { kind: "history", documentId, versions: [{ revision, document: record,
+        replacedAt: "2026-09-08T00:00:00Z", expiresAt: "2026-10-08T00:00:00Z", reason: "replaced" }],
+        ...(revision === 3 ? { nextRevision: 3 } : {}) } }
+    })
+    const result = await accountJournalRecordHistory(documentId)
+    expect(result?.versions.map(item => item.revision)).toEqual([3, 2])
+    expect(mocks.send.mock.calls.map(call => call[1].beforeRevision)).toEqual([undefined, 3])
+  })
+  it("rejects a history pagination cursor that would repeat a page", async () => {
+    mocks.send.mockResolvedValue({ ok: true, data: { kind: "history", documentId, versions: [{ revision: 3, document: record,
+      replacedAt: "2026-09-08T00:00:00Z", expiresAt: "2026-10-08T00:00:00Z", reason: "replaced" }], nextRevision: 3 } })
+    expect(await accountJournalRecordHistory(documentId)).toBeNull()
+    expect(mocks.send).toHaveBeenCalledTimes(2)
+  })
+  it("finds an exact restore source through paged ordinary history when targeted transport is unavailable", async () => {
+    mocks.send.mockImplementation(async (_owner: string, request: AccountJournalRequest) => {
+      if (request.action !== "history") throw new Error("Unexpected request")
+      const revision = request.beforeRevision === undefined ? 3 : request.beforeRevision - 1
+      return { ok: true, data: { kind: "history", documentId, versions: [{ revision, document: record,
+        replacedAt: "2026-09-08T00:00:00Z", expiresAt: "2026-10-08T00:00:00Z", reason: "replaced" }],
+        nextRevision: revision } }
+    })
+    const result = await accountJournalRecordHistory(documentId, 1)
+    expect(result?.versions.map(item => item.revision)).toEqual([3, 2, 1])
+    expect(mocks.send.mock.calls.map(call => ({ before: call[1].beforeRevision, target: call[1].targetRevision })))
+      .toEqual([{ before: undefined, target: 1 }, { before: 3, target: undefined }, { before: 2, target: undefined }])
   })
   it("preserves the existing successful boolean restore contract", async () => {
     expect(await restoreAccountJournalVersion(documentId, 1, 2)).toBe(true)

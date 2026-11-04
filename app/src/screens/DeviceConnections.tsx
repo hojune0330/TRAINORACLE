@@ -3,7 +3,7 @@ import { AppHeading } from "../components/AppHeading"
 import { MenuAction } from "../components/MenuAction"
 import { InfoDisclosure } from "../components/InfoDisclosure"
 import { RecordStateList } from "../components/RecordUI"
-import { GarminConnectionPanel } from "../components/GarminConnectionPanel"
+import { GarminConnectionPanel, type OpenGarminJournalRecord } from "../components/GarminConnectionPanel"
 import "./device-connections.css"
 
 /** Connection and receipt come only from the authenticated service, never a build flag. */
@@ -11,7 +11,7 @@ export function DeviceConnections({ onOpenImport, ownerId = null, onOpenAccount,
   readonly onOpenImport?: () => void
   readonly ownerId?: string | null
   readonly onOpenAccount?: () => void
-  readonly onOpenJournalRecord?: (date: string, entryId: string) => void
+  readonly onOpenJournalRecord?: OpenGarminJournalRecord
 }) {
   return <div className="device-connections">
     <section aria-labelledby="connection-file-title">

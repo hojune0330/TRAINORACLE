@@ -1,7 +1,7 @@
 import React from "react"
 import { Pencil, RefreshCw, Upload, X } from "lucide-react"
 import { parseActivityFile, type ImportedActivity } from "../../domain/import/activity-file"
-import { buildFileObservation, FILE_OBSERVATION_LIMITS, toFileObservationSummary, type FileObservationV1 } from "../../domain/import/file-observation"
+import { buildFileObservation, FILE_OBSERVATION_LIMITS, prepareLegacyFileDetailUpgrade, toFileObservationSummary, type FileObservationV1 } from "../../domain/import/file-observation"
 import { fileAnalysisFormats } from "../../domain/import/file-analysis-policy"
 import { FILE_OBSERVATION_CORRECTION_FIELDS } from "../../domain/account/account-journal-record-schema"
 import { correctAccountJournalFileObservation, readAccountJournalWriteBase, retryAccountJournalFileObservation, type AccountJournalWriteBase } from "../../domain/account/account-journal-record-service"
@@ -85,6 +85,11 @@ export function FileObservationCorrection({ entryId }: { readonly entryId: strin
   const selectReplacement = (candidate: FileObservationV1) => {
     if (!original) return
     try {
+      if (!original.detail && candidate.detail) {
+        const upgraded = prepareLegacyFileDetailUpgrade(original, candidate)
+        if (!upgraded) { setMessage("기존 원본의 ID·날짜·시각·거리·시간·구간이 모두 같아야 상세를 추가할 수 있어요. 기존 기록은 바뀌지 않았어요."); return }
+        change(activityOf(upgraded)); setCandidates([]); return
+      }
       const next = buildFileObservation({
         format: candidate.format, sourceProfile: candidate.sourceProfile, parserVersion: original.parserVersion,
         sourceActivityId: candidate.sourceActivityId, sourceIdentityFingerprint: original.sourceIdentityFingerprint,
@@ -93,6 +98,7 @@ export function FileObservationCorrection({ entryId }: { readonly entryId: strin
         durationMeaning: candidate.durationMeaning, laps: candidate.laps,
         ...(original.dataLineage ? { dataLineage: original.dataLineage } : {}),
         ...(candidate.detail ? { detail: candidate.detail } : {}),
+        ...(original.sourceIdentityScope ? { sourceIdentityScope: original.sourceIdentityScope } : {}),
         confirmation: { durationMeaning: null, sport: null },
       })
       change(activityOf(next)); setCandidates([])

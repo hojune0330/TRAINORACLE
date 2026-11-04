@@ -40,7 +40,7 @@ if (process.env.JOURNAL_HANDLER_MUTATION) {
   const change = mutations[process.env.JOURNAL_HANDLER_MUTATION];
   assert.ok(change && source.includes(change[0]), 'mutation must change an observed guard');
   source = source.replace(...change);
-  for (const file of ['account-journal-crypto.mjs','account-journal-record-validator.mjs','account-state-validator.mjs','account-journal-comparison-original.mjs'])
+  for (const file of ['account-journal-crypto.mjs','account-journal-record-validator.mjs','account-state-validator.mjs','account-journal-comparison-original.mjs','account-file-document-codec.mjs'])
     source = source.replace(`'./${file}'`,JSON.stringify(new URL(file,url).href));
   handlerFactory = (await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`)).createAccountJournalHandler;
 }

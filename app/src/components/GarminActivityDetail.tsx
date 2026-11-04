@@ -3,6 +3,7 @@ import { activeLocalAccount, journalOwner, localJournalScopeGeneration, onLocalJ
 import { accountJournalDocumentId } from "../domain/account/account-journal-record-service"
 import { garminErrorMessage, requestGarminIntegration, type GarminError, type GarminItem, type GarminSample, type GarminTransport } from "../domain/account/garmin-integration"
 import { garminChartSamples, loadGarminActivitySamples } from "../domain/account/garmin-activity-detail"
+import { GARMIN_SUMMARY_METRICS } from "../domain/account/garmin-summary"
 import { ImportedActivitySensorChart } from "./ImportedActivitySensorChart"
 import { ImportedActivityRoute } from "./ImportedActivityRoute"
 import { importedSourceClock, originalQuantity } from "./ImportedActivityMetrics"
@@ -56,6 +57,7 @@ function ProviderDetailSession({ ownerId, item: initialItem, documentId, transpo
     event.preventDefault(); setView(next); document.getElementById(`${titleId}-${next}`)?.focus()
   }
   const observation = item?.observation
+  const summary = item?.source?.summary
   const positions = samples?.flatMap((sample, index) => Object.hasOwn(sample, "latitude") || Object.hasOwn(sample, "longitude") ? [{ sample, index }] : []) ?? []
   return <section className="imported-activity-detail record-ui" aria-labelledby={titleId} aria-busy={busy || undefined}>
     <h3 id={titleId}>Garmin 원본 상세</h3>
@@ -77,18 +79,25 @@ function ProviderDetailSession({ ownerId, item: initialItem, documentId, transpo
           <div><dt>전달 경로</dt><dd>Garmin 계정 연결</dd></div>
           {item?.source && <><div><dt>원본 기록 방식</dt><dd>{item.source.manual ? "Garmin에서 수동 입력" : "수동 입력 표시 없음"}</dd></div>
             <div><dt>복합운동 관계</dt><dd>{item.source.parent.isParent ? "여러 운동을 묶은 상위 기록" : item.source.parent.parentSummaryId ? "복합운동의 하위 기록" : "상위·하위 관계 표시 없음"}</dd></div></>}
-          <div><dt>기기 이름</dt><dd>이 받은 기록에는 제공되지 않았어요.</dd></div>
+          <div><dt>기기 이름</dt><dd>{summary && Object.hasOwn(summary, "deviceName") ? summary.deviceName === null ? "원본 빈값(null)" : summary.deviceName === "" ? "원본 빈 문자열" : summary.deviceName : "현재 보관된 기기 이름이 없어요."}</dd></div>
           <div><dt>자료 상태</dt><dd>{item?.state === "CONFIRMED" ? "계정 일지에 반영된 원본" : "받은 원본 · 일지 저장과 별도"}</dd></div>
         </dl>
         {item?.clock && <p>기기에 설정된 시차는 실제 지역 시간대를 확정하는 정보가 아니에요. 원본 시작 시각과 따로 표시해요.</p>}
         {(item?.source?.parent.isParent || item?.source?.parent.parentSummaryId) && <p>상위 기록과 하위 기록을 함께 저장하면 운동량이 중복될 수 있어요.</p>}
       </div>
       <div id={`${titleId}-panel-1`} role="tabpanel" aria-labelledby={`${titleId}-1`} hidden={view !== 1}>
-        <h4>전달된 전체 수치</h4>
+        <h4>현재 보관된 수치</h4>
         <dl className="imported-activity-detail__context"><div><dt>거리</dt><dd>{originalQuantity(observation.distanceMeters, "m")}</dd></div>
           <div><dt>{meaning[observation.durationMeaning]}</dt><dd>{originalQuantity(observation.durationSeconds, "s")}</dd></div>
           <div><dt>구간</dt><dd>{observation.laps.length}개</dd></div><div><dt>센서 표본</dt><dd>{samples === null ? "아직 불러오지 않음" : `${samples.length}개`}</dd></div></dl>
-        <p>제공되지 않은 평균·최대 수치와 페이스는 새로 만들지 않아요. 센서 값은 차트와 표에서 확인할 수 있어요.</p>
+        <p>현재 보관된 Garmin 요약값을 원래 단위로 표시해요. 없는 값은 새로 계산하지 않아요. 센서 값은 차트와 표에서 확인할 수 있어요.</p>
+        <table className="imported-activity-detail__table"><caption>Garmin 원본 요약 수치 · 보관 여부 포함</caption>
+          <thead><tr><th scope="col">항목</th><th scope="col">원본 값</th><th scope="col">단위</th></tr></thead>
+          <tbody>{(Object.keys(GARMIN_SUMMARY_METRICS) as (keyof typeof GARMIN_SUMMARY_METRICS)[]).map(field => {
+            const [label, unit] = GARMIN_SUMMARY_METRICS[field], present = summary && Object.hasOwn(summary, field), value = summary?.[field]
+            return <tr key={field}><th scope="row">{label}<small>{field}</small></th><td>{!present ? "보관된 값 없음" : value === null ? "원본 빈값(null)" : String(value)}</td><td>{unit}</td></tr>
+          })}</tbody></table>
+        <p>보관된 값 없음은 전달 누락과 현재 수집 허용 범위를 구별해 확정한 상태가 아니에요. 소수 페이스는 Garmin의 min/km 원본값이며 분:초 형식으로 바꾸지 않았어요.</p>
         {positions.length > 0 && <><AccessibleTrendTable caption="원본 위치 표본" rows={positions.slice(positionStart, positionStart + 20).map(({ sample, index }) => ({ key: String(index), label: `표본 ${index + 1} · 시작 뒤 ${sample.offsetSeconds}초`, value: `위도 ${originalQuantity(sample.latitude, "°")} · 경도 ${originalQuantity(sample.longitude, "°")}` }))} />
           <p>위치 표본 {positions.length}개 중 {positionStart + 1}–{Math.min(positionStart + 20, positions.length)}개</p>
           {positions.length > 20 && <div className="imported-activity-detail__pager"><RecordAction priority="secondary" disabled={positionStart === 0} onClick={() => setPositionStart(value => Math.max(0, value - 20))}>이전 위치 표본</RecordAction><RecordAction priority="secondary" disabled={positionStart + 20 >= positions.length} onClick={() => setPositionStart(value => value + 20)}>다음 위치 표본</RecordAction></div>}</>}

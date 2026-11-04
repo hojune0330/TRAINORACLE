@@ -1,7 +1,25 @@
--- REVIEW CANDIDATE ONLY. Not applied to any hosted project. Existing migrations
--- 0001..0062 are prerequisites; never bulk-push old migrations to install this.
+-- Exact mirror of 20261104103908_garmin_integration_runtime.sql, tested together.
+-- Existing account storage/journal objects are prerequisites; never bulk-push old migrations.
 -- No provider approval, operational review, feature or key is enabled here.
 begin;
+do $$ declare dependency text; begin
+  foreach dependency in array array['public.account_storage_subject_allowed(uuid)',
+    'public.service_feature_enabled(text)','public.mutate_account_journal_attested(text,text,text)',
+    'public.withdraw_storage_on_account_deletion()','public.erase_account_storage_on_withdrawal()',
+    'auth.jwt()','extensions.hmac(bytea,bytea,text)','extensions.gen_random_uuid()'] loop
+    if to_regprocedure(dependency) is null then raise exception 'GARMIN_PREREQUISITE_MISSING: %',dependency;end if;
+  end loop;
+  foreach dependency in array array['auth.users','auth.sessions','public.account_storage_consents',
+    'public.account_journal_documents','public.account_journal_gateway_keys'] loop
+    if to_regclass(dependency) is null then raise exception 'GARMIN_PREREQUISITE_MISSING: %',dependency;end if;
+  end loop;
+  if not exists(select 1 from pg_trigger where tgrelid='public.account_storage_consents'::regclass
+    and tgfoid='public.erase_account_storage_on_withdrawal()'::regprocedure and tgenabled in ('O','A'))
+    or not exists(select 1 from pg_trigger where tgrelid='public.account_deletion_requests'::regclass
+    and tgfoid='public.withdraw_storage_on_account_deletion()'::regprocedure and tgenabled in ('O','A')) then
+    raise exception 'GARMIN_WITHDRAWAL_TRIGGER_PREREQUISITE_MISSING';
+  end if;
+end $$;
 create table public.garmin_integration_controls (
   singleton boolean primary key default true check(singleton), approved boolean not null default false,
   config_hash text not null check(config_hash ~ '^[a-f0-9]{64}$'), evidence_reference text not null,
@@ -52,7 +70,7 @@ create table public.garmin_delivery_events (
 create table public.garmin_revocation_outbox (
   id uuid primary key, user_id uuid not null references auth.users(id) on delete cascade,
   connection_id uuid not null, epoch uuid not null, credential jsonb not null,
-  config_hash text not null, completed_at timestamptz
+  config_hash text not null, completed_at timestamptz, lease_id uuid, lease_until timestamptz
 );
 create table public.garmin_push_jobs (
   id uuid primary key, user_id uuid not null references auth.users(id) on delete cascade,
@@ -130,10 +148,16 @@ begin
       return jsonb_build_object('kind','completed');
     end if;
     if action in ('revocations','revoked') then
-      if action='revocations' then return jsonb_build_object('rows',coalesce((select jsonb_agg(to_jsonb(r)) from
-        (select * from public.garmin_revocation_outbox where completed_at is null order by id limit 10)r),'[]'::jsonb));end if;
-      update public.garmin_revocation_outbox set completed_at=clock_timestamp(),credential='null'::jsonb
-        where id=(req->>'id')::uuid and completed_at is null;
+      if action='revocations' then
+        select * into revoke_row from public.garmin_revocation_outbox where completed_at is null and config_hash=req->>'configHash'
+          and (lease_until is null or lease_until<clock_timestamp()) order by id limit 1 for update skip locked;
+        if revoke_row.id is null then return jsonb_build_object('rows','[]'::jsonb);end if;
+        update public.garmin_revocation_outbox set lease_id=extensions.gen_random_uuid(),lease_until=clock_timestamp()+interval '60 seconds'
+          where id=revoke_row.id returning * into revoke_row;
+        return jsonb_build_object('rows',jsonb_build_array(to_jsonb(revoke_row)));
+      end if;
+      update public.garmin_revocation_outbox set completed_at=clock_timestamp(),credential='null'::jsonb,lease_id=null,lease_until=null
+        where id=(req->>'id')::uuid and config_hash=req->>'configHash' and lease_id=(req->>'lease')::uuid;
       return jsonb_build_object('kind','revoked');
     end if;
     if action='resolveSubject' then select * into c from public.garmin_connections where subject_hash=req->>'subjectHash';
@@ -181,7 +205,8 @@ begin
     jsonb_build_object('state',c.state,'epoch',c.epoch,'lastSyncAt',c.last_sync_at)end,'pendingCount',(select count(*) from public.garmin_inbox where user_id=actor and epoch=c.epoch and state in ('PENDING','CONFLICT')));end if;
   -- Local disconnect always works, including after operational kill switch.
   if action='ackRevocation' then
-    update public.garmin_revocation_outbox set completed_at=clock_timestamp(),credential='null'::jsonb where id=(req->>'id')::uuid and user_id=actor;
+    update public.garmin_revocation_outbox set completed_at=clock_timestamp(),credential='null'::jsonb,lease_id=null,lease_until=null
+      where id=(req->>'id')::uuid and user_id=actor and lease_id=(req->>'lease')::uuid;
     return jsonb_build_object('kind','revoked');
   end if;
   if action='revocationStatus' then return jsonb_build_object('pending',exists(select 1 from public.garmin_revocation_outbox where user_id=actor and completed_at is null));end if;
@@ -190,7 +215,12 @@ begin
       values(extensions.gen_random_uuid(),actor,c.connection_id,c.epoch,c.credential,c.config_hash);end if;
     update public.garmin_connections set state='REVOKED',epoch=extensions.gen_random_uuid(),credential=null,refresh_nonce=null,refresh_until=null,updated_at=clock_timestamp() where user_id=actor;
     delete from public.garmin_oauth_attempts where user_id=actor;
-    select * into revoke_row from public.garmin_revocation_outbox where user_id=actor and completed_at is null order by id limit 1;
+    select * into revoke_row from public.garmin_revocation_outbox where user_id=actor and completed_at is null and config_hash=req->>'configHash'
+      and (lease_until is null or lease_until<clock_timestamp()) order by id limit 1 for update skip locked;
+    if revoke_row.id is not null then
+      update public.garmin_revocation_outbox set lease_id=extensions.gen_random_uuid(),lease_until=clock_timestamp()+interval '60 seconds'
+        where id=revoke_row.id returning * into revoke_row;
+    end if;
     return jsonb_build_object('kind','disconnected','remoteRevocationPending',revoke_row.id is not null,'revocation',case when revoke_row.id is null then null else to_jsonb(revoke_row)end);
   end if;
   if not ready then return jsonb_build_object('error','OPERATIONS_PENDING');end if;
@@ -200,7 +230,7 @@ begin
     if c.state='ACTIVE' then return jsonb_build_object('error','ALREADY_CONNECTED');end if;
     -- A delayed DELETE registration must never revoke a newly connected grant.
     -- Complete local/remote disconnect (or receive vendor deregistration) first.
-    if c.credential is not null or exists(select 1 from public.garmin_revocation_outbox where user_id=actor and completed_at is null)
+    if c.credential is not null or exists(select 1 from public.garmin_revocation_outbox where user_id=actor and (completed_at is null or lease_until>clock_timestamp()))
       then return jsonb_build_object('error','REVOKE_PENDING');end if;
     delete from public.garmin_oauth_attempts where user_id=actor;
     insert into public.garmin_connections(user_id,connection_id,epoch,state,consent_revision,config_hash)

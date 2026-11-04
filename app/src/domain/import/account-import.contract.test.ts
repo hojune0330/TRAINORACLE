@@ -3,7 +3,8 @@ import { createElement } from "react"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { createAccountImportConfirmation, buildAccountImportDrafts } from "./account-import"
 import { buildImportDrafts, confirmImportDrafts, saveImportedActivities, toImportedEntry } from "./import-draft"
-import { buildFileObservation, toFileObservationSummary } from "./file-observation"
+import { buildFileObservation, prepareLegacyFileDetailUpgrade, toFileObservationSummary } from "./file-observation"
+import { parseActivityFile } from "./activity-file"
 import { activeLocalAccount, setActiveLocalAccount } from "../account/local-journal-ownership"
 import { putAccountJournalProjection, readAccountJournalPrivateEntry, resetAccountJournalProjection } from "../account/account-journal-projection"
 import { parseAccountJournalRecord, validateAccountJournalRecordUpdate } from "../account/account-journal-record-schema"
@@ -63,6 +64,23 @@ afterEach(() => { cleanup(); batches.splice(0).forEach(batch => batch.dispose())
 
 describe("explicit file identity choices", () => {
   beforeEach(() => vi.stubEnv("VITE_FEATURE_FILE_ANALYSIS_TCX", "true"))
+
+  it("reuses an upgraded legacy key only after the exact rich source is selected and reread", async () => {
+    const source = parseActivityFile(`<TrainingCenterDatabase><Activities><Activity Sport="Running"><Id>2026-07-20T07:00:00Z</Id><Lap StartTime="2026-07-20T07:00:00Z"><TotalTimeSeconds>1800</TotalTimeSeconds><DistanceMeters>5000</DistanceMeters></Lap></Activity></Activities></TrainingCenterDatabase>`, "UTC").activities[0]!
+    const { schemaVersion, source: transport, sourceObservationKey, contentRevisionFingerprint, completeness, sourceIdentityFingerprint, detail, ...input } = source.observation!
+    const original = toImportedEntry({ ...source, observation: buildFileObservation({ ...input, parserVersion: "legacy-v1" }) }, "tcx")
+    const upgraded = { ...original, fileObservation: prepareLegacyFileDetailUpgrade(original.fileObservation, source.observation)! }
+    expect(upgraded.fileObservation.sourceObservationKey).not.toBe(source.observation!.sourceObservationKey)
+    putAccountJournalProjection("A", upgraded)
+    const draft = (await buildAccountImportDrafts([source]))![0]!, candidate = draft.identityCandidates![0]!
+    expect(candidate.kind).toBe("REUSE")
+    expect(await observedBatch([{ draft, intent: { kind: "SAVE_SEPARATE", confirmedSeparate: true } }]).confirm())
+      .toMatchObject({ account: 1, reused: 1, saved: 0, conflicts: 0, confirmedEntries: [{ id: upgraded.id, date: upgraded.date }] })
+    expect(await observedBatch([{ draft, intent: { kind: "USE_EXISTING", entryId: candidate.id, expectedSavedAt: candidate.savedAt } }]).confirm())
+      .toMatchObject({ account: 1, reused: 1, saved: 0, conflicts: 0 })
+    expect(api.persist).not.toHaveBeenCalled()
+    expect(api.replay).not.toHaveBeenCalled()
+  })
 
   it("keeps pending candidates reviewable and replays only an explicitly selected identical file", async () => {
     const source = observedActivity(), stored = toImportedEntry(source, "tcx", { includeFileObservation: true })

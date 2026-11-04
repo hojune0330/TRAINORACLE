@@ -7,6 +7,7 @@ import { currentStorageConsentRevision } from "./storage-consent-revision"
 import { ACCOUNT_NETWORK_DEADLINE_MS } from "./account-network-deadline"
 import { accountJournalPreviewEnabled } from "./account-journal-api"
 import { prepareDeviceActivity, type PreparedDeviceActivity } from "../import/prepared-device-activity"
+import { garminSummarySchema } from "./garmin-summary"
 
 export const GARMIN_VERSION = "GARMIN_INTEGRATION_V1" as const
 const version = z.literal(GARMIN_VERSION)
@@ -32,7 +33,7 @@ export const garminItemSchema = z.object({ inboxId: z.uuid(), revision,
   state: z.enum(["PENDING", "CONFIRMED", "DISMISSED", "DELETED", "CONFLICT"]), provider: z.literal("GARMIN"),
   observation: observationSchema.nullable(), documentId: z.uuid().nullable(),
   clock: z.object({ basis: z.literal("DEVICE_OFFSET"), offsetSeconds: z.number().int().min(-86400).max(86400), localDate: z.iso.date() }).strict().nullable().optional(),
-  source: z.object({ manual: z.boolean(), parent: z.object({ isParent: z.boolean(), parentSummaryId: z.string().max(200).nullable() }).strict(), summaryId: z.string().min(1).max(200), lapStartOffsetsSeconds: z.array(z.number().finite().nonnegative()).max(1000) }).strict().nullable().optional(),
+  source: z.object({ manual: z.boolean(), parent: z.object({ isParent: z.boolean(), parentSummaryId: z.string().max(200).nullable() }).strict(), summaryId: z.string().min(1).max(200), lapStartOffsetsSeconds: z.array(z.number().finite().nonnegative()).max(1000), summary: garminSummarySchema.optional() }).strict().nullable().optional(),
   detailManifest: z.array(z.object({ partIndex: z.number().int().min(0).max(31), sha256: z.string().regex(/^[a-f0-9]{64}$/u), sampleCount: z.number().int().min(1).max(100000) }).strict()).max(32),
 }).strict().refine(item => item.state === "DELETED" ? item.observation === null : item.observation !== null)
 const inboxSchema = z.object({ schemaVersion: version, items: z.array(garminItemSchema).max(20), nextCursor: z.uuid().nullable() }).strict()

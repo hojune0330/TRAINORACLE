@@ -13,6 +13,7 @@ import { captureReaderPosition, restoreReaderPosition, type ReaderPosition } fro
 import { useNavigationReturnFrame } from "../hooks/useNavigationReturnFrame"
 import { AppIntroduction } from "./AppIntroduction"
 import { DeviceConnections } from "./DeviceConnections"
+import type { OpenGarminJournalRecord } from "../components/GarminConnectionPanel"
 
 export type MoreView = "tools" | "learning" | "account" | "backup" | "about" | "introduction" | "connections"
 
@@ -24,7 +25,7 @@ const VIEW_TITLES: Record<MoreView, string> = {
 
 export type MoreProps = {
   readonly ownerId?: string | null
-  readonly onOpenJournalRecord?: (date: string, entryId: string) => void
+  readonly onOpenJournalRecord?: OpenGarminJournalRecord
   readonly view?: MoreView
   readonly connectionOrigin?: MoreView
   readonly onViewChange?: (view: MoreView) => void

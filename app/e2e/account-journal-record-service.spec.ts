@@ -874,7 +874,14 @@ test.describe("explicit file import preserves unrelated pending work", () => {
         .toMatchObject({ state: "DRAFT_ACKNOWLEDGED", serverRevision: 1, pending: null })
       const aSaves = server.calls.filter(call => call.request.action === "save" && call.request.document.entry.id === "unrelated-pending")
       expect(aSaves).toHaveLength(2)
-      expect(aSaves[1]!.request).toEqual(aSaves[0]!.request)
+      // B's V5 preflight upgrades the transport's supported read versions. The
+      // server excludes this capability from operation identity; A's operation
+      // ID, revision, purpose and full immutable document must still match.
+      const { supportedJournalVersions: beforeVersions, ...beforeOperation } = aSaves[0]!.request
+      const { supportedJournalVersions: afterVersions, ...afterOperation } = aSaves[1]!.request
+      expect(beforeVersions).toEqual([2, 3])
+      expect(afterVersions).toEqual([2, 3, 4, 5])
+      expect(afterOperation).toEqual(beforeOperation)
       expect(server.documents.size).toBe(2)
     })
   }

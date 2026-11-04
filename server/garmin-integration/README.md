@@ -81,7 +81,9 @@ Every success includes `schemaVersion: "GARMIN_INTEGRATION_V1"`.
 Inbox items contain `inboxId, revision, state, provider, observation, documentId,
 detailManifest, clock, source`. Clock is null or `{basis:"DEVICE_OFFSET",
 offsetSeconds,localDate}`. Source is null or `{manual,parent:{isParent,
-parentSummaryId},summaryId,lapStartOffsetsSeconds}`. Observation is `PREPARED_DEVICE_ACTIVITY_V1`, with verified
+parentSummaryId},summaryId,lapStartOffsetsSeconds,summary?}`. The optional summary
+contains only the exact reviewed official fields listed below; old rows without
+this property remain readable. Observation is `PREPARED_DEVICE_ACTIVITY_V1`, with verified
 GARMIN/PROVIDER_API lineage and `analysisEligible:false`; deleted items have null
 observation. `ACTIVE` means token/subject binding succeeded, not that a workout
 arrived. Only a committed event updates `lastSyncAt`.
@@ -180,12 +182,19 @@ and temperature is airTemperatureCelsius. These fields also require the profile'
 allowlist; no zero is substituted for missing samples.
 No model/inference/train/evaluation/log/cache API exists here.
 
-`POST /internal/garmin/revocations` with signed `{}` retries at most ten pending
-revocations. Run it from an owner-controlled worker scheduler; the service does
+`POST /internal/garmin/revocations` with signed `{}` retries at most one pending
+revocation. Run it from an owner-controlled worker scheduler; the service does
 not install a background job or imply one is already running. Failed remote
 revocation stays pending. After storage erasure no credential is retained solely
 to retry a remote API; provider-side disconnection may then require the provider
 account interface.
+
+Each remote removal has a 60-second SQL lease shared by immediate disconnect and
+workers. Completion must match its lease; the runtime refuses to start a DELETE
+with less than 20 seconds remaining. This prevents overlapping old/new deployment
+workers from removing a newly connected grant. Failed attempts remain pending
+until the lease can be retried. A live lease still blocks reconnect if a vendor
+deregistration notice arrives before the leased HTTP call finishes.
 
 ## Runtime and review prerequisites
 
@@ -213,7 +222,7 @@ Runtime-only environment variables (values are never printed by this service):
   `TRAINORACLE_JOURNAL_ATTESTATION_JSON` are needed only for confirmation.
 - `TRAINORACLE_GARMIN_REVIEWED_PROFILE_JSON`: `{accessLevel:"STARTER",
   evidenceReference,validUntil,clientId,clientSecret,redirectUri,
-  allowedDetailFields:[]}`. The adapter fixes issued URLs, raw Basic client
+  allowedDetailFields:[],allowedSummaryFields:[]}`. The adapter fixes issued URLs, raw Basic client
   authentication, fixed default scopes, separate ACTIVITY_EXPORT permission and
   conservative no-source-revision handling. The current web client requires the
   exact callback URL to include `?garmin_callback=1` (for the canonical origin,
@@ -221,12 +230,50 @@ Runtime-only environment variables (values are never printed by this service):
   Supabase login codes; no arbitrary return URL is accepted.
 - `TRAINORACLE_GARMIN_PUSH_ENABLED` and the pinned proxy list described above.
 
+`allowedSummaryFields` defaults to `[]` and is included in `configHash`. Before
+registering a real application/profile, review the exact list and bind its new
+hash to the server approval; adding summary collection never inherits an older
+profile's approval. Available names from the issued Activity Details summary are:
+
+```text
+averageBikeCadenceInRoundsPerMinute averageHeartRateInBeatsPerMinute
+averageRunCadenceInStepsPerMinute averagePushCadenceInPushesPerMinute
+averageSpeedInMetersPerSecond averageSwimCadenceInStrokesPerMinute
+averagePaceInMinutesPerKilometer activeKilocalories deviceName
+maxBikeCadenceInRoundsPerMinute maxHeartRateInBeatsPerMinute
+maxPaceInMinutesPerKilometer maxRunCadenceInStepsPerMinute
+maxPushCadenceInPushesPerMinute maxSpeedInMetersPerSecond numberOfActiveLengths
+startingLatitudeInDegree startingLongitudeInDegree steps pushes
+totalElevationGainInMeters totalElevationLossInMeters
+```
+
+Only selected fields enter the encrypted queue/context, retaining absence, null,
+zero, source precision and original units. The UI displays this stored summary;
+it does not derive averages, convert decimal min/km into time, reinterpret
+maxPace, or multiply cadence. Device name is a bounded source string. Free-form
+activity titles/descriptions remain excluded. A changed retained summary becomes
+a conservative conflict; arrival order cannot overwrite a confirmed source.
+These display fields neither enter the minimal provider journal summary nor
+become model input or an AI grant.
+
 Before activation, compare the actual deployed existing journal gateway, auth,
 consent/RLS definitions and generated journal validator with this candidate. The
-source test chain does not prove hosted equivalence. Review this additive SQL,
-generate the repository's real migration using `supabase migration new`, apply
-only the exact reviewed delta to the authorized project, and record its receipt.
+source test chain does not prove hosted equivalence.
+`supabase/migrations/20261104103908_garmin_integration_runtime.sql` was created by
+the installed Supabase CLI `migration new` command. `schema-candidate.sql` is its
+exact mirror, checked by the deployment test. The HTTP/SQL integration suite now
+executes the formal migration. Apply only this exact reviewed additive delta to
+the authorized project and record its receipt.
 Never bulk-push 0051–0058 or assume those historical migrations are absent.
+
+The migration is one transaction: nine new Garmin tables, RLS/direct-table grant
+revocation, the scoped attested RPC and a separate purpose-erasure trigger. It
+does not replace existing account functions, modify existing consent/feature rows,
+or insert an approval/key. Missing required helpers or active withdrawal/deletion
+triggers fail before any new object is created. A synthetic missing-helper test
+proves atomic rollback; the live catalog was read on 2026-11-04 and showed all
+eight required functions and the existing triggers, with zero Garmin objects.
+That metadata read did not read health rows, keys, review values or user consent.
 
 Approval requires a server-owned `garmin_integration_controls` row with the exact
 adapter `configHash` (SHA-256 of expanded canonical protocol profile excluding
@@ -242,7 +289,7 @@ triggers erase account data. Do not drop/recreate tables or weaken RLS/ACLs.
 
 Uncompleted operational requirements are real app/client issuance, exact redirect
 and company ingress deployment/review, protected runtime keys and profiles,
-additive SQL application, worker scheduling, actual user permission and a real
+additive SQL application, explicitly starting the supervised process, actual user permission and a real
 provider-to-account round trip. Starter has no historical/PING access; no such
 client is implemented. Resolving
 already-confirmed source conflicts is a separate explicit review UI flow; this
@@ -310,13 +357,96 @@ queue is being drained.
 The implementation and tests do not start an operational worker, install a
 service, schedule a task, enable provider access or change database flags.
 
+## Single-process deployment entrypoint
+
+```text
+node server/garmin-integration/deployment.mjs
+```
+
+This hosting entrypoint binds `0.0.0.0:$PORT` (default 10000). It exposes only
+`GET/HEAD /healthz`, and `POST/OPTIONS /api/garmin-integration` or
+`/webhooks/garmin`. All public `/internal/*` paths return 404. When explicitly
+enabled, the existing worker shares this process and calls a separate ephemeral
+listener on `127.0.0.1`. The listener port is selected internally; the standalone
+worker's port setting is not used. Do not also start `worker.mjs` or another
+scheduler against this process.
+
+No key or account configuration is needed to start the default preparation mode.
+Health returns `PREPARATORY_DISABLED`, a validated 40-hex `sourceRevision` from
+`RENDER_GIT_COMMIT` (or operator-supplied `TRAINORACLE_SOURCE_REVISION`), and explicit
+`database: NOT_PROBED` / `garmin: NOT_PROBED`. Missing revision is `null`, never an
+invented release hash. Health makes no database/provider calls and reveals no
+environment values or credentials. Enabled but incomplete protected runtime
+configuration fails startup. A configured process reports `CONFIGURED_UNVERIFIED`;
+health still does not certify approval, consent, ingestion or journal persistence.
+
+SIGINT/SIGTERM stops scheduling and drains listeners with a 20-second bound. A
+worker crash shuts down the owning process with a nonzero result; its normal
+bounded run is renewed after a one-second interruptible delay. Logs contain only
+fixed lifecycle/worker codes, validated aggregate counts and the public source
+hash. Database jobs and revocations are independently leased, so a host's brief
+old/new deployment overlap does not rely on one-process assumptions for safety.
+
+The public handler receives the actual TCP peer. Hosting `x-forwarded-for`,
+`x-real-ip` or arbitrary client headers are not a trusted Garmin identity. The
+existing `x-trainoracle-peer-ip` exception requires a specifically pinned company
+proxy that overwrites the header and enforces the reviewed source boundary.
+Render's proxy is not automatically such a proxy. Keep PUSH off until this is
+established; never allow all proxies or use client ID as authentication.
+
+`render.preparatory.yaml` is an optional custom-path Blueprint for a **new, keyless,
+free preparation service**, Node 24.22.1, automatic deployment off, health path
+`/healthz`, and all three Garmin flags false. It defines no database, paid plan,
+secret, migration hook, domain or real-user flow. Singapore is only the proposed
+preparatory host region; moving health data there requires the separate operating
+and location decision. Existing Supabase Seoul storage remains unchanged.
+
+The Blueprint fields were checked against the current official
+[Blueprint reference](https://render.com/docs/blueprint-spec),
+[health checks](https://render.com/docs/health-checks), and
+[deploy lifecycle](https://render.com/docs/deploys) on 2026-11-04. Render CLI/API
+Blueprint validation and deployment were not run by this change. The owner must
+select the intended Render workspace and validate this exact Blueprint before
+creation; do not apply it to an unrelated existing service.
+
+The official [free-instance limits](https://render.com/docs/free) state that free
+web services sleep after 15 idle minutes, take about one minute to wake, and lose
+local files on restart. This is appropriate for checking the disabled process and
+source hash, **not live Garmin PUSH's 30-second acknowledgement deadline**. The
+service stores no payload files locally, but a real live collector still requires
+an approved continuously available host and verified ingress. No keep-alive
+traffic workaround, paid resource or provider activation is created here.
+
+## Remaining optional feeds
+
+ActivityFiles is explicitly unsupported by this version. The issued contract has
+one-use callback downloads expiring after 24 hours and a Starter limit of 50/minute.
+A tokenized callback is not a user access token and must never be logged. Adding it
+requires a persistent download/attempt ledger, exact HTTPS origin/path validation,
+redirect rejection, bounded download+encrypted storage, provider-specific FIT/TCX/
+GPX projection, and reference/erasure integration. The existing browser FIT parser
+produces FILE_UPLOAD provenance; passing provider downloads through that contract
+would misrepresent their origin. Activity Details already supplies the supported
+sample path, so this is a separate optional extension, not fabricated historical
+or PING access.
+
+MoveIQ is also unsupported: the issued documentation defines automatically
+detected labeled time spans, not user-started fitness activities. Their wellness
+distance is already represented in other summary feeds. A future reference-only
+view needs a separate event contract and duplicate-origin handling; these events
+must not silently create confirmed workouts or increase training totals.
+
 ## Focused verification
 
-`node --test server/garmin-integration/service.test.mjs server/garmin-integration/worker.test.mjs`
+`node --test server/garmin-integration/service.test.mjs server/garmin-integration/worker.test.mjs server/garmin-integration/deployment.test.mjs`
 
 Tests use the existing pinned `@electric-sql/pglite` from
 `supabase/tests/local-postgres`, execute the existing 0001–0062 migrations plus
-this candidate, and use real numeric-loopback HTTP and AES-GCM. They are not a
+the formal Garmin migration, and use real numeric-loopback HTTP and AES-GCM. The
+39 tests passed on Node 24.22.1, including official summary encrypted roundtrip,
+profile-hash-bound summary allowlist, disabled health, public internal-route
+denial, actual signed loopback worker calls, supervised shutdown, atomic missing
+migration prerequisite, and concurrent remote-removal leases. They are not a
 real Garmin or hosted account round trip. On this workstation sandbox loopback
 was denied EACCES; the exact test command was permitted outside that sandbox.
 

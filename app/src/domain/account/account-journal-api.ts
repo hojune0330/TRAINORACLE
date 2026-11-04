@@ -1,7 +1,10 @@
 import { z } from "zod"
 import { supabase } from "./supabase-client"
+import { accountConfig } from "./config"
+import { accountJournalGatewayUrl, accountJournalTransportIdentity, invokeAccountJournalGateway } from "./account-journal-gateway-transport"
 import { ACCOUNT_NETWORK_DEADLINE_MS } from "./account-network-deadline"
-import { ACCOUNT_REQUEST_MAX_BYTES } from "./account-document-capacity"
+import { ACCOUNT_REQUEST_MAX_BYTES, accountDocumentFits } from "./account-document-capacity"
+import { compressFileJson, FILE_MUTATION_MAX_BYTES, FILE_DOCUMENT_MAX_BYTES, FILE_COMPRESSED_MAX_BYTES, FILE_CORRECTION_MAX_BYTES, isFileDetailMutation, jsonBytes } from "./account-file-document-codec"
 import { accountDeletionBoundaryState, onAccountDeletionBoundaryChange } from "./account-deletion-boundary"
 import { activeLocalAccount, localJournalScopeGeneration } from "./local-journal-ownership"
 import { isAccountStoragePaused } from "./storage-consent"
@@ -27,6 +30,7 @@ return z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("ready") }).strict(),
   z.object({ kind: z.literal("journal-body-part-support"), version: z.literal(1) }).strict(),
   z.object({ kind: z.literal("journal-detail-support"), version: z.literal(1) }).strict(),
+  z.object({ kind: z.literal("journal-large-file-support"), version: z.literal(1), maxDocumentBytes: z.literal(FILE_DOCUMENT_MAX_BYTES), maxCompressedBytes: z.literal(FILE_COMPRESSED_MAX_BYTES), maxCorrectionBytes: z.union([z.literal(FILE_CORRECTION_MAX_BYTES), z.literal(FILE_DOCUMENT_MAX_BYTES)]) }).strict(),
   z.object({ kind: z.literal("calendar-decoration-support"), version: z.literal(1) }).strict(),
   z.object({ kind: z.literal("athlete-record-support"), version: z.literal(1) }).strict(),
   z.object({ kind: z.literal("running-profile-support"), version: z.literal(1) }).strict(),
@@ -41,7 +45,7 @@ return z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("restored"), documentId: z.uuid(), revision, operationId: z.uuid(), sourceRevision: revision }).strict(),
   z.object({ kind: z.literal("history"), documentId: z.uuid(), versions: z.array(z.object({
     revision, document: schema, replacedAt: z.string(), expiresAt: z.string(), reason: z.enum(["replaced", "trash"]),
-  }).strict()) }).strict(),
+  }).strict()), nextRevision: revision.nullable().optional() }).strict(),
   z.object({ kind: z.literal("saved"), documentId: z.uuid(), operationId: z.uuid(), revision }).strict(),
   z.object({ kind: z.literal("conflict"), documentId: z.uuid(), operationId: z.uuid(),
     currentRevision: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER - 1) }).strict(),
@@ -54,6 +58,7 @@ export type AccountJournalResponse<T = AccountJournalDraft> =
   | { kind: "ready" }
   | { kind: "journal-body-part-support"; version: 1 }
   | { kind: "journal-detail-support"; version: 1 }
+  | { kind: "journal-large-file-support"; version: 1; maxDocumentBytes: typeof FILE_DOCUMENT_MAX_BYTES; maxCompressedBytes: typeof FILE_COMPRESSED_MAX_BYTES; maxCorrectionBytes: typeof FILE_CORRECTION_MAX_BYTES | typeof FILE_DOCUMENT_MAX_BYTES }
   | { kind: "calendar-decoration-support"; version: 1 }
   | { kind: "athlete-record-support"; version: 1 }
   | { kind: "running-profile-support"; version: 1 }
@@ -65,7 +70,7 @@ export type AccountJournalResponse<T = AccountJournalDraft> =
   | { kind: "list"; documents: { documentId: string; revision: number; document: T }[]; nextCursor: string | null; deletedDocuments?: { documentId: string; revision: number }[] }
   | { kind: "deleted"; documentId: string; revision: number; operationId?: string }
   | { kind: "restored"; documentId: string; revision: number; operationId: string; sourceRevision: number }
-  | { kind: "history"; documentId: string; versions: { revision: number; document: T; replacedAt: string; expiresAt: string; reason: "replaced" | "trash" }[] }
+  | { kind: "history"; documentId: string; versions: { revision: number; document: T; replacedAt: string; expiresAt: string; reason: "replaced" | "trash" }[]; nextRevision?: number | null }
   | { kind: "saved"; documentId: string; operationId: string; revision: number }
   | { kind: "conflict"; documentId: string; operationId: string; currentRevision: number }
   | { kind: "source_unavailable"; documentId: string; operationId: string; currentRevision: number; sourceRevision: number }
@@ -74,6 +79,7 @@ export type AccountJournalRequest<T = AccountJournalDraft> = { supportedRunningP
   | { action: "status" }
   | { action: "journalBodyPartSupport" }
   | { action: "journalDetailSupport" }
+  | { action: "journalLargeFileSupport" }
   | { action: "calendarDecorationSupport" }
   | { action: "athleteRecordSupport" }
   | { action: "runningProfileSupport" }
@@ -84,7 +90,7 @@ export type AccountJournalRequest<T = AccountJournalDraft> = { supportedRunningP
   | { action: "restartOracleV2"; documentId: string; operationId: string; expectedRevision: number; confirmation: "START_NEW_ORACLE_V2" }
   | { action: "list"; cursor?: string; collection?: "JOURNAL" }
   | { action: "read"; documentId: string }
-  | { action: "history"; documentId: string; collection?: "JOURNAL" }
+  | { action: "history"; documentId: string; collection?: "JOURNAL"; beforeRevision?: number; targetRevision?: number }
   | { action: "delete"; documentId: string; operationId: string; expectedRevision: number }
   | { action: "restore"; documentId: string; operationId: string; expectedRevision: number; sourceRevision: number }
   | { action: "save"; documentId: string; operationId: string; expectedRevision: number;
@@ -101,6 +107,27 @@ export type CorrectImportedObservationRequest = Extract<AccountJournalRequest, {
 
 let bodySupport: { ownerId: string; generation: number; supported: boolean } | null = null
 let detailSupport: { ownerId: string; generation: number } | null = null
+let largeFileSupport: { ownerId: string; generation: number; transport: string; maxCorrectionBytes: number } | null = null
+export function accountJournalLargeFileSupported(ownerId: string): boolean {
+  return largeFileSupport?.ownerId === ownerId && activeLocalAccount() === ownerId
+    && largeFileSupport.generation === localJournalScopeGeneration() && largeFileSupport.transport === accountJournalTransportIdentity()
+}
+export function accountJournalCorrectionMaxBytes(ownerId: string): number {
+  return accountJournalLargeFileSupported(ownerId) ? largeFileSupport!.maxCorrectionBytes : FILE_CORRECTION_MAX_BYTES
+}
+export async function checkAccountJournalLargeFileSupport(ownerId: string, isCurrent: () => boolean,
+  dependencies: { client: typeof supabase; owner: typeof activeLocalAccount } = { client: supabase, owner: activeLocalAccount }): Promise<boolean> {
+  if (!isCurrent() || dependencies.owner() !== ownerId) return false
+  const generation = localJournalScopeGeneration()
+  const transport = accountJournalTransportIdentity()
+  if (accountJournalLargeFileSupported(ownerId)) return true
+  const result = await requestAccountDocument(ownerId, { action: "journalLargeFileSupport" }, isCurrent, accountJournalRecordSchema, dependencies)
+  if (!isCurrent() || activeLocalAccount() !== ownerId || localJournalScopeGeneration() !== generation || transport !== accountJournalTransportIdentity()) return false
+  if (result.ok && result.data.kind === "journal-large-file-support" && result.data.version === 1) {
+    largeFileSupport = { ownerId, generation, transport, maxCorrectionBytes: result.data.maxCorrectionBytes }; return true
+  }
+  return false
+}
 export function accountJournalDetailSupported(ownerId: string): boolean {
   return detailSupport?.ownerId === ownerId && activeLocalAccount() === ownerId
     && detailSupport.generation === localJournalScopeGeneration()
@@ -196,11 +223,13 @@ async function executeAccountDocument<T>(
   dependencies: { client: typeof supabase; owner: typeof activeLocalAccount }, signal: AbortSignal,
 ): Promise<AccountJournalResult<T>> {
   let boundaryFailure: "ACCOUNT_DELETION_REQUESTED" | "UNAVAILABLE" | null = null
+  const generation = localJournalScopeGeneration(), transportIdentity = accountJournalTransportIdentity()
   const current = () => {
     // Preserve this check's unavailable result even if storage recovers before
     // obsolete() runs. An unreadable marker is not proof of a deleted owner.
     boundaryFailure = localBoundaryFailure(ownerId)
     return !signal.aborted && boundaryFailure === null && isCurrent() && dependencies.owner() === ownerId
+      && generation === localJournalScopeGeneration() && transportIdentity === accountJournalTransportIdentity()
   }
   const obsolete = (): AccountJournalResult<T> => ({ ok: false,
     code: boundaryFailure ?? localBoundaryFailure(ownerId) ?? "STALE_RESPONSE" })
@@ -237,15 +266,32 @@ async function executeAccountDocument<T>(
       signal.addEventListener("abort", releaseSendGuard, { once: true })
       if (!current()) return obsolete()
     }
-    const body = journalCall ? { ...request, supportedJournalVersions: accountJournalDetailSupported(ownerId) ? [2, 3, 4, 5]
-      : accountBodyPartMetadataSupported(ownerId) ? [2, 3, 4] : [2, 3], supportsExerciseLogV1: true } : request
-    if (new TextEncoder().encode(JSON.stringify(body)).byteLength > ACCOUNT_REQUEST_MAX_BYTES) return { ok: false, code: "DOCUMENT_CAPACITY_EXCEEDED" }
-    const { data, error } = await client.functions.invoke("account-journal", {
-      body,
-      headers: { Authorization: `Bearer ${token}`, "x-trainoracle-storage-revision": String(storageRevision),
-        ...(sendGuard ? { [LOCAL_COLLECTION_SEND_GUARD_HEADER]: sendGuard.nonce } : {}) },
-      signal,
-    })
+    let body: Record<string, unknown> = journalCall ? { ...request, supportedJournalVersions: accountJournalDetailSupported(ownerId) ? [2, 3, 4, 5]
+      : accountBodyPartMetadataSupported(ownerId) ? [2, 3, 4] : [2, 3], supportsExerciseLogV1: true,
+      ...(accountJournalLargeFileSupported(ownerId) ? { supportsLargeFileV1: true } : {}) } : request
+    // Older endpoints can still provide their complete history. Only the new
+    // authenticated capability enables a targeted large-file history request.
+    if (request.action === "history" && !accountJournalLargeFileSupported(ownerId)) delete body.targetRevision
+    if (request.action === "correctImportedObservation" && jsonBytes(request.replacementObservation) > accountJournalCorrectionMaxBytes(ownerId))
+      return { ok: false, code: "DOCUMENT_CAPACITY_EXCEEDED" }
+    if (jsonBytes(body) > ACCOUNT_REQUEST_MAX_BYTES) {
+      if (!isFileDetailMutation(request)) return { ok: false, code: "DOCUMENT_CAPACITY_EXCEEDED" }
+      if (request.action === "save" && (!accountDocumentFits(request.document) || !schema.safeParse(request.document).success)) return { ok: false, code: "DOCUMENT_CAPACITY_EXCEEDED" }
+      if (!accountJournalLargeFileSupported(ownerId)) return { ok: false, code: "UPGRADE_REQUIRED" }
+      try { body = { action: "compressedFileMutation", envelope: await compressFileJson(body, FILE_MUTATION_MAX_BYTES) } }
+      catch { return { ok: false, code: "DOCUMENT_CAPACITY_EXCEEDED" } }
+      if (!current()) return obsolete()
+    }
+    if (jsonBytes(body) > ACCOUNT_REQUEST_MAX_BYTES) return { ok: false, code: "DOCUMENT_CAPACITY_EXCEEDED" }
+    const headers = { Authorization: `Bearer ${token}`, "x-trainoracle-storage-revision": String(storageRevision),
+      ...(sendGuard ? { [LOCAL_COLLECTION_SEND_GUARD_HEADER]: sendGuard.nonce } : {}) }
+    const gatewayUrl = accountJournalGatewayUrl()
+    const config = gatewayUrl ? accountConfig() : null
+    if (gatewayUrl && !config) return { ok: false, code: "UNAVAILABLE" }
+    const { data, error } = gatewayUrl && config
+      ? await invokeAccountJournalGateway({ gatewayUrl, serviceUrl: config.url, anonKey: config.anonKey,
+        ownerId, token, body, headers, signal, current })
+      : await client.functions.invoke("account-journal", { body, headers, signal })
     let responseData: unknown = data
     if (!current()) return obsolete()
     if (error) {
@@ -254,6 +300,10 @@ async function executeAccountDocument<T>(
       if (status === 426) {
         if (journalCall && ["read", "list", "history"].includes(request.action) && !accountJournalDetailSupported(ownerId)
           && await checkAccountJournalDetailSupport(ownerId, current, dependencies) && current()) {
+          return requestAccountDocument(ownerId, request, isCurrent, schema, dependencies)
+        }
+        if (journalCall && ["read", "list", "history"].includes(request.action) && !accountJournalLargeFileSupported(ownerId)
+          && await checkAccountJournalLargeFileSupport(ownerId, current, dependencies) && current()) {
           return requestAccountDocument(ownerId, request, isCurrent, schema, dependencies)
         }
         return { ok: false, code: "UPGRADE_REQUIRED" }
@@ -297,11 +347,13 @@ async function executeAccountDocument<T>(
       } else return { ok: false, code: status === 401 ? "AUTH_REQUIRED" : status === 403 ? "ACCESS_DENIED"
         : status === 404 && request.action === "read" ? "NOT_FOUND" : "UNAVAILABLE" }
     }
+    if (journalCall && jsonBytes(responseData) > FILE_MUTATION_MAX_BYTES + 65_536) return { ok: false, code: "INVALID_RESPONSE" }
     const parsed = responseSchema(schema).safeParse(responseData)
     if (!parsed.success) return { ok: false, code: "INVALID_RESPONSE" }
     const result = parsed.data as AccountJournalResponse<T>
     const correctKind = request.action === "status" ? result.kind === "ready"
       : request.action === "journalDetailSupport" ? result.kind === "journal-detail-support"
+      : request.action === "journalLargeFileSupport" ? result.kind === "journal-large-file-support"
       : request.action === "journalBodyPartSupport" ? result.kind === "journal-body-part-support"
       : request.action === "calendarDecorationSupport" ? result.kind === "calendar-decoration-support"
       : request.action === "athleteRecordSupport" ? result.kind === "athlete-record-support"

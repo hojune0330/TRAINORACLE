@@ -1,4 +1,5 @@
 import { decryptAccountJournalDocument } from './account-journal-crypto.mjs';
+import { decodeAccountStoredJson, FILE_MUTATION_MAX_BYTES, jsonBytes } from './account-file-document-codec.mjs';
 import { accountPlanCollectionDocumentId } from './account-plan-collection-handler.mjs';
 
 const collections = new Set(['journal','history','planParts','planIndex','legacyJournal','legacyPlans',
@@ -47,11 +48,12 @@ export function createAccountDataRightsHandler({ authenticate, getMaterial, allo
       if(page?.ownerId!==session.ownerId || page.collection!==input.collection || !Array.isArray(page.items)
         || page.items.length>10 || page.items.some(item=>item.record?.user_id!==session.ownerId)) return response(403,{error:'ACCESS_DENIED'});
       let material;
+      const included=[]; let returnedBytes=0;
       for(const item of page.items) {
         const row=item.record;
         const encrypted=['journal','history'].includes(input.collection) ? row.encrypted_payload
           : ['planParts','planIndex'].includes(input.collection) ? row.payload : null;
-        if(!encrypted) continue;
+        if(!encrypted) { included.push(item); returnedBytes+=jsonBytes(item); continue; }
         material??=await getMaterial();
         const documentId=['journal','history'].includes(input.collection) ? row.document_id
           : input.collection==='planIndex'
@@ -59,9 +61,15 @@ export function createAccountDataRightsHandler({ authenticate, getMaterial, allo
             : await accountPlanCollectionDocumentId(session.ownerId,row.part_kind,row.part_id);
         const text=await decryptAccountJournalDocument(encrypted,{ownerId:session.ownerId,documentId},material.get(encrypted.keyId));
         // Explicit export only. Never feed the result into application state or AI.
-        row.document=JSON.parse(text);
+        const document=await decodeAccountStoredJson(text);
+        const size=jsonBytes(document)+jsonBytes({cursor:item.cursor,document_id:documentId,user_id:session.ownerId});
+        if(size>FILE_MUTATION_MAX_BYTES) throw new Error('EXPORT_CAPACITY');
+        if(included.length && returnedBytes+size>FILE_MUTATION_MAX_BYTES) { page.nextCursor=included.at(-1).cursor; break; }
+        row.document=document;
         delete row.encrypted_payload; delete row.payload;
+        included.push(item); returnedBytes+=size;
       }
+      page.items=included;
       // Recheck the same active session after decryption and before releasing any data.
       if(await session.verify(input)!==true) return response(403,{error:'ACCESS_DENIED'});
       return response(200,page);

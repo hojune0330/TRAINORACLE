@@ -28,6 +28,29 @@ async function changeTime() {
   fireEvent.change(screen.getByLabelText("파일의 시간은 어떤 시간인가요?"), { target: { value: "TIMER" } })
 }
 describe("FileObservationCorrection", () => {
+  it("adds exact legacy detail only after explicit review while preserving the stored identity", async () => {
+    const xml = `<TrainingCenterDatabase><Activities><Activity Sport="Running"><Id>2026-09-19T01:00:00Z</Id><Lap StartTime="2026-09-19T01:00:00Z"><TotalTimeSeconds>300.25</TotalTimeSeconds><DistanceMeters>1000</DistanceMeters><Track><Trackpoint><Time>2026-09-19T01:00:00Z</Time><HeartRateBpm><Value>123</Value></HeartRateBpm></Trackpoint></Track></Lap></Activity></Activities></TrainingCenterDatabase>`
+    const rich = parseActivityFile(xml, "Asia/Seoul").activities[0]!.observation!
+    const { schemaVersion, source, sourceObservationKey, contentRevisionFingerprint, completeness, sourceIdentityFingerprint, detail, ...input } = rich
+    const previous = buildFileObservation({ ...input, parserVersion: "legacy-v1" })
+    api.read.mockResolvedValue({ ...base, entry: { ...entry, fileObservation: previous } })
+    render(<FileObservationCorrection entryId={entry.id} />)
+    fireEvent.click(screen.getByRole("button", { name: "시간·파일 기록 정정" }))
+    await screen.findByText("파일의 시간은 어떤 시간인가요?")
+    const file = new File([xml], "same-source.tcx", { type: "application/xml" })
+    Object.defineProperty(file, "text", { value: async () => xml })
+    fireEvent.change(screen.getByLabelText("같은 운동의 수정 파일"), { target: { files: [file] } })
+    fireEvent.click(await screen.findByRole("button", { name: /이 수정본 선택/u }))
+    expect(api.correct).not.toHaveBeenCalled()
+    expect(screen.getByRole("button", { name: "확인한 변경 저장" })).toBeDisabled()
+    fireEvent.click(screen.getByRole("checkbox", { name: /센서·경로 상세/u }))
+    fireEvent.click(screen.getByRole("button", { name: "확인한 변경 저장" }))
+    await screen.findByText(/정정한 기록을 계정에 저장/u)
+    expect(api.correct.mock.calls[0]![1]).toMatchObject({ sourceIdentityScope: "LEGACY_UNSCOPED_V1",
+      sourceObservationKey: previous.sourceObservationKey, sourceIdentityFingerprint: previous.sourceIdentityFingerprint,
+      parserVersion: previous.parserVersion, detail: rich.detail })
+    expect(api.correct.mock.calls[0]![3]).toEqual(["detail"])
+  })
   it("accepts a real parsed replacement without forwarding computed output fields to the builder", async () => {
     const xml = `<TrainingCenterDatabase><Activities><Activity Sport="Running"><Id>2026-09-19T01:00:00Z</Id><Lap StartTime="2026-09-19T01:00:00Z"><TotalTimeSeconds>360.125</TotalTimeSeconds><DistanceMeters>1200.5</DistanceMeters></Lap></Activity></Activities></TrainingCenterDatabase>`
     const previous = parseActivityFile(xml.replace("360.125", "300.25").replace("1200.5", "1000"), "Asia/Seoul").activities[0]!.observation!

@@ -108,7 +108,7 @@ test("counts an imported journal without treating its numbers as analysis eviden
   await expect(page.getByTestId("trends-excluded-imported")).toContainText("가져온 일지 1개의 외부 수치 중 확인되지 않은 값은 분석에서 제외했어요")
 })
 
-test("shows a duplicate warning unchecked instead of merging silently", async ({ page }) => {
+test("keeps repeated source IDs idempotent and requires a choice for similar distinct activities", async ({ page }) => {
   const today = new Date().toISOString().slice(0, 10)
   await openImport(page)
   const file = {
@@ -141,10 +141,29 @@ test("shows a duplicate warning unchecked instead of merging silently", async ({
   await label.click({ position: { x: 3, y: 22 } })
   await expect(checkbox).toBeChecked()
   await expect(page.getByRole("button", { name: "저장 방식을 골라 주세요" })).toBeDisabled()
+  await expect(page.getByRole("option", { name: "같은 원본의 저장 결과 확인", exact: true })).toHaveCount(1)
+  await expect(page.getByText("이미 보관한 원본과 같은 기록이에요. 다시 확인해도 새 일지로 중복 저장하지 않아요.")).toBeVisible()
+  await page.getByRole("combobox").selectOption("separate")
+  await page.getByRole("button", { name: /고른 1건 일지에 저장/u }).click()
+  await expect(page.getByTestId("import-saved")).toContainText("이미 보관된 같은 기록 1건을 확인했어요.")
+  expect(await page.evaluate((key) => JSON.parse(window.localStorage.getItem(key) ?? "[]").length, JOURNAL_KEY)).toBe(1)
+
+  // Similar values are only a warning. A distinct source ID can still be saved
+  // separately after an explicit choice; the first source is never overwritten.
+  await page.getByRole("button", { name: "파일 더 가져오기" }).click()
+  await page.getByLabel("가져올 운동 파일 선택", { exact: true }).setInputFiles({ ...file,
+    buffer: Buffer.from(tcxFor(today).replaceAll("T06:00:00Z", "T07:00:00Z"), "utf-8"),
+  })
+  await expect(page.getByTestId("import-duplicate-flag")).toBeVisible()
+  await expect(checkbox).not.toBeChecked()
+  await checkbox.check()
+  await expect(page.getByRole("button", { name: "저장 방식을 골라 주세요" })).toBeDisabled()
   await page.getByRole("combobox").selectOption("separate")
   await page.getByRole("button", { name: /고른 1건 일지에 저장/u }).click()
   await expect(page.getByTestId("import-saved")).toContainText("새 일지 1건 저장")
-  expect(await page.evaluate((key) => JSON.parse(window.localStorage.getItem(key) ?? "[]").length, JOURNAL_KEY)).toBe(2)
+  const stored = await page.evaluate(key => JSON.parse(window.localStorage.getItem(key) ?? "[]"), JOURNAL_KEY)
+  expect(stored).toHaveLength(2)
+  expect(new Set(stored.map((entry: { fileObservation: { sourceObservationKey: string } }) => entry.fileObservation.sourceObservationKey)).size).toBe(2)
 })
 
 test("reconciles a detailed continuation and keeps subjective editing available", async ({ page }, testInfo) => {

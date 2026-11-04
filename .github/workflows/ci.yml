@@ -117,9 +117,14 @@ jobs:
 
       - name: Verify company-hosted coaching permissions and HTTP flow
         run: |
+          node app/scripts/build-account-file-document-codec.mjs --check
           node app/scripts/build-coaching-record-evidence.mjs --check
           node --test server/self-hosted-coaching/service.test.mjs
-          node --test server/garmin-integration/service.test.mjs server/garmin-integration/worker.test.mjs
+          node --test server/garmin-integration/service.test.mjs server/garmin-integration/worker.test.mjs server/garmin-integration/deployment.test.mjs
+          node --test server/account-gateway/service.test.mjs
+
+      - name: Verify lossless encrypted FILE storage and existing account consumers
+        run: node --test supabase/tests/account-large-file.test.mjs supabase/tests/account-journal-handler.test.mjs supabase/tests/account-plan-collection-handler.test.mjs supabase/tests/account-data-rights-handler.test.mjs
 
       - name: Install D9 evaluator dependencies
         working-directory: runtime-evidence/d9-evaluator
@@ -327,6 +332,7 @@ jobs:
       - name: Verify encrypted account journal buffer and record recovery
         working-directory: app
         run: |
+          node --test scripts/account-large-file-browser.test.mjs
           npm run test:e2e:account-draft-buffer
           npm run test:e2e:account-draft-panel
           npm run test:e2e:account-record-service

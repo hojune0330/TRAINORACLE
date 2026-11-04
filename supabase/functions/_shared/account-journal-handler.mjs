@@ -1,4 +1,6 @@
 import { encryptAccountJournalDocument, decryptAccountJournalDocument } from './account-journal-crypto.mjs';
+import { compressFileJson, decompressFileJson, isFileDetailDocument, isFileDetailMutation, fileDetailBaseFits, jsonBytes,
+  FILE_DOCUMENT_CODEC, FILE_DOCUMENT_MAX_BYTES, FILE_MUTATION_MAX_BYTES, FILE_COMPRESSED_MAX_BYTES, FILE_CORRECTION_MAX_BYTES } from './account-file-document-codec.mjs';
 import { validateAccountJournalRecord, validateAccountJournalRecordUpdate, validateInitialFileObservationRecord,
   correctAccountJournalImportedObservation, FILE_OBSERVATION_CORRECTION_FIELDS, parseFileObservation,
   confirmComparisonRelationRequestSchema, releaseComparisonRelationRequestSchema, applyAccountJournalComparisonMutation,
@@ -11,6 +13,7 @@ import * as accountState from './account-state-validator.mjs';
 // 100,000 UTF-16 code units can require 600,000 bytes as JSON \uXXXX escapes.
 // Keep the streaming bound above that plus the 200-unit title and request metadata.
 export const MAX_BODY_BYTES = 655_360;
+const INLINE_DOCUMENT_BYTES = 600_000;
 const MAX_REVISION = 9_007_199_254_740_990;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu;
 const isUuid = value => typeof value === 'string' && UUID.test(value);
@@ -295,7 +298,7 @@ async function bodyJson(request) {
   catch { fail(400, 'INVALID_REQUEST'); }
 }
 
-function parseAction(input, validateDocument) {
+function parseAction(input, validateDocument, maxCorrectionBytes = FILE_CORRECTION_MAX_BYTES) {
   if (!object(input)) fail(400, 'INVALID_REQUEST');
   const supportedJournalVersions = input.supportedJournalVersions ?? [2];
   if (!Array.isArray(supportedJournalVersions) || supportedJournalVersions.length < 1 || supportedJournalVersions.length > 4
@@ -309,13 +312,16 @@ function parseAction(input, validateDocument) {
     || supportedRunningProfileVersions.length > 2 || new Set(supportedRunningProfileVersions).size !== supportedRunningProfileVersions.length
     || supportedRunningProfileVersions.some(version => ![1, 2].includes(version))
     || Object.hasOwn(input, 'supportedRunningProfileVersions') && input.supportedRunningProfileVersions === null) fail(400, 'INVALID_REQUEST');
-  const { supportedJournalVersions: _capabilities, supportsExerciseLogV1: _exerciseCapability,
+  const supportsLargeFileV1 = input.supportsLargeFileV1 === true;
+  if (Object.hasOwn(input, 'supportsLargeFileV1') && !supportsLargeFileV1) fail(400, 'INVALID_REQUEST');
+  const { supportedJournalVersions: _capabilities, supportsExerciseLogV1: _exerciseCapability, supportsLargeFileV1: _largeCapability,
     supportedRunningProfileVersions: _profileCapabilities, ...actionInput } = input;
   input = actionInput;
   const { action } = input;
   let valid = false;
   if (action === 'status') valid = keys(input, ['action']);
   if (action === 'journalDetailSupport') valid = keys(input, ['action']);
+  if (action === 'journalLargeFileSupport') valid = keys(input, ['action']);
   if (action === 'journalBodyPartSupport') valid = keys(input, ['action']);
   if (action === 'calendarDecorationSupport') valid = keys(input, ['action']);
   if (action === 'athleteRecordSupport') valid = keys(input, ['action']);
@@ -333,8 +339,11 @@ function parseAction(input, validateDocument) {
     && (!Object.hasOwn(input, 'limit') || (Number.isInteger(input.limit) && input.limit >= 1 && input.limit <= 50))
     && (!Object.hasOwn(input, 'cursor') || isUuid(input.cursor));
   if (action === 'read') valid = keys(input, ['action', 'documentId']) && isUuid(input.documentId);
-  if (action === 'history') valid = keys(input, ['action', 'documentId'], ['collection']) && isUuid(input.documentId)
-    && (!Object.hasOwn(input, 'collection') || input.collection === 'JOURNAL');
+  if (action === 'history') valid = keys(input, ['action', 'documentId'], ['collection', 'beforeRevision', 'targetRevision']) && isUuid(input.documentId)
+    && (!Object.hasOwn(input, 'collection') || input.collection === 'JOURNAL')
+    && (!Object.hasOwn(input, 'beforeRevision') || revision(input.beforeRevision) && input.beforeRevision > 0)
+    && (!Object.hasOwn(input, 'targetRevision') || revision(input.targetRevision) && input.targetRevision > 0)
+    && !(Object.hasOwn(input, 'beforeRevision') && Object.hasOwn(input, 'targetRevision'));
   if (action === 'delete' || action === 'restore') valid = keys(input,
     ['action', 'documentId', 'operationId', 'expectedRevision', ...(action === 'restore' ? ['sourceRevision'] : [])])
     && isUuid(input.documentId) && isUuid(input.operationId) && revision(input.expectedRevision)
@@ -360,11 +369,12 @@ function parseAction(input, validateDocument) {
   if (!valid) fail(400, 'INVALID_REQUEST');
   if (action === 'save') {
     let accepted = false;
-    try { accepted = validateAccountJournalDocument(input.document) && validateDocument(input.document) === true; } catch { /* Fail closed without validator details. */ }
+    try { accepted = validateAccountJournalDocument(input.document) && (validateDocument === validateAccountJournalDocument || validateDocument(input.document) === true); } catch { /* Fail closed without validator details. */ }
     if (!accepted) fail(422, observationOf(input.document) || input.writePurpose === 'FILE_OBSERVATION' ? 'INVALID_FILE_OBSERVATION' : 'INVALID_DOCUMENT');
   }
+  if (action === 'correctImportedObservation' && jsonBytes(input.replacementObservation) > maxCorrectionBytes) fail(413, 'DOCUMENT_CAPACITY_EXCEEDED');
   if (action === 'correctImportedObservation' && !parseFileObservation(input.replacementObservation)) fail(422, 'INVALID_FILE_OBSERVATION');
-  return { ...input, supportedJournalVersions, supportsExerciseLogV1, supportedRunningProfileVersions, ...(input.documentId ? { documentId: input.documentId.toLowerCase() } : {}),
+  return { ...input, supportedJournalVersions, supportsExerciseLogV1, supportsLargeFileV1, supportedRunningProfileVersions, ...(input.documentId ? { documentId: input.documentId.toLowerCase() } : {}),
     ...(input.operationId ? { operationId: input.operationId.toLowerCase() } : {}),
     ...(input.cursor ? { cursor: input.cursor.toLowerCase() } : {}) };
 }
@@ -402,7 +412,9 @@ function receiptFor(result, input) {
  * Missing preflight restore source: 409 {error:'SOURCE_UNAVAILABLE'} without mutation.
  * Purged save proposal: 409 {error:'OPERATION_REPLAY_UNAVAILABLE'} without re-encryption.
  */
-export function createAccountJournalHandler({ authenticate, getMaterial, validateDocument, allowedOrigins = [] }) {
+export function createAccountJournalHandler({ authenticate, getMaterial, validateDocument, allowedOrigins = [], runtimeBudget = 'EDGE' }) {
+  // Deployment-owned option only. No request field can select this profile.
+  const maxCorrectionBytes = runtimeBudget === 'COMPANY_NODE' ? FILE_DOCUMENT_MAX_BYTES : FILE_CORRECTION_MAX_BYTES;
   const origins = new Set(allowedOrigins.filter(origin => {
     try { return origin !== '*' && new URL(origin).origin === origin && /^https?:\/\//u.test(origin); }
     catch { return false; }
@@ -431,13 +443,24 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
       if (!isUuid(session?.ownerId) || !session.repo) fail(401, 'AUTH_REQUIRED');
       const ownerId = session.ownerId.toLowerCase();
       const repo = session.repo;
-      const input = parseAction(await bodyJson(request), validateDocument);
+      let wire = await bodyJson(request);
+      if (wire?.action === 'compressedFileMutation') {
+        if (!keys(wire, ['action', 'envelope'])) fail(400, 'INVALID_REQUEST');
+        if (await repo.enabled(ownerId) !== true) fail(403, 'ACCOUNT_JOURNAL_DISABLED');
+        try { wire = await decompressFileJson(wire.envelope, FILE_MUTATION_MAX_BYTES); }
+        catch { fail(422, 'INVALID_FILE_OBSERVATION'); }
+        if (!isFileDetailMutation(wire) || wire.supportsLargeFileV1 !== true) fail(426, 'UPGRADE_REQUIRED');
+      }
+      const input = parseAction(wire, validateDocument, maxCorrectionBytes);
       const requireSupported = document => {
+        if (isFileDetailDocument(document) && jsonBytes(document) > INLINE_DOCUMENT_BYTES && !input.supportsLargeFileV1) fail(426, 'UPGRADE_REQUIRED');
         if (document?.kind === 'RUNNING_PROFILE' && document.data.version === 'RUNNING_PROFILE_V2' && !input.supportedRunningProfileVersions.includes(2)) fail(426, 'UPGRADE_REQUIRED');
         if (document?.state === 'FINALIZED' && !input.supportedJournalVersions.includes(document.version)) fail(426, 'UPGRADE_REQUIRED');
         if (document?.state === 'FINALIZED' && document.entry?.exerciseLog !== undefined && !input.supportsExerciseLogV1) fail(426, 'UPGRADE_REQUIRED');
       };
       if (input.action === 'save') requireSupported(input.document);
+      if (input.action === 'save' && isFileDetailDocument(input.document)
+        && (!fileDetailBaseFits(input.document) || jsonBytes(input.document) > FILE_DOCUMENT_MAX_BYTES)) fail(413, 'DOCUMENT_CAPACITY_EXCEEDED');
       if (input.action === 'restartOracleV2') {
         requireSupported(emptyOracleV2());
         if (!await stateIdentityValid(ownerId, input.documentId, emptyOracleV2())) fail(422, 'INVALID_DOCUMENT');
@@ -452,6 +475,10 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
         if (enabled !== true) fail(503, 'UNAVAILABLE');
       };
       await checkGate();
+      if (input.action === 'journalLargeFileSupport') {
+        if (typeof CompressionStream !== 'function' || typeof DecompressionStream !== 'function') fail(503, 'UNAVAILABLE');
+        return respond(200, { kind: 'journal-large-file-support', version: 1, maxDocumentBytes: FILE_DOCUMENT_MAX_BYTES, maxCompressedBytes: FILE_COMPRESSED_MAX_BYTES, maxCorrectionBytes });
+      }
       if (input.action === 'journalDetailSupport') {
         if (!validateAccountJournalRecord({ version: 5, state: 'FINALIZED', kind: 'JOURNAL', entry: {
           id: 'synthetic-detail-support', kind: 'evening', date: '2026-11-04', savedAt: '2026-11-04T00:00:00.000Z',
@@ -597,12 +624,26 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
         const key = material.get(payload?.keyId);
         if (!key) fail(503, 'KEY_UNAVAILABLE');
         try {
-          const doc = JSON.parse(await decryptAccountJournalDocument(payload, { ownerId, documentId }, key));
-          if (!validateAccountJournalDocument(doc) || validateDocument(doc) !== true) throw 0;
+          let doc = JSON.parse(await decryptAccountJournalDocument(payload, { ownerId, documentId }, key));
+          if (doc?.format === FILE_DOCUMENT_CODEC) {
+            doc = await decompressFileJson(doc);
+            if (!fileDetailBaseFits(doc)) throw 0;
+          }
+          if (jsonBytes(doc) > (isFileDetailDocument(doc) ? FILE_DOCUMENT_MAX_BYTES : 1_048_560)) throw 0;
+          if (!validateAccountJournalDocument(doc) || validateDocument !== validateAccountJournalDocument && validateDocument(doc) !== true) throw 0;
           if (doc.state === 'FINALIZED' && await recordId(ownerId, doc.entry.id) !== documentId) throw 0;
           if (!await stateIdentityValid(ownerId,documentId,doc)) throw 0;
-          return JSON.parse(canonical(doc));
+          return doc;
         } catch { fail(503, 'INVALID_STORED_DATA'); }
+      };
+      const encode = async (document, documentId) => {
+        let plaintext;
+        if (jsonBytes(document) > INLINE_DOCUMENT_BYTES && isFileDetailDocument(document)) {
+          if (!fileDetailBaseFits(document)) fail(413, 'DOCUMENT_CAPACITY_EXCEEDED');
+          try { plaintext = JSON.stringify(await compressFileJson(document)); }
+          catch { fail(413, 'DOCUMENT_CAPACITY_EXCEEDED'); }
+        } else plaintext = canonical(document);
+        return encryptAccountJournalDocument(plaintext, { ownerId, documentId }, material.active);
       };
       const entry = async row => {
         if (!object(row) || row.user_id !== ownerId || !isUuid(row.document_id)
@@ -637,15 +678,26 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
         return respond(200, { kind: Object.hasOwn(value, 'document') ? 'document' : 'deleted', ...value });
       }
       if (input.action === 'list') {
-        const limit = input.limit ?? 50;
+        // Large-capable clients page one record at a time to bound schema CPU as well as bytes.
+        const limit = input.supportsLargeFileV1 ? 1 : input.limit ?? 50;
         const rows = await repo.list(ownerId, limit + 1, input.cursor);
         await checkGate();
         if (!Array.isArray(rows) || rows.length > limit + 1) fail(503, 'INVALID_STORED_DATA');
         let previous = input.cursor ?? '';
         const entries = [];
+        let pageBytes = 0, hasMore = false;
         for (const row of rows) {
           if (typeof row?.document_id !== 'string' || row.document_id <= previous) fail(503, 'INVALID_STORED_DATA');
-          entries.push(await entry(row));
+          if (entries.length >= limit) {
+            if (!input.supportsLargeFileV1) await entry(row);
+            else if (row.user_id !== ownerId || !isUuid(row.document_id) || row.document_id !== row.document_id.toLowerCase()
+              || !revision(row.revision) || row.revision < 1) fail(503, 'INVALID_STORED_DATA');
+            hasMore = true; break;
+          }
+          const value = await entry(row), size = jsonBytes(value);
+          if (entries.length && pageBytes + size > FILE_MUTATION_MAX_BYTES) { hasMore = true; break; }
+          if (size > FILE_MUTATION_MAX_BYTES) fail(503, 'INVALID_STORED_DATA');
+          entries.push(value); pageBytes += size;
           previous = row.document_id;
         }
         const page = entries.slice(0, limit);
@@ -656,22 +708,36 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
         return respond(200, { kind: 'list', documents: page.filter(entry => entry.document && (input.collection === 'JOURNAL'
           ? entry.document.state === 'FINALIZED' : entry.document.state === 'DRAFT')),
           ...(deletedDocuments.length ? { deletedDocuments } : {}),
-          nextCursor: entries.length > limit ? entries[limit - 1].documentId : null });
+          nextCursor: hasMore ? entries.at(-1).documentId : null });
       }
-      const versions = async () => {
+      let historyNextRevision = null;
+      const versions = async (targetRevision, includeNewest = false, beforeRevision) => {
         const rows = await repo.history(input.documentId);
         await checkGate();
         if (!Array.isArray(rows)) fail(503, 'INVALID_STORED_DATA');
         let previous = MAX_REVISION + 1;
         const values = [];
+        let historyBytes = 0;
+        let first = true;
         for (const row of rows) {
           if (!keys(row, ['revision', 'encryptedPayload', 'replacedAt', 'expiresAt', 'reason'])
             || !revision(row.revision) || row.revision < 1 || row.revision >= previous
             || !timestamp(row.replacedAt) || !timestamp(row.expiresAt)
             || Date.parse(row.expiresAt) - Date.parse(row.replacedAt) !== 30 * 24 * 60 * 60 * 1000
             || !['replaced', 'trash'].includes(row.reason)) fail(503, 'INVALID_STORED_DATA');
-          values.push({ revision: row.revision, document: await decode(row.encryptedPayload, input.documentId),
-            replacedAt: row.replacedAt, expiresAt: row.expiresAt, reason: row.reason });
+          const selected = targetRevision === undefined || row.revision === targetRevision || includeNewest && first;
+          previous = row.revision; first = false;
+          if (!selected || beforeRevision !== undefined && row.revision >= beforeRevision) continue;
+          if (targetRevision === undefined && input.supportsLargeFileV1 && values.length) {
+            historyNextRevision = values.at(-1).revision; break;
+          }
+          const value = { revision: row.revision, document: await decode(row.encryptedPayload, input.documentId),
+            replacedAt: row.replacedAt, expiresAt: row.expiresAt, reason: row.reason };
+          if (targetRevision === undefined && values.length && historyBytes + jsonBytes(value) > FILE_MUTATION_MAX_BYTES) {
+            historyNextRevision = values.at(-1).revision; break;
+          }
+          historyBytes += jsonBytes(value);
+          values.push(value);
           previous = row.revision;
         }
         return values;
@@ -694,11 +760,12 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
         if (protectedRow && (await entry(protectedRow)).document?.kind?.startsWith('GOAL_PROGRAM_')) fail(422, 'INVALID_DOCUMENT_UPDATE');
       }
       if (input.action === 'history') {
-        const values = await versions();
+        const values = await versions(input.targetRevision, false, input.beforeRevision);
         await checkGate();
         for (const value of values) requireSupported(value.document);
         return respond(200, { kind: 'history', documentId: input.documentId,
-          versions: values.filter(value => input.collection !== 'JOURNAL' || value.document.state === 'FINALIZED') });
+          versions: values.filter(value => input.collection !== 'JOURNAL' || value.document.state === 'FINALIZED'),
+          ...(historyNextRevision === null ? {} : { nextRevision: historyNextRevision }) });
       }
       const originalRevision = async expected => {
         const row = await repo.read(ownerId, input.documentId);
@@ -709,7 +776,7 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
           if (value.revision === expected && value.document) return value.document;
         }
         if (typeof repo.history !== 'function') fail(409, 'OPERATION_REPLAY_UNAVAILABLE');
-        const original = (await versions()).find(value => value.revision === expected)?.document;
+        const original = (await versions(expected)).find(value => value.revision === expected)?.document;
         if (!original) fail(409, 'OPERATION_REPLAY_UNAVAILABLE');
         return original;
       };
@@ -765,14 +832,16 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
         const document = await decode(prior.proposed_encrypted_payload, prior.document_id);
         requireSupported(document);
         if (comparisonAction(input.action)) {
-          const { supportedJournalVersions: ignored, supportsExerciseLogV1: ignoredExercise, supportedRunningProfileVersions: ignoredProfile, ...request } = input;
+          const { supportedJournalVersions: ignored, supportsExerciseLogV1: ignoredExercise, supportedRunningProfileVersions: ignoredProfile, supportsLargeFileV1: ignoredLarge, ...request } = input;
           const proposal = applyAccountJournalComparisonMutation(await originalRevision(input.expectedRevision), request);
           if (!proposal || canonical(proposal) !== canonical(document)) fail(409, 'OPERATION_REUSED');
           return receiptFor(prior.result, input);
         }
         if (input.action === 'correctImportedObservation') {
+          if (jsonBytes(document) > maxCorrectionBytes) fail(413, 'DOCUMENT_CAPACITY_EXCEEDED');
           if (!observationOf(document) || canonical(observationOf(document)) !== canonical(input.replacementObservation)) fail(409, 'OPERATION_REUSED');
           const original = await originalRevision(input.expectedRevision);
+          if (jsonBytes(original) > maxCorrectionBytes) fail(413, 'DOCUMENT_CAPACITY_EXCEEDED');
           const proposal = correctAccountJournalImportedObservation(original, input.previousContentRevisionFingerprint,
             input.replacementObservation, input.confirmedChangedFields);
           if (!proposal || canonical(proposal) !== canonical(document)) fail(409, 'OPERATION_REUSED');
@@ -781,7 +850,7 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
         if (canonical(document) !== canonical(input.document)) fail(409, 'OPERATION_REUSED');
         if (observationOf(document)) {
           if (input.expectedRevision === 0) {
-            if (!['FILE_OBSERVATION', 'MIGRATION'].includes(input.writePurpose) || !validateInitialFileObservationRecord(document)) fail(409, 'OPERATION_REUSED');
+            if (!['FILE_OBSERVATION', 'MIGRATION'].includes(input.writePurpose) || !validateInitialFileObservationRecord(document, input.writePurpose)) fail(409, 'OPERATION_REUSED');
           } else if (!validateAccountJournalRecordUpdate(await originalRevision(input.expectedRevision), document, input.writePurpose)) {
             fail(409, 'OPERATION_REUSED');
           }
@@ -816,7 +885,7 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
           if (typeof repo.restartOracleV2 !== 'function') fail(503, 'UNAVAILABLE');
           const document = emptyOracleV2();
           if (!validateAccountJournalDocument(document) || validateDocument(document) !== true) fail(503, 'UNAVAILABLE');
-          const encryptedPayload = await encryptAccountJournalDocument(canonical(document), { ownerId, documentId: input.documentId }, material.active);
+          const encryptedPayload = await encode(document, input.documentId);
           await checkGate();
           try { receipt = receiptFor(await repo.restartOracleV2({ documentId: input.documentId, operationId: input.operationId,
             expectedRevision: input.expectedRevision, encryptedPayload, metadata: accountJournalMetadata(document) }), input); }
@@ -831,7 +900,7 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
       else if (input.action === 'delete' || input.action === 'restore') {
         let restoredDocument;
         if (input.action === 'restore') {
-          const values = await versions();
+          const values = await versions(input.sourceRevision, !lifecycleCurrent?.document);
           restoredDocument = values.find(value => value.revision === input.sourceRevision)?.document;
           requireSupported(restoredDocument);
           const restoreBaseline = lifecycleCurrent?.document ?? values[0]?.document;
@@ -903,7 +972,7 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
         }
         let document;
         if (comparisonAction(input.action)) {
-          const { supportedJournalVersions: ignored, supportsExerciseLogV1: ignoredExercise, supportedRunningProfileVersions: ignoredProfile, ...request } = input;
+          const { supportedJournalVersions: ignored, supportsExerciseLogV1: ignoredExercise, supportedRunningProfileVersions: ignoredProfile, supportsLargeFileV1: ignoredLarge, ...request } = input;
           if (input.action === 'confirmComparisonRelation') {
             if ((relationsOf(current.document)?.length ?? 0) >= 32) fail(409, 'COMPARISON_CAPACITY_EXCEEDED');
             const original = await readComparisonOriginal(input.relation.original);
@@ -913,16 +982,17 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
           if (!document || validateDocument(document) !== true) fail(422, 'INVALID_COMPARISON_RELATION');
         } else {
           const observation = observationOf(current.document);
+          if (jsonBytes(current.document) > maxCorrectionBytes) fail(413, 'DOCUMENT_CAPACITY_EXCEEDED');
           if (!observation) fail(422, 'INVALID_FILE_OBSERVATION');
           if (observation.contentRevisionFingerprint !== input.previousContentRevisionFingerprint) fail(409, 'FILE_OBSERVATION_CONFLICT');
           document = correctAccountJournalImportedObservation(current.document, input.previousContentRevisionFingerprint,
             input.replacementObservation, input.confirmedChangedFields);
           if (!document || validateDocument(document) !== true) fail(422, 'INVALID_FILE_OBSERVATION');
+          if (jsonBytes(document) > maxCorrectionBytes) fail(413, 'DOCUMENT_CAPACITY_EXCEEDED');
         }
         await checkFileGate();
         await checkGate();
-        const encryptedPayload = await encryptAccountJournalDocument(canonical(document),
-          { ownerId, documentId: input.documentId }, material.active);
+        const encryptedPayload = await encode(document, input.documentId);
         try {
           receipt = receiptFor(await repo.commit({ documentId: input.documentId, operationId: input.operationId,
             expectedRevision: input.expectedRevision, encryptedPayload,
@@ -962,10 +1032,10 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
             } else if (currentRow === null || !sameRelations(currentDocument, input.document)) fail(422, 'INVALID_COMPARISON_RELATION');
           }
           if (relationsOf(currentDocument) && !sameRelations(currentDocument, input.document)) fail(422, 'INVALID_COMPARISON_RELATION');
-          if (input.writePurpose === 'FILE_OBSERVATION' && !validateInitialFileObservationRecord(input.document)) fail(422, 'INVALID_FILE_OBSERVATION');
+          if (input.writePurpose === 'FILE_OBSERVATION' && !validateInitialFileObservationRecord(input.document, input.writePurpose)) fail(422, 'INVALID_FILE_OBSERVATION');
           if (currentRow === null && (input.document.version === 3 || input.document.version === 4 && observationOf(input.document))
             && (!['FILE_OBSERVATION', 'MIGRATION'].includes(input.writePurpose)
-              || !validateInitialFileObservationRecord(input.document))) fail(422, 'INVALID_FILE_OBSERVATION');
+              || !validateInitialFileObservationRecord(input.document, input.writePurpose))) fail(422, 'INVALID_FILE_OBSERVATION');
         }
         if (currentRow !== null && currentRow.revision === input.expectedRevision
           && (currentRow.deleted_at === null || currentRow.deleted_at === undefined)) {
@@ -998,8 +1068,7 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
         }
         if (!sameObservation(currentDocument, input.document)
           || input.writePurpose === 'MIGRATION' && observationOf(input.document)) await checkFileGate();
-        const encryptedPayload = await encryptAccountJournalDocument(canonical(input.document),
-          { ownerId, documentId: input.documentId }, material.active);
+        const encryptedPayload = await encode(input.document, input.documentId);
         try { receipt = receiptFor(await repo.commit({ documentId: input.documentId,
           operationId: input.operationId, expectedRevision: input.expectedRevision, encryptedPayload,
           metadata: { ...accountJournalMetadata(input.document), ...await calendarOwnershipMetadata(input.document), ...await goalProgramMetadata(input.document, currentRow?.revision === input.expectedRevision ? currentDocument : undefined), ...(input.document.state === 'FINALIZED'

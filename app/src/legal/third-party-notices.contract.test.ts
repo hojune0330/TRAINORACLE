@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs"
+import { createHash } from "node:crypto"
 import { describe, expect, it } from "vitest"
 // @ts-expect-error plain .mjs build script without type declarations
 import { productionPackages, renderNotices } from "../../scripts/generate-third-party-notices.mjs"
@@ -19,12 +20,27 @@ describe("app-wide open-source software notice", () => {
     for (const dev of ["vite", "vitest", "typescript", "@playwright/test", "esbuild"]) expect(names, dev).not.toContain(dev)
     for (const item of packages) expect(committed, item.name).toContain(`<h2>${item.name} ${item.version}</h2>`)
   })
-  it("ships a full license text for every package and only licenses that allow redistribution with notice", () => {
+  it("ships full license text and admits only the declared licenses or the exact FIT SDK license reviewed for integration", () => {
     const allowed = new Set(["MIT", "ISC", "0BSD", "BSD-2-Clause", "BSD-3-Clause", "Apache-2.0"])
-    for (const item of productionPackages() as Pkg[]) expect(allowed.has(item.license), `${item.name}: ${item.license}`).toBe(true)
+    for (const item of productionPackages() as Pkg[]) {
+      if (item.name === "@garmin/fitsdk") {
+        // This is Garmin's custom FIT Protocol License, not an SPDX open-source license.
+        // Garmin documents use in compatible browsers. A different version or license
+        // must be reviewed again; arbitrary SEE LICENSE packages are not admitted.
+        expect(item.version).toBe("21.221.0")
+        expect(item.license).toBe("SEE LICENSE IN LICENSE.txt")
+        const license = readFileSync("node_modules/@garmin/fitsdk/LICENSE.txt")
+        expect(createHash("sha256").update(license).digest("hex"))
+          .toBe("6cc7ff94b5afc8c3a2b14aeb3e90da97a9fb6c8d40644304da94df5cf56428cf")
+        expect(committed).toContain("FIT Protocol License Agreement")
+      } else {
+        expect(allowed.has(item.license), `${item.name}: ${item.license}`).toBe(true)
+      }
+    }
     expect(committed).not.toContain("라이선스 파일이 없어")
     expect(committed).toContain("Apache License")
     expect(committed).toContain("SIL OPEN FONT LICENSE")
+    expect(committed).toContain("개별 사용 조건이 있는 소프트웨어")
   })
   it("is linked from More and from the game menu", () => {
     expect(readFileSync("src/screens/More.tsx", "utf8")).toContain("./legal/third-party-notices.html")

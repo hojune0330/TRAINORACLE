@@ -2,6 +2,7 @@ import { createServer } from 'node:http';
 import { createHmac } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { decryptAccountJournalDocument } from '../../supabase/functions/_shared/account-journal-crypto.mjs';
+import { decodeAccountStoredJson } from '../../supabase/functions/_shared/account-file-document-codec.mjs';
 import { importJournalKeyring } from '../../supabase/functions/_shared/account-journal-handler.mjs';
 import { prepareCoachingRecordEvidence, buildCoachingEvidenceFacts, evaluateProviderDataUse, deriveProviderDataLineage } from './contracts.mjs';
 
@@ -152,7 +153,7 @@ export function createSupabaseRepository({ url, publishableKey, attestation, key
     },
     async decode(auth, row) {
       const material = keyring.get(row.encryptedPayload?.keyId);
-      return JSON.parse(await decryptAccountJournalDocument(row.encryptedPayload, { ownerId: auth.ownerId, documentId: row.documentId }, material));
+      return decodeAccountStoredJson(await decryptAccountJournalDocument(row.encryptedPayload, { ownerId: auth.ownerId, documentId: row.documentId }, material));
     },
   };
 }

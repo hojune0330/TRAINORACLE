@@ -1406,18 +1406,20 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
     screen = (
       <DeferredMobileScreens.More
         ownerId={activeLocalAccount()}
-        onOpenJournalRecord={(date, entryId) => {
+        onOpenJournalRecord={async (date, entryId, requestCurrent) => {
           const owner = activeLocalAccount(), scope = localJournalScopeGeneration()
-          if (!owner) return
-          void refreshAccountJournalRecordsForImport().then(ready => {
-            const current = () => ready && owner === activeLocalAccount() && scope === localJournalScopeGeneration()
+          if (!owner || !requestCurrent()) return "UNAVAILABLE"
+          try {
+            const ready = await refreshAccountJournalRecordsForImport()
+            const current = () => requestCurrent() && ready && owner === activeLocalAccount() && scope === localJournalScopeGeneration()
               && loadEntries().some(entry => entry.id === entryId && entry.date === date && entry.syncState === "synced")
-            if (!current()) return
-            runDraftSafeNavigation(() => runViewTransition("push", () => {
+            if (!current()) return "UNAVAILABLE"
+            const navigated = runDraftSafeNavigation(() => runViewTransition("push", () => {
               setUtilityView(null)
               setV({ ...viewForTab("journal"), detailDate: date, detailEntryId: entryId })
             }), false, current)
-          }).catch(() => undefined)
+            return navigated ? "OPENED" : "DRAFT_REVIEW"
+          } catch { return "UNAVAILABLE" }
         }}
         view={moreView}
         connectionOrigin={moreConnectionReturn.current?.view}

@@ -11,10 +11,12 @@ import { clearGarminOperation, consumeGarminCallback, garminEndpoint, garminErro
   type GarminConfirmation, type GarminError, type GarminItem, type GarminRequest, type GarminStatus, type GarminTransport } from "../domain/account/garmin-integration"
 import "./garmin-connection-panel.css"
 
+export type GarminJournalOpenResult = "OPENED" | "UNAVAILABLE" | "DRAFT_REVIEW"
+export type OpenGarminJournalRecord = (date: string, entryId: string, isCurrent: () => boolean) => Promise<GarminJournalOpenResult>
 export type GarminConnectionPanelProps = {
   readonly ownerId: string | null
   readonly onOpenAccount?: () => void
-  readonly onOpenJournalRecord?: (date: string, entryId: string) => void
+  readonly onOpenJournalRecord?: OpenGarminJournalRecord
   readonly transport?: GarminTransport
   readonly configured?: boolean
   readonly featureEnabled?: boolean
@@ -46,6 +48,8 @@ function GarminConnectionSession({ ownerId, onOpenAccount, onOpenJournalRecord, 
   const [loaded, setLoaded] = useState(false), [busy, setBusy] = useState(false), [error, setError] = useState<GarminError | null>(null)
   const [reviewed, setReviewed] = useState<Record<string, boolean>>({})
   const [receipts, setReceipts] = useState<Record<string, GarminConfirmation>>({})
+  const [openingJournal, setOpeningJournal] = useState<string | null>(null)
+  const [journalOpenNotice, setJournalOpenNotice] = useState<{ inboxId: string; result: "UNAVAILABLE" | "DRAFT_REVIEW" } | null>(null)
   const [pending, setPending] = useState<Record<string, "confirm" | "dismiss">>({})
   const [message, setMessage] = useState<string | null>(null), [disconnectReview, setDisconnectReview] = useState(false)
   const [callbackAvailable, setCallbackAvailable] = useState(() => hasGarminCallback())
@@ -55,6 +59,19 @@ function GarminConnectionSession({ ownerId, onOpenAccount, onOpenJournalRecord, 
   const current = (controller: AbortController) => live.current && operation.current === controller && !controller.signal.aborted
   const send = (request: GarminRequest, controller: AbortController) => transport(ownerId!, request, controller.signal, () => current(controller))
   const ready = configured && featureEnabled && status?.capability.enabled === true
+
+  async function openJournal(inboxId: string, receipt: GarminConfirmation) {
+    if (!onOpenJournalRecord || busy) return
+    const controller = begin(); setOpeningJournal(inboxId); setJournalOpenNotice(null)
+    try {
+      const result = await onOpenJournalRecord(receipt.date, receipt.journalEntryId, () => current(controller))
+      if (current(controller) && result !== "OPENED") setJournalOpenNotice({ inboxId, result })
+    } catch {
+      if (current(controller)) setJournalOpenNotice({ inboxId, result: "UNAVAILABLE" })
+    } finally {
+      if (current(controller)) { setBusy(false); setOpeningJournal(null) }
+    }
+  }
 
   async function load(next = false) {
     if (!ownerId || !configured) return
@@ -77,7 +94,7 @@ function GarminConnectionSession({ ownerId, onOpenAccount, onOpenJournalRecord, 
       const rows = result.data.items
       setItems(previous => next ? [...previous.filter(item => !rows.some(row => row.inboxId === item.inboxId)), ...rows] : rows)
       // A fresh read requires a fresh explicit review; no checkbox promotes a revised row.
-      setReviewed({}); setReceipts({}); setCursor(result.data.nextCursor); setLoaded(true)
+      setReviewed({}); setReceipts({}); setJournalOpenNotice(null); setCursor(result.data.nextCursor); setLoaded(true)
       setPending(previous => ({ ...(next ? previous : {}), ...Object.fromEntries(rows.flatMap(item => {
         const saved = pendingGarminOperation(ownerId, item.inboxId)
         return saved ? [[item.inboxId, saved.action]] : []
@@ -191,7 +208,7 @@ function GarminConnectionSession({ ownerId, onOpenAccount, onOpenJournalRecord, 
           {loaded && <section aria-label="Garmin 받은 기록">
             <AppHeading as="h3" variant="section">받은 기록 검토</AppHeading>
             <p>시작 시각과 운동 수치를 확인한 뒤 일지에 저장해요. 받은 것만으로 저장되거나 계획에 반영되지는 않아요.</p>
-            {items.length === 0 && <RecordNotice kind="empty" title="아직 받은 기록이 없어요"><p>연결 이후 받은 운동은 여기에 표시돼요. 과거 기록 제공 범위는 연결 권한에 따라 달라요.</p></RecordNotice>}
+            {items.length === 0 && <RecordNotice kind="empty" title="아직 받은 기록이 없어요"><p>현재 자동 연결은 연결 이후 전달된 기록을 받아요. 과거 기록은 파일로 가져올 수 있어요.</p></RecordNotice>}
             {items.map(item => {
               const observation = item.observation, key = `${item.inboxId}:${item.revision}`, receipt = receipts[item.inboxId], retry = pending[item.inboxId]
               const pendingRequest = ownerId ? pendingGarminOperation(ownerId, item.inboxId) : null
@@ -212,7 +229,7 @@ function GarminConnectionSession({ ownerId, onOpenAccount, onOpenJournalRecord, 
                   </dl>
                   {observation.durationMeaning === "UNKNOWN" && <p>시간 종류가 확인되지 않아 페이스로 바꾸지 않아요.</p>}
                   <OriginalProviderLaps item={item} />
-                  <details><summary>전체 수치·센서 원본 상세</summary><GarminActivityDetail ownerId={ownerId!} item={item} transport={transport} /></details>
+                  <details><summary>보관된 수치·센서 상세</summary><GarminActivityDetail ownerId={ownerId!} item={item} transport={transport} /></details>
                 </>}
                 {retryChanged ? <RecordNotice kind="conflict" title="이전 요청 이후 원본이나 동의가 바뀌었어요"><p>이전 저장 결과와 현재 기록을 확인한 뒤, 바뀐 원본을 다시 검토해 주세요.</p>
                   <RecordAction priority="secondary" disabled={busy} onClick={() => { clearGarminOperation(ownerId!, item.inboxId); setPending(previous => { const next = { ...previous }; delete next[item.inboxId]; return next }); setReviewed(previous => ({ ...previous, [key]: false })) }}>변경된 원본 다시 검토</RecordAction></RecordNotice>
@@ -225,7 +242,13 @@ function GarminConnectionSession({ ownerId, onOpenAccount, onOpenJournalRecord, 
                       <RecordAction priority="secondary" disabled={busy || !ready || !reviewed[key]} onClick={() => void mutate(item, "dismiss")}>이 받은 기록 제외</RecordAction></div>
                   </>}
                 {item.state === "CONFLICT" && <p>다른 수정본이 있어 바로 덮어쓰지 않아요. 일지의 기존 기록과 Garmin 원본을 확인해 주세요.</p>}
-                {receipt && onOpenJournalRecord && <RecordAction priority="secondary" onClick={() => onOpenJournalRecord(receipt.date, receipt.journalEntryId)}>저장한 일지 열기</RecordAction>}
+                {journalOpenNotice?.inboxId === item.inboxId && <RecordNotice kind="blocked"
+                  title={journalOpenNotice.result === "DRAFT_REVIEW" ? "작성 중인 내용을 먼저 확인해 주세요" : "저장된 일지를 아직 열지 못했어요"}>
+                  <p>{journalOpenNotice.result === "DRAFT_REVIEW" ? "이동 전에 작성 중인 내용의 저장 여부를 확인해 주세요. 일지를 다시 저장할 필요는 없어요."
+                    : "계정의 해당 일지를 다시 불러오지 못했어요. 저장 확인 결과는 유지돼요. 연결 상태를 확인한 뒤 다시 열어 주세요."}</p>
+                </RecordNotice>}
+                {receipt && onOpenJournalRecord && <RecordAction priority="secondary" disabled={busy}
+                  onClick={() => void openJournal(item.inboxId, receipt)}>{openingJournal === item.inboxId ? "일지 확인 중…" : journalOpenNotice?.inboxId === item.inboxId ? "저장한 일지 다시 열기" : "저장한 일지 열기"}</RecordAction>}
               </article>
             })}
             {cursor && <RecordAction priority="secondary" disabled={busy} onClick={() => void load(true)}>받은 기록 20개 더 보기</RecordAction>}

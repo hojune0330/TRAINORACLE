@@ -60,7 +60,7 @@ export function renderNotices(packages = productionPackages()) {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>오픈소스 소프트웨어 고지 | TrainOracle</title>
+  <title>제3자 소프트웨어 고지 | TrainOracle</title>
   <link rel="stylesheet" href="./legal.css" />
   <style>pre{white-space:pre-wrap;word-break:break-word;font-size:12px;line-height:1.5}table{border-collapse:collapse;width:100%}td,th{text-align:left;padding:4px 8px;border-bottom:1px solid currentColor}</style>
 </head>
@@ -75,8 +75,8 @@ export function renderNotices(packages = productionPackages()) {
     </nav>
   </div></header>
   <main class="legal-document">
-    <h1>오픈소스 소프트웨어 고지</h1>
-    <p class="legal-summary">TrainOracle 앱에 포함되어 배포되는 오픈소스 소프트웨어 ${packages.length}개와 글꼴의 저작권·라이선스 전문입니다. 개발에만 쓰는 도구는 앱에 포함되지 않아 제외했습니다. 스티커 등 그림 자산은 <a href="./open-source.html">자산 출처</a>에 있습니다.</p>
+    <h1>제3자 소프트웨어 고지</h1>
+    <p class="legal-summary">TrainOracle 앱에 포함되는 오픈소스 및 개별 사용 조건이 있는 소프트웨어 ${packages.length}개와 글꼴의 저작권·라이선스 전문입니다. Garmin FIT SDK에는 별도의 FIT Protocol License Agreement가 적용되며 오픈소스 라이선스로 분류하지 않습니다. 개발에만 쓰는 도구는 앱에 포함되지 않아 제외했습니다. 스티커 등 그림 자산은 <a href="./open-source.html">자산 출처</a>에 있습니다.</p>
     <table><thead><tr><th>패키지</th><th>버전</th><th>라이선스</th></tr></thead><tbody>
 ${rows}
 <tr><td><a href="#pretendard">Pretendard (글꼴)</a></td><td>—</td><td>OFL-1.1</td></tr>

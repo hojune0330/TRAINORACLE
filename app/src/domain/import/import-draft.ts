@@ -115,6 +115,14 @@ function identityCandidateKind(entry: JournalEntry, activity: ImportedActivity, 
   const previous = entry.fileObservation
   if (previous) {
     const sameSource = previous.sourceObservationKey === observation.sourceObservationKey
+    // Upgraded legacy FILE keys stay unscoped. Only exact content (including
+    // the declared source namespace) can offer explicit reuse of that record.
+    const upgradedLegacy = previous.sourceIdentityScope === "LEGACY_UNSCOPED_V1"
+      && observation.sourceActivityId !== null && previous.sourceActivityId === observation.sourceActivityId
+      && previous.sourceProfile === observation.sourceProfile
+      && previous.detail !== undefined && observation.detail !== undefined
+      && sameFileObservation(previous, observation)
+    if (upgradedLegacy) return "REUSE"
     // Rich files have a namespaced identity. A legacy same-file ID is only a
     // review candidate, never permission to silently duplicate or overwrite it.
     const legacyCandidate = previous.sourceProfile === observation.sourceProfile
@@ -244,7 +252,8 @@ export function confirmImportDrafts(
       const fresh = buildImportDrafts([draft.activity])[0]!
       if ((draft.requiresIdentityChoice || fresh.requiresIdentityChoice) && intent.confirmedSeparate !== true) { conflicts++; continue }
       const matches = observation?.sourceActivityId != null ? loadEntries().filter((entry): entry is PostSessionEntry =>
-        entry.kind === "post-session" && entry.fileObservation?.sourceObservationKey === observation.sourceObservationKey) : []
+        entry.kind === "post-session" && (entry.fileObservation?.sourceObservationKey === observation.sourceObservationKey
+          || entry.fileObservation?.sourceIdentityScope === "LEGACY_UNSCOPED_V1" && fileImportCandidateKind(entry, draft.activity) === "REUSE")) : []
       if (matches.length) {
         const match = matches[0]!
         if (matches.length === 1 && sameFileObservation(match.fileObservation!, observation!)) { reused++; acknowledge(match) }
