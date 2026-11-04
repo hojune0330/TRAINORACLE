@@ -2,12 +2,14 @@
 //  - 파일에 실제로 있는 사실만 읽는다. 없는 값은 계산 가능한 경우(총거리/총시간
 //    → 평균 페이스)에만 파생하고, 그 외 추정·날조 없음.
 //  - 파싱 실패는 조용히 스킵이 아니라 결과에 개수로 보고 (fail-visible).
-//  - 외부 의존성 없음 — 브라우저/jsdom 내장 DOMParser 사용.
+//  - XML은 DOMParser, FIT은 Garmin 공식 SDK로 해석한다. 파일 선언은 연결 인증이 아니다.
 
 import { z } from "zod"
 import { activityFileTooLarge, parseCsvActivities, parseFileNumber, parseJsonActivities } from "./structured-activity-file"
 import { buildFileObservation, completeLapTotal, FILE_OBSERVATION_LIMITS, toFileObservationSummary } from "./file-observation"
 import type { FileObservationV1 } from "./file-observation"
+import { gpxTrackDetail, tcxActivityDetail } from "./xml-activity-detail"
+import { parseFitActivities } from "./fit-activity-file"
 
 export type ImportedActivity = {
   readonly date: string
@@ -31,6 +33,7 @@ export type ActivityParseIssueCode =
   | "INVALID_ROW" | "INVALID_DURATION_MEANING" | "INVALID_TIMESTAMP" | "MISSING_TIMESTAMP"
   | "DATE_TIME_CONFLICT" | "INVALID_COORDINATE" | "TIME_GAP" | "NON_MONOTONIC_TIME"
   | "CSV_INVALID_HEADER" | "CSV_DUPLICATE_HEADER" | "CSV_COLUMN_COUNT" | "CSV_INVALID_QUOTES"
+  | "INVALID_SENSOR_VALUE" | "AMBIGUOUS_SENSOR_FIELD" | "UNASSIGNED_FIT_RECORD" | "UNSUPPORTED_FIT_FIELDS"
 
 export type ActivityParseIssue = {
   readonly code: ActivityParseIssueCode
@@ -42,7 +45,7 @@ export type ActivityParseIssue = {
 export type ActivityParseResult = {
   readonly activities: readonly ImportedActivity[]
   readonly skipped: number
-  readonly format: "tcx" | "gpx" | "csv" | "json" | "unknown"
+  readonly format: "tcx" | "gpx" | "csv" | "json" | "fit" | "unknown"
   readonly issues?: readonly ActivityParseIssue[]
 }
 
@@ -193,9 +196,11 @@ function parseTcx(doc: Document, timeZone: string): ActivityParseResult {
     }))
     const distanceMeters = completeLapTotal(laps, "distanceMeters")
     const durationSeconds = completeLapTotal(laps, "durationSeconds")
+    const detail = tcxActivityDetail(node, issue)
     if (laps.length > 0 && distanceMeters === null && laps.every(lap => lap.distanceMeters !== null)) issue("INVALID_DISTANCE_TOTAL")
     if (laps.length > 0 && durationSeconds === null && laps.every(lap => lap.durationSeconds !== null)) issue("INVALID_DURATION_TOTAL")
-    if (!laps.some(lap => (lap.distanceMeters ?? 0) > 0 || (lap.durationSeconds ?? 0) > 0)) {
+    if (!laps.some(lap => (lap.distanceMeters ?? 0) > 0 || (lap.durationSeconds ?? 0) > 0)
+      && !detail.samples.some(sample => sample.position !== null || Object.values(sample.metrics).some(value => value !== null))) {
       skipped += 1
       issue("NO_MEASUREMENTS")
       finishIssues()
@@ -203,10 +208,10 @@ function parseTcx(doc: Document, timeZone: string): ActivityParseResult {
     }
     const sport = tcxSport(node.getAttribute("Sport"))
     const observation = buildFileObservation({
-      format: "tcx", sourceProfile: "TCX_ACTIVITY_V1", parserVersion: "tcx-observation-1",
+      format: "tcx", sourceProfile: "TCX_ACTIVITY_V1", parserVersion: "tcx-observation-2",
       sourceActivityId: validId ? id : null,
       date, startedAt, timeZone: observationTimeZone, sport,
-      distanceMeters, durationSeconds, durationMeaning: "SOURCE_DEFINED", laps, confirmation: null,
+      distanceMeters, durationSeconds, durationMeaning: "SOURCE_DEFINED", laps, confirmation: null, detail,
     })
     activities.push({
       date,
@@ -307,6 +312,7 @@ function parseGpx(doc: Document, timeZone: string, includeObservation: boolean):
     }
     const distanceMeters = distanceComplete ? meters : null
     const durationSeconds = timeComplete && pointCount >= 2 && firstTime !== null && previousTime !== null ? elapsedSeconds(firstTime, previousTime) : null
+    const detail = gpxTrackDetail(trk, doc.documentElement.getAttribute("creator"), issue)
     let date: string | null = null
     let observationZone: string | null = null
     if (dateSource !== null) {
@@ -317,13 +323,14 @@ function parseGpx(doc: Document, timeZone: string, includeObservation: boolean):
       } else date = dateSource.slice(0, 10)
     }
     if (date === null || !isoDate.safeParse(date).success) { issue(date === null ? "MISSING_DATE" : "INVALID_DATE"); skipped += 1 }
-    else if (distanceMeters === null && durationSeconds === null) { issue("NO_MEASUREMENTS"); skipped += 1 }
+    else if (distanceMeters === null && durationSeconds === null
+      && !detail.samples.some(sample => sample.position !== null || Object.values(sample.metrics).some(value => value !== null))) { issue("NO_MEASUREMENTS"); skipped += 1 }
     else {
       const sport = tcxSport(fieldText(trk, "type"))
       const observation = buildFileObservation({
-        format: "gpx", sourceProfile: "GPX_TRACK_V1", parserVersion: "gpx-observation-1", sourceActivityId: null,
+        format: "gpx", sourceProfile: "GPX_TRACK_V1", parserVersion: "gpx-observation-2", sourceActivityId: null,
         date, startedAt: firstTime, timeZone: observationZone, sport, distanceMeters, durationSeconds,
-        durationMeaning: "ELAPSED", laps: [], confirmation: null,
+        durationMeaning: "ELAPSED", laps: [], confirmation: null, detail,
       })
       activities.push({
         date, name: includeObservation ? sport === "RUNNING" ? "가져온 달리기" : "가져온 활동" : fieldText(trk, "name") || "가져온 활동",
@@ -334,6 +341,20 @@ function parseGpx(doc: Document, timeZone: string, includeObservation: boolean):
     for (const [code, count] of codes) issues.push({ code, activityIndex, count })
   }
   return { activities, skipped, format: "gpx", ...(issues.length > 0 ? { issues } : {}) }
+}
+
+/** Binary entry point: FIT must never be decoded through File.text(). */
+export function parseActivityFileBytes(
+  bytes: Uint8Array,
+  timeZone: string = Intl.DateTimeFormat().resolvedOptions().timeZone,
+  options: ActivityFileParseOptions = {},
+): ActivityParseResult {
+  if (bytes.byteLength > FILE_OBSERVATION_LIMITS.bytes) return rejected("FILE_TOO_LARGE")
+  if (bytes.length >= 12 && bytes[8] === 46 && bytes[9] === 70 && bytes[10] === 73 && bytes[11] === 84) {
+    return parseFitActivities(bytes, timeZone)
+  }
+  try { return parseActivityFile(new TextDecoder("utf-8", { fatal: true }).decode(bytes), timeZone, options) }
+  catch { return rejected("INVALID_FILE") }
 }
 
 export function parseActivityFile(

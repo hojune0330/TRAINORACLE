@@ -1,4 +1,4 @@
-import { parseActivityFile } from "./activity-file"
+import { parseActivityFile, parseActivityFileBytes } from "./activity-file"
 import type { ActivityFileParseOptions, ActivityParseResult } from "./activity-file"
 
 export class ActivityParseCancelled extends Error {
@@ -13,7 +13,7 @@ type WorkerReply = { ok: true; result: ActivityParseResult } | { ok: false }
  * Missing chunks/crashes fail visibly, without repeating heavy work on the UI.
  */
 export async function parseActivityFileAsync(
-  text: string,
+  text: string | Uint8Array,
   timeZone: string,
   options: ActivityFileParseOptions,
   signal: AbortSignal,
@@ -21,14 +21,15 @@ export async function parseActivityFileAsync(
 ): Promise<ActivityParseResult> {
   if (signal.aborted) throw new ActivityParseCancelled()
   // XML requires the browser DOM; worker startup costs more than small inputs.
-  if (text.length < 64 * 1024 || text.trimStart().startsWith("<") || typeof Worker === "undefined") {
-    return parseActivityFile(text, timeZone, options)
+  const parseHere = () => typeof text === "string" ? parseActivityFile(text, timeZone, options) : parseActivityFileBytes(text, timeZone, options)
+  if (typeof text === "string" && (text.length < 64 * 1024 || text.trimStart().startsWith("<")) || typeof Worker === "undefined") {
+    return parseHere()
   }
   let worker: ParserWorker
   try { worker = createWorker() }
   catch {
     if (signal.aborted) throw new ActivityParseCancelled()
-    return parseActivityFile(text, timeZone, options)
+    return parseHere()
   }
   return new Promise((resolve, reject) => {
     let settled = false

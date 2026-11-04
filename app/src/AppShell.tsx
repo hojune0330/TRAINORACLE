@@ -29,6 +29,8 @@ import type { GameLoungeNavigationState } from "./screens/treadmill/GameLounge"
 import { LogEntry } from "./screens/LogEntry"
 import { DeferredMobileScreens } from "./DeferredMobileScreens"
 import { accountFeatureEnabled } from "./domain/account/config"
+import { hasGarminCallback } from "./domain/account/garmin-integration"
+import { refreshAccountJournalRecordsForImport } from "./domain/account/account-journal-record-service"
 import { loungeEntryIntent } from "./domain/lounge/entry-intent"
 import { loadEntries, localOnlyCount, todayISO } from "./domain/journal-store"
 import type { JournalEntry } from "./domain/journal-store"
@@ -217,6 +219,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
   const [accountScopeRevision, setAccountScopeRevision] = React.useState(0)
   const [, refreshAccountJournals] = React.useReducer((revision: number) => revision + 1, 0)
   const [v, setV] = React.useState(() => {
+    if (hasGarminCallback()) return INITIAL_VIEW_STATE
     if (arenaInvitation()) return INITIAL_VIEW_STATE
     const recoveryTab = readRecoveryTab()
     const accountEntry = accountFeatureEnabled() && typeof window !== "undefined"
@@ -230,7 +233,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
   React.useEffect(() => { clearRecoveryTab() }, [])
   // A direct route or interrupted-task recovery must never become an introduction.
   const [allowHomeIntroduction] = React.useState(() => v.tab === "home" && !v.accountOpen
-    && !oracleEntry.requested && readRecoveryTab() === null && isPlainHomeEntry(window.location))
+    && !hasGarminCallback() && !oracleEntry.requested && readRecoveryTab() === null && isPlainHomeEntry(window.location))
   const [savedToast, setSavedToast] = React.useState<ShellToastState | null>(null)
   const [homeMemoReceipt, setHomeMemoReceipt] = React.useState<HomeMemoReceipt | null>(null)
   const [homeMemoNotice, setHomeMemoNotice] = React.useState<string | null>(null)
@@ -287,9 +290,9 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
   const [athleteRecordsOpen, setAthleteRecordsOpen] = React.useState(false)
   const [homeDetailOrigin, setHomeDetailOrigin] = React.useState<"home" | "rewards">("home")
   const scrollRegionRef = React.useRef<HTMLElement>(null)
-  const [utilityView, setUtilityView] = React.useState<"more" | "guide" | "minji" | "content" | "rewards" | "minigame" | null>(() => arenaInvitation() || new URLSearchParams(location.search).get("games") === "lounge" ? "minigame" : null)
+  const [utilityView, setUtilityView] = React.useState<"more" | "guide" | "minji" | "content" | "rewards" | "minigame" | null>(() => hasGarminCallback() ? "more" : arenaInvitation() || new URLSearchParams(location.search).get("games") === "lounge" ? "minigame" : null)
   const [utilityOrigin, setUtilityOrigin] = React.useState<"home" | "more">(() => new URLSearchParams(location.search).get("games") === "lounge" ? "home" : "more")
-  const [moreView, setMoreView] = React.useState<MoreView>("tools")
+  const [moreView, setMoreView] = React.useState<MoreView>(() => hasGarminCallback() ? "connections" : "tools")
   const moreVisibleRef = React.useRef(false)
   moreVisibleRef.current = v.tab === "home" && utilityView === "more" && !v.accountOpen && !v.restoreOpen
   const [decorationInitialDate, setDecorationInitialDate] = React.useState<string | undefined>()
@@ -1402,6 +1405,20 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
   } else if (v.tab === "home" && utilityView === "more") {
     screen = (
       <DeferredMobileScreens.More
+        ownerId={activeLocalAccount()}
+        onOpenJournalRecord={(date, entryId) => {
+          const owner = activeLocalAccount(), scope = localJournalScopeGeneration()
+          if (!owner) return
+          void refreshAccountJournalRecordsForImport().then(ready => {
+            const current = () => ready && owner === activeLocalAccount() && scope === localJournalScopeGeneration()
+              && loadEntries().some(entry => entry.id === entryId && entry.date === date && entry.syncState === "synced")
+            if (!current()) return
+            runDraftSafeNavigation(() => runViewTransition("push", () => {
+              setUtilityView(null)
+              setV({ ...viewForTab("journal"), detailDate: date, detailEntryId: entryId })
+            }), false, current)
+          }).catch(() => undefined)
+        }}
         view={moreView}
         connectionOrigin={moreConnectionReturn.current?.view}
         onViewChange={next => runViewTransition(next === "tools" || moreView === "connections" && next === "about" ? "pop" : "push", () => {

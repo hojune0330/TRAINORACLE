@@ -9,6 +9,7 @@ import { TrainingLexiconRoute } from "./screens/TrainingLexiconRoute"
 import { LT_PILOT_MULTI_PLAN_RUNTIME_V3 } from "./domain/lt-pilot-runtime-v3"
 import { captureEmailAuthCallbackFromUrl } from "./domain/account/email-auth-callback"
 import { captureOAuthAuthCallbackFromUrl } from "./domain/account/oauth-auth-callback"
+import { captureGarminCallback } from "./domain/account/garmin-integration"
 import { retireSharedOriginAuthCredentials } from "./domain/account/auth-origin"
 
 // 토큰 단일 소스: 저장소 루트 CSS를 직접 import (이중 정의 금지)
@@ -41,6 +42,9 @@ const showTrainingLexicon = new URLSearchParams(window.location.search).get("ter
 // Email confirmation links contain a one-time token hash. Remove it from the
 // visible URL/history before rendering, then let the account screen exchange the
 // in-memory value exactly once.
+// Provider authorization codes belong to the server-side Garmin exchange, never
+// the application's Supabase login callback. Scrub them before either consumer.
+captureGarminCallback()
 captureEmailAuthCallbackFromUrl()
 captureOAuthAuthCallbackFromUrl()
 

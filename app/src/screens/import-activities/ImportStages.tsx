@@ -11,6 +11,7 @@ import { accountJournalRecordsEnabled } from "../../domain/account/account-journ
 import { fileAnalysisFormats } from "../../domain/import/file-analysis-policy"
 import { FileObservationReview } from "./FileObservationReview"
 import { ImportedActivityFacts, importedActivityFactLabels } from "./ImportedActivityFacts"
+import { ImportedActivityDetail } from "../../components/ImportedActivityDetail"
 import type { ImportedActivity } from "../../domain/import/activity-file"
 import "./file-analysis.css"
 import { RecordAction, RecordChoice, RecordNotice, RecordStateList } from "../../components/RecordUI"
@@ -69,7 +70,7 @@ export function PickStage({ busy, failure, fileInputRef, onFile, onCancel }: {
             <p>지원 파일이 없으면 지금 가져오지 않아도 돼요. 수면·HRV 자동 연결은 제공하지 않아요.</p>
           </> : <ol>
             <li>{source === "garmin" ? "Garmin Connect" : "COROS"}에서 가져올 운동 기록을 열어요.</li>
-            <li>활동 내보내기에서 {source === "coros" ? "TCX" : "TCX 또는 GPX"} 파일을 이 기기에 저장해요. FIT·ZIP 파일은 아직 읽지 못해요.</li>
+            <li>활동 내보내기에서 FIT·TCX 또는 GPX 파일을 이 기기에 저장해요. ZIP 파일은 먼저 압축을 풀어 주세요.</li>
             <li>위의 파일 선택으로 거리·시간을 확인한 뒤, 원하는 기록만 저장해요.</li>
           </ol>}
         </>}
@@ -104,7 +105,7 @@ export function PickStage({ busy, failure, fileInputRef, onFile, onCancel }: {
         id="import-file"
         type="file"
         hidden
-        accept=".csv,.json,.tcx,.gpx,text/csv,application/json,application/xml,text/xml"
+        accept=".fit,.csv,.json,.tcx,.gpx,text/csv,application/json,application/xml,text/xml,application/octet-stream"
         disabled={busy}
         onChange={(event) => {
           const file = event.currentTarget.files?.[0]
@@ -112,7 +113,7 @@ export function PickStage({ busy, failure, fileInputRef, onFile, onCancel }: {
           if (file !== undefined) void onFile(file)
         }}
       />
-      <p className="import-preparation__formats">TCX · GPX · 지원 CSV·JSON / 한 번에 파일 1개, 최대 10MB</p>
+      <p className="import-preparation__formats">FIT · TCX · GPX · 지원 CSV·JSON / 한 번에 파일 1개, 최대 10MB</p>
       {busy && (
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
           <p role="status" style={{ ...mono, fontSize: "var(--fs-body-sm)", color: "var(--ink-3)", margin: 0 }}>읽는 중…</p>
@@ -125,7 +126,7 @@ export function PickStage({ busy, failure, fileInputRef, onFile, onCancel }: {
       {failure !== null && (
         <RecordNotice kind={failure === "empty" ? "empty" : failure === "cancelled" ? "blocked" : "error"} title={failure === "empty" ? "파일에 활동이 없어요" : failure === "cancelled" ? "가져오기를 취소했어요" : "파일을 확인해 주세요"} headingLevel={2} announce="assertive" data-testid="import-failure">
           <div style={{ ...mono, fontSize: "var(--fs-body)", color: "var(--ink)", lineHeight: 1.6 }}>
-            {failure === "unsupported-format" ? "아직 지원하지 않는 파일 형식이에요. 건강앱의 전체 ZIP·XML 백업이나 FIT 대신 운동 기록의 TCX·GPX 또는 지원하는 CSV·JSON을 골라 주세요." : failure === "account-unavailable" ? "계정 기록을 조회하지 못했어요. 연결과 로그인을 확인한 뒤 다시 시도해 주세요." : failure === "empty"
+            {failure === "unsupported-format" ? "아직 지원하지 않는 파일 형식이에요. 건강앱의 전체 ZIP·XML 백업 대신 개별 운동의 FIT·TCX·GPX 또는 지원하는 CSV·JSON을 골라 주세요." : failure === "account-unavailable" ? "계정 기록을 조회하지 못했어요. 연결과 로그인을 확인한 뒤 다시 시도해 주세요." : failure === "empty"
               ? "파일은 읽었지만 일지로 옮길 활동을 찾지 못했어요. 날짜·거리·시간이 비어 있는 파일일 수 있어요."
               : failure === "too-many-records" ? "한 파일에서 읽을 수 있는 운동은 1,000개까지예요. 기간을 나눠 내보내 주세요."
                 : failure === "too-many-segments" ? "구간이나 위치 기록이 너무 많아요. 운동을 나눈 파일로 다시 골라 주세요."
@@ -133,7 +134,7 @@ export function PickStage({ busy, failure, fileInputRef, onFile, onCancel }: {
                 ? "파일이 너무 커요. 10MB 이하 파일로 나누어 다시 골라 주세요."
                 : failure === "cancelled"
                   ? "가져오기를 취소했어요. 같은 파일도 다시 고를 수 있어요."
-                  : "이 파일을 읽지 못했어요. .csv, .json, .tcx 또는 .gpx 파일인지 확인해 주세요."}
+                  : "이 파일을 읽지 못했어요. .fit, .csv, .json, .tcx 또는 .gpx 파일인지 확인해 주세요."}
             <br />기존 일지는 그대로 있어요.
           </div>
         </RecordNotice>
@@ -161,11 +162,13 @@ export function ReviewStage({ drafts, result, selected, intents, onIntent, onTog
   readonly onActivityChange?: (index: number, activity: ImportedActivity) => void
 }) {
   const analysisEnabled = accountJournalRecordsEnabled() && fileAnalysisFormats().some(format => format === result.format)
+  const detailEnabled = drafts.some(draft => draft.activity.observation !== undefined)
   const chosenCount = drafts.filter((_, index) => selected.has(index)).length
+  const [previewIndex, setPreviewIndex] = React.useState<number | null>(null)
   const excludedCount = drafts.filter((_, index) => selected.has(index) && intents.get(index)?.kind === "EXCLUDE").length
   const saveCount = chosenCount - excludedCount
   const needsChoice = (draft: ImportDraft, intent: ImportSaveIntent | undefined) => !intent
-    || analysisEnabled && draft.requiresIdentityChoice && intent.kind === "SAVE_SEPARATE" && !intent.confirmedSeparate
+    || detailEnabled && draft.requiresIdentityChoice && intent.kind === "SAVE_SEPARATE" && !intent.confirmedSeparate
   const missingIntent = drafts.some((draft, index) => selected.has(index) && needsChoice(draft, intents.get(index)))
   return (
     <div className="import-review">
@@ -187,6 +190,10 @@ export function ReviewStage({ drafts, result, selected, intents, onIntent, onTog
                   : issue.code.includes("DATE") ? "날짜 확인 필요"
                     : issue.code.includes("LIMIT") || issue.code === "FILE_TOO_LARGE" ? "읽을 수 있는 파일 크기·구간 수 초과"
                       : issue.code === "INVALID_SOURCE_ID" ? "원본 운동 ID를 확인하지 못함"
+                        : issue.code === "UNSUPPORTED_FIT_FIELDS" ? "일부 FIT 확장 필드는 아직 해석하지 못함"
+                          : issue.code === "UNASSIGNED_FIT_RECORD" ? "운동 구간에 대응되지 않은 FIT 표본 확인 필요"
+                            : issue.code === "INVALID_SENSOR_VALUE" ? "센서 값의 형식 확인 필요"
+                              : issue.code === "AMBIGUOUS_SENSOR_FIELD" ? "겹치는 센서 필드 확인 필요"
                         : "지원 형식·측정값 확인 필요"
           } · {issue.count}개
         </p>)}
@@ -205,7 +212,7 @@ export function ReviewStage({ drafts, result, selected, intents, onIntent, onTog
             { value: "", label: "저장 방식 선택" },
             { value: "separate", label: "새 일지로 저장" },
             { value: "exclude", label: "이번 가져오기에서 제외" },
-            ...(analysisEnabled ? (draft.identityCandidates ?? []).map(candidate => ({ value: `use:${candidate.id}`,
+            ...(detailEnabled ? (draft.identityCandidates ?? []).filter(candidate => accountJournalRecordsEnabled() || candidate.kind !== "ATTACH").map(candidate => ({ value: `use:${candidate.id}`,
               disabled: candidate.kind === "CORRECTION",
               label: `${candidate.kind === "REUSE" ? "같은 기록으로 확인" : candidate.kind === "ATTACH" ? "기존 일지에 파일 근거 연결" : "기존 일지 정정 필요"} · ${candidate.activitySlot === "AM" ? "오전" : candidate.activitySlot === "PM" ? "오후" : "시간 미지정"} · ${candidate.title}`,
             })) : []),
@@ -223,6 +230,13 @@ export function ReviewStage({ drafts, result, selected, intents, onIntent, onTog
                     }}>이미 있는 것 같아요</span>
                   )}
                 <ImportedActivityFacts activity={activity} showTimeNotice={false} compact />
+                {activity.observation && <div>
+                  <button type="button" disabled={busy} aria-expanded={previewIndex === index}
+                    onClick={() => setPreviewIndex(current => current === index ? null : index)}>
+                    {previewIndex === index ? "상세 미리보기 닫기" : "저장 전 상세 보기"}
+                  </button>
+                  {previewIndex === index && <ImportedActivityDetail observation={activity.observation} />}
+                </div>}
                 <select
                   disabled={busy || !selected.has(index)}
                   aria-label={`${choiceLabel} 저장 방식`}
@@ -233,7 +247,7 @@ export function ReviewStage({ drafts, result, selected, intents, onIntent, onTog
                     const identity = draft.identityCandidates?.find(candidate => `use:${candidate.id}` === value && candidate.kind !== "CORRECTION")
                     onIntent(index, value === "separate" ? { kind: "SAVE_SEPARATE", confirmedSeparate: true }
                       : value === "exclude" ? { kind: "EXCLUDE" }
-                      : analysisEnabled && identity ? { kind: "USE_EXISTING", entryId: identity.id, expectedSavedAt: identity.savedAt }
+                      : detailEnabled && identity ? { kind: "USE_EXISTING", entryId: identity.id, expectedSavedAt: identity.savedAt }
                       : target === undefined ? undefined
                         : { kind: "ADD_TO_EXISTING", entryId: target.id, expectedSavedAt: target.savedAt })
                   }}
@@ -247,10 +261,10 @@ export function ReviewStage({ drafts, result, selected, intents, onIntent, onTog
                 {choiceValue !== "" && choiceValue !== "separate" && <p className="import-review__intent" aria-hidden="true">
                   {choices.find(choice => choice.value === choiceValue)?.label}
                 </p>}
-                {analysisEnabled && draft.batchDuplicateOf !== undefined && <p style={{ fontSize: "var(--fs-body-sm)", color: "var(--ink-3)", lineHeight: 1.6 }}>
+                {detailEnabled && draft.batchDuplicateOf !== undefined && <p style={{ fontSize: "var(--fs-body-sm)", color: "var(--ink-3)", lineHeight: 1.6 }}>
                   이 파일의 운동 {draft.batchDuplicateOf + 1}과 기록 값이 같고 원본 ID가 없어요. 서로 다른 운동인지 확인해 주세요.
                 </p>}
-                {analysisEnabled && draft.identityCandidates?.some(candidate => candidate.kind === "CORRECTION")
+                {detailEnabled && draft.identityCandidates?.some(candidate => candidate.kind === "CORRECTION")
                   && <p style={{ fontSize: "var(--fs-body-sm)", color: "var(--ink-3)", lineHeight: 1.6 }}>기존 원본 기록과 값이 달라요. 같은 운동이면 기존 일지에서 정정해 주세요.</p>}
                 {analysisEnabled && onActivityChange && <FileObservationReview activity={activity} disabled={busy}
                   onChange={next => onActivityChange(index, next)} />}
@@ -329,7 +343,9 @@ export function SavedStage({ outcome, analysisAvailable = false, onOpenLog, onOp
     {(outcome.pending ?? 0) > 0 && <RecordNotice kind="unknown" title="계정 저장 여부를 아직 확인하지 못했어요"><p>같은 저장 요청으로 다시 시도해요.</p></RecordNotice>}
     {(outcome.conflicts ?? 0) > 0 && <RecordNotice kind="conflict" title="다른 수정본 확인 필요"><p>기존 일지와 다른 내용이 있어요. 원래 파일을 다시 검토해 저장할 운동과 방식을 골라 주세요.</p></RecordNotice>}
     {needsReview && <p>아래에는 계정 저장이 확인된 일지만 표시해요.</p>}
-    {outcome.stopReason && <p role="alert">나머지 저장을 멈췄어요. 이미 저장된 기록은 그대로 있어요. 연결·로그인·앱 업데이트 상태를 확인한 뒤 다시 시도해 주세요.</p>}
+    {outcome.stopReason && <p role="alert">{outcome.stopReason === "DETAIL_CAPACITY_EXCEEDED"
+      ? "상세 기록이 현재 계정 저장 용량을 넘었어요. 일부 값만 줄여 저장하지 않았어요. 원본 파일을 보관하고, 원래 파일 검토 화면에서 상세를 확인해 주세요."
+      : "나머지 저장을 멈췄어요. 이미 저장된 기록은 그대로 있어요. 연결·로그인·앱 업데이트 상태를 확인한 뒤 다시 시도해 주세요."}</p>}
     {confirmed && onOpenEntry && (outcome.confirmedEntries?.length ?? 0) > 0 && <ul className="import-confirmed-entries" aria-label="계정 저장이 확인된 일지">
       {outcome.confirmedEntries!.map((entry, index) => <li key={entry.id}><button type="button" disabled={busy}
         aria-label={`${compactDate(entry.date)} 저장한 일지 열기 · 확인된 일지 ${index + 1}`}
@@ -342,7 +358,7 @@ export function SavedStage({ outcome, analysisAvailable = false, onOpenLog, onOp
       </div>
     </div>
   </div>
-  const completed = outcome.saved + (outcome.merged ?? 0)
+  const completed = outcome.saved + (outcome.merged ?? 0) + (outcome.reused ?? 0)
   const onlyExcluded = completed === 0 && (outcome.excluded ?? 0) > 0
     && outcome.failed === 0 && (outcome.conflicts ?? 0) === 0 && !outcome.stopReason
   const resultLabel = onlyExcluded ? "가져오기 제외 완료" : completed === 0
@@ -356,6 +372,7 @@ export function SavedStage({ outcome, analysisAvailable = false, onOpenLog, onOp
         <div style={{ ...mono, fontSize: "var(--fs-body-sm)", color: "var(--ink-3)", lineHeight: 1.5, letterSpacing: "0.1em" }}>{resultLabel}</div>
         <div style={{ fontFamily: "var(--sans)", fontSize: 16, fontWeight: 500, marginTop: 5 }}>
           {onlyExcluded ? `${outcome.excluded}건 가져오기에서 제외` : <>새 일지 {outcome.saved}건 저장 · 기존 일지 {outcome.merged ?? 0}건 보완</>}
+          {(outcome.reused ?? 0) > 0 && <p>이미 보관된 같은 기록 {outcome.reused}건을 확인했어요.</p>}
         </div>
         {completed > 0 && <RecordStateList label="파일 일지 보관 상태" items={[{ id: "device", state: { phase: "storage", status: "device" }, detail: "이 브라우저에 저장했어요. 계정에 동기화되지는 않아요." }]} />}
         {onlyExcluded && <div style={{ ...mono, fontSize: "var(--fs-body-sm)", color: "var(--ink-3)", lineHeight: 1.6, marginTop: 4 }}>

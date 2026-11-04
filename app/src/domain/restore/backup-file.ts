@@ -58,6 +58,7 @@ export const SAFE_FORMAT = "trainoracle.journal.v1"
 export const FULL_FORMAT_V3 = "trainoracle.journal.full-backup.v3"
 export const FULL_FORMAT_V4 = "trainoracle.journal.full-backup.v4"
 export const FULL_FORMAT_V5 = "trainoracle.journal.full-backup.v5"
+export const FULL_FORMAT_V7 = "trainoracle.journal.full-backup.v7"
 export const FULL_FORMAT_V6 = "trainoracle.journal.full-backup.v6"
 export const FULL_FORMAT = "trainoracle.journal.full-backup.v2"
 export const LEGACY_FULL_FORMAT = "trainoracle.journal.full-backup.v1"
@@ -138,7 +139,7 @@ function readParsedBackup(parsed: unknown): BackupReadResult {
   if (root.app !== "TRAINORACLE") return UNRECOGNIZED
 
   const format = root.format
-  const kind: BackupKind | null = format === FULL_FORMAT_V6 || format === FULL_FORMAT_V5 || format === FULL_FORMAT_V4 || format === FULL_FORMAT_V3 || format === FULL_FORMAT || format === LEGACY_FULL_FORMAT
+  const kind: BackupKind | null = (format === FULL_FORMAT_V7 || format === FULL_FORMAT_V6) || format === FULL_FORMAT_V5 || format === FULL_FORMAT_V4 || format === FULL_FORMAT_V3 || format === FULL_FORMAT || format === LEGACY_FULL_FORMAT
     ? "full"
     : format === SAFE_FORMAT ? "safe" : null
   if (kind === null) return UNRECOGNIZED
@@ -147,15 +148,19 @@ function readParsedBackup(parsed: unknown): BackupReadResult {
   if (!Array.isArray(rawEntries)) return { ...UNRECOGNIZED, recognized: true, kind }
 
   // A legacy/safe envelope may not smuggle newly adopted evidence into an old format.
-  const privateCompatible = format === FULL_FORMAT_V6 ? rawEntries : rawEntries.filter(entry => {
+  const privateCompatible = (format === FULL_FORMAT_V7 || format === FULL_FORMAT_V6) ? rawEntries : rawEntries.filter(entry => {
     const record = asRecord(entry)
     return kind === "safe" || record?.bodyPartMetadata === undefined
   })
-  const formatEntries = format === FULL_FORMAT_V6 || format === FULL_FORMAT_V5 || format === FULL_FORMAT_V4 ? privateCompatible : privateCompatible.filter(entry => {
+  const formatEntries = (format === FULL_FORMAT_V7 || format === FULL_FORMAT_V6) || format === FULL_FORMAT_V5 || format === FULL_FORMAT_V4 ? privateCompatible : privateCompatible.filter(entry => {
     const record = asRecord(entry)
     return record?.fileObservation === undefined && record?.comparisonRelations === undefined
   })
-  const prepared = kind === "safe" ? formatEntries.map(withEmptyTextFields) : formatEntries
+  const richCompatible = format === FULL_FORMAT_V7 ? formatEntries : formatEntries.filter(entry => {
+    const observation = asRecord(asRecord(entry)?.fileObservation)
+    return observation?.detail === undefined && observation?.format !== "fit"
+  })
+  const prepared = kind === "safe" ? richCompatible.map(withEmptyTextFields) : richCompatible
   const parsedEntries = parseJournalEntryList(prepared)
   const seenIds = new Set<string>()
   const entries = parsedEntries.filter((entry) => {
@@ -164,7 +169,7 @@ function readParsedBackup(parsed: unknown): BackupReadResult {
     return true
   })
   const decoration = readDecorationSection(format, root.decorations)
-  const calendar = format === FULL_FORMAT_V5 || format === FULL_FORMAT_V6 && root.calendarDecorations !== undefined
+  const calendar = format === FULL_FORMAT_V5 || (format === FULL_FORMAT_V7 || format === FULL_FORMAT_V6) && root.calendarDecorations !== undefined
     ? calendarDecorationStateSchema.safeParse(root.calendarDecorations) : null
   return {
     entries,
@@ -185,10 +190,10 @@ function readDecorationSection(
   format: unknown,
   candidate: unknown,
 ): { readonly state: DecorationState | null; readonly status: BackupReadResult["decorationStatus"] } {
-  if (format !== FULL_FORMAT_V6 && format !== FULL_FORMAT_V5 && format !== FULL_FORMAT_V4 && format !== FULL_FORMAT_V3 && format !== FULL_FORMAT) return { state: null, status: "not-included" }
+  if (format !== FULL_FORMAT_V7 && format !== FULL_FORMAT_V6 && format !== FULL_FORMAT_V5 && format !== FULL_FORMAT_V4 && format !== FULL_FORMAT_V3 && format !== FULL_FORMAT) return { state: null, status: "not-included" }
   // A v5 file may contain only calendar decorations. An absent journal-decoration
   // section has no replacement authority; a present but malformed one is invalid.
-  if ((format === FULL_FORMAT_V6 || format === FULL_FORMAT_V5) && candidate === undefined) return { state: null, status: "not-included" }
+  if (((format === FULL_FORMAT_V7 || format === FULL_FORMAT_V6) || format === FULL_FORMAT_V5) && candidate === undefined) return { state: null, status: "not-included" }
   if (typeof candidate !== "object" || candidate === null) return { state: null, status: "invalid" }
   const normalized = readLosslessDecorationState(candidate)
   return normalized === null

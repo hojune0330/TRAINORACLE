@@ -28,6 +28,7 @@ type DraftNoticeTone = "info" | "pending" | "success" | "warning" | "error" | "c
 
 const messageTones: Record<keyof typeof messages, DraftNoticeTone> = {
   ACCOUNT_DELETION_REQUESTED: "error",
+  DOCUMENT_CAPACITY_EXCEEDED: "error",
   UPGRADE_REQUIRED: "error",
   FILE_EVIDENCE_DISABLED: "warning",
   INVALID_FILE_OBSERVATION: "error",

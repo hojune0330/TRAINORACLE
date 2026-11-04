@@ -220,16 +220,16 @@ describe("explicit file identity choices", () => {
     expect(api.persist).not.toHaveBeenCalled()
   })
 
-  it("preserves the legacy disabled-flag ID shape even when the parser carries an observation", async () => {
+  it("preserves observed facts and stable identity even while descriptive analysis is off", async () => {
     vi.stubEnv("VITE_FEATURE_FILE_ANALYSIS_TCX", "false")
     const source = observedActivity(), draft = (await buildAccountImportDrafts([source]))![0]!
     await observedBatch([{ draft, intent: { kind: "SAVE_SEPARATE" } }]).confirm()
     const stored = api.persist.mock.calls[0]![0]
-    expect(stored.id).toBe(`A:${JSON.stringify(["confirmed-activity-import-v1", "tcx", 0, source])}`)
-    expect(stored.fileObservation).toBeUndefined()
+    expect(stored.id).toBe(`A:${JSON.stringify(["file-observation-import-v1", source.observation!.sourceObservationKey])}`)
+    expect(stored.fileObservation).toMatchObject({ ...source.observation, confirmation: { durationMeaning: null, sport: null } })
     putAccountJournalProjection("A", stored)
     await observedBatch([{ draft, intent: { kind: "SAVE_SEPARATE" } }]).confirm()
-    expect(api.persist.mock.calls[1]![0]).toEqual(stored)
+    expect(api.persist).toHaveBeenCalledTimes(1)
   })
 
   it("replays a known exact source without creating or attaching a coexisting legacy row", async () => {

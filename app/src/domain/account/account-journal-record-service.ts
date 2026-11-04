@@ -1,5 +1,5 @@
 import { createAccountDocumentBuffer, type AccountJournalConflictBuffer, type AccountJournalDraftView } from "./account-journal-draft-buffer"
-import { accountJournalPreviewEnabled, requestAccountDocument, accountBodyPartMetadataSupported, checkAccountJournalBodyPartSupport } from "./account-journal-api"
+import { accountJournalPreviewEnabled, requestAccountDocument, accountBodyPartMetadataSupported, checkAccountJournalBodyPartSupport, checkAccountJournalDetailSupport } from "./account-journal-api"
 import { currentStorageConsentRevision, pinStorageOperationRevision } from "./storage-consent-revision"
 import type { AccountJournalRequest } from "./account-journal-api"
 import { accountJournalRecordSchema, accountJournalRecordVersion, validateAccountJournalRecordUpdate, correctAccountJournalImportedObservation, applyAccountJournalComparisonMutation, type AccountJournalRecord } from "./account-journal-record-schema"
@@ -14,6 +14,7 @@ import { markCurrentConfirmedAccountJournalProjection, currentConfirmedAccountJo
 import { canEditJournalEntry, keepsImportedObjectiveFacts, preserveJournalProvenance } from "../journal-edit-policy"
 import { samePlannedSessionLink } from "../planned-session-link"
 import { isAccountJournalWriteRejection, type AccountJournalWriteRejection } from "./account-write-rejection"
+import { accountDocumentFits } from "./account-document-capacity"
 
 let buffer: AccountJournalConflictBuffer<AccountJournalRecord> | null = null
 let owner: string | null = null
@@ -125,6 +126,8 @@ function flush(ctx: Context, documentId: string) {
     async request => {
       if (request.action === "save" && request.document.version === 4
         && !await checkAccountJournalBodyPartSupport(ctx.ownerId, ctx.current)) return { ok: false, code: "UPGRADE_REQUIRED" }
+      if (request.action === "save" && request.document.version === 5
+        && !await checkAccountJournalDetailSupport(ctx.ownerId, ctx.current)) return { ok: false, code: "UPGRADE_REQUIRED" }
       return requestAccountDocument(ctx.ownerId, request, ctx.current, accountJournalRecordSchema)
     }, ctx.current,
     (document, revision) => markCurrent(ctx, document, revision))
@@ -350,11 +353,14 @@ export async function persistAccountJournalRecord(entry: JournalEntry, expectedS
       // its legacy transport metadata before calling this boundary.
       const version = accountJournalRecordVersion(entry)
       let document = accountJournalRecordSchema.parse({ version, state: "FINALIZED", kind: "JOURNAL", entry })
+      // Reject before creating a durable outbox item that can never be sent.
+      if (!accountDocumentFits(document)) return { ...failedSave, rejection: "DOCUMENT_CAPACITY_EXCEEDED" }
       const documentId = await accountJournalDocumentId(current.ownerId, document.entry.id)
       if (!current.current() || lifecycleRequests.has(documentId) || deleted.has(documentId)) return failedSave
       const old = await current.buffer.read(current.ownerId, documentId)
-      if (old?.draft.version === 4) document = accountJournalRecordSchema.parse({ ...document, version: 4 })
+      if (old && old.draft.version > document.version) document = accountJournalRecordSchema.parse({ ...document, version: old.draft.version })
       if (document.version === 4 && !await checkAccountJournalBodyPartSupport(current.ownerId, current.current)) return failedSave
+      if (document.version === 5 && !await checkAccountJournalDetailSupport(current.ownerId, current.current)) return failedSave
       if (!current.current()) return failedSave
       if (old?.pending?.mutation) return failedSave
       if (expectedBase !== undefined) {

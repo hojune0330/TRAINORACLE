@@ -395,6 +395,22 @@ const finalized = { version: 2, state: 'FINALIZED', kind: 'JOURNAL', entry: {
   rpe: 0, memo: 'Synthetic private record', memoPurpose: 'PRIVATE_SELF_ONLY',
 } };
 const capabilities = { supportedJournalVersions: [2, 3] };
+test('journal V5 advertises explicit support and refuses old readers without leaking encrypted data', async () => {
+  const f = await fixture({ dependencies: { validateDocument: validateAccountJournalDocument } });
+  const document = { ...finalized, version: 5 };
+  const documentId = await finalizedId();
+  const compatible = { supportedJournalVersions: [2, 3, 4, 5] };
+  await response(await f.request({ action: 'journalDetailSupport' }), 200, { kind: 'journal-detail-support', version: 1 });
+  await response(await f.request(save({ documentId, document, ...capabilities })), 426, { error: 'UPGRADE_REQUIRED' });
+  assert.equal(f.calls.commit, 0);
+  await response(await f.request(save({ documentId, document, ...compatible })), 200);
+  assert.deepEqual((await response(await f.request({ action: 'read', documentId, ...compatible }), 200)).document, document);
+  for (const request of [{ action: 'read', documentId }, { action: 'list', collection: 'JOURNAL' }]) {
+    await response(await f.request({ ...request, ...capabilities }), 426, { error: 'UPGRADE_REQUIRED' });
+  }
+  await response(await f.request(save({ documentId, document: finalized, operationId: OP2, expectedRevision: 1, ...compatible })), 422);
+  assert.equal(f.calls.commit, 1);
+});
 test('body companion v4 capability preserves encrypted owner snapshots and rejects older editors', async () => {
   const f = await fixture({ dependencies: { validateDocument: validateAccountJournalDocument } });
   const document = { ...finalized, version: 4, entry: { ...finalized.entry,

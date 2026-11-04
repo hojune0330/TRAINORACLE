@@ -47,3 +47,25 @@ export function readActivityFileText(file: File, signal: AbortSignal): Promise<s
     reader.readAsText(file)
   })
 }
+
+/** Binary FIT input stays on device and shares cancellation semantics with text files. */
+export function readActivityFileBytes(file: File, signal: AbortSignal): Promise<Uint8Array> {
+  return new Promise((resolve, reject) => {
+    if (signal.aborted) { reject(new ActivityFileReadError("cancelled")); return }
+    const reader = new FileReader()
+    let settled = false
+    const finish = (result?: ArrayBuffer, kind?: "cancelled" | "unreadable") => {
+      if (settled) return
+      settled = true
+      signal.removeEventListener("abort", abort)
+      if (result) resolve(new Uint8Array(result))
+      else reject(new ActivityFileReadError(kind ?? "unreadable"))
+    }
+    const abort = () => { reader.abort(); finish(undefined, "cancelled") }
+    reader.onload = () => reader.result instanceof ArrayBuffer ? finish(reader.result) : finish()
+    reader.onerror = () => finish()
+    reader.onabort = () => finish(undefined, "cancelled")
+    signal.addEventListener("abort", abort, { once: true })
+    reader.readAsArrayBuffer(file)
+  })
+}

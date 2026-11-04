@@ -298,9 +298,9 @@ async function bodyJson(request) {
 function parseAction(input, validateDocument) {
   if (!object(input)) fail(400, 'INVALID_REQUEST');
   const supportedJournalVersions = input.supportedJournalVersions ?? [2];
-  if (!Array.isArray(supportedJournalVersions) || supportedJournalVersions.length < 1 || supportedJournalVersions.length > 3
+  if (!Array.isArray(supportedJournalVersions) || supportedJournalVersions.length < 1 || supportedJournalVersions.length > 4
     || new Set(supportedJournalVersions).size !== supportedJournalVersions.length
-    || supportedJournalVersions.some(version => ![2, 3, 4].includes(version))
+    || supportedJournalVersions.some(version => ![2, 3, 4, 5].includes(version))
     || Object.hasOwn(input, 'supportedJournalVersions') && input.supportedJournalVersions === null) fail(400, 'INVALID_REQUEST');
   if (Object.hasOwn(input, 'supportsExerciseLogV1') && typeof input.supportsExerciseLogV1 !== 'boolean') fail(400, 'INVALID_REQUEST');
   const supportsExerciseLogV1 = input.supportsExerciseLogV1 === true;
@@ -315,6 +315,7 @@ function parseAction(input, validateDocument) {
   const { action } = input;
   let valid = false;
   if (action === 'status') valid = keys(input, ['action']);
+  if (action === 'journalDetailSupport') valid = keys(input, ['action']);
   if (action === 'journalBodyPartSupport') valid = keys(input, ['action']);
   if (action === 'calendarDecorationSupport') valid = keys(input, ['action']);
   if (action === 'athleteRecordSupport') valid = keys(input, ['action']);
@@ -451,6 +452,13 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
         if (enabled !== true) fail(503, 'UNAVAILABLE');
       };
       await checkGate();
+      if (input.action === 'journalDetailSupport') {
+        if (!validateAccountJournalRecord({ version: 5, state: 'FINALIZED', kind: 'JOURNAL', entry: {
+          id: 'synthetic-detail-support', kind: 'evening', date: '2026-11-04', savedAt: '2026-11-04T00:00:00.000Z',
+          syncState: 'local', sleepH: 0, sleepQuality: 0, weightKg: '', restingHr: '', painParts: {}, mood: 0, note: '',
+        } })) fail(503, 'UNAVAILABLE');
+        return respond(200, { kind: 'journal-detail-support', version: 1 });
+      }
       if (input.action === 'journalBodyPartSupport') {
         // The encrypted generic JOURNAL storage path already stores FINALIZED
         // documents. Probe the exact server codec; no schema or public flag is opened.
@@ -838,7 +846,7 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
             if (!sameRelations(baseline, restoredDocument)) fail(422, 'INVALID_COMPARISON_RELATION');
             requireSupported(baseline);
             if (baseline?.state === 'FINALIZED' && baseline.version === 3 && restoredDocument.version === 2) fail(422, 'INVALID_FILE_OBSERVATION');
-            if (baseline?.state === 'FINALIZED' && baseline.version === 4 && restoredDocument.version < 4) fail(422, 'INVALID_DOCUMENT_UPDATE');
+            if (baseline?.state === 'FINALIZED' && baseline.version >= 4 && restoredDocument.version < baseline.version) fail(422, 'INVALID_DOCUMENT_UPDATE');
             const changed = !sameObservation(lifecycleCurrent?.document, restoredDocument);
             if (changed) await checkFileGate();
             if (baseline?.state === 'FINALIZED' && (!sameObservation(baseline, restoredDocument)

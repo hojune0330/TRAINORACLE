@@ -306,14 +306,14 @@ describe("GPX precise observations", () => {
     expect(parsePreciseGpx(source.replace("<time>2026-09-19T00:01:00Z</time>", "")).skipped).toBe(1)
   })
 
-  it("does not persist raw tracks, titles, notes or arbitrary track numbers as identities", () => {
+  it("preserves approved GPS detail but does not use titles, notes or arbitrary track numbers as identities", () => {
     const source = gpx(gpxSegment(gpxPoint("37.123456789", "127", "2026-09-19T00:00:00Z") + gpxPoint("37.124456789", "127", "2026-09-19T00:01:00Z")))
     const clean = parsePreciseGpx(source).activities[0]?.observation
     const decorated = parsePreciseGpx(source.replace("<trk>", '<trk><name>private-sentinel</name><desc>private-sentinel</desc><number>99</number><extensions><confirmation>MOVING</confirmation></extensions>')).activities[0]!
     expect(decorated.observation).toEqual(clean)
     expect(decorated.observation).toMatchObject({ sourceActivityId: null, laps: [], confirmation: null })
     expect(JSON.stringify(decorated)).not.toContain("private-sentinel")
-    expect(JSON.stringify(decorated.observation)).not.toContain("37.123456789")
+    expect(decorated.observation?.detail?.samples[0]?.position?.latitudeDegrees).toBe(37.123456789)
   })
 
   it("supports standard prefixed GPX namespaces without promoting foreign tags", () => {

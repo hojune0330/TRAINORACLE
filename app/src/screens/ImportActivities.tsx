@@ -6,7 +6,7 @@ import type { ImportDraft, ImportDraftSelection, ImportFormat, ImportSaveIntent,
 import { PickStage, ReviewStage, SavedStage } from "./import-activities/ImportStages"
 import type { ReadFailure } from "./import-activities/ImportStages"
 import { mono, secondaryBtn } from "./import-activities/styles"
-import { ActivityFileReadError, MAX_IMPORT_FILE_BYTES, readActivityFileText } from "./import-activities/read-file"
+import { ActivityFileReadError, MAX_IMPORT_FILE_BYTES, readActivityFileText, readActivityFileBytes } from "./import-activities/read-file"
 import { useActiveContentScroll } from "../hooks/useActiveContentScroll"
 import { useOrderedStepMotion } from "../hooks/useOrderedStepMotion"
 import { accountJournalRecordsEnabled } from "../domain/account/account-journal-record-service"
@@ -126,16 +126,16 @@ export function ImportActivities({ onBack, onOpenLog, onOpenEntry, onOpenAnalysi
       setFailure("too-large")
       return
     }
-    if (/\.(zip|fit)$/i.test(file.name)) {
+    if (/\.zip$/i.test(file.name)) {
       busyRef.current = false; setBusy(false); setFailure("unsupported-format"); return
     }
 
     readControllerRef.current?.abort()
     const controller = new AbortController()
     readControllerRef.current = controller
-    let text: string
+    let text: string | Uint8Array
     try {
-      text = await readActivityFileText(file, controller.signal)
+      text = /\.fit$/i.test(file.name) ? await readActivityFileBytes(file, controller.signal) : await readActivityFileText(file, controller.signal)
     } catch (error) {
       if (!current() || readControllerRef.current !== controller) return
       if (readControllerRef.current === controller) readControllerRef.current = null
@@ -148,7 +148,7 @@ export function ImportActivities({ onBack, onOpenLog, onOpenEntry, onOpenAnalysi
 
     let parsed = false
     try {
-      const formats = accountJournalRecordsEnabled() ? fileAnalysisFormats() : []
+      const formats = ["tcx", "fit", "gpx", "csv", "json"] as const
       const result = await parseActivityFileAsync(text, Intl.DateTimeFormat().resolvedOptions().timeZone, {
         observations: { csv: formats.includes("csv"), json: formats.includes("json"), gpx: formats.includes("gpx") },
       }, controller.signal)
@@ -214,8 +214,7 @@ export function ImportActivities({ onBack, onOpenLog, onOpenEntry, onOpenAnalysi
       if (!selected.has(index)) continue
       const intent = intents.get(index)
       if (intent === undefined) return
-      if (accountJournalRecordsEnabled() && fileAnalysisFormats().some(format => format === stage.result.format)
-        && draft.requiresIdentityChoice && intent.kind === "SAVE_SEPARATE" && intent.confirmedSeparate !== true) return
+      if (draft.activity.observation && draft.requiresIdentityChoice && intent.kind === "SAVE_SEPARATE" && intent.confirmedSeparate !== true) return
       chosen.push({ draft, intent })
     }
     if (chosen.length === 0) return
@@ -400,13 +399,13 @@ export function ImportActivities({ onBack, onOpenLog, onOpenEntry, onOpenAnalysi
 }
 
 function importFormat(format: ActivityParseResult["format"]): ImportFormat {
-  if (format === "csv" || format === "json" || format === "gpx") return format
+  if (format === "csv" || format === "json" || format === "gpx" || format === "fit") return format
   return "tcx"
 }
 
 /** A different format's switch or a pending receipt cannot make this batch analysable. */
 function hasConfirmedImportAnalysis({ outcome, format, analysisCandidates }: Extract<Stage, { step: "saved" }>): boolean {
-  if ((outcome.account ?? 0) === 0 || !fileAnalysisFormats().includes(format)) return false
+  if ((outcome.account ?? 0) === 0 || !fileAnalysisFormats().some(allowed => allowed === format)) return false
   const confirmed = readCurrentConfirmedAccountJournalProjection().filter(entry => entry.kind === "post-session"
     && entry.fileObservation?.format === format && analysisCandidates.some(candidate =>
       (candidate.entryId === null || candidate.entryId === entry.id)

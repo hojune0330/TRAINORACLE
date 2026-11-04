@@ -23,6 +23,8 @@ const VIEW_TITLES: Record<MoreView, string> = {
 }
 
 export type MoreProps = {
+  readonly ownerId?: string | null
+  readonly onOpenJournalRecord?: (date: string, entryId: string) => void
   readonly view?: MoreView
   readonly connectionOrigin?: MoreView
   readonly onViewChange?: (view: MoreView) => void
@@ -48,6 +50,8 @@ export type MoreProps = {
 }
 
 export function More({
+  ownerId,
+  onOpenJournalRecord,
   view,
   connectionOrigin: suppliedConnectionOrigin,
   onViewChange,
@@ -161,7 +165,7 @@ export function More({
           <MenuAction icon={Info} label={VIEW_TITLES.about} onClick={() => changeView("about")} />
         </MenuGroup>
         </>}
-        {activeView === "connections" && <DeviceConnections onOpenImport={onOpenImport} />}
+        {activeView === "connections" && <DeviceConnections ownerId={ownerId} onOpenAccount={onOpenAccount} onOpenJournalRecord={onOpenJournalRecord} onOpenImport={onOpenImport} />}
         {activeView === "introduction" && <AppIntroduction
           onOpenPlan={onOpenPlan} onOpenJournal={onOpenJournal} onOpenRewards={onOpenRewards}
           onOpenAnalysis={onOpenAnalysis} onOpenPaceCalculator={onOpenPaceCalculator}

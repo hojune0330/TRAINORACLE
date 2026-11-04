@@ -1,0 +1,16 @@
+.garmin-panel { min-width: 0; display: grid; gap: 16px; font: 400 var(--fs-body) / 1.6 var(--sans); overflow-wrap: anywhere; }
+.garmin-panel p { margin: 0; }
+.garmin-panel__actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.garmin-panel__record { border-top: 1px solid var(--line); padding-block: 20px; display: grid; gap: 12px; min-width: 0; }
+.garmin-panel__record h4 { font-size: var(--fs-body); margin: 0; }
+.garmin-panel__facts { margin: 0; }
+.garmin-panel__facts > div { display: grid; grid-template-columns: minmax(85px, 1fr) minmax(0, 2fr); gap: 12px; padding-block: 6px; }
+.garmin-panel__facts dt { color: var(--ink-2); }
+.garmin-panel__facts dd { margin: 0; font-variant-numeric: tabular-nums; }
+.garmin-panel summary { cursor: pointer; min-height: 44px; padding-block: 10px; }
+.garmin-panel__laps { padding-left: 24px; max-height: 24rem; overflow: auto; }
+.garmin-panel__laps li { padding-block: 8px; }
+.garmin-panel__disconnect { display: flex; gap: 10px; align-items: start; min-height: 44px; margin-block: 12px; }
+.garmin-panel__disconnect input { margin-top: 8px; flex: 0 0 auto; }
+.garmin-panel__message { border-left: 2px solid var(--ink); padding-left: 12px; }
+@media (max-width: 360px) { .garmin-panel__facts > div { grid-template-columns: 1fr; gap: 0; } .garmin-panel__actions > button { width: 100%; } }

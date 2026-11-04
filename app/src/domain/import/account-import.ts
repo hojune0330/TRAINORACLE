@@ -5,8 +5,7 @@ import { readAccountJournalPrivateEntry, readAccountJournalProjection } from "..
 import { buildImportDrafts, confirmedFileActivity, fileImportCandidateKind, importedProvenance, isWaitingCandidate, sameFileObservation, toImportedEntry } from "./import-draft"
 import type { ImportDraftSelection, ImportFormat, ImportSaveResult } from "./import-draft"
 import type { ImportedActivity } from "./activity-file"
-import { fileAnalysisFormats } from "./file-analysis-policy"
-import { validateAccountJournalRecordUpdate } from "../account/account-journal-record-schema"
+import { validateAccountJournalRecordUpdate, accountJournalRecordVersion } from "../account/account-journal-record-schema"
 
 /** A scope stays invalid after A -> B -> A, even if no promise settled in B. */
 export function createAccountImportScope() {
@@ -67,7 +66,7 @@ export function createAccountImportConfirmation(selections: readonly ImportDraft
   const scope = createAccountImportScope()
   const chosen = structuredClone(selections)
   const prepared = new Map<number, Prepared>()
-  const includeFileObservation = fileAnalysisFormats().includes(format)
+  const includeFileObservation = chosen.some(row => row.draft.activity.observation !== undefined)
   const acknowledged = new Set<number>()
   const duplicateRows = new Map<number, number>()
   const invalidRows = new Set<number>()
@@ -135,6 +134,9 @@ export function createAccountImportConfirmation(selections: readonly ImportDraft
         const legacyId = await accountJournalDocumentId(scope.ownerId!, JSON.stringify([
           "confirmed-activity-import-v1", format, draft.sourceIndex ?? index, observation ? legacyActivity : draft.activity,
         ]))
+        const priorSummaryOnlyId = observation ? await accountJournalDocumentId(scope.ownerId!, JSON.stringify([
+          "confirmed-activity-import-v1", format, draft.sourceIndex ?? index, draft.activity,
+        ])) : legacyId
         let id = observation
           ? observation.sourceActivityId === null ? item.entry.id
             : await accountJournalDocumentId(scope.ownerId!, JSON.stringify(["file-observation-import-v1", observation.sourceObservationKey]))
@@ -175,7 +177,7 @@ export function createAccountImportConfirmation(selections: readonly ImportDraft
           item.alreadyConfirmed = Boolean(observation && base?.entry && sameImportedSnapshot(base.entry, item.entry))
         }
         // A legacy row is never silently promoted or duplicated by the new identity scheme.
-        if (observation && !item.alreadyConfirmed && legacyId !== id && readAccountJournalPrivateEntry(legacyId)
+        if (observation && !item.alreadyConfirmed && [legacyId, priorSummaryOnlyId].some(prior => prior !== id && readAccountJournalPrivateEntry(prior))
           && !(intent.kind === "SAVE_SEPARATE" && intent.confirmedSeparate)) {
           item.legacyConflict = true
         }
@@ -251,8 +253,8 @@ export function createAccountImportConfirmation(selections: readonly ImportDraft
           },
         }
         if (entry.fileObservation && !validateAccountJournalRecordUpdate(
-          { version: current.fileObservation ? 3 : 2, state: "FINALIZED", kind: "JOURNAL", entry: current },
-          { version: 3, state: "FINALIZED", kind: "JOURNAL", entry }, "FILE_OBSERVATION")) { result.conflicts++; continue }
+          { version: accountJournalRecordVersion(current), state: "FINALIZED", kind: "JOURNAL", entry: current },
+          { version: accountJournalRecordVersion(entry), state: "FINALIZED", kind: "JOURNAL", entry }, "FILE_OBSERVATION")) { result.conflicts++; continue }
         item = { entry, expectedSavedAt: intent.expectedSavedAt, expectedBase, merged: true }
         prepared.set(index, item)
       }
@@ -269,7 +271,7 @@ export function createAccountImportConfirmation(selections: readonly ImportDraft
         if (!saved.ok) {
           result.failed += chosen.slice(index).filter(row => row.intent.kind !== "EXCLUDE").length
           result.excluded += chosen.slice(index).filter(row => row.intent.kind === "EXCLUDE").length
-          lastResult = { ...result, stopReason: "SAVE_REJECTED" }
+          lastResult = { ...result, stopReason: "rejection" in saved && saved.rejection === "DOCUMENT_CAPACITY_EXCEEDED" ? "DETAIL_CAPACITY_EXCEEDED" : "SAVE_REJECTED" }
           return lastResult
         }
         else if (saved.storage === "CONFLICT") result.conflicts++

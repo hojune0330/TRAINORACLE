@@ -119,6 +119,7 @@ jobs:
         run: |
           node app/scripts/build-coaching-record-evidence.mjs --check
           node --test server/self-hosted-coaching/service.test.mjs
+          node --test server/garmin-integration/service.test.mjs server/garmin-integration/worker.test.mjs
 
       - name: Install D9 evaluator dependencies
         working-directory: runtime-evidence/d9-evaluator

@@ -10,7 +10,7 @@ import { activeLocalAccount, onLocalJournalScopeChange } from "../../domain/acco
 import { FileObservationReview } from "../import-activities/FileObservationReview"
 
 const LABEL = { startedAt: "시작 시각", timeZone: "시간대", sport: "파일의 운동 종류", distanceMeters: "전체 거리",
-  durationSeconds: "전체 시간", durationMeaning: "파일의 시간 종류", laps: "구간 기록", confirmation: "내가 확인한 시간·운동 종류" } as const
+  durationSeconds: "전체 시간", durationMeaning: "파일의 시간 종류", laps: "구간 기록", detail: "센서·경로 상세", confirmation: "내가 확인한 시간·운동 종류" } as const
 const json = (value: unknown) => JSON.stringify(value)
 function activityOf(observation: FileObservationV1): ImportedActivity {
   return { name: "가져온 운동", sport: observation.sport, date: observation.date, observation, ...toFileObservationSummary(observation) }
@@ -20,6 +20,7 @@ function description(key: keyof typeof LABEL, observation: FileObservationV1): s
   if (key === "distanceMeters") return value === null ? "미기록" : `${value}m`
   if (key === "durationSeconds") return value === null ? "미기록" : `${value}초`
   if (key === "laps") return `${observation.laps.length}개 구간`
+  if (key === "detail") return observation.detail ? `${observation.detail.samples.length}개 원본 표본 · ${observation.detail.laps.length}개 구간` : "미기록"
   const meaning = { TIMER: "일시정지 제외", MOVING: "이동 시간", ELAPSED: "전체 경과", SOURCE_DEFINED: "뜻 미확인", UNKNOWN: "알 수 없음" } as const
   const sport = { RUNNING: "달리기", WALKING: "걷기", CYCLING: "자전거", OTHER: "그 밖의 운동", UNKNOWN: "미확인" } as const
   if (key === "durationMeaning") return meaning[observation.durationMeaning]
@@ -90,6 +91,8 @@ export function FileObservationCorrection({ entryId }: { readonly entryId: strin
         date: candidate.date, startedAt: candidate.startedAt, timeZone: candidate.timeZone, sport: candidate.sport,
         distanceMeters: candidate.distanceMeters, durationSeconds: candidate.durationSeconds,
         durationMeaning: candidate.durationMeaning, laps: candidate.laps,
+        ...(original.dataLineage ? { dataLineage: original.dataLineage } : {}),
+        ...(candidate.detail ? { detail: candidate.detail } : {}),
         confirmation: { durationMeaning: null, sport: null },
       })
       change(activityOf(next)); setCandidates([])

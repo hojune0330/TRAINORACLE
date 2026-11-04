@@ -87,7 +87,7 @@ export function projectFileObservation(
   ]) }
   if (!isValidIsoDate(entry.date) || parsed.date !== entry.date) return exclude("DATE_MISMATCH")
   if (parsed.confirmation === null) return exclude("CONFIRMATION_REQUIRED")
-  if (!(options.formats ?? fileAnalysisFormats()).includes(parsed.format)) return exclude("FORMAT_DISABLED")
+  if (parsed.format === "fit" || !(options.formats ?? fileAnalysisFormats()).includes(parsed.format)) return exclude("FORMAT_DISABLED")
   if (options.sourceContext !== "ACCOUNT_CONFIRMED") return exclude("ACCOUNT_CONFIRMATION_REQUIRED")
   const observation: ProjectedFileObservation = Object.freeze({
     policyVersion: FILE_ANALYSIS_POLICY_VERSION,

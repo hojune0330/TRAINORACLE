@@ -574,7 +574,8 @@ export function exportEntriesJSON(options: JournalExportOptions = {}): string {
     }
     return stringifyBackupJsonForExport({
       app: "TRAINORACLE",
-      format: entries.some(entry => entry.bodyPartMetadata !== undefined) ? "trainoracle.journal.full-backup.v6"
+      format: entries.some(entry => entry.kind === "post-session" && (entry.fileObservation?.detail !== undefined || entry.fileObservation?.format === "fit")) ? "trainoracle.journal.full-backup.v7"
+        : entries.some(entry => entry.bodyPartMetadata !== undefined) ? "trainoracle.journal.full-backup.v6"
         : calendarUnsupported ? "trainoracle.journal.full-backup.v4" : "trainoracle.journal.full-backup.v5",
       exportMode: "OWNER_FULL_BACKUP",
       exportedAt: new Date().toISOString(),

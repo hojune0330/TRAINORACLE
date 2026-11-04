@@ -39,10 +39,14 @@ describe("file observation journal integration", () => {
     expect(confirmedFileActivity(invalid, "tcx")).toBeNull()
     expect(() => toImportedEntry(invalid, "tcx", { includeFileObservation: true })).toThrow("INVALID_FILE_OBSERVATION")
   })
-  it("keeps feature-off imports V2 and never automatically upgrades old data", () => {
+  it("preserves new imports independently of analysis and leaves explicit legacy conversion available", () => {
     const entry = toImportedEntry(activity(), "tcx")
-    expect(entry.fileObservation).toBeUndefined()
-    expect(parseAccountJournalRecord({ version: 2, kind: "JOURNAL", state: "FINALIZED", entry })).not.toBeNull()
+    expect(entry.fileObservation?.confirmation).not.toBeNull()
+    expect(parseAccountJournalRecord({ version: 3, kind: "JOURNAL", state: "FINALIZED", entry })).not.toBeNull()
+    expect(parseAccountJournalRecord({ version: 2, kind: "JOURNAL", state: "FINALIZED", entry })).toBeNull()
+    const legacy = toImportedEntry(activity(), "tcx", { includeFileObservation: false })
+    expect(legacy.fileObservation).toBeUndefined()
+    expect(parseAccountJournalRecord({ version: 2, kind: "JOURNAL", state: "FINALIZED", entry: legacy })).not.toBeNull()
   })
   it("does not drop or change observation facts during ordinary journal edits", () => {
     const entry = record()

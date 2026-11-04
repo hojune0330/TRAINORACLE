@@ -38,6 +38,20 @@ function file(options: { id?: string; sourceActivityId?: string; meaning?: "TIME
 }
 
 describe("canonical company coaching evidence", () => {
+  it("cannot erase a declared file provider through a different trusted source registry", () => {
+    const fileObservation = buildFileObservation({ format: "tcx", sourceProfile: "TCX_ACTIVITY_V1", parserVersion: "tcx-1",
+      sourceActivityId: "synthetic", date: "2026-10-30", startedAt: null, timeZone: null, sport: "RUNNING",
+      distanceMeters: 5000, durationSeconds: 1800, durationMeaning: "TIMER", laps: [
+        { sourceIndex: 0, distanceMeters: 5000, durationSeconds: 1800, durationMeaning: "TIMER", kind: "UNKNOWN" }],
+      confirmation: { sport: null, durationMeaning: null }, detail: { schemaVersion: 1,
+        source: { originProvider: "GARMIN", evidence: "FILE_METADATA", manufacturer: "Garmin", product: null, namespace: null },
+        samples: [], laps: [], events: [], summary: [] } })
+    const input = { documentId: firstId, revision: 1, document: { version: 5, state: "FINALIZED", kind: "JOURNAL",
+      entry: { ...entry(), fileObservation } }, allowedFormats: ["tcx"] as const }
+    expect(prepareCoachingRecordEvidence({ ...input, lineage: fileLineage })).not.toBeNull()
+    expect(prepareCoachingRecordEvidence({ ...input, lineage: { ...fileLineage,
+      sources: fileLineage.sources.map(source => ({ ...source, originProvider: "COROS" })) } })).toBeNull()
+  })
   it("projects valid direct explicit facts without raw journal or pretending to know sport/time semantics", () => {
     const a = direct()!, b = direct({ distanceKm: "10", durationMin: "60" }, secondId)!
     expect(a).not.toBeNull()

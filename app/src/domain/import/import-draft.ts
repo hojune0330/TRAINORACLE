@@ -16,11 +16,14 @@ import { canEditJournalEntry } from "../journal-edit-policy"
 import type { AccountJournalWriteBase } from "../account/account-journal-record-service"
 import { parseFileObservation, toFileObservationSummary, type FileObservationV1 } from "./file-observation"
 import { providerLineageFingerprint } from "../provider-data-rights"
+import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identity"
+import { activeLocalAccount } from "../account/local-journal-ownership"
+import { tombstonedIds } from "../account/tombstone"
 
 /** 가져오기 파생 입력 토큰 — 일지 필드가 아니라 "파일에서 왔다"는 표시 */
 export const IMPORT_DERIVED_FROM = ["import:activity-file"] as const
 
-export type ImportFormat = "tcx" | "gpx" | "csv" | "json"
+export type ImportFormat = "tcx" | "gpx" | "csv" | "json" | "fit"
 
 export type ImportIdentityCandidate = Pick<PostSessionEntry, "id" | "savedAt" | "activitySlot" | "title"> & {
   readonly kind: "REUSE" | "ATTACH" | "CORRECTION"
@@ -59,7 +62,7 @@ export type ImportSaveResult = {
   readonly conflicts?: number
   readonly failed: number
   readonly total: number
-  readonly stopReason?: "ACCOUNT_UNAVAILABLE" | "SAVE_REJECTED"
+  readonly stopReason?: "ACCOUNT_UNAVAILABLE" | "SAVE_REJECTED" | "DETAIL_CAPACITY_EXCEEDED"
 }
 
 function numeric(value: string): number | null {
@@ -112,9 +115,14 @@ function identityCandidateKind(entry: JournalEntry, activity: ImportedActivity, 
   const previous = entry.fileObservation
   if (previous) {
     const sameSource = previous.sourceObservationKey === observation.sourceObservationKey
+    // Rich files have a namespaced identity. A legacy same-file ID is only a
+    // review candidate, never permission to silently duplicate or overwrite it.
+    const legacyCandidate = previous.sourceProfile === observation.sourceProfile
+      && previous.sourceActivityId !== null && previous.sourceActivityId === observation.sourceActivityId
+      && (previous.detail === undefined || observation.detail === undefined)
     const noIdCandidate = observation.sourceActivityId === null && previous.sourceProfile === observation.sourceProfile
       && previous.contentRevisionFingerprint === observation.contentRevisionFingerprint
-    return sameSource || noIdCandidate ? sameFileObservation(previous, observation) ? "REUSE" : "CORRECTION" : null
+    return sameSource || noIdCandidate ? sameFileObservation(previous, observation) ? "REUSE" : "CORRECTION" : legacyCandidate ? "CORRECTION" : null
   }
   if (entry.date !== activity.date || entry.fieldProvenance === undefined || !looksLikeSameActivity(entry, activity)) return null
   const summary = toFileObservationSummary(observation)
@@ -162,7 +170,7 @@ export function buildImportDrafts(
     if (observation?.sourceActivityId === null && batchDuplicateOf === undefined) firstNoId.set(observation.sourceObservationKey, sourceIndex)
     const requiresIdentityChoice = observation !== null && (observation.sourceActivityId === null
       ? duplicate !== undefined || identityCandidates.length > 0 || (noIdCounts.get(observation.sourceObservationKey) ?? 0) > 1
-      : !identityCandidates.some(candidate => candidate.kind === "REUSE") && identityCandidates.some(candidate => candidate.kind === "ATTACH"))
+      : !identityCandidates.some(candidate => candidate.kind === "REUSE") && identityCandidates.some(candidate => candidate.kind === "ATTACH" || candidate.kind === "CORRECTION"))
     return { activity, duplicateOf: duplicate?.id ?? null, reconciliationCandidates,
       identityCandidates, requiresIdentityChoice, ...(batchDuplicateOf === undefined ? {} : { batchDuplicateOf }) }
   })
@@ -219,18 +227,47 @@ export function confirmImportDrafts(
   if (legacyJournalWritesBlocked()) return { saved: 0, merged: 0, conflicts: 0, failed: selections.length, total: loadEntries().length }
   let saved = 0
   let merged = 0
+  let reused = 0
   let conflicts = 0
   let failed = 0
   let excluded = 0
   let total = loadEntries().length
+  const confirmedEntries: { id: string; date: string }[] = []
+  const acknowledge = (entry: PostSessionEntry) => {
+    if (!confirmedEntries.some(item => item.id === entry.id)) confirmedEntries.push({ id: entry.id, date: entry.date })
+  }
 
   for (const { draft, intent } of selections) {
     if (intent?.kind === "EXCLUDE") { excluded++; continue }
     if (intent?.kind === "SAVE_SEPARATE") {
-      const result = saveImportedActivity(draft.activity, format)
-      if (result.ok) saved += 1
+      const observation = parseFileObservation(draft.activity.observation)
+      const fresh = buildImportDrafts([draft.activity])[0]!
+      if ((draft.requiresIdentityChoice || fresh.requiresIdentityChoice) && intent.confirmedSeparate !== true) { conflicts++; continue }
+      const matches = observation?.sourceActivityId != null ? loadEntries().filter((entry): entry is PostSessionEntry =>
+        entry.kind === "post-session" && entry.fileObservation?.sourceObservationKey === observation.sourceObservationKey) : []
+      if (matches.length) {
+        const match = matches[0]!
+        if (matches.length === 1 && sameFileObservation(match.fileObservation!, observation!)) { reused++; acknowledge(match) }
+        else conflicts++
+        continue
+      }
+      let entry: PostSessionEntry
+      try { entry = toImportedEntry(draft.activity, format) } catch { failed++; continue }
+      entry = localImportedIdentity(entry)
+      if (tombstonedIds().has(entry.id)) { conflicts++; continue }
+      const result = saveEntry(entry)
+      if (result.ok) { saved += 1; acknowledge(entry) }
       else failed += 1
       total = result.total
+      continue
+    }
+
+    if (intent?.kind === "USE_EXISTING") {
+      const matches = loadEntries().filter(entry => entry.id === intent.entryId)
+      const current = matches[0]
+      if (matches.length === 1 && current?.kind === "post-session" && current.savedAt === intent.expectedSavedAt
+        && fileImportCandidateKind(current, draft.activity) === "REUSE") { reused++; acknowledge(current) }
+      else conflicts++
       continue
     }
 
@@ -247,14 +284,18 @@ export function confirmImportDrafts(
       continue
     }
 
-    const imported = importedProvenance(draft.activity, format)
+    const confirmed = draft.activity.observation ? confirmedFileActivity(draft.activity, format) : null
+    if (draft.activity.observation && !confirmed) { failed++; continue }
+    const source = confirmed ?? draft.activity
+    const imported = importedProvenance(source, format)
     const next: PostSessionEntry = {
       ...current,
       savedAt: new Date(Math.max(Date.now(), Date.parse(current.savedAt) + 1)).toISOString(),
       objectiveDataState: "CONFIRMED",
-      distanceKm: draft.activity.distanceKm,
-      durationMin: draft.activity.durationMin,
-      avgPace: draft.activity.avgPace,
+      distanceKm: source.distanceKm,
+      durationMin: source.durationMin,
+      avgPace: source.avgPace,
+      ...(confirmed?.observation ? { fileObservation: confirmed.observation } : {}),
       fieldProvenance: {
         ...(current.fieldProvenance ?? {}),
         distanceKm: imported.distanceKm ?? { provenance: "MISSING" },
@@ -263,19 +304,20 @@ export function confirmImportDrafts(
       },
     }
     const result = updateEntryPreservingMemo(next, current.savedAt)
-    if (result.ok) merged += 1
+    if (result.ok) { merged += 1; acknowledge(next) }
     else failed += 1
     total = result.total
   }
 
-  return { saved, merged, conflicts, failed, total, ...(excluded ? { excluded } : {}) }
+  return { saved, merged, reused, conflicts, failed, total: loadEntries().length, confirmedEntries, ...(excluded ? { excluded } : {}) }
 }
 
 /** 가져온 활동 1건을 저장할 post-session 일지로 변환 (저장은 하지 않음) */
 export function toImportedEntry(activity: ImportedActivity, format: ImportFormat,
   options: { readonly includeFileObservation?: boolean } = {}): PostSessionEntry {
-  const confirmed = options.includeFileObservation ? confirmedFileActivity(activity, format) : null
-  if (options.includeFileObservation && !confirmed) throw new Error("INVALID_FILE_OBSERVATION")
+  const preserveObservation = options.includeFileObservation ?? activity.observation !== undefined
+  const confirmed = preserveObservation ? confirmedFileActivity(activity, format) : null
+  if (preserveObservation && !confirmed) throw new Error("INVALID_FILE_OBSERVATION")
   const source = confirmed ?? activity
   return {
     id: newEntryId(),
@@ -301,7 +343,23 @@ export function saveImportedActivity(
   format: ImportFormat,
 ): { readonly ok: boolean; readonly total: number } {
   if (legacyJournalWritesBlocked()) return { ok: false, total: loadEntries().length }
-  return saveEntry(toImportedEntry(activity, format))
+  try {
+    if (buildImportDrafts([activity])[0]?.requiresIdentityChoice) return { ok: false, total: loadEntries().length }
+    const entry = localImportedIdentity(toImportedEntry(activity, format))
+    if (tombstonedIds().has(entry.id)) return { ok: false, total: loadEntries().length }
+    const existing = loadEntries().filter(current => current.id === entry.id)
+    if (existing.length) return { ok: existing.length === 1 && existing[0]?.kind === "post-session"
+      && existing[0].fileObservation !== undefined && entry.fileObservation !== undefined
+      && sameFileObservation(existing[0].fileObservation, entry.fileObservation), total: loadEntries().length }
+    return saveEntry(entry)
+  } catch { return { ok: false, total: loadEntries().length } }
+}
+
+function localImportedIdentity(entry: PostSessionEntry): PostSessionEntry {
+  if (entry.fileObservation?.sourceActivityId == null) return entry
+  return { ...entry, id: canonicalJsonFingerprint("trainoracle.local-file-journal.v1", {
+    owner: activeLocalAccount(), source: entry.fileObservation.sourceObservationKey,
+  }) }
 }
 
 /** 사용자가 확인한 초안 여러 건을 저장 — 실패 건수를 숨기지 않고 보고한다 */

@@ -64,6 +64,11 @@ export function prepareCoachingRecordEvidence(input: {
     const projection = projectFileObservation(entry, { formats: input.allowedFormats ?? [], sourceContext: "ACCOUNT_CONFIRMED" })
     if (projection.status !== "ACCEPTED") return null
     fileObservation = entry.fileObservation
+    // A file's manufacturer is not an authorization grant, but it also cannot
+    // be erased by registering the same data as user-created or another brand.
+    const declaredOrigin = fileObservation.detail?.source.originProvider
+    if (declaredOrigin && declaredOrigin !== "UNKNOWN" && declaredOrigin !== "OTHER"
+      && !lineage.sources.some(source => source.originProvider === declaredOrigin)) return null
     // A verified registry can resolve UNKNOWN origins, but cannot erase a known embedded provider.
     if (fileObservation.dataLineage?.sources.some(source => source.originProvider !== "UNKNOWN"
       && !lineage.sources.some(trusted => trusted.originProvider === source.originProvider))) return null

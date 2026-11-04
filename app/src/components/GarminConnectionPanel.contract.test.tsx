@@ -1,0 +1,97 @@
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { GarminConnectionPanel } from "./GarminConnectionPanel"
+import { GARMIN_VERSION, type GarminRequest, type GarminResult, type GarminTransport } from "../domain/account/garmin-integration"
+import { setActiveLocalAccount } from "../domain/account/local-journal-ownership"
+import { rememberStorageConsentRevision } from "../domain/account/storage-consent-revision"
+import { syntheticGarminItem as item, syntheticGarminOwner as owner, syntheticGarminStatus as status, syntheticGarminReceipt as receipt } from "./GarminConnectionPanel.test-fixtures"
+
+beforeEach(() => { sessionStorage.clear(); setActiveLocalAccount(owner); rememberStorageConsentRevision(owner, 2) })
+afterEach(() => { cleanup(); setActiveLocalAccount(null); sessionStorage.clear(); vi.restoreAllMocks() })
+const success = (data: Extract<GarminResult, { ok: true }>["data"]): GarminResult => ({ ok: true, data })
+function exampleTransport(mutate?: (request: GarminRequest) => GarminResult | Promise<GarminResult>): GarminTransport {
+  return async (_owner, request) => request.action === "status" ? success(status)
+    : request.action === "inbox" ? success({ schemaVersion: GARMIN_VERSION, items: [item], nextCursor: null })
+      : mutate ? mutate(request) : success(receipt)
+}
+const mount = (transport: GarminTransport, props: Partial<React.ComponentProps<typeof GarminConnectionPanel>> = {}) => render(<GarminConnectionPanel ownerId={owner} configured featureEnabled transport={transport} {...props} />)
+
+describe("Garmin connection and reviewed inbox", () => {
+  it("leaves default configuration unavailable without making a connection request", () => {
+    const transport = vi.fn(exampleTransport())
+    mount(transport, { configured: false })
+    expect(screen.getByText(/Garmin 자동 연결을 준비/)).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Garmin 연결" })).not.toBeInTheDocument()
+    expect(transport).not.toHaveBeenCalled()
+  })
+  it("distinguishes account connection, no receipt and unsaved records, preserving zero/null/time meaning", async () => {
+    mount(exampleTransport())
+    await screen.findByRole("heading", { name: "받은 기록 검토" })
+    expect(screen.getByText("연결됨")).toBeInTheDocument()
+    expect(screen.getByText("아직 받은 기록 없음")).toBeInTheDocument()
+    expect(screen.getByText("받은 기록 · 저장 전")).toBeInTheDocument()
+    expect(screen.getAllByText("0 m").length).toBeGreaterThan(0)
+    expect(screen.getAllByText("미기록").length).toBeGreaterThan(0)
+    expect(screen.getByText(/2026-11-05 · 기기에 설정된 시차 32400초/)).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "일지에 저장" })).toBeDisabled()
+    expect(screen.queryByText("계정 저장 확인됨")).not.toBeInTheDocument()
+  })
+  it("saves only after review and opens the exact server-confirmed journal date/id", async () => {
+    const transport = vi.fn(exampleTransport()), open = vi.fn()
+    mount(transport, { onOpenJournalRecord: open })
+    fireEvent.click(await screen.findByRole("checkbox", { name: "이 운동의 시작 시각과 수치를 확인했어요" }))
+    fireEvent.click(screen.getByRole("button", { name: "일지에 저장" }))
+    fireEvent.click(await screen.findByRole("button", { name: "저장한 일지 열기" }))
+    expect(open).toHaveBeenCalledWith("2026-11-05", "garmin-synthetic-entry")
+    const request = transport.mock.calls.find(call => call[1].action === "confirm")![1]
+    expect(Object.keys(request).sort()).toEqual(["action", "expectedRevision", "inboxId", "operationId"])
+    expect(screen.getByText("계정 저장 확인됨")).toBeInTheDocument()
+  })
+  it("keeps an unknown save pending across reload and retries the exact operation", async () => {
+    const attempts: GarminRequest[] = []
+    const transport = vi.fn(exampleTransport(request => { attempts.push(request); return attempts.length === 1 ? { ok: false, code: "UNAVAILABLE" } : success({ ...receipt, kind: "already_confirmed" }) }))
+    const first = mount(transport)
+    fireEvent.click(await screen.findByRole("checkbox", { name: "이 운동의 시작 시각과 수치를 확인했어요" }))
+    fireEvent.click(screen.getByRole("button", { name: "일지에 저장" }))
+    await screen.findByRole("button", { name: "같은 저장 요청 결과 확인" }); first.unmount()
+    mount(transport)
+    fireEvent.click(await screen.findByRole("button", { name: "같은 저장 요청 결과 확인" }))
+    await screen.findByText(/이미 저장된 일지의 결과를 확인/)
+    expect(attempts).toHaveLength(2); expect(attempts[1]).toEqual(attempts[0])
+  })
+  it("resets review on revised-source reload and requires explicit reconsideration", async () => {
+    let revision = 1
+    const transport: GarminTransport = async (_owner, request) => request.action === "status" ? success(status)
+      : request.action === "inbox" ? success({ schemaVersion: GARMIN_VERSION, items: [{ ...item, revision }], nextCursor: null }) : { ok: false, code: "SOURCE_CHANGED" }
+    mount(transport)
+    fireEvent.click(await screen.findByRole("checkbox", { name: "이 운동의 시작 시각과 수치를 확인했어요" }))
+    fireEvent.click(screen.getByRole("button", { name: "일지에 저장" }))
+    await screen.findByText(/원본 기록이 바뀌었어요/)
+    revision = 2; fireEvent.click(screen.getByRole("button", { name: "현재 상태 다시 확인" }))
+    await waitFor(() => expect(screen.getByRole("checkbox", { name: "이 운동의 시작 시각과 수치를 확인했어요" })).not.toBeChecked())
+    expect(screen.getByRole("button", { name: "일지에 저장" })).toBeDisabled()
+  })
+  it("clears old-owner records immediately and ignores a late save ACK", async () => {
+    let resolve!: (result: GarminResult) => void
+    const transport = exampleTransport(() => new Promise(done => { resolve = done }))
+    const view = mount(transport)
+    fireEvent.click(await screen.findByRole("checkbox", { name: "이 운동의 시작 시각과 수치를 확인했어요" }))
+    fireEvent.click(screen.getByRole("button", { name: "일지에 저장" }))
+    view.rerender(<GarminConnectionPanel ownerId={null} configured featureEnabled transport={transport} />)
+    resolve(success(receipt))
+    await screen.findByText("계정에서 연결을 관리해요")
+    expect(screen.queryByText("달리기")).not.toBeInTheDocument()
+    expect(screen.queryByText("계정 저장 확인됨")).not.toBeInTheDocument()
+  })
+  it("keeps disconnect reachable with the feature off and labels unconfirmed remote revocation", async () => {
+    const transport = vi.fn(exampleTransport(() => success({ schemaVersion: GARMIN_VERSION, connection: { state: "DISCONNECTED", epoch: null, lastSyncAt: null }, remoteRevocationPending: true })))
+    mount(transport, { featureEnabled: false })
+    await screen.findByText("연결됨")
+    fireEvent.click(screen.getByText("연결 해제", { selector: "summary" }))
+    fireEvent.click(screen.getByRole("checkbox", { name: "Garmin 연결을 해제할게요" }))
+    fireEvent.click(screen.getByRole("button", { name: "연결 해제 확인" }))
+    await screen.findByText(/Garmin 권한 해제는 확인되지 않아 다시 시도/)
+    expect(transport.mock.calls.some(call => call[1].action === "inbox")).toBe(false)
+    expect(screen.getByText("연결 안 됨")).toBeInTheDocument()
+  })
+})

@@ -1,6 +1,7 @@
 import { z } from "zod"
 import { canonicalJsonFingerprint } from "@impl/plan-generator/candidate-identity"
 import { providerDataLineageSchema } from "../provider-data-rights"
+import { activityFileDetailSchema } from "./file-activity-detail"
 
 // Operational budgets, not physiological limits.
 export const FILE_OBSERVATION_LIMITS = {
@@ -15,6 +16,7 @@ const profiles = {
   csv: "CSV_COLUMNS_V1",
   json: "JSON_COLUMNS_V1",
   gpx: "GPX_TRACK_V1",
+  fit: "FIT_ACTIVITY_V1",
 } as const
 const sport = z.enum(["RUNNING", "WALKING", "CYCLING", "OTHER", "UNKNOWN"])
 const durationMeaning = z.enum(["ELAPSED", "TIMER", "MOVING", "SOURCE_DEFINED", "UNKNOWN"])
@@ -39,8 +41,9 @@ const fields = z.strictObject({
   source: z.literal("FILE_UPLOAD"),
   // Legacy observations remain readable. Missing lineage never grants AI use.
   dataLineage: providerDataLineageSchema.optional(),
-  format: z.enum(["tcx", "csv", "json", "gpx"]),
-  sourceProfile: z.enum(["TCX_ACTIVITY_V1", "CSV_COLUMNS_V1", "JSON_COLUMNS_V1", "GPX_TRACK_V1"]),
+  detail: activityFileDetailSchema.optional(),
+  format: z.enum(["tcx", "csv", "json", "gpx", "fit"]),
+  sourceProfile: z.enum(["TCX_ACTIVITY_V1", "CSV_COLUMNS_V1", "JSON_COLUMNS_V1", "GPX_TRACK_V1", "FIT_ACTIVITY_V1"]),
   parserVersion: z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$/u),
   sourceActivityId: z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._:@+-]{0,199}$/u).nullable(),
   date: z.iso.date().refine(value => !value.startsWith("0000-")),
@@ -116,6 +119,7 @@ function contentFingerprint(value: ObservationFields): string {
     durationMeaning: value.durationMeaning,
     laps: value.laps,
     completeness: value.completeness,
+    ...(value.detail ? { detail: value.detail } : {}),
   })
 }
 
@@ -126,7 +130,10 @@ function sourceKey(value: ObservationFields, sourceIdentityFingerprint: string):
       sourceProfile: value.sourceProfile,
       sourceIdentityFingerprint,
     }
-    : { source: value.source, sourceProfile: value.sourceProfile, sourceActivityId: value.sourceActivityId })
+    : { source: value.source, sourceProfile: value.sourceProfile, sourceActivityId: value.sourceActivityId,
+      // Legacy keys remain exact; the new source metadata scope prevents equal IDs crossing declared devices/providers.
+      ...(value.detail ? { sourceNamespace: value.detail.source } : {}),
+    })
 }
 
 export const fileObservationSchema = fields.extend({

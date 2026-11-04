@@ -1,6 +1,7 @@
 import { z } from "zod"
 import { supabase } from "./supabase-client"
 import { ACCOUNT_NETWORK_DEADLINE_MS } from "./account-network-deadline"
+import { ACCOUNT_REQUEST_MAX_BYTES } from "./account-document-capacity"
 import { accountDeletionBoundaryState, onAccountDeletionBoundaryChange } from "./account-deletion-boundary"
 import { activeLocalAccount, localJournalScopeGeneration } from "./local-journal-ownership"
 import { isAccountStoragePaused } from "./storage-consent"
@@ -25,6 +26,7 @@ const document = z.object({ documentId: z.uuid(), revision, document: schema }).
 return z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("ready") }).strict(),
   z.object({ kind: z.literal("journal-body-part-support"), version: z.literal(1) }).strict(),
+  z.object({ kind: z.literal("journal-detail-support"), version: z.literal(1) }).strict(),
   z.object({ kind: z.literal("calendar-decoration-support"), version: z.literal(1) }).strict(),
   z.object({ kind: z.literal("athlete-record-support"), version: z.literal(1) }).strict(),
   z.object({ kind: z.literal("running-profile-support"), version: z.literal(1) }).strict(),
@@ -51,6 +53,7 @@ return z.discriminatedUnion("kind", [
 export type AccountJournalResponse<T = AccountJournalDraft> =
   | { kind: "ready" }
   | { kind: "journal-body-part-support"; version: 1 }
+  | { kind: "journal-detail-support"; version: 1 }
   | { kind: "calendar-decoration-support"; version: 1 }
   | { kind: "athlete-record-support"; version: 1 }
   | { kind: "running-profile-support"; version: 1 }
@@ -70,6 +73,7 @@ export type AccountJournalRequest<T = AccountJournalDraft> = { supportedRunningP
   | ConfirmComparisonRelationRequest | ReleaseComparisonRelationRequest
   | { action: "status" }
   | { action: "journalBodyPartSupport" }
+  | { action: "journalDetailSupport" }
   | { action: "calendarDecorationSupport" }
   | { action: "athleteRecordSupport" }
   | { action: "runningProfileSupport" }
@@ -96,6 +100,26 @@ export type AccountJournalResult<T = AccountJournalDraft> =
 export type CorrectImportedObservationRequest = Extract<AccountJournalRequest, { action: "correctImportedObservation" }>
 
 let bodySupport: { ownerId: string; generation: number; supported: boolean } | null = null
+let detailSupport: { ownerId: string; generation: number } | null = null
+export function accountJournalDetailSupported(ownerId: string): boolean {
+  return detailSupport?.ownerId === ownerId && activeLocalAccount() === ownerId
+    && detailSupport.generation === localJournalScopeGeneration()
+}
+
+/** Probe before sending new structured facts; old servers never get a lossy fallback. */
+export async function checkAccountJournalDetailSupport(ownerId: string, isCurrent: () => boolean,
+  dependencies: { client: typeof supabase; owner: typeof activeLocalAccount } = { client: supabase, owner: activeLocalAccount }): Promise<boolean> {
+  if (!isCurrent() || dependencies.owner() !== ownerId) return false
+  const generation = localJournalScopeGeneration()
+  if (accountJournalDetailSupported(ownerId)) return true
+  const result = await requestAccountDocument(ownerId, { action: "journalDetailSupport" }, isCurrent, accountJournalRecordSchema, dependencies)
+  if (!isCurrent() || activeLocalAccount() !== ownerId || localJournalScopeGeneration() !== generation) return false
+  if (result.ok && result.data.kind === "journal-detail-support" && result.data.version === 1) {
+    detailSupport = { ownerId, generation }
+    return true
+  }
+  return false
+}
 export function accountBodyPartMetadataSupported(ownerId: string): boolean {
   return bodySupport?.ownerId === ownerId && activeLocalAccount() === ownerId
     && bodySupport.generation === localJournalScopeGeneration() && bodySupport.supported
@@ -202,6 +226,10 @@ async function executeAccountDocument<T>(
       && (request.document as { version?: unknown }).version === 4 && !accountBodyPartMetadataSupported(ownerId)) {
       return { ok: false, code: "UPGRADE_REQUIRED" }
     }
+    if (request.action === "save" && (request.document as { kind?: unknown; version?: unknown })?.kind === "JOURNAL"
+      && (request.document as { version?: unknown }).version === 5 && !accountJournalDetailSupported(ownerId)) {
+      return { ok: false, code: "UPGRADE_REQUIRED" }
+    }
     // Keep this INDEX's fresh/date decision through the SDK auth reread and
     // asynchronous consent fetch. Do not change unrelated journal requests.
     if (request.action === "save" && (request.document as { kind?: unknown })?.kind === "GOAL_PROGRAM_INDEX") {
@@ -209,8 +237,11 @@ async function executeAccountDocument<T>(
       signal.addEventListener("abort", releaseSendGuard, { once: true })
       if (!current()) return obsolete()
     }
+    const body = journalCall ? { ...request, supportedJournalVersions: accountJournalDetailSupported(ownerId) ? [2, 3, 4, 5]
+      : accountBodyPartMetadataSupported(ownerId) ? [2, 3, 4] : [2, 3], supportsExerciseLogV1: true } : request
+    if (new TextEncoder().encode(JSON.stringify(body)).byteLength > ACCOUNT_REQUEST_MAX_BYTES) return { ok: false, code: "DOCUMENT_CAPACITY_EXCEEDED" }
     const { data, error } = await client.functions.invoke("account-journal", {
-      body: journalCall ? { ...request, supportedJournalVersions: accountBodyPartMetadataSupported(ownerId) ? [2, 3, 4] : [2, 3], supportsExerciseLogV1: true } : request,
+      body,
       headers: { Authorization: `Bearer ${token}`, "x-trainoracle-storage-revision": String(storageRevision),
         ...(sendGuard ? { [LOCAL_COLLECTION_SEND_GUARD_HEADER]: sendGuard.nonce } : {}) },
       signal,
@@ -219,7 +250,14 @@ async function executeAccountDocument<T>(
     if (!current()) return obsolete()
     if (error) {
       const status = error.context instanceof Response ? error.context.status : 0
-      if (status === 426) return { ok: false, code: "UPGRADE_REQUIRED" }
+      if (status === 413) return { ok: false, code: "DOCUMENT_CAPACITY_EXCEEDED" }
+      if (status === 426) {
+        if (journalCall && ["read", "list", "history"].includes(request.action) && !accountJournalDetailSupported(ownerId)
+          && await checkAccountJournalDetailSupport(ownerId, current, dependencies) && current()) {
+          return requestAccountDocument(ownerId, request, isCurrent, schema, dependencies)
+        }
+        return { ok: false, code: "UPGRADE_REQUIRED" }
+      }
       if (status === 507) {
         const quota = await error.context.clone().json().catch(() => null)
         if (!current()) return obsolete()
@@ -263,6 +301,7 @@ async function executeAccountDocument<T>(
     if (!parsed.success) return { ok: false, code: "INVALID_RESPONSE" }
     const result = parsed.data as AccountJournalResponse<T>
     const correctKind = request.action === "status" ? result.kind === "ready"
+      : request.action === "journalDetailSupport" ? result.kind === "journal-detail-support"
       : request.action === "journalBodyPartSupport" ? result.kind === "journal-body-part-support"
       : request.action === "calendarDecorationSupport" ? result.kind === "calendar-decoration-support"
       : request.action === "athleteRecordSupport" ? result.kind === "athlete-record-support"

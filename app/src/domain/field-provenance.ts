@@ -45,7 +45,7 @@ const ENTRY_PROVENANCE_FIELDS: Readonly<Record<ProvenanceEntryKind, readonly str
  * 즉 가져온 값은 일지에서는 보이지만 통계·추이·훈련계획 입력에서는 제외된다.
  * 포함 여부를 열려면 별도 오너 결정으로 파생 규칙 ID를 등록해야 한다.
  */
-export const EXTERNAL_DERIVATION_INPUTS = ["import:activity-file"] as const
+export const EXTERNAL_DERIVATION_INPUTS = ["import:activity-file", "import:provider-activity"] as const
 
 export type ExternalDerivationInput = (typeof EXTERNAL_DERIVATION_INPUTS)[number]
 

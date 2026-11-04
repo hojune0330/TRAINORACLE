@@ -4,9 +4,11 @@ export const ACCOUNT_WRITE_REJECTIONS = [
   "COMPARISON_ORIGINAL_UNAVAILABLE", "INVALID_COMPARISON_RELATION", "COMPARISON_CAPACITY_EXCEEDED",
   "OWNERSHIP_STATE_CHANGED", "CONFLICT_STORAGE_LIMIT_REACHED",
   "ACCOUNT_DELETION_REQUESTED",
+  "DOCUMENT_CAPACITY_EXCEEDED",
 ] as const
 export type AccountJournalWriteRejection = (typeof ACCOUNT_WRITE_REJECTIONS)[number]
 export const FILE_WRITE_REJECTION_MESSAGES = {
+  DOCUMENT_CAPACITY_EXCEEDED: "상세 기록이 현재 계정 저장 용량을 넘었어요. 일부 값만 줄여 저장하지 않았어요. 원본 파일을 보관해 주세요.",
   ACCOUNT_DELETION_REQUESTED: "삭제를 요청한 계정으로는 다시 전송하지 않아요. 이 기기의 기록과 미전송 입력은 그대로 보관돼 있어요.",
   UPGRADE_REQUIRED: "이 기록을 읽고 저장하려면 앱을 새로 열어 최신 버전을 사용해 주세요. 기존 기록과 입력은 보관돼 있어요.",
   FILE_EVIDENCE_DISABLED: "파일 분석 자료의 새 저장을 잠시 중단했어요. 기존 기록은 그대로 있고 원본 파일도 바뀌지 않았어요.",

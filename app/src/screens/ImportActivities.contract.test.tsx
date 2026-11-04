@@ -131,7 +131,7 @@ describe("ImportActivities — 고르기 단계", () => {
     expect(guide).toHaveAttribute("aria-hidden", "true")
     expect(container.querySelectorAll("img")).toHaveLength(1)
     expect(screen.getByTestId("import-privacy-notice")).toBeVisible()
-    expect(screen.getByLabelText(/가져올 운동 파일 선택/u)).toHaveAttribute("accept", ".csv,.json,.tcx,.gpx,text/csv,application/json,application/xml,text/xml")
+    expect(screen.getByLabelText(/가져올 운동 파일 선택/u)).toHaveAttribute("accept", ".fit,.csv,.json,.tcx,.gpx,text/csv,application/json,application/xml,text/xml,application/octet-stream")
     expect(loadEntries()).toEqual([])
 
     await pickFile(user, upload(tcxFile([tcxLap("2026-07-20T06:00:00Z", 10000, 3000)])))
@@ -207,7 +207,8 @@ describe("ImportActivities — 고르기 단계", () => {
     }])
     await pickFile(user, new File([json], "activities.json", { type: "application/json" }))
 
-    expect(await screen.findByText("저녁 러닝")).toBeVisible()
+    expect(await screen.findByText("가져온 달리기")).toBeVisible()
+    expect(screen.queryByText("저녁 러닝")).toBeNull()
     expect(loadEntries()).toEqual([])
   })
 

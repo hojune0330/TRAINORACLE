@@ -8,6 +8,7 @@ import { AccountJournalHistory } from "./account/AccountJournalHistory"
 import { IndexCard, MoodStrip } from "../components/JournalPrimitives"
 import { BodyRecordSummary } from "../components/BodyRecordSummary"
 import { ImportedActivityDetail } from "../components/ImportedActivityDetail"
+import { GarminJournalActivityDetail } from "../components/GarminActivityDetail"
 import { journalPainPartsForSafety } from "../domain/body-part-metadata"
 import { calendarDayLabel } from "../components/MonthCalendar"
 import { JournalConfirmationDialog } from "../components/JournalConfirmationDialog"
@@ -119,9 +120,15 @@ function sessionSummary(entry: PostSessionEntry): string {
 
 function importedTimeLabel(entry: PostSessionEntry): string {
   if (!isImportedField("durationMin", entry.fieldProvenance)) return "시간"
+  if (isGarminProviderEntry(entry)) return "Garmin 전달 시간"
   const meaning = entry.fileObservation?.confirmation?.durationMeaning ?? entry.fileObservation?.durationMeaning
   return meaning === "TIMER" ? "타이머 시간" : meaning === "MOVING" ? "이동 시간"
     : meaning === "ELAPSED" ? "전체 경과 시간" : "파일 시간 · 종류 미확인"
+}
+
+function isGarminProviderEntry(entry: PostSessionEntry): boolean {
+  return Object.values(entry.fieldProvenance ?? {}).some(field => field.provenance === "DERIVED"
+    && field.derivationRuleId === "import:GARMIN:provider-v1" && field.derivedFrom?.includes("import:provider-activity"))
 }
 
 function raceSummary(entry: RaceEntry): string {
@@ -510,7 +517,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, onJournalSave
           // A reconciled, previously classified journal keeps its existing classification.
           const unknownImportedKind = imported && entry.fieldProvenance?.system?.provenance !== "EXPLICIT"
             && (entry.system === "" || entry.system === "base" && entry.objectiveDataState === undefined)
-          const meta = unknownImportedKind ? { c: "FILE", n: "훈련 종류 미확인", cls: "rest", term: null }
+          const meta = unknownImportedKind ? { c: isGarminProviderEntry(entry) ? "DEVICE" : "FILE", n: "훈련 종류 미확인", cls: "rest", term: null }
             : entry.system === ""
             ? { c: "LOG", n: "빠른 기록", cls: "rest", term: null }
             : SYSTEM_META[entry.system] ?? { c: "??", n: entry.system, cls: "rest", term: null }
@@ -556,6 +563,8 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, onJournalSave
                   ))}
                 </div>}
                 {entry.fileObservation && <ImportedActivityDetail observation={entry.fileObservation} />}
+                {open && !readOnly && isGarminProviderEntry(entry)
+                  && <GarminJournalActivityDetail entryId={entry.id} />}
                 <BodyRecordSummary entry={entry} />
                 <SavedMemo entry={entry} text={entry.memo} fontSize={19} />
                 <JournalOriginalPlan entry={entry} />
