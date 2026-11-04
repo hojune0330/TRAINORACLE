@@ -121,6 +121,8 @@ jobs:
           node app/scripts/build-coaching-record-evidence.mjs --check
           node --test server/self-hosted-coaching/service.test.mjs
           node --test server/garmin-integration/service.test.mjs server/garmin-integration/worker.test.mjs server/garmin-integration/deployment.test.mjs
+          node server/garmin-ingress/build-worker.mjs --check
+          node --test server/garmin-ingress/ingress.test.mjs
           node --test server/account-gateway/service.test.mjs
 
       - name: Verify lossless encrypted FILE storage and existing account consumers
