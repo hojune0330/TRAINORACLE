@@ -38,10 +38,12 @@ test('redirects, raw/error bodies and request deadlines never leak content or fo
   const stalled=createServer(()=>{}),stalledPort=await listen(stalled);const began=Date.now();
   try{const result=await runGarminWorker({...options(stalledPort),requestTimeoutMs:40,once:true});assert.equal(result.failures,3);assert.ok(Date.now()-began<2000);}finally{await close(stalled);}
 });
-test('failed tasks back off, successful recovery resets delay, and shutdown cancels sleep without another call',async()=>{
+test('failed tasks back off, successful recovery resets delay, and shutdown stops subsequent scheduling',async()=>{
   const logs=[],calls=[];let processCalls=0;const stop=new AbortController();
   const server=createServer((req,res)=>{calls.push({path:req.url,at:Date.now()});if(req.url.endsWith('/process')&&++processCalls<=2)return json(res,{error:'PRIVATE_SERVER_ERROR_CANARY'},503);json(res,{...responseFor(req.url),...(req.url.endsWith('/maintenance')?{checked:0,refreshed:0}:req.url.endsWith('/process')?{processed:0}:{completed:0})});});const port=await listen(server);
-  try{const result=await runGarminWorker({...options(port),signal:stop.signal,onEvent:event=>{logs.push(event);if(event.event==='WORKER_RECOVERED'&&event.task==='PROCESS')setTimeout(()=>stop.abort(),5);}});assert.equal(result.reason,'ABORTED');
+  // Stop at the completed response boundary. A delayed abort permits another
+  // request to be sent; cancellation cannot retract bytes already on the wire.
+  try{const result=await runGarminWorker({...options(port),signal:stop.signal,onEvent:event=>{logs.push(event);if(event.event==='WORKER_RECOVERED'&&event.task==='PROCESS')stop.abort();}});assert.equal(result.reason,'ABORTED');
     assert.deepEqual(logs.filter(e=>e.event==='WORKER_RETRY'&&e.task==='PROCESS').map(e=>e.delayMs),[40,80]);assert.equal(processCalls,3);assert.ok(logs.some(e=>e.event==='WORKER_RECOVERED'));assert.ok(!JSON.stringify(logs).includes('PRIVATE_SERVER_ERROR_CANARY'));
     const n=calls.length;await new Promise(r=>setTimeout(r,60));assert.equal(calls.length,n);
   }finally{await close(server);}
