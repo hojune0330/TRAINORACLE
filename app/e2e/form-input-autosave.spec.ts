@@ -82,6 +82,9 @@ test("home inline recovers the exact encrypted owner/date draft and excludes com
       export function accountJournalPreviewEnabled() { return true }
       export function accountBodyPartMetadataSupported() { return false }
       export async function checkAccountJournalBodyPartSupport() { return false }
+      export async function checkAccountJournalDetailSupport() { return false }
+      export async function checkAccountJournalLargeFileSupport() { return false }
+      export function accountJournalCorrectionMaxBytes() { return 1200000 }
       async function request(owner, value, current) {
         if (!current()) return {ok:false,code:'AUTH_REQUIRED'};
         if (value.action !== 'save') return {ok:false,code:'NOT_FOUND'};
@@ -225,6 +228,9 @@ for (const choice of ["LOCAL", "REMOTE", "DELETE"] as const) test(`server confli
       export function accountJournalPreviewEnabled() { return true }
       export function accountBodyPartMetadataSupported() { return false }
       export async function checkAccountJournalBodyPartSupport() { return false }
+      export async function checkAccountJournalDetailSupport() { return false }
+      export async function checkAccountJournalLargeFileSupport() { return false }
+      export function accountJournalCorrectionMaxBytes() { return 1200000 }
       export async function requestAccountDocument() { return {ok:false,code:'UNAVAILABLE'} }
       let remote = null, revision = 0;
       export async function requestAccountJournal(owner, request, current) {
@@ -394,6 +400,9 @@ for (const response of ["ACK_LOST", "EDITED_PENDING", "PLANNED_SESSION_ALREADY_R
         export function accountJournalPreviewEnabled() { return true }
         export function accountBodyPartMetadataSupported() { return false }
         export async function checkAccountJournalBodyPartSupport() { return false }
+        export async function checkAccountJournalDetailSupport() { return false }
+        export async function checkAccountJournalLargeFileSupport() { return false }
+        export function accountJournalCorrectionMaxBytes() { return 1200000 }
         export async function requestAccountDocument(owner, request, current) {
           const response = await fetch('/__finalized_transport__', {method:'POST',body:JSON.stringify(request)});
           const result = await response.json(); return current() ? result : {ok:false,code:'AUTH_REQUIRED'};

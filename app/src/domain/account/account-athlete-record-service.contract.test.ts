@@ -27,6 +27,7 @@ const mocks = vi.hoisted(() => ({ owner: "a1111111-1111-4111-8111-111111111111" 
 vi.mock("./account-journal-api", () => ({ requestAccountDocument: mocks.request, accountJournalPreviewEnabled: () => mocks.enabled }))
 vi.mock("./account-journal-draft-buffer", () => ({ createAccountDocumentBuffer: mocks.create }))
 vi.mock("./local-journal-ownership", () => ({ activeLocalAccount: () => mocks.owner,
+  localJournalScopeGeneration: () => 0,
   onLocalJournalScopeChange: (fn: () => void) => { mocks.changed = fn; return () => { mocks.changed = null } } }))
 import { accountAthleteRecordDocumentId, loadAccountAthleteRecords, syncAccountAthleteRecords,
   addAccountAthleteRecord, getConfirmedAccountAthleteRecordSnapshot, readAccountAthleteRecordsState,
