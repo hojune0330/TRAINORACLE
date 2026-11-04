@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs"
 import { join } from "node:path"
 import { describe, expect, it } from "vitest"
 import { CURRENT_ACCOUNT_LEGAL_VERSION } from "./config"
+import { STORAGE_CONSENT_VERSION } from "./storage-consent"
 
 const migration = readFileSync(
   join(process.cwd(), "..", "supabase", "migrations", "0027_account_legal_consent.sql"),
@@ -14,8 +15,7 @@ const currentVersionMigration = readFileSync(
 const privacyDocument = readFileSync(join(process.cwd(), "public", "legal", "privacy.html"), "utf8")
 const termsDocument = readFileSync(join(process.cwd(), "public", "legal", "terms.html"), "utf8")
 const hostedReleaseValidator = readFileSync(join(process.cwd(), "scripts", "validate-hosted-release-env.mjs"), "utf8")
-const latestVersionMigration = readFileSync(join(process.cwd(), "..", "supabase", "migrations", "0057_purpose_scoped_storage_consent.sql"), "utf8")
-  + readFileSync(join(process.cwd(), "..", "supabase", "migrations", "0058_storage_withdrawal_erasure.sql"), "utf8")
+const latestVersionMigration = readFileSync(join(process.cwd(), "..", "supabase", "migrations", "20261104145316_account_legal_version_20261104.sql"), "utf8")
 
 describe("account legal-consent migration", () => {
   it("records only document versions and the server consent time with the private profile", () => {
@@ -55,11 +55,19 @@ describe("account legal-consent migration", () => {
   it("keeps client, hosted release check, server gate, and both public documents on one version", () => {
     const version = CURRENT_ACCOUNT_LEGAL_VERSION
     expect(hostedReleaseValidator).toContain(`const CURRENT_ACCOUNT_LEGAL_VERSION = "${version}"`)
-    expect(latestVersionMigration).toContain(`new.privacy_policy_version is distinct from '${version}'`)
-    expect(latestVersionMigration).toContain(`new.terms_of_service_version is distinct from '${version}'`)
-    expect(latestVersionMigration).toContain(`profile.privacy_policy_version = '${version}'`)
-    expect(latestVersionMigration).toContain(`profile.terms_of_service_version = '${version}'`)
+    expect(latestVersionMigration).toContain(`replacement constant text := $replacement$\\1'${version}'$replacement$`)
+    expect(latestVersionMigration).toContain("'public.enforce_current_account_legal_versions()'")
+    expect(latestVersionMigration).toContain("'public.account_admission_access_allowed(uuid)'")
+    expect(latestVersionMigration).toContain("'public.claim_beta_seat(uuid,uuid,date,text,text)'")
     expect(privacyDocument).toContain(`문서 버전: ${version}`)
     expect(termsDocument).toContain(`문서 버전: ${version}`)
+  })
+
+  it("keeps health/text purpose consent separate from the new legal acknowledgement", () => {
+    expect(STORAGE_CONSENT_VERSION).toBe("2026-10-05")
+    expect(STORAGE_CONSENT_VERSION).not.toBe(CURRENT_ACCOUNT_LEGAL_VERSION)
+    expect(latestVersionMigration).toContain("ACCOUNT_LEGAL_DEFINITION_UNEXPECTED")
+    expect(latestVersionMigration).toContain("ACCOUNT_LEGAL_UNLISTED_FUNCTION")
+    expect(latestVersionMigration).not.toMatch(/^\s*(update|insert\s+into|delete\s+from|alter\s+table)\b/gimu)
   })
 })

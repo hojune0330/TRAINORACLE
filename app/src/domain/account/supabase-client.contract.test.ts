@@ -11,9 +11,9 @@ const releaseEnvironment = {
   VITE_SUPABASE_URL: "https://example.supabase.co",
   VITE_SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiYW5vbiJ9.synthetic-signature",
   VITE_PRIVACY_POLICY_URL: "https://trainoracle.example/privacy",
-  VITE_PRIVACY_POLICY_VERSION: "2026-10-05",
+  VITE_PRIVACY_POLICY_VERSION: "2026-11-04",
   VITE_TERMS_OF_SERVICE_URL: "https://trainoracle.example/terms",
-  VITE_TERMS_OF_SERVICE_VERSION: "2026-10-05",
+  VITE_TERMS_OF_SERVICE_VERSION: "2026-11-04",
 }
 
 describe("Supabase authentication client", () => {

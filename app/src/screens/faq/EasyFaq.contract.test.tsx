@@ -14,9 +14,9 @@ function enablePublicAccountForTest() {
   vi.stubEnv("VITE_SUPABASE_URL", "https://project.supabase.co")
   vi.stubEnv("VITE_SUPABASE_ANON_KEY", "eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiYW5vbiJ9.synthetic-signature")
   vi.stubEnv("VITE_PRIVACY_POLICY_URL", "https://example.com/privacy")
-  vi.stubEnv("VITE_PRIVACY_POLICY_VERSION", "2026-10-05")
+  vi.stubEnv("VITE_PRIVACY_POLICY_VERSION", "2026-11-04")
   vi.stubEnv("VITE_TERMS_OF_SERVICE_URL", "https://example.com/terms")
-  vi.stubEnv("VITE_TERMS_OF_SERVICE_VERSION", "2026-10-05")
+  vi.stubEnv("VITE_TERMS_OF_SERVICE_VERSION", "2026-11-04")
 }
 
 describe("easy FAQ", () => {

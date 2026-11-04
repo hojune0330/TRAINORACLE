@@ -8,9 +8,9 @@ const credentials = {
 
 const legalDocuments = {
   VITE_PRIVACY_POLICY_URL: "https://trainoracle.example/privacy",
-  VITE_PRIVACY_POLICY_VERSION: "2026-10-05",
+  VITE_PRIVACY_POLICY_VERSION: "2026-11-04",
   VITE_TERMS_OF_SERVICE_URL: "https://trainoracle.example/terms",
-  VITE_TERMS_OF_SERVICE_VERSION: "2026-10-05",
+  VITE_TERMS_OF_SERVICE_VERSION: "2026-11-04",
 }
 
 describe("account public release gate", () => {
@@ -144,8 +144,8 @@ describe("account public release gate", () => {
 
   it("stays disabled when either legal version is older than the current published documents", () => {
     const approved = { ...credentials, ...legalDocuments, VITE_ACCOUNT_PUBLIC_ENABLED: "true" }
-    expect(resolveAccountConfig({ ...approved, VITE_PRIVACY_POLICY_VERSION: "2026-08-25" })).toBeNull()
-    expect(resolveAccountConfig({ ...approved, VITE_TERMS_OF_SERVICE_VERSION: "2026-08-25" })).toBeNull()
+    expect(resolveAccountConfig({ ...approved, VITE_PRIVACY_POLICY_VERSION: "2026-10-05" })).toBeNull()
+    expect(resolveAccountConfig({ ...approved, VITE_TERMS_OF_SERVICE_VERSION: "2026-10-05" })).toBeNull()
   })
 
   it("rejects a non-HTTPS endpoint", () => {

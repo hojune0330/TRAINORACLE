@@ -18,9 +18,9 @@ const storagePrivacyRelease = {
 
 const legalDocuments = {
   VITE_PRIVACY_POLICY_URL: "https://trainoracle.example/privacy",
-  VITE_PRIVACY_POLICY_VERSION: "2026-10-05",
+  VITE_PRIVACY_POLICY_VERSION: "2026-11-04",
   VITE_TERMS_OF_SERVICE_URL: "https://trainoracle.example/terms",
-  VITE_TERMS_OF_SERVICE_VERSION: "2026-10-05",
+  VITE_TERMS_OF_SERVICE_VERSION: "2026-11-04",
 }
 
 test("keeps the local-only release valid when every network feature is closed", () => {
@@ -88,10 +88,10 @@ test("requires public legal documents and versions before opening accounts", () 
 test("rejects an older legal version before an account release", () => {
   const account = { ...connection, ...legalDocuments, ...storagePrivacyRelease, VITE_ACCOUNT_PUBLIC_ENABLED: "true" }
   assert.deepEqual(validateHostedReleaseEnvironment({
-    ...account, VITE_PRIVACY_POLICY_VERSION: "2026-08-25",
+    ...account, VITE_PRIVACY_POLICY_VERSION: "2026-10-05",
   }), ["ACCOUNT_REQUIRES_PUBLIC_LEGAL_DOCUMENTS"])
   assert.deepEqual(validateHostedReleaseEnvironment({
-    ...account, VITE_TERMS_OF_SERVICE_VERSION: "2026-08-25",
+    ...account, VITE_TERMS_OF_SERVICE_VERSION: "2026-10-05",
   }), ["ACCOUNT_REQUIRES_PUBLIC_LEGAL_DOCUMENTS"])
 })
 

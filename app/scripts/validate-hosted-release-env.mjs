@@ -8,7 +8,7 @@ const ACCOUNT_BACKED_FEATURES = [
   "PRODUCT_ANALYTICS",
 ]
 
-const CURRENT_ACCOUNT_LEGAL_VERSION = "2026-10-05"
+const CURRENT_ACCOUNT_LEGAL_VERSION = "2026-11-04"
 const REQUIRED_ACCOUNT_STORAGE_MIGRATION = "0058_storage_withdrawal_erasure"
 
 function textValue(environment, name) {

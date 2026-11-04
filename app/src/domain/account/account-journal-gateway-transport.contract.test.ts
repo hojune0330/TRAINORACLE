@@ -69,8 +69,8 @@ describe("company account gateway transport", () => {
   it("routes the actual account API through the guarded company path and never falls back from bad configuration", async () => {
     for (const [key, value] of Object.entries({ VITE_ACCOUNT_JOURNAL_GATEWAY_URL: gatewayUrl,
       VITE_ACCOUNT_PUBLIC_ENABLED: "true", VITE_SUPABASE_URL: serviceUrl, VITE_SUPABASE_ANON_KEY: `sb_publishable_${"a".repeat(24)}`,
-      VITE_PRIVACY_POLICY_URL: "https://company.example/privacy", VITE_PRIVACY_POLICY_VERSION: "2026-10-05",
-      VITE_TERMS_OF_SERVICE_URL: "https://company.example/terms", VITE_TERMS_OF_SERVICE_VERSION: "2026-10-05" })) vi.stubEnv(key, value)
+      VITE_PRIVACY_POLICY_URL: "https://company.example/privacy", VITE_PRIVACY_POLICY_VERSION: "2026-11-04",
+      VITE_TERMS_OF_SERVICE_URL: "https://company.example/terms", VITE_TERMS_OF_SERVICE_VERSION: "2026-11-04" })) vi.stubEnv(key, value)
     const invoke = vi.fn(), transport = vi.fn<typeof fetch>(async input => Response.json(String(input) === consentUrl ? consent : { kind: "ready" }))
     vi.stubGlobal("fetch", transport)
     const client = { auth: { getSession: async () => ({ data: { session: { user: { id: owner }, access_token: token } }, error: null }) }, functions: { invoke } }

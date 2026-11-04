@@ -8,6 +8,7 @@ const migration = readFileSync(
   "utf8",
 ).replaceAll("\r\n", "\n")
 const currentMigration = readFileSync(join(process.cwd(), "..", "supabase", "migrations", "0057_purpose_scoped_storage_consent.sql"), "utf8").replaceAll("\r\n", "\n")
+const legalRevision = readFileSync(join(process.cwd(), "..", "supabase", "migrations", "20261104145316_account_legal_version_20261104.sql"), "utf8")
 
 function between(start: string, end: string): string {
   const startIndex = migration.indexOf(start)
@@ -69,8 +70,12 @@ describe("current-account server admission migration", () => {
     expect(admission).toContain("from public.beta_enrollments")
     expect(admission).toContain("public.account_admission_access_allowed(actor) is distinct from true")
     expect(admission).toContain("clock_timestamp() at time zone 'Asia/Seoul'")
-    expect(admission).toContain(`profile.privacy_policy_version is distinct from '${CURRENT_ACCOUNT_LEGAL_VERSION}'`)
-    expect(admission).toContain(`profile.terms_of_service_version is distinct from '${CURRENT_ACCOUNT_LEGAL_VERSION}'`)
+    // The historical admission body remains unchanged. The additive migration
+    // updates only these comparisons; its executed SQL is covered in PGlite.
+    expect(admission).toContain("profile.privacy_policy_version is distinct from '2026-10-05'")
+    expect(admission).toContain("profile.terms_of_service_version is distinct from '2026-10-05'")
+    expect(legalRevision).toContain("'public.get_current_account_admission_status(uuid)'")
+    expect(legalRevision).toContain(`replacement constant text := $replacement$\\1'${CURRENT_ACCOUNT_LEGAL_VERSION}'$replacement$`)
     expect(admission).toContain("profile.legal_consented_at > now_at")
   })
 

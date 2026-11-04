@@ -3,7 +3,7 @@ import { resolve } from "node:path"
 import { describe, expect, it } from "vitest"
 
 const PUBLIC_LEGAL_DIR = resolve(process.cwd(), "public", "legal")
-const VERSION = "2026-10-05"
+const VERSION = "2026-11-04"
 
 function readLegalDocument(filename: string) {
   return readFileSync(resolve(PUBLIC_LEGAL_DIR, filename), "utf8")

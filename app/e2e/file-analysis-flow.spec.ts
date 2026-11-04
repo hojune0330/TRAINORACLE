@@ -56,8 +56,8 @@ test.beforeAll(async () => {
   const env = {
     VITE_ACCOUNT_PUBLIC_ENABLED: "true", VITE_KILL_ACCOUNT: "false",
     VITE_SUPABASE_URL: "https://synthetic.invalid", VITE_SUPABASE_ANON_KEY: "sb_publishable_synthetic_file_analysis_test_only",
-    VITE_PRIVACY_POLICY_URL: "https://synthetic.invalid/privacy", VITE_PRIVACY_POLICY_VERSION: "2026-10-05",
-    VITE_TERMS_OF_SERVICE_URL: "https://synthetic.invalid/terms", VITE_TERMS_OF_SERVICE_VERSION: "2026-10-05",
+    VITE_PRIVACY_POLICY_URL: "https://synthetic.invalid/privacy", VITE_PRIVACY_POLICY_VERSION: "2026-11-04",
+    VITE_TERMS_OF_SERVICE_URL: "https://synthetic.invalid/terms", VITE_TERMS_OF_SERVICE_VERSION: "2026-11-04",
     VITE_FEATURE_ACCOUNT_JOURNAL: "true", VITE_KILL_ACCOUNT_JOURNAL: "false",
     VITE_FEATURE_FILE_ANALYSIS_TCX: "true", VITE_KILL_FILE_ANALYSIS_TCX: "false",
     VITE_FEATURE_FILE_ANALYSIS_CSV: "true", VITE_KILL_FILE_ANALYSIS_CSV: "false",
