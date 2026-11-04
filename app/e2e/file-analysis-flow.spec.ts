@@ -342,14 +342,20 @@ test("TCX account acknowledgement -> report -> pace plan saved/reopened -> confi
   expect(await sharedDistance(page)).toEqual({ totalKm: null, includedSourceCount: 0 })
   const panel = await saveImport(page)
   const saved = [...account.documents.values()][0]!.document
-  expect(saved.version).toBe(3)
+  expect(saved.version).toBe(5)
   expect(schema.validateInitialFileObservationRecord(saved)).toBe(true)
   expect(account.calls.filter(call => call.action === "save")).toHaveLength(1)
+  if (saved.entry.kind !== "post-session") throw new Error("Expected imported workout")
+  expect(saved.entry.fileObservation?.detail?.samples.map(sample => sample.position)).toEqual([
+    { latitudeDegrees: 35.123456, longitudeDegrees: 127.654321 },
+  ])
   const serialized = JSON.stringify(saved)
-  for (const forbidden of [privateMarker, "35.123456", "127.654321", "synthetic.tcx", "LatitudeDegrees", "LongitudeDegrees"]) {
+  for (const forbidden of [privateMarker, "synthetic.tcx", "LatitudeDegrees", "LongitudeDegrees", "analysisEligible"]) {
     expect(serialized).not.toContain(forbidden)
     await expect(panel).not.toContainText(forbidden)
   }
+  // Stored source detail is not permission to use location in derived analysis.
+  for (const coordinate of ["35.123456", "127.654321"]) await expect(panel).not.toContainText(coordinate)
   const detail = panel.locator("summary").filter({ hasText: "계산에 쓴 기록과 빠진 항목" })
   await detail.focus(); await detail.press("Enter")
   await expect(panel.getByText(/거리 합계와 시간 합계/u)).toBeVisible()
@@ -674,7 +680,7 @@ for (const file of additionalFiles) {
     await expect(page.getByTestId("import-saved")).toContainText("계정에 저장됨 1건")
     const stored = [...account.documents.values()][0]!
     expect(stored.revision).toBe(1)
-    expect(stored.document.version).toBe(3)
+    expect(stored.document.version).toBe(file.format === "gpx" ? 5 : 3)
     expect(schema.validateInitialFileObservationRecord(stored.document)).toBe(true)
     if (stored.document.entry.kind !== "post-session") throw new Error("Expected imported workout")
     const observation = stored.document.entry.fileObservation!
@@ -684,9 +690,17 @@ for (const file of additionalFiles) {
     if (file.format === "gpx") {
       expect(observation.distanceMeters).toBeGreaterThan(2000)
       expect(observation.distanceMeters).toBeLessThan(2010)
-    } else expect(observation.distanceMeters).toBe(5000)
+      expect(observation.detail?.samples.map(sample => sample.position)).toEqual([
+        { latitudeDegrees: 35.123456, longitudeDegrees: 127.654321 },
+        { latitudeDegrees: 35.141456, longitudeDegrees: 127.654321 },
+      ])
+    } else {
+      expect(observation.distanceMeters).toBe(5000)
+      expect(observation.detail).toBeUndefined()
+    }
     const serialized = JSON.stringify(stored.document)
-    for (const forbidden of [privateMarker, "35.123456", "35.141456", "127.654321", `synthetic.${file.format}`, "analysisEligible"])
+    for (const forbidden of [privateMarker, `synthetic.${file.format}`, "analysisEligible",
+      ...(file.format === "gpx" ? [] : ["35.123456", "35.141456", "127.654321"])])
       expect(serialized).not.toContain(forbidden)
     const readsBefore = account.calls.filter(call => call.action === "read" || call.action === "list").length
     await page.reload()
@@ -708,6 +722,7 @@ for (const file of additionalFiles) {
     await expect(panel.getByRole("region", { name: "계획과 실제 수치 차이" })).toHaveCount(0)
     await expect(panel.getByRole("button", { name: "선택한 대응 확인·저장" })).toHaveCount(0)
     await expect(panel).not.toContainText(privateMarker)
+    for (const coordinate of ["35.123456", "35.141456", "127.654321"]) await expect(panel).not.toContainText(coordinate)
     await panel.locator("h2").evaluate(node => node.scrollIntoView({ block: "start" }))
     await page.screenshot({ path: testInfo.outputPath(`${file.format}-account-reloaded.png`), animations: "disabled" })
     await panel.getByText("전체 기록만 있어 구간별로 나눠 비교할 수 없어요.").scrollIntoViewIfNeeded()
