@@ -46,9 +46,9 @@ describe("entry chooser confirmed-first journal guard", () => {
       fireEvent.click(screen.getByTestId(`entry-choice-${type}`))
       expect(pick).toHaveBeenLastCalledWith(type)
     }
-    fireEvent.click(screen.getByTestId("open-import"))
+    fireEvent.click(screen.getByRole("button", { name: "운동 자동연동" }))
     expect(openImport).toHaveBeenCalledOnce()
-    expect(screen.getByRole("button", { name: "운동 파일 불러오기" })).toBeVisible()
+    expect(screen.getByRole("button", { name: "운동 자동연동" })).toBeVisible()
   })
 
   it.each(["malformed", "read-failure"] as const)("does not present %s local storage as the first journal", failure => {
@@ -86,7 +86,7 @@ describe("entry chooser confirmed-first journal guard", () => {
     expect(screen.queryByText(/첫 일지예요/)).toBeNull()
     expect(guide()).toBeNull()
     fireEvent.click(screen.getByTestId("entry-choice-evening"))
-    fireEvent.click(screen.getByTestId("open-import"))
+    fireEvent.click(screen.getByRole("button", { name: "운동 자동연동" }))
     expect(pick).toHaveBeenCalledWith("evening")
     expect(openImport).toHaveBeenCalledOnce()
     act(() => { setAccountJournalProjectionStatus(owner, "READY") })

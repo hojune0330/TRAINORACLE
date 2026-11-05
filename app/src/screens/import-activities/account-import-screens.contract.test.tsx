@@ -97,7 +97,7 @@ describe("analysis action uses this batch's confirmed file evidence", () => {
       return { ok: true, storage: mode === "pending" ? "PENDING" : mode === "conflict" ? "CONFLICT" : "ACCOUNT" }
     })
     const analysis = vi.fn(), summary = vi.fn(), user = userEvent.setup()
-    render(<ImportActivities onOpenAnalysis={analysis} onOpenSummary={summary} />)
+    render(<ImportActivities initialMethod="file" onOpenAnalysis={analysis} onOpenSummary={summary} />)
     await user.upload(screen.getByLabelText(/가져올 운동 파일 선택/), mode === "other-format-only" ? watchFile() : tcxWatchFile())
     await user.click(await screen.findByRole("button", { name: "고른 1건 일지에 저장" }))
     await screen.findByTestId("import-saved")
@@ -125,7 +125,7 @@ describe("analysis action uses this batch's confirmed file evidence", () => {
         return { ok: true, storage: "ACCOUNT" }
       })
     const analysis = vi.fn(), user = userEvent.setup()
-    render(<ImportActivities onOpenAnalysis={analysis} />)
+    render(<ImportActivities initialMethod="file" onOpenAnalysis={analysis} />)
     await user.upload(screen.getByLabelText(/가져올 운동 파일 선택/), tcxWatchFile())
     await user.click(await screen.findByRole("button", { name: "고른 1건 일지에 저장" }))
     await screen.findByTestId("import-saved")
@@ -161,7 +161,7 @@ describe("account import and restore screens", () => {
     const second = xml.replaceAll("06:00:00Z", "09:00:00Z").match(/<Activity [\s\S]*<\/Activity>/)![0]
     const file = new File([xml.replace("</Activities>", `${second}</Activities>`)], "two.tcx", { type: "application/xml" })
     const user = userEvent.setup()
-    render(<ImportActivities />)
+    render(<ImportActivities initialMethod="file" />)
     await user.upload(screen.getByLabelText(/가져올 운동 파일 선택/), file)
     await user.click(await screen.findByRole("checkbox", { name: /운동 2, .*가져오기/ }))
     await user.selectOptions(screen.getByRole("combobox", { name: /운동 2, .*저장 방식/ }), "use:existing-b")
@@ -179,7 +179,7 @@ describe("account import and restore screens", () => {
   it("reopens a conflicted file with fresh read-only review, preserving the result on read failure", async () => {
     api.persist.mockResolvedValue({ ok: true, storage: "CONFLICT" })
     const user = userEvent.setup()
-    render(<ImportActivities />)
+    render(<ImportActivities initialMethod="file" />)
     await user.upload(screen.getByLabelText(/가져올 운동 파일 선택/), watchFile())
     await user.click(await screen.findByRole("button", { name: "고른 1건 일지에 저장" }))
     await screen.findByTestId("import-saved")
@@ -225,7 +225,7 @@ describe("account import and restore screens", () => {
   it("keeps cancellation effective while the account review hydration is pending", async () => {
     let resolve!: (value: boolean) => void
     api.hydrate.mockImplementationOnce(() => new Promise(done => { resolve = done }))
-    render(<ImportActivities />)
+    render(<ImportActivities initialMethod="file" />)
     const user = userEvent.setup()
     await user.upload(screen.getByLabelText(/가져올 운동 파일 선택/), watchFile())
     await waitFor(() => expect(api.hydrate).toHaveBeenCalledTimes(1))
@@ -236,7 +236,7 @@ describe("account import and restore screens", () => {
   })
   it("routes confirmed watch data asynchronously and distinguishes pending from account acknowledgment", async () => {
     api.persist.mockResolvedValueOnce({ ok: true, storage: "PENDING" })
-    render(<ImportActivities />)
+    render(<ImportActivities initialMethod="file" />)
     expect(screen.getByTestId("import-privacy-notice")).toHaveTextContent("암호화 보관 경로로 전송")
     const user = userEvent.setup()
     await user.upload(screen.getByLabelText(/가져올 운동 파일 선택/), watchFile())
@@ -270,7 +270,7 @@ describe("account import and restore screens", () => {
     let resolve!: (value: unknown) => void
     api.persist.mockImplementationOnce(() => new Promise(done => { resolve = done }))
     const user = userEvent.setup()
-    render(kind === "watch" ? <ImportActivities /> : <RestoreBackup />)
+    render(kind === "watch" ? <ImportActivities initialMethod="file" /> : <RestoreBackup />)
     await user.upload(screen.getByLabelText(kind === "watch" ? /가져올 운동 파일 선택/ : /백업 파일/), kind === "watch" ? watchFile() : backupFile())
     fireEvent.click(kind === "watch" ? await screen.findByRole("button", { name: "고른 1건 일지에 저장" }) : await screen.findByTestId("restore-submit"))
     await waitFor(() => expect(api.persist).toHaveBeenCalledTimes(1))
@@ -284,7 +284,7 @@ describe("account import and restore screens", () => {
   it.each(["watch", "backup"])("cancels %s file reads on owner change before hydration", async (kind) => {
     let resolve!: (value: boolean) => void
     api.hydrate.mockImplementationOnce(() => new Promise(done => { resolve = done }))
-    render(kind === "watch" ? <ImportActivities /> : <RestoreBackup />)
+    render(kind === "watch" ? <ImportActivities initialMethod="file" /> : <RestoreBackup />)
     await userEvent.setup().upload(screen.getByLabelText(kind === "watch" ? /가져올 운동 파일 선택/ : /백업 파일/), kind === "watch" ? watchFile() : backupFile())
     await waitFor(() => expect(api.hydrate).toHaveBeenCalledTimes(1))
     act(() => { setActiveLocalAccount("B"); setActiveLocalAccount("A") })

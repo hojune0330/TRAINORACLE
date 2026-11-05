@@ -3,6 +3,7 @@
 import React from "react"
 import { ArrowLeft } from "lucide-react"
 import { SectionLb } from "../components/JournalPrimitives"
+import { AutomaticConnectionEntry } from "../components/AutomaticConnectionEntry"
 import {
   authReturnAttemptId,
   clearAuthReturnAttemptIdFromUrl,
@@ -517,7 +518,10 @@ export function Account({ onBack, onOpenImport, onOpenRestore, onOpenJournal, on
           </button>
         </div>
       ) : user === null ? (
-        <AccountAuthGateway config={config} today={today} onUnsafeSessionDetected={blockUnverifiedAccountSession} />
+        <>
+          <p className="account-automatic-connection-benefit">로그인하고 워치를 연결하면 새 운동을 자동으로 가져올 수 있어요.</p>
+          <AccountAuthGateway config={config} today={today} onUnsafeSessionDetected={blockUnverifiedAccountSession} />
+        </>
       ) : setupState === "saving" || setupState === "checking" ? (
         <div style={{ marginTop: 24 }}>
           <p role="status" style={{ fontFamily: "var(--sans)", fontSize: 14, lineHeight: 1.65, margin: 0 }}>
@@ -574,6 +578,7 @@ export function Account({ onBack, onOpenImport, onOpenRestore, onOpenJournal, on
           </div>
 
           {setupNotice !== null && <p role="status" style={{ ...mono, fontSize: 11, margin: 0 }}>{setupNotice}</p>}
+          {onOpenImport && <AutomaticConnectionEntry onOpen={onOpenImport} />}
           <InstallShortcutSuggestion eligible={setupState === "ready"} returnFocusTo={() => document.querySelector<HTMLElement>('[data-install-shortcut-return="account"]')} />
           {profileSetupComplete && <LoungeEntry key={user.id} userId={user.id} requested={loungeRequested} />}
 
@@ -590,15 +595,6 @@ export function Account({ onBack, onOpenImport, onOpenRestore, onOpenJournal, on
           {accountJournalPreviewEnabled() && <AccountJournalDraftPanel key={user.id} userId={user.id} />}
           {accountJournalPreviewEnabled() && <AccountJournalHistory key={`history-${user.id}`} />}
           {accountJournalPreviewEnabled() && <AccountJournalMigration key={`migration-${user.id}`} userId={user.id} />}
-
-          <SectionLb>기기 데이터 가져오기</SectionLb>
-          <div data-testid="import-teaser" style={{ border: "1px solid var(--line)", borderRadius: "var(--r-md)", padding: "12px 14px" }}>
-            <div style={{ fontFamily: "var(--sans)", fontSize: 13.5, fontWeight: 600 }}>워치 기록을 파일로 가져올 수 있어요</div>
-            <p style={{ fontFamily: "var(--sans)", fontSize: 12, lineHeight: 1.6, color: "var(--ink-2)", margin: "6px 0 0" }}>
-              가민 커넥트 등에서 활동을 TCX·GPX로 내보내면 거리·시간·평균 페이스가 채워진 일지 초안이 만들어져요.
-            </p>
-            {onOpenImport && <button type="button" onClick={onOpenImport} style={{ ...secondaryBtn, marginTop: 10, minHeight: 44 }}>파일 고르기</button>}
-          </div>
 
           <SwitchAccountPanel
             onSignOut={handleSignOut}

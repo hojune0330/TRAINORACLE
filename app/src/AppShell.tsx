@@ -10,7 +10,8 @@ import { accountJournalProjectionStatus } from "./domain/account/account-journal
 import { rememberCalendarDate } from "./hooks/useCalendarPosition"
 import { runDraftSafeNavigation } from "./domain/unsaved-draft-navigation"
 import { useNavigationReturnFrame } from "./hooks/useNavigationReturnFrame"
-import { BROWSER_BACK_LAYER_HISTORY_KEY, beginBrowserPopNavigation, consumeBrowserBackLayer, getBrowserNavigationEpoch, isBrowserPopScrollRestoration } from "./navigation/browserNavigation"
+import { BROWSER_BACK_LAYER_HISTORY_KEY, beginBrowserPopNavigation, consumeBrowserBackLayer, getBrowserNavigationEpoch, isBrowserPopScrollRestoration, requestBrowserBackLayer } from "./navigation/browserNavigation"
+import { useTaskFlowBack } from "./hooks/useTaskFlowBack"
 import { captureReaderPosition, captureCalendarReaderPosition, restoreReaderPosition, validJournalCalendarReturn,
   type JournalCalendarReturn, type ReaderPosition } from "./navigation/readerPosition"
 import type { AppTab } from "./components/AppChrome"
@@ -80,7 +81,8 @@ import { isReadingStage, type ReadingStage } from "./domain/record-reading-oracl
 import { isRunningProfileStage, type RunningProfileStage } from "./domain/running-profile"
 import { isPaceToolStage, type PaceToolRequest } from "./domain/pace-tools"
 import { isEligiblePaceRecordCurrent } from "./domain/account/eligible-account-pace-records"
-import type { ImportReviewSession } from "./screens/ImportActivities"
+import type { ImportMethod, ImportReviewSession } from "./screens/ImportActivities"
+import type { OpenGarminJournalRecord } from "./components/GarminConnectionPanel"
 const ImportedRecords = React.lazy(() => import("./screens/ImportedRecords").then(module => ({ default: module.ImportedRecords })))
 const JOURNAL_REWARD_MESSAGE = {
   AWARDED: "기록한 날 +4P가 반영됐어요.",
@@ -207,6 +209,14 @@ function overlayHistoryMarker(state: unknown, owner: string): AppOverlay | null 
 export type AppShellMultiPlanRuntime = Pick<React.ComponentProps<typeof DeferredMobileScreens.PlanBeta>,
   "multiAdjustmentResolverV3" | "readMultiAdjustedEvidenceV3">
 
+function ConnectionAccountBackBoundary({ enabled, onBack, children }: {
+  readonly enabled: boolean; readonly onBack: () => void; readonly children: React.ReactNode
+}) {
+  // The account screen remounts on an owner change, rearming the normal scoped Back layer.
+  useTaskFlowBack({ enabled, onBack })
+  return <>{children}</>
+}
+
 export function AppShell({ multiPlanRuntime, systemStatus }: {
   readonly multiPlanRuntime?: AppShellMultiPlanRuntime
   readonly systemStatus?: React.ReactNode
@@ -307,6 +317,13 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
   const overlayHistoryOwnerRef = React.useRef(`shell-${Date.now()}-${Math.random().toString(36).slice(2)}`)
   const restoreReturnRef = React.useRef<ShellReturnPoint | null>(null)
   const importReturnRef = React.useRef<RecordingOrigin | null>(null)
+  const connectionAccountReturn = React.useRef<RecordingOrigin | null>(null)
+  // The destination may survive sign-in; owner-bound drafts and reader state may not.
+  const connectionAccountRequested = React.useRef(false)
+  const [importMethod, setImportMethod] = React.useState<ImportMethod>("automatic")
+  React.useEffect(() => {
+    if (!v.accountOpen) { connectionAccountReturn.current = null; connectionAccountRequested.current = false }
+  }, [v.accountOpen])
   const importReviewSession = React.useRef<ImportReviewSession>({ scope: localJournalScopeGeneration(), review: null, position: null })
   const importedListPosition = React.useRef<ReaderPosition | null>(null)
   React.useEffect(() => onLocalJournalScopeChange(() => {
@@ -653,7 +670,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
     const scope = () => {
       domainVisit.current = null; domainVisits.current.clear(); pendingDomainExit.current = null; domainPopDecision.current = null; domainPositions.current.clear()
       setPublishedDock(null)
-      if (recordingOrigin.current) { setV(INITIAL_VIEW_STATE); setUtilityView(null) }
+      if (recordingOrigin.current && !connectionAccountRequested.current) { setV(INITIAL_VIEW_STATE); setUtilityView(null) }
       recordingOrigin.current = null
       coachingDayOrigin.current = null
       trainingContentOrigin.current = null
@@ -662,6 +679,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
       moreReturnPosition.current = null
       moreConnectionReturn.current = null
       importReturnRef.current = null
+      connectionAccountReturn.current = null
       setGuestOracleSession(null)
       setProfileNavigationState(undefined)
       setGameNavigationState(undefined)
@@ -1344,11 +1362,32 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
     restoreReturnRef.current = null
     restoreReturnPoint(point)
   })
-  const openImport = () => runViewTransition("push", () => {
+  const openImportWithMethod = (method: ImportMethod) => runViewTransition("push", () => {
     importReturnRef.current = captureRecordingOrigin(false)
+    setImportMethod(method)
     setUtilityView(null)
     setAthleteRecordsOpen(false)
     setV(s => ({ ...s, tab: "log", accountOpen: false, restoreOpen: false, importOpen: true }))
+  })
+  const openImport = () => openImportWithMethod("automatic")
+  const openFileImport = () => openImportWithMethod("file")
+  const openConnectionAccount = () => runViewTransition("push", () => {
+    connectionAccountReturn.current = captureRecordingOrigin(false)
+    connectionAccountRequested.current = true
+    setUtilityView(null)
+    setV(s => ({ ...s, tab: "home", accountOpen: true, importOpen: false }))
+  })
+  const closeAccount = () => runViewTransition("pop", () => {
+    setOracleEntry({ requested: false, invitation: null }); clearOracleInvitationReturn()
+    const origin = connectionAccountReturn.current, returnToConnection = connectionAccountRequested.current
+    connectionAccountReturn.current = null; connectionAccountRequested.current = false
+    if (origin && origin.owner === activeLocalAccount()) { restoreRecordingOrigin(origin); return }
+    if (returnToConnection) {
+      setImportMethod("automatic"); setUtilityView(null)
+      setV({ ...viewForTab("log"), importOpen: true })
+      return
+    }
+    setV(s => ({ ...s, accountOpen: false }))
   })
   const closeImport = () => runViewTransition("pop", () => {
     const point = importReturnRef.current
@@ -1380,6 +1419,21 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
     ) : <DeferredMobileScreens.LogDetail {...common} />
   }
 
+  const openGarminJournalRecord: OpenGarminJournalRecord = async (date, entryId, requestCurrent) => {
+    const owner = activeLocalAccount(), scope = localJournalScopeGeneration()
+    if (!owner || !requestCurrent()) return "UNAVAILABLE"
+    try {
+      const ready = await refreshAccountJournalRecordsForImport()
+      const current = () => requestCurrent() && ready && owner === activeLocalAccount() && scope === localJournalScopeGeneration()
+        && loadEntries().some(entry => entry.id === entryId && entry.date === date && entry.syncState === "synced")
+      if (!current()) return "UNAVAILABLE"
+      const navigated = runDraftSafeNavigation(() => runViewTransition("push", () => {
+        setUtilityView(null)
+        setV({ ...viewForTab("journal"), detailDate: date, detailEntryId: entryId })
+      }), false, current)
+      return navigated ? "OPENED" : "DRAFT_REVIEW"
+    } catch { return "UNAVAILABLE" }
+  }
   let screen: React.ReactNode
   if (v.tab === "home" && v.restoreOpen) {
     screen = (
@@ -1390,37 +1444,22 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
     )
   } else if (v.tab === "home" && v.accountOpen && accountEnabled) {
     screen = (
+      <ConnectionAccountBackBoundary enabled={connectionAccountRequested.current} onBack={closeAccount}>
       <DeferredMobileScreens.Account
         loungeRequested={loungeEntryIntent().requested}
         onOpenJournal={() => goTab("journal")}
         onOpenPlan={() => goTab("plan")}
-        onBack={() => runViewTransition("pop", () => {
-          setOracleEntry({ requested: false, invitation: null }); clearOracleInvitationReturn()
-          setV(s => ({ ...s, accountOpen: false }))
-        })}
+        onBack={() => { if (!connectionAccountRequested.current || !requestBrowserBackLayer()) closeAccount() }}
         onOpenImport={openImport}
         onOpenRestore={openRestore}
       />
+      </ConnectionAccountBackBoundary>
     )
   } else if (v.tab === "home" && utilityView === "more") {
     screen = (
       <DeferredMobileScreens.More
         ownerId={activeLocalAccount()}
-        onOpenJournalRecord={async (date, entryId, requestCurrent) => {
-          const owner = activeLocalAccount(), scope = localJournalScopeGeneration()
-          if (!owner || !requestCurrent()) return "UNAVAILABLE"
-          try {
-            const ready = await refreshAccountJournalRecordsForImport()
-            const current = () => requestCurrent() && ready && owner === activeLocalAccount() && scope === localJournalScopeGeneration()
-              && loadEntries().some(entry => entry.id === entryId && entry.date === date && entry.syncState === "synced")
-            if (!current()) return "UNAVAILABLE"
-            const navigated = runDraftSafeNavigation(() => runViewTransition("push", () => {
-              setUtilityView(null)
-              setV({ ...viewForTab("journal"), detailDate: date, detailEntryId: entryId })
-            }), false, current)
-            return navigated ? "OPENED" : "DRAFT_REVIEW"
-          } catch { return "UNAVAILABLE" }
-        }}
+        onOpenJournalRecord={openGarminJournalRecord}
         view={moreView}
         connectionOrigin={moreConnectionReturn.current?.view}
         onViewChange={next => runViewTransition(next === "tools" || moreView === "connections" && next === "about" ? "pop" : "push", () => {
@@ -1451,6 +1490,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
         onOpenOracleLibrary={oracleV2Enabled() ? () => openOverlay({ kind: "running-profile", stage: "overview", initialView: "library" }) : undefined}
         onOpenRecords={() => openOverlay({ kind: "athlete-records" })}
         onOpenImport={openImport}
+        onOpenFileImport={openFileImport}
         onOpenPlan={() => goTab("plan")}
         onOpenJournal={() => startRecording("quick-session")}
         onOpenAnalysis={() => goTab("trends")}
@@ -1639,6 +1679,10 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
     screen = (
       <DeferredMobileScreens.ImportActivities
         reviewSession={importReviewSession.current}
+        initialMethod={importMethod}
+        ownerId={activeLocalAccount()}
+        onOpenAccount={accountEnabled ? openConnectionAccount : undefined}
+        onOpenJournalRecord={openGarminJournalRecord}
         onBack={closeImport}
         onOpenLog={() => goTab("journal")}
         onOpenEntry={(date, entryId) => openOverlay({ kind: "imported-records", date, entryId })}
@@ -1703,7 +1747,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
         })}
         onBack={goHome}
         onWriteLog={() => goTab("log")}
-        onOpenImport={openImport}
+        onOpenImport={openFileImport}
         onOpenRecords={() => openOverlay({ kind: "athlete-records", initialPurpose: "PERSONAL_BEST" })}
         onWriteRecovery={() => startRecording("evening")}
         onOpenPlan={() => goTab("plan")}

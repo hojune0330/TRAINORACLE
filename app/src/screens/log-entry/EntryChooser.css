@@ -3,6 +3,7 @@
   gap: var(--space-1);
   margin: var(--space-3) 20px 0;
 }
+.entry-chooser__connection { margin: var(--space-4) 20px var(--space-5); }
 
 button.entry-chooser__option.category-card--row {
   width: 100%;

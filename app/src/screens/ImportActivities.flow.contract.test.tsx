@@ -19,9 +19,25 @@ beforeEach(async () => {
 })
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
 
-it("retains exact choices and excludes across file preparation, a failed replacement and resume without saving", async () => {
+it("starts with automatic connection and retains an unfinished file selection when switching methods", async () => {
   const user = userEvent.setup()
   render(<ImportActivities />)
+  expect(screen.getByRole("button", { name: "자동연동 추천" })).toHaveAttribute("aria-pressed", "true")
+  expect(screen.queryByLabelText("가져올 운동 파일 선택")).toBeNull()
+  await user.click(screen.getByRole("button", { name: "파일 가져오기" }))
+  await user.upload(screen.getByLabelText("가져올 운동 파일 선택"), records)
+  const choices = await screen.findAllByRole("combobox", { name: /저장 방식/u })
+  await user.selectOptions(choices[1]!, "exclude")
+  await user.click(screen.getByRole("button", { name: "자동연동 추천" }))
+  expect(screen.queryByTestId("import-draft-row")).toBeNull()
+  await user.click(screen.getByRole("button", { name: "파일 가져오기" }))
+  expect(screen.getAllByRole("combobox", { name: /저장 방식/u })[1]).toHaveValue("exclude")
+  expect(loadEntries()).toEqual([])
+})
+
+it("retains exact choices and excludes across file preparation, a failed replacement and resume without saving", async () => {
+  const user = userEvent.setup()
+  render(<ImportActivities initialMethod="file" />)
   await user.upload(screen.getByLabelText("가져올 운동 파일 선택"), records)
   const boxes = await screen.findAllByRole("checkbox")
   const choices = screen.getAllByRole("combobox", { name: /저장 방식/u })
@@ -66,7 +82,7 @@ it("does not label a device write as account confirmation", () => {
 it("restores a same-scope review across unmounts but refuses an A-B-A lifetime", async () => {
   const user = userEvent.setup()
   const session: ImportReviewSession = { scope: localJournalScopeGeneration(), review: null, position: null }
-  const first = render(<ImportActivities reviewSession={session} />)
+  const first = render(<ImportActivities initialMethod="file" reviewSession={session} />)
   await user.upload(screen.getByLabelText("가져올 운동 파일 선택"), records)
   const choices = await screen.findAllByRole("combobox", { name: /저장 방식/u })
   await user.selectOptions(choices[1]!, "exclude")
@@ -79,7 +95,7 @@ it("restores a same-scope review across unmounts but refuses an A-B-A lifetime",
   restored.unmount()
   setActiveLocalAccount("synthetic-other")
   setActiveLocalAccount(null)
-  render(<ImportActivities reviewSession={session} />)
+  render(<ImportActivities initialMethod="file" reviewSession={session} />)
   expect(screen.queryByTestId("import-draft-row")).toBeNull()
   expect(loadEntries()).toEqual([])
 })

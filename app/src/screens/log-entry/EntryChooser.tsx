@@ -1,6 +1,7 @@
 import React from "react"
-import { CheckCircle2, Flag, HeartPulse, PencilLine, Watch } from "lucide-react"
+import { CheckCircle2, Flag, HeartPulse, PencilLine } from "lucide-react"
 import { CategoryCard } from "../../components/CategoryCard"
+import { AutomaticConnectionEntry } from "../../components/AutomaticConnectionEntry"
 import "./EntryChooser.css"
 import { compactDate, dowOf } from "../../domain/dates"
 import { todayISO } from "../../domain/journal-store"
@@ -14,7 +15,7 @@ interface EntryChooserProps {
   readonly onBack?: () => void
   readonly onPick?: (entryType: LogEntryType) => void
   readonly targetDate?: string
-  /** 워치 내보내기 파일 가져오기 — 직접 쓰기의 대안 진입점 */
+  /** 자동연동을 기본으로 여는 가져오기 입구. */
   readonly onOpenImport?: () => void
 }
 
@@ -60,6 +61,7 @@ export function EntryChooser({ onBack, onPick, onOpenImport, targetDate }: Entry
         </div>
       </div>
 
+      {onOpenImport && <div className="entry-chooser__connection"><AutomaticConnectionEntry onOpen={onOpenImport} /></div>}
       <div className="entry-chooser__options app-choice-group">
         {ENTRY_OPTIONS.map((option) => (
           <CategoryCard key={option.id} className="entry-chooser__option" data-testid={`entry-choice-${option.id}`}
@@ -67,13 +69,6 @@ export function EntryChooser({ onBack, onPick, onOpenImport, targetDate }: Entry
             description={option.d} variant="row" onClick={() => onPick?.(option.id)} />
         ))}
       </div>
-
-      {onOpenImport && (
-        <div className="app-choice-group" style={{ padding: "20px 20px 0" }}>
-          <CategoryCard category="record" icon={Watch} variant="row" title="운동 파일 불러오기"
-            onClick={onOpenImport} data-testid="open-import" />
-        </div>
-      )}
 
     </div>
   )

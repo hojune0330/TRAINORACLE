@@ -137,15 +137,31 @@ describe("Account session exit", () => {
   it("does not mount private account controls before server admission is ready", async () => {
     let resolveSetup!: (value: { ok: boolean; ready: boolean; message: string }) => void
     mocks.loadSetup.mockImplementation(() => new Promise(resolve => { resolveSetup = resolve }))
+    const openImport = vi.fn()
 
-    render(<Account />)
+    render(<Account onOpenImport={openImport} />)
 
     expect(await screen.findByText("가입 정보를 안전하게 저장하고 있어요. 이 화면을 잠시 그대로 두세요.")).toBeVisible()
     await waitFor(() => expect(mocks.loadSetup).toHaveBeenCalled())
     expect(screen.queryByRole("button", { name: "합성 삭제 완료" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "운동 자동연동" })).not.toBeInTheDocument()
 
     await act(async () => { resolveSetup({ ok: true, ready: true, message: "준비됨" }) })
-    expect(await screen.findByRole("button", { name: "합성 삭제 완료" })).toBeVisible()
+    const management = await screen.findByRole("button", { name: "합성 삭제 완료" })
+    expect(management).toBeVisible()
+    const automaticEntry = screen.getByRole("button", { name: "운동 자동연동" })
+    expect(automaticEntry.compareDocumentPosition(management) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(screen.queryByTestId("import-teaser")).toBeNull()
+    await userEvent.click(automaticEntry)
+    expect(openImport).toHaveBeenCalledOnce()
+  })
+
+  it("introduces automatic connection before login without replacing the authentication steps", async () => {
+    mocks.currentUser.mockResolvedValue(null)
+    render(<Account onOpenImport={vi.fn()} />)
+    expect(await screen.findByTestId("guest-auth-gateway")).toBeVisible()
+    expect(screen.getByText("로그인하고 워치를 연결하면 새 운동을 자동으로 가져올 수 있어요.")).toBeVisible()
+    expect(screen.queryByRole("button", { name: "운동 자동연동" })).toBeNull()
   })
 
   it("keeps the signed-in account and setup hints when local sign-out fails", async () => {

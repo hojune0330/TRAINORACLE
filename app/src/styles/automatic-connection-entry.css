@@ -1,0 +1,15 @@
+button.category-card.automatic-connection-entry {
+  grid-column: 1 / -1;
+  background: var(--category-record-wash);
+  border-color: var(--category-record);
+}
+
+button.category-card.automatic-connection-entry:active { background: var(--surface-2); }
+
+.account-automatic-connection-benefit {
+  margin: var(--space-4) 0 0;
+  color: var(--ink-2);
+  font: 400 var(--fs-body) / 1.6 var(--sans);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}

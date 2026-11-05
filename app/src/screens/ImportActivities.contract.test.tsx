@@ -65,7 +65,7 @@ describe("ImportActivities — 고르기 단계", () => {
   })
 
   it("opens the native picker directly without requiring a provider choice", () => {
-    render(<ImportActivities />)
+    render(<ImportActivities initialMethod="file" />)
     const input = screen.getByLabelText(/가져올 운동 파일 선택/u)
     const click = vi.spyOn(input, "click").mockImplementation(() => undefined)
     fireEvent.click(screen.getByRole("button", { name: "파일이 있어요 · 바로 선택" }))
@@ -80,7 +80,7 @@ describe("ImportActivities — 고르기 단계", () => {
     ["COROS · 코로스", "COROS 파일 준비", "TCX"],
     ["애플 건강·삼성 헬스", "건강앱 파일 준비", "전체 ZIP·XML 백업은 아직 읽지 못해요"],
   ])("shows only the chosen %s preparation, keeps direct upload and returns to source choice", (value, title, text) => {
-    render(<ImportActivities />)
+    render(<ImportActivities initialMethod="file" />)
     fireEvent.click(screen.getByRole("button", { name: "파일 준비하기" }))
     fireEvent.click(screen.getByRole("button", { name: value }))
     expect(screen.getByRole("heading", { name: title })).toBeVisible()
@@ -101,7 +101,7 @@ describe("ImportActivities — 고르기 단계", () => {
   })
 
   it("keeps a single screen heading without adding a second heading to the file pick guidance", () => {
-    const { container } = render(<ImportActivities />)
+    const { container } = render(<ImportActivities initialMethod="file" />)
     const heading = screen.getByRole("heading", { name: "운동 기록 가져오기", level: 1 })
 
     expect(heading).toHaveClass("app-heading", "app-heading--screen", "app-heading--accent")
@@ -114,7 +114,7 @@ describe("ImportActivities — 고르기 단계", () => {
 
   it("explains unsupported native health XML instead of pretending it was imported", async () => {
     const user = userEvent.setup()
-    const { container } = render(<ImportActivities />)
+    const { container } = render(<ImportActivities initialMethod="file" />)
     await pickFile(user, upload('<HealthData locale="ko_KR"><Record type="steps" value="100" /></HealthData>', "export.xml"))
     expect(await screen.findByTestId("import-failure")).toHaveTextContent("건강앱의 전체 ZIP·XML 백업")
     expect(loadEntries()).toEqual([])
@@ -123,7 +123,7 @@ describe("ImportActivities — 고르기 단계", () => {
 
   it("keeps decorative file guidance at the first pick only, with file privacy and format actions unchanged", async () => {
     const user = userEvent.setup()
-    const { container } = render(<ImportActivities />)
+    const { container } = render(<ImportActivities initialMethod="file" />)
     const guide = container.querySelector(".contextual-entry-intro img")
 
     expect(guide).toHaveAttribute("width", "80")
@@ -163,7 +163,7 @@ describe("ImportActivities — 고르기 단계", () => {
 
   it("파일을 고르기 전에 기기 내 처리 안내를 보여준다", () => {
     // Given / When
-    render(<ImportActivities />)
+    render(<ImportActivities initialMethod="file" />)
 
     // Then
     const notice = screen.getByTestId("import-privacy-notice")
@@ -174,17 +174,17 @@ describe("ImportActivities — 고르기 단계", () => {
     expect(details).toHaveStyle({ fontSize: "var(--fs-body-sm)" })
   })
 
-  it("자동 연동 시점을 약속하지 않고 원본 보존 안내를 한 번만 보여준다", async () => {
+  it("자동연동 화면을 안내하고 원본 보존 안내를 한 번만 보여준다", async () => {
     // Given / When
-    render(<ImportActivities />)
+    render(<ImportActivities initialMethod="file" />)
 
     // Then
     const status = screen.getByTestId("oauth-status")
-    const help = screen.getByText("가민·코로스·WHOOP·스트라바 자동 연동은 준비 중이에요")
+    const help = screen.getByText("새 운동을 자동으로 가져오고 싶어요")
     expect(help).toBeVisible()
     expect(help.closest("details")).not.toHaveAttribute("open")
     await userEvent.click(help)
-    expect(status).toHaveTextContent(/시작 날짜는 아직 정해지지 않았어요/u)
+    expect(status).toHaveTextContent(/자동연동에서 워치별 연결 가능 여부/u)
     expect(screen.getByText("계정 자동 연결 대신 파일을 가져와요. 원본 기록은 바뀌지 않아요.")).toBeVisible()
     expect(screen.queryByText("파일을 가져와도 워치 앱의 원본 기록은 바뀌지 않아요.")).toBeNull()
     expect(status.textContent ?? "").not.toMatch(/곧 가져올 수 있어요/u)
@@ -192,7 +192,7 @@ describe("ImportActivities — 고르기 단계", () => {
 
   it("CSV와 JSON 파일을 선택할 수 있고 저장 전 미리보기를 보여준다", async () => {
     const user = userEvent.setup()
-    render(<ImportActivities />)
+    render(<ImportActivities initialMethod="file" />)
     const input = screen.getByLabelText(/가져올 운동 파일 선택/u)
 
     expect(input).toHaveAttribute("accept", expect.stringContaining(".csv"))
@@ -215,7 +215,7 @@ describe("ImportActivities — 고르기 단계", () => {
   it("읽지 못한 파일은 실패를 드러내고 기존 일지를 건드리지 않는다", async () => {
     // Given
     const user = userEvent.setup()
-    render(<ImportActivities />)
+    render(<ImportActivities initialMethod="file" />)
 
     // When
     await pickFile(user, upload("this is not xml at all", "broken.tcx"))
@@ -230,7 +230,7 @@ describe("ImportActivities — 고르기 단계", () => {
     ['<?xml version="1.0"?><TrainingCenterDatabase><Activities /></TrainingCenterDatabase>', "파일은 읽었지만 일지로 옮길 활동을 찾지 못했어요"],
     ["<TrainingCenterDatabase><Activities></TrainingCenterDatabase>", "이 파일을 읽지 못했어요"],
   ])("distinguishes valid empty TCX from malformed XML: %s", async (text, message) => {
-    render(<ImportActivities />)
+    render(<ImportActivities initialMethod="file" />)
     await pickFile(userEvent.setup(), upload(text))
     expect(await screen.findByTestId("import-failure")).toHaveTextContent(message)
     expect(loadEntries()).toEqual([])
@@ -238,7 +238,7 @@ describe("ImportActivities — 고르기 단계", () => {
 
   it("큰 파일은 내용을 읽기 전에 거절하고 같은 파일을 다시 고를 수 있게 한다", async () => {
     const user = userEvent.setup()
-    render(<ImportActivities />)
+    render(<ImportActivities initialMethod="file" />)
     const file = upload("small body", "oversized.tcx")
     Object.defineProperty(file, "size", { value: 50 * 1024 * 1024 })
     const read = vi.spyOn(file, "text")
@@ -266,7 +266,7 @@ describe("ImportActivities — 고르기 단계", () => {
     }
     vi.stubGlobal("FileReader", HangingFileReader)
     const user = userEvent.setup()
-    render(<ImportActivities />)
+    render(<ImportActivities initialMethod="file" />)
 
     await pickFile(user, upload(tcxFile([tcxLap("2026-07-20T06:00:00Z", 10000, 3000)])))
     await user.click(await screen.findByRole("button", { name: "가져오기 취소" }))
@@ -285,7 +285,7 @@ describe("ImportActivities — 확인 단계", () => {
   it("읽은 활동을 목록으로 보여주고, 고르기 전에는 저장 버튼이 잠겨 있다", async () => {
     // Given
     const user = userEvent.setup()
-    render(<ImportActivities />)
+    render(<ImportActivities initialMethod="file" />)
 
     // When
     await pickFile(user, upload(tcxFile([tcxLap("2026-07-20T06:00:00Z", 10000, 3000)])))
@@ -300,7 +300,7 @@ describe("ImportActivities — 확인 단계", () => {
   it("읽지 못한 활동 수를 숨기지 않는다", async () => {
     // Given
     const user = userEvent.setup()
-    render(<ImportActivities />)
+    render(<ImportActivities initialMethod="file" />)
     const mixed = tcxFile([
       tcxLap("2026-07-20T06:00:00Z", 10000, 3000),
       tcxLap("", 0, 0),
@@ -317,7 +317,7 @@ describe("ImportActivities — 확인 단계", () => {
   it("중복으로 보이는 활동은 기본 해제 상태로 둔다", async () => {
     // Given — 같은 날 같은 거리의 일지가 이미 있다
     const user = userEvent.setup()
-    render(<ImportActivities />)
+    render(<ImportActivities initialMethod="file" />)
     await pickFile(user, upload(tcxFile([tcxLap("2026-07-20T06:00:00Z", 10000, 3000)])))
     await waitFor(() => expect(screen.getAllByTestId("import-draft-row")).toHaveLength(1))
     await user.click(screen.getByRole("button", { name: /고른 1건 일지에 저장/u }))
@@ -337,7 +337,7 @@ describe("ImportActivities — 확인 단계", () => {
   it("기존 일지 보완과 새 가져오기 편집 범위 및 통계 제외를 미리 알린다", async () => {
     // Given
     const user = userEvent.setup()
-    render(<ImportActivities />)
+    render(<ImportActivities initialMethod="file" />)
 
     // When
     await pickFile(user, upload(tcxFile([tcxLap("2026-07-20T06:00:00Z", 10000, 3000)])))
@@ -360,7 +360,7 @@ describe("ImportActivities — 저장", () => {
 
   it("keeps keyboard focus in the result after explicitly excluding a record", async () => {
     const user = userEvent.setup()
-    render(<ImportActivities />)
+    render(<ImportActivities initialMethod="file" />)
     await pickFile(user, upload(tcxFile([tcxLap("2026-07-20T06:00:00Z", 5000, 1500)])))
     await user.selectOptions(await screen.findByRole("combobox", { name: /저장 방식/ }), "exclude")
     screen.getByRole("button", { name: "고른 1건 가져오기에서 제외" }).focus()
@@ -376,7 +376,7 @@ describe("ImportActivities — 저장", () => {
     // Given
     const user = userEvent.setup()
     const onOpenLog = vi.fn()
-    render(<ImportActivities onOpenLog={onOpenLog} />)
+    render(<ImportActivities initialMethod="file" onOpenLog={onOpenLog} />)
     const two = tcxFile([
       tcxLap("2026-07-20T06:00:00Z", 10000, 3000),
       tcxLap("2026-07-21T06:00:00Z", 5000, 1500),
@@ -405,7 +405,7 @@ describe("ImportActivities — 저장", () => {
   it("저장한 값은 RPE를 채워 넣지 않는다", async () => {
     // Given
     const user = userEvent.setup()
-    render(<ImportActivities />)
+    render(<ImportActivities initialMethod="file" />)
     await pickFile(user, upload(tcxFile([tcxLap("2026-07-20T06:00:00Z", 10000, 3000)])))
     await waitFor(() => expect(screen.getAllByTestId("import-draft-row")).toHaveLength(1))
 

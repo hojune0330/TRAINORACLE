@@ -14,6 +14,7 @@ import { useNavigationReturnFrame } from "../hooks/useNavigationReturnFrame"
 import { AppIntroduction } from "./AppIntroduction"
 import { DeviceConnections } from "./DeviceConnections"
 import type { OpenGarminJournalRecord } from "../components/GarminConnectionPanel"
+import { AutomaticConnectionEntry } from "../components/AutomaticConnectionEntry"
 
 export type MoreView = "tools" | "learning" | "account" | "backup" | "about" | "introduction" | "connections"
 
@@ -45,6 +46,7 @@ export type MoreProps = {
   readonly onOpenOracleLibrary?: () => void
   readonly onOpenRecords?: () => void
   readonly onOpenImport?: () => void
+  readonly onOpenFileImport?: () => void
   readonly onOpenPlan?: () => void
   readonly onOpenJournal?: () => void
   readonly onOpenAnalysis?: () => void
@@ -72,6 +74,7 @@ export function More({
   onOpenOracleLibrary,
   onOpenRecords,
   onOpenImport,
+  onOpenFileImport,
   onOpenPlan,
   onOpenJournal,
   onOpenAnalysis,
@@ -138,6 +141,7 @@ export function More({
 
       <div className={`more-screen__list${activeView === "tools" ? " more-screen__list--tools" : ""}`}>
         {activeView === "tools" && <>
+        {onOpenImport && <AutomaticConnectionEntry onOpen={onOpenImport} />}
         {(onOpenMinigame || onOpenPaceCalculator) && <MenuGroup title="게임·페이스">
           {onOpenMinigame && <MenuAction icon={Gamepad2} label="게임 라운지" illustration="running-game-announcement" onClick={onOpenMinigame} />}
           {onOpenPaceCalculator && <MenuAction category="training" icon={Calculator} label="페이스 계산기" detail="거리와 기록으로 페이스·구간 시간 계산" illustration="pace-calculator-announcement" onClick={onOpenPaceCalculator} />}
@@ -151,7 +155,6 @@ export function More({
         <InstallShortcutMenuEntry />
         {(onOpenImport || onOpenRecords) && <MenuGroup title="기록 도구">
           {onOpenRecords && <MenuAction category="record" icon={Flag} label="경기 기록 추가·수정" onClick={onOpenRecords} />}
-          {onOpenImport && <MenuAction category="record" icon={Watch} label="워치 파일 가져오기" onClick={onOpenImport} />}
           <MenuAction category="record" icon={Watch} label="기기 연동 상태" onClick={() => changeView("connections")} />
         </MenuGroup>}
         <MenuGroup title="배우기">
@@ -166,7 +169,7 @@ export function More({
           <MenuAction icon={Info} label={VIEW_TITLES.about} onClick={() => changeView("about")} />
         </MenuGroup>
         </>}
-        {activeView === "connections" && <DeviceConnections ownerId={ownerId} onOpenAccount={onOpenAccount} onOpenJournalRecord={onOpenJournalRecord} onOpenImport={onOpenImport} />}
+        {activeView === "connections" && <DeviceConnections ownerId={ownerId} onOpenAccount={onOpenAccount} onOpenJournalRecord={onOpenJournalRecord} onOpenImport={onOpenFileImport ?? onOpenImport} />}
         {activeView === "introduction" && <AppIntroduction
           onOpenPlan={onOpenPlan} onOpenJournal={onOpenJournal} onOpenRewards={onOpenRewards}
           onOpenAnalysis={onOpenAnalysis} onOpenPaceCalculator={onOpenPaceCalculator}
