@@ -4,9 +4,11 @@ import {INGRESS_VERSION,INGRESS_HEADERS,IngressError,deny,unavailable,requireCon
 /** Direct Garmin -> Cloudflare only. A Worker subrequest can alter client IP
  * headers; CF-Worker is platform-added to fetch subrequests and is rejected.
  * Do not mount behind another CDN, Worker or a service binding. See README. */
-export function createGarminIngressWorker({keyId,audience,secretHex,publicUrl,originUrl},{fetchImpl=fetch,cryptoImpl=crypto,now=()=>Date.now()}={}){
-  requireConfig({keyId,audience,secretHex});publicUrl=exactIngressUrl(publicUrl);originUrl=exactIngressUrl(originUrl);
+export function createGarminIngressWorker({keyId,audience,secretHex,publicUrl,originUrl,gatewayAnonJwt},{fetchImpl=fetch,cryptoImpl=crypto,now=()=>Date.now()}={}){
+  requireConfig({keyId,audience,secretHex});publicUrl=exactIngressUrl(publicUrl);originUrl=exactIngressUrl(originUrl,{supabaseOrigin:true});
   if(new URL(publicUrl).origin===new URL(originUrl).origin)unavailable();
+  const supabaseOrigin=new URL(originUrl).pathname.startsWith('/functions/v1/');
+  if(supabaseOrigin&&(typeof gatewayAnonJwt!=='string'||!/^eyJ[A-Za-z0-9_-]+\.eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(gatewayAnonJwt)))unavailable();
   const rawKey=keyFromHex(secretHex);
   const keyPromise=cryptoImpl.subtle.importKey('raw',rawKey,{name:'HMAC',hash:'SHA-256'},false,['sign']);
   rawKey.fill(0);
@@ -27,6 +29,9 @@ export function createGarminIngressWorker({keyId,audience,secretHex,publicUrl,or
       const headers=safeHeaders(clientId);headers.set(INGRESS_HEADERS.version,INGRESS_VERSION);
       for(const name of ['keyId','audience','timestamp','nonce','sourceIp','bodySha256'])headers.set(INGRESS_HEADERS[name],fields[name]);
       headers.set(INGRESS_HEADERS.signature,signature);
+      // The public anon JWT satisfies the platform gateway only. It cannot
+      // replace the signed Garmin envelope or a user's authenticated session.
+      if(supabaseOrigin)headers.set('authorization',`Bearer ${gatewayAnonJwt}`);
       const response=await fetchImpl(originUrl,{method:'POST',headers,body,redirect:'error',cache:'no-store',credentials:'omit',signal:AbortSignal.timeout(20000)});
       // ACK only the existing durable ingress handler's 200; do not reflect an
       // origin body, headers, redirects, errors or credentials to the sender.
@@ -44,7 +49,7 @@ export default {async fetch(request,env){
   try{
     let worker=workers.get(env);if(!worker){worker=createGarminIngressWorker({
       keyId:env.TRAINORACLE_GARMIN_INGRESS_KEY_ID,audience:env.TRAINORACLE_GARMIN_INGRESS_AUDIENCE,
-      secretHex:env.TRAINORACLE_GARMIN_INGRESS_SECRET_HEX,publicUrl:env.TRAINORACLE_GARMIN_INGRESS_PUBLIC_URL,originUrl:env.TRAINORACLE_GARMIN_INGRESS_ORIGIN_URL,
+      secretHex:env.TRAINORACLE_GARMIN_INGRESS_SECRET_HEX,publicUrl:env.TRAINORACLE_GARMIN_INGRESS_PUBLIC_URL,originUrl:env.TRAINORACLE_GARMIN_INGRESS_ORIGIN_URL,gatewayAnonJwt:env.TRAINORACLE_GARMIN_GATEWAY_JWT??env.SUPABASE_ANON_KEY,
     });workers.set(env,worker);}return await worker.fetch(request);
   }catch{return ingressResponse(503,{error:'INGRESS_CONFIGURATION_PENDING'});}
 }};

@@ -1,6 +1,7 @@
 import { createServer } from 'node:http';
 import { randomUUID, createHash } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
+import process from 'node:process';
 import { encryptAccountJournalDocument } from '../../supabase/functions/_shared/account-journal-crypto.mjs';
 import { accountJournalMetadata, importJournalAttestor, importJournalKeyring, validateAccountJournalDocument } from '../../supabase/functions/_shared/account-journal-handler.mjs';
 import { VERSION, UUID, ID, exact, fail, IntegrationError, canonical, sha, sign, sameSignature, nonce, stableUuid, boundedJson, keyBytes, createVault, prepareObservation, prepareDetail } from './primitives.mjs';
@@ -43,7 +44,7 @@ export function providerJournalDocument(auth,row,observation,clock=null) {
   return {documentId,journalEntryId,document};
 }
 
-export function createGarminHandler({repository,vault,provider,identityKey,relayHttpKey,journalKeyring,journalAttest,push,allowedOrigins=[],enabled=false,now=()=>Date.now()}) {
+export function createGarminRuntime({repository,vault,provider,identityKey,relayHttpKey,journalKeyring,journalAttest,push,allowedOrigins=[],enabled=false,now=()=>Date.now()}) {
   const origins=new Set(allowedOrigins);const configHash=provider?.configHash??'0'.repeat(64);
   const ensureProvider=()=>{if(!enabled||!provider||!provider.isCurrent())fail(503,'PROVIDER_CONFIGURATION_PENDING');};
   const maintenance=repository&&provider&&vault?createGarminMaintenance({repository,provider,vault,now}):null;
@@ -59,7 +60,18 @@ export function createGarminHandler({repository,vault,provider,identityKey,relay
     return {documentId:proposal.documentId,journalEntryId:proposal.journalEntryId,journalProof};
   }
   const autosave=createGarminAutosave({repository,configHash,decode,sourceContext,prepare});
-  return async (request,transport={})=>{
+  // Internal functions, never client-selected callbacks. Edge scheduling uses
+  // these directly after its own narrow authentication, without loopback HTTP.
+  const runTask=async task=>{
+    if(!repository||!vault)fail(503,'OPERATIONS_PENDING');
+    if(task==='revocations'){if(!provider||!maintenance)fail(503,'PROVIDER_CONFIGURATION_PENDING');return maintenance.revocations();}
+    ensureProvider();
+    if(task==='process'){if(!push)fail(503,'PROVIDER_CONFIGURATION_PENDING');return push.processOne();}
+    if(task==='autosave')return autosave();
+    if(task==='maintenance'&&maintenance)return maintenance.processOne();
+    fail(422,'INVALID_INPUT');
+  };
+  const handler=async (request,transport={})=>{
     const origin=request.headers.get('origin');const headers={'content-type':'application/json','cache-control':'no-store','pragma':'no-cache','x-content-type-options':'nosniff','referrer-policy':'no-referrer',...(origin&&origins.has(origin)?{'access-control-allow-origin':origin,'vary':'Origin'}:{})};
     const respond=(status,value)=>new Response(JSON.stringify(status<400?{schemaVersion:VERSION,...value}:value),{status,headers});
     try{
@@ -76,12 +88,10 @@ export function createGarminHandler({repository,vault,provider,identityKey,relay
         const timestamp=request.headers.get('x-trainoracle-relay-timestamp');if(!/^\d{10,13}$/.test(timestamp??'')||Math.abs(now()-Number(timestamp))>60_000)fail(403,'ACCESS_DENIED');
         const input=await boundedJson(request,6_500_000);
         if(!sameSignature(request.headers.get('x-trainoracle-relay-signature'),sign(relayHttpKey,`${timestamp}\n${path}\n${canonical(input)}`)))fail(403,'ACCESS_DENIED');
-        if(path==='/internal/garmin/autosave'){if(!exact(input,[]))fail(422,'INVALID_INPUT');return respond(200,await autosave());}
-        if(path==='/internal/garmin/process'){if(!exact(input,[])||!push)fail(422,'INVALID_INPUT');return respond(200,await push.processOne());}
-        if(path==='/internal/garmin/maintenance'){if(!exact(input,[])||!maintenance)fail(422,'INVALID_INPUT');return respond(200,await maintenance.processOne());}
+        if(['/internal/garmin/autosave','/internal/garmin/process','/internal/garmin/maintenance'].includes(path)){if(!exact(input,[]))fail(422,'INVALID_INPUT');return respond(200,await runTask(path.split('/').at(-1)));}
         if(path==='/internal/garmin/events'&&provider.kind==='GARMIN_STARTER')fail(422,'UNSUPPORTED_GARMIN_FEED');
         if(path==='/internal/garmin/revocations'){
-          if(!exact(input,[])||!maintenance)fail(422,'INVALID_INPUT');return respond(200,await maintenance.revocations());
+          if(!exact(input,[]))fail(422,'INVALID_INPUT');return respond(200,await runTask('revocations'));
         }
         if(!exact(input,['eventId','connectionId','epoch','subject','activityId','revision','kind','observation','detail'])||!ID.test(input.eventId)||!UUID.test(input.connectionId)||!UUID.test(input.epoch)||!ID.test(input.subject)||!ID.test(input.activityId)||!positive(input.revision)||!['UPSERT','DELETE'].includes(input.kind))fail(422,'INVALID_INPUT');
         if(input.kind==='DELETE'&&(input.observation!==null||input.detail!==null))fail(422,'INVALID_INPUT');
@@ -160,10 +170,13 @@ export function createGarminHandler({repository,vault,provider,identityKey,relay
       fail(422,'INVALID_INPUT');
     }catch(error){return respond(error instanceof IntegrationError?error.status:503,{error:error instanceof IntegrationError?error.code:'OPERATIONS_PENDING'});}
   };
+  return Object.freeze({handler,runTask,configHash});
 }
 
+export function createGarminHandler(options){return createGarminRuntime(options).handler;}
+
 export function createNodeServer(handler){const server=createServer(async(req,res)=>{try{const request=new Request(`http://localhost${req.url}`,{method:req.method,headers:req.headers,...(['GET','HEAD'].includes(req.method)?{}:{body:req,duplex:'half'})});const result=await handler(request,{peerAddress:req.socket.remoteAddress});res.writeHead(result.status,Object.fromEntries(result.headers));res.end(Buffer.from(await result.arrayBuffer()));}catch{res.writeHead(503,{'content-type':'application/json','cache-control':'no-store'});res.end('{"error":"OPERATIONS_PENDING"}');}});server.requestTimeout=25000;server.headersTimeout=10000;server.maxHeadersCount=40;return server;}
-export async function runtimeFromEnvironment(env=process.env){
+export async function runtimeFromEnvironment(env=process.env,{inProcessTasks=false}={}){
   const enabled=env.TRAINORACLE_GARMIN_ENABLED==='true';let repository,vault,provider,journalKeyring,journalAttest,identityKey,relayHttpKey;
   if(env.SUPABASE_URL&&env.SUPABASE_ANON_KEY&&env.TRAINORACLE_GARMIN_ATTESTATION_JSON&&env.TRAINORACLE_GARMIN_VAULT_JSON){
     repository=createSupabaseRepository({url:env.SUPABASE_URL,publishableKey:env.SUPABASE_ANON_KEY,attestation:JSON.parse(env.TRAINORACLE_GARMIN_ATTESTATION_JSON),relayAttestation:env.TRAINORACLE_GARMIN_RELAY_ATTESTATION_JSON?JSON.parse(env.TRAINORACLE_GARMIN_RELAY_ATTESTATION_JSON):undefined,serviceRoleKey:env.SUPABASE_SERVICE_ROLE_KEY});
@@ -174,8 +187,8 @@ export async function runtimeFromEnvironment(env=process.env){
   if(env.TRAINORACLE_GARMIN_REVIEWED_PROFILE_JSON){try{const profile=JSON.parse(env.TRAINORACLE_GARMIN_REVIEWED_PROFILE_JSON);provider=profile.accessLevel==='STARTER'?createGarminStarterProvider(profile):undefined;}catch{provider=undefined;}}
   if(env.TRAINORACLE_JOURNAL_KEYRING_JSON&&env.TRAINORACLE_JOURNAL_ATTESTATION_JSON){journalKeyring=await importJournalKeyring(env.TRAINORACLE_JOURNAL_KEYRING_JSON);journalAttest=await importJournalAttestor(env.TRAINORACLE_JOURNAL_ATTESTATION_JSON);}
   const push=repository&&provider?.kind==='GARMIN_STARTER'?createGarminPushRuntime({repository,vault,provider,identityKey,enabled:enabled&&env.TRAINORACLE_GARMIN_PUSH_ENABLED==='true',trustedProxyAddresses:(env.TRAINORACLE_GARMIN_TRUSTED_PROXY_ADDRESSES??'').split(',').filter(Boolean)}):undefined;
-  return {handler:createGarminHandler({repository,vault,provider,identityKey,relayHttpKey,journalKeyring,journalAttest,push,enabled,allowedOrigins:(env.TRAINORACLE_GARMIN_ALLOWED_ORIGINS??'').split(',').map(s=>s.trim()).filter(Boolean)}),
-    configured:!!(repository&&vault&&provider?.isCurrent()&&identityKey&&relayHttpKey&&journalKeyring&&journalAttest&&env.TRAINORACLE_GARMIN_RELAY_ATTESTATION_JSON&&env.SUPABASE_SERVICE_ROLE_KEY)};
+  return {...createGarminRuntime({repository,vault,provider,identityKey,relayHttpKey,journalKeyring,journalAttest,push,enabled,allowedOrigins:(env.TRAINORACLE_GARMIN_ALLOWED_ORIGINS??'').split(',').map(s=>s.trim()).filter(Boolean)}),
+    configured:!!(repository&&vault&&provider?.isCurrent()&&identityKey&&(inProcessTasks||relayHttpKey)&&journalKeyring&&journalAttest&&env.TRAINORACLE_GARMIN_RELAY_ATTESTATION_JSON&&env.SUPABASE_SERVICE_ROLE_KEY)};
 }
 export async function serviceFromEnvironment(env=process.env){return createNodeServer((await runtimeFromEnvironment(env)).handler);}
-if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){try{const server=await serviceFromEnvironment();const port=Number(process.env.PORT??8789);if(!Number.isInteger(port)||port<1||port>65535)throw 0;server.listen(port,'127.0.0.1');}catch{process.stderr.write('GARMIN_INTEGRATION_CONFIGURATION_INVALID\n');process.exitCode=1;}}
+if(typeof process!=='undefined'&&process.argv?.[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){try{const server=await serviceFromEnvironment();const port=Number(process.env.PORT??8789);if(!Number.isInteger(port)||port<1||port>65535)throw 0;server.listen(port,'127.0.0.1');}catch{process.stderr.write('GARMIN_INTEGRATION_CONFIGURATION_INVALID\n');process.exitCode=1;}}

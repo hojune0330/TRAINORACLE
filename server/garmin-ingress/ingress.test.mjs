@@ -26,6 +26,22 @@ function signed({url=originUrl,payload=body,method='POST',changes={},headers={}}
 }
 const node=(handler=()=>Response.json({queued:1}),options={})=>createSignedGarminIngress(handler,{...config,now:()=>at,...options});
 
+test('Supabase origin keeps platform JWT and signed Garmin authentication together',async()=>{
+  const hosted='https://texspxlpjungyarkvtkc.supabase.co/functions/v1/garmin-integration/webhooks/garmin';
+  const gatewayAnonJwt=`eyJhbGciOiJIUzI1NiJ9.${Buffer.from(JSON.stringify({role:'anon',ref:'texspxlpjungyarkvtkc'})).toString('base64url')}.synthetic`;
+  let seen;
+  const worker=createGarminIngressWorker({...config,publicUrl,originUrl:hosted,gatewayAnonJwt},{now:()=>at,fetchImpl:async(url,options)=>{
+    seen={url,options};const rewritten=new Request(originUrl,options);
+    return node()(rewritten);
+  }});
+  assert.equal((await worker.fetch(direct())).status,200);
+  assert.equal(seen.url,hosted);assert.equal(seen.options.headers.get('authorization'),`Bearer ${gatewayAnonJwt}`);
+  assert.match(seen.options.headers.get(INGRESS_HEADERS.signature),/^[a-f0-9]{64}$/);
+  assert.throws(()=>createGarminIngressWorker({...config,publicUrl,originUrl:hosted}));
+  assert.throws(()=>createGarminIngressWorker({...config,publicUrl:hosted,originUrl,gatewayAnonJwt}));
+  assert.throws(()=>createGarminIngressWorker({...config,publicUrl,originUrl:hosted+'?redirect=other',gatewayAnonJwt}));
+});
+
 test('edge signs exact bytes and Node preserves them for existing Garmin source authentication',async()=>{
   const calls=[];
   const handler=node(async(request,transport)=>{

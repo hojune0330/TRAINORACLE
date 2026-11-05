@@ -1,5 +1,29 @@
 # Company-hosted Garmin integration candidate
 
+## Current backend direction — 2026-11-05
+
+New deployments use `supabase/functions/garmin-integration/index.ts`: the existing
+Supabase project owns authentication, encrypted storage, token maintenance and
+atomic journal saves. Cloudflare only verifies Garmin's delivery source and
+signs the request. The Node/Render entrypoint remains a rollback candidate, not
+a prerequisite of the Edge path. Do not copy the journal keyring to Render.
+
+Edge keeps platform `verify_jwt=true`, plus the existing user-session, signed
+ingress and Cron-HMAC checks. `TRAINORACLE_GARMIN_GATEWAY_JWT` is the project's
+public legacy anon JWT for the gateway, separate from database API-key format.
+The existing journal root is pinned in DB and derives purpose-separated Garmin
+keys inside Supabase. Explicit key changes cannot overwrite an existing root.
+
+`garmin_private.schedule_tick()` runs every minute and selects only work that is
+due. A successful token rotation followed by a transient permissions error is
+retried using the persisted successor. Provider-returned access/refresh expiry
+is renewed with 600 seconds of headroom. Operating approval may have no expiry;
+an explicitly configured expiry or revoked approval is still honored.
+
+See [delivery evidence](../../reports/operations/GARMIN_BACKEND_SIMPLIFICATION_2026-11-05.md)
+for deployed state and remaining provider activation. The historical candidate
+description below is not current deployment evidence.
+
 This is a runnable authenticated service and PostgreSQL candidate, not a deployed
 Garmin integration or evidence of app-specific Garmin permission. Actual Starter
 OAuth2 and PUSH wire adapters were implemented after the owner obtained the issued

@@ -64,3 +64,7 @@ verify_jwt = false
 # Private operator verification; never ordinary end-user JWT authorization.
 [functions.lounge-identity-deletion]
 verify_jwt = false
+
+# Platform JWT stays enabled. User session / ingress / Cron checks also run.
+[functions.garmin-integration]
+verify_jwt = true

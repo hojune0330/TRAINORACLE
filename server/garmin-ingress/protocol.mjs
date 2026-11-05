@@ -24,9 +24,11 @@ export function sourceIpv4(value){
   if(value.split('.').some(part=>Number(part)>255||String(Number(part))!==part))deny();
   return value;
 }
-export function exactIngressUrl(raw){
+export function exactIngressUrl(raw,{supabaseOrigin=false}={}){
   let url;try{url=new URL(raw);}catch{unavailable();}
-  if(url.protocol!=='https:'||url.username||url.password||url.port||url.search||url.hash||url.pathname!==INGRESS_PATH||url.href!==raw)unavailable();
+  const pathAllowed=url.pathname===INGRESS_PATH||supabaseOrigin&&/^[a-z0-9]{20}\.supabase\.co$/.test(url.hostname)
+    &&url.pathname==='/functions/v1/garmin-integration/webhooks/garmin';
+  if(url.protocol!=='https:'||url.username||url.password||url.port||url.search||url.hash||!pathAllowed||url.href!==raw)unavailable();
   return url.href;
 }
 export function requireIngressRequest(request){

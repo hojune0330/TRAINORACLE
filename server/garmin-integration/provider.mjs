@@ -5,9 +5,12 @@ import { boundedJson, canonical, fail, ID, object, sha, trustedUrl } from './pri
  * requires reviewed vendor documentation and a matching server-owned DB approval.
  * No Garmin network address is compiled into this service. */
 export function createReviewedProvider(config, {allowLocalHttp=false,fetchImpl=fetch,now=()=>Date.now()}={}) {
+  // Operating approval has no invented renewal deadline. An explicitly supplied
+  // deadline remains binding; OAuth access/refresh expiry is a separate contract.
+  const validUntil=config?.validUntil==null?null:typeof config.validUntil==='string'?Date.parse(config.validUntil):NaN;
+  const current=()=>validUntil===null||Number.isFinite(validUntil)&&validUntil>now();
   if(!object(config)||config.protocol!=='OAUTH2_AUTHORIZATION_CODE_PKCE'
-    ||!ID.test(config.evidenceReference??'')||Date.parse(config.validUntil)<=now()
-    ||!Number.isFinite(Date.parse(config.validUntil))||!config.clientId
+    ||!ID.test(config.evidenceReference??'')||!current()||!config.clientId
     ||!['none','client_secret_basic','client_secret_post'].includes(config.tokenAuth)
     ||config.tokenAuth!=='none'&&(!config.clientSecret||typeof config.clientSecret!=='string')
     ||!Array.isArray(config.scopes)||!config.scopes.length||config.scopes.some(s=>typeof s!=='string'||!/^[\x21\x23-\x5B\x5D-\x7E]{1,200}$/.test(s))
@@ -24,7 +27,7 @@ export function createReviewedProvider(config, {allowLocalHttp=false,fetchImpl=f
   // credentials. Runtime validity + SQL evidence expiry are checked independently.
   const {clientSecret:ignored,validUntil:ignoredExpiry,evidenceReference:ignoredEvidence,...publicProfile}=config;
   const configHash=sha(canonical(publicProfile));
-  const ready=()=>{if(Date.parse(config.validUntil)<=now())fail(503,'PROVIDER_CONFIGURATION_PENDING');};
+  const ready=()=>{if(!current())fail(503,'PROVIDER_CONFIGURATION_PENDING');};
   async function request(url,options,max=64000){ready();let response;try{response=await fetchImpl(url,{...options,redirect:'error',cache:'no-store',signal:AbortSignal.timeout(8000)});}catch{fail(502,'PROVIDER_UNAVAILABLE');}if(!response.ok)fail(502,'PROVIDER_UNAVAILABLE');return max===0?null:boundedJson(response,max);}
   async function token(form){const headers={'content-type':'application/x-www-form-urlencoded','accept':'application/json'};
     form.set('client_id',config.clientId);
@@ -39,7 +42,7 @@ export function createReviewedProvider(config, {allowLocalHttp=false,fetchImpl=f
     const refreshExpiresAt=typeof value.refresh_token_expires_in==='number'&&Number.isSafeInteger(value.refresh_token_expires_in)&&value.refresh_token_expires_in>0&&value.refresh_token_expires_in<=31536000?new Date(now()+value.refresh_token_expires_in*1000).toISOString():null;
     return {accessToken:value.access_token,refreshToken:value.refresh_token??null,expiresAt:new Date(now()+value.expires_in*1000).toISOString(),refreshExpiresAt,scopes};
   }
-  return Object.freeze({configHash,isCurrent:()=>Date.parse(config.validUntil)>now(),allowedDetailFields:Object.freeze([...config.allowedDetailFields]),
+  return Object.freeze({configHash,isCurrent:current,allowedDetailFields:Object.freeze([...config.allowedDetailFields]),
     authorizationUrl(state,challenge){ready();const url=new URL(urls.authorizationEndpoint);for(const [k,v] of Object.entries({response_type:'code',client_id:config.clientId,redirect_uri:redirect.href,scope:config.scopes.join(' '),state,code_challenge:challenge,code_challenge_method:'S256'}))url.searchParams.set(k,v);return url.href;},
     async exchange(code,verifier){return token(new URLSearchParams({grant_type:'authorization_code',code,redirect_uri:redirect.href,code_verifier:verifier}));},
     async subject(credentials){const value=await request(urls.subjectEndpoint,{method:'GET',headers:{authorization:`Bearer ${credentials.accessToken}`,accept:'application/json'}});const subject=value?.[config.subjectField];if(!(typeof subject==='string'&&ID.test(subject)))fail(502,'PROVIDER_RESPONSE_INVALID');return subject;},
