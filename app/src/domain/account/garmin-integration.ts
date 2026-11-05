@@ -86,7 +86,13 @@ export function garminEndpoint(env: Readonly<Record<string, unknown>> = import.m
   try {
     const url = new URL(env.VITE_GARMIN_INTEGRATION_URL, origin)
     const local = env.DEV === true && ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname)
-    return !url.username && !url.password && !url.search && !url.hash && url.pathname === "/api/garmin-integration"
+    let configuredEdge = false
+    if (url.pathname === "/functions/v1/garmin-integration" && typeof env.VITE_SUPABASE_URL === "string") {
+      const project = new URL(env.VITE_SUPABASE_URL)
+      configuredEdge = project.protocol === "https:" && project.origin === env.VITE_SUPABASE_URL
+        && url.origin === project.origin && url.pathname === "/functions/v1/garmin-integration"
+    }
+    return !url.username && !url.password && !url.search && !url.hash && (url.pathname === "/api/garmin-integration" || configuredEdge)
       && (url.protocol === "https:" || local && url.protocol === "http:") ? url.href : null
   } catch { return null }
 }

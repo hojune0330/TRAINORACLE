@@ -28,6 +28,31 @@ describe("Garmin authenticated browser boundary", () => {
     expect(safeGarminAuthorizationUrl(url, "b".repeat(43))).toBeNull()
     expect(safeGarminAuthorizationUrl(url, state, {})).toBeNull()
   })
+  it("accepts the exact configured project's Garmin function while retaining the company gateway", () => {
+    const project = "https://synthetic-project.supabase.co", endpoint = `${project}/functions/v1/garmin-integration`
+    const env = { VITE_SUPABASE_URL: project, VITE_GARMIN_INTEGRATION_URL: endpoint }
+    expect(garminEndpoint(env)).toBe(endpoint)
+    expect(garminEndpoint({ VITE_GARMIN_INTEGRATION_URL: endpoint })).toBeNull()
+    for (const value of ["https://other-project.supabase.co/functions/v1/garmin-integration", `${endpoint}/`, `${endpoint}/api/garmin-integration`, `${endpoint}?redirect=x`, `${endpoint}#fragment`, `${project}/functions/v1/account-journal`, "https://a:b@synthetic-project.supabase.co/functions/v1/garmin-integration"]) {
+      expect(garminEndpoint({ ...env, VITE_GARMIN_INTEGRATION_URL: value })).toBeNull()
+    }
+    for (const value of [`${project}/`, `${project}/path`, "https://a:b@synthetic-project.supabase.co", "http://synthetic-project.supabase.co", "invalid"]) {
+      expect(garminEndpoint({ ...env, VITE_SUPABASE_URL: value })).toBeNull()
+    }
+    const gateway = "https://company.example/api/garmin-integration"
+    expect(garminEndpoint({ ...env, VITE_GARMIN_INTEGRATION_URL: gateway })).toBe(gateway)
+  })
+  it("uses the existing verified owner and storage consent when sending to the configured Garmin function", async () => {
+    const project = "https://synthetic-project.supabase.co", endpoint = `${project}/functions/v1/garmin-integration`
+    vi.stubEnv("VITE_SUPABASE_URL", project); vi.stubEnv("VITE_GARMIN_INTEGRATION_URL", endpoint)
+    const fetcher = vi.fn().mockResolvedValue(new Response(JSON.stringify(status))); vi.stubGlobal("fetch", fetcher)
+    expect((await requestGarminIntegration(owner, { action: "status" }, new AbortController().signal, () => true)).ok).toBe(true)
+    expect(fetcher).toHaveBeenCalledWith(endpoint, expect.objectContaining({
+      method: "POST", credentials: "omit", redirect: "error",
+      headers: expect.objectContaining({ Authorization: "Bearer synthetic-proof", "x-trainoracle-storage-revision": "2" }),
+    }))
+    expect(auth.getUser).toHaveBeenCalledWith("synthetic-proof")
+  })
   it("accepts only identifier requests and rejects malformed source or mismatched read receipts", () => {
     expect(garminRequestSchema.safeParse({ action: "confirm", inboxId: item.inboxId, expectedRevision: 1, operationId: crypto.randomUUID(), distanceMeters: 5000 }).success).toBe(false)
     expect(parseGarminResponse({ action: "inbox" }, { schemaVersion: GARMIN_VERSION, items: [{ ...item, observation: { ...item.observation, analysisEligible: true } }], nextCursor: null }).ok).toBe(false)

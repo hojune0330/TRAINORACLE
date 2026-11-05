@@ -63,14 +63,15 @@ function sourceIpv4(value) {
   if (value.split(".").some((part) => Number(part) > 255 || String(Number(part)) !== part)) deny();
   return value;
 }
-function exactIngressUrl(raw) {
+function exactIngressUrl(raw, { supabaseOrigin = false } = {}) {
   let url;
   try {
     url = new URL(raw);
   } catch {
     unavailable();
   }
-  if (url.protocol !== "https:" || url.username || url.password || url.port || url.search || url.hash || url.pathname !== INGRESS_PATH || url.href !== raw) unavailable();
+  const pathAllowed = url.pathname === INGRESS_PATH || supabaseOrigin && /^[a-z0-9]{20}\.supabase\.co$/.test(url.hostname) && url.pathname === "/functions/v1/garmin-integration/webhooks/garmin";
+  if (url.protocol !== "https:" || url.username || url.password || url.port || url.search || url.hash || !pathAllowed || url.href !== raw) unavailable();
   return url.href;
 }
 function requireIngressRequest(request) {
@@ -133,11 +134,13 @@ async function boundedBody(request) {
 }
 
 // server/garmin-ingress/worker.mjs
-function createGarminIngressWorker({ keyId, audience, secretHex, publicUrl, originUrl }, { fetchImpl = fetch, cryptoImpl = crypto, now = () => Date.now() } = {}) {
+function createGarminIngressWorker({ keyId, audience, secretHex, publicUrl, originUrl, gatewayAnonJwt }, { fetchImpl = fetch, cryptoImpl = crypto, now = () => Date.now() } = {}) {
   requireConfig({ keyId, audience, secretHex });
   publicUrl = exactIngressUrl(publicUrl);
-  originUrl = exactIngressUrl(originUrl);
+  originUrl = exactIngressUrl(originUrl, { supabaseOrigin: true });
   if (new URL(publicUrl).origin === new URL(originUrl).origin) unavailable();
+  const supabaseOrigin = new URL(originUrl).pathname.startsWith("/functions/v1/");
+  if (supabaseOrigin && (typeof gatewayAnonJwt !== "string" || !/^eyJ[A-Za-z0-9_-]+\.eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(gatewayAnonJwt))) unavailable();
   const rawKey = keyFromHex(secretHex);
   const keyPromise = cryptoImpl.subtle.importKey("raw", rawKey, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
   rawKey.fill(0);
@@ -158,6 +161,7 @@ function createGarminIngressWorker({ keyId, audience, secretHex, publicUrl, orig
       headers.set(INGRESS_HEADERS.version, INGRESS_VERSION);
       for (const name of ["keyId", "audience", "timestamp", "nonce", "sourceIp", "bodySha256"]) headers.set(INGRESS_HEADERS[name], fields[name]);
       headers.set(INGRESS_HEADERS.signature, signature);
+      if (supabaseOrigin) headers.set("authorization", `Bearer ${gatewayAnonJwt}`);
       const response = await fetchImpl(originUrl, { method: "POST", headers, body, redirect: "error", cache: "no-store", credentials: "omit", signal: AbortSignal.timeout(2e4) });
       if (response.body) void response.body.cancel().catch(() => {
       });
@@ -178,7 +182,8 @@ var worker_default = { async fetch(request, env) {
         audience: env.TRAINORACLE_GARMIN_INGRESS_AUDIENCE,
         secretHex: env.TRAINORACLE_GARMIN_INGRESS_SECRET_HEX,
         publicUrl: env.TRAINORACLE_GARMIN_INGRESS_PUBLIC_URL,
-        originUrl: env.TRAINORACLE_GARMIN_INGRESS_ORIGIN_URL
+        originUrl: env.TRAINORACLE_GARMIN_INGRESS_ORIGIN_URL,
+        gatewayAnonJwt: env.TRAINORACLE_GARMIN_GATEWAY_JWT ?? env.SUPABASE_ANON_KEY
       });
       workers.set(env, worker);
     }

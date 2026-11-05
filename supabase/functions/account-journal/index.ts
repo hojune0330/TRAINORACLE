@@ -7,13 +7,16 @@ import { createAccountPlanCollectionRepository } from '../_shared/account-plan-c
 // ACCOUNT_JOURNAL_V2 remains operationally OFF until actual server readiness is verified.
 // Runtime configuration: SUPABASE_URL, SUPABASE_ANON_KEY,
 // TRAINORACLE_JOURNAL_ALLOWED_ORIGINS (comma-separated exact origins),
+// TRAINORACLE_CANONICAL_ORIGIN (optional additional exact origin; preserves existing origins),
 // TRAINORACLE_JOURNAL_KEYRING_JSON ({activeKeyId,keys:{id:base64_32_bytes}}).
 // TRAINORACLE_JOURNAL_ATTESTATION_JSON ({keyId,key:base64_32_bytes}), separate key.
 // Never use a service-role key or log requests/errors. Generated server validators
 // contain only pure schemas/catalog rules, never browser storage or app runtime code.
 Deno.serve((request: Request) => createAccountJournalHandler({
-  allowedOrigins: (Deno.env.get('TRAINORACLE_JOURNAL_ALLOWED_ORIGINS') ?? '')
-    .split(',').map((origin: string) => origin.trim()).filter(Boolean),
+  allowedOrigins: [
+    ...(Deno.env.get('TRAINORACLE_JOURNAL_ALLOWED_ORIGINS') ?? '').split(','),
+    Deno.env.get('TRAINORACLE_CANONICAL_ORIGIN') ?? '',
+  ].map((origin: string) => origin.trim()).filter(Boolean),
   validateDocument: validateAccountJournalDocument,
   getMaterial: async () => {
     await importJournalAttestor(Deno.env.get('TRAINORACLE_JOURNAL_ATTESTATION_JSON'));
