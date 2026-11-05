@@ -43,11 +43,11 @@ async function emptyObjectBody(request){
 export function createTickClaim({env,fetchImpl=fetch}){
   let base;try{base=new URL(env.SUPABASE_URL);}catch{reject(503,'OPERATIONS_PENDING');}
   if(base.protocol!=='https:'||base.username||base.password||base.port||base.pathname!=='/'||base.search||base.hash
-    ||!env.SUPABASE_ANON_KEY||!env.SUPABASE_SERVICE_ROLE_KEY)reject(503,'OPERATIONS_PENDING');
+    ||!env.SUPABASE_SERVICE_ROLE_KEY)reject(503,'OPERATIONS_PENDING');
   const endpoint=new URL('/rest/v1/rpc/garmin_edge_claim_tick',base);
   return async({nonceHash,timestamp})=>{
     let result;try{result=await fetchImpl(endpoint,{method:'POST',redirect:'error',cache:'no-store',signal:AbortSignal.timeout(10000),
-      headers:{'content-type':'application/json',apikey:env.SUPABASE_ANON_KEY,authorization:`Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`},
+      headers:{'content-type':'application/json',apikey:env.SUPABASE_SERVICE_ROLE_KEY,authorization:`Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`},
       body:JSON.stringify({nonce_hash:nonceHash,signed_at:timestamp})});}catch{reject(503,'OPERATIONS_PENDING');}
     if(!result.ok)reject(503,'OPERATIONS_PENDING');
     const reader=result.body?.getReader();if(!reader)reject(503,'OPERATIONS_PENDING');

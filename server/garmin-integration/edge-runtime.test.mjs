@@ -97,10 +97,10 @@ test('DB claim failure stops work; task failure is sanitized and remaining maint
 });
 
 test('tick claim sends only nonce metadata to exact RPC using server credential',async()=>{
-  let seen;const claim=createTickClaim({env,fetchImpl:async(url,init)=>{seen={url:String(url),...init};return Response.json({accepted:true});}});
+  let seen;const claim=createTickClaim({env:{...env,SUPABASE_ANON_KEY:undefined},fetchImpl:async(url,init)=>{seen={url:String(url),...init};return Response.json({accepted:init.headers.apikey==='synthetic-service'},{status:init.headers.apikey==='synthetic-service'?200:401});}});
   assert.equal(await claim({nonceHash:'a'.repeat(64),timestamp:at/1000}),true);
   assert.equal(seen.url,'https://synthetic.supabase.co/rest/v1/rpc/garmin_edge_claim_tick');assert.equal(seen.redirect,'error');
-  assert.deepEqual(JSON.parse(seen.body),{nonce_hash:'a'.repeat(64),signed_at:at/1000});assert.equal(seen.headers.authorization,'Bearer synthetic-service');
+  assert.deepEqual(JSON.parse(seen.body),{nonce_hash:'a'.repeat(64),signed_at:at/1000});assert.equal(seen.headers.authorization,'Bearer synthetic-service');assert.equal(seen.headers.apikey,'synthetic-service');
   assert.throws(()=>createTickClaim({env:{...env,SUPABASE_URL:'https://attacker.test/?redirect=1'}}));
   const rejected=createTickClaim({env,fetchImpl:async()=>Response.json({accepted:false})});assert.equal(await rejected({nonceHash:'a'.repeat(64),timestamp:at/1000}),false);
 });

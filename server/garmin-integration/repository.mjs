@@ -5,12 +5,14 @@ import { boundedJson, fail, keyBytes, sign, trustedUrl, UUID } from './primitive
 export function createSupabaseRepository({url,publishableKey,attestation,relayAttestation,serviceRoleKey,allowLocalHttp=false,fetchImpl=fetch}) {
   const base=trustedUrl(url,allowLocalHttp);if(base.pathname!=='/'||!publishableKey)fail(503,'CONFIGURATION_INVALID');
   const secret=keyBytes(attestation?.key),relaySecret=relayAttestation?keyBytes(relayAttestation.key):null;
-  async function request(path,token,body,consentRevision){let response;try{response=await fetchImpl(new URL(path,base),{method:body?'POST':'GET',redirect:'error',cache:'no-store',signal:AbortSignal.timeout(12000),headers:{apikey:publishableKey,authorization:`Bearer ${token}`,'content-type':'application/json',...(consentRevision?{'x-trainoracle-storage-revision':String(consentRevision)}:{})},...(body?{body:JSON.stringify(body)}:{})});}catch{fail(503,'OPERATIONS_PENDING');}
+  // Server actions use the same service credential at both gateway layers.
+  // User actions always retain their public API key and actual user JWT.
+  async function request(path,token,body,consentRevision,serverAction=false){let response;try{response=await fetchImpl(new URL(path,base),{method:body?'POST':'GET',redirect:'error',cache:'no-store',signal:AbortSignal.timeout(12000),headers:{apikey:serverAction?serviceRoleKey:publishableKey,authorization:`Bearer ${token}`,'content-type':'application/json',...(consentRevision?{'x-trainoracle-storage-revision':String(consentRevision)}:{})},...(body?{body:JSON.stringify(body)}:{})});}catch{fail(503,'OPERATIONS_PENDING');}
     if(!response.ok)fail(response.status===401?401:response.status===403?403:503,response.status===401?'AUTH_REQUIRED':response.status===403?'ACCESS_DENIED':'OPERATIONS_PENDING');
     return boundedJson(response,9_000_000);
   }
   async function invoke(input,auth,relay,maintenance=false,autosave=false){const request_text=JSON.stringify({...input,domain:autosave?'trainoracle.garmin.autosave.v1':maintenance?'trainoracle.garmin.maintenance.v1':'trainoracle.garmin.integration.v1',expiresAt:Math.floor(Date.now()/1000)+60,...(relay?{}:{ownerId:auth.ownerId,sessionId:auth.sessionId})});
-    const result=await request(`/rest/v1/rpc/${autosave?'garmin_autosave_attested':maintenance?'garmin_maintenance_attested':'garmin_integration_attested'}`,relay?serviceRoleKey:auth.token,{request_text,signature:sign(relay?relaySecret:secret,request_text),key_id:relay?relayAttestation.keyId:attestation.keyId},autosave&&relay?input.consentRevision:auth?.consentRevision);
+    const result=await request(`/rest/v1/rpc/${autosave?'garmin_autosave_attested':maintenance?'garmin_maintenance_attested':'garmin_integration_attested'}`,relay?serviceRoleKey:auth.token,{request_text,signature:sign(relay?relaySecret:secret,request_text),key_id:relay?relayAttestation.keyId:attestation.keyId},autosave&&relay?input.consentRevision:auth?.consentRevision,relay);
     if(result?.error){const code=result.error;fail(code==='OPERATIONS_PENDING'?503:409,code);}return result;
   }
   return {
