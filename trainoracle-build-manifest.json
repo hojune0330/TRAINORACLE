@@ -1,11 +1,11 @@
 {
   "kind": "TRAINORACLE_RELEASE_BUILD_PACKAGE",
-  "sourceSha": "c6f82f9d97b3b634b34ab01efdde9f2081ca2839",
-  "previousPagesSha": "34a4f8ea43570d76be9f630c9af2927ac0555c9d",
+  "sourceSha": "6bef177462e2693fa71dfef4a9f51fcdf60d973c",
+  "previousPagesSha": "5997073192dd414aa20c3e0eddba259fd05c5e79",
   "deploymentStatus": "NOT_PUBLISHED",
   "previewOnly": false,
   "accountHeld": true,
-  "publicConfigurationSourceSha": "34a4f8ea43570d76be9f630c9af2927ac0555c9d",
+  "publicConfigurationSourceSha": "5997073192dd414aa20c3e0eddba259fd05c5e79",
   "oracleV2Enabled": true,
   "files": {
     ".nojekyll": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
@@ -554,10 +554,10 @@
     "illustrations/watch-file-guide-v1.webp": "eef6af2ba908bb17e22c6933063d452707d07d37f829fe1da1f3c2c64dd40127",
     "illustrations/watch-file-v2.webp": "3290b85c84b608c8bd63a965f60427fb26b7290084bc7549fb9ce9d6f6003cdd",
     "index.html": "f38d806b02eaaafbff16c78ebf15e23dd42381708c51e7223219091c0aca37f7",
-    "legal/device-integrations.html": "83e47839a6de2caf96f26d6fcd6ddeb57b4d7acd56dbb36c006919a2a8746a16",
+    "legal/device-integrations.html": "5b24a67f866348a92eb5ad364dcc616ac23a86119b57976ec72a1d0525329ccd",
     "legal/legal.css": "b2f11f0bb92d1b1e0d0d4925c432e4e0069b6bc1b65b249220b3acfc67c6a26b",
     "legal/open-source.html": "4eb1a29f48f563d80c2c87ff69c1ef68d64b64c3d1026b3a55ab50d0811dd5ed",
-    "legal/privacy.html": "3873e106953cd89c55eafb9f262036a482c2b3cd73be68a1a8b184e58cb4694e",
+    "legal/privacy.html": "b5b23e7da60c83e49d33f0e31ecb1a9074b8195dbb19d1585bac9b1d8d7a5049",
     "legal/terms.html": "f50d7f35038dcfafec6ce03676918ca48d0413d9e636be5a07adff336b7548b0",
     "legal/third-party-notices.html": "720ddf566e9b69e8f7aa7fcec536e251924366207a8731ac5441f56df49d9037",
     "licenses/dicebear-open-peeps-LICENSE.txt": "da4841198095b0e172e87959ffe1684059b25d89943c5d9077fea3af8394400a",
@@ -668,5 +668,5 @@
     "sw.js": "128fc4dc94dff6af0737ef5332c981341f275bf843959706761680dd2aa2bcbe"
   },
   "backendVerification": "NOT_CONFIRMED",
-  "builtAt": "2026-11-04T15:35:39.758Z"
+  "builtAt": "2026-11-05T00:13:20.575Z"
 }
