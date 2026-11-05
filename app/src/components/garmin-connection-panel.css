@@ -14,3 +14,7 @@
 .garmin-panel__disconnect input { margin-top: 8px; flex: 0 0 auto; }
 .garmin-panel__message { border-left: 2px solid var(--ink); padding-left: 12px; }
 @media (max-width: 360px) { .garmin-panel__facts > div { grid-template-columns: 1fr; gap: 0; } .garmin-panel__actions > button { width: 100%; } }
+
+.garmin-panel__setup { display: grid; gap: 12px; padding-block: 16px; border-block: 1px solid var(--line); }
+.garmin-panel__setup h4 { margin: 0; }
+.garmin-panel__setup label { display: flex; align-items: center; gap: 10px; min-height: 44px; }

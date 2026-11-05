@@ -44,6 +44,7 @@ before(async()=>{
   assert.equal((await db.query("select to_regclass('public.garmin_connections') as name")).rows[0].name,null);
   await db.exec(migration);
   await db.exec(await readFile(new URL('../../supabase/migrations/20261104231500_garmin_credential_maintenance.sql',import.meta.url),'utf8'));
+  await db.exec(await readFile(new URL('../../supabase/migrations/20261105020000_garmin_autosave.sql',import.meta.url),'utf8'));
   assert.equal((await db.query('select count(*)::int as count from public.garmin_integration_keys')).rows[0].count,0);
   assert.equal((await db.query('select count(*)::int as count from public.garmin_integration_controls')).rows[0].count,0);
   await approveSyntheticOracleStorage(db);
@@ -58,7 +59,7 @@ before(async()=>{
     const identity=identities.get(req.headers.authorization?.replace('Bearer ',''));const relay=req.headers.authorization===`Bearer ${serviceToken}`;
     if(!identity&&!relay)return json(res,401,{});
     if(req.url==='/auth/v1/user')return json(res,200,{id:identity?.ownerId});
-    const rpc=req.url==='/rest/v1/rpc/garmin_integration_attested'?'garmin_integration_attested':req.url==='/rest/v1/rpc/garmin_maintenance_attested'?'garmin_maintenance_attested':null;
+    const rpc=req.url==='/rest/v1/rpc/garmin_autosave_attested'?'garmin_autosave_attested':req.url==='/rest/v1/rpc/garmin_integration_attested'?'garmin_integration_attested':req.url==='/rest/v1/rpc/garmin_maintenance_attested'?'garmin_maintenance_attested':null;
     if(!rpc)return json(res,404,{});
     let proof;try{proof=JSON.parse(await raw(req));}catch{return json(res,400,{});}
     const work=async()=>{try{
@@ -109,6 +110,64 @@ function event(c,patch={}){return {eventId:'event-1',connectionId:c.connection_i
 async function receive(c,patch={}){const result=await relay(event(c,patch));assert.equal(result.status,200,JSON.stringify(result));return result.data;}
 async function confirm(inbox,operationId=randomUUID()){return call({action:'confirm',inboxId:inbox.inboxId,expectedRevision:inbox.revision,operationId});}
 
+const saveVersion='GARMIN_AUTO_SAVE_2026_11_05';
+async function setSaveMode(c,saveMode='AUTO'){
+  const status=await call({action:'status',experience:true});assert.equal(status.status,200,JSON.stringify(status));
+  const result=await call({action:'preferences',epoch:c.epoch,expectedPreferenceRevision:status.data.experience.preferenceRevision,saveMode,consentVersion:saveVersion});
+  assert.equal(result.status,200,JSON.stringify(result));return result.data.experience;
+}
+test('autosave defaults to review; explicit consent persists and background writes exactly once',async()=>{
+  const c=await connect();await receive(c);
+  assert.equal((await relay({},'/internal/garmin/autosave')).data.saved,0);
+  const preference=await setSaveMode(c);assert.equal(preference.saveMode,'AUTO');
+  const saved=await relay({},'/internal/garmin/autosave');assert.equal(saved.status,200,JSON.stringify(saved));assert.equal(saved.data.saved,1,JSON.stringify(saved));
+  assert.equal((await relay({},'/internal/garmin/autosave')).data.saved,0);
+  const inbox=await call({action:'inbox',experience:true});assert.equal(inbox.data.items[0].savedAutomatically,true);assert.ok(inbox.data.items[0].journalEntryId);
+  const docs=(await admin('select * from public.account_journal_documents')).rows;assert.equal(docs.length,1);
+  const plain=await decryptAccountJournalDocument(docs[0].encrypted_payload,{ownerId:owner,documentId:docs[0].document_id},journalKeyring.active);
+  assert.ok(plain);assert.ok((await call({action:'status',experience:true})).data.experience.lastSavedAt);
+});
+test('autosave consent CAS and account isolation reject stale or foreign preferences',async()=>{
+  const c=await connect();await setSaveMode(c);
+  const stale=await call({action:'preferences',epoch:c.epoch,expectedPreferenceRevision:0,saveMode:'REVIEW',consentVersion:saveVersion});assert.equal(stale.status,409);
+  const foreign=await call({action:'preferences',epoch:c.epoch,expectedPreferenceRevision:1,saveMode:'AUTO',consentVersion:saveVersion},{token:otherToken});assert.notEqual(foreign.status,200);
+  await setSaveMode(c,'REVIEW');await receive(c);assert.equal((await relay({},'/internal/garmin/autosave')).data.saved,0);
+});
+test('autosave preserves same-day journals, routes duplicates to review and stops after disconnect',async()=>{
+  const c=await connect();await setSaveMode(c);await receive(c);assert.equal((await relay({},'/internal/garmin/autosave')).data.saved,1);
+  await receive(c,{eventId:'second',activityId:'activity-2',observation:observation({sourceId:'activity-2'})});
+  const next=await relay({},'/internal/garmin/autosave');assert.equal(next.data.reviewRequired,1,JSON.stringify(next));
+  assert.equal((await admin('select count(*) n from public.account_journal_documents')).rows[0].n,1);
+  assert.equal((await call({action:'status',experience:true})).data.experience.reviewRequiredCount,1);
+  await call({action:'disconnect'});assert.equal((await relay({},'/internal/garmin/autosave')).data.saved,0);
+});
+test('autosave refuses a revoked opt-in or changed source after preparation',async()=>{
+  const c=await connect();await setSaveMode(c);await receive(c);
+  const claimed=await repository.autosave(null,{action:'next',configHash:provider.configHash});assert.ok(claimed.row);
+  await setSaveMode(c,'REVIEW');
+  await assert.rejects(()=>repository.autosave(null,{action:'commit',configHash:provider.configHash,ownerId:owner,epoch:c.epoch,inboxId:claimed.row.inbox_id,expectedRevision:claimed.row.source_revision,preferenceRevision:claimed.row.save_preference_revision}),e=>e.code==='CONSENT_CHANGED');
+  assert.equal((await admin('select count(*) n from public.account_journal_documents')).rows[0].n,0);
+});
+
+test('autosave defers transient failures without blocking other pending rows; dismissed revisions stay dismissed',async()=>{
+  const c=await connect();await setSaveMode(c);const first=await receive(c);
+  const row=(await repository.autosave(null,{action:'next',configHash:provider.configHash})).row;
+  await repository.autosave(null,{action:'defer',configHash:provider.configHash,ownerId:owner,epoch:c.epoch,inboxId:row.inbox_id,expectedRevision:row.source_revision,preferenceRevision:row.save_preference_revision});
+  assert.equal((await relay({},'/internal/garmin/autosave')).data.saved,0);
+  await call({action:'dismiss',inboxId:first.inboxId,expectedRevision:1,operationId:randomUUID()});
+  await receive(c,{eventId:'changed',revision:2,observation:observation({sourceVersion:'2'})});
+  assert.equal((await call({action:'inbox'})).data.items[0].state,'DISMISSED');
+});
+test('autosave RPC rejects runtime keys for worker actions and stale storage consent',async()=>{
+  const c=await connect();await setSaveMode(c);await receive(c);
+  const auth=await repository.authenticate(token,1);
+  await assert.rejects(()=>repository.autosave(auth,{action:'next',configHash:provider.configHash}),e=>e.code==='ACCESS_DENIED');
+  const row=(await repository.autosave(null,{action:'next',configHash:provider.configHash})).row;
+  await admin('update public.account_storage_consents set revision=revision+1 where user_id=$1',[owner]);
+  assert.equal((await repository.autosave(null,{action:'next',configHash:provider.configHash})).row,null);
+  await assert.rejects(()=>repository.autosave(null,{action:'commit',configHash:provider.configHash,ownerId:owner,epoch:c.epoch,inboxId:row.inbox_id,expectedRevision:row.source_revision,preferenceRevision:row.save_preference_revision}),e=>e.code==='CONNECTION_CHANGED');
+  await admin('update public.account_storage_consents set revision=revision-1 where user_id=$1',[owner]);
+});
 test('default off still supports authenticated status and disconnect without provider calls',async()=>{const server=createNodeServer(createGarminHandler({...options(),enabled:false}));const url=await listen(server);try{const status=await call({action:'status'},{url});assert.equal(status.status,200);assert.equal(status.data.capability.reason,'PROVIDER_CONFIGURATION_PENDING');assert.equal((await call({action:'connect'},{url})).status,503);assert.equal((await call({action:'disconnect'},{url})).status,200);assert.equal(providerCalls.length,0);}finally{await close(server);}});
 test('real OAuth HTTP PKCE exchange and subject binding store only encrypted credentials, callback retry never exchanges twice',async()=>{const c=await connect();assert.equal(c.state,'ACTIVE');const persisted=JSON.stringify(c);assert.ok(!persisted.includes('PRIVATE_ACCESS_TOKEN'));assert.ok(!persisted.includes('PRIVATE_REFRESH_TOKEN'));assert.equal(c.subject_hash,sign(identityKey,'garmin-subject-v1:synthetic-garmin-subject'));const replay=await call({action:'complete',state:c.start.data.state,code:'different-code'});assert.equal(replay.status,200);assert.equal(providerCalls.filter(c=>c.url==='/token').length,1);const status=await call({action:'status'});assert.equal(status.data.connection.lastSyncAt,null);});
 test('real HTTP -> SQL -> AES-GCM inbox/detail -> atomic existing journal commit and readback',async()=>{const c=await connect();const received=await receive(c);const list=await call({action:'inbox'});assert.equal(list.status,200);assert.equal(list.data.items[0].observation.analysisEligible,false);assert.equal(list.data.items[0].observation.dataLineage.sources[0].originProvider,'GARMIN');const detail=await call({action:'detail',inboxId:received.inboxId,expectedRevision:1,partIndex:0});assert.deepEqual(detail.data.samples,samples);const saved=await confirm(received);assert.equal(saved.status,200,JSON.stringify(saved));assert.equal(saved.data.date,'2026-11-04');const row=(await admin('select * from public.account_journal_documents where user_id=$1 and document_id=$2',[owner,saved.data.documentId])).rows[0];assert.equal(row.revision,1);const document=JSON.parse(await decryptAccountJournalDocument(row.encrypted_payload,{ownerId:owner,documentId:row.document_id},journalKeyring.active));assert.equal(document.entry.distanceKm,'10');assert.equal(document.entry.avgPace,'');assert.equal(document.entry.memo,'');assert.deepEqual(document.entry.fieldProvenance.distanceKm.derivedFrom,['import:provider-activity']);assert.equal(document.entry.fileObservation,undefined);assert.equal((await call({action:'read',documentId:saved.data.documentId})).data.item.inboxId,received.inboxId);assert.ok((await call({action:'status'})).data.connection.lastSyncAt);});

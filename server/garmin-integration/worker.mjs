@@ -3,6 +3,7 @@ import {pathToFileURL} from 'node:url';
 import {keyBytes,sign,VERSION,exact} from './primitives.mjs';
 
 const TASKS=Object.freeze([
+  {name:'AUTOSAVE',path:'/internal/garmin/autosave',interval:'processIntervalMs'},
   {name:'PROCESS',path:'/internal/garmin/process',interval:'processIntervalMs'},
   {name:'REVOCATIONS',path:'/internal/garmin/revocations',interval:'revocationIntervalMs'},
   {name:'MAINTENANCE',path:'/internal/garmin/maintenance',interval:'maintenanceIntervalMs'},
@@ -16,6 +17,10 @@ const sleep=(ms,signal)=>new Promise(resolve=>{
   const timer=setTimeout(finish,ms);signal.addEventListener('abort',finish,{once:true});
 });
 function responseCounts(name,value){
+  if(name==='AUTOSAVE'){
+    if(!exact(value,['schemaVersion','saved','reviewRequired'])||value.schemaVersion!==VERSION||!integer(value.saved,0,1)||!integer(value.reviewRequired,0,1)||value.saved+value.reviewRequired>1)return null;
+    return {saved:value.saved,reviewRequired:value.reviewRequired};
+  }
   if(name==='MAINTENANCE'){
     if(!exact(value,['schemaVersion','checked','refreshed','reconnectRequired'])||value.schemaVersion!==VERSION
       ||!integer(value.checked,0,1)||!integer(value.refreshed,0,1)||!integer(value.reconnectRequired,0,1))return null;
@@ -59,7 +64,7 @@ async function callTask(task,options,signal){
   });}finally{clearTimeout(timer);}
 }
 
-/** One explicit worker instance, three independent schedules, no overlapping calls.
+/** One explicit worker instance, four independent schedules, no overlapping calls.
  * Disabling does not require a key and performs no I/O. onEvent receives only
  * fixed strings, attempt counts and validated aggregate counts, never payloads. */
 export async function runGarminWorker(input={}){

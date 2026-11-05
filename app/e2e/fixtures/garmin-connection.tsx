@@ -18,11 +18,12 @@ async function start() {
   }))
   const digest = await garminSamplesDigest(samples)
   const item = { ...syntheticGarminItem, detailManifest: [{ partIndex: 0, sha256: digest, sampleCount: samples.length }] }
+  const scenario = new URLSearchParams(location.search).get("scenario")
   let mutations = 0, journalReads = 0
   const transport: GarminTransport = async (_owner, request) => {
     if (request.action === "confirm" && ++mutations === 1) return { ok: false, code: "UNAVAILABLE" }
-    const data = request.action === "status" ? { ...syntheticGarminStatus, connection: { ...syntheticGarminStatus.connection, lastSyncAt: "2026-11-04T23:45:00Z" } }
-      : request.action === "inbox" ? { schemaVersion: GARMIN_VERSION, items: [item], nextCursor: null }
+    const data = request.action === "status" ? { ...syntheticGarminStatus, ...(scenario === "auto" ? { experience: { saveMode: "AUTO", preferenceRevision: 1, lastSavedAt: "2026-11-04T23:45:00Z", reviewRequiredCount: 0, reconnectRequired: false } } : {}), connection: { ...syntheticGarminStatus.connection, ...(scenario === "setup" ? { state: "DISCONNECTED" } : {}), lastSyncAt: scenario === "setup" ? null : "2026-11-04T23:45:00Z" } }
+      : request.action === "inbox" ? { schemaVersion: GARMIN_VERSION, items: [{ ...item, ...(scenario === "auto" ? { state: "CONFIRMED", savedAutomatically: true, documentId: syntheticGarminReceipt.documentId, journalEntryId: syntheticGarminReceipt.journalEntryId, journalDate: syntheticGarminReceipt.date } : {}) }], nextCursor: null }
         : request.action === "read" ? { schemaVersion: GARMIN_VERSION, item: { ...item, state: "CONFIRMED", documentId: syntheticGarminReceipt.documentId } }
           : request.action === "detail" ? { schemaVersion: GARMIN_VERSION, inboxId: item.inboxId, revision: item.revision, partIndex: 0, sha256: digest, sampleCount: samples.length, samples }
             : request.action === "confirm" ? { ...syntheticGarminReceipt, kind: "already_confirmed" }

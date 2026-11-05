@@ -7,7 +7,7 @@ import { localJournalScopeGeneration, onLocalJournalScopeChange } from "../domai
 import { currentStorageConsentRevision } from "../domain/account/storage-consent-revision"
 import { accountJournalPreviewEnabled } from "../domain/account/account-journal-api"
 import { clearGarminOperation, consumeGarminCallback, garminEndpoint, garminErrorMessage, garminIntegrationEnabled, hasGarminCallback,
-  pendingGarminOperation, prepareGarminOperation, rememberGarminAttempt, requestGarminIntegration, safeGarminAuthorizationUrl,
+  GARMIN_SAVE_CONSENT_VERSION, pendingGarminOperation, prepareGarminOperation, rememberGarminAttempt, requestGarminIntegration, safeGarminAuthorizationUrl,
   type GarminConfirmation, type GarminError, type GarminItem, type GarminRequest, type GarminStatus, type GarminTransport } from "../domain/account/garmin-integration"
 import "./garmin-connection-panel.css"
 
@@ -53,6 +53,8 @@ function GarminConnectionSession({ ownerId, onOpenAccount, onOpenJournalRecord, 
   const [pending, setPending] = useState<Record<string, "confirm" | "dismiss">>({})
   const [message, setMessage] = useState<string | null>(null), [disconnectReview, setDisconnectReview] = useState(false)
   const [callbackAvailable, setCallbackAvailable] = useState(() => hasGarminCallback())
+  const [connectReview, setConnectReview] = useState(false), [saveMode, setSaveMode] = useState<"AUTO" | "REVIEW">("AUTO")
+  const callbackStarted = useRef(false)
   const live = useRef(true), operation = useRef<AbortController | null>(null)
   useEffect(() => { live.current = true; return () => { live.current = false; operation.current?.abort() } }, [])
   const begin = () => { operation.current?.abort(); const controller = new AbortController(); operation.current = controller; setBusy(true); setError(null); return controller }
@@ -79,7 +81,7 @@ function GarminConnectionSession({ ownerId, onOpenAccount, onOpenJournalRecord, 
     try {
       let canRead = ready && status?.connection.state === "ACTIVE"
       if (!next) {
-        const result = await send({ action: "status" }, controller)
+        const result = await send({ action: "status", experience: true }, controller)
         if (!current(controller)) return
         if (!result.ok) { setError(result.code); setStatus(null); setItems([]); setLoaded(false); return }
         if (!("capability" in result.data)) { setError("INVALID_RESPONSE"); return }
@@ -87,7 +89,7 @@ function GarminConnectionSession({ ownerId, onOpenAccount, onOpenJournalRecord, 
         if (!canRead) { setItems([]); setCursor(null); setLoaded(false); return }
       }
       if (!canRead) return
-      const result = await send({ action: "inbox", ...(next && cursor ? { cursor } : {}) }, controller)
+      const result = await send({ action: "inbox", experience: true, ...(next && cursor ? { cursor } : {}) }, controller)
       if (!current(controller)) return
       if (!result.ok) { setError(result.code); if (!next) { setItems([]); setLoaded(false) }; return }
       if (!("items" in result.data)) { setError("INVALID_RESPONSE"); return }
@@ -104,11 +106,16 @@ function GarminConnectionSession({ ownerId, onOpenAccount, onOpenJournalRecord, 
   }
   useEffect(() => { void load() }, []) // the keyed session pins owner/transport for its lifetime
 
+  useEffect(() => {
+    if (status?.experience?.saveMode !== "AUTO" || status.connection.state !== "ACTIVE" || busy || Object.values(reviewed).some(Boolean)) return
+    const timer = window.setInterval(() => { if (document.visibilityState === "visible") void load() }, 30000)
+    return () => window.clearInterval(timer)
+  }, [status?.experience?.saveMode, status?.connection.state, busy, reviewed])
   async function connect() {
     if (!ownerId || !ready) return
     const controller = begin()
     try {
-      const result = await send({ action: "connect" }, controller)
+      const result = await send({ action: "connect", saveMode, consentVersion: GARMIN_SAVE_CONSENT_VERSION }, controller)
       if (!current(controller)) return
       if (!result.ok) { setError(result.code); return }
       if (!("authorizationUrl" in result.data)) { setError("INVALID_RESPONSE"); return }
@@ -128,8 +135,32 @@ function GarminConnectionSession({ ownerId, onOpenAccount, onOpenJournalRecord, 
       if (!current(controller)) return
       if (!result.ok) { setError(result.code); return }
       if (!("connection" in result.data)) { setError("INVALID_RESPONSE"); return }
-      setMessage(result.data.connection.state === "ACTIVE" ? "Garmin 계정 연결을 확인했어요. 받은 기록을 검토한 뒤 일지에 저장해 주세요." : "연결 결과를 다시 확인해 주세요.")
+      setMessage(result.data.connection.state === "ACTIVE" ? "Garmin 계정이 연결됐어요. 새 운동이 도착하면 선택한 방식으로 일지에 반영해요." : "연결 결과를 다시 확인해 주세요.")
       await load()
+    } catch { if (current(controller)) setError("UNAVAILABLE") }
+    finally { if (current(controller)) setBusy(false) }
+  }
+  useEffect(() => {
+    let cancelled = false
+    queueMicrotask(() => {
+      if (!cancelled && ownerId && configured && featureEnabled && callbackAvailable && !callbackStarted.current) {
+        callbackStarted.current = true
+        void complete()
+      }
+    })
+    return () => { cancelled = true }
+  }, [ownerId, configured, featureEnabled, callbackAvailable])
+  async function changeSaveMode(mode: "AUTO" | "REVIEW") {
+    if (!status?.experience || !status.connection.epoch || busy) return
+    const controller = begin()
+    try {
+      const result = await send({ action: "preferences", saveMode: mode, consentVersion: GARMIN_SAVE_CONSENT_VERSION, epoch: status.connection.epoch, expectedPreferenceRevision: status.experience.preferenceRevision }, controller)
+      if (!current(controller)) return
+      if (!result.ok) { setError(result.code); return }
+      if (!("experience" in result.data) || !result.data.experience) { setError("INVALID_RESPONSE"); return }
+      const experience = result.data.experience
+      setStatus(previous => previous ? { ...previous, experience } : previous)
+      setMessage(mode === "AUTO" ? "자동 저장에 동의했어요. 확인이 필요한 기록만 따로 알려드려요." : "앞으로 받은 운동은 확인 후 저장해요.")
     } catch { if (current(controller)) setError("UNAVAILABLE") }
     finally { if (current(controller)) setBusy(false) }
   }
@@ -197,25 +228,40 @@ function GarminConnectionSession({ ownerId, onOpenAccount, onOpenJournalRecord, 
               detail: connection?.lastSyncAt ? `마지막 수신 확인: ${importedSourceClock(connection.lastSyncAt)}` : undefined },
           ]} />
           {!featureEnabled || status && !status.capability.enabled ? <p>새 연결과 기록 가져오기는 아직 사용할 수 없어요. 기존 연결 상태 확인과 해제는 할 수 있어요.</p> : null}
-          {callbackAvailable && <RecordNotice kind="pending" title="Garmin에서 돌아왔어요"><p>현재 로그인한 계정으로 연결을 마무리해 주세요.</p>
-            <RecordAction disabled={busy || !featureEnabled} onClick={() => void complete()}>연결 마무리</RecordAction></RecordNotice>}
+          {callbackAvailable && <RecordNotice kind="pending" title="Garmin 연결을 확인하고 있어요"><p>잠시만 기다려 주세요.</p></RecordNotice>}
           <div className="garmin-panel__actions">
-            <RecordAction priority="secondary" disabled={busy} onClick={() => void load()}>현재 상태 다시 확인</RecordAction>
-            {ready && connection?.state !== "ACTIVE" && !callbackAvailable && <RecordAction disabled={busy} onClick={() => void connect()}>{connection?.state === "REVOKED" || connection?.state === "ERROR" ? "Garmin 다시 연결" : "Garmin 연결"}</RecordAction>}
+            <RecordAction priority="secondary" disabled={busy} onClick={() => void load()}>상태 새로고침</RecordAction>
+            {ready && connection?.state !== "ACTIVE" && !callbackAvailable && !connectReview && <RecordAction disabled={busy} onClick={() => setConnectReview(true)}>{connection?.state === "REVOKED" || connection?.state === "ERROR" ? "Garmin 다시 연결" : "Garmin 연결"}</RecordAction>}
           </div>
+          {connectReview && ready && connection?.state !== "ACTIVE" && <section aria-label="Garmin 연결 및 저장 동의" className="garmin-panel__setup">
+            <h4>운동을 어떻게 저장할까요?</h4>
+            <p>Garmin에서 허용한 운동과 세부 수치를 계정에 보관해요. AI 코칭 이용 동의는 포함하지 않아요.</p>
+            <label><input type="radio" name="garmin-save" checked={saveMode === "AUTO"} onChange={() => setSaveMode("AUTO")} disabled={busy} />새 운동을 일지에 자동 저장 · 권장</label>
+            <label><input type="radio" name="garmin-save" checked={saveMode === "REVIEW"} onChange={() => setSaveMode("REVIEW")} disabled={busy} />받은 운동을 확인 후 저장</label>
+            <p>중복 가능성이나 수정 충돌이 있는 기록은 확인 후 저장해요. 저장 방식은 나중에 바꿀 수 있어요.</p>
+            <div className="garmin-panel__actions"><RecordAction disabled={busy} onClick={() => void connect()}>동의하고 Garmin 연결</RecordAction><RecordAction priority="secondary" disabled={busy} onClick={() => setConnectReview(false)}>취소</RecordAction></div>
+          </section>}
+          {connection?.state === "ACTIVE" && status?.experience && <section aria-label="운동 저장 설정">
+            <p>{status.experience.saveMode === "AUTO" ? "새 운동을 자동으로 일지에 저장해요." : "받은 운동을 확인 후 저장해요."}</p>
+            <p>{status.experience.lastSavedAt ? "마지막 일지 반영: " + importedSourceClock(status.experience.lastSavedAt) : "아직 일지에 반영된 운동이 없어요."}</p>
+            {status.experience.reviewRequiredCount > 0 && <p role="status">확인이 필요한 기록 {status.experience.reviewRequiredCount}개</p>}
+            <details><summary>저장 방식 변경</summary><p>자동 저장은 받은 운동을 계정 일지에 반영해요. 기존에 작성한 내용은 덮어쓰지 않아요.</p>
+              <RecordAction priority="secondary" disabled={busy || !ready} onClick={() => void changeSaveMode(status.experience!.saveMode === "AUTO" ? "REVIEW" : "AUTO")}>{status.experience.saveMode === "AUTO" ? "확인 후 저장으로 변경" : "동의하고 자동 저장으로 변경"}</RecordAction>
+            </details>
+          </section>}
           {error && <RecordNotice kind="error" title="결과 확인이 필요해요" announce><p>{garminErrorMessage[error]}</p></RecordNotice>}
           {message && <p className="garmin-panel__message" role="status">{message}</p>}
           {loaded && <section aria-label="Garmin 받은 기록">
-            <AppHeading as="h3" variant="section">받은 기록 검토</AppHeading>
-            <p>시작 시각과 운동 수치를 확인한 뒤 일지에 저장해요. 받은 것만으로 저장되거나 계획에 반영되지는 않아요.</p>
+            <AppHeading as="h3" variant="section">{status?.experience?.saveMode === "AUTO" ? "운동 기록" : "받은 기록 검토"}</AppHeading>
+            <p>{status?.experience?.saveMode === "AUTO" ? "새 운동은 자동 저장돼요. 확인이 필요한 기록은 시작 시각과 수치를 검토해 주세요." : "시작 시각과 운동 수치를 확인한 뒤 일지에 저장해요."}</p>
             {items.length === 0 && <RecordNotice kind="empty" title="아직 받은 기록이 없어요"><p>현재 자동 연결은 연결 이후 전달된 기록을 받아요. 과거 기록은 파일로 가져올 수 있어요.</p></RecordNotice>}
             {items.map(item => {
-              const observation = item.observation, key = `${item.inboxId}:${item.revision}`, receipt = receipts[item.inboxId], retry = pending[item.inboxId]
+              const observation = item.observation, key = `${item.inboxId}:${item.revision}`, receipt = receipts[item.inboxId] ?? (item.state === "CONFIRMED" && item.documentId && item.journalEntryId && (item.journalDate || item.clock) ? { schemaVersion: "GARMIN_INTEGRATION_V1" as const, kind: "already_confirmed" as const, documentId: item.documentId, journalEntryId: item.journalEntryId, revision: item.revision, date: item.journalDate ?? item.clock!.localDate } : undefined), retry = pending[item.inboxId]
               const pendingRequest = ownerId ? pendingGarminOperation(ownerId, item.inboxId) : null
               const retryChanged = !!pendingRequest && (pendingRequest.expectedRevision !== item.revision || pendingRequest.consentRevision !== currentStorageConsentRevision(ownerId!))
               return <article key={key} className="garmin-panel__record">
                 <h4>{observation ? sportLabel[observation.sport] : "삭제된 운동"}</h4>
-                <p>{rowState[item.state]}</p>
+                <p>{item.savedAutomatically && item.state === "CONFIRMED" ? "일지에 자동 저장됨" : item.reviewRequired ? "확인이 필요한 기록" : rowState[item.state]}</p>
                 {item.source?.manual && <p>Garmin에서 수동 입력된 운동이에요. 기기의 자동 측정 기록과 구분해 확인해 주세요.</p>}
                 {(item.source?.parent.isParent || item.source?.parent.parentSummaryId) && <p>{item.source.parent.isParent ? "여러 운동을 묶은 상위 기록이에요." : "복합운동에 포함된 하위 기록이에요."} 상위·하위 기록을 함께 저장하면 운동량이 중복될 수 있어요. 저장할 범위를 확인해 주세요.</p>}
                 {observation && <>
@@ -235,7 +281,7 @@ function GarminConnectionSession({ ownerId, onOpenAccount, onOpenJournalRecord, 
                   <RecordAction priority="secondary" disabled={busy} onClick={() => { clearGarminOperation(ownerId!, item.inboxId); setPending(previous => { const next = { ...previous }; delete next[item.inboxId]; return next }); setReviewed(previous => ({ ...previous, [key]: false })) }}>변경된 원본 다시 검토</RecordAction></RecordNotice>
                   : retry ? <RecordNotice kind="pending" title="이 요청의 결과를 다시 확인해 주세요"><p>응답이 끊긴 요청은 같은 요청 번호로 확인해요. 새 저장 요청은 만들지 않아요.</p>
                   <RecordAction disabled={busy || !ready} onClick={() => void mutate(item, retry)}>{retry === "confirm" ? "같은 저장 요청 결과 확인" : "같은 제외 요청 결과 확인"}</RecordAction></RecordNotice>
-                  : item.state === "PENDING" && <>
+                  : item.state === "PENDING" && (status?.experience?.saveMode !== "AUTO" || item.reviewRequired) && <>
                     <RecordChoice checked={reviewed[key] === true} onChange={checked => setReviewed(previous => ({ ...previous, [key]: checked }))}
                       title="이 운동의 시작 시각과 수치를 확인했어요" inputLabel="이 운동의 시작 시각과 수치를 확인했어요" density="row" disabled={busy} disabledReason="요청 결과를 확인 중이에요." />
                     <div className="garmin-panel__actions"><RecordAction disabled={busy || !ready || !reviewed[key]} onClick={() => void mutate(item, "confirm")}>일지에 저장</RecordAction>

@@ -14,10 +14,13 @@ const version = z.literal(GARMIN_VERSION)
 const revision = z.number().int().positive().max(Number.MAX_SAFE_INTEGER - 1)
 const timestamp = z.iso.datetime({ offset: true })
 const state = z.string().regex(/^[A-Za-z0-9_-]{43}$/u)
+export const GARMIN_SAVE_CONSENT_VERSION = "GARMIN_AUTO_SAVE_2026_11_05" as const
+const experienceSchema = z.object({ saveMode: z.enum(["AUTO", "REVIEW"]), preferenceRevision: z.number().int().nonnegative(), lastSavedAt: timestamp.nullable(), reviewRequiredCount: z.number().int().nonnegative(), reconnectRequired: z.boolean() }).strict()
+const preferencesSchema = z.object({ schemaVersion: version, experience: experienceSchema }).strict()
 const connectionSchema = z.object({ state: z.enum(["DISCONNECTED", "PENDING", "ACTIVE", "REVOKED", "ERROR"]), epoch: z.uuid().nullable(), lastSyncAt: timestamp.nullable() }).strict()
 export const garminStatusSchema = z.object({ schemaVersion: version,
   capability: z.object({ enabled: z.boolean(), reason: z.enum(["READY", "PROVIDER_CONFIGURATION_PENDING", "OPERATIONS_PENDING"]) }).strict(),
-  connection: connectionSchema, pendingCount: z.number().int().nonnegative(),
+  experience: experienceSchema.optional(), connection: connectionSchema, pendingCount: z.number().int().nonnegative(),
 }).strict()
 const observationSchema = z.unknown().transform((value, ctx): PreparedDeviceActivity => {
   const raw = value as Partial<PreparedDeviceActivity> | null
@@ -34,6 +37,7 @@ export const garminItemSchema = z.object({ inboxId: z.uuid(), revision,
   observation: observationSchema.nullable(), documentId: z.uuid().nullable(),
   clock: z.object({ basis: z.literal("DEVICE_OFFSET"), offsetSeconds: z.number().int().min(-86400).max(86400), localDate: z.iso.date() }).strict().nullable().optional(),
   source: z.object({ manual: z.boolean(), parent: z.object({ isParent: z.boolean(), parentSummaryId: z.string().max(200).nullable() }).strict(), summaryId: z.string().min(1).max(200), lapStartOffsetsSeconds: z.array(z.number().finite().nonnegative()).max(1000), summary: garminSummarySchema.optional() }).strict().nullable().optional(),
+  savedAutomatically: z.boolean().optional(), reviewRequired: z.boolean().optional(), journalEntryId: z.string().max(200).nullable().optional(), journalDate: z.iso.date().nullable().optional(),
   detailManifest: z.array(z.object({ partIndex: z.number().int().min(0).max(31), sha256: z.string().regex(/^[a-f0-9]{64}$/u), sampleCount: z.number().int().min(1).max(100000) }).strict()).max(32),
 }).strict().refine(item => item.state === "DELETED" ? item.observation === null : item.observation !== null)
 const inboxSchema = z.object({ schemaVersion: version, items: z.array(garminItemSchema).max(20), nextCursor: z.uuid().nullable() }).strict()
@@ -54,10 +58,12 @@ const detailSchema = z.object({ schemaVersion: version, inboxId: z.uuid(), revis
 export type GarminSample = z.infer<typeof garminSampleSchema>
 const mutation = { inboxId: z.uuid(), expectedRevision: revision, operationId: z.uuid() }
 export const garminRequestSchema = z.discriminatedUnion("action", [
-  z.object({ action: z.literal("status") }).strict(), z.object({ action: z.literal("connect") }).strict(),
+  z.object({ action: z.literal("status"), experience: z.literal(true).optional() }).strict(),
+  z.object({ action: z.literal("connect"), saveMode: z.enum(["AUTO", "REVIEW"]).optional(), consentVersion: z.literal(GARMIN_SAVE_CONSENT_VERSION).optional() }).strict(),
+  z.object({ action: z.literal("preferences"), saveMode: z.enum(["AUTO", "REVIEW"]), consentVersion: z.literal(GARMIN_SAVE_CONSENT_VERSION), epoch: z.uuid(), expectedPreferenceRevision: z.number().int().nonnegative() }).strict(),
   z.object({ action: z.literal("complete"), code: z.string().min(1).max(2048), state }).strict(),
-  z.object({ action: z.literal("inbox"), cursor: z.uuid().optional() }).strict(),
-  z.object({ action: z.literal("read"), documentId: z.uuid() }).strict(),
+  z.object({ action: z.literal("inbox"), experience: z.literal(true).optional(), cursor: z.uuid().optional() }).strict(),
+  z.object({ action: z.literal("read"), experience: z.literal(true).optional(), documentId: z.uuid() }).strict(),
   z.object({ action: z.literal("detail"), inboxId: z.uuid(), expectedRevision: revision, partIndex: z.number().int().min(0).max(31) }).strict(),
   z.object({ action: z.literal("confirm"), ...mutation }).strict(), z.object({ action: z.literal("dismiss"), ...mutation }).strict(),
   z.object({ action: z.literal("disconnect") }).strict(), z.object({ action: z.literal("refresh") }).strict(),
@@ -66,7 +72,7 @@ export type GarminStatus = z.infer<typeof garminStatusSchema>
 export type GarminItem = z.infer<typeof garminItemSchema>
 export type GarminRequest = z.infer<typeof garminRequestSchema>
 export type GarminConfirmation = z.infer<typeof confirmedSchema>
-export type GarminResponse = GarminStatus | z.infer<typeof inboxSchema> | z.infer<typeof connectSchema> | z.infer<typeof connectionResponseSchema> | GarminConfirmation | z.infer<typeof dismissedSchema> | z.infer<typeof detailSchema> | { schemaVersion: typeof GARMIN_VERSION; item: GarminItem }
+export type GarminResponse = z.infer<typeof preferencesSchema> | GarminStatus | z.infer<typeof inboxSchema> | z.infer<typeof connectSchema> | z.infer<typeof connectionResponseSchema> | GarminConfirmation | z.infer<typeof dismissedSchema> | z.infer<typeof detailSchema> | { schemaVersion: typeof GARMIN_VERSION; item: GarminItem }
 const serverError = z.enum(["AUTH_REQUIRED", "ACCESS_DENIED", "SOURCE_CHANGED", "CONNECTION_CHANGED", "OPERATION_CONFLICT", "CONSENT_CHANGED", "REVIEW_REQUIRED", "PROVIDER_CONFIGURATION_PENDING", "OPERATIONS_PENDING", "INVALID_INPUT", "PROVIDER_UNAVAILABLE", "PROVIDER_RESPONSE_INVALID", "PROVIDER_SCOPE_MISMATCH", "OAUTH_RESTART_REQUIRED", "JOURNAL_CONTRACT_UNAVAILABLE", "ENCRYPTED_DATA_UNAVAILABLE", "STORAGE_CONSENT_REQUIRED", "REVOKE_PENDING", "PROVIDER_PERMISSION_REQUIRED", "PROVIDER_ACCOUNT_ALREADY_BOUND", "ALREADY_CONNECTED", "BUSY", "DETAIL_UNAVAILABLE"])
 export type GarminError = z.infer<typeof serverError> | "UNAVAILABLE" | "INVALID_RESPONSE" | "STALE_RESPONSE" | "LOCAL_STATE_UNAVAILABLE"
 export type GarminResult = { ok: true; data: GarminResponse } | { ok: false; code: GarminError }
@@ -95,7 +101,7 @@ export function safeGarminAuthorizationUrl(value: string, expectedState: string,
   } catch { return null }
 }
 export function parseGarminResponse(request: GarminRequest, value: unknown): GarminResult {
-  const schema = request.action === "status" ? garminStatusSchema : request.action === "inbox" ? inboxSchema
+  const schema = request.action === "preferences" ? preferencesSchema : request.action === "status" ? garminStatusSchema : request.action === "inbox" ? inboxSchema
     : request.action === "connect" ? connectSchema : request.action === "confirm" ? confirmedSchema
       : request.action === "dismiss" ? dismissedSchema : request.action === "detail" ? detailSchema : request.action === "read" ? z.object({ schemaVersion: version, item: garminItemSchema }).strict() : connectionResponseSchema
   const parsed = schema.safeParse(value)

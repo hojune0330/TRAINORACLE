@@ -7,6 +7,7 @@ import { VERSION, UUID, ID, exact, fail, IntegrationError, canonical, sha, sign,
 import { createSupabaseRepository } from './repository.mjs';
 import {createGarminStarterProvider} from './garmin-starter.mjs';
 import {createGarminPushRuntime} from './push.mjs';
+import {createGarminAutosave,SAVE_CONSENT_VERSION} from './autosave.mjs';
 import {createGarminMaintenance} from './maintenance.mjs';
 
 const context=(ownerId,connectionId,epoch,purpose,record='')=>({ownerId,connectionId,epoch,purpose,record});
@@ -17,12 +18,15 @@ function dateFor(observation){const p=new Intl.DateTimeFormat('en-CA',{timeZone:
 const positive=v=>Number.isSafeInteger(v)&&v>0;
 function validateInput(input){
   if(!input||typeof input.action!=='string')fail(422,'INVALID_INPUT');
-  const shapes={status:['action'],connect:['action'],complete:['action','code','state'],inbox:['action','cursor'],read:['action','documentId'],detail:['action','inboxId','expectedRevision','partIndex'],confirm:['action','inboxId','expectedRevision','operationId'],dismiss:['action','inboxId','expectedRevision','operationId'],disconnect:['action'],refresh:['action']};
-  const allowed=shapes[input.action];if(!allowed||!exact(input,allowed,input.action==='inbox'?['action']:allowed))fail(422,'INVALID_INPUT');
+  const shapes={status:['action','experience'],preferences:['action','saveMode','consentVersion','epoch','expectedPreferenceRevision'],connect:['action','saveMode','consentVersion'],complete:['action','code','state'],inbox:['action','cursor','experience'],read:['action','documentId','experience'],detail:['action','inboxId','expectedRevision','partIndex'],confirm:['action','inboxId','expectedRevision','operationId'],dismiss:['action','inboxId','expectedRevision','operationId'],disconnect:['action'],refresh:['action']};
+  const allowed=shapes[input.action];if(!allowed||!exact(input,allowed,['inbox','status','connect'].includes(input.action)?['action']:input.action==='read'?['action','documentId']:allowed))fail(422,'INVALID_INPUT');
   for(const id of ['inboxId','documentId','operationId','cursor'])if(input[id]!==undefined&&!UUID.test(input[id]))fail(422,'INVALID_INPUT');
   if(input.expectedRevision!==undefined&&!positive(input.expectedRevision))fail(422,'INVALID_INPUT');
   if(input.action==='detail'&&(!Number.isInteger(input.partIndex)||input.partIndex<0||input.partIndex>31))fail(422,'INVALID_INPUT');
   if(input.action==='complete'&&(typeof input.code!=='string'||input.code.length<1||input.code.length>2048||typeof input.state!=='string'||!/^[A-Za-z0-9_-]{43}$/.test(input.state)))fail(422,'INVALID_INPUT');
+  if(input.experience!==undefined&&input.experience!==true)fail(422,'INVALID_INPUT');
+  if(input.saveMode!==undefined&&(!['AUTO','REVIEW'].includes(input.saveMode)||input.consentVersion!==SAVE_CONSENT_VERSION))fail(422,'INVALID_INPUT');
+  if(input.action==='preferences'&&(!UUID.test(input.epoch)||!Number.isSafeInteger(input.expectedPreferenceRevision)||input.expectedPreferenceRevision<0))fail(422,'INVALID_INPUT');
   return input;
 }
 
@@ -46,13 +50,21 @@ export function createGarminHandler({repository,vault,provider,identityKey,relay
   const subjectHash=subject=>sign(identityKey,`garmin-subject-v1:${subject}`);
   async function decode(row){if(!row.encrypted_observation||row.state==='DELETED')return null;return vault.open(row.encrypted_observation,rowContext(row));}
   async function sourceContext(row){return row.encrypted_context?vault.open(row.encrypted_context,context(row.user_id,row.connection_id,row.epoch,'source-context',`${row.inbox_id}:${row.source_revision}`)):null;}
-  async function item(row){const source=await sourceContext(row);return {inboxId:row.inbox_id,revision:row.source_revision,state:row.state,provider:'GARMIN',observation:await decode(row),documentId:row.document_id,detailManifest:row.detail_manifest,clock:source?.clock??null,source:source?{manual:source.manual,parent:source.parent,summaryId:source.summaryId,lapStartOffsetsSeconds:source.lapStartOffsetsSeconds,...(source.summary?{summary:source.summary}:{})}:null};}
+  async function item(row,experience=false){const source=await sourceContext(row);return {inboxId:row.inbox_id,revision:row.source_revision,state:row.state,provider:'GARMIN',observation:await decode(row),documentId:row.document_id,detailManifest:row.detail_manifest,...(experience?{savedAutomatically:row.saved_automatically??false,reviewRequired:row.auto_review_required??false,journalEntryId:row.journal_entry_id??null,journalDate:row.journal_entry_id?(source?.clock?.localDate??dateFor(await decode(row))):null}:{}),clock:source?.clock??null,source:source?{manual:source.manual,parent:source.parent,summaryId:source.summaryId,lapStartOffsetsSeconds:source.lapStartOffsetsSeconds,...(source.summary?{summary:source.summary}:{})}:null};}
+  async function prepare(auth,row,observation,clock,operationId){
+    if(!journalKeyring||!journalAttest)fail(503,'JOURNAL_CONTRACT_UNAVAILABLE');
+    const proposal=providerJournalDocument(auth,row,observation,clock);
+    const encryptedPayload=await encryptAccountJournalDocument(canonical(proposal.document),{ownerId:auth.ownerId,documentId:proposal.documentId},journalKeyring.active);
+    const journalProof=await journalAttest(auth.ownerId,'commit',{documentId:proposal.documentId,operationId,expectedRevision:0,encryptedPayload,metadata:{...accountJournalMetadata(proposal.document),awardAllowed:false}});
+    return {documentId:proposal.documentId,journalEntryId:proposal.journalEntryId,journalProof};
+  }
+  const autosave=createGarminAutosave({repository,configHash,decode,sourceContext,prepare});
   return async (request,transport={})=>{
     const origin=request.headers.get('origin');const headers={'content-type':'application/json','cache-control':'no-store','pragma':'no-cache','x-content-type-options':'nosniff','referrer-policy':'no-referrer',...(origin&&origins.has(origin)?{'access-control-allow-origin':origin,'vary':'Origin'}:{})};
     const respond=(status,value)=>new Response(JSON.stringify(status<400?{schemaVersion:VERSION,...value}:value),{status,headers});
     try{
       const path=new URL(request.url).pathname;
-      if(!['/api/garmin-integration','/internal/garmin/events','/internal/garmin/revocations','/internal/garmin/process','/internal/garmin/maintenance','/webhooks/garmin'].includes(path))return respond(404,{error:'NOT_FOUND'});
+      if(!['/api/garmin-integration','/internal/garmin/events','/internal/garmin/revocations','/internal/garmin/process','/internal/garmin/maintenance','/internal/garmin/autosave','/webhooks/garmin'].includes(path))return respond(404,{error:'NOT_FOUND'});
       if(request.method==='OPTIONS'){if(!origin||!origins.has(origin)||path!=='/api/garmin-integration')return respond(403,{error:'ACCESS_DENIED'});return new Response(null,{status:204,headers:{...headers,'access-control-allow-methods':'POST, OPTIONS','access-control-allow-headers':'authorization, content-type, x-trainoracle-storage-revision','access-control-max-age':'0'}});}
       if(request.method!=='POST')return respond(405,{error:'METHOD_NOT_ALLOWED'});
       if(origin&&!origins.has(origin))fail(403,'ACCESS_DENIED');
@@ -64,6 +76,7 @@ export function createGarminHandler({repository,vault,provider,identityKey,relay
         const timestamp=request.headers.get('x-trainoracle-relay-timestamp');if(!/^\d{10,13}$/.test(timestamp??'')||Math.abs(now()-Number(timestamp))>60_000)fail(403,'ACCESS_DENIED');
         const input=await boundedJson(request,6_500_000);
         if(!sameSignature(request.headers.get('x-trainoracle-relay-signature'),sign(relayHttpKey,`${timestamp}\n${path}\n${canonical(input)}`)))fail(403,'ACCESS_DENIED');
+        if(path==='/internal/garmin/autosave'){if(!exact(input,[]))fail(422,'INVALID_INPUT');return respond(200,await autosave());}
         if(path==='/internal/garmin/process'){if(!exact(input,[])||!push)fail(422,'INVALID_INPUT');return respond(200,await push.processOne());}
         if(path==='/internal/garmin/maintenance'){if(!exact(input,[])||!maintenance)fail(422,'INVALID_INPUT');return respond(200,await maintenance.processOne());}
         if(path==='/internal/garmin/events'&&provider.kind==='GARMIN_STARTER')fail(422,'UNSUPPORTED_GARMIN_FEED');
@@ -91,7 +104,7 @@ export function createGarminHandler({repository,vault,provider,identityKey,relay
       const auth=await repository.authenticate(authorization.slice(7),consentRevision);const input=validateInput(await boundedJson(request,16_000));
       const call=data=>repository.call(auth,{configHash,...data});
       if(input.action==='status'){
-        const status=await call({action:'status'});const current=enabled&&!!provider&&provider.isCurrent();return respond(200,{capability:{enabled:current&&status.ready,reason:!current?'PROVIDER_CONFIGURATION_PENDING':status.ready?'READY':'OPERATIONS_PENDING'},connection:connection(status.connection),pendingCount:status.pendingCount});
+        const status=await call({action:'status'});const current=enabled&&!!provider&&provider.isCurrent();return respond(200,{capability:{enabled:current&&status.ready,reason:!current?'PROVIDER_CONFIGURATION_PENDING':status.ready?'READY':'OPERATIONS_PENDING'},connection:connection(status.connection),pendingCount:status.pendingCount,...(input.experience?{experience:await repository.autosave(auth,{action:'status',configHash})}:{})});
       }
       if(input.action==='disconnect') {
         const result=await call({action:'disconnect'});const revoked=result.revocation;
@@ -99,9 +112,11 @@ export function createGarminHandler({repository,vault,provider,identityKey,relay
         const pending=await call({action:'revocationStatus'});const status=await call({action:'status'});return respond(200,{connection:connection(status.connection),remoteRevocationPending:pending.pending});
       }
       ensureProvider();
+      if(input.action==='preferences'){await repository.autosave(auth,{...input,configHash});return respond(200,{experience:await repository.autosave(auth,{action:'status',configHash})});}
       if(input.action==='connect') {
         const state=nonce(),verifier=nonce(),connectionId=randomUUID(),epoch=randomUUID();
         await call({action:'begin',stateHash:sha(state),connectionId,epoch,encryptedVerifier:await vault.seal({verifier},context(auth.ownerId,connectionId,epoch,'pkce',sha(state)))});
+        if(input.saveMode){const pref=await repository.autosave(auth,{action:'status',configHash});await repository.autosave(auth,{action:'preferences',configHash,epoch,saveMode:input.saveMode,consentVersion:input.consentVersion,expectedPreferenceRevision:pref.preferenceRevision});}
         const challenge=createHash('sha256').update(verifier).digest('base64url');return respond(200,{authorizationUrl:provider.authorizationUrl(state,challenge),state,expiresAt:new Date(now()+600000).toISOString()});
       }
       if(input.action==='complete') {
@@ -122,8 +137,8 @@ export function createGarminHandler({repository,vault,provider,identityKey,relay
         if(!result.refreshed)fail(409,'OAUTH_RESTART_REQUIRED');
         return respond(200,{connection:connection((await call({action:'status'})).connection)});
       }
-      if(input.action==='inbox'){const rows=(await call(input)).rows;const selected=rows.slice(0,20);const items=await Promise.all(selected.map(item));if(selected.length)await call({action:'verify',epoch:selected[0].epoch});return respond(200,{items,nextCursor:rows.length>20?selected.at(-1).inbox_id:null});}
-      if(input.action==='read'){const row=(await call(input)).row;const decoded=await item(row);await call({action:'verify',epoch:row.epoch});return respond(200,{item:decoded});}
+      if(input.action==='inbox'){const rows=(await call(input)).rows;const selected=rows.slice(0,20);const items=await Promise.all(selected.map(row=>item(row,input.experience)));if(selected.length)await call({action:'verify',epoch:selected[0].epoch});return respond(200,{items,nextCursor:rows.length>20?selected.at(-1).inbox_id:null});}
+      if(input.action==='read'){const row=(await call(input)).row;const decoded=await item(row,input.experience);await call({action:'verify',epoch:row.epoch});return respond(200,{item:decoded});}
       if(input.action==='detail'){
         const result=await call(input);const manifest=result.row.detail_manifest.find(p=>p.partIndex===input.partIndex);if(!manifest||!result.part)fail(404,'DETAIL_UNAVAILABLE');
         const samples=await vault.open(result.part,context(auth.ownerId,result.row.connection_id,result.row.epoch,'detail',`${result.row.inbox_id}:${result.row.source_revision}:${input.partIndex}`));if(sha(canonical(samples))!==manifest.sha256)fail(503,'ENCRYPTED_DATA_UNAVAILABLE');
