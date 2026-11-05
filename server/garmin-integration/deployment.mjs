@@ -5,7 +5,7 @@ import {accountGatewayFromEnvironment} from '../account-gateway/service.mjs';
 import {signedGarminIngressFromEnvironment} from '../garmin-ingress/signed-ingress.mjs';
 
 const PUBLIC_ROUTES=new Set(['/api/garmin-integration','/webhooks/garmin','/api/account-journal']);
-const INTERNAL_ROUTES=new Set(['/internal/garmin/process','/internal/garmin/revocations','/internal/garmin/maintenance']);
+const INTERNAL_ROUTES=new Set(['/internal/garmin/autosave','/internal/garmin/process','/internal/garmin/revocations','/internal/garmin/maintenance']);
 const headers={'content-type':'application/json','cache-control':'no-store','pragma':'no-cache','x-content-type-options':'nosniff','referrer-policy':'no-referrer'};
 const json=(status,value)=>new Response(JSON.stringify(value),{status,headers});
 const listen=(server,port,host)=>new Promise((resolve,reject)=>{server.once('error',reject);server.listen(port,host,()=>{server.removeListener('error',reject);resolve(server.address().port);});});

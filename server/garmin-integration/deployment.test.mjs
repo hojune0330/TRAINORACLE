@@ -16,7 +16,7 @@ test('keyless default starts health with source revision, no backend claims or i
     const response=await fetch(`${url}/healthz`),health=await response.json();assert.equal(response.status,200);assert.equal(response.headers.get('cache-control'),'no-store');
     assert.deepEqual(health,{service:'trainoracle-garmin',status:'ok',mode:'PREPARATORY_DISABLED',sourceRevision:revision,evidence:{process:'RUNNING',database:'NOT_PROBED',garmin:'NOT_PROBED'},accountGateway:'DISABLED'});
     assert.equal((await fetch(`${url}/healthz`,{method:'HEAD'})).status,200);
-    for(const path of ['/internal/garmin/process','/internal/garmin/revocations','/internal/garmin/maintenance','/internal/garmin/events','/unrecognized'])assert.equal((await fetch(url+path,{method:'POST',body:'{}'})).status,404);
+    for(const path of ['/internal/garmin/autosave','/internal/garmin/process','/internal/garmin/revocations','/internal/garmin/maintenance','/internal/garmin/events','/unrecognized'])assert.equal((await fetch(url+path,{method:'POST',body:'{}'})).status,404);
     assert.equal((await fetch(`${url}/api/garmin-integration`,{method:'POST',headers:{'content-type':'application/json'},body:'{"action":"connect"}'})).status,503);
     assert.equal((await fetch(`${url}/api/account-journal`,{method:'POST',headers:{'content-type':'application/json'},body:'{"action":"status"}'})).status,503);
     assert.equal((await fetch(`${url}/webhooks/garmin`,{method:'POST',body:'{}','headers':{'x-trainoracle-peer-ip':'204.77.162.1'}})).status,503);
@@ -32,13 +32,13 @@ test('one supervised real loopback worker signs requests; public transport keeps
       const body=await request.text(),timestamp=request.headers.get('x-trainoracle-relay-timestamp');
       assert.equal(body,'{}');assert.equal(request.headers.get('x-trainoracle-relay-signature'),sign(key,`${timestamp}\n${path}\n{}`));
       assert.equal(transport.peerAddress,'127.0.0.1');calls.push(path);
-      return Response.json({schemaVersion:VERSION,...(path.endsWith('/maintenance')?{checked:0,refreshed:0,reconnectRequired:0}:path.endsWith('/process')?{processed:0,reviewRequired:0}:{completed:0,pending:0})});
+      return Response.json({schemaVersion:VERSION,...(path.endsWith('/autosave')?{saved:0,reviewRequired:0}:path.endsWith('/maintenance')?{checked:0,refreshed:0,reconnectRequired:0}:path.endsWith('/process')?{processed:0,reviewRequired:0}:{completed:0,pending:0})});
     }
     return Response.json({peerAddress:transport.peerAddress});
   }});
   const deployment=await startGarminDeployment({env:{PORT:'0',TRAINORACLE_GARMIN_ENABLED:'true',TRAINORACLE_GARMIN_PUSH_ENABLED:'true',TRAINORACLE_GARMIN_WORKER_ENABLED:'true',TRAINORACLE_GARMIN_RELAY_HTTP_KEY:key.toString('base64')},runtimeFactory,signal:controller.signal,onEvent:e=>events.push(e)});
   try{
-    await waitFor(()=>calls.length===3);assert.deepEqual(calls,['/internal/garmin/process','/internal/garmin/revocations','/internal/garmin/maintenance']);
+    await waitFor(()=>calls.length===4);assert.deepEqual(calls,['/internal/garmin/autosave','/internal/garmin/process','/internal/garmin/revocations','/internal/garmin/maintenance']);
     const base=`http://127.0.0.1:${deployment.port}`;
     const response=await fetch(`${base}/webhooks/garmin`,{method:'POST',body:'{}',headers:{'x-trainoracle-peer-ip':'204.77.162.1','x-forwarded-for':'204.77.162.1'}});
     assert.equal((await response.json()).peerAddress,'127.0.0.1');
