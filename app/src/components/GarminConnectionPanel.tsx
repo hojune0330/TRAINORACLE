@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react"
+import { useTaskFlowBack } from "../hooks/useTaskFlowBack"
 import { AppHeading } from "./AppHeading"
-import { RecordAction, RecordChoice, RecordNotice, RecordSource, RecordStateList } from "./RecordUI"
+import { RecordAction, RecordChoice, RecordNotice, RecordStateList } from "./RecordUI"
+import { GarminJournalComparison } from "./GarminJournalComparison"
 import { GarminActivityDetail } from "./GarminActivityDetail"
 import { importedSourceClock, originalQuantity } from "./ImportedActivityMetrics"
 import { localJournalScopeGeneration, onLocalJournalScopeChange } from "../domain/account/local-journal-ownership"
@@ -14,6 +16,7 @@ import "./garmin-connection-panel.css"
 export type GarminJournalOpenResult = "OPENED" | "UNAVAILABLE" | "DRAFT_REVIEW"
 export type OpenGarminJournalRecord = (date: string, entryId: string, isCurrent: () => boolean) => Promise<GarminJournalOpenResult>
 export type GarminConnectionPanelProps = {
+  readonly onSubviewChange?: (active: boolean) => void
   readonly ownerId: string | null
   readonly onOpenAccount?: () => void
   readonly onOpenJournalRecord?: OpenGarminJournalRecord
@@ -27,21 +30,12 @@ const meaningLabel = { TIMER: "타이머 시간", MOVING: "이동 시간", ELAPS
 const rowState = { PENDING: "받은 기록 · 저장 전", CONFIRMED: "계정 저장 확인됨", DISMISSED: "목록에서 제외됨", DELETED: "Garmin에서 삭제된 기록", CONFLICT: "다른 수정본 확인 필요" }
 const unknownResult = new Set<GarminError>(["UNAVAILABLE", "INVALID_RESPONSE", "STALE_RESPONSE", "OPERATIONS_PENDING", "JOURNAL_CONTRACT_UNAVAILABLE", "BUSY"])
 
-function OriginalProviderLaps({ item }: { readonly item: GarminItem }) {
-  const [count, setCount] = useState(20), laps = item.observation?.laps ?? []
-  if (!laps.length) return null
-  return <details><summary>원본 구간 보기 · {laps.length}개</summary>
-    <ol className="garmin-panel__laps">{laps.slice(0, count).map((lap, index) => <li key={index}>{index + 1}구간 · {originalQuantity(lap.distanceMeters, "m")} · {meaningLabel[lap.durationMeaning]} {originalQuantity(lap.durationSeconds, "s")}</li>)}</ol>
-    {count < laps.length && <RecordAction priority="secondary" onClick={() => setCount(value => value + 20)}>구간 20개 더 보기</RecordAction>}
-  </details>
-}
-
 /** A scope epoch key clears private rows synchronously, including an A → B → A switch. */
 export function GarminConnectionPanel(props: GarminConnectionPanelProps) {
   const generation = useSyncExternalStore(onLocalJournalScopeChange, localJournalScopeGeneration, () => 0)
   return <GarminConnectionSession key={`${props.ownerId ?? "guest"}:${generation}`} {...props} />
 }
-function GarminConnectionSession({ ownerId, onOpenAccount, onOpenJournalRecord, transport = requestGarminIntegration,
+function GarminConnectionSession({ onSubviewChange, ownerId, onOpenAccount, onOpenJournalRecord, transport = requestGarminIntegration,
   configured = garminEndpoint() !== null, featureEnabled = garminIntegrationEnabled() && accountJournalPreviewEnabled(), navigate = url => window.location.assign(url) }: GarminConnectionPanelProps) {
   const [status, setStatus] = useState<GarminStatus | null>(null)
   const [items, setItems] = useState<GarminItem[]>([]), [cursor, setCursor] = useState<string | null>(null)
@@ -54,6 +48,26 @@ function GarminConnectionSession({ ownerId, onOpenAccount, onOpenJournalRecord, 
   const [message, setMessage] = useState<string | null>(null), [disconnectReview, setDisconnectReview] = useState(false)
   const [callbackAvailable, setCallbackAvailable] = useState(() => hasGarminCallback())
   const [connectReview, setConnectReview] = useState(false), [saveMode, setSaveMode] = useState<"AUTO" | "REVIEW">("AUTO")
+  const [view, setView] = useState<"list" | "settings" | "review" | "saved">("list")
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const origin = useRef<{ label: string; scroll: number; view: typeof view; selectedId: string | null }[]>([])
+  const heading = useRef<HTMLDivElement | null>(null)
+  const enter = (next: typeof view, id: string | null = null) => {
+    origin.current.push({ label: document.activeElement?.textContent ?? "", scroll: window.scrollY, view, selectedId })
+    setView(next); setSelectedId(id)
+    requestAnimationFrame(() => heading.current?.focus())
+  }
+  const back = () => {
+    const previous = origin.current.pop()
+    setView(previous?.view ?? "list"); setSelectedId(previous?.selectedId ?? null); setConnectReview(false)
+    requestAnimationFrame(() => {
+      const target = [...(heading.current?.closest(".garmin-panel")?.querySelectorAll("button") ?? [])].find(button => button.textContent === previous?.label)
+      ;(target ?? heading.current)?.focus({ preventScroll: true })
+      if (previous) window.scrollTo(0, previous.scroll)
+    })
+  }
+  useTaskFlowBack({ enabled: view !== "list", busy, onBack: back })
+  useEffect(() => { onSubviewChange?.(view !== "list"); return () => onSubviewChange?.(false) }, [view, onSubviewChange])
   const callbackStarted = useRef(false)
   const live = useRef(true), operation = useRef<AbortController | null>(null)
   useEffect(() => { live.current = true; return () => { live.current = false; operation.current?.abort() } }, [])
@@ -107,10 +121,10 @@ function GarminConnectionSession({ ownerId, onOpenAccount, onOpenJournalRecord, 
   useEffect(() => { void load() }, []) // the keyed session pins owner/transport for its lifetime
 
   useEffect(() => {
-    if (status?.experience?.saveMode !== "AUTO" || status.connection.state !== "ACTIVE" || busy || Object.values(reviewed).some(Boolean)) return
+    if (status?.experience?.saveMode !== "AUTO" || status.connection.state !== "ACTIVE" || busy || selectedId || Object.values(reviewed).some(Boolean)) return
     const timer = window.setInterval(() => { if (document.visibilityState === "visible") void load() }, 30000)
     return () => window.clearInterval(timer)
-  }, [status?.experience?.saveMode, status?.connection.state, busy, reviewed])
+  }, [status?.experience?.saveMode, status?.connection.state, busy, reviewed, selectedId])
   async function connect() {
     if (!ownerId || !ready) return
     const controller = begin()
@@ -192,6 +206,8 @@ function GarminConnectionSession({ ownerId, onOpenAccount, onOpenJournalRecord, 
         setItems(previous => previous.map(row => row.inboxId === item.inboxId ? { ...row, state: "CONFIRMED", documentId: receipt.documentId } : row))
         setMessage(receipt.kind === "already_confirmed" ? "이미 저장된 일지의 결과를 확인했어요. 새 일지는 만들지 않았어요." : "계정 일지 저장을 확인했어요. 일지에서 저장된 기록을 다시 열 수 있어요.")
       }
+      setStatus(previous => previous ? { ...previous, pendingCount: Math.max(0, previous.pendingCount - 1),
+        experience: previous.experience ? { ...previous.experience, reviewRequiredCount: Math.max(0, previous.experience.reviewRequiredCount - (item.reviewRequired ? 1 : 0)) } : undefined } : previous)
       clearGarminOperation(ownerId, item.inboxId)
       setPending(previous => { const next = { ...previous }; delete next[item.inboxId]; return next })
     } catch { if (current(controller)) setError("UNAVAILABLE") }
@@ -215,12 +231,26 @@ function GarminConnectionSession({ ownerId, onOpenAccount, onOpenJournalRecord, 
   }
 
   const connection = status?.connection
+  const needsReview = (item: GarminItem) => !!pending[item.inboxId] || item.state === "CONFLICT" || item.state === "PENDING" && (status?.experience?.saveMode !== "AUTO" || item.reviewRequired === true)
+  const reviewCount = Math.max(status?.experience?.reviewRequiredCount ?? status?.pendingCount ?? 0, items.filter(needsReview).length)
+  const visibleItems = selectedId ? items.filter(item => item.inboxId === selectedId) : items.filter(item => view === "saved" ? item.state === "CONFIRMED" : needsReview(item))
   return <section className="garmin-panel" aria-labelledby="garmin-title" aria-busy={busy || undefined}>
-    <AppHeading as="h3" variant="section" id="garmin-title">Garmin</AppHeading>
+    <div ref={heading} tabIndex={-1} className="garmin-panel__heading">
+      {view !== "list" && <RecordAction priority="secondary" disabled={busy} onClick={() => window.history.back()}>뒤로</RecordAction>}
+      <AppHeading as="h3" variant="section" id="garmin-title">{view === "settings" ? "Garmin 설정" : view === "review" ? selectedId ? "기록 확인" : "확인이 필요한 기록" : view === "saved" ? "저장된 운동" : "Garmin"}</AppHeading>
+    </div>
     {!configured ? <p>Garmin 자동 연결을 준비하고 있어요. 지금은 파일로 가져올 수 있어요.</p>
       : !ownerId ? <RecordNotice kind="blocked" title="계정에서 연결을 관리해요" action={onOpenAccount ? { label: "로그인·계정 설정", onClick: onOpenAccount } : undefined}>
         <p>로그인과 계정 기록 보관 설정을 확인한 뒤 Garmin 연결을 시작할 수 있어요.</p></RecordNotice>
         : <>
+          {view === "list" && <div className="garmin-panel__overview">
+            <p>{error ? "상태 확인이 필요해요" : !status ? "연결 확인 중…" : connection?.state === "ACTIVE" ? "연결됨" : connection?.state === "PENDING" ? "연결을 마무리해 주세요" : connection?.state === "ERROR" || connection?.state === "REVOKED" ? "다시 연결이 필요해요" : "연결 안 됨"}</p>
+            <div className="garmin-panel__actions">
+              <RecordAction priority="secondary" disabled={busy} onClick={() => enter("settings")}>{connection?.state === "ACTIVE" ? "Garmin 설정" : "연결 설정"}</RecordAction>
+              {!!reviewCount && <RecordAction priority="secondary" disabled={busy} onClick={() => enter("review")}>확인이 필요한 기록 {reviewCount}개</RecordAction>}
+            </div>
+          </div>}
+          {view === "settings" && <div className="garmin-panel__settings">
           <RecordStateList label="Garmin 연결과 수신 상태" items={[
             { id: "connection", state: { phase: "connection", status: connection?.state === "ACTIVE" ? "connected" : connection?.state === "DISCONNECTED" || connection?.state === "REVOKED" ? "disconnected" : "unknown" },
               detail: connection?.state === "PENDING" ? "Garmin에서 허용한 뒤 앱으로 돌아와 연결을 마무리해 주세요." : connection?.state === "ERROR" ? "다시 연결해야 해요." : undefined },
@@ -249,34 +279,32 @@ function GarminConnectionSession({ ownerId, onOpenAccount, onOpenJournalRecord, 
               <RecordAction priority="secondary" disabled={busy || !ready} onClick={() => void changeSaveMode(status.experience!.saveMode === "AUTO" ? "REVIEW" : "AUTO")}>{status.experience.saveMode === "AUTO" ? "확인 후 저장으로 변경" : "동의하고 자동 저장으로 변경"}</RecordAction>
             </details>
           </section>}
+          {loaded && <div className="garmin-panel__actions">
+            <RecordAction priority="secondary" disabled={busy} onClick={() => enter("review")}>받은 기록 검토</RecordAction>
+            <RecordAction priority="secondary" disabled={busy} onClick={() => enter("saved")}>저장된 운동 보기</RecordAction>
+          </div>}
+          </div>}
           {error && <RecordNotice kind="error" title="결과 확인이 필요해요" announce><p>{garminErrorMessage[error]}</p></RecordNotice>}
           {message && <p className="garmin-panel__message" role="status">{message}</p>}
-          {loaded && <section aria-label="Garmin 받은 기록">
-            <AppHeading as="h3" variant="section">{status?.experience?.saveMode === "AUTO" ? "운동 기록" : "받은 기록 검토"}</AppHeading>
-            <p>{status?.experience?.saveMode === "AUTO" ? "새 운동은 자동 저장돼요. 확인이 필요한 기록은 시작 시각과 수치를 검토해 주세요." : "시작 시각과 운동 수치를 확인한 뒤 일지에 저장해요."}</p>
-            {items.length === 0 && <RecordNotice kind="empty" title="아직 받은 기록이 없어요"><p>현재 자동 연결은 연결 이후 전달된 기록을 받아요. 과거 기록은 파일로 가져올 수 있어요.</p></RecordNotice>}
-            {items.map(item => {
+          {loaded && (view === "review" || view === "saved") && <section aria-label="Garmin 받은 기록">
+            <RecordAction priority="secondary" disabled={busy} onClick={() => void load()}>상태 새로고침</RecordAction>
+            {!selectedId && <p>{view === "saved" ? "일지에 저장된 운동이에요." : "시작 시각과 수치를 확인해 주세요. 같은 날짜의 운동도 서로 다른 운동일 수 있어요."}</p>}
+            {visibleItems.length === 0 && <RecordNotice kind="empty" title={view === "saved" ? "이 목록에 저장된 운동이 없어요" : "이 목록에 확인할 기록이 없어요"}><p>현재 자동 연결은 연결 이후 전달된 기록을 받아요. 과거 기록은 파일로 가져올 수 있어요.</p></RecordNotice>}
+            {visibleItems.map(item => {
               const observation = item.observation, key = `${item.inboxId}:${item.revision}`, receipt = receipts[item.inboxId] ?? (item.state === "CONFIRMED" && item.documentId && item.journalEntryId && (item.journalDate || item.clock) ? { schemaVersion: "GARMIN_INTEGRATION_V1" as const, kind: "already_confirmed" as const, documentId: item.documentId, journalEntryId: item.journalEntryId, revision: item.revision, date: item.journalDate ?? item.clock!.localDate } : undefined), retry = pending[item.inboxId]
               const pendingRequest = ownerId ? pendingGarminOperation(ownerId, item.inboxId) : null
               const retryChanged = !!pendingRequest && (pendingRequest.expectedRevision !== item.revision || pendingRequest.consentRevision !== currentStorageConsentRevision(ownerId!))
               return <article key={key} className="garmin-panel__record">
                 <h4>{observation ? sportLabel[observation.sport] : "삭제된 운동"}</h4>
-                <p>{item.savedAutomatically && item.state === "CONFIRMED" ? "일지에 자동 저장됨" : item.reviewRequired ? "확인이 필요한 기록" : rowState[item.state]}</p>
-                {item.source?.manual && <p>Garmin에서 수동 입력된 운동이에요. 기기의 자동 측정 기록과 구분해 확인해 주세요.</p>}
-                {(item.source?.parent.isParent || item.source?.parent.parentSummaryId) && <p>{item.source.parent.isParent ? "여러 운동을 묶은 상위 기록이에요." : "복합운동에 포함된 하위 기록이에요."} 상위·하위 기록을 함께 저장하면 운동량이 중복될 수 있어요. 저장할 범위를 확인해 주세요.</p>}
-                {observation && <>
-                  <RecordSource source="Garmin 계정에서 받음" originalTimeMeaning={meaningLabel[observation.durationMeaning]} dateBasis={observation.timeZone} />
-                  <dl className="garmin-panel__facts">
-                    <div><dt>운동 시작</dt><dd>{importedSourceClock(observation.startedAt)}</dd></div>
-                    {item.clock && <div><dt>기기 표시 날짜</dt><dd>{item.clock.localDate} · 기기에 설정된 시차 {item.clock.offsetSeconds}초</dd></div>}
-                    <div><dt>거리</dt><dd>{originalQuantity(observation.distanceMeters, "m")}</dd></div>
-                    <div><dt>{meaningLabel[observation.durationMeaning]}</dt><dd>{originalQuantity(observation.durationSeconds, "s")}</dd></div>
-                    <div><dt>원본 구간</dt><dd>{observation.laps.length}개</dd></div>
-                  </dl>
-                  {observation.durationMeaning === "UNKNOWN" && <p>시간 종류가 확인되지 않아 페이스로 바꾸지 않아요.</p>}
-                  <OriginalProviderLaps item={item} />
-                  <details><summary>보관된 수치·센서 상세</summary><GarminActivityDetail ownerId={ownerId!} item={item} transport={transport} /></details>
+                <p>{item.savedAutomatically && item.state === "CONFIRMED" ? "일지에 자동 저장됨" : item.state === "PENDING" && item.reviewRequired ? "확인이 필요한 기록" : rowState[item.state]}</p>
+                {!selectedId && observation && <>
+                  <p>{importedSourceClock(observation.startedAt)} · Garmin</p>
+                  <p>{originalQuantity(observation.distanceMeters, "m")} · {meaningLabel[observation.durationMeaning]} {originalQuantity(observation.durationSeconds, "s")}</p>
+                  {view === "review" && <RecordAction priority="secondary" disabled={busy} onClick={() => enter("review", item.inboxId)}>기록 확인</RecordAction>}
                 </>}
+                {selectedId && observation && <GarminActivityDetail ownerId={ownerId!} item={item} transport={transport} />}
+                {selectedId && item.state === "PENDING" && item.clock && <GarminJournalComparison ownerId={ownerId!} date={item.clock.localDate} />}
+                {selectedId && <>
                 {retryChanged ? <RecordNotice kind="conflict" title="이전 요청 이후 원본이나 동의가 바뀌었어요"><p>이전 저장 결과와 현재 기록을 확인한 뒤, 바뀐 원본을 다시 검토해 주세요.</p>
                   <RecordAction priority="secondary" disabled={busy} onClick={() => { clearGarminOperation(ownerId!, item.inboxId); setPending(previous => { const next = { ...previous }; delete next[item.inboxId]; return next }); setReviewed(previous => ({ ...previous, [key]: false })) }}>변경된 원본 다시 검토</RecordAction></RecordNotice>
                   : retry ? <RecordNotice kind="pending" title="이 요청의 결과를 다시 확인해 주세요"><p>응답이 끊긴 요청은 같은 요청 번호로 확인해요. 새 저장 요청은 만들지 않아요.</p>
@@ -288,6 +316,7 @@ function GarminConnectionSession({ ownerId, onOpenAccount, onOpenJournalRecord, 
                       <RecordAction priority="secondary" disabled={busy || !ready || !reviewed[key]} onClick={() => void mutate(item, "dismiss")}>이 받은 기록 제외</RecordAction></div>
                   </>}
                 {item.state === "CONFLICT" && <p>다른 수정본이 있어 바로 덮어쓰지 않아요. 일지의 기존 기록과 Garmin 원본을 확인해 주세요.</p>}
+                </>}
                 {journalOpenNotice?.inboxId === item.inboxId && <RecordNotice kind="blocked"
                   title={journalOpenNotice.result === "DRAFT_REVIEW" ? "작성 중인 내용을 먼저 확인해 주세요" : "저장된 일지를 아직 열지 못했어요"}>
                   <p>{journalOpenNotice.result === "DRAFT_REVIEW" ? "이동 전에 작성 중인 내용의 저장 여부를 확인해 주세요. 일지를 다시 저장할 필요는 없어요."
@@ -297,9 +326,9 @@ function GarminConnectionSession({ ownerId, onOpenAccount, onOpenJournalRecord, 
                   onClick={() => void openJournal(item.inboxId, receipt)}>{openingJournal === item.inboxId ? "일지 확인 중…" : journalOpenNotice?.inboxId === item.inboxId ? "저장한 일지 다시 열기" : "저장한 일지 열기"}</RecordAction>}
               </article>
             })}
-            {cursor && <RecordAction priority="secondary" disabled={busy} onClick={() => void load(true)}>받은 기록 20개 더 보기</RecordAction>}
+            {!selectedId && cursor && <RecordAction priority="secondary" disabled={busy} onClick={() => void load(true)}>받은 기록 20개 더 보기</RecordAction>}
           </section>}
-          {connection && connection.state !== "DISCONNECTED" && <details><summary>연결 해제</summary>
+          {view === "settings" && connection && connection.state !== "DISCONNECTED" && <details><summary>연결 해제</summary>
             <p>새 기록을 받지 않도록 연결을 해제해요. 이미 일지에 저장된 기록은 따로 삭제할 수 있어요.</p>
             <p>계정 보관 동의를 철회하거나 탈퇴해 연결 정보가 삭제된 경우에는 Garmin Connect의 계정 정보에서 앱 권한도 직접 해제해 주세요.</p>
             <label className="garmin-panel__disconnect"><input type="checkbox" checked={disconnectReview} disabled={busy} onChange={event => setDisconnectReview(event.target.checked)} />Garmin 연결을 해제할게요</label>

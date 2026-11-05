@@ -56,3 +56,11 @@
   .imported-activity-detail__tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .imported-activity-detail__context > div { grid-template-columns: minmax(0, 1fr); gap: var(--space-1); }
 }
+
+.garmin-detail .imported-activity-detail__tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.garmin-detail__metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 130px), 1fr)); gap: 16px; }
+.garmin-detail__metrics dt { font-size: var(--fs-body-sm); color: var(--ink-2); }
+.garmin-detail__metrics dd { font: 650 var(--fs-body) / 1.5 var(--sans); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.garmin-detail__hero { padding-block: 12px; }
+.garmin-detail__raw > summary { cursor: pointer; min-height: 44px; padding-block: 12px; }
+.garmin-detail__raw[open] > :not(summary) { margin-block: 12px; }
