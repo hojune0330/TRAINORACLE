@@ -5,10 +5,12 @@ import { requestVerifiedAccountScopeRefresh } from "../../domain/account/verifie
 import { primaryBtn, secondaryBtn } from "./styles"
 import { isStorageTransmissionHeld } from "../../domain/account/storage-transmission-hold"
 
-export function StorageConsentPanel({ userId, load = loadAccountStorageConsent, save = saveAccountStorageConsent }: {
+export function StorageConsentPanel({ userId, load = loadAccountStorageConsent, save = saveAccountStorageConsent, onGranted, onStatus }: {
   readonly userId: string
   readonly load?: typeof loadAccountStorageConsent
   readonly save?: typeof saveAccountStorageConsent
+  readonly onGranted?: () => void
+  readonly onStatus?: (state: "checking" | "required" | "ready" | "unavailable") => void
 }) {
   const [receipt, setReceipt] = React.useState<StorageConsent | null>(null)
   const [health, setHealth] = React.useState(false)
@@ -17,35 +19,48 @@ export function StorageConsentPanel({ userId, load = loadAccountStorageConsent, 
   const [busy, setBusy] = React.useState(false)
   const [retry, setRetry] = React.useState(0)
   const currentOwner = React.useRef(userId)
+  const lifetime = React.useRef(0)
+  React.useLayoutEffect(() => { lifetime.current += 1; return () => { lifetime.current += 1 } }, [userId])
   currentOwner.current = userId
+  const statusCallback = React.useRef(onStatus)
+  statusCallback.current = onStatus
+  const reportStatus = (consent: StorageConsent) => statusCallback.current?.(
+    !consent.operationsReady || isStorageTransmissionHeld(userId) ? "unavailable"
+      : consent.healthStorage && consent.journalTextStorage ? "ready" : "required")
   React.useEffect(() => {
     let active = true
     setReceipt(null); setHealth(false); setText(false); setBusy(true)
+    statusCallback.current?.("checking")
     void load(userId).then(result => {
       if (!active) return
       setBusy(false)
-      if (!result.ok) { setNotice(result.message); return }
+      if (!result.ok) { setNotice(result.message); statusCallback.current?.("unavailable"); return }
       setReceipt(result.consent)
+      reportStatus(result.consent)
       setHealth(result.consent.healthStorage); setText(result.consent.journalTextStorage)
       setNotice(isStorageTransmissionHeld(userId) ? "철회 결과를 확인하지 못해 이 기기의 전송은 멈춰 있어요. 서버 동의 철회를 다시 요청해 주세요." : !result.consent.operationsReady ? "온라인 보관은 운영 확인 전이라 열려 있지 않아요. 기기 기록과 내 자료 내려받기는 사용할 수 있어요." : result.consent.healthStorage && result.consent.journalTextStorage
         ? "선택한 범위로 온라인 보관을 사용할 수 있어요."
         : "온라인 보관은 꺼져 있어요. 기기 일지와 훈련 기능은 계속 사용할 수 있어요.")
-    }).catch(() => { if (active) { setBusy(false); setNotice("동의 상태를 확인하지 못했어요. 다시 확인해 주세요.") } })
+    }).catch(() => { if (active) { setBusy(false); setNotice("동의 상태를 확인하지 못했어요. 다시 확인해 주세요."); statusCallback.current?.("unavailable") } })
     return () => { active = false }
   }, [userId, load, retry])
   async function update(withdraw: boolean) {
     if (!receipt || busy) return
     setBusy(true)
+    statusCallback.current?.("checking")
+    const requestLifetime = lifetime.current
     const result = await save(receipt, withdraw ? false : health, withdraw ? false : text)
       .catch(() => ({ ok: false as const, message: "서버의 변경 결과를 확인하지 못했어요. 다시 확인해 주세요." }))
-    if (currentOwner.current !== userId) return
+    if (currentOwner.current !== userId || lifetime.current !== requestLifetime) return
     setBusy(false)
     requestVerifiedAccountScopeRefresh()
-    if (!result.ok) { setReceipt(null); setNotice(result.message); return }
+    if (!result.ok) { setReceipt(null); setNotice(result.message); statusCallback.current?.("unavailable"); return }
     setReceipt(result.consent); setHealth(result.consent.healthStorage); setText(result.consent.journalTextStorage)
+    reportStatus(result.consent)
     setNotice(withdraw || !result.consent.healthStorage || !result.consent.journalTextStorage
       ? "온라인 처리를 중단하고 서버의 해당 보관 자료·교체본·휴지통을 삭제했어요. 기기 기록은 그대로이며, 사업자 백업 정리는 별도 확인 중이에요."
       : "선택한 목적의 동의를 저장했어요. 기존 기기 기록은 별도로 선택해야 계정으로 옮겨져요.")
+    if (!withdraw && result.consent.operationsReady && !isStorageTransmissionHeld(userId) && result.consent.healthStorage && result.consent.journalTextStorage) onGranted?.()
   }
   return <section className="account-panel" aria-busy={busy} aria-label="온라인 보관 동의">
     <h2 style={{ margin: 0, fontSize: "var(--fs-body)" }}>온라인 보관 · 선택 동의</h2>

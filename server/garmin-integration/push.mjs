@@ -47,7 +47,8 @@ export function createGarminPushRuntime({repository,vault,provider,identityKey,e
         // clock/manual/parent are factual source metadata; no activity title/note
         // enters this store or any AI source registry. Exact timing remains in the
         // durable job for conflicts; normalized sensor detail remains independently encrypted.
-        const sourceContext={clock:mapped.clock,manual:mapped.manual,parent:mapped.parent,summaryId:mapped.summaryId,lapStartOffsetsSeconds:mapped.lapStartOffsetsSeconds,summary:mapped.summary};
+        const sourceContext={clock:mapped.clock,manual:mapped.manual,parent:mapped.parent,summaryId:mapped.summaryId,lapStartOffsetsSeconds:mapped.lapStartOffsetsSeconds,summary:mapped.summary,
+          monitoringPeriod:{basis:'GARMIN_MONITORING_PERIOD',seconds:mapped.observation.durationSeconds}};
         const coreDigest=sha(canonical({observation,clock:mapped.clock,manual:mapped.manual,parent:mapped.parent,summary:mapped.summary}));
         const result=await relay({action:'ingestWire',connectionId:job.connection_id,epoch:job.epoch,ownerId:job.user_id,subjectHash:subjectHash(row.userId),activityHash,inboxId,
           sourceRevision:revision,kind:'UPSERT',eventHash:sha(job.id),payloadDigest:sha(canonical(row)),coreDigest,

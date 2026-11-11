@@ -102,7 +102,7 @@ describe("ImportActivities — 고르기 단계", () => {
 
   it("keeps a single screen heading without adding a second heading to the file pick guidance", () => {
     const { container } = render(<ImportActivities initialMethod="file" />)
-    const heading = screen.getByRole("heading", { name: "운동 기록 가져오기", level: 1 })
+    const heading = screen.getByRole("heading", { name: "운동 가져오기", level: 1 })
 
     expect(heading).toHaveClass("app-heading", "app-heading--screen", "app-heading--accent")
     expect(heading.style.fontSize).toBe("")

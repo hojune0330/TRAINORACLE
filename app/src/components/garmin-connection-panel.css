@@ -22,9 +22,14 @@
 .garmin-panel__heading, .garmin-panel__overview, .garmin-panel__settings { display: grid; gap: 12px; min-width: 0; }
 .garmin-panel__heading:focus { outline: none; }
 .garmin-panel__heading > button { justify-self: start; }
+.garmin-panel__heading:has(> h3:first-child) { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; }
+.garmin-panel__heading h3 { margin: 0; }
+.garmin-panel__heading > .record-action { width: auto; }
 .garmin-panel__summary { display: grid; gap: 4px; min-width: 0; }
 .garmin-panel__summary > p:first-child { font-weight: 600; }
 .garmin-panel__receipt { color: var(--ink-2); font-variant-numeric: tabular-nums; }
 .garmin-panel__setup h4:focus { outline: none; }
 .garmin-panel__message { border-left: 0; padding: 12px 0; }
 .garmin-panel__record > p { overflow-wrap: anywhere; }
+.garmin-panel__inbox-title { margin: 0; font-size: var(--fs-body); }
+.garmin-panel__provider-link { display: inline-flex; align-items: center; min-height: 44px; color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }

@@ -6,11 +6,11 @@ import {randomUUID,createHash} from 'node:crypto';
 import {readFile} from 'node:fs/promises';
 import {loadOracleMigrationChain,approveSyntheticOracleStorage,admitOracleStorage,setOracleAuth} from '../../supabase/tests/local-postgres/oracle-auth-fixture.mjs';
 import {importJournalAttestor,importJournalKeyring} from '../../supabase/functions/_shared/account-journal-handler.mjs';
-import {decryptAccountJournalDocument} from '../../supabase/functions/_shared/account-journal-crypto.mjs';
+import {decryptAccountJournalDocument,encryptAccountJournalDocument} from '../../supabase/functions/_shared/account-journal-crypto.mjs';
 import {createVault,canonical,sha,sign,prepareObservation,prepareDetail} from './primitives.mjs';
 import {createReviewedProvider} from './provider.mjs';
 import {createSupabaseRepository} from './repository.mjs';
-import {createGarminHandler,createNodeServer} from './service.mjs';
+import {createGarminHandler,createNodeServer,providerJournalDocument} from './service.mjs';
 import {createGarminStarterProvider,GARMIN_SCOPES,GARMIN_SUMMARY_FIELDS,inCidrs,authenticateGarminPush,normalizeGarminActivity,parseGarminPush} from './garmin-starter.mjs';
 import {createGarminPushRuntime} from './push.mjs';
 
@@ -47,6 +47,8 @@ before(async()=>{
   await db.exec(await readFile(new URL('../../supabase/migrations/20261105020000_garmin_autosave.sql',import.meta.url),'utf8'));
   await db.exec(await readFile(new URL('../../supabase/migrations/20261105033607_garmin_optional_operating_expiry.sql',import.meta.url),'utf8'));
   await db.exec(await readFile(new URL('../../supabase/migrations/20261105033619_garmin_permission_retry.sql',import.meta.url),'utf8'));
+  await db.exec(await readFile(new URL('./schema-revision-recheck-candidate.sql',import.meta.url),'utf8'));
+  await db.exec(await readFile(new URL('./schema-distinct-activity-candidate.sql',import.meta.url),'utf8'));
   assert.equal((await db.query('select count(*)::int as count from public.garmin_integration_keys')).rows[0].count,0);
   assert.equal((await db.query('select count(*)::int as count from public.garmin_integration_controls')).rows[0].count,0);
   await approveSyntheticOracleStorage(db);
@@ -143,6 +145,44 @@ test('autosave preserves same-day journals, routes duplicates to review and stop
   assert.equal((await call({action:'status',experience:true})).data.experience.reviewRequiredCount,1);
   await call({action:'disconnect'});assert.equal((await relay({},'/internal/garmin/autosave')).data.saved,0);
 });
+test('autosave keeps distinct morning and evening workouts on the same day without editing the first journal',async()=>{
+  const c=await connect();await setSaveMode(c);
+  await receive(c,{observation:observation({durationMeaning:'ELAPSED'})});
+  assert.equal((await relay({},'/internal/garmin/autosave')).data.saved,1);
+  const before=(await admin('select * from public.account_journal_documents')).rows[0];
+  await receive(c,{eventId:'evening',activityId:'activity-2',observation:observation({sourceId:'activity-2',startedAt:'2026-11-04T10:00:00Z',durationMeaning:'ELAPSED'})});
+  assert.equal((await relay({},'/internal/garmin/autosave')).data.saved,1);
+  const docs=(await admin('select * from public.account_journal_documents')).rows;
+  assert.equal(docs.length,2);
+  assert.deepEqual(docs.find(x=>x.document_id===before.document_id),before);
+  assert.equal((await relay({},'/internal/garmin/autosave')).data.saved,0);
+});
+test('autosave does not treat different source IDs or timer durations as proof of separate workouts',async()=>{
+  const c=await connect();await setSaveMode(c);await receive(c);
+  assert.equal((await relay({},'/internal/garmin/autosave')).data.saved,1);
+  await receive(c,{eventId:'timer-second',activityId:'activity-2',observation:observation({sourceId:'activity-2',startedAt:'2026-11-04T10:00:00Z'})});
+  assert.equal((await relay({},'/internal/garmin/autosave')).data.reviewRequired,1);
+  assert.equal((await admin('select count(*) n from public.account_journal_documents')).rows[0].n,1);
+});
+test('autosave rejects a stale same-day comparison after the existing journal changes',async()=>{
+  const c=await connect();await setSaveMode(c);await receive(c,{observation:observation({durationMeaning:'ELAPSED'})});
+  assert.equal((await relay({},'/internal/garmin/autosave')).data.saved,1);
+  const obs=observation({sourceId:'activity-2',startedAt:'2026-11-04T10:00:00Z',durationMeaning:'ELAPSED'});
+  await receive(c,{eventId:'race-second',activityId:'activity-2',observation:obs});
+  const row=(await repository.autosave(null,{action:'next',configHash:provider.configHash})).row;
+  const target={configHash:provider.configHash,ownerId:owner,consentRevision:1,epoch:c.epoch,inboxId:row.inbox_id,expectedRevision:row.source_revision,preferenceRevision:row.save_preference_revision};
+  const comparison=await repository.autosave(null,{...target,action:'candidates',journalDate:'2026-11-04'});
+  assert.equal(comparison.candidates.length,1);
+  const auth=await repository.authenticate(token,1);
+  await assert.rejects(()=>repository.autosave(auth,{...target,action:'candidates',journalDate:'2026-11-04'}),e=>e.code==='ACCESS_DENIED');
+  await admin('update public.account_journal_documents set revision=revision+1');
+  const proposal=providerJournalDocument({ownerId:owner},row,obs),operationId=randomUUID();
+  const encryptedPayload=await encryptAccountJournalDocument(canonical(proposal.document),{ownerId:owner,documentId:proposal.documentId},journalKeyring.active);
+  const journalProof=await journalAttest(owner,'commit',{documentId:proposal.documentId,operationId,expectedRevision:0,encryptedPayload,metadata:{kind:'JOURNAL',journalDate:'2026-11-04',awardAllowed:false,eligible:false,occurrenceId:null}});
+  const result=await repository.autosave(null,{...target,action:'commit',operationId,documentId:proposal.documentId,journalEntryId:proposal.journalEntryId,journalProof,collisionSnapshot:comparison.snapshot});
+  assert.equal(result.kind,'review_required');
+  assert.equal((await admin('select count(*) n from public.account_journal_documents')).rows[0].n,1);
+});
 test('autosave refuses a revoked opt-in or changed source after preparation',async()=>{
   const c=await connect();await setSaveMode(c);await receive(c);
   const claimed=await repository.autosave(null,{action:'next',configHash:provider.configHash});assert.ok(claimed.row);
@@ -169,6 +209,32 @@ test('autosave RPC rejects runtime keys for worker actions and stale storage con
   assert.equal((await repository.autosave(null,{action:'next',configHash:provider.configHash})).row,null);
   await assert.rejects(()=>repository.autosave(null,{action:'commit',configHash:provider.configHash,ownerId:owner,epoch:c.epoch,inboxId:row.inbox_id,expectedRevision:row.source_revision,preferenceRevision:row.save_preference_revision}),e=>e.code==='CONNECTION_CHANGED');
   await admin('update public.account_storage_consents set revision=revision-1 where user_id=$1',[owner]);
+});
+test('a newly accepted revision rechecks automatic saving without inheriting an old review marker',async()=>{
+  const c=await connect();await setSaveMode(c);
+  await receive(c,{observation:observation({durationSeconds:null,durationMeaning:'UNKNOWN'})});
+  assert.equal((await relay({},'/internal/garmin/autosave')).data.reviewRequired,1);
+  assert.equal((await relay({},'/internal/garmin/autosave')).data.saved,0,'the same unverified revision stays stopped');
+  await receive(c,{eventId:'source-revision-2',revision:2,observation:observation({sourceVersion:'2'})});
+  assert.equal((await relay({},'/internal/garmin/autosave')).data.saved,1,'revised source passes every existing AUTO and duration check again');
+  assert.equal((await relay({},'/internal/garmin/autosave')).data.saved,0);
+  assert.equal((await admin('select count(*) n from public.account_journal_documents')).rows[0].n,1);
+});
+test('revision recheck preserves missing-time review, explicit REVIEW mode and dismissal',async()=>{
+  const c=await connect();await setSaveMode(c);
+  const received=await receive(c,{observation:observation({durationSeconds:null,durationMeaning:'UNKNOWN'})});
+  assert.equal((await relay({},'/internal/garmin/autosave')).data.reviewRequired,1);
+  await receive(c,{eventId:'still-unknown',revision:2,observation:observation({sourceVersion:'2',durationSeconds:null,durationMeaning:'UNKNOWN'})});
+  assert.equal((await relay({},'/internal/garmin/autosave')).data.reviewRequired,1,'new revision does not make missing time a known timer');
+  await setSaveMode(c,'REVIEW');
+  await receive(c,{eventId:'known-but-review',revision:3,observation:observation({sourceVersion:'3'})});
+  assert.equal((await relay({},'/internal/garmin/autosave')).data.saved,0,'revision change never grants AUTO consent');
+  assert.equal((await call({action:'dismiss',inboxId:received.inboxId,expectedRevision:3,operationId:randomUUID()})).status,200);
+  await setSaveMode(c);
+  await receive(c,{eventId:'known-after-dismissal',revision:4,observation:observation({sourceVersion:'4'})});
+  assert.equal((await call({action:'inbox'})).data.items[0].state,'DISMISSED');
+  assert.equal((await relay({},'/internal/garmin/autosave')).data.saved,0);
+  assert.equal((await admin('select count(*) n from public.account_journal_documents')).rows[0].n,0);
 });
 test('a provider deletion after autosave remains readable in the new experience without restoring the journal',async()=>{
   const c=await connect();await setSaveMode(c);await receive(c);assert.equal((await relay({},'/internal/garmin/autosave')).data.saved,1);
@@ -268,6 +334,8 @@ test('issued Starter wire profile fixes default OAuth scopes, verifies ACTIVITY_
   try{
     const start=await call({action:'connect'},{url});assert.equal(start.status,200);const authorization=new URL(start.data.authorizationUrl);assert.equal(authorization.searchParams.has('scope'),false);lastChallenge=authorization.searchParams.get('code_challenge');assert.equal((await call({action:'complete',state:start.data.state,code:'x'},{url})).status,200);
     assert.ok(providerCalls.some(x=>x.url==='/permissions'));
+    const connected=await call({action:'status',experience:true},{url});
+    assert.equal((await call({action:'preferences',epoch:connected.data.connection.epoch,expectedPreferenceRevision:connected.data.experience.preferenceRevision,saveMode:'AUTO',consentVersion:saveVersion},{url})).status,200);
     const startTime=Date.parse('2026-11-03T23:00:00Z')/1000;
     const summary=Object.fromEntries(GARMIN_SUMMARY_FIELDS.map((field,index)=>[field,field==='deviceName'?'Synthetic Fenix':field==='averageHeartRateInBeatsPerMinute'?null:field==='steps'?0:field==='averagePaceInMinutesPerKilometer'?0.5975272352046997:index+0.125]));
     const wire={activityDetails:[{userId:subject,summaryId:'official-shape-detail',activityId:123456,summary:{startTimeInSeconds:startTime,startTimeOffsetInSeconds:32400,durationInSeconds:3600,distanceInMeters:10000,activityType:'RUNNING',activityName:'PRIVATE_NOTE_MUST_NOT_PERSIST'},samples:[{startTimeInSeconds:startTime,heartRate:125,powerInWatts:250},{startTimeInSeconds:startTime+1,heartRate:126}],laps:[{startTimeInSeconds:startTime}]}]};
@@ -277,10 +345,27 @@ test('issued Starter wire profile fixes default OAuth scopes, verifies ACTIVITY_
     assert.deepEqual(item.source.summary,summary);assert.equal(JSON.stringify(item).includes('PRIVATE_NOTE_MUST_NOT_PERSIST'),false);
     const stored=(await admin('select encrypted_context from public.garmin_inbox where inbox_id=$1',[item.inboxId])).rows[0];assert.equal(JSON.stringify(stored).includes('Synthetic Fenix'),false);
     const detail=await call({action:'detail',inboxId:item.inboxId,expectedRevision:item.revision,partIndex:0},{url});assert.equal(detail.data.samples[0].powerWatts,250);
-    const saved=await call({action:'confirm',inboxId:item.inboxId,expectedRevision:item.revision,operationId:randomUUID()},{url});assert.equal(saved.status,200,JSON.stringify(saved));assert.equal(saved.data.date,'2026-11-04');
-    assert.deepEqual((await call({action:'read',documentId:saved.data.documentId},{url})).data.item.source.summary,summary);
+    const path='/internal/garmin/autosave',timestamp=String(Date.now());
+    const autosaveResponse=await fetch(url+path,{method:'POST',headers:{'content-type':'application/json','x-trainoracle-relay-timestamp':timestamp,'x-trainoracle-relay-signature':sign(relayHttpKey,`${timestamp}\n${path}\n{}`)},body:'{}'});
+    assert.equal(autosaveResponse.status,200);assert.equal((await autosaveResponse.json()).saved,1);
+    const storedItem=(await call({action:'inbox',experience:true},{url})).data.items[0];
+    assert.equal(storedItem.state,'CONFIRMED');assert.equal(storedItem.savedAutomatically,true);assert.equal(storedItem.journalDate,'2026-11-04');
+    const row=(await admin('select encrypted_payload,document_id from public.account_journal_documents where document_id=$1',[storedItem.documentId])).rows[0];
+    const savedDocument=JSON.parse(await decryptAccountJournalDocument(row.encrypted_payload,{ownerId:owner,documentId:row.document_id},journalKeyring.active));
+    assert.equal(savedDocument.entry.distanceKm,'10');assert.equal(savedDocument.entry.durationMin,'');assert.equal(savedDocument.entry.fieldProvenance.durationMin.provenance,'MISSING');
+    assert.equal(savedDocument.entry.avgPace,'');assert.equal(savedDocument.entry.rpe,0);
+    const savedOriginal=(await call({action:'read',documentId:storedItem.documentId},{url})).data.item;
+    assert.equal(savedOriginal.observation.durationSeconds,3600);assert.equal(savedOriginal.observation.durationMeaning,'UNKNOWN');assert.deepEqual(savedOriginal.source.summary,summary);
     assert.equal((await postPush(wire)).status,200);assert.equal((await signedProcess()).data.processed,0,'same durable job is not replayed after ACK');
-    const changed=structuredClone(wire);changed.activityDetails[0].summary.distanceInMeters=11000;assert.equal((await postPush(changed)).status,200);assert.equal((await signedProcess()).data.reviewRequired,1);assert.equal((await call({action:'inbox'},{url})).data.items[0].state,'CONFLICT');
+    const evening=structuredClone(wire);evening.activityDetails[0].activityId=123457;evening.activityDetails[0].summaryId='evening-shape-detail';
+    evening.activityDetails[0].summary.startTimeInSeconds=startTime+36000;
+    evening.activityDetails[0].samples=[];evening.activityDetails[0].laps=[];
+    assert.equal((await postPush(evening)).status,200);assert.equal((await signedProcess()).data.processed,1);
+    const secondStamp=String(Date.now());const secondSave=await fetch(url+path,{method:'POST',headers:{'content-type':'application/json','x-trainoracle-relay-timestamp':secondStamp,'x-trainoracle-relay-signature':sign(relayHttpKey,`${secondStamp}\n${path}\n{}`)},body:'{}'});
+    assert.equal((await secondSave.json()).saved,1,'Starter monitoring span distinguishes morning and evening without inventing TIMER');
+    assert.equal((await admin('select count(*) n from public.account_journal_documents')).rows[0].n,2);
+    assert.deepEqual((await admin('select encrypted_payload,document_id from public.account_journal_documents where document_id=$1',[storedItem.documentId])).rows[0],row);
+    const changed=structuredClone(wire);changed.activityDetails[0].summary.distanceInMeters=11000;assert.equal((await postPush(changed)).status,200);assert.equal((await signedProcess()).data.reviewRequired,1);assert.equal((await call({action:'inbox'},{url})).data.items.find(x=>x.inboxId===item.inboxId).state,'CONFLICT');
     const permissions={userPermissionsChange:[{userId:subject,summaryId:'permission-change',permissions:[],changeTimeInSeconds:Date.now()/1000|0}]};assert.equal((await postPush(permissions)).status,200);assert.equal((await call({action:'status'},{url})).data.connection.state,'ERROR');assert.equal((await call({action:'inbox'},{url})).status,409);
     assert.equal((await postPush({deregistrations:[{userId:subject}]})).status,200);assert.equal((await call({action:'status'},{url})).data.connection.state,'REVOKED');
   }finally{await close(server);}

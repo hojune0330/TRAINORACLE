@@ -24,7 +24,7 @@ import { todayISO, type JournalEntry } from "../domain/journal-store"
 import { homeMemoReceiptStorageStatus, type HomeMemoReceipt } from "../domain/home-memo-receipt"
 import { runDraftSafeNavigation } from "../domain/unsaved-draft-navigation"
 import { accountJournalProjectionStatus, readAccountJournalProjection, readCurrentConfirmedAccountJournalProjection } from "../domain/account/account-journal-projection"
-import { RecordStartActions } from "../components/RecordStartActions"
+import { ConnectedDataHome } from "./home/ConnectedDataHome"
 import { ProductAnnouncement } from "../components/ProductAnnouncement"
 import { MINIGAME_ANNOUNCEMENT } from "../domain/product-announcements"
 import { createPlannedSessionLogDraft, type PlannedSessionLink } from "../domain/planned-session-link"
@@ -186,7 +186,7 @@ export function Home({
         announcement={onOpenMinigame && <ProductAnnouncement notice={MINIGAME_ANNOUNCEMENT} onOpen={onOpenMinigame} />}
         oraclePreview={oraclePreview}
         oraclePreviewLabel={oraclePreviewLabel}
-        recordStart={journalSnapshot.status === "READY" && entries.length === 0 ? <RecordStartActions onImport={onOpenImport} onRecords={onOpenRecords} /> : undefined}
+        recordStart={<ConnectedDataHome entries={journalSnapshot.status === "READY" ? entries : []} today={today} onOpenImport={onOpenImport} onOpenDay={onOpenDay} onOpenTrends={onOpenTrends} />}
         onWriteLog={onWriteLog}
         onOpenArchive={onOpenArchive}
         onOpenToday={onOpenDay === undefined ? onOpenArchive : () => onOpenDay(today)}

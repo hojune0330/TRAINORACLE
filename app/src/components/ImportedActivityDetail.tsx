@@ -4,7 +4,7 @@ import { fileDuration, fileNumber } from "../screens/trends/file-analysis-displa
 import { RecordAction, RecordNotice, RecordSource } from "./RecordUI"
 import { ImportedActivitySensorChart, type ActivityChartRange } from "./ImportedActivitySensorChart"
 import { ImportedActivityRoute } from "./ImportedActivityRoute"
-import { ImportedActivityMetrics, ImportedActivityMetricRows, importedSourceClock } from "./ImportedActivityMetrics"
+import { ImportedActivityMetrics, ImportedActivityMetricRows, importedSourceClock, activityDistance, activityDuration } from "./ImportedActivityMetrics"
 import "./imported-activity-detail.css"
 
 const SPORT: Record<FileObservationV1["sport"], string> = {
@@ -122,6 +122,10 @@ function ActivityDetail({ observation }: { readonly observation: FileObservation
         onKeyDown={event => tabKey(event, index)} onClick={() => setView(item.id)}>{item.label}</button>)}
     </div>
     <div id={`${titleId}-panel-summary`} role="tabpanel" aria-labelledby={`${titleId}-summary`} hidden={view !== "summary"}>
+    <dl className="imported-activity-detail__context">
+      <div><dt>거리</dt><dd>{activityDistance(observation.distanceMeters)}</dd></div>
+      <div><dt>{TIME[effectiveMeaning]}</dt><dd>{activityDuration(observation.durationSeconds)}</dd></div>
+    </dl>
     <RecordSource source="파일에서 가져옴" format={observation.format.toUpperCase()}
       dateBasis={observation.timeZone ?? "지역 시간대 미확인 · 파일 날짜 유지"}
       originalTimeMeaning={TIME[observation.durationMeaning]}

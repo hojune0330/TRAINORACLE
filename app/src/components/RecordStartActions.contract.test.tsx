@@ -6,7 +6,7 @@ afterEach(cleanup)
 it("offers two working entrypoints without the removed explanatory disclosure", () => {
   const onImport = vi.fn(), onRecords = vi.fn()
   render(<RecordStartActions onImport={onImport} onRecords={onRecords} />)
-  fireEvent.click(screen.getByRole("button", { name: /운동 자동연동/ }))
+  fireEvent.click(screen.getByRole("button", { name: /운동 가져오기/ }))
   fireEvent.click(screen.getByRole("button", { name: /최고기록 남기기/ }))
   expect(onImport).toHaveBeenCalledOnce()
   expect(onRecords).toHaveBeenCalledOnce()

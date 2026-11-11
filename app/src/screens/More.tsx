@@ -141,7 +141,7 @@ export function More({
 
       <div className={`more-screen__list${activeView === "tools" ? " more-screen__list--tools" : ""}`}>
         {activeView === "tools" && <>
-        {onOpenImport && <AutomaticConnectionEntry onOpen={onOpenImport} />}
+        <AutomaticConnectionEntry onOpen={onOpenImport ?? (() => changeView("connections"))} />
         {(onOpenMinigame || onOpenPaceCalculator) && <MenuGroup title="게임·페이스">
           {onOpenMinigame && <MenuAction icon={Gamepad2} label="게임 라운지" illustration="running-game-announcement" onClick={onOpenMinigame} />}
           {onOpenPaceCalculator && <MenuAction category="training" icon={Calculator} label="페이스 계산기" detail="거리와 기록으로 페이스·구간 시간 계산" illustration="pace-calculator-announcement" onClick={onOpenPaceCalculator} />}
@@ -153,9 +153,8 @@ export function More({
           {onOpenOracleLibrary && <MenuAction category="oracle" icon={BookOpen} label="오라클 읽을거리" onClick={onOpenOracleLibrary} />}
         </MenuGroup>}
         <InstallShortcutMenuEntry />
-        {(onOpenImport || onOpenRecords) && <MenuGroup title="기록 도구">
+        {onOpenRecords && <MenuGroup title="기록 도구">
           {onOpenRecords && <MenuAction category="record" icon={Flag} label="경기 기록 추가·수정" onClick={onOpenRecords} />}
-          <MenuAction category="record" icon={Watch} label="기기 연동 상태" onClick={() => changeView("connections")} />
         </MenuGroup>}
         <MenuGroup title="배우기">
           <MenuAction category="journal" icon={BookOpen} label="일지 예시 보기" onClick={onOpenMinji} />
@@ -203,13 +202,13 @@ export function More({
         </details>
         </>}
         {activeView === "about" && <>
-        <MenuGroup title="문의와 기기">
+        <MenuGroup title={onOpenImport ? "문의" : "문의와 기기"}>
         {onOpenFeedback === undefined ? (
           <MenuAction icon={MessageSquareText} label="문의 게시판" detail={feedbackAvailable ? undefined : "준비 중"} href="?feedback=1" />
         ) : (
           <MenuAction icon={MessageSquareText} label="문의 게시판" detail={feedbackAvailable ? undefined : "준비 중"} onClick={onOpenFeedback} />
         )}
-        <MenuAction icon={Watch} label="기기 연동 상태" detail="Garmin · COROS" onClick={() => changeView("connections")} />
+        {!onOpenImport && <MenuAction icon={Watch} label="기기 연동 상태" detail="Garmin · COROS" onClick={() => changeView("connections")} />}
         </MenuGroup>
         <MenuGroup title="개인정보와 이용 안내">
           <MenuAction icon={ShieldCheck} label="개인정보처리방침" href="./legal/privacy.html" target="_blank" />

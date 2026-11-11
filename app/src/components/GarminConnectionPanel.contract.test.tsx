@@ -182,7 +182,7 @@ it("requires explicit consent for the selected saving mode and keeps Back within
   expect(transport.mock.calls.find(call => call[1].action === "connect")?.[1]).toMatchObject({ action: "connect", saveMode: "REVIEW" })
 })
 it.each(["REVOKED", "ERROR"] as const)("retains the reconnect action for %s on the first screen", async state => {
-  mount(async () => success({ ...status, pendingCount: 0, connection: { ...status.connection, state } }))
+  mount(async () => success({ ...status, experience: { ...autoExperience, reconnectRequired: true }, pendingCount: 0, connection: { ...status.connection, state } }))
   fireEvent.click(await screen.findByRole("button", { name: "Garmin 다시 연결" }))
   expect(screen.getByRole("region", { name: "Garmin 연결 및 저장 동의" })).toBeVisible()
 })
@@ -211,10 +211,11 @@ it("shows actual receipt and saving mode on the first screen without implying a 
     : success({ schemaVersion: GARMIN_VERSION, items: [item], nextCursor: null })
   mount(transport)
   const review = await screen.findByRole("button", { name: "확인이 필요한 기록 1개" })
-  expect(review).toHaveAttribute("data-priority", "primary")
+  expect(review).toHaveAttribute("data-priority", "secondary")
+  expect(screen.getByRole("button", { name: "기록 확인" })).toHaveAttribute("data-priority", "primary")
   expect(screen.getByText("받은 운동을 확인 후 저장해요.")).toBeVisible()
-  expect(screen.getByText(/마지막 수신 확인:.*2026-11-05.*01:02:03/)).toBeVisible()
-  expect(screen.getByRole("button", { name: "저장된 운동 보기" })).toHaveAttribute("data-priority", "secondary")
+  expect(screen.getByText(/최근 확인 ·/)).toBeVisible()
+  expect(screen.queryByRole("button", { name: "저장된 운동 보기" })).toBeNull()
   expect(screen.queryByText("계정 저장 확인됨")).toBeNull()
   expect(screen.queryByText("일지에 자동 저장됨")).toBeNull()
 })
@@ -228,12 +229,18 @@ it("reopens an automatically saved journal after reload using server receipt ide
   const open = vi.fn(async () => "OPENED" as const)
   const transport: GarminTransport = async (_owner, request) => request.action === "status" ? success({ ...status, experience: autoExperience }) : success({ schemaVersion: GARMIN_VERSION, items: [{ ...item, state: "CONFIRMED", documentId: receipt.documentId, journalEntryId: receipt.journalEntryId, journalDate: receipt.date, savedAutomatically: true }], nextCursor: null })
   mount(transport, { onOpenJournalRecord: open })
-  const saved = await screen.findByRole("button", { name: "저장된 운동 보기" })
-  expect(saved).toHaveAttribute("data-priority", "primary")
-  fireEvent.click(saved)
+  await screen.findByRole("button", { name: "저장된 운동 보기" })
   fireEvent.click(await screen.findByRole("button", { name: "저장한 일지 열기" }))
   expect(open).toHaveBeenCalledWith(receipt.date, receipt.journalEntryId, expect.any(Function))
   expect(screen.getByText("일지에 자동 저장됨")).toBeVisible()
+})
+it("opens review directly from the first screen without saving or selecting consent", async () => {
+  const transport = vi.fn(exampleTransport())
+  mount(transport)
+  fireEvent.click(await screen.findByRole("button", { name: "기록 확인" }))
+  expect(screen.getByRole("button", { name: "일지에 저장" })).toBeDisabled()
+  expect(screen.getByRole("checkbox", { name: "이 운동의 시작 시각과 수치를 확인했어요" })).not.toBeChecked()
+  expect(transport.mock.calls.some(call => ["confirm", "dismiss", "connect"].includes(call[1].action))).toBe(false)
 })
 it("changes storage mode only after server acknowledgement and pins the preference revision", async () => {
   const transport = vi.fn<GarminTransport>(async (_owner, request) => request.action === "status" ? success({ ...status, experience: autoExperience }) : request.action === "preferences" ? success({ schemaVersion: GARMIN_VERSION, experience: { ...autoExperience, saveMode: "REVIEW", preferenceRevision: 2 } }) : success({ schemaVersion: GARMIN_VERSION, items: [], nextCursor: null }))
@@ -262,4 +269,95 @@ it("does not report unknown connection as disconnected after a status failure", 
   expect(screen.queryByRole("button", { name: "Garmin 연결 시작" })).toBeNull()
   await openSettings()
   expect(screen.getByRole("button", { name: "상태 새로고침" })).toBeEnabled()
+})
+
+
+it("keeps the last good inbox after a transient status failure and recovers on focus", async () => {
+  let failed = false
+  const transport: GarminTransport = async (_owner, request) => request.action === "status"
+    ? failed ? { ok: false, code: "UNAVAILABLE" } : success(status)
+    : success({ schemaVersion: GARMIN_VERSION, items: [item], nextCursor: null })
+  mount(transport)
+  await openSettings()
+  failed = true
+  fireEvent.click(screen.getByRole("button", { name: "상태 새로고침" }))
+  await screen.findByText("결과 확인이 필요해요")
+  expect(screen.getByText("연결됨")).toBeInTheDocument()
+  failed = false
+  await act(async () => { window.dispatchEvent(new Event("focus")) })
+  await waitFor(() => expect(screen.queryByText("결과 확인이 필요해요")).toBeNull())
+})
+
+it("shows the first connection consent inline without an extra start click or automatic request", async () => {
+  const transport = vi.fn<GarminTransport>(async (_owner, request) => request.action === "status"
+    ? success({ ...status, pendingCount: 0, connection: { ...status.connection, state: "DISCONNECTED" } })
+    : { ok: false, code: "UNAVAILABLE" })
+  const depth = window.history.length
+  mount(transport, { inlineSetup: true })
+  await screen.findByRole("region", { name: "Garmin 연결 및 저장 동의" })
+  expect(screen.queryByRole("button", { name: "Garmin 연결 시작" })).toBeNull()
+  expect(screen.getByRole("radio", { name: "새 운동을 일지에 자동 저장 · 권장" })).toBeChecked()
+  expect(window.history.length).toBe(depth)
+  expect(transport.mock.calls.some(call => call[1].action === "connect")).toBe(false)
+  fireEvent.click(screen.getByRole("button", { name: "동의하고 Garmin 연결" }))
+  await screen.findByText("결과 확인이 필요해요")
+  expect(transport.mock.calls.filter(call => call[1].action === "connect")).toHaveLength(1)
+  expect(transport.mock.calls.find(call => call[1].action === "connect")?.[1]).toMatchObject({ saveMode: "AUTO" })
+})
+it("can defer inline setup without connecting and open it again deliberately", async () => {
+  const transport = vi.fn<GarminTransport>(async () => success({ ...status, pendingCount: 0, connection: { ...status.connection, state: "DISCONNECTED" } }))
+  mount(transport, { inlineSetup: true })
+  fireEvent.click(await screen.findByRole("button", { name: "나중에 연결" }))
+  expect(screen.queryByRole("region", { name: "Garmin 연결 및 저장 동의" })).toBeNull()
+  fireEvent.click(screen.getByRole("button", { name: "Garmin 연결 시작" }))
+  expect(screen.getByRole("region", { name: "Garmin 연결 및 저장 동의" })).toBeVisible()
+  expect(transport.mock.calls.some(call => call[1].action === "connect")).toBe(false)
+})
+it("shows connected workouts instead of repeating first-connection consent", async () => {
+  mount(exampleTransport(), { inlineSetup: true })
+  await screen.findByRole("button", { name: "기록 확인" })
+  expect(screen.queryByRole("button", { name: "동의하고 Garmin 연결" })).toBeNull()
+  expect(screen.queryByRole("region", { name: "Garmin 연결 및 저장 동의" })).toBeNull()
+})
+it.each(["STORAGE_CONSENT_REQUIRED", "CONSENT_CHANGED", "OPERATIONS_PENDING"] as const)("links %s directly to existing storage settings without granting permission", async code => {
+  const open = vi.fn(), transport = vi.fn<GarminTransport>(async () => ({ ok: false, code }))
+  mount(transport, { inlineSetup: true, onOpenStorageSettings: open })
+  fireEvent.click(await screen.findByRole("button", { name: "기록 보관 설정 확인" }))
+  expect(open).toHaveBeenCalledOnce()
+  expect(transport.mock.calls.some(call => call[1].action === "connect")).toBe(false)
+})
+
+it.each(["checking", "required", "unavailable"] as const)("uses real storage readiness %s before connection even when provider capability is disabled", async storageReadiness => {
+  const open = vi.fn(), transport = vi.fn<GarminTransport>(async () => success({ ...status,
+    capability: { enabled: false, reason: "OPERATIONS_PENDING" }, connection: { ...status.connection, state: "DISCONNECTED" } }))
+  mount(transport, { inlineSetup: true, storageReadiness, onOpenStorageSettings: open })
+  expect(screen.queryByRole("button", { name: "동의하고 Garmin 연결" })).toBeNull()
+  if (storageReadiness === "checking") expect(screen.getByText("기록 보관 상태를 확인하고 있어요")).toBeVisible()
+  else {
+    const action = await screen.findByRole("button", { name: "기록 보관 설정 확인" })
+    await waitFor(() => expect(action).toBeEnabled())
+    fireEvent.click(action)
+    expect(open).toHaveBeenCalledOnce()
+  }
+  expect(transport.mock.calls.some(call => call[1].action === "connect")).toBe(false)
+})
+it("withholds old inbox rows while account storage is no longer ready", async () => {
+  const view = mount(exampleTransport(), { inlineSetup: true, storageReadiness: "ready" })
+  await screen.findByRole("button", { name: "기록 확인" })
+  view.rerender(<GarminConnectionPanel ownerId={owner} configured featureEnabled transport={exampleTransport()} inlineSetup storageReadiness="required" onOpenStorageSettings={vi.fn()} />)
+  expect(screen.queryByRole("button", { name: "기록 확인" })).toBeNull()
+  expect(screen.queryByText("연결됨", { exact: true })).toBeNull()
+  expect(screen.getByRole("button", { name: "기록 보관 설정 확인" })).toBeVisible()
+})
+
+it("waits for verified storage readiness before loading connected workouts", async () => {
+  const transport = vi.fn(exampleTransport())
+  const view = mount(transport, { inlineSetup: true, storageReadiness: "checking" })
+  await act(async () => { window.dispatchEvent(new Event("focus")) })
+  expect(transport).not.toHaveBeenCalled()
+  view.rerender(<GarminConnectionPanel ownerId={owner} configured featureEnabled transport={transport} inlineSetup storageReadiness="ready" />)
+  await screen.findByRole("button", { name: "기록 확인" })
+  expect(transport.mock.calls.filter(call => call[1].action === "status")).toHaveLength(1)
+  expect(transport.mock.calls.filter(call => call[1].action === "inbox")).toHaveLength(1)
+  expect(transport.mock.calls.some(call => call[1].action === "connect")).toBe(false)
 })

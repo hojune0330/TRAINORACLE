@@ -8,8 +8,8 @@ const receipt:StorageConsent={userId:A,revision:0,purposeVersion:"2026-10-05",he
 afterEach(cleanup)
 describe("separate optional online storage consent",()=>{
   it("starts unchecked, keeps local use explicit and requires both independent choices",async()=>{
-    const save=vi.fn().mockResolvedValue({ok:true,consent:{...receipt,revision:1,healthStorage:true,journalTextStorage:true}})
-    render(<StorageConsentPanel userId={A} load={async()=>({ok:true,consent:receipt})} save={save}/>)
+    const granted=vi.fn(),save=vi.fn().mockResolvedValue({ok:true,consent:{...receipt,revision:1,healthStorage:true,journalTextStorage:true}})
+    render(<StorageConsentPanel userId={A} load={async()=>({ok:true,consent:receipt})} save={save} onGranted={granted}/>)
     await waitFor(()=>expect(screen.getByRole("button",{name:"온라인 보관 동의 철회"})).toBeEnabled())
     const health=screen.getByRole("checkbox",{name:/건강정보/}),text=screen.getByRole("checkbox",{name:/메모·글/})
     expect(health).not.toBeChecked();expect(text).not.toBeChecked()
@@ -19,6 +19,7 @@ describe("separate optional online storage consent",()=>{
     await userEvent.click(text)
     await userEvent.click(screen.getByRole("button",{name:"선택한 동의 저장"}))
     expect(save).toHaveBeenCalledWith(receipt,true,true)
+    expect(granted).toHaveBeenCalledOnce()
   })
   it("reports live purpose erasure without claiming device or backup erasure",async()=>{
     const previous={...receipt,revision:3,healthStorage:true,journalTextStorage:true}
@@ -46,4 +47,29 @@ describe("separate optional online storage consent",()=>{
     await userEvent.click(screen.getByRole("checkbox",{name:/메모·글/}))
     expect(screen.getByRole("button",{name:"선택한 동의 저장"})).toBeDisabled()
   })
+})
+
+it.each([
+  [{ ...receipt, revision: 5 }, "required"],
+  [{ ...receipt, healthStorage: true, journalTextStorage: true }, "ready"],
+  [{ ...receipt, operationsReady: false, healthStorage: true, journalTextStorage: true }, "unavailable"],
+] as const)("reports actual receipt readiness without treating revision as consent", async (consent, expected) => {
+  const status = vi.fn(), granted = vi.fn()
+  render(<StorageConsentPanel userId={A} load={async () => ({ ok: true, consent })} onStatus={status} onGranted={granted}/>)
+  await waitFor(() => expect(status).toHaveBeenLastCalledWith(expected))
+  expect(status).toHaveBeenCalledWith("checking")
+  expect(granted).not.toHaveBeenCalled()
+})
+it("does not resume connection from a late grant after leaving the account panel", async () => {
+  let resolve!: (value: { ok: true; consent: StorageConsent }) => void
+  const granted = vi.fn(), save = vi.fn(() => new Promise<{ ok: true; consent: StorageConsent }>(done => { resolve = done }))
+  const view = render(<StorageConsentPanel userId={A} load={async () => ({ ok: true, consent: receipt })} save={save} onGranted={granted}/>)
+  await waitFor(() => expect(screen.getByRole("checkbox", { name: /건강정보/ })).toBeEnabled())
+  await userEvent.click(screen.getByRole("checkbox", { name: /건강정보/ }))
+  await userEvent.click(screen.getByRole("checkbox", { name: /메모·글/ }))
+  await userEvent.click(screen.getByRole("button", { name: "선택한 동의 저장" }))
+  view.unmount()
+  resolve({ ok: true, consent: { ...receipt, revision: 1, healthStorage: true, journalTextStorage: true } })
+  await Promise.resolve(); await Promise.resolve()
+  expect(granted).not.toHaveBeenCalled()
 })

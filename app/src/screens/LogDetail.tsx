@@ -564,7 +564,7 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, onJournalSave
                 </div>}
                 {entry.fileObservation && <ImportedActivityDetail observation={entry.fileObservation} />}
                 {open && !readOnly && isGarminProviderEntry(entry)
-                  && <GarminJournalActivityDetail entryId={entry.id} />}
+                  && <GarminJournalActivityDetail entryId={entry.id} durationMissing={entry.durationMin === ""} />}
                 <BodyRecordSummary entry={entry} />
                 <SavedMemo entry={entry} text={entry.memo} fontSize={19} />
                 <JournalOriginalPlan entry={entry} />
@@ -625,9 +625,9 @@ function LogDetailJournal({ date, onBack, onAddEntry, onEditEntry, onJournalSave
             onToggle={() => toggleEntry(viewKey)}
           >
             <div className="journal-entry-card journal-entry-card--checkin">
-              <CheckinRow lb="수면" v={entry.sleepH > 0 ? `${entry.sleepH} h · ${["", "나쁨", "부족", "보통", "좋음", "최고"][entry.sleepQuality] ?? "—"}` : "미기록"} />
+              <CheckinRow lb="수면" v={(entry.sleepH > 0 || entry.fieldProvenance?.sleepH?.provenance === "EXPLICIT") ? `${entry.sleepH} h · ${["", "나쁨", "부족", "보통", "좋음", "최고"][entry.sleepQuality] ?? "—"}` : "미기록"} />
               {entry.weightKg && <CheckinRow lb="체중" v={`${entry.weightKg} kg`} />}
-              {entry.restingHr && <CheckinRow lb="안정시 HR" v={`${entry.restingHr} bpm`} />}
+              {entry.restingHr && <CheckinRow lb="안정시 심박" v={`${entry.restingHr} bpm`} />}
               <BodyRecordSummary entry={entry} />
               <CheckinRow lb="감정" v={entry.mood > 0 ? "" : "미기록"} right={entry.mood > 0 ? <MoodStrip level={entry.mood} showLabel /> : undefined} last={!entry.note} />
               <div style={{ padding: entry.note ? "0 14px" : 0 }}>

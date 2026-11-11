@@ -35,10 +35,10 @@ function validateInput(input){
  * No FILE_UPLOAD/TCX provenance, subjective safety response, plan completion, AI
  * eligibility or pace is manufactured. The original provider observation stays in
  * the encrypted provider store and is retrievable by its journal document ID. */
-export function providerJournalDocument(auth,row,observation,clock=null) {
+export function providerJournalDocument(auth,row,observation,clock=null,{omitUnknownDuration=false}={}) {
   const journalEntryId=`garmin-${stableUuid(['trainoracle.garmin.entry.v1',auth.ownerId,row.activity_hash])}`;
   const documentId=stableUuid(['trainoracle.journal.record.v1',auth.ownerId,journalEntryId]);
-  const fields={distanceKm:observation.distanceMeters===null?'':String(observation.distanceMeters/1000),durationMin:observation.durationSeconds===null?'':String(observation.durationSeconds/60)};
+  const fields={distanceKm:observation.distanceMeters===null?'':String(observation.distanceMeters/1000),durationMin:observation.durationSeconds===null||(omitUnknownDuration&&observation.durationMeaning==='UNKNOWN')?'':String(observation.durationSeconds/60)};
   const document={version:2,state:'FINALIZED',kind:'JOURNAL',entry:{id:journalEntryId,kind:'post-session',date:clock?.localDate??dateFor(observation),savedAt:new Date(row.received_at).toISOString(),syncState:'local',system:'',title:'Garmin 운동',...fields,avgPace:'',rpe:0,memo:'',memoPurpose:'ANALYZABLE_TRAINING_NOTE',fieldProvenance:Object.fromEntries(Object.entries(fields).map(([field,value])=>[field,value===''?{provenance:'MISSING'}:{provenance:'DERIVED',derivedFrom:['import:provider-activity'],derivationRuleId:'import:GARMIN:provider-v1'}]))}};
   if(!validateAccountJournalDocument(document))fail(503,'JOURNAL_CONTRACT_UNAVAILABLE');
   return {documentId,journalEntryId,document};
@@ -52,12 +52,12 @@ export function createGarminRuntime({repository,vault,provider,identityKey,relay
   async function decode(row){if(!row.encrypted_observation||row.state==='DELETED')return null;return vault.open(row.encrypted_observation,rowContext(row));}
   async function sourceContext(row){return row.encrypted_context?vault.open(row.encrypted_context,context(row.user_id,row.connection_id,row.epoch,'source-context',`${row.inbox_id}:${row.source_revision}`)):null;}
   async function item(row,experience=false){const source=await sourceContext(row),observation=await decode(row);return {inboxId:row.inbox_id,revision:row.source_revision,state:row.state,provider:'GARMIN',observation,documentId:row.document_id,detailManifest:row.detail_manifest,...(experience?{savedAutomatically:row.saved_automatically??false,reviewRequired:row.auto_review_required??false,journalEntryId:row.journal_entry_id??null,journalDate:row.journal_entry_id&&observation?(source?.clock?.localDate??dateFor(observation)):null}:{}),clock:source?.clock??null,source:source?{manual:source.manual,parent:source.parent,summaryId:source.summaryId,lapStartOffsetsSeconds:source.lapStartOffsetsSeconds,...(source.summary?{summary:source.summary}:{})}:null};}
-  async function prepare(auth,row,observation,clock,operationId){
+  async function prepare(auth,row,observation,clock,operationId,projectionOptions){
     if(!journalKeyring||!journalAttest)fail(503,'JOURNAL_CONTRACT_UNAVAILABLE');
-    const proposal=providerJournalDocument(auth,row,observation,clock);
+    const proposal=providerJournalDocument(auth,row,observation,clock,projectionOptions);
     const encryptedPayload=await encryptAccountJournalDocument(canonical(proposal.document),{ownerId:auth.ownerId,documentId:proposal.documentId},journalKeyring.active);
     const journalProof=await journalAttest(auth.ownerId,'commit',{documentId:proposal.documentId,operationId,expectedRevision:0,encryptedPayload,metadata:{...accountJournalMetadata(proposal.document),awardAllowed:false}});
-    return {documentId:proposal.documentId,journalEntryId:proposal.journalEntryId,journalProof};
+    return {documentId:proposal.documentId,journalEntryId:proposal.journalEntryId,journalProof,journalDate:proposal.document.entry.date};
   }
   const autosave=createGarminAutosave({repository,configHash,decode,sourceContext,prepare});
   // Internal functions, never client-selected callbacks. Edge scheduling uses

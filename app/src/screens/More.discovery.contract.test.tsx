@@ -4,6 +4,17 @@ import { More } from "./More"
 
 afterEach(cleanup)
 
+it("routes imports through one common entry instead of repeating device settings", () => {
+  const open = vi.fn()
+  render(<More onBack={vi.fn()} onOpenMinji={vi.fn()} onOpenGuide={vi.fn()} onOpenImport={open} />)
+  fireEvent.click(screen.getByRole("button", { name: "운동 가져오기" }))
+  expect(open).toHaveBeenCalledOnce()
+  expect(screen.queryByRole("button", { name: "기기 연동 상태" })).toBeNull()
+  fireEvent.click(screen.getByRole("button", { name: "앱 정보·개인정보·문의" }))
+  expect(screen.queryByRole("button", { name: "기기 연동 상태" })).toBeNull()
+  expect(screen.getByRole("link", { name: /^개인정보처리방침/ })).toBeVisible()
+})
+
 it("names storage without advertising an unavailable account destination", () => {
   render(<More onBack={vi.fn()} onOpenMinji={vi.fn()} onOpenGuide={vi.fn()} />)
   expect(screen.queryByRole("button", { name: "계정·기록 보관" })).toBeNull()
@@ -81,7 +92,7 @@ it("shows learning and decoration destinations directly in More", () => {
   const entries = [
     ["페이스 계산기", "onOpenPaceCalculator"],
     ["경기 기록 추가·수정", "onOpenRecords"],
-    ["운동 자동연동", "onOpenImport"],
+    ["운동 가져오기", "onOpenImport"],
     ["러닝 취향", "onOpenRunningProfile"],
     ["최고기록으로 풀이하기", "onOpenRecordReading"],
     ["오라클 읽을거리", "onOpenOracleLibrary"],
@@ -106,9 +117,9 @@ it("shows learning and decoration destinations directly in More", () => {
   expect(within(screen.getByRole("region", { name: "게임·페이스" })).getAllByRole("button").map(button => button.getAttribute("aria-label"))).toEqual(["게임 라운지", "페이스 계산기"])
   expect(screen.getAllByRole("region")[0]).toHaveAccessibleName("게임·페이스")
   expect(screen.getAllByRole("region")[1]).toHaveAccessibleName("취향·꾸미기")
-  const automaticEntry = screen.getByRole("button", { name: "운동 자동연동" })
+  const automaticEntry = screen.getByRole("button", { name: "운동 가져오기" })
   expect(automaticEntry.parentElement?.firstElementChild).toBe(automaticEntry)
-  expect(automaticEntry).toHaveAccessibleDescription("워치를 연결하고 새 운동을 자동으로 가져오세요")
+  expect(automaticEntry).toHaveAccessibleDescription("워치 자동 연결 · 받은 운동 확인 · 파일 가져오기")
   expect(screen.queryByRole("button", { name: "워치 파일 가져오기" })).toBeNull()
   for (const name of ["러닝 취향", "최고기록으로 풀이하기", "게임 라운지"]) {
     expect(screen.getByRole("button", { name })).toHaveTextContent(new RegExp(`^${name}$`))
@@ -121,7 +132,7 @@ it("shows learning and decoration destinations directly in More", () => {
 it("does not advertise tools whose callbacks are unavailable", () => {
   render(<More onBack={vi.fn()} onOpenMinji={vi.fn()} onOpenGuide={vi.fn()} />)
   expect(screen.queryByRole("button", { name: "오라클 읽을거리" })).toBeNull()
-  expect(screen.queryByRole("button", { name: "운동 자동연동" })).toBeNull()
+  expect(screen.getByRole("button", { name: "운동 가져오기" })).toBeVisible()
   const about = screen.getByRole("button", { name: "앱 정보·개인정보·문의" })
   expect(about).not.toHaveAccessibleDescription()
   fireEvent.click(about)

@@ -1449,8 +1449,10 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
         loungeRequested={loungeEntryIntent().requested}
         onOpenJournal={() => goTab("journal")}
         onOpenPlan={() => goTab("plan")}
-        onBack={() => { if (!connectionAccountRequested.current || !requestBrowserBackLayer()) closeAccount() }}
+        onBack={() => { if (!requestBrowserBackLayer()) closeAccount() }}
         onOpenImport={openImport}
+        onOpenFileImport={openFileImport}
+        onOpenJournalRecord={openGarminJournalRecord}
         onOpenRestore={openRestore}
       />
       </ConnectionAccountBackBoundary>

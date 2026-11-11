@@ -1,4 +1,5 @@
 import {stableUuid, IntegrationError} from './primitives.mjs';
+import {allCandidatesDistinct} from './distinct-activity.mjs';
 
 export const SAVE_CONSENT_VERSION='GARMIN_AUTO_SAVE_2026_11_05';
 /** No browser session, token or foreground tab is needed. The database rechecks
@@ -12,10 +13,12 @@ export function createGarminAutosave({repository,configHash,decode,sourceContext
     try {
       const observation=await decode(row),source=await sourceContext(row);
       if(!observation||observation.distanceMeters===null||observation.durationSeconds===null
-        ||observation.durationMeaning==='UNKNOWN'||source?.manual||source?.parent?.isParent||source?.parent?.parentSummaryId)return await review();
+        ||source?.manual||source?.parent?.isParent||source?.parent?.parentSummaryId)return await review();
       const operationId=stableUuid(['trainoracle.garmin.autosave.v1',row.user_id,row.activity_hash]);
-      const proposal=await prepare({ownerId:row.user_id},row,observation,source?.clock,operationId);
-      const result=await repository.autosave(null,{...target,action:'commit',operationId,...proposal});
+      const proposal=await prepare({ownerId:row.user_id},row,observation,source?.clock,operationId,{omitUnknownDuration:true});
+      const comparison=await repository.autosave(null,{...target,action:'candidates',journalDate:proposal.journalDate});
+      if(!await allCandidatesDistinct(row,observation,source,comparison.candidates,decode,sourceContext))return await review();
+      const result=await repository.autosave(null,{...target,action:'commit',operationId,...proposal,collisionSnapshot:comparison.snapshot});
       return {saved:result.kind==='saved'?1:0,reviewRequired:result.kind==='review_required'?1:0};
     } catch(error) {
       if(error instanceof IntegrationError&&['CONNECTION_CHANGED','CONSENT_CHANGED','SOURCE_CHANGED'].includes(error.code))return {saved:0,reviewRequired:0};

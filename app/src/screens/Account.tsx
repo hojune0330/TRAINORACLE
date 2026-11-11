@@ -3,7 +3,10 @@
 import React from "react"
 import { ArrowLeft } from "lucide-react"
 import { SectionLb } from "../components/JournalPrimitives"
-import { AutomaticConnectionEntry } from "../components/AutomaticConnectionEntry"
+import { DeviceConnections } from "./DeviceConnections"
+import type { OpenGarminJournalRecord, StorageConnectionReadiness } from "../components/GarminConnectionPanel"
+import { useActiveContentScroll } from "../hooks/useActiveContentScroll"
+import { isBrowserPopScrollRestoration } from "../navigation/browserNavigation"
 import {
   authReturnAttemptId,
   clearAuthReturnAttemptIdFromUrl,
@@ -63,9 +66,11 @@ function authenticatedMethod(user: AccountUser): AuthMethod | null {
     : null
 }
 
-export function Account({ onBack, onOpenImport, onOpenRestore, onOpenJournal, onOpenPlan, loungeRequested = false }: {
+export function Account({ onBack, onOpenImport, onOpenFileImport, onOpenJournalRecord, onOpenRestore, onOpenJournal, onOpenPlan, loungeRequested = false }: {
   readonly onBack?: () => void
   readonly onOpenImport?: () => void
+  readonly onOpenFileImport?: () => void
+  readonly onOpenJournalRecord?: OpenGarminJournalRecord
   readonly onOpenRestore?: () => void
   readonly onOpenJournal?: () => void
   readonly onOpenPlan?: () => void
@@ -89,6 +94,22 @@ export function Account({ onBack, onOpenImport, onOpenRestore, onOpenJournal, on
   const activeUserIdRef = React.useRef<string | null>(null)
   const accountSessionGenerationRef = React.useRef(0)
   const sessionBlockedRef = React.useRef(false)
+  const watchSectionRef = React.useRef<HTMLDivElement>(null)
+  const storageSectionRef = React.useRef<HTMLDivElement>(null)
+  const restoredReader = React.useRef(isBrowserPopScrollRestoration())
+  const [storageState, setStorageState] = React.useState<{ owner: string; state: StorageConnectionReadiness } | null>(null)
+  const receiveStorageStatus = React.useCallback((state: StorageConnectionReadiness) => {
+    if (user && activeUserIdRef.current === user.id) setStorageState({ owner: user.id, state })
+  }, [user?.id])
+  const [connectionFocusRevision, focusConnection] = React.useReducer(value => value + 1, 0)
+  const [storageFocusRevision, focusStorage] = React.useReducer(value => value + 1, 0)
+  useActiveContentScroll(!loading && user && setupState === "ready" && (!restoredReader.current || connectionFocusRevision > 0)
+    ? user.id + ":watch:" + connectionFocusRevision : null, watchSectionRef, watchSectionRef)
+  useActiveContentScroll(storageFocusRevision ? "storage:" + storageFocusRevision : null, storageSectionRef, storageSectionRef)
+  const openStorageSettings = () => {
+    const disclosure = storageSectionRef.current?.querySelector("details")
+    if (disclosure) { disclosure.open = true; focusStorage() }
+  }
 
   React.useEffect(() => {
     clearAuthReturnAttemptIdFromUrl()
@@ -549,6 +570,7 @@ export function Account({ onBack, onOpenImport, onOpenRestore, onOpenJournal, on
             legalDocuments={config}
             completionOnly
             onCompleted={() => {
+              focusConnection()
               writeCurrentSetupReceipt(user.id, config)
               setSetupState("ready")
               setSetupNotice("가입 확인을 마쳤어요.")
@@ -559,6 +581,11 @@ export function Account({ onBack, onOpenImport, onOpenRestore, onOpenJournal, on
         </div>
       ) : setupState === "ready" ? (
         <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 16 }}>
+          {onOpenImport && <div ref={watchSectionRef} tabIndex={-1} className="account-watch-entry" aria-label="내 워치와 운동 기록">
+            <DeviceConnections key={user.id} ownerId={user.id} inlineSetup onOpenImport={onOpenFileImport ?? onOpenImport}
+              onOpenJournalRecord={onOpenJournalRecord} onOpenStorageSettings={openStorageSettings}
+              storageReadiness={storageState?.owner === user.id ? storageState.state : "checking"} />
+          </div>}
           <div style={{ border: "1px solid var(--line)", borderRadius: "var(--r-md)", padding: "14px 16px" }}>
             <div style={{ ...mono, fontSize: 10, color: "var(--ink-3)", letterSpacing: 0 }}>로그인됨</div>
             <div style={{ fontFamily: "var(--sans)", fontSize: 15, fontWeight: 600, marginTop: 4, letterSpacing: 0 }}>
@@ -578,7 +605,6 @@ export function Account({ onBack, onOpenImport, onOpenRestore, onOpenJournal, on
           </div>
 
           {setupNotice !== null && <p role="status" style={{ ...mono, fontSize: 11, margin: 0 }}>{setupNotice}</p>}
-          {onOpenImport && <AutomaticConnectionEntry onOpen={onOpenImport} />}
           <InstallShortcutSuggestion eligible={setupState === "ready"} returnFocusTo={() => document.querySelector<HTMLElement>('[data-install-shortcut-return="account"]')} />
           {profileSetupComplete && <LoungeEntry key={user.id} userId={user.id} requested={loungeRequested} />}
 
@@ -588,6 +614,9 @@ export function Account({ onBack, onOpenImport, onOpenRestore, onOpenJournal, on
             legalDocuments={config}
             profileSetupComplete={profileSetupComplete}
             onDeletionCompleted={() => handleDeletionCompleted(user.id)}
+            storageSectionRef={storageSectionRef}
+            onStorageStatus={receiveStorageStatus}
+            onStorageGranted={() => { if (activeUserIdRef.current === user.id) focusConnection() }}
           />
           <DeviceJournalOwnershipPanel userId={user.id} />
           <DeviceTrainingDataPanel userId={user.id} />

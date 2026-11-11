@@ -1,0 +1,25 @@
+[
+  {
+    "width": 320,
+    "firstReceiptAutomatic": true,
+    "exactJournalOpened": true,
+    "noHorizontalOverflow": true
+  },
+  {
+    "width": 320,
+    "unknownOriginalVisible": true
+  },
+  {
+    "width": 375,
+    "firstReceiptAutomatic": true,
+    "exactJournalOpened": true,
+    "noHorizontalOverflow": true
+  },
+  {
+    "width": 375,
+    "unknownOriginalVisible": true
+  },
+  {
+    "largeTextNoOverflow": true
+  }
+]

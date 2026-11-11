@@ -54,7 +54,7 @@ type TrainingHomeProps = {
 export function TrainingHome({
   model, onWriteLog, onOpenArchive, onOpenToday, onOpenPlan,
   onOpenOracle, onOpenMore, onOpenContent, onOpenRewards, onOpenTrainingSession,
-  safetyNotice, announcement, accountEntry, recentJournal, installSuggestion, inlineMemo, planReadiness = "READY",
+  safetyNotice, announcement, accountEntry, recentJournal, installSuggestion, inlineMemo, recordStart, planReadiness = "READY",
   journalReadiness = "READY",
 }: TrainingHomeProps) {
   // The model requests the first-record example only when no dated journal is visible.
@@ -87,6 +87,7 @@ export function TrainingHome({
         <AppHeading ref={title} tabIndex={-1} id="home-hub-title" variant="hero" accent>훈련과 기록</AppHeading>
       </section>
 
+      {recordStart}
       <DatedTraining model={model} readiness={planReadiness} onOpenPlan={onOpenPlan} onOpenSession={onOpenTrainingSession} />
       <section className="home-hub__work-area" aria-labelledby="home-record-title">
         <div className="home-hub__section-heading"><AppHeading as="h2" variant="section" id="home-record-title">오늘의 기록</AppHeading>

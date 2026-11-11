@@ -323,7 +323,7 @@ export function ImportActivities({ onBack, onOpenLog, onOpenEntry, onOpenAnalysi
         )}
         <div>
           <AppHeading ref={headingRef} tabIndex={-1} as="h1" variant="screen" accent className="import-activities__title">
-            운동 기록 가져오기
+            운동 가져오기
           </AppHeading>
         </div>
       </div>
@@ -339,7 +339,7 @@ export function ImportActivities({ onBack, onOpenLog, onOpenEntry, onOpenAnalysi
 
       {method === "automatic" ? <div className="import-method__automatic">
         <DeviceConnections ownerId={ownerId} onOpenAccount={onOpenAccount} onOpenJournalRecord={onOpenJournalRecord}
-          onSubviewChange={setConnectionSubview} onOpenImport={() => setMethod("file")} />
+          onSubviewChange={setConnectionSubview} showFileEntry={false} onOpenImport={() => setMethod("file")} />
       </div> : <div
         key={stage.step}
         ref={stageRef}

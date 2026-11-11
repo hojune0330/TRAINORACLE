@@ -1,0 +1,170 @@
+[
+  {
+    "width": 320,
+    "mode": "unconnected",
+    "cta": "동의하고 Garmin 연결",
+    "ctaRect": {
+      "x": 21,
+      "y": 531.265625,
+      "width": 278,
+      "height": 48
+    },
+    "aboveFold": true,
+    "scroll": 320,
+    "scrollY": 0,
+    "regionBottom": 726,
+    "regionScrollTop": 106,
+    "tabTop": 726,
+    "focus": "account-watch-entry",
+    "headingButtons": [],
+    "smallTargets": []
+  },
+  {
+    "width": 320,
+    "mode": "active",
+    "cta": "저장한 일지 열기",
+    "ctaRect": {
+      "x": 21,
+      "y": 480.890625,
+      "width": 278,
+      "height": 48
+    },
+    "aboveFold": true,
+    "scroll": 320,
+    "scrollY": 0,
+    "regionBottom": 726,
+    "regionScrollTop": 106,
+    "tabTop": 726,
+    "focus": "account-watch-entry",
+    "headingButtons": [
+      {
+        "text": "Garmin 설정",
+        "left": 182.921875,
+        "right": 299,
+        "textLeft": 199.921875,
+        "textRight": 282,
+        "scrollWidth": 114,
+        "clientWidth": 114
+      }
+    ],
+    "smallTargets": []
+  },
+  {
+    "width": 320,
+    "mode": "required",
+    "cta": "기록 보관 설정 확인",
+    "ctaRect": {
+      "x": 21,
+      "y": 275.9375,
+      "width": 278,
+      "height": 48
+    },
+    "aboveFold": true,
+    "scroll": 320,
+    "scrollY": 0,
+    "regionBottom": 726,
+    "regionScrollTop": 106,
+    "tabTop": 726,
+    "focus": "account-watch-entry",
+    "headingButtons": [
+      {
+        "text": "연결 설정",
+        "left": 207.578125,
+        "right": 299,
+        "textLeft": 224.578125,
+        "textRight": 282,
+        "scrollWidth": 89,
+        "clientWidth": 89
+      }
+    ],
+    "smallTargets": []
+  },
+  {
+    "width": 375,
+    "mode": "unconnected",
+    "cta": "동의하고 Garmin 연결",
+    "ctaRect": {
+      "x": 21,
+      "y": 461.703125,
+      "width": 333,
+      "height": 48
+    },
+    "aboveFold": true,
+    "scroll": 375,
+    "scrollY": 0,
+    "regionBottom": 726,
+    "regionScrollTop": 106,
+    "tabTop": 726,
+    "focus": "account-watch-entry",
+    "headingButtons": [],
+    "smallTargets": []
+  },
+  {
+    "width": 375,
+    "mode": "active",
+    "cta": "저장한 일지 열기",
+    "ctaRect": {
+      "x": 21,
+      "y": 480.890625,
+      "width": 333,
+      "height": 48
+    },
+    "aboveFold": true,
+    "scroll": 375,
+    "scrollY": 0,
+    "regionBottom": 726,
+    "regionScrollTop": 106,
+    "tabTop": 726,
+    "focus": "account-watch-entry",
+    "headingButtons": [
+      {
+        "text": "Garmin 설정",
+        "left": 237.921875,
+        "right": 354,
+        "textLeft": 254.921875,
+        "textRight": 337,
+        "scrollWidth": 114,
+        "clientWidth": 114
+      }
+    ],
+    "smallTargets": []
+  },
+  {
+    "width": 375,
+    "mode": "required",
+    "cta": "기록 보관 설정 확인",
+    "ctaRect": {
+      "x": 21,
+      "y": 252.75,
+      "width": 333,
+      "height": 48
+    },
+    "aboveFold": true,
+    "scroll": 375,
+    "scrollY": 0,
+    "regionBottom": 726,
+    "regionScrollTop": 106,
+    "tabTop": 726,
+    "focus": "account-watch-entry",
+    "headingButtons": [
+      {
+        "text": "연결 설정",
+        "left": 262.578125,
+        "right": 354,
+        "textLeft": 279.578125,
+        "textRight": 337,
+        "scrollWidth": 89,
+        "clientWidth": 89
+      }
+    ],
+    "smallTargets": []
+  },
+  {
+    "flow": "storage required -> existing settings -> explicit two-purpose save -> connection arrival without connecting",
+    "passed": true
+  },
+  {
+    "flow": "only explicit Garmin consent calls connect",
+    "passed": true
+  }
+]

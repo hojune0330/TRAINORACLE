@@ -1,3 +1,5 @@
+import { useState } from "react"
+import { useTaskFlowBack } from "./hooks/useTaskFlowBack"
 import { initializeCanonicalJournalFixture } from "./test/canonical-journal-fixture"
 import { act, cleanup, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
@@ -11,11 +13,17 @@ import { hasPendingBrowserBackLayer } from "./navigation/browserNavigation"
 import * as verifiedAccountScope from "./domain/account/verified-account-scope"
 
 vi.mock("./screens/Account", () => ({
-  Account: ({ onBack }: { onBack?: () => void }) => <>
-    <h1>합성 계정 화면</h1>
-    <button type="button" onClick={() => setActiveLocalAccount("synthetic-connection-owner")}>합성 로그인 완료</button>
-    <button type="button" onClick={onBack}>계정 화면 닫기</button>
-  </>,
+  Account: ({ onBack }: { onBack?: () => void }) => {
+    const [settings, setSettings] = useState(false)
+    useTaskFlowBack({ enabled: settings, onBack: () => setSettings(false) })
+    return <>
+      <h1>합성 계정 화면</h1>
+      {settings && <h2>합성 워치 설정</h2>}
+      <button type="button" onClick={() => setSettings(true)}>워치 설정 열기</button>
+      <button type="button" onClick={() => setActiveLocalAccount("synthetic-connection-owner")}>합성 로그인 완료</button>
+      <button type="button" onClick={onBack}>계정 화면 닫기</button>
+    </>
+  },
 }))
 
 // Transform lazy destinations outside the 1s interaction query timeout. Real
@@ -62,12 +70,12 @@ describe("AppShell origin-preserving navigation", { timeout: 15000 }, () => {
     await user.click(screen.getByRole("button", { name: "더보기" }))
     const region = document.querySelector<HTMLElement>(".app-scroll-region")!
     region.scrollTop = 280
-    await user.click(await screen.findByRole("button", { name: "운동 자동연동" }))
-    expect(await screen.findByRole("heading", { name: "운동 기록 가져오기" })).toBeVisible()
+    await user.click(await screen.findByRole("button", { name: "운동 가져오기" }))
+    expect(await screen.findByRole("heading", { name: "운동 가져오기" })).toBeVisible()
     if (kind === "browser") act(() => window.history.back())
     else await user.click(screen.getByRole("button", { name: "뒤로" }))
     await waitFor(() => expect(screen.getByRole("heading", { name: "더보기" })).toBeVisible())
-    await waitFor(() => expect(screen.getByRole("button", { name: "운동 자동연동" })).toHaveFocus())
+    await waitFor(() => expect(screen.getByRole("button", { name: "운동 가져오기" })).toHaveFocus())
     expect(region.scrollTop).toBe(280)
   })
   it("returns native Back from training vocabulary and articles through their list to More", async () => {
@@ -117,8 +125,8 @@ describe("AppShell origin-preserving navigation", { timeout: 15000 }, () => {
     await user.click(await screen.findByRole("button", { name: "경기 기록 추가·수정" }))
     await user.click(await screen.findByRole("button", { name: "더보기로" }))
     expect(await screen.findByRole("heading", { name: "더보기" })).toBeVisible()
-    await user.click(screen.getByRole("button", { name: "운동 자동연동" }))
-    expect(await screen.findByRole("heading", { name: "운동 기록 가져오기" })).toBeVisible()
+    await user.click(screen.getByRole("button", { name: "운동 가져오기" }))
+    expect(await screen.findByRole("heading", { name: "운동 가져오기" })).toBeVisible()
     await user.click(screen.getByRole("button", { name: "뒤로" }))
     expect(await screen.findByRole("heading", { name: "더보기" })).toBeVisible()
   })
@@ -137,13 +145,13 @@ describe("AppShell origin-preserving navigation", { timeout: 15000 }, () => {
       const user = userEvent.setup()
       render(<AppShell />)
       await user.click(screen.getByRole("button", { name: entry === "more" ? "더보기" : "기록하기" }))
-      await user.click(await screen.findByRole("button", { name: "운동 자동연동" }))
+      await user.click(await screen.findByRole("button", { name: "운동 가져오기" }))
       await user.click(await screen.findByRole("button", { name: "로그인하고 연결" }))
       expect(await screen.findByRole("heading", { name: "합성 계정 화면" })).toBeVisible()
       if (ownerChanged) await user.click(screen.getByRole("button", { name: "합성 로그인 완료" }))
       if (backKind === "browser") act(() => window.history.back())
       else await user.click(screen.getByRole("button", { name: "계정 화면 닫기" }))
-      expect(await screen.findByRole("heading", { name: "운동 기록 가져오기" })).toBeVisible()
+      expect(await screen.findByRole("heading", { name: "운동 가져오기" })).toBeVisible()
       expect(screen.getByRole("button", { name: "자동연동 추천" })).toHaveAttribute("aria-pressed", "true")
       expect(screen.queryByRole("heading", { name: "합성 계정 화면" })).toBeNull()
     } finally {
@@ -343,8 +351,8 @@ describe("AppShell origin-preserving navigation", { timeout: 15000 }, () => {
     await user.click(screen.getByRole("button", { name: "홈으로 돌아가기" }))
     await user.click(screen.getByRole("button", { name: "기록하기" }))
     expect(await screen.findByRole("heading", { name: "무엇을 기록할까요?" })).toBeVisible()
-    await user.click(screen.getByRole("button", { name: /^운동 자동연동/u }))
-    expect(await screen.findByRole("heading", { name: "운동 기록 가져오기" })).toBeVisible()
+    await user.click(screen.getByRole("button", { name: /^운동 가져오기/u }))
+    expect(await screen.findByRole("heading", { name: "운동 가져오기" })).toBeVisible()
     await user.click(screen.getByRole("button", { name: "뒤로" }))
     expect(await screen.findByRole("heading", { name: "무엇을 기록할까요?" })).toBeVisible()
   })
@@ -446,4 +454,27 @@ describe("saved Oracle plan Forward navigation", { timeout: 20000 }, () => {
     expect(screen.queryByRole("heading", { name: "9일 훈련 계획" })).toBeNull()
     expect(screen.queryByRole("button", { name: "훈련" })?.getAttribute("aria-current")).not.toBe("page")
   })
+})
+
+it("closes embedded watch settings before leaving an account opened from Home", async () => {
+  for (const [name, value] of Object.entries({
+    VITE_ACCOUNT_PUBLIC_ENABLED: "true", VITE_KILL_ACCOUNT: "false",
+    VITE_SUPABASE_URL: "https://synthetic.supabase.co", VITE_SUPABASE_ANON_KEY: "sb_publishable_synthetic_navigation_0000",
+    VITE_PRIVACY_POLICY_URL: "https://example.test/privacy", VITE_PRIVACY_POLICY_VERSION: "2026-11-04",
+    VITE_TERMS_OF_SERVICE_URL: "https://example.test/terms", VITE_TERMS_OF_SERVICE_VERSION: "2026-11-04",
+  })) vi.stubEnv(name, value)
+  const scope = vi.spyOn(verifiedAccountScope, "startVerifiedAccountScope").mockImplementation(() => () => undefined)
+  const network = vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("synthetic navigation does not use the network"))
+  try {
+    const user = userEvent.setup()
+    render(<AppShell />)
+    await user.click(await screen.findByRole("button", { name: /^(로그인 또는 가입|내 계정)$/ }))
+    await screen.findByRole("heading", { name: "합성 계정 화면" })
+    await user.click(screen.getByRole("button", { name: "워치 설정 열기" }))
+    await user.click(screen.getByRole("button", { name: "계정 화면 닫기" }))
+    await waitFor(() => expect(screen.queryByRole("heading", { name: "합성 워치 설정" })).toBeNull())
+    expect(screen.getByRole("heading", { name: "합성 계정 화면" })).toBeVisible()
+    await user.click(screen.getByRole("button", { name: "계정 화면 닫기" }))
+    await screen.findByRole("heading", { name: "훈련과 기록" })
+  } finally { cleanup(); setActiveLocalAccount(null); scope.mockRestore(); network.mockRestore() }
 })

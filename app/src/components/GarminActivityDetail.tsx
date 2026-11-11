@@ -6,7 +6,7 @@ import { garminChartSamples, loadGarminActivitySamples } from "../domain/account
 import { GARMIN_SUMMARY_METRICS } from "../domain/account/garmin-summary"
 import { ImportedActivitySensorChart } from "./ImportedActivitySensorChart"
 import { ImportedActivityRoute } from "./ImportedActivityRoute"
-import { importedSourceClock, originalQuantity } from "./ImportedActivityMetrics"
+import { activityDistance, activityDuration, activityPace, importedSourceClock, originalQuantity } from "./ImportedActivityMetrics"
 import { RecordAction, RecordNotice, RecordSource } from "./RecordUI"
 import { AccessibleTrendTable } from "../screens/trends/AccessibleTrendTable"
 import "./imported-activity-detail.css"
@@ -76,9 +76,9 @@ function ProviderDetailSession({ ownerId, item: initialItem, documentId, transpo
       <p>{sport[observation.sport]} · {importedSourceClock(observation.startedAt)} · Garmin</p>
       {item?.state !== "CONFIRMED" && <p>일지에 저장되지 않은 기록</p>}
       <dl className="garmin-detail__metrics garmin-detail__hero">
-        <div><dt>거리</dt><dd>{originalQuantity(observation.distanceMeters, "m")}</dd></div>
-        <div><dt>{meaning[observation.durationMeaning]}</dt><dd>{originalQuantity(observation.durationSeconds, "s")}</dd></div>
-        {typeof summary?.averagePaceInMinutesPerKilometer === "number" && <div><dt>평균 페이스 · 원본</dt><dd>{originalQuantity(summary.averagePaceInMinutesPerKilometer, "min/km")}</dd></div>}
+        <div><dt>거리</dt><dd>{activityDistance(observation.distanceMeters)}</dd></div>
+        <div><dt>{meaning[observation.durationMeaning]}</dt><dd>{activityDuration(observation.durationSeconds)}</dd></div>
+        {typeof summary?.averagePaceInMinutesPerKilometer === "number" && <div><dt>평균 페이스 · 원본</dt><dd>{activityPace(summary.averagePaceInMinutesPerKilometer)}</dd></div>}
       </dl>
       {(item?.source?.parent.isParent || item?.source?.parent.parentSummaryId) && <RecordNotice kind="conflict" title="복합운동 기록이에요"><p>상위 기록과 하위 기록을 함께 저장하면 운동량이 중복될 수 있어요.</p></RecordNotice>}
       {item?.source?.manual && <p>Garmin에서 수동 입력된 운동이에요.</p>}
@@ -127,7 +127,7 @@ function ProviderDetailSession({ ownerId, item: initialItem, documentId, transpo
             const [label, unit] = GARMIN_SUMMARY_METRICS[field], present = summary && Object.hasOwn(summary, field), value = summary?.[field]
             return <tr key={field}><th scope="row">{label}<small>{field}</small></th><td>{!present ? "보관된 값 없음" : value === null ? "원본 빈값(null)" : String(value)}</td><td>{unit}</td></tr>
           })}</tbody></table>
-        <p>보관된 값 없음은 전달 누락과 현재 수집 허용 범위를 구별해 확정한 상태가 아니에요. 소수 페이스는 Garmin의 min/km 원본값이며 분:초 형식으로 바꾸지 않았어요.</p>
+        <p>보관된 값 없음은 전달 누락과 현재 수집 허용 범위를 구별해 확정한 상태가 아니에요. 아래 표는 원본 단위와 정밀도예요. 위 요약의 거리는 km, 시간과 페이스는 읽기 쉬운 형식으로 표시해요.</p>
         {positions.length > 0 && <><AccessibleTrendTable caption="원본 위치 표본" rows={positions.slice(positionStart, positionStart + 20).map(({ sample, index }) => ({ key: String(index), label: `표본 ${index + 1} · 시작 뒤 ${sample.offsetSeconds}초`, value: `위도 ${originalQuantity(sample.latitude, "°")} · 경도 ${originalQuantity(sample.longitude, "°")}` }))} />
           <p>위치 표본 {positions.length}개 중 {positionStart + 1}–{Math.min(positionStart + 20, positions.length)}개</p>
           {positions.length > 20 && <div className="imported-activity-detail__pager"><RecordAction priority="secondary" disabled={positionStart === 0} onClick={() => setPositionStart(value => Math.max(0, value - 20))}>이전 위치 표본</RecordAction><RecordAction priority="secondary" disabled={positionStart + 20 >= positions.length} onClick={() => setPositionStart(value => value + 20)}>다음 위치 표본</RecordAction></div>}</>}
@@ -137,22 +137,59 @@ function ProviderDetailSession({ ownerId, item: initialItem, documentId, transpo
 }
 
 /** Exact account document ID; a local provenance string alone never grants a server read. */
-export function GarminJournalActivityDetail({ entryId }: { readonly entryId: string }) {
-  const [open, setOpen] = useState(false)
-  return <details className="garmin-detail__raw" onToggle={event => setOpen(event.currentTarget.open)}><summary>운동 상세</summary>
-    {open && <GarminJournalDetailIdentity entryId={entryId} />}
-  </details>
+export function GarminJournalActivityDetail({ entryId, durationMissing = false }: { readonly entryId: string; readonly durationMissing?: boolean }) {
+  return <GarminJournalDetailIdentity entryId={entryId} durationMissing={durationMissing} />
 }
-function GarminJournalDetailIdentity({ entryId }: { readonly entryId: string }) {
+function GarminJournalDetailIdentity({ entryId, durationMissing }: { readonly entryId: string; readonly durationMissing: boolean }) {
   const generation = useSyncExternalStore(onLocalJournalScopeChange, localJournalScopeGeneration, () => 0)
   const owner = activeLocalAccount(), [identity, setIdentity] = useState<{ owner: string; generation: number; entryId: string; documentId: string } | null>(null)
+  const [failed, setFailed] = useState(false), [attempt, setAttempt] = useState(0)
   useEffect(() => {
     let live = true
+    setFailed(false)
     if (owner && journalOwner(entryId) === owner) void accountJournalDocumentId(owner, entryId).then(documentId => {
       if (live && activeLocalAccount() === owner && localJournalScopeGeneration() === generation) setIdentity({ owner, generation, entryId, documentId })
-    })
+    }).catch(() => { if (live) setFailed(true) })
     return () => { live = false }
-  }, [owner, generation, entryId])
+  }, [owner, generation, entryId, attempt])
   return identity && identity.owner === owner && identity.generation === generation && identity.entryId === entryId
-    ? <GarminActivityDetail ownerId={identity.owner} documentId={identity.documentId} /> : null
+    ? <GarminJournalPreview key={`${owner}:${generation}:${identity.documentId}`} ownerId={identity.owner} documentId={identity.documentId} durationMissing={durationMissing} />
+    : !owner || journalOwner(entryId) !== owner ? <p>이 기록을 보관한 계정에서 확인해 주세요.</p>
+      : failed ? <RecordNotice kind="error" title="운동 상세를 불러오지 못했어요"><RecordAction onClick={() => setAttempt(value => value + 1)}>다시 불러오기</RecordAction></RecordNotice>
+        : <p role="status">운동 상세를 확인하고 있어요.</p>
+}
+
+/** Read the verified summary once; fetch sensor parts only when the reader opens it. */
+export function GarminJournalPreview({ ownerId, documentId, durationMissing, transport = requestGarminIntegration }: {
+  readonly ownerId: string; readonly documentId: string; readonly durationMissing: boolean; readonly transport?: GarminTransport
+}) {
+  const [item, setItem] = useState<GarminItem | null>(null), [error, setError] = useState<GarminError | null>(null)
+  const [open, setOpen] = useState(false), [attempt, setAttempt] = useState(0)
+  const details = useRef<HTMLDetailsElement | null>(null), detailTitle = useRef<HTMLElement | null>(null)
+  useEffect(() => {
+    const controller = new AbortController(), generation = localJournalScopeGeneration()
+    const current = () => !controller.signal.aborted && activeLocalAccount() === ownerId && localJournalScopeGeneration() === generation
+    const unsubscribe = onLocalJournalScopeChange(() => controller.abort())
+    setItem(null); setError(null)
+    void transport(ownerId, { action: "read", documentId, experience: true }, controller.signal, current).then(result => {
+      if (!current()) return
+      if (!result.ok) { setError(result.code); return }
+      if (!("item" in result.data) || result.data.item.documentId !== documentId) { setError("INVALID_RESPONSE"); return }
+      if (result.data.item.state !== "CONFIRMED") { setError("SOURCE_CHANGED"); return }
+      setItem(result.data.item)
+    }).catch(() => { if (current()) setError("UNAVAILABLE") })
+    return () => { controller.abort(); unsubscribe() }
+  }, [ownerId, documentId, transport, attempt])
+  const unknown = durationMissing && item?.savedAutomatically === true && item.observation?.durationMeaning === "UNKNOWN" && item.observation.durationSeconds !== null
+  return <div className="garmin-journal-preview">
+    {unknown && <RecordNotice kind="pending" title="시간 기준 확인 필요">
+      <p>Garmin 원본 시간은 {activityDuration(item.observation!.durationSeconds)}예요. 이동·정지 포함 기준이 확인되지 않아 일지 시간과 페이스 계산에는 넣지 않았어요.</p>
+      {!open && <RecordAction priority="secondary" onClick={() => { setOpen(true); if (details.current) details.current.open = true; requestAnimationFrame(() => detailTitle.current?.focus({ preventScroll: true })) }}>Garmin 원본 시간 보기</RecordAction>}
+    </RecordNotice>}
+    {error && <RecordNotice kind="error" title="원본 확인을 완료하지 못했어요"><p>{garminErrorMessage[error]}</p><RecordAction priority="secondary" onClick={() => setAttempt(value => value + 1)}>다시 불러오기</RecordAction></RecordNotice>}
+    {!item && !error && <p role="status">운동 원본을 확인하고 있어요.</p>}
+    {item && <details ref={details} className="garmin-detail__raw" open={open} onToggle={event => setOpen(event.currentTarget.open)}><summary ref={detailTitle} tabIndex={0}>운동 상세</summary>
+      {open && <GarminActivityDetail ownerId={ownerId} item={item} transport={transport} />}
+    </details>}
+  </div>
 }

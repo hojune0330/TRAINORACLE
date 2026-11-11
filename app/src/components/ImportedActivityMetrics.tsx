@@ -33,3 +33,18 @@ export function ImportedActivityMetrics({ observation }: { readonly observation:
     {summaries.some(item => item.metric === "runCadence" || item.metric === "cadenceRpm") && <p>케이던스는 파일의 단위를 유지해요. 걸음 수로 바꾸거나 두 배로 환산하지 않아요.</p>}
   </div>
 }
+
+/** Presentation conversion only: the original value remains in the source table. */
+export function activityDistance(value: number | null | undefined) {
+  return value == null ? "미기록" : value >= 1000 ? (value / 1000).toLocaleString("ko-KR", { maximumFractionDigits: 2 }) + " km" : value.toLocaleString("ko-KR", { maximumFractionDigits: 1 }) + " m"
+}
+export function activityDuration(value: number | null | undefined) {
+  if (value == null) return "미기록"
+  const seconds = Math.round(value), hours = Math.floor(seconds / 3600), minutes = Math.floor(seconds % 3600 / 60)
+  return (hours ? hours + "시간 " : "") + minutes + "분 " + seconds % 60 + "초"
+}
+export function activityPace(minutes: number | null | undefined) {
+  if (minutes == null) return "미기록"
+  const seconds = Math.round(minutes * 60)
+  return Math.floor(seconds / 60) + ":" + String(seconds % 60).padStart(2, "0") + " /km"
+}

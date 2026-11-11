@@ -627,6 +627,21 @@ export async function hydrateAccountJournalRecords() {
   try { return await run } finally { if (hydration === run) hydration = null }
 }
 
+let importRefresh: { owner: string; current: () => boolean; promise: Promise<boolean> } | null = null
+
+/** Coalesce passive refresh only; explicit import review still requires a new read. */
+export async function refreshAccountJournalRecordsInBackground(): Promise<boolean> {
+  let ctx: ReturnType<typeof context>
+  try { ctx = context() } catch { return false }
+  if (!ctx) return false
+  const current = ctx
+  if (importRefresh?.owner === current.ownerId && importRefresh.current()) return importRefresh.promise
+  const promise = serialize(current, () => hydrate(current, false), false)
+  const flight = { owner: current.ownerId, current: current.current, promise }
+  importRefresh = flight
+  try { return await promise } finally { if (importRefresh === flight) importRefresh = null }
+}
+
 /** A fresh import review never sends the account's unrelated durable outbox. */
 export async function refreshAccountJournalRecordsForImport(): Promise<boolean> {
   let ctx: ReturnType<typeof context>

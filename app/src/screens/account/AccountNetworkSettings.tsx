@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState, type ReactNode } from "react"
+import { useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from "react"
 import { InfoDisclosure } from "../../components/InfoDisclosure"
 import { BetaAccountSettings } from "./BetaAccountSettings"
 import { CoachSupportPanel } from "./CoachSupportPanel"
@@ -62,6 +62,9 @@ export function AccountNetworkSettings({
   initialTermsAcknowledged,
   profileSetupComplete = false,
   onDeletionCompleted,
+  storageSectionRef,
+  onStorageGranted,
+  onStorageStatus,
 }: {
   readonly userId: string
   readonly today: string
@@ -73,6 +76,9 @@ export function AccountNetworkSettings({
   readonly initialTermsAcknowledged?: boolean
   readonly profileSetupComplete?: boolean
   readonly onDeletionCompleted?: (() => AccountActionResult | Promise<AccountActionResult>) | undefined
+  readonly storageSectionRef?: RefObject<HTMLDivElement>
+  readonly onStorageGranted?: () => void
+  readonly onStorageStatus?: (state: "checking" | "required" | "ready" | "unavailable") => void
 }) {
   const features = productFeatures()
   return (
@@ -101,9 +107,9 @@ export function AccountNetworkSettings({
         />
       )}
       {profileSetupComplete && (
-        <AccountSettingsDisclosure title="온라인 보관">
-          <StorageConsentPanel key={userId} userId={userId} />
-        </AccountSettingsDisclosure>
+        <div ref={storageSectionRef} tabIndex={-1} className="account-storage-entry"><AccountSettingsDisclosure title="온라인 보관">
+          <StorageConsentPanel key={userId} userId={userId} onGranted={onStorageGranted} onStatus={onStorageStatus} />
+        </AccountSettingsDisclosure></div>
       )}
       <AccountSettingsDisclosure title="내 자료·백업">
         <AccountDataRightsPanel key={`rights-${userId}`} userId={userId} />

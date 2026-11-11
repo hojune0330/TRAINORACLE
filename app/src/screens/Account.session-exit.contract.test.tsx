@@ -144,15 +144,17 @@ describe("Account session exit", () => {
     expect(await screen.findByText("가입 정보를 안전하게 저장하고 있어요. 이 화면을 잠시 그대로 두세요.")).toBeVisible()
     await waitFor(() => expect(mocks.loadSetup).toHaveBeenCalled())
     expect(screen.queryByRole("button", { name: "합성 삭제 완료" })).not.toBeInTheDocument()
-    expect(screen.queryByRole("button", { name: "운동 자동연동" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("heading", { name: "내 워치와 운동 기록" })).not.toBeInTheDocument()
 
     await act(async () => { resolveSetup({ ok: true, ready: true, message: "준비됨" }) })
     const management = await screen.findByRole("button", { name: "합성 삭제 완료" })
     expect(management).toBeVisible()
-    const automaticEntry = screen.getByRole("button", { name: "운동 자동연동" })
+    const automaticEntry = screen.getByRole("heading", { name: "내 워치와 운동 기록" })
     expect(automaticEntry.compareDocumentPosition(management) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(automaticEntry.compareDocumentPosition(screen.getByText("runner@example.com")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    await waitFor(() => expect(automaticEntry.closest(".account-watch-entry")).toHaveFocus())
     expect(screen.queryByTestId("import-teaser")).toBeNull()
-    await userEvent.click(automaticEntry)
+    await userEvent.click(screen.getByRole("button", { name: "워치 파일 가져오기" }))
     expect(openImport).toHaveBeenCalledOnce()
   })
 
@@ -161,7 +163,7 @@ describe("Account session exit", () => {
     render(<Account onOpenImport={vi.fn()} />)
     expect(await screen.findByTestId("guest-auth-gateway")).toBeVisible()
     expect(screen.getByText("로그인하고 워치를 연결하면 새 운동을 자동으로 가져올 수 있어요.")).toBeVisible()
-    expect(screen.queryByRole("button", { name: "운동 자동연동" })).toBeNull()
+    expect(screen.queryByRole("button", { name: "운동 가져오기" })).toBeNull()
   })
 
   it("keeps the signed-in account and setup hints when local sign-out fails", async () => {

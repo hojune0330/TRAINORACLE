@@ -22,7 +22,7 @@ for (const width of [320, 375]) {
       await page.goBack()
       await expect(page.getByRole("heading", { name: "더보기", exact: true })).toBeVisible()
       await page.getByRole("button", { name: "워치 파일 가져오기", exact: true }).click()
-      await expect(page.getByRole("heading", { name: "운동 기록 가져오기", exact: true })).toBeVisible()
+      await expect(page.getByRole("heading", { name: "운동 가져오기", exact: true })).toBeVisible()
       await page.getByRole("button", { name: "뒤로", exact: true }).click()
       await page.getByRole("button", { name: "오라클 읽을거리", exact: true }).click()
       await expect(page.getByRole("navigation", { name: "오라클 메뉴" })
