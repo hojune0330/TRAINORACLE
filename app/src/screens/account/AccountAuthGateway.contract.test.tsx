@@ -1,7 +1,8 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { AccountAuthGateway } from "./AccountAuthGateway"
+import { requestBrowserBackLayer } from "../../navigation/browserNavigation"
 
 const config = {
   url: "https://example.supabase.co",
@@ -39,8 +40,23 @@ describe("mobile-first account authentication gateway", () => {
     expect(screen.getByRole("button", { name: "이메일로 계속하기" })).toBeVisible()
     expect(screen.queryByRole("button", { name: "휴대전화로 계속하기" })).not.toBeInTheDocument()
     expect(screen.queryByRole("button", { name: "계정 없이 계속 사용" })).not.toBeInTheDocument()
-    expect(screen.getByText(/로그인 후 온라인 보관을 선택할 수 있어요/u)).toBeVisible()
+    expect(screen.getByRole("heading", { name: "처음이면 회원가입, 이미 가입했다면 로그인" })).toBeVisible()
     expect(screen.getByText(/가입만으로 기록이 업로드되지는 않아요/u)).toBeVisible()
+  })
+
+  it("returns within authentication on screen Back without discarding entered answers or starting auth", async () => {
+    const social = vi.fn()
+    render(<AccountAuthGateway config={config} today="2026-08-25" onSocialSignIn={social} />)
+    await userEvent.click(screen.getByRole("button", { name: "Google로 계속하기" }))
+    fireEvent.change(screen.getByLabelText("생년월일"), { target: { value: "2000-01-01" } })
+    await userEvent.click(screen.getByRole("checkbox", { name: /개인정보 처리방침.*확인/u }))
+    await userEvent.click(screen.getByRole("checkbox", { name: /이용약관.*동의/u }))
+    act(() => { expect(requestBrowserBackLayer()).toBe(true) })
+    expect(await screen.findByRole("heading", { name: "처음이면 회원가입, 이미 가입했다면 로그인" })).toBeVisible()
+    await userEvent.click(screen.getByRole("button", { name: "Google로 계속하기" }))
+    expect(screen.getByLabelText("생년월일")).toHaveValue("2000-01-01")
+    expect(screen.getByRole("checkbox", { name: /이용약관.*동의/u })).toBeChecked()
+    expect(social).not.toHaveBeenCalled()
   })
 
   it("hides Kakao when the provider has not been released", () => {

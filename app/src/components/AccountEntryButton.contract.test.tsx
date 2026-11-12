@@ -45,6 +45,21 @@ describe("home account entry", () => {
     expect(onOpenAccount).toHaveBeenCalledTimes(1)
   })
 
+  it("offers a clearly named guest start action and removes it for a signed-in visitor", async () => {
+    const onOpenAccount = vi.fn()
+    const guest = render(<AccountEntryButton prominent onOpenAccount={onOpenAccount} />)
+    await act(async () => { await Promise.resolve() })
+    const start = screen.getByRole("button", { name: "회원가입 · 로그인" })
+    expect(start).toBeVisible()
+    start.click()
+    expect(onOpenAccount).toHaveBeenCalledTimes(1)
+    guest.unmount()
+    userRef.value = { id: "u1", email: null, phone: null, provider: "google" }
+    const member = render(<AccountEntryButton prominent onOpenAccount={onOpenAccount} />)
+    await act(async () => { await Promise.resolve() })
+    expect(member.container).toBeEmptyDOMElement()
+  })
+
   it("switches to a quiet 내 계정 icon once signed in", async () => {
     userRef.value = { id: "u1", email: "a@b.c", phone: null, provider: "google" }
     render(<AccountEntryButton onOpenAccount={vi.fn()} />)

@@ -1,4 +1,5 @@
 import { isReloadBlocked } from "./screen-recovery"
+import { isAuthSessionQuarantined } from "./account/auth-session-quarantine"
 
 /** Automatic updates remain enabled, but never discard a volatile draft. */
 export function registerAppServiceWorker(baseUrl: string, reload = () => window.location.reload()): void {
@@ -18,8 +19,15 @@ export function registerAppServiceWorker(baseUrl: string, reload = () => window.
     retryTimer = undefined
     if (!pendingWorker && !controllerChanged) return
     // Even a form without a registered draft guard must not be replaced mid-entry.
-    const inputSurface = document.querySelector("input:not([type='hidden']), textarea, select, [contenteditable='true']")
-    if (document.visibilityState !== "visible" || isReloadBlocked() || inputSurface !== null) {
+    const inputInProgress = Array.from(document.querySelectorAll("input:not([type='hidden']):not([type='button']):not([type='submit']), textarea, select, [contenteditable='true']"))
+      .some(element => {
+        if (element === document.activeElement) return true
+        if (element instanceof HTMLInputElement) return element.type === "checkbox" || element.type === "radio" ? element.checked : element.value !== ""
+        if (element instanceof HTMLTextAreaElement || element instanceof HTMLSelectElement) return element.value !== ""
+        return element.textContent?.trim() !== ""
+      })
+    const busySurface = document.querySelector("[aria-busy='true']") !== null
+    if (document.visibilityState !== "visible" || isReloadBlocked() || isAuthSessionQuarantined() || inputInProgress || busySurface) {
       retryTimer = setTimeout(resume, 5_000)
       return
     }
@@ -59,7 +67,7 @@ export function registerAppServiceWorker(baseUrl: string, reload = () => window.
   }
 
   void navigator.serviceWorker
-    .register(`${baseUrl}sw.js`, { scope: baseUrl })
+    .register(`${baseUrl}sw.js`, { scope: baseUrl, updateViaCache: "none" })
     .then(inspectRegistration)
     .catch(() => console.warn("[SW] registration unavailable"))
 
@@ -72,5 +80,7 @@ export function registerAppServiceWorker(baseUrl: string, reload = () => window.
       .finally(() => { checking = false })
   }
   window.addEventListener("focus", checkForUpdate)
+  window.addEventListener("pageshow", checkForUpdate)
+  window.addEventListener("online", checkForUpdate)
   document.addEventListener("visibilitychange", checkForUpdate)
 }

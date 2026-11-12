@@ -1,8 +1,9 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { registerAppServiceWorker } from "./pwa-update"
 
-const safety = vi.hoisted(() => ({ blocked: false }))
+const safety = vi.hoisted(() => ({ blocked: false, authBlocked: false }))
 vi.mock("./screen-recovery", () => ({ isReloadBlocked: () => safety.blocked }))
+vi.mock("./account/auth-session-quarantine", () => ({ isAuthSessionQuarantined: () => safety.authBlocked }))
 
 let swEvents: Record<string, () => void>
 let windowEvents: Record<string, () => void>
@@ -13,6 +14,7 @@ let register: ReturnType<typeof vi.fn>
 beforeEach(() => {
   vi.useFakeTimers()
   safety.blocked = false
+  safety.authBlocked = false
   swEvents = {}; windowEvents = {}
   worker = { postMessage: vi.fn() }
   registration = { waiting: worker, update: vi.fn().mockResolvedValue(undefined), addEventListener: vi.fn() }
@@ -80,4 +82,49 @@ it("also defers replacement while an unregistered input screen is open", async (
     await vi.advanceTimersByTimeAsync(5_000)
     expect(worker.postMessage).toHaveBeenCalledOnce()
   } finally { input.remove() }
+})
+
+it("allows an untouched empty home memo but protects a focused empty field", async () => {
+  const memo = document.createElement("textarea")
+  document.body.append(memo)
+  try {
+    memo.focus()
+    registerAppServiceWorker("/")
+    await Promise.resolve()
+    expect(worker.postMessage).not.toHaveBeenCalled()
+    memo.blur()
+    await vi.advanceTimersByTimeAsync(5_000)
+    expect(worker.postMessage).toHaveBeenCalledOnce()
+  } finally { memo.remove() }
+})
+
+it("keeps an OAuth callback and a busy account screen intact until completion", async () => {
+  safety.authBlocked = true
+  const reload = vi.fn()
+  const account = document.createElement("section")
+  document.body.append(account)
+  try {
+    registerAppServiceWorker("/", reload)
+    await Promise.resolve()
+    expect(worker.postMessage).not.toHaveBeenCalled()
+    safety.authBlocked = false
+    account.setAttribute("aria-busy", "true")
+    await vi.advanceTimersByTimeAsync(5_000)
+    expect(worker.postMessage).not.toHaveBeenCalled()
+    account.removeAttribute("aria-busy")
+    await vi.advanceTimersByTimeAsync(5_000)
+    expect(worker.postMessage).toHaveBeenCalledOnce()
+    swEvents.controllerchange!()
+    expect(reload).toHaveBeenCalledOnce()
+  } finally { account.remove() }
+})
+
+it("checks the installed app when restored from page cache or brought online", async () => {
+  registerAppServiceWorker("/")
+  await Promise.resolve()
+  expect(register).toHaveBeenCalledWith("/sw.js", { scope: "/", updateViaCache: "none" })
+  windowEvents.pageshow!()
+  await vi.advanceTimersByTimeAsync(0)
+  windowEvents.online!()
+  expect(registration.update).toHaveBeenCalledTimes(2)
 })

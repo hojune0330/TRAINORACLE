@@ -141,6 +141,7 @@ export function More({
 
       <div className={`more-screen__list${activeView === "tools" ? " more-screen__list--tools" : ""}`}>
         {activeView === "tools" && <>
+        {onOpenAccount && <MenuAction icon={CircleUserRound} label={ownerId ? "내 계정" : "회원가입 · 로그인"} detail={ownerId ? "계정 상태와 워치 연결" : "간편 인증으로 시작하기"} onClick={onOpenAccount} />}
         <AutomaticConnectionEntry onOpen={onOpenImport ?? (() => changeView("connections"))} />
         {(onOpenMinigame || onOpenPaceCalculator) && <MenuGroup title="게임·페이스">
           {onOpenMinigame && <MenuAction icon={Gamepad2} label="게임 라운지" illustration="running-game-announcement" onClick={onOpenMinigame} />}

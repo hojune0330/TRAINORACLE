@@ -288,7 +288,10 @@ export function Account({ onBack, onOpenImport, onOpenFileImport, onOpenJournalR
         if (result.ready) {
           setSetupState("ready")
           setSetupNotice(result.message)
-          requestVerifiedAccountScopeRefresh()
+          // Reading an already-ready profile must not request another scope
+          // reset: AppShell remounts this screen on scope changes. Only a new
+          // enrollment completion needs to wake the admission coordinator.
+          if (result.pendingAttempted) requestVerifiedAccountScopeRefresh()
         } else if (!result.pendingAttempted && result.canComplete) {
           setSetupState("needs-profile")
           setSetupNotice("확인 링크를 새 화면에서 열었어요. 나이와 필수 약관만 다시 확인하면 가입이 끝나요.")
@@ -416,7 +419,7 @@ export function Account({ onBack, onOpenImport, onOpenFileImport, onOpenJournalR
   const profileSetupComplete = setupState === "ready"
 
   return (
-    <div style={{ padding: "18px 20px 90px" }}>
+    <div style={{ padding: "18px 20px 90px" }} aria-busy={loading || busy || setupState === "checking" || setupState === "saving"}>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         {onBack && (
           <button
@@ -430,7 +433,7 @@ export function Account({ onBack, onOpenImport, onOpenFileImport, onOpenJournalR
         <div>
           <div style={{ ...mono, fontSize: 9.5, color: "var(--ink-3)", letterSpacing: 0 }}>TRAINORACLE ACCOUNT</div>
           <h1 style={{ fontFamily: "var(--sans)", fontSize: 20, fontWeight: 600, margin: "4px 0 0", letterSpacing: 0 }}>
-            {user ? "내 계정" : "로그인 또는 가입"}
+            {user ? "내 계정" : "회원가입 · 로그인"}
           </h1>
         </div>
       </div>
@@ -540,7 +543,7 @@ export function Account({ onBack, onOpenImport, onOpenFileImport, onOpenJournalR
         </div>
       ) : user === null ? (
         <>
-          <p className="account-automatic-connection-benefit">로그인하고 워치를 연결하면 새 운동을 자동으로 가져올 수 있어요.</p>
+          <p className="account-automatic-connection-benefit">먼저 트레인오라클에 로그인하고, 다음 화면에서 Garmin 계정을 연결해요.</p>
           <AccountAuthGateway config={config} today={today} onUnsafeSessionDetected={blockUnverifiedAccountSession} />
         </>
       ) : setupState === "saving" || setupState === "checking" ? (
@@ -581,13 +584,11 @@ export function Account({ onBack, onOpenImport, onOpenFileImport, onOpenJournalR
         </div>
       ) : setupState === "ready" ? (
         <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 16 }}>
-          {onOpenImport && <div ref={watchSectionRef} tabIndex={-1} className="account-watch-entry" aria-label="내 워치와 운동 기록">
-            <DeviceConnections key={user.id} ownerId={user.id} inlineSetup onOpenImport={onOpenFileImport ?? onOpenImport}
-              onOpenJournalRecord={onOpenJournalRecord} onOpenStorageSettings={openStorageSettings}
-              storageReadiness={storageState?.owner === user.id ? storageState.state : "checking"} />
-          </div>}
-          <div style={{ border: "1px solid var(--line)", borderRadius: "var(--r-md)", padding: "14px 16px" }}>
-            <div style={{ ...mono, fontSize: 10, color: "var(--ink-3)", letterSpacing: 0 }}>로그인됨</div>
+          <div ref={watchSectionRef} tabIndex={-1} className="account-watch-entry" aria-label="내 워치와 운동 기록">
+          <section className="account-session-status" aria-label="트레인오라클 로그인 상태">
+            <div className="account-session-status__heading"><strong>트레인오라클 로그인됨</strong>
+              <button type="button" style={secondaryBtn} disabled={busy} onClick={() => void handleSignOut()}>로그아웃</button>
+            </div>
             <div style={{ fontFamily: "var(--sans)", fontSize: 15, fontWeight: 600, marginTop: 4, letterSpacing: 0 }}>
               {user.email ?? (user.phone ? maskPhoneNumber(user.phone) : "연락처 미공개")}
             </div>
@@ -602,6 +603,11 @@ export function Account({ onBack, onOpenImport, onOpenFileImport, onOpenJournalR
                       : "이메일 인증"}
               </div>
             )}
+            <p>로그아웃은 이 기기에만 적용돼요. Garmin 자동 수신을 멈추려면 아래 Garmin 연결을 해제하세요.</p>
+          </section>
+          {onOpenImport && <DeviceConnections key={user.id} ownerId={user.id} inlineSetup onOpenImport={onOpenFileImport ?? onOpenImport}
+            onOpenJournalRecord={onOpenJournalRecord} onOpenStorageSettings={openStorageSettings}
+            storageReadiness={storageState?.owner === user.id ? storageState.state : "checking"} />}
           </div>
 
           {setupNotice !== null && <p role="status" style={{ ...mono, fontSize: 11, margin: 0 }}>{setupNotice}</p>}
@@ -630,8 +636,6 @@ export function Account({ onBack, onOpenImport, onOpenFileImport, onOpenJournalR
             onOpenBackup={onOpenRestore}
             onOutcome={setAccountActionNotice}
           />
-          <button type="button" style={secondaryBtn} disabled={busy} onClick={() => void handleSignOut()}>로그아웃</button>
-          <p style={{ ...mono, fontSize: 10.5, color: "var(--ink-4)", lineHeight: 1.6, margin: 0 }}>로그아웃해도 이 기기의 일지는 지워지지 않아요.</p>
         </div>
       ) : (
         <div style={{ marginTop: 24 }}>
@@ -656,7 +660,8 @@ export function Account({ onBack, onOpenImport, onOpenFileImport, onOpenJournalR
         </div>
       )}
 
-      {onOpenRestore && !loading && (
+      {!loading && <details className="account-local-tools"><summary>이 기기의 백업·복원·삭제</summary>
+      {onOpenRestore && (
         <div style={{ marginTop: 24 }}>
           <SectionLb>내려받은 백업 되돌리기</SectionLb>
           <p style={{ fontFamily: "var(--sans)", fontSize: 12.5, lineHeight: 1.6, color: "var(--ink-2)", margin: "8px 0 0" }}>
@@ -666,7 +671,8 @@ export function Account({ onBack, onOpenImport, onOpenFileImport, onOpenJournalR
         </div>
       )}
 
-      {!loading && <EraseLocalData onOpenRestore={onOpenRestore} />}
+      <EraseLocalData onOpenRestore={onOpenRestore} />
+      </details>}
     </div>
   )
 }

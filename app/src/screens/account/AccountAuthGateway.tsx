@@ -23,6 +23,7 @@ import {
 import type { AuthMethod } from "../../domain/account/auth-onboarding"
 import { formatBirthDateInput } from "./birth-date-input"
 import { useActiveContentScroll } from "../../hooks/useActiveContentScroll"
+import { useTaskFlowBack } from "../../hooks/useTaskFlowBack"
 import { consumeCapturedEmailAuthCallback } from "../../domain/account/email-auth-callback"
 import type { EmailAuthCallbackResult } from "../../domain/account/email-auth-callback"
 
@@ -96,6 +97,15 @@ export function AccountAuthGateway({
     setStep("method")
     setNotice(null)
   }
+
+  // The screen's Back and browser Back return within authentication before leaving it.
+  useTaskFlowBack({ enabled: step !== "method", busy, onBack: () => {
+    clearPendingAccountSetup(); setNotice(null)
+    if (step === "email-sent") setStep("email")
+    else if (step === "phone-code") { setStep("phone"); setPhoneCode("") }
+    else if (step === "email" || step === "phone") setStep("eligibility")
+    else resetMethod()
+  } })
 
   const continueAfterEligibility = async () => {
     if (method === null) return
@@ -253,9 +263,9 @@ export function AccountAuthGateway({
       {step === "method" && (
         <>
           <div className="account-auth__intro">
-            <span className="account-auth__trust"><ShieldCheck aria-hidden="true" size={15} /> 로그인하고 기록을 지키세요</span>
-          <h2>로그인 후 온라인 보관을 선택할 수 있어요</h2>
-            <p>로그인해 두면 일지와 훈련 계획을 계정과 연결해 기기를 바꾸거나 잃어버려도 지킬 수 있어요. 가장 편한 방법으로 시작하세요.</p>
+            <span className="account-auth__trust"><ShieldCheck aria-hidden="true" size={15} /> 별도 비밀번호 없이 시작</span>
+            <h2>처음이면 회원가입, 이미 가입했다면 로그인</h2>
+            <p>트레인오라클 계정으로 들어가는 단계예요. 기존 회원은 가입할 때 쓴 계정을 선택해 주세요.</p>
           </div>
           <div className="account-auth__methods" aria-label="로그인 방법 선택">
             {config.kakaoAuthEnabled && (
@@ -283,10 +293,11 @@ export function AccountAuthGateway({
         <>
           <StepHeader
             step={emailCallbackAttemptId === null ? "1 / 2" : "가입 확인"}
-            title={emailCallbackAttemptId === null ? "가입 전에 두 가지만 확인해요" : "이메일 확인 전에 두 가지만 다시 확인해요"}
+            title={emailCallbackAttemptId === null ? "가입·로그인 전에 확인해요" : "이메일 확인 전에 두 가지만 다시 확인해요"}
             onBack={resetMethod}
             disabled={busy}
           />
+          {emailCallbackAttemptId === null && <p className="account-auth__precheck-note">현재는 기존 회원도 로그인 전에 나이와 필수 약관을 확인해요. 이후 가입할 때 쓴 계정을 선택하면 돼요.</p>}
           <div className="account-auth__field-group">
             <label htmlFor="account-signup-birth-date">생년월일</label>
             <input
@@ -342,7 +353,7 @@ export function AccountAuthGateway({
             onClick={() => void continueAfterEligibility()}
           >
             {busy
-              ? "연결하는 중..."
+              ? "로그인 확인 중..."
               : method === "email"
                 ? emailCallbackAttemptId === null ? "이메일 입력하기" : "확인하고 로그인하기"
                 : method === "phone"

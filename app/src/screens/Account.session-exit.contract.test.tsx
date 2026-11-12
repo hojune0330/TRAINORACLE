@@ -107,7 +107,8 @@ vi.mock("./account/index", () => ({
 
 import { Account } from "./Account"
 import { closeAccountDeletionBoundary } from "../domain/account/account-deletion-boundary"
-import { activeLocalAccount, localJournalScopeGeneration, setActiveLocalAccount } from "../domain/account/local-journal-ownership"
+import { activeLocalAccount, localJournalScopeGeneration, onLocalJournalScopeChange, setActiveLocalAccount } from "../domain/account/local-journal-ownership"
+import { startVerifiedAccountScope } from "../domain/account/verified-account-scope"
 
 beforeEach(() => {
   localStorage.clear()
@@ -134,6 +135,37 @@ beforeEach(() => {
 afterEach(() => cleanup())
 
 describe("Account session exit", () => {
+  it("settles the signed-in screen after the shell remounts it for a verified account scope", async () => {
+    // Use the real scope coordinator and the shell's keyed remount contract.
+    // A bounded harness turns the former admission -> refresh -> remount loop
+    // into a visible failure instead of letting the regression run forever.
+    function SignedInShell() {
+      const [revision, setRevision] = React.useState(0)
+      React.useEffect(() => {
+        let changes = 0
+        const stopScope = onLocalJournalScopeChange(() => setRevision(++changes))
+        const stopAuth = startVerifiedAccountScope(() => {}, {
+          currentUser: mocks.currentUser,
+          onAuthChange: () => () => {},
+          loadPrivateProfileSetupStatus: mocks.loadSetup,
+          setActiveLocalAccount,
+          setAccountAuthState: () => {},
+          isQuarantined: () => false,
+          subscribeQuarantine: () => () => {},
+        })
+        return () => { stopScope(); stopAuth() }
+      }, [])
+      return revision < 8 ? <Account key={revision} onOpenImport={() => {}} /> : <p role="alert">계정 화면 반복</p>
+    }
+    render(<SignedInShell />)
+    await waitFor(() => expect(activeLocalAccount()).toBe("athlete-a"))
+    expect(await screen.findByRole("heading", { name: "내 워치와 운동 기록" })).toBeVisible()
+    await act(async () => { await new Promise(resolve => setTimeout(resolve, 100)) })
+    expect(screen.queryByText("계정 화면 반복")).toBeNull()
+    expect(screen.getByRole("button", { name: "로그아웃" })).toBeVisible()
+    expect(mocks.loadSetup.mock.calls.length).toBeLessThanOrEqual(4)
+  })
+
   it("does not mount private account controls before server admission is ready", async () => {
     let resolveSetup!: (value: { ok: boolean; ready: boolean; message: string }) => void
     mocks.loadSetup.mockImplementation(() => new Promise(resolve => { resolveSetup = resolve }))
@@ -151,7 +183,7 @@ describe("Account session exit", () => {
     expect(management).toBeVisible()
     const automaticEntry = screen.getByRole("heading", { name: "내 워치와 운동 기록" })
     expect(automaticEntry.compareDocumentPosition(management) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
-    expect(automaticEntry.compareDocumentPosition(screen.getByText("runner@example.com")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(screen.getByRole("button", { name: "로그아웃" }).compareDocumentPosition(automaticEntry) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     await waitFor(() => expect(automaticEntry.closest(".account-watch-entry")).toHaveFocus())
     expect(screen.queryByTestId("import-teaser")).toBeNull()
     await userEvent.click(screen.getByRole("button", { name: "워치 파일 가져오기" }))
@@ -162,7 +194,7 @@ describe("Account session exit", () => {
     mocks.currentUser.mockResolvedValue(null)
     render(<Account onOpenImport={vi.fn()} />)
     expect(await screen.findByTestId("guest-auth-gateway")).toBeVisible()
-    expect(screen.getByText("로그인하고 워치를 연결하면 새 운동을 자동으로 가져올 수 있어요.")).toBeVisible()
+    expect(screen.getByText("먼저 트레인오라클에 로그인하고, 다음 화면에서 Garmin 계정을 연결해요.")).toBeVisible()
     expect(screen.queryByRole("button", { name: "운동 가져오기" })).toBeNull()
   })
 

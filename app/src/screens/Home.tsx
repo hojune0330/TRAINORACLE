@@ -200,6 +200,7 @@ export function Home({
         onOpenContent={onOpenContent}
         onOpenRewards={onOpenRewards}
         accountEntry={<AccountEntryButton onOpenAccount={onOpenAccount} />}
+        accountWelcome={<AccountEntryButton prominent onOpenAccount={onOpenAccount} />}
         recentJournal={<LatestJournalDay entries={entries} today={today} storage={{
           readiness: journalSnapshot.status, owner: journalSnapshot.owner, accountStatus: storageStatus,
           accountStoredVersions: new Map(readAccountJournalProjection().map(entry => [entry.id, { savedAt: entry.savedAt, date: entry.date, kind: entry.kind }])),

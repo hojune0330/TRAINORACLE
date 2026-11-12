@@ -347,6 +347,8 @@ function GarminConnectionSession({ onSubviewChange, ownerId, onOpenAccount, onOp
           {(view === "list" || view === "settings") && showConnectReview && canStartConnection && <section aria-label="Garmin 연결 및 저장 동의" className="garmin-panel__setup">
             <h4 ref={setupHeading} id="garmin-connect-title" tabIndex={-1}>{inlineConnectReview ? "Garmin 연결하고 자동으로 기록하기" : "운동을 어떻게 저장할까요?"}</h4>
             {inlineConnectReview && <p>{reconnectRequired ? "연결이 끊겼어요. 다시 연결하면 새 운동을 받아요." : "한 번 연결하면 매번 파일을 올리지 않아도 돼요."}</p>}
+            <p>Garmin 공식 웹 화면에서 운동 기록이 있는 Garmin 계정으로 로그인하고 데이터 공유를 허용해 주세요. 트레인오라클의 Google 로그인과는 별도예요.</p>
+            <p>워치 기록은 Garmin Connect 앱에서 먼저 동기화해 주세요. 연결 뒤에는 Garmin 서버가 전달한 기록을 받아요.</p>
             <p>Garmin에서 허용한 운동과 세부 수치를 계정에 보관해요. AI 코칭 이용 동의는 포함하지 않아요.</p>
             <p>연결한 뒤 전달되는 운동부터 받아요. 연결 전 기록은 파일로 가져올 수 있어요.</p>
             <label><input type="radio" name="garmin-save" checked={saveMode === "AUTO"} onChange={() => setSaveMode("AUTO")} disabled={busy} />새 운동을 일지에 자동 저장 · 권장</label>
@@ -437,7 +439,7 @@ function GarminConnectionSession({ onSubviewChange, ownerId, onOpenAccount, onOp
             {!!reviewCount && <RecordAction priority="secondary" disabled={busy} onClick={() => enter("review")}>확인이 필요한 기록 {reviewCount}개</RecordAction>}
             {(items.some(item => item.state === "CONFIRMED") || cursor) && <RecordAction priority="secondary" disabled={busy} onClick={() => enter("saved")}>저장된 운동 보기</RecordAction>}
           </div>}
-          {view === "settings" && connection && connection.state !== "DISCONNECTED" && <details><summary>연결 해제</summary>
+          {(view === "list" || view === "settings") && !connectReview && connection && connection.state !== "DISCONNECTED" && <details><summary>Garmin 연결 해제</summary>
             <p>새 기록을 받지 않도록 연결을 해제해요. 이미 일지에 저장된 기록은 따로 삭제할 수 있어요.</p>
             <p>계정 보관 동의를 철회하거나 탈퇴해 연결 정보가 삭제된 경우에는 Garmin Connect의 계정 정보에서 앱 권한도 직접 해제해 주세요.</p>
             <label className="garmin-panel__disconnect"><input type="checkbox" checked={disconnectReview} disabled={busy} onChange={event => setDisconnectReview(event.target.checked)} />Garmin 연결을 해제할게요</label>

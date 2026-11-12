@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "prebuild": "node scripts/check-build-runtime.mjs",
-    "build": "tsc --noEmit && vite build --emptyOutDir=false",
+    "build": "tsc --noEmit && vite build --emptyOutDir=false && node scripts/stamp-service-worker.mjs",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "typecheck:e2e": "tsc --noEmit -p tsconfig.e2e.json",
