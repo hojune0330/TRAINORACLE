@@ -119,7 +119,7 @@ it("shows learning and decoration destinations directly in More", () => {
   expect(screen.getAllByRole("region")[1]).toHaveAccessibleName("취향·꾸미기")
   const automaticEntry = screen.getByRole("button", { name: "운동 가져오기" })
   expect(automaticEntry.parentElement?.firstElementChild).toBe(automaticEntry)
-  expect(automaticEntry).toHaveAccessibleDescription("워치 자동 연결 · 받은 운동 확인 · 파일 가져오기")
+  expect(automaticEntry).toHaveAccessibleName("운동 가져오기")
   expect(screen.queryByRole("button", { name: "워치 파일 가져오기" })).toBeNull()
   for (const name of ["러닝 취향", "최고기록으로 풀이하기", "게임 라운지"]) {
     expect(screen.getByRole("button", { name })).toHaveTextContent(new RegExp(`^${name}$`))

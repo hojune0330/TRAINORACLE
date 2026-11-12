@@ -19,8 +19,8 @@ test("audits empty home and chooser touch actions", async ({ page }, testInfo) =
   await expect(page.getByRole("navigation", { name: "홈 바로가기" })).toBeVisible()
   const services = page.getByRole("navigation", { name: "홈 바로가기" })
   await auditTouchTargets(page, [
-    { name: "empty-home.primary-memo", locator: page.getByPlaceholder("운동이나 오늘의 느낌을 남겨 보세요", { exact: true }), heightOnly: true },
-    { name: "empty-home.create-plan", locator: page.getByRole("button", { name: "훈련 계획 만들기" }), heightOnly: true },
+    { name: "empty-home.primary-memo", locator: page.getByRole("textbox", { name: "오늘의 메모", exact: true }), heightOnly: true },
+    { name: "empty-home.create-plan", locator: page.getByRole("button", { name: "훈련 계획" }), heightOnly: true },
     { name: "empty-home.learn", locator: services.getByRole("button", { name: "훈련법 읽기" }), heightOnly: true },
     { name: "empty-home.decorate", locator: services.getByRole("button", { name: "일지 꾸미기" }), heightOnly: true },
     { name: "empty-home.more", locator: page.getByRole("button", { name: "더보기", exact: true }) },

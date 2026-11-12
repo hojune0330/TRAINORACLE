@@ -13,11 +13,12 @@ import { hasPendingBrowserBackLayer } from "./navigation/browserNavigation"
 import * as verifiedAccountScope from "./domain/account/verified-account-scope"
 
 vi.mock("./screens/Account", () => ({
-  Account: ({ onBack }: { onBack?: () => void }) => {
+  Account: ({ onBack, initialAuthMode }: { onBack?: () => void; initialAuthMode?: string }) => {
     const [settings, setSettings] = useState(false)
     useTaskFlowBack({ enabled: settings, onBack: () => setSettings(false) })
     return <>
       <h1>합성 계정 화면</h1>
+      <span data-testid="account-entry-mode">{initialAuthMode}</span>
       {settings && <h2>합성 워치 설정</h2>}
       <button type="button" onClick={() => setSettings(true)}>워치 설정 열기</button>
       <button type="button" onClick={() => setActiveLocalAccount("synthetic-connection-owner")}>합성 로그인 완료</button>
@@ -152,7 +153,7 @@ describe("AppShell origin-preserving navigation", { timeout: 15000 }, () => {
       if (backKind === "browser") act(() => window.history.back())
       else await user.click(screen.getByRole("button", { name: "계정 화면 닫기" }))
       expect(await screen.findByRole("heading", { name: "운동 가져오기" })).toBeVisible()
-      expect(screen.getByRole("button", { name: "자동연동 추천" })).toHaveAttribute("aria-pressed", "true")
+      expect(screen.getByRole("button", { name: "자동연동" })).toHaveAttribute("aria-pressed", "true")
       expect(screen.queryByRole("heading", { name: "합성 계정 화면" })).toBeNull()
     } finally {
       cleanup(); setActiveLocalAccount(null); scope.mockRestore(); network.mockRestore()
@@ -468,13 +469,17 @@ it("closes embedded watch settings before leaving an account opened from Home", 
   try {
     const user = userEvent.setup()
     render(<AppShell />)
-    await user.click(await screen.findByRole("button", { name: /^(로그인 또는 가입|내 계정)$/ }))
+    await user.click(await screen.findByRole("button", { name: /^(로그인|내 계정)$/ }))
     await screen.findByRole("heading", { name: "합성 계정 화면" })
+    expect(screen.getByTestId("account-entry-mode")).toHaveTextContent("login")
     await user.click(screen.getByRole("button", { name: "워치 설정 열기" }))
     await user.click(screen.getByRole("button", { name: "계정 화면 닫기" }))
     await waitFor(() => expect(screen.queryByRole("heading", { name: "합성 워치 설정" })).toBeNull())
     expect(screen.getByRole("heading", { name: "합성 계정 화면" })).toBeVisible()
     await user.click(screen.getByRole("button", { name: "계정 화면 닫기" }))
     await screen.findByRole("heading", { name: "훈련과 기록" })
+    await user.click(screen.getByRole("button", { name: "회원가입" }))
+    await screen.findByRole("heading", { name: "합성 계정 화면" })
+    expect(screen.getByTestId("account-entry-mode")).toHaveTextContent("signup")
   } finally { cleanup(); setActiveLocalAccount(null); scope.mockRestore(); network.mockRestore() }
 })

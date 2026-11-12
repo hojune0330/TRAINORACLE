@@ -1,15 +1,29 @@
-button.category-card.automatic-connection-entry {
+button.automatic-connection-entry {
   grid-column: 1 / -1;
-  background: var(--category-record-wash);
-  border-color: var(--category-record);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--app-touch-min);
+  max-width: 100%;
+  padding: var(--space-2) 0;
+  border: 0;
+  background: none;
+  color: var(--ink-2);
+  font: 400 var(--fs-body-sm) / 1.5 var(--sans);
+  text-align: left;
+  cursor: pointer;
 }
-
-button.category-card.automatic-connection-entry:active { background: var(--surface-2); }
+button.automatic-connection-entry > svg { flex-shrink: 0; }
+.home-hub button.automatic-connection-entry { font-size: var(--fs-body-sm); }
+.automatic-connection-entry__copy { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-1) var(--space-2); }
+.automatic-connection-entry__status { font-size: var(--fs-caption); }
+.automatic-connection-entry__description { flex-basis: 100%; font-size: var(--fs-body-sm); line-height: 1.5; }
+button.automatic-connection-entry:focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; border-radius: var(--r-action); }
 
 .account-automatic-connection-benefit {
   margin: var(--space-4) 0 0;
   color: var(--ink-2);
-  font: 400 var(--fs-body) / 1.6 var(--sans);
+  font: 400 var(--fs-body-sm) / 1.6 var(--sans);
   word-break: keep-all;
   overflow-wrap: anywhere;
 }

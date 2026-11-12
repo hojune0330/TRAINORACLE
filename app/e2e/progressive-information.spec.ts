@@ -19,8 +19,8 @@ for (const width of [320, 375]) {
     await page.setViewportSize({ width, height: width === 320 ? 568 : 667 })
     await page.evaluate(() => document.fonts.ready)
     // The first recording action is the inline memo; structured exercise entry follows it.
-    await expect(page.getByPlaceholder("운동이나 오늘의 느낌을 남겨 보세요")).toBeInViewport({ ratio: 1 })
-    for (const name of ["운동 내용도 기록하기", "훈련 계획 만들기"]) {
+    await expect(page.getByRole("textbox", { name: "오늘의 메모", exact: true })).toBeInViewport({ ratio: 1 })
+    for (const name of ["운동 내용도 기록하기", "훈련 계획"]) {
       const button = page.getByRole("button", { name, exact: true })
       await button.scrollIntoViewIfNeeded()
       await expect(button).toBeInViewport({ ratio: 1 })
@@ -40,7 +40,7 @@ for (const width of [320, 375]) {
 
   test(`shows seven event choices and puts previous answers in an editable summary at ${width}px`, async ({ page }, testInfo) => {
     await page.setViewportSize({ width, height: width === 320 ? 568 : 667 })
-    await page.getByRole("button", { name: "훈련 계획 만들기", exact: true }).click()
+    await page.getByRole("button", { name: "훈련 계획", exact: true }).click()
     const choices = page.getByRole("group", { name: "어떤 종목을 준비하세요?" })
     await expect(choices.getByRole("button")).toHaveCount(7)
     await expect(choices.getByRole("button").first()).toBeInViewport({ ratio: 1 })
@@ -143,7 +143,7 @@ test("wraps text at double size without horizontal clipping and respects reduced
   })
   expect(await page.locator(".app-scroll-region").evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true)
   await expect(page.getByRole("navigation", { name: "홈 바로가기" })).toBeVisible()
-  for (const label of ["훈련 계획 만들기", "훈련법 읽기", "일지 꾸미기"]) {
+  for (const label of ["훈련 계획", "훈련법 읽기", "일지 꾸미기"]) {
     const button = page.getByRole("button", { name: label, exact: true })
     expect(await button.evaluate(el => el.scrollWidth <= el.clientWidth && el.scrollHeight <= el.clientHeight)).toBe(true)
   }

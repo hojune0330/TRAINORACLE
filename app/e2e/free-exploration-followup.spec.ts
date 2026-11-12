@@ -99,7 +99,7 @@ test("shows an executable record-based workout and opens its same stored method"
     performanceSeconds: 1111, achievedOn: "2026-09-20", seasonId: null, enteredBy: "ATHLETE",
     verificationState: "SELF_REPORTED", sourceRef: "athlete-record:synthetic-followup-5k", savedAt: "2026-09-20T12:00:00Z",
   }])))
-  await page.getByRole("button", { name: "훈련 계획 만들기", exact: true }).click()
+  await page.getByRole("button", { name: "훈련 계획", exact: true }).click()
   await completeDetailedPlan(page, { event: /^5000m/, experience: /빠른 훈련과 쉬운 훈련을 나눠 꾸준히 해왔어요/,
     focus: /유산소 반복 훈련/, template: /5000m 경기 페이스 상세 훈련 포함/ })
   await page.getByRole("button", { name: "기준 기록 확인하기", exact: true }).click()

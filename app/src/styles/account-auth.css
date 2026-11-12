@@ -727,3 +727,6 @@ textarea.account-panel__control {
 .account-session-status__heading strong { font-size: var(--fs-body); }
 .account-session-status__heading button { min-height: 44px; }
 .account-session-status p { margin: var(--space-2) 0 0; font-size: var(--fs-caption); line-height: 1.5; color: var(--ink-2); }
+.account-auth__mode-switch { display:flex; align-items:center; gap:var(--space-2); color:var(--ink-2); font-size:var(--fs-body-sm); }
+.account-auth__mode-switch button { min-height:44px; padding:0 var(--space-2); border:0; background:none; color:var(--ink); font:inherit; cursor:pointer; }
+.account-auth__mode-switch button:focus-visible { outline:2px solid var(--brand); outline-offset:2px; border-radius:var(--r-action); }

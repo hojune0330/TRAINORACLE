@@ -61,7 +61,7 @@ function ConnectedDataSession({ entries, today, onOpenImport, onOpenDay }: Props
   const connected = status?.connection.state === "ACTIVE"
   return <section className="home-hub__connected" aria-label="연결된 운동과 몸 상태">
     {onOpenImport && <AutomaticConnectionEntry onOpen={onOpenImport}
-      label={failed ? "연결 확인 필요" : connected ? "Garmin 연결됨" : enabled && !status ? "연결 확인 중" : "자동연동 추천"}
+      label={failed ? "연결 확인 필요" : connected ? "Garmin 연결됨" : enabled && !status ? "연결 확인 중" : undefined}
       description={failed ? "연결 상태를 확인하지 못했어요. 눌러서 다시 확인해 주세요."
         : connected ? status.experience?.reviewRequiredCount ? "확인이 필요한 운동 " + status.experience.reviewRequiredCount + "개 · 바로 확인하기"
           : status.connection.lastSyncAt ? "받은 운동과 일지 저장 상태 보기" : "워치 기록이 Garmin Connect에 올라오면 자동으로 받아요."

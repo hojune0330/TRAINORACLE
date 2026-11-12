@@ -1,4 +1,5 @@
 import React from "react"
+import type { AccountEntryMode } from "./components/AccountEntryButton"
 import { arenaInvitation } from "./screens/treadmill/arena-types"
 import { isPlainHomeEntry } from "./screens/home/HomeIntroduction"
 import { acknowledgeAnnouncement, MINIGAME_ANNOUNCEMENT } from "./domain/product-announcements"
@@ -227,6 +228,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
   const [oracleEntryRevision, refreshOracleEntry] = React.useReducer((revision: number) => revision + 1, 0)
   const [oracleAuthResolved, setOracleAuthResolved] = React.useState(() => !accountFeatureEnabled())
   const [accountScopeRevision, setAccountScopeRevision] = React.useState(0)
+  const [accountEntryMode, setAccountEntryMode] = React.useState<AccountEntryMode>("login")
   const [, refreshAccountJournals] = React.useReducer((revision: number) => revision + 1, 0)
   const [v, setV] = React.useState(() => {
     if (hasGarminCallback()) return INITIAL_VIEW_STATE
@@ -1371,7 +1373,12 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
   })
   const openImport = () => openImportWithMethod("automatic")
   const openFileImport = () => openImportWithMethod("file")
+  const openAccount = (mode: AccountEntryMode = "login") => runViewTransition("push", () => {
+    setAccountEntryMode(mode)
+    setV(s => ({ ...s, accountOpen: true }))
+  })
   const openConnectionAccount = () => runViewTransition("push", () => {
+    setAccountEntryMode("login")
     connectionAccountReturn.current = captureRecordingOrigin(false)
     connectionAccountRequested.current = true
     setUtilityView(null)
@@ -1446,6 +1453,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
     screen = (
       <ConnectionAccountBackBoundary enabled={connectionAccountRequested.current} onBack={closeAccount}>
       <DeferredMobileScreens.Account
+        initialAuthMode={accountEntryMode}
         loungeRequested={loungeEntryIntent().requested}
         onOpenJournal={() => goTab("journal")}
         onOpenPlan={() => goTab("plan")}
@@ -1497,7 +1505,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
         onOpenJournal={() => startRecording("quick-session")}
         onOpenAnalysis={() => goTab("trends")}
         onOpenFeedback={() => openOverlay({ kind: "feedback" })}
-        onOpenAccount={accountEnabled ? () => runViewTransition("push", () => setV(s => ({ ...s, accountOpen: true }))) : undefined}
+        onOpenAccount={accountEnabled ? openAccount : undefined}
         onOpenRestore={openRestore}
       />
     )
@@ -1569,7 +1577,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
           onOpenOracle={topic => openOracle(topic, "personal")}
           onOpenMore={() => runViewTransition("push", () => setUtilityView("more"))}
           onOpenMinigame={() => runViewTransition("push", () => enterDomain("games"), false)}
-          onOpenAccount={accountEnabled ? () => runViewTransition("push", () => setV(s => ({ ...s, accountOpen: true }))) : undefined}
+          onOpenAccount={accountEnabled ? openAccount : undefined}
           onOpenContent={openTrainingReading}
           onOpenRewards={() => openDecorationStudio()}
           onOpenNextTraining={(link: PlannedSessionLink) => runViewTransition("tab-forward", () => {

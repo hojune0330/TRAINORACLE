@@ -12,7 +12,7 @@ import { compactDate, isoShift } from "../domain/dates"
 import { summarizeToDateDistances } from "../domain/cumulative-distance"
 import { projectStructuredJournalObservations } from "../domain/journal-observation"
 import { painLevelsRequireReview } from "../safety/memo-safety"
-import { AccountEntryButton } from "../components/AccountEntryButton"
+import { AccountEntryButton, type AccountEntryMode } from "../components/AccountEntryButton"
 import { TrainingHome } from "./home/TrainingHome"
 import { LatestJournalDay } from "./home/LatestJournalDay"
 import { LOCAL_JOURNALS_CHANGED } from "../domain/journal-change-events"
@@ -51,7 +51,7 @@ export type HomeProps = {
   readonly oraclePreviewLabel?: string
   readonly onOpenMore?: () => void
   readonly onOpenMinigame?: () => void
-  readonly onOpenAccount?: () => void
+  readonly onOpenAccount?: (mode?: AccountEntryMode) => void
   readonly onOpenContent?: () => void
   readonly onOpenRewards?: () => void
   readonly onDecorateToday?: () => void
@@ -136,7 +136,7 @@ export function Home({
       {painReviewDates.length > 0 && <PainReview dates={painReviewDates} />}
       {storageMessage !== null && <div className="home-hub__notice" role={storageStatus === "PENDING" || storageStatus === "LOADING" ? "status" : "alert"}>
         <p>{storageMessage}</p>
-        {onOpenAccount && <button type="button" onClick={onOpenAccount}>계정 저장 상태 확인</button>}
+        {onOpenAccount && <button type="button" onClick={() => onOpenAccount()}>계정 저장 상태 확인</button>}
       </div>}
       {journalReadMessage !== null && <div className="home-hub__notice" role={journalSnapshot.status === "ERROR" ? "alert" : "status"}>
         <p>{journalReadMessage}</p>
@@ -200,7 +200,6 @@ export function Home({
         onOpenContent={onOpenContent}
         onOpenRewards={onOpenRewards}
         accountEntry={<AccountEntryButton onOpenAccount={onOpenAccount} />}
-        accountWelcome={<AccountEntryButton prominent onOpenAccount={onOpenAccount} />}
         recentJournal={<LatestJournalDay entries={entries} today={today} storage={{
           readiness: journalSnapshot.status, owner: journalSnapshot.owner, accountStatus: storageStatus,
           accountStoredVersions: new Map(readAccountJournalProjection().map(entry => [entry.id, { savedAt: entry.savedAt, date: entry.date, kind: entry.kind }])),

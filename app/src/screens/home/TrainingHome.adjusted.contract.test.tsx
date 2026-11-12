@@ -29,7 +29,7 @@ it("keeps the adjusted prescription unchanged and opens it through the concise h
   expect(button).not.toHaveTextContent("오후 훈련도 있어요")
   expect(button).toHaveTextContent("2 × 400m")
   expect(button).toHaveTextContent("반복 사이 17초 서서 쉬기")
-  fireEvent.click(screen.getByRole("button", { name: "전체 계획" }))
+  fireEvent.click(screen.getByRole("button", { name: "훈련 계획" }))
   expect(open).toHaveBeenCalledOnce()
   const after = buildTrainingHomeViewModel([], [], { ...selected.state,
     progress: [{ sessionDay: session.day, sessionSlot: session.slot, state: "COMPLETED" }] }, date)

@@ -194,7 +194,7 @@ describe("Account session exit", () => {
     mocks.currentUser.mockResolvedValue(null)
     render(<Account onOpenImport={vi.fn()} />)
     expect(await screen.findByTestId("guest-auth-gateway")).toBeVisible()
-    expect(screen.getByText("먼저 트레인오라클에 로그인하고, 다음 화면에서 Garmin 계정을 연결해요.")).toBeVisible()
+    expect(screen.getByText("Garmin 연결은 로그인 후 선택할 수 있어요.")).toBeVisible()
     expect(screen.queryByRole("button", { name: "운동 가져오기" })).toBeNull()
   })
 

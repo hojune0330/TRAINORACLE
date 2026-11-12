@@ -163,9 +163,9 @@ test("WELCOME keeps its height and readable actions with a reserved scrollbar gu
   expect(await page.evaluate(() => innerWidth)).toBe(320)
   const region = page.locator(SCROLL_REGION)
   expect(await region.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true)
-  // Current home order: open the plan, create a plan, then today's record.
-  const first = page.getByRole("button", { name: "전체 계획", exact: true })
-  const second = page.getByRole("button", { name: "훈련 계획 만들기", exact: true })
+  // One plan entry leads directly to today's editable memo in keyboard order.
+  const first = page.getByRole("button", { name: "훈련 계획", exact: true })
+  const second = page.getByRole("textbox", { name: "오늘의 메모", exact: true })
   await expect(first).toBeVisible()
   await expect(second).toBeVisible()
   const firstBox = await first.boundingBox()

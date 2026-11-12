@@ -39,6 +39,7 @@ import {
   AccountNetworkSettings, AccountSyncPanel, DeviceJournalOwnershipPanel, DeviceTrainingDataPanel, EraseLocalData, SwitchAccountPanel,
 } from "./account/index"
 import { AccountAuthGateway } from "./account/AccountAuthGateway"
+import type { AccountEntryMode } from "../components/AccountEntryButton"
 import { BetaAccountSettings } from "./account/BetaAccountSettings"
 import { AccountDataRightsPanel } from "./account/AccountDataRightsPanel"
 import { AccountJournalDraftPanel } from "./account/AccountJournalDraftPanel"
@@ -66,7 +67,8 @@ function authenticatedMethod(user: AccountUser): AuthMethod | null {
     : null
 }
 
-export function Account({ onBack, onOpenImport, onOpenFileImport, onOpenJournalRecord, onOpenRestore, onOpenJournal, onOpenPlan, loungeRequested = false }: {
+export function Account({ onBack, onOpenImport, onOpenFileImport, onOpenJournalRecord, onOpenRestore, onOpenJournal, onOpenPlan, loungeRequested = false, initialAuthMode = "login" }: {
+  readonly initialAuthMode?: AccountEntryMode
   readonly onBack?: () => void
   readonly onOpenImport?: () => void
   readonly onOpenFileImport?: () => void
@@ -78,6 +80,7 @@ export function Account({ onBack, onOpenImport, onOpenFileImport, onOpenJournalR
 }) {
   const config = accountConfig()
   const today = koreaServiceDate()
+  const [authMode, setAuthMode] = React.useState<AccountEntryMode>(initialAuthMode)
   const [user, setUser] = React.useState<AccountUser | null>(null)
   const [loading, setLoading] = React.useState(true)
   const [busy, setBusy] = React.useState(false)
@@ -433,7 +436,7 @@ export function Account({ onBack, onOpenImport, onOpenFileImport, onOpenJournalR
         <div>
           <div style={{ ...mono, fontSize: 9.5, color: "var(--ink-3)", letterSpacing: 0 }}>TRAINORACLE ACCOUNT</div>
           <h1 style={{ fontFamily: "var(--sans)", fontSize: 20, fontWeight: 600, margin: "4px 0 0", letterSpacing: 0 }}>
-            {user ? "내 계정" : "회원가입 · 로그인"}
+            {user ? "내 계정" : authMode === "signup" ? "회원가입" : "로그인"}
           </h1>
         </div>
       </div>
@@ -475,6 +478,8 @@ export function Account({ onBack, onOpenImport, onOpenFileImport, onOpenJournalR
         </div>
       ) : emailCallbackAttemptId !== null ? (
         <AccountAuthGateway
+          mode={authMode}
+          onModeChange={setAuthMode}
           config={config}
           today={today}
           emailCallbackAttemptId={emailCallbackAttemptId}
@@ -543,8 +548,8 @@ export function Account({ onBack, onOpenImport, onOpenFileImport, onOpenJournalR
         </div>
       ) : user === null ? (
         <>
-          <p className="account-automatic-connection-benefit">먼저 트레인오라클에 로그인하고, 다음 화면에서 Garmin 계정을 연결해요.</p>
-          <AccountAuthGateway config={config} today={today} onUnsafeSessionDetected={blockUnverifiedAccountSession} />
+          <AccountAuthGateway config={config} today={today} mode={authMode} onModeChange={setAuthMode} onUnsafeSessionDetected={blockUnverifiedAccountSession} />
+          <p className="account-automatic-connection-benefit">Garmin 연결은 로그인 후 선택할 수 있어요.</p>
         </>
       ) : setupState === "saving" || setupState === "checking" ? (
         <div style={{ marginTop: 24 }}>

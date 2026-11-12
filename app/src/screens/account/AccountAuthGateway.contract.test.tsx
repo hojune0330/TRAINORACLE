@@ -19,10 +19,23 @@ beforeEach(() => sessionStorage.clear())
 afterEach(cleanup)
 
 describe("mobile-first account authentication gateway", () => {
+  it("keeps signup distinct from login while preserving the pre-auth checks", async () => {
+    const social = vi.fn()
+    render(<AccountAuthGateway config={config} today="2026-08-25" onSocialSignIn={social} />)
+    await userEvent.click(screen.getByRole("button", { name: "회원가입" }))
+    expect(screen.queryByRole("button", { name: "Google로 로그인" })).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole("button", { name: "Google로 회원가입" }))
+    expect(screen.getByRole("heading", { name: "회원가입 전 확인" })).toBeVisible()
+    expect(screen.getByRole("button", { name: "Google로 회원가입" })).toBeDisabled()
+    expect(social).not.toHaveBeenCalled()
+    await userEvent.click(screen.getByRole("button", { name: "이전 단계" }))
+    await userEvent.click(screen.getByRole("button", { name: "로그인" }))
+    expect(screen.getByRole("button", { name: "Google로 로그인" })).toBeVisible()
+  })
   it("formats eight typed birth-date digits without requiring a calendar picker", async () => {
     render(<AccountAuthGateway config={config} today="2026-08-25" />)
 
-    await userEvent.click(screen.getByRole("button", { name: "이메일로 계속하기" }))
+    await userEvent.click(screen.getByRole("button", { name: "이메일로 로그인" }))
     const birthDate = screen.getByLabelText("생년월일")
     await userEvent.type(birthDate, "2000")
     expect(screen.getByRole("button", { name: "이메일 입력하기" })).toBeDisabled()
@@ -35,25 +48,25 @@ describe("mobile-first account authentication gateway", () => {
   it("shows Kakao, Google, and email as online-first options without a local-mode exit", () => {
     render(<AccountAuthGateway config={config} today="2026-08-25" />)
 
-    expect(screen.getByRole("button", { name: "카카오로 계속하기" })).toBeVisible()
-    expect(screen.getByRole("button", { name: "Google로 계속하기" })).toBeVisible()
-    expect(screen.getByRole("button", { name: "이메일로 계속하기" })).toBeVisible()
-    expect(screen.queryByRole("button", { name: "휴대전화로 계속하기" })).not.toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "카카오로 로그인" })).toBeVisible()
+    expect(screen.getByRole("button", { name: "Google로 로그인" })).toBeVisible()
+    expect(screen.getByRole("button", { name: "이메일로 로그인" })).toBeVisible()
+    expect(screen.queryByRole("button", { name: "휴대전화로 로그인" })).not.toBeInTheDocument()
     expect(screen.queryByRole("button", { name: "계정 없이 계속 사용" })).not.toBeInTheDocument()
-    expect(screen.getByRole("heading", { name: "처음이면 회원가입, 이미 가입했다면 로그인" })).toBeVisible()
+    expect(screen.getByText("가입할 때 쓴 계정으로 로그인하세요.")).toBeVisible()
     expect(screen.getByText(/가입만으로 기록이 업로드되지는 않아요/u)).toBeVisible()
   })
 
   it("returns within authentication on screen Back without discarding entered answers or starting auth", async () => {
     const social = vi.fn()
     render(<AccountAuthGateway config={config} today="2026-08-25" onSocialSignIn={social} />)
-    await userEvent.click(screen.getByRole("button", { name: "Google로 계속하기" }))
+    await userEvent.click(screen.getByRole("button", { name: "Google로 로그인" }))
     fireEvent.change(screen.getByLabelText("생년월일"), { target: { value: "2000-01-01" } })
     await userEvent.click(screen.getByRole("checkbox", { name: /개인정보 처리방침.*확인/u }))
     await userEvent.click(screen.getByRole("checkbox", { name: /이용약관.*동의/u }))
     act(() => { expect(requestBrowserBackLayer()).toBe(true) })
-    expect(await screen.findByRole("heading", { name: "처음이면 회원가입, 이미 가입했다면 로그인" })).toBeVisible()
-    await userEvent.click(screen.getByRole("button", { name: "Google로 계속하기" }))
+    expect(await screen.findByText("가입할 때 쓴 계정으로 로그인하세요.")).toBeVisible()
+    await userEvent.click(screen.getByRole("button", { name: "Google로 로그인" }))
     expect(screen.getByLabelText("생년월일")).toHaveValue("2000-01-01")
     expect(screen.getByRole("checkbox", { name: /이용약관.*동의/u })).toBeChecked()
     expect(social).not.toHaveBeenCalled()
@@ -62,17 +75,17 @@ describe("mobile-first account authentication gateway", () => {
   it("hides Kakao when the provider has not been released", () => {
     render(<AccountAuthGateway config={{ ...config, kakaoAuthEnabled: false }} today="2026-08-25" />)
 
-    expect(screen.queryByRole("button", { name: "카카오로 계속하기" })).not.toBeInTheDocument()
-    expect(screen.getByRole("button", { name: "Google로 계속하기" })).toBeVisible()
-    expect(screen.getByRole("button", { name: "이메일로 계속하기" })).toBeVisible()
+    expect(screen.queryByRole("button", { name: "카카오로 로그인" })).not.toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Google로 로그인" })).toBeVisible()
+    expect(screen.getByRole("button", { name: "이메일로 로그인" })).toBeVisible()
   })
 
   it("hides Google and email independently when their operational gates are closed", () => {
     render(<AccountAuthGateway config={{ ...config, googleAuthEnabled: false, emailAuthEnabled: false }} today="2026-08-25" />)
 
-    expect(screen.queryByRole("button", { name: "Google로 계속하기" })).not.toBeInTheDocument()
-    expect(screen.queryByRole("button", { name: "이메일로 계속하기" })).not.toBeInTheDocument()
-    expect(screen.getByRole("button", { name: "카카오로 계속하기" })).toBeVisible()
+    expect(screen.queryByRole("button", { name: "Google로 로그인" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "이메일로 로그인" })).not.toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "카카오로 로그인" })).toBeVisible()
   })
 
   it("uses Korean phone OTP only when the separately gated method is enabled", async () => {
@@ -97,7 +110,7 @@ describe("mobile-first account authentication gateway", () => {
       />,
     )
 
-    await userEvent.click(screen.getByRole("button", { name: "휴대전화로 계속하기" }))
+    await userEvent.click(screen.getByRole("button", { name: "휴대전화로 로그인" }))
     fireEvent.change(screen.getByLabelText("생년월일"), { target: { value: "2000-01-01" } })
     await userEvent.click(screen.getByRole("checkbox", { name: /개인정보 처리방침.*확인/u }))
     await userEvent.click(screen.getByRole("checkbox", { name: /이용약관.*동의/u }))
@@ -116,9 +129,9 @@ describe("mobile-first account authentication gateway", () => {
     const socialSignIn = vi.fn()
     render(<AccountAuthGateway config={config} today="2026-08-25" onSocialSignIn={socialSignIn} />)
 
-    await userEvent.click(screen.getByRole("button", { name: "카카오로 계속하기" }))
+    await userEvent.click(screen.getByRole("button", { name: "카카오로 로그인" }))
     fireEvent.change(screen.getByLabelText("생년월일"), { target: { value: "2013-08-25" } })
-    await userEvent.click(screen.getByRole("button", { name: "카카오로 계속하기" }))
+    await userEvent.click(screen.getByRole("button", { name: "카카오로 로그인" }))
 
     expect(socialSignIn).not.toHaveBeenCalled()
     expect(screen.getByRole("status")).toHaveTextContent("온라인 계정은 만 14세부터")
@@ -131,11 +144,11 @@ describe("mobile-first account authentication gateway", () => {
     const socialSignIn = vi.fn().mockResolvedValue({ ok: true, message: "redirect" })
     render(<AccountAuthGateway config={config} today="2026-08-25" onSocialSignIn={socialSignIn} />)
 
-    await userEvent.click(screen.getByRole("button", { name: "카카오로 계속하기" }))
+    await userEvent.click(screen.getByRole("button", { name: "카카오로 로그인" }))
     fireEvent.change(screen.getByLabelText("생년월일"), { target: { value: "2000-01-01" } })
     await userEvent.click(screen.getByRole("checkbox", { name: /개인정보 처리방침.*확인/u }))
     await userEvent.click(screen.getByRole("checkbox", { name: /이용약관.*동의/u }))
-    await userEvent.click(screen.getByRole("button", { name: "카카오로 계속하기" }))
+    await userEvent.click(screen.getByRole("button", { name: "카카오로 로그인" }))
 
     expect(socialSignIn).toHaveBeenCalledWith("kakao", expect.stringMatching(/^[a-f0-9]{32}$/u))
     const pending = JSON.parse(sessionStorage.getItem("trainoracle.account.pending-setup.v1") ?? "{}") as Record<string, unknown>
@@ -151,11 +164,11 @@ describe("mobile-first account authentication gateway", () => {
     const socialSignIn = vi.fn().mockResolvedValue({ ok: true, message: "redirect" })
     render(<AccountAuthGateway config={config} today="2026-08-25" onSocialSignIn={socialSignIn} />)
 
-    await userEvent.click(screen.getByRole("button", { name: "Google로 계속하기" }))
+    await userEvent.click(screen.getByRole("button", { name: "Google로 로그인" }))
     fireEvent.change(screen.getByLabelText("생년월일"), { target: { value: "2000-01-01" } })
     await userEvent.click(screen.getByRole("checkbox", { name: /개인정보 처리방침.*확인/u }))
     await userEvent.click(screen.getByRole("checkbox", { name: /이용약관.*동의/u }))
-    await userEvent.click(screen.getByRole("button", { name: "Google로 계속하기" }))
+    await userEvent.click(screen.getByRole("button", { name: "Google로 로그인" }))
     expect(sessionStorage.length).toBe(1)
 
     fireEvent.change(screen.getByLabelText("생년월일"), { target: { value: "2000-01-02" } })
@@ -172,7 +185,7 @@ describe("mobile-first account authentication gateway", () => {
       />,
     )
 
-    await userEvent.click(screen.getByRole("button", { name: "이메일로 계속하기" }))
+    await userEvent.click(screen.getByRole("button", { name: "이메일로 로그인" }))
     fireEvent.change(screen.getByLabelText("생년월일"), { target: { value: "2000-01-01" } })
     await userEvent.click(screen.getByRole("checkbox", { name: /개인정보 처리방침.*확인/u }))
     await userEvent.click(screen.getByRole("checkbox", { name: /이용약관.*동의/u }))
@@ -235,14 +248,14 @@ describe("mobile-first account authentication gateway", () => {
     const socialSignIn = vi.fn().mockRejectedValue(new Error("provider unavailable"))
     render(<AccountAuthGateway config={config} today="2026-08-25" onSocialSignIn={socialSignIn} />)
 
-    await userEvent.click(screen.getByRole("button", { name: "Google로 계속하기" }))
+    await userEvent.click(screen.getByRole("button", { name: "Google로 로그인" }))
     fireEvent.change(screen.getByLabelText("생년월일"), { target: { value: "2000-01-01" } })
     await userEvent.click(screen.getByRole("checkbox", { name: /개인정보 처리방침.*확인/u }))
     await userEvent.click(screen.getByRole("checkbox", { name: /이용약관.*동의/u }))
-    await userEvent.click(screen.getByRole("button", { name: "Google로 계속하기" }))
+    await userEvent.click(screen.getByRole("button", { name: "Google로 로그인" }))
 
     expect(screen.getByRole("status")).toHaveTextContent("간편 로그인을 시작하지 못했어요")
-    expect(screen.getByRole("button", { name: "Google로 계속하기" })).toBeEnabled()
+    expect(screen.getByRole("button", { name: "Google로 로그인" })).toBeEnabled()
     expect(sessionStorage.length).toBe(0)
   })
 
@@ -250,7 +263,7 @@ describe("mobile-first account authentication gateway", () => {
     const send = vi.fn().mockResolvedValue({ ok: false, message: "전송 실패" })
     render(<AccountAuthGateway config={config} today="2026-08-25" onRequestEmailOtp={send} />)
 
-    await userEvent.click(screen.getByRole("button", { name: "이메일로 계속하기" }))
+    await userEvent.click(screen.getByRole("button", { name: "이메일로 로그인" }))
     fireEvent.change(screen.getByLabelText("생년월일"), { target: { value: "2000-01-01" } })
     await userEvent.click(screen.getByRole("checkbox", { name: /개인정보 처리방침.*확인/u }))
     await userEvent.click(screen.getByRole("checkbox", { name: /이용약관.*동의/u }))
@@ -274,7 +287,7 @@ describe("mobile-first account authentication gateway", () => {
       />,
     )
 
-    await userEvent.click(screen.getByRole("button", { name: "휴대전화로 계속하기" }))
+    await userEvent.click(screen.getByRole("button", { name: "휴대전화로 로그인" }))
     fireEvent.change(screen.getByLabelText("생년월일"), { target: { value: "2000-01-01" } })
     await userEvent.click(screen.getByRole("checkbox", { name: /개인정보 처리방침.*확인/u }))
     await userEvent.click(screen.getByRole("checkbox", { name: /이용약관.*동의/u }))

@@ -165,7 +165,7 @@ test.describe("staging account runtime isolation", () => {
 
     await pageA.goto("/?account=1")
     await pageA.getByRole("button", { name: "로그아웃", exact: true }).click()
-    await expect(pageA.getByRole("heading", { name: "로그인 또는 가입" })).toBeVisible()
+    await expect(pageA.getByRole("heading", { name: "로그인", exact: true })).toBeVisible()
     await replaceSession(pageA, sessionB)
     await expect(pageA.getByRole("heading", { name: "내 계정" })).toBeVisible()
     await pageA.getByRole("button", { name: "뒤로" }).click()

@@ -42,7 +42,6 @@ type TrainingHomeProps = {
   readonly oraclePreviewLabel?: string
   readonly recordStart?: ReactNode
   readonly accountEntry?: ReactNode
-  readonly accountWelcome?: ReactNode
   readonly recentJournal?: ReactNode
   readonly installSuggestion?: ReactNode
   readonly inlineMemo?: ReactNode
@@ -55,7 +54,7 @@ type TrainingHomeProps = {
 export function TrainingHome({
   model, onWriteLog, onOpenArchive, onOpenToday, onOpenPlan,
   onOpenOracle, onOpenMore, onOpenContent, onOpenRewards, onOpenTrainingSession,
-  safetyNotice, announcement, accountEntry, accountWelcome, recentJournal, installSuggestion, inlineMemo, recordStart, planReadiness = "READY",
+  safetyNotice, announcement, accountEntry, recentJournal, installSuggestion, inlineMemo, recordStart, planReadiness = "READY",
   journalReadiness = "READY",
 }: TrainingHomeProps) {
   // The model requests the first-record example only when no dated journal is visible.
@@ -78,7 +77,7 @@ export function TrainingHome({
         <div className="home-hub__header-actions">
           {accountEntry}
           <button className="home-hub__more" data-install-shortcut-return="home" type="button" onClick={onOpenMore} aria-label="더보기" title="전체 메뉴">
-            <LayoutGrid aria-hidden="true" size={18} /><span>더보기</span>
+            <LayoutGrid aria-hidden="true" size={18} />
           </button>
         </div>
       </header>
@@ -88,7 +87,6 @@ export function TrainingHome({
         <AppHeading ref={title} tabIndex={-1} id="home-hub-title" variant="hero" accent>훈련과 기록</AppHeading>
       </section>
 
-      {accountWelcome}
       {recordStart}
       <DatedTraining model={model} readiness={planReadiness} onOpenPlan={onOpenPlan} onOpenSession={onOpenTrainingSession} />
       <section className="home-hub__work-area" aria-labelledby="home-record-title">
@@ -133,11 +131,11 @@ function DatedTraining({ model, readiness, onOpenPlan, onOpenSession }: { model:
     ERROR: "훈련 계획을 읽지 못했어요. 계획에서 다시 확인해 주세요.",
   }
   return <section className="home-hub__training" aria-labelledby={`${id}-heading`}>
-    <div className="home-hub__section-heading"><AppHeading as="h2" variant="section" id={`${id}-heading`}>오늘과 내일 훈련</AppHeading>
-      {onOpenPlan && <button type="button" onClick={onOpenPlan}>전체 계획<ChevronRight aria-hidden="true" size={16} /></button>}
-    </div>
+    <AppHeading as="h2" variant="section" id={`${id}-heading`}>
+      {onOpenPlan ? <button className="home-hub__plan-entry" type="button" onClick={onOpenPlan}>훈련 계획<ChevronRight aria-hidden="true" size={16} /></button> : "훈련 계획"}
+    </AppHeading>
     {readiness !== "READY" && readiness !== "EMPTY" ? <p role={readiness === "IDLE" || readiness === "LOADING" || readiness === "PENDING" || readiness === "EVIDENCE_REQUIRED" ? "status" : "alert"}>{notices[readiness]}</p>
-      : model.hasPlan === false ? <button type="button" className="home-hub__text-action" onClick={onOpenPlan}>훈련 계획 만들기<ChevronRight size={16} aria-hidden="true" /></button>
+      : model.hasPlan === false ? null
       : <div className="home-hub__training-days">{model.trainingDays?.map((day, index) => <article className="home-hub__training-day" key={day.date} aria-label={`${index === 0 ? "오늘" : "내일"} 훈련`}>
         <h3>{index === 0 ? "오늘" : "내일"}<time dateTime={day.date}>{Number(day.date.slice(5, 7))}월 {Number(day.date.slice(8))}일</time></h3>
         {day.sessions.length === 0 ? <p className="home-hub__training-empty">예정된 훈련이 없어요.</p> : day.sessions.map(({ session, progress }) => <div className={`home-hub__training-slot${session.role === "REST" ? " home-hub__training-slot--rest" : ""}`} key={`${session.day}:${session.slot}`}>

@@ -330,7 +330,7 @@ export function ImportActivities({ onBack, onOpenLog, onOpenEntry, onOpenAnalysi
 
       <div className="import-method app-choice-group" role="group" aria-label="운동 기록 가져오는 방법" hidden={connectionSubview}>
         <button type="button" className="app-choice-control" aria-pressed={method === "automatic"} disabled={busy} onClick={() => setMethod("automatic")}>
-          <Link2 size={20} aria-hidden="true" /><span>자동연동</span>{" "}<span className="import-method__recommendation">추천</span>
+          <Link2 size={20} aria-hidden="true" /><span>자동연동</span>
         </button>
         <button type="button" className="app-choice-control" aria-pressed={method === "file"} disabled={busy} onClick={() => setMethod("file")}>
           <FileUp size={20} aria-hidden="true" /><span>파일 가져오기</span>

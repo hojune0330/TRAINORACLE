@@ -31,7 +31,7 @@ describe("home account entry", () => {
     render(<AccountEntryButton onOpenAccount={vi.fn()} />)
     await act(async () => { await Promise.resolve() })
 
-    const button = screen.getByRole("button", { name: "로그인 또는 가입" })
+    const button = screen.getByRole("button", { name: "로그인" })
     expect(button).toBeVisible()
     expect(button).toHaveTextContent("로그인")
   })
@@ -41,23 +41,25 @@ describe("home account entry", () => {
     render(<AccountEntryButton onOpenAccount={onOpenAccount} />)
     await act(async () => { await Promise.resolve() })
 
-    screen.getByRole("button", { name: "로그인 또는 가입" }).click()
-    expect(onOpenAccount).toHaveBeenCalledTimes(1)
+    screen.getByRole("button", { name: "로그인" }).click()
+    expect(onOpenAccount).toHaveBeenCalledWith("login")
   })
 
-  it("offers a clearly named guest start action and removes it for a signed-in visitor", async () => {
+  it("opens a distinct signup entry and removes both guest entries after sign-in", async () => {
     const onOpenAccount = vi.fn()
-    const guest = render(<AccountEntryButton prominent onOpenAccount={onOpenAccount} />)
+    const guest = render(<AccountEntryButton onOpenAccount={onOpenAccount} />)
     await act(async () => { await Promise.resolve() })
-    const start = screen.getByRole("button", { name: "회원가입 · 로그인" })
+    const start = screen.getByRole("button", { name: "회원가입" })
     expect(start).toBeVisible()
     start.click()
-    expect(onOpenAccount).toHaveBeenCalledTimes(1)
+    expect(onOpenAccount).toHaveBeenCalledWith("signup")
     guest.unmount()
     userRef.value = { id: "u1", email: null, phone: null, provider: "google" }
-    const member = render(<AccountEntryButton prominent onOpenAccount={onOpenAccount} />)
+    render(<AccountEntryButton onOpenAccount={onOpenAccount} />)
     await act(async () => { await Promise.resolve() })
-    expect(member.container).toBeEmptyDOMElement()
+    expect(screen.queryByRole("button", { name: "회원가입" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "로그인" })).not.toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "내 계정" })).toBeVisible()
   })
 
   it("switches to a quiet 내 계정 icon once signed in", async () => {

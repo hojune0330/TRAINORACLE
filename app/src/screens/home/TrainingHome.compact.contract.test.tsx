@@ -61,7 +61,7 @@ describe("compact home training destination", () => {
     const full = sessionExecutionSteps(session, true)
     expect(full.map(step => step.detail).join(" ")).toMatch(/22분.*2분 걷기.*23분/)
     expect(full.map(step => step.detail).join(" ")).toContain("힘든 정도(RPE) 3–4/10")
-    fireEvent.click(screen.getByRole("button", { name: "전체 계획" }))
+    fireEvent.click(screen.getByRole("button", { name: "훈련 계획" }))
     expect(open).toHaveBeenCalledOnce()
     expect(JSON.stringify(source)).toBe(before)
     expect(source.nextTraining!.laterSameDaySession!.slot).toBe("PM")

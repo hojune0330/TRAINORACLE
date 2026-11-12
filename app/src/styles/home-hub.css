@@ -1,20 +1,15 @@
 .home-hub { color:var(--ink); max-width:680px; margin:0 auto; padding:20px 20px 36px; font-family:var(--sans); word-break:keep-all; }
 .home-hub button { font:inherit; cursor:pointer; }
-.home-account-start { display:grid; gap:var(--space-2); margin-bottom:var(--space-5); padding:var(--space-4); border:1px solid var(--line); border-radius:var(--r-task-surface); background:var(--surface); }
-.home-account-start h2 { margin:0; font-size:var(--fs-app-section-title); line-height:1.4; }
-.home-account-start p { margin:0; color:var(--ink-2); font-size:var(--fs-body); line-height:1.5; }
-.home-hub .home-account-start__action { width:100%; min-height:48px; padding:12px 16px; border:1px solid var(--brand); border-radius:var(--r-action); background:var(--brand); color:var(--surface); font-weight:700; }
-.home-account-start .home-account-start__optional { font-size:var(--fs-body-sm); }
-.home-account-start__action:focus-visible { outline:2px solid var(--ink); outline-offset:3px; }
 .home-hub__header { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px 16px; min-height:44px; }
 .home-hub__brand { font-size:.78rem; font-weight:800; letter-spacing:.14em; }
 .home-hub__identity { display:flex; align-items:center; gap:var(--space-2); min-width:0; }
 .home-hub__identity-copy { display:grid; gap:var(--space-1); min-width:0; }
 .home-hub__purpose { color:var(--ink-2); font-size:var(--fs-body-sm); line-height:1.5; overflow-wrap:anywhere; }
-.home-hub__header-actions { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-left:auto; }
-.home-hub__more { display:inline-flex; align-items:center; gap:var(--space-2); min-height:var(--app-touch-min); padding:var(--space-2) var(--space-3); border:var(--bw-line) solid var(--line); border-radius:var(--r-action); background:var(--surface-2); color:var(--ink); font-weight:700; }
+.home-hub__header-actions { display:flex; flex-wrap:wrap; align-items:center; gap:0; margin-left:auto; }
+.home-hub__more { display:inline-flex; align-items:center; justify-content:center; min-width:var(--app-touch-min); min-height:var(--app-touch-min); padding:var(--space-2); border:0; border-radius:var(--r-action); background:none; color:var(--ink-2); }
 .home-hub__intro { margin:var(--space-5) 0 var(--space-4); }
 .home-hub__identity-art { display:block; flex-shrink:0; object-fit:contain; }
+@media (max-width:360px) { .home-hub__identity-art { display:none; } }
 .home-hub__introduction { display:flex; align-items:center; gap:var(--space-2); margin-top:var(--space-4); color:var(--ink-2); }
 .home-hub__introduction p { flex:1; min-width:0; margin:0; font-size:var(--fs-body); line-height:1.5; overflow-wrap:anywhere; }
 .home-hub__introduction button { display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; min-width:var(--app-touch-min); min-height:var(--app-touch-min); padding:var(--space-2); border:0; border-radius:var(--r-action); background:none; color:var(--ink-2); }
@@ -92,6 +87,8 @@
 .home-hub__next-prescription { display:block; color:var(--ink-2); margin-top:var(--space-1); }
 .home-hub__next-role { color:var(--category-training); font-weight:600; }
 .home-hub__training { container-type:inline-size; }
+.home-hub__training > h2 { margin:0; }
+.home-hub__plan-entry { display:flex; align-items:center; justify-content:space-between; gap:var(--space-2); width:100%; min-height:44px; padding:8px 0; border:0; background:none; color:var(--ink); text-align:left; }
 .home-hub__training-days { display:grid; gap:0; border:1px solid var(--line); border-radius:var(--r-task-surface); background:var(--surface); }
 .home-hub__training-day { min-width:0; padding:var(--space-4); }
 .home-hub__training-day + .home-hub__training-day { border-top:1px solid var(--line); }

@@ -15,6 +15,7 @@ import { AppIntroduction } from "./AppIntroduction"
 import { DeviceConnections } from "./DeviceConnections"
 import type { OpenGarminJournalRecord } from "../components/GarminConnectionPanel"
 import { AutomaticConnectionEntry } from "../components/AutomaticConnectionEntry"
+import { AccountEntryActions, type AccountEntryMode } from "../components/AccountEntryButton"
 
 export type MoreView = "tools" | "learning" | "account" | "backup" | "about" | "introduction" | "connections"
 
@@ -33,7 +34,7 @@ export type MoreProps = {
   readonly onBack: () => void
   readonly onOpenMinji: () => void
   readonly onOpenGuide: () => void
-  readonly onOpenAccount?: () => void
+  readonly onOpenAccount?: (mode?: AccountEntryMode) => void
   readonly onOpenRestore?: () => void
   readonly feedbackAvailable?: boolean
   readonly onOpenFeedback?: () => void
@@ -141,7 +142,7 @@ export function More({
 
       <div className={`more-screen__list${activeView === "tools" ? " more-screen__list--tools" : ""}`}>
         {activeView === "tools" && <>
-        {onOpenAccount && <MenuAction icon={CircleUserRound} label={ownerId ? "내 계정" : "회원가입 · 로그인"} detail={ownerId ? "계정 상태와 워치 연결" : "간편 인증으로 시작하기"} onClick={onOpenAccount} />}
+        {onOpenAccount && <AccountEntryActions signedIn={Boolean(ownerId)} onOpenAccount={onOpenAccount} />}
         <AutomaticConnectionEntry onOpen={onOpenImport ?? (() => changeView("connections"))} />
         {(onOpenMinigame || onOpenPaceCalculator) && <MenuGroup title="게임·페이스">
           {onOpenMinigame && <MenuAction icon={Gamepad2} label="게임 라운지" illustration="running-game-announcement" onClick={onOpenMinigame} />}

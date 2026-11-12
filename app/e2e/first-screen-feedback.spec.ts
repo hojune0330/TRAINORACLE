@@ -46,7 +46,7 @@ test("keeps the welcome home clear and usable on narrow phones", async ({ page }
     await expect(page.getByText("모든 데이터는 이 기기에만 저장돼요.")).toHaveCount(0)
     await expect(page.getByRole("navigation", { name: "주 탭" })).toBeVisible()
     const homeMemo = page.getByRole("textbox", { name: "오늘의 메모", exact: true })
-    await expect(homeMemo).toHaveAttribute("placeholder", "운동이나 오늘의 느낌을 남겨 보세요")
+    await expect(homeMemo).not.toHaveAttribute("placeholder", /.+/)
     await expect(homeMemo).toBeInViewport({ ratio: 1 })
     const writeWorkout = page.getByRole("button", { name: "운동 내용도 기록하기", exact: true })
     await writeWorkout.scrollIntoViewIfNeeded()

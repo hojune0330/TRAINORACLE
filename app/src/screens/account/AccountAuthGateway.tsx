@@ -1,5 +1,6 @@
 import React from "react"
-import { ArrowLeft, ChevronRight, Mail, Phone, ShieldCheck } from "lucide-react"
+import { ArrowLeft, ChevronRight, Mail, Phone } from "lucide-react"
+import type { AccountEntryMode } from "../../components/AccountEntryButton"
 import type { AuthResult, AuthVerificationResult, SocialAuthProvider } from "../../domain/account/auth"
 import {
   maskPhoneNumber,
@@ -31,6 +32,8 @@ type GatewayStep = "method" | "eligibility" | "email" | "email-sent" | "phone" |
 type NoticeTone = "pending" | "success" | "error"
 
 export type AccountAuthGatewayProps = {
+  readonly mode?: AccountEntryMode
+  readonly onModeChange?: (mode: AccountEntryMode) => void
   readonly config: AccountConfig
   readonly today: string
   readonly onSocialSignIn?: (provider: SocialAuthProvider, attemptId: string) => Promise<AuthResult>
@@ -46,6 +49,8 @@ export type AccountAuthGatewayProps = {
 export function AccountAuthGateway({
   config,
   today,
+  mode: controlledMode,
+  onModeChange,
   onSocialSignIn = signInWithProvider,
   onRequestEmailOtp: sendEmailOtp = requestEmailOtp,
   onRequestPhoneOtp: sendPhoneOtp = requestPhoneOtp,
@@ -55,6 +60,9 @@ export function AccountAuthGateway({
   onEmailCallbackFinished,
   onUnsafeSessionDetected,
 }: AccountAuthGatewayProps) {
+  const [localMode, setLocalMode] = React.useState<AccountEntryMode>("login")
+  const mode = controlledMode ?? localMode
+  const actionLabel = mode === "signup" ? "회원가입" : "로그인"
   const [step, setStep] = React.useState<GatewayStep>(() => emailCallbackAttemptId === null ? "method" : "eligibility")
   const [method, setMethod] = React.useState<AuthMethod | null>(() => emailCallbackAttemptId === null ? null : "email")
   const [birthDate, setBirthDate] = React.useState("")
@@ -263,23 +271,30 @@ export function AccountAuthGateway({
       {step === "method" && (
         <>
           <div className="account-auth__intro">
-            <span className="account-auth__trust"><ShieldCheck aria-hidden="true" size={15} /> 별도 비밀번호 없이 시작</span>
-            <h2>처음이면 회원가입, 이미 가입했다면 로그인</h2>
-            <p>트레인오라클 계정으로 들어가는 단계예요. 기존 회원은 가입할 때 쓴 계정을 선택해 주세요.</p>
+            <p>{mode === "signup" ? "사용할 계정을 선택해 주세요." : "가입할 때 쓴 계정으로 로그인하세요."}</p>
           </div>
-          <div className="account-auth__methods" aria-label="로그인 방법 선택">
+          <div className="account-auth__methods" aria-label={`${actionLabel} 방법 선택`}>
             {config.kakaoAuthEnabled && (
-              <MethodButton className="account-auth__method--kakao" mark="K" label="카카오로 계속하기" onClick={() => chooseMethod("kakao")} />
+              <MethodButton className="account-auth__method--kakao" mark="K" label={`카카오로 ${actionLabel}`} onClick={() => chooseMethod("kakao")} />
             )}
             {config.googleAuthEnabled && (
-              <MethodButton mark="G" label="Google로 계속하기" onClick={() => chooseMethod("google")} />
+              <MethodButton mark="G" label={`Google로 ${actionLabel}`} onClick={() => chooseMethod("google")} />
             )}
             {config.emailAuthEnabled && (
-              <MethodButton icon={<Mail aria-hidden="true" size={19} />} label="이메일로 계속하기" onClick={() => chooseMethod("email")} />
+              <MethodButton icon={<Mail aria-hidden="true" size={19} />} label={`이메일로 ${actionLabel}`} onClick={() => chooseMethod("email")} />
             )}
             {config.phoneAuthEnabled && (
-              <MethodButton icon={<Phone aria-hidden="true" size={19} />} label="휴대전화로 계속하기" onClick={() => chooseMethod("phone")} />
+              <MethodButton icon={<Phone aria-hidden="true" size={19} />} label={`휴대전화로 ${actionLabel}`} onClick={() => chooseMethod("phone")} />
             )}
+          </div>
+          <div className="account-auth__mode-switch">
+            <span>{mode === "signup" ? "이미 계정이 있나요?" : "처음인가요?"}</span>
+            <button type="button" disabled={busy} onClick={() => {
+              resetMethod()
+              const nextMode = mode === "signup" ? "login" : "signup"
+              setLocalMode(nextMode)
+              onModeChange?.(nextMode)
+            }}>{mode === "signup" ? "로그인" : "회원가입"}</button>
           </div>
           {!config.kakaoAuthEnabled && !config.googleAuthEnabled && !config.emailAuthEnabled && !config.phoneAuthEnabled && (
             <p className="account-auth__notice" data-state="pending" role="status">
@@ -293,11 +308,11 @@ export function AccountAuthGateway({
         <>
           <StepHeader
             step={emailCallbackAttemptId === null ? "1 / 2" : "가입 확인"}
-            title={emailCallbackAttemptId === null ? "가입·로그인 전에 확인해요" : "이메일 확인 전에 두 가지만 다시 확인해요"}
+            title={emailCallbackAttemptId === null ? `${actionLabel} 전 확인` : "이메일 확인 전에 두 가지만 다시 확인해요"}
             onBack={resetMethod}
             disabled={busy}
           />
-          {emailCallbackAttemptId === null && <p className="account-auth__precheck-note">현재는 기존 회원도 로그인 전에 나이와 필수 약관을 확인해요. 이후 가입할 때 쓴 계정을 선택하면 돼요.</p>}
+          {emailCallbackAttemptId === null && mode === "login" && <p className="account-auth__precheck-note">로그인에도 나이와 필수 약관 확인이 필요해요.</p>}
           <div className="account-auth__field-group">
             <label htmlFor="account-signup-birth-date">생년월일</label>
             <input
@@ -358,7 +373,7 @@ export function AccountAuthGateway({
                 ? emailCallbackAttemptId === null ? "이메일 입력하기" : "확인하고 로그인하기"
                 : method === "phone"
                   ? "휴대전화 번호 입력하기"
-                  : `${method === "kakao" ? "카카오" : "Google"}로 계속하기`}
+                  : `${method === "kakao" ? "카카오" : "Google"}로 ${actionLabel}`}
             {!busy && <ChevronRight aria-hidden="true" size={18} />}
           </button>
         </>

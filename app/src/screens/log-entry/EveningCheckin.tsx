@@ -365,7 +365,7 @@ function EveningCheckinEditor({ onBack, onExit, onDone, targetDate, initialEntry
       {navigation.dialog}
       <FormFinalizationRecovery recovery={finalization} onBack={draft.back(onBack)} />
       {homeInline && <>
-        <PurposeScopedMemoField controller={note} fieldId="home-evening-note" label="오늘의 메모" placeholder="운동이나 오늘의 느낌을 남겨 보세요" textFirst compactLabel autoGrowMaxRows={8}
+        <PurposeScopedMemoField controller={note} fieldId="home-evening-note" label="오늘의 메모" textFirst compactLabel autoGrowMaxRows={8}
           optionalTools={step === "choose" ? <details className="home-hub__condition-options evening-checkin__home-condition"><summary>컨디션 추가<ChevronDown size={16} aria-hidden="true" /></summary>{conditionChoices}</details> : undefined}
           onComposingChange={value => { composing.current = value }} />
       </>}

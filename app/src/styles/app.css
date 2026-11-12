@@ -1688,29 +1688,27 @@ button, input, textarea, select { font: inherit; letter-spacing: inherit; }
   gap: 8px;
 }
 
-/* 로그인 발견성(2026-08-27): 계정 진입 버튼을 홈 헤더에 상시 노출.
- * 비로그인 상태는 "로그인" 라벨을 붙여 회원가입·로그인 입구임을 즉시 알린다. */
-.training-home__account {
+/* Quiet account links retain a full touch target. */
+.account-entry-actions { display: inline-flex; align-items: center; gap: 0; }
+.training-home__account, .home-hub .training-home__account {
   min-height: 44px;
-  padding: 0 12px;
+  min-width: 44px;
+  padding: 0 6px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  border: 1px solid var(--line);
+  border: 0;
   border-radius: var(--r-md);
   background: transparent;
-  color: var(--ink);
+  color: var(--ink-2);
   font-family: var(--sans);
   font-size: 12.5px;
-  font-weight: 600;
+  font-weight: 400;
   letter-spacing: 0;
   cursor: pointer;
 }
 
-.training-home__account--signed-in {
-  min-width: 44px;
-  justify-content: center;
-}
+.training-home__account:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
 
 .training-home__welcome-fold {
   min-block-size: 0;
