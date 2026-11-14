@@ -41,7 +41,7 @@ npx supabase migration list --linked
 순서대로 진행한다. 0051이 기존
 가입 RPC를 `CLIENT_UPDATE_REQUIRED`로 fail-closed하고 구형 무인자 삭제 RPC 권한을
 닫고, 0052가 탈퇴·차단 계정의 COROS 수집을 막고, 0053이 허용되지 않은 AMR과
-비밀번호 자격 증명 보유 계정, 폐기된 `session_id`를 막는 것을 확인한다. 0053이
+당시 정책의 비밀번호 자격 증명 보유 계정, 폐기된 `session_id`를 막던 기존 관문을 적용한다. 0053이
 추가하는 `AUTH_OAUTH`와 `AUTH_PASSWORDLESS`는 기본적으로 닫혀 있다. 실제 확인을
 마친 인증 종류만 서버에서 연다. 0054는 공개 프로필과 개인 프로필 조회를 현재
 계정 상태에 묶고, 0055는 가입 확정 쓰기를 인증을 완료한 정확한 `session_id`에
@@ -81,17 +81,33 @@ VITE_EMAIL_AUTH_PKCE_OPERATIONS_APPROVED=false
 발송 쿼터·비용·반송·스팸 평판 경보를 실제로 확인한다. 이 운영 증거가 없으면 이메일
 게이트는 계속 `false`로 둔다.
 
-0053의 현재 정책은 **현재 로그인 방법만** 보는 것이 아니라 비밀번호 자격 증명을
-가진 계정 전체를 차단한다. 이후 Google이나 magic link로 로그인해도 동일하다. 전용
-시험 프로젝트에서 신규·기존 magic link, Google, 직접 비밀번호 가입 계정의 JWT
-`amr`과 서버 판정을 실제로 대조하고, 미사용 OAuth·익명·SSO provider가 꺼진 것을
-확인하기 전에는 계정 게이트를 열지 않는다. 해시 값 자체는 영수증·로그에 복사하지
-않고 존재 여부와 허용·거부 결과만 기록한다.
+2026-11-14 소유자는 이메일·비밀번호 일반 가입/로그인을 채택했다. 0053의
+비밀번호 자격 증명 전면 차단은 새 additive migration으로 대체된다. 이전 migration을
+편집하거나 이전 금지 정책을 현재 제품 범위로 표시하지 않는다. `AUTH_PASSWORD`는
+독립 서버 관문이며 **새 migration 기본값은 false**다. 정상 password(+refresh)는
+이메일 확인·실제 자격 증명·활성 본인 세션이 필요하고, 확인된 email/signup에 실제
+비밀번호가 있으면 같은 채널이다. 없으면 기존 passwordless 채널에 남는다.
+Google OAuth는 별도 비밀번호의 존재로 거부하지 않는다. recovery/invite/anonymous와
+unknown 혼합 AMR는 일반 가입·자료 접근을 허용하지 않으며, 재설정 완료 후에는
+복구 세션을 닫고 새 password 로그인으로 돌아가야 한다.
+
+Hosted Auth의 Email provider/이메일 확인 요구, 가입 확인·비밀번호 재설정 템플릿,
+정확한 canonical/native callback allowlist, 비밀번호 정책·남용 방지·발송 요율·SMTP를
+운영 설정에서 확인한다. 기존 PKCE/초대·복구 격리 관문을 일반 로그인 권한으로
+우회하지 않는다. 비밀번호는 Auth SDK에만 전달하며 앱 상태·DB·일지·로그·영수증에
+남기지 않는다. 개인 사용자 JWT나 해시를 수집해 설정 증거를 만드는 경로도 추가하지 않는다.
 
 공개 Auth API를 직접 호출해도 계정 입장으로 이어지지 않도록 서버 운영 스위치를
 별도로 관리한다. Google·Kakao는 `AUTH_OAUTH`, 이메일 링크·SMS 등 비밀번호 없는
-인증은 `AUTH_PASSWORDLESS`다. 현재 JWT의 OAuth AMR은 Google과 Kakao를 확실히
-구분하지 못하므로 둘 중 하나만 사고가 나도 `AUTH_OAUTH` 전체를 닫는다. 두 스위치는
+인증은 `AUTH_PASSWORDLESS`, 일반 이메일·비밀번호는 `AUTH_PASSWORD`다. 현재 설치된
+Lounge capability도 실제 발급 채널을 기록하고 그 채널의 현재 스위치를 재검사한다.
+운영 metadata에서 `oracle_profile_comparison_attested(text,text,text)`는 미설치이므로
+core migration은 이를 요구하거나 생성하지 않는다. 비교 기능을 별도 승인하여 0062를
+처음 설치한 후 `supabase/operations/password_auth_comparison_companion.sql`의 prerequisite와
+정확한 원문을 확인해 적용한다. companion을 core migration으로 자동 등록하거나 비교
+controls를 자동으로 켜지 않는다.
+기존 출처 불명 capability에 비밀번호 권한을 자동 부여하지 않는다. 현재 JWT의 OAuth AMR은 Google과 Kakao를 확실히
+구분하지 못하므로 둘 중 하나만 사고가 나도 `AUTH_OAUTH` 전체를 닫는다. 세 스위치는
 Hosted 설정과 실제 왕복을 확인한 뒤에만 열고, `ACCOUNT`는 그 다음에 연다.
 
 ## 4. 카카오 간편 로그인
@@ -272,7 +288,7 @@ Google·Kakao provider, 이메일 발송 또는 SMS provider를 비활성화한 
 재배포 전까지 바뀌지 않으며, 공개 anon key를 사용한 Auth API 직접 호출은 UI 숨김을
 우회할 수 있습니다.
 따라서 순서는 `ACCOUNT=false` → 해당 서버 인증 종류(`AUTH_OAUTH` 또는
-`AUTH_PASSWORDLESS`) `false` → Hosted provider·발송 경로 중단 → 영향받은 Auth 세션
+`AUTH_PASSWORDLESS` 또는 `AUTH_PASSWORD`) `false` → Hosted provider·발송 경로 중단 → 영향받은 Auth 세션
 폐기 → 서버 세션 소멸 확인 → UI kill 배포입니다. Supabase access token은 sign-out
 뒤에도 만료 전까지 유효할 수 있으므로 토큰 폐기만 추정하지 않습니다. 0053의
 `session_id` 검사로 계정 접근이 실제 거부되는지 확인하고, 그 전에는 `ACCOUNT`를

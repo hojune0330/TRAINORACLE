@@ -730,3 +730,10 @@ textarea.account-panel__control {
 .account-auth__mode-switch { display:flex; align-items:center; gap:var(--space-2); color:var(--ink-2); font-size:var(--fs-body-sm); }
 .account-auth__mode-switch button { min-height:44px; padding:0 var(--space-2); border:0; background:none; color:var(--ink); font:inherit; cursor:pointer; }
 .account-auth__mode-switch button:focus-visible { outline:2px solid var(--brand); outline-offset:2px; border-radius:var(--r-action); }
+
+.account-password, .account-password form { display:flex; flex-direction:column; gap:var(--space-3); min-width:0; }
+.account-password p { margin:0; font-size:var(--fs-body-sm); line-height:1.6; }
+.account-password__show { display:flex; align-items:center; gap:var(--space-2); min-height:44px; color:var(--ink-2); font-size:var(--fs-body-sm); }
+.account-password__show input { width:20px; height:20px; margin:0; }
+.account-auth__alternative-label { margin:var(--space-2) 0 0; color:var(--ink-3); font-size:var(--fs-caption); text-align:center; }
+.account-auth__other-methods > summary { min-height:44px; padding:12px 0; cursor:pointer; color:var(--ink-2); font-size:var(--fs-body-sm); }

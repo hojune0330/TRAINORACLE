@@ -1,4 +1,5 @@
 import React from "react"
+import { PasswordAuthPanel } from "./PasswordAuthPanel"
 import { ArrowLeft, ChevronRight, Mail, Phone } from "lucide-react"
 import type { AccountEntryMode } from "../../components/AccountEntryButton"
 import type { AuthResult, AuthVerificationResult, SocialAuthProvider } from "../../domain/account/auth"
@@ -33,6 +34,8 @@ type GatewayStep = "method" | "eligibility" | "email" | "email-sent" | "phone" |
 type NoticeTone = "pending" | "success" | "error"
 
 export type AccountAuthGatewayProps = {
+  readonly passwordNotice?: string | null
+  readonly onPasswordSignedIn?: (userId: string) => void
   readonly mode?: AccountEntryMode
   readonly onModeChange?: (mode: AccountEntryMode) => void
   readonly config: AccountConfig
@@ -50,6 +53,8 @@ export type AccountAuthGatewayProps = {
 export function AccountAuthGateway({
   config,
   today,
+  passwordNotice = null,
+  onPasswordSignedIn,
   mode: controlledMode,
   onModeChange,
   onSocialSignIn = signInWithProvider,
@@ -61,11 +66,13 @@ export function AccountAuthGateway({
   onEmailCallbackFinished,
   onUnsafeSessionDetected,
 }: AccountAuthGatewayProps) {
+  const [passwordRevision, resetPasswordForm] = React.useReducer(value => value + 1, 0)
+  const [passwordLoginNotice, setPasswordLoginNotice] = React.useState<string | null>(passwordNotice)
   const [localMode, setLocalMode] = React.useState<AccountEntryMode>("login")
   const mode = controlledMode ?? localMode
   const actionLabel = mode === "signup" ? "회원가입" : "로그인"
   const [step, setStep] = React.useState<GatewayStep>(() => emailCallbackAttemptId === null ? "method" : "eligibility")
-  const [method, setMethod] = React.useState<AuthMethod | null>(() => emailCallbackAttemptId === null ? null : "email")
+  const [method, setMethod] = React.useState<Exclude<AuthMethod, "password"> | null>(() => emailCallbackAttemptId === null ? null : "email")
   const [birthDate, setBirthDate] = React.useState("")
   const [privacyAcknowledged, setPrivacyAcknowledged] = React.useState(false)
   const [termsAcknowledged, setTermsAcknowledged] = React.useState(false)
@@ -93,8 +100,9 @@ export function AccountAuthGateway({
     return () => window.clearTimeout(timer)
   }, [phoneResendSeconds])
 
-  const chooseMethod = async (nextMethod: AuthMethod) => {
+  const chooseMethod = async (nextMethod: Exclude<AuthMethod, "password">) => {
     if (busy) return
+    resetPasswordForm(); setPasswordLoginNotice(null)
     if (nextMethod === "google" || nextMethod === "kakao") {
       setNotice(null); setBusy(true)
       let attemptId: string | null = null
@@ -120,6 +128,7 @@ export function AccountAuthGateway({
   }
 
   const resetMethod = () => {
+    resetPasswordForm(); setPasswordLoginNotice(null)
     clearPendingAccountSetup()
     setMethod(null)
     setStep("method")
@@ -293,6 +302,10 @@ export function AccountAuthGateway({
           <div className="account-auth__intro">
             <p>{mode === "signup" ? "사용할 계정을 선택해 주세요." : "가입할 때 쓴 계정으로 로그인하세요."}</p>
           </div>
+          {config.passwordAuthEnabled === true && <PasswordAuthPanel key={mode + ":" + passwordRevision} mode={mode} disabled={busy}
+            initialNotice={passwordLoginNotice} onBusyChange={setBusy} onSignedIn={onPasswordSignedIn} onUnsafeSessionDetected={onUnsafeSessionDetected}
+            onRequireLogin={message => { setLocalMode("login"); onModeChange?.("login"); resetPasswordForm(); setPasswordLoginNotice(message) }} />}
+          {config.passwordAuthEnabled === true && (config.googleAuthEnabled || config.kakaoAuthEnabled) && <p className="account-auth__alternative-label">간편 {actionLabel}</p>}
           <div className="account-auth__methods" aria-label={`${actionLabel} 방법 선택`}>
             {config.kakaoAuthEnabled && (
               <MethodButton className="account-auth__method--kakao" mark="K" label={`카카오로 ${actionLabel}`} disabled={busy} onClick={() => void chooseMethod("kakao")} />
@@ -300,6 +313,8 @@ export function AccountAuthGateway({
             {config.googleAuthEnabled && (
               <MethodButton mark="G" label={`Google로 ${actionLabel}`} disabled={busy} onClick={() => void chooseMethod("google")} />
             )}
+          </div>
+          {config.passwordAuthEnabled === true ? (config.emailAuthEnabled || config.phoneAuthEnabled) && <details className="account-auth__other-methods"><summary>다른 인증 방법</summary>          <div className="account-auth__methods">
             {config.emailAuthEnabled && (
               <MethodButton icon={<Mail aria-hidden="true" size={19} />} label={`이메일로 ${actionLabel}`} disabled={busy} onClick={() => void chooseMethod("email")} />
             )}
@@ -307,6 +322,15 @@ export function AccountAuthGateway({
               <MethodButton icon={<Phone aria-hidden="true" size={19} />} label={`휴대전화로 ${actionLabel}`} disabled={busy} onClick={() => void chooseMethod("phone")} />
             )}
           </div>
+</details> : <>          <div className="account-auth__methods">
+            {config.emailAuthEnabled && (
+              <MethodButton icon={<Mail aria-hidden="true" size={19} />} label={`이메일로 ${actionLabel}`} disabled={busy} onClick={() => void chooseMethod("email")} />
+            )}
+            {config.phoneAuthEnabled && (
+              <MethodButton icon={<Phone aria-hidden="true" size={19} />} label={`휴대전화로 ${actionLabel}`} disabled={busy} onClick={() => void chooseMethod("phone")} />
+            )}
+          </div>
+</>}
           <div className="account-auth__mode-switch">
             <span>{mode === "signup" ? "이미 계정이 있나요?" : "처음인가요?"}</span>
             <button type="button" disabled={busy} onClick={() => {
@@ -316,7 +340,7 @@ export function AccountAuthGateway({
               onModeChange?.(nextMode)
             }}>{mode === "signup" ? "로그인" : "회원가입"}</button>
           </div>
-          {!config.kakaoAuthEnabled && !config.googleAuthEnabled && !config.emailAuthEnabled && !config.phoneAuthEnabled && (
+          {config.passwordAuthEnabled !== true && !config.kakaoAuthEnabled && !config.googleAuthEnabled && !config.emailAuthEnabled && !config.phoneAuthEnabled && (
             <p className="account-auth__notice" data-state="pending" role="status">
               로그인이 잠시 닫혀 있어요. 이 기기에서는 일지와 훈련 계획을 계속 사용할 수 있어요.
             </p>

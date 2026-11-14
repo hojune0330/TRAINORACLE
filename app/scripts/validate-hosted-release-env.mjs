@@ -70,6 +70,7 @@ export function validateHostedReleaseEnvironment(environment) {
   const kakaoAuthOpen = isAuthProviderEnabled(environment, "KAKAO")
   const googleAuthOpen = isAuthProviderEnabled(environment, "GOOGLE")
   const emailAuthOpen = isAuthProviderEnabled(environment, "EMAIL")
+  const passwordAuthOpen = isAuthProviderEnabled(environment, "PASSWORD")
   const phoneAuthOpen = isPhoneAuthEnabled(environment)
 
   if (configuredPublicKey !== "" && !isSupabasePublicClientKey(configuredPublicKey)) {
@@ -104,6 +105,10 @@ export function validateHostedReleaseEnvironment(environment) {
   }
   if (emailAuthOpen && textValue(environment, "VITE_EMAIL_AUTH_PKCE_OPERATIONS_APPROVED") !== "true") {
     errors.push("EMAIL_AUTH_REQUIRES_PKCE_OPERATIONS_APPROVAL")
+  }
+  if (passwordAuthOpen && !accountOpen) errors.push("PASSWORD_AUTH_REQUIRES_ACCOUNT")
+  if (passwordAuthOpen && textValue(environment, "VITE_PASSWORD_AUTH_OPERATIONS_APPROVED") !== "true") {
+    errors.push("PASSWORD_AUTH_REQUIRES_OPERATIONAL_APPROVAL")
   }
   if (phoneAuthOpen && !accountOpen) {
     errors.push("PHONE_AUTH_REQUIRES_ACCOUNT")

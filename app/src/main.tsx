@@ -9,6 +9,7 @@ import { TrainingLexiconRoute } from "./screens/TrainingLexiconRoute"
 import { LT_PILOT_MULTI_PLAN_RUNTIME_V3 } from "./domain/lt-pilot-runtime-v3"
 import { captureEmailAuthCallbackFromUrl } from "./domain/account/email-auth-callback"
 import { captureOAuthAuthCallbackFromUrl } from "./domain/account/oauth-auth-callback"
+import { capturePasswordAuthCallbackFromUrl } from "./domain/account/password-auth"
 import { captureGarminCallback } from "./domain/account/garmin-integration"
 import { retireSharedOriginAuthCredentials } from "./domain/account/auth-origin"
 
@@ -45,8 +46,10 @@ const showTrainingLexicon = new URLSearchParams(window.location.search).get("ter
 // Provider authorization codes belong to the server-side Garmin exchange, never
 // the application's Supabase login callback. Scrub them before either consumer.
 captureGarminCallback()
-captureEmailAuthCallbackFromUrl()
-captureOAuthAuthCallbackFromUrl()
+if (!capturePasswordAuthCallbackFromUrl()) {
+  captureEmailAuthCallbackFromUrl()
+  captureOAuthAuthCallbackFromUrl()
+}
 
 // GitHub Pages project paths share one origin with every other project under
 // the account. Retire credentials from that origin; journals/plans are retained.

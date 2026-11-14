@@ -14,6 +14,12 @@ const legalDocuments = {
 }
 
 describe("account public release gate", () => {
+  it("opens password authentication only with its exact operations approval and kill switch", () => {
+    const env = { ...credentials, ...legalDocuments, VITE_ACCOUNT_PUBLIC_ENABLED: "true", VITE_PASSWORD_AUTH_ENABLED: "true" }
+    expect(resolveAccountConfig(env)?.passwordAuthEnabled).toBe(false)
+    expect(resolveAccountConfig({ ...env, VITE_PASSWORD_AUTH_OPERATIONS_APPROVED: "true" })?.passwordAuthEnabled).toBe(true)
+    expect(resolveAccountConfig({ ...env, VITE_PASSWORD_AUTH_OPERATIONS_APPROVED: "true", VITE_KILL_PASSWORD_AUTH: "true" })?.passwordAuthEnabled).toBe(false)
+  })
   it("stays disabled when credentials exist without release approval", () => {
     expect(resolveAccountConfig(credentials)).toBeNull()
   })
@@ -34,6 +40,7 @@ describe("account public release gate", () => {
       googleAuthEnabled: false,
       emailAuthEnabled: false,
       phoneAuthEnabled: false,
+      passwordAuthEnabled: false,
       privacyPolicy: {
         url: legalDocuments.VITE_PRIVACY_POLICY_URL,
         version: legalDocuments.VITE_PRIVACY_POLICY_VERSION,

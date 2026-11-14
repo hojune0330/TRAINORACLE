@@ -15,6 +15,14 @@ legal_clearance_claimed: false
 
 ## 결정된 방향
 
+2026-11-14 소유자는 **이메일·비밀번호 일반 회원가입과 로그인 지원**을 채택했다.
+이는 아래에 남은 과거의 비밀번호 전면 금지 결정을 대체한다. Google OAuth,
+비밀번호 없는 확인 링크와 독립적인 서버 `AUTH_PASSWORD` 관문을 사용하며 새 관문은
+migration 기본값이 `false`다. 실제 Hosted Auth 설정·이메일 확인·로그인 경로와 운영
+활성화가 확인되기 전까지, 코드 구현을 일반 회원가입 공개 완료로 표시하지 않는다.
+비밀번호는 Supabase Auth SDK로 전달하고 Auth가 해시를 관리한다. 앱 DB·일지·
+로그·임시 가입 상태에 비밀번호를 저장하지 않는다.
+
 일반 사용자가 계정을 만들 수 있는 공개 베타를 먼저 목표로 한다. 계정 공개가
 안정된 뒤 동기화를 별도 기능으로 연다. 로그인만으로 일지를 업로드하지 않으며,
 사용자가 온라인 보관 목적을 각각 선택해야 한다. 2026-10-05 승인 범위의 계정
@@ -54,8 +62,9 @@ legal_clearance_claimed: false
 - 신규 법률 문서는 시행 예정 버전이다. 적용일/변경 고지 및 운영 사실 확정 후에만
   게시·적용한다. 현재 실행되지 않은 배포·DB 적용·실계정 검증을 완료로 표시하지 않는다.
 
-1차 공개 인증은 Supabase Auth의 Google과 이메일 확인 링크만 제공한다.
-TrainOracle은 비밀번호를 만들거나 저장하지 않는다. 만 14세 미만에게는 온라인
+현재 채택한 인증은 Supabase Auth의 Google, 이메일·비밀번호 일반 가입/로그인과
+별도 게이트의 이메일 확인 링크다. 실제 활성 채널은 각각의 운영 스위치에 따른다.
+TrainOracle 앱 저장소는 비밀번호를 보관하지 않는다. 만 14세 미만에게는 온라인
 계정을 제공하지 않으며, 계정 없이 로컬 일지와 훈련 계획을 계속 사용할 수 있다.
 카카오, 전화·문자, 토스, 네이버, Apple, AthleteTime SSO는 이번 공개의 선행조건이 아니다.
 휴대전화 OTP 화면과 코드는 별도 닫힌 게이트로 준비하지만, SMS 공급자·CAPTCHA·
@@ -120,7 +129,7 @@ PASS로 바꾸지 않는다.
 | G11 휴대전화 선택 출시 | SMS 공급자·한국 발신 조건·CAPTCHA·요율 제한·비용 경보·실수신 왕복 | CODE_READY_PROVIDER_OPEN |
 | G12 전용 origin | 지속 로그인 토큰과 계정별 로컬 데이터를 다른 Pages 프로젝트와 공유하지 않는 전용 도메인·서브도메인 | OPEN_GITHUB_PAGES_SHARED_ORIGIN |
 | G13 이메일 남용 방지 | Hosted Auth CAPTCHA·발송 요율 제한·사용자/IP 기준 감시·custom SMTP 쿼터와 비용·평판 경보 실측 | OPEN_PROVIDER_ABUSE_CONTROLS |
-| G14 인증 표면 제한 | 미사용 OAuth·익명·SSO를 Hosted Auth에서 끄고, 비밀번호 가입·로그인 세션과 비밀번호 자격 증명 보유 계정이 0053에서 거부되는지 실측 | OPEN_HOSTED_AUTH_ALLOWLIST_AND_PASSWORD_PROBE |
+| G14 인증 표면 제한 | 미사용 OAuth·익명·SSO는 닫고, 확인된 이메일의 정상 password/signup 세션은 AUTH_PASSWORD에서만 허용하며 recovery·invite·익명·unknown 혼합·폐기 세션은 거부. 설치된 Lounge 채널 재검사, 미설치 비교는 별도 최초 설치 후 companion 적용 | OWNER_ADOPTED_PASSWORD_CHANNEL_CODE_CANDIDATE_RUNTIME_OPEN |
 | G15 목적 동의·철회 | 0058 전체 적용, 두 브라우저 철회/재시도·재동의 이전작업 거절·실제 병렬 경합·수동 권리열람/삭제 검증 | LOCAL_CANDIDATE_ONLY_RUNTIME_OPEN |
 | G16 운영 사실 | 실제 위탁/국외 처리/로그/백업 조건 고지와 검토 증거 DB 등록 | CLOSED_EMPTY_REVIEW_TABLE |
 
@@ -142,19 +151,24 @@ G13은 화면의 재전송 대기 시간만으로 닫을 수 없다. 공개 anon
 서버 요율 제한을 켜고, custom SMTP의 일·시간 쿼터, 비용·반송·스팸 평판 경보를 실제로
 확인하기 전까지 이메일 로그인을 공개하지 않는다.
 
-0053은 JWT의 AMR뿐 아니라 `auth.users.encrypted_password` 존재 여부도 서버에서
-확인한다. Supabase의 `email/signup` 표시는 비밀번호 가입 확인과 비밀번호 없는 첫
-이메일 가입을 구분하지 못하기 때문이다. 앱은 비밀번호를 제공하지 않으며, 공개
-Auth API로 비밀번호 사용자를 만들어도 TrainOracle 입장·데이터 접근은 거부한다.
+0053의 비밀번호 자격 증명 전면 차단은 역사적 정책이며 현재 허용 근거가 아니다.
+2026-11-14 additive migration은 실제 세션 AMR을 분류한다. 정상 `password`와
+`token_refresh` 조합은 확인된 이메일·실제 비밀번호 자격 증명·활성 본인 세션과
+`AUTH_PASSWORD`가 필요하다. `email/signup`은 실제 자격 증명이 있으면 같은
+비밀번호 채널, 없으면 기존 `AUTH_PASSWORDLESS` 채널로 구분한다. 복구·초대·익명·
+알 수 없는 혼합 AMR와 refresh-only는 가입·자료 접근 권한이 되지 않는다.
+비밀번호 재설정은 복구 목적에만 사용하며 완료 후 정상 비밀번호로 새 로그인해야 한다.
 OAuth AMR만으로 Google과 다른 OAuth 제공자를 구분할 수 없으므로, G14에서 미사용
 Hosted provider가 실제로 꺼져 있는지도 별도로 확인한다.
-비밀번호 해시가 한 번이라도 생긴 계정은 이후 Google이나 진짜 magic link로 다시
-인증해도 입장을 허용하지 않는 것이 현재 정책이다. 공개 전 전용 시험 프로젝트에서
-신규 magic link, 기존 magic link, Google, 직접 비밀번호 가입 네 계정의 실제 AMR과
-해시 존재 판정을 비교한다. 합성 DB의 빈 문자열 가정만으로 G14를 닫지 않는다.
-또한 `AUTH_OAUTH`와 `AUTH_PASSWORDLESS` 서버 스위치는 기본값이 `false`다. 실제
+Google OAuth 세션은 별도 비밀번호의 존재와 혼동하지 않는다. 설치된 Lounge도
+발급 당시 서버가 판정한 채널을 저장해 현재 해당 채널이 닫혔는지 다시 확인한다.
+운영 metadata에서 프로필 비교 함수는 미설치다. 이를 일반 가입의 선행조건으로 삼거나
+새로 공개하지 않는다. 별도 승인된 비교 기능 최초 설치 후에만
+`supabase/operations/password_auth_comparison_companion.sql`을 적용해 같은 채널 판정을 연결한다.
+기존 출처 불명 capability에 새 비밀번호 권한을 추정해 붙이지 않는다.
+`AUTH_OAUTH`, `AUTH_PASSWORDLESS`, `AUTH_PASSWORD` 서버 스위치는 생성 기본값이 `false`다. 실제
 Hosted Auth 왕복을 확인한 인증 종류만 서버에서 연 뒤 `ACCOUNT`를 마지막에 연다.
-브라우저의 provider별 값은 화면 노출 제어이고, 이 두 서버 스위치가 공개 Auth API
+브라우저의 provider별 값은 화면 노출 제어이고, 이 세 서버 스위치가 공개 Auth API
 직접 호출 뒤의 계정 입장을 막는 경계다. OAuth AMR만으로 현재 Google·Kakao 중 어느
 제공자로 로그인했는지 확실히 구분할 수 없으므로 제공자 하나의 사고라도
 `AUTH_OAUTH=false`로 OAuth 전체를 보수적으로 닫는다.

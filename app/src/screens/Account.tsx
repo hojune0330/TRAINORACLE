@@ -39,6 +39,8 @@ import {
   AccountNetworkSettings, AccountSyncPanel, DeviceJournalOwnershipPanel, DeviceTrainingDataPanel, EraseLocalData, SwitchAccountPanel,
 } from "./account/index"
 import { AccountAuthGateway } from "./account/AccountAuthGateway"
+import { PasswordAuthCallbackPanel } from "./account/PasswordAuthCallbackPanel"
+import { hasPasswordRecoveryCallback, isPasswordRecoveryActive, onPasswordAuthStateChange } from "../domain/account/password-auth"
 import type { AccountEntryMode } from "../components/AccountEntryButton"
 import { BetaAccountSettings } from "./account/BetaAccountSettings"
 import { AccountDataRightsPanel } from "./account/AccountDataRightsPanel"
@@ -80,6 +82,8 @@ export function Account({ onBack, onOpenImport, onOpenFileImport, onOpenJournalR
 }) {
   const config = accountConfig()
   const today = koreaServiceDate()
+  const [passwordFlowActive, setPasswordFlowActive] = React.useState(() => hasPasswordRecoveryCallback() || isPasswordRecoveryActive())
+  const [passwordNotice, setPasswordNotice] = React.useState<string | null>(null)
   const [authMode, setAuthMode] = React.useState<AccountEntryMode>(initialAuthMode)
   const [user, setUser] = React.useState<AccountUser | null>(null)
   const [loading, setLoading] = React.useState(true)
@@ -118,7 +122,16 @@ export function Account({ onBack, onOpenImport, onOpenFileImport, onOpenJournalR
     clearAuthReturnAttemptIdFromUrl()
   }, [])
 
+  React.useEffect(() => onPasswordAuthStateChange(() => {
+    if (hasPasswordRecoveryCallback() || isPasswordRecoveryActive()) setPasswordFlowActive(true)
+  }), [])
+
   React.useEffect(() => {
+    if (passwordFlowActive) {
+      activeUserIdRef.current = null; setupAttemptRef.current = null
+      setUser(null); setSetupState("not-required"); setLoading(false)
+      return
+    }
     let mounted = true
     let unsubscribe: () => void = () => undefined
     let verificationSequence = 0
@@ -215,7 +228,7 @@ export function Account({ onBack, onOpenImport, onOpenFileImport, onOpenJournalR
       setLoading(false)
     })
     return () => { mounted = false; unsubscribe() }
-  }, [])
+  }, [passwordFlowActive])
 
   React.useEffect(() => onAccountDeletionBoundaryChange(owner => {
     if (activeUserIdRef.current !== owner) return
@@ -241,7 +254,7 @@ export function Account({ onBack, onOpenImport, onOpenFileImport, onOpenJournalR
   }), [])
 
   React.useEffect(() => {
-    if (emailCallbackAttemptId !== null) {
+    if (passwordFlowActive || emailCallbackAttemptId !== null) {
       setSetupState("not-required")
       return
     }
@@ -325,6 +338,7 @@ export function Account({ onBack, onOpenImport, onOpenFileImport, onOpenJournalR
     today,
     returnAttemptId,
     emailCallbackAttemptId,
+    passwordFlowActive,
     unverifiedAccountSessionOpen,
     deletedAccountSessionOpen,
   ])
@@ -429,6 +443,26 @@ export function Account({ onBack, onOpenImport, onOpenFileImport, onOpenJournalR
   if (config === null) return null
   const profileSetupComplete = setupState === "ready"
 
+  const acceptPasswordSession = async (expectedUserId: string): Promise<boolean> => {
+    const sequence = accountSessionGenerationRef.current
+    setLoading(true)
+    try {
+      const verified = await currentUser({ throwOnFailure: true })
+      if (sequence !== accountSessionGenerationRef.current) return false
+      if (verified?.id !== expectedUserId || isAuthSessionQuarantined() || isAccountDeletionClosed(expectedUserId)
+        || hasPasswordRecoveryCallback() || isPasswordRecoveryActive()) throw Error("AUTH_IDENTITY_UNCONFIRMED")
+      sessionBlockedRef.current = false; activeUserIdRef.current = verified.id; setupAttemptRef.current = null
+      setUser(verified); setUnverifiedAccountSessionOpen(false); setPasswordNotice(null); setAuthCallbackNotice(null)
+      setPasswordFlowActive(false); setSetupState("checking"); setLoading(false)
+      return true
+    } catch {
+      if (sequence === accountSessionGenerationRef.current) {
+        setLoading(false); setAccountActionNotice({ ok: false, message: "로그인한 계정을 다시 확인하지 못했어요. 잠시 후 다시 시도해 주세요." })
+      }
+      return false
+    }
+  }
+
   return (
     <div style={{ padding: "18px 20px 90px" }} aria-busy={loading || busy || setupState === "checking" || setupState === "saving"}>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -449,7 +483,7 @@ export function Account({ onBack, onOpenImport, onOpenFileImport, onOpenJournalR
         </div>
       </div>
 
-      {accountActionNotice !== null && (
+      {!passwordFlowActive && accountActionNotice !== null && (
         <p
           role={accountActionNotice.ok ? "status" : "alert"}
           aria-live="polite"
@@ -460,7 +494,7 @@ export function Account({ onBack, onOpenImport, onOpenFileImport, onOpenJournalR
           {accountActionNotice.message}
         </p>
       )}
-      {authCallbackNotice !== null && !authCallbackNotice.ok && (
+      {!passwordFlowActive && authCallbackNotice !== null && !authCallbackNotice.ok && (
         <p
           role={authCallbackNotice.ok ? "status" : "alert"}
           aria-live="polite"
@@ -472,7 +506,12 @@ export function Account({ onBack, onOpenImport, onOpenFileImport, onOpenJournalR
         </p>
       )}
 
-      {loading ? (
+      {passwordFlowActive ? <PasswordAuthCallbackPanel onSignedIn={acceptPasswordSession} onLoginRequired={message => {
+        if (hasPasswordRecoveryCallback() || isPasswordRecoveryActive() || isAuthSessionQuarantined()) return
+        sessionBlockedRef.current = false; activeUserIdRef.current = null; setupAttemptRef.current = null
+        setUser(null); setUnverifiedAccountSessionOpen(false); setAuthCallbackNotice(null)
+        setAuthMode("login"); setPasswordNotice(message); setPasswordFlowActive(false); setLoading(true)
+      }} /> : loading ? (
         <p role="status" style={{ ...mono, fontSize: 12, color: "var(--ink-3)", marginTop: 24 }}>계정 상태를 확인하고 있어요.</p>
       ) : unverifiedAccountSessionOpen ? (
         <div style={{ marginTop: 24, display: "flex", flexDirection: "column", gap: 12 }}>
@@ -556,7 +595,8 @@ export function Account({ onBack, onOpenImport, onOpenFileImport, onOpenJournalR
         </div>
       ) : user === null ? (
         <>
-          <AccountAuthGateway config={config} today={today} mode={authMode} onModeChange={setAuthMode} onUnsafeSessionDetected={blockUnverifiedAccountSession} />
+          <AccountAuthGateway config={config} today={today} mode={authMode} onModeChange={setAuthMode} passwordNotice={passwordNotice}
+            onUnsafeSessionDetected={blockUnverifiedAccountSession} onPasswordSignedIn={expectedUserId => { void acceptPasswordSession(expectedUserId) }} />
           <p className="account-automatic-connection-benefit">Garmin 연결은 로그인 후 선택할 수 있어요.</p>
         </>
       ) : setupState === "saving" || setupState === "checking" ? (
@@ -660,7 +700,7 @@ export function Account({ onBack, onOpenImport, onOpenFileImport, onOpenJournalR
         </div>
       )}
 
-      {!loading && user !== null && !unverifiedAccountSessionOpen && !deletedAccountSessionOpen
+      {!passwordFlowActive && !loading && user !== null && !unverifiedAccountSessionOpen && !deletedAccountSessionOpen
         && coachingEndpoint() && (
         <SelfHostedCoachingPanel key={`coaching-rights-${user.id}`} ownerId={user.id} mode="manage"
           onReviewJournal={() => onOpenJournal?.()} onReviewPlan={() => onOpenPlan?.()} />
@@ -676,7 +716,7 @@ export function Account({ onBack, onOpenImport, onOpenFileImport, onOpenJournalR
         </details>
       )}
 
-      {!loading && <details className="account-local-tools"><summary>이 기기의 백업·복원·삭제</summary>
+      {!passwordFlowActive && !loading && <details className="account-local-tools"><summary>이 기기의 백업·복원·삭제</summary>
       {onOpenRestore && (
         <div style={{ marginTop: 24 }}>
           <SectionLb>내려받은 백업 되돌리기</SectionLb>

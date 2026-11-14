@@ -1,7 +1,7 @@
 export const AUTH_SESSION_QUARANTINE_KEY = "trainoracle.auth.quarantine.v1"
 
 const ATTEMPT_ID_PATTERN = /^[a-f0-9]{32}$/u
-const METHODS = ["email", "phone", "kakao", "google"] as const
+const METHODS = ["email", "phone", "kakao", "google", "password"] as const
 const SAME_TAB_EVENT = "trainoracle:auth-session-quarantine"
 const ORIGIN_AUTH_LOCK = "trainoracle.auth-session-quarantine.v1"
 

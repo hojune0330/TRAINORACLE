@@ -1,0 +1,115 @@
+import React from "react"
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { PasswordAuthPanel } from "./PasswordAuthPanel"
+import { PasswordAuthCallbackPanel } from "./PasswordAuthCallbackPanel"
+import { AccountAuthGateway } from "./AccountAuthGateway"
+import type { PasswordAuthResult } from "../../domain/account/password-auth"
+
+const config = { url: "https://example.supabase.co", anonKey: "public-anon-key", passwordAuthEnabled: true,
+  googleAuthEnabled: true, kakaoAuthEnabled: true, emailAuthEnabled: false, phoneAuthEnabled: false,
+  privacyPolicy: { url: "https://example.test/privacy", version: "2026-11-04" }, termsOfService: { url: "https://example.test/terms", version: "2026-11-04" } }
+const result = (state: PasswordAuthResult["state"], message = "안내"): PasswordAuthResult => ({ ok: state !== "ERROR", state, message })
+const actions = () => ({ login: vi.fn().mockResolvedValue(result("ERROR")), signup: vi.fn().mockResolvedValue(result("EMAIL_CONFIRMATION_REQUIRED")), requestRecovery: vi.fn().mockResolvedValue(result("RECOVERY_EMAIL_SENT")), resend: vi.fn().mockResolvedValue(result("EMAIL_CONFIRMATION_REQUIRED")) })
+beforeEach(() => { sessionStorage.clear(); localStorage.clear() })
+afterEach(cleanup)
+
+describe("password account UI", () => {
+  it("submits one password login, permits password-manager input and clears secrets while awaiting proof", async () => {
+    const api = actions(), signedIn = vi.fn()
+    let resolve!: (value: PasswordAuthResult) => void
+    api.login.mockImplementation(() => new Promise<PasswordAuthResult>(done => { resolve = done }))
+    render(<PasswordAuthPanel mode="login" actions={api} onSignedIn={signedIn} />)
+    fireEvent.change(screen.getByLabelText("이메일"), { target: { value: "runner@example.com" } })
+    const password = screen.getByLabelText("비밀번호")
+    expect(password).toHaveAttribute("autocomplete", "current-password")
+    fireEvent.change(password, { target: { value: "synthetic-password" } })
+    fireEvent.submit(screen.getByRole("button", { name: "로그인" }).closest("form")!)
+    fireEvent.submit(screen.getByRole("button", { name: "확인하는 중…" }).closest("form")!)
+    expect(api.login).toHaveBeenCalledOnce()
+    expect(api.login).toHaveBeenCalledWith("runner@example.com", "synthetic-password", expect.stringMatching(/^[a-f0-9]{32}$/u))
+    expect(password).toHaveValue("")
+    expect(sessionStorage.getItem("trainoracle.account.pending-setup.v1")).not.toContain("synthetic-password")
+    expect(screen.queryByLabelText("생년월일")).toBeNull()
+    expect(signedIn).not.toHaveBeenCalled()
+    await act(async () => resolve({ ...result("SIGNED_IN"), verifiedUserId: "athlete-a" }))
+    expect(signedIn).toHaveBeenCalledWith("athlete-a")
+  })
+  it("checks signup confirmation, clears the password and keeps sent email distinct from membership", async () => {
+    const api = actions(), signedIn = vi.fn()
+    render(<PasswordAuthPanel mode="signup" actions={api} onSignedIn={signedIn} />)
+    fireEvent.change(screen.getByLabelText("이메일"), { target: { value: "runner@example.com" } })
+    fireEvent.change(screen.getByLabelText("비밀번호"), { target: { value: "synthetic-password" } })
+    fireEvent.change(screen.getByLabelText("비밀번호 확인"), { target: { value: "different" } })
+    await userEvent.click(screen.getByRole("button", { name: "회원가입" }))
+    expect(api.signup).not.toHaveBeenCalled()
+    expect(screen.getByRole("status")).toHaveTextContent("비밀번호가 서로 달라요")
+    fireEvent.change(screen.getByLabelText("비밀번호 확인"), { target: { value: "synthetic-password" } })
+    await userEvent.click(screen.getByRole("checkbox", { name: "비밀번호 보기" }))
+    expect(screen.getByLabelText("비밀번호")).toHaveAttribute("type", "text")
+    expect(screen.getByLabelText("비밀번호 확인")).toHaveAttribute("autocomplete", "new-password")
+    await userEvent.click(screen.getByRole("button", { name: "회원가입" }))
+    expect(await screen.findByRole("heading", { name: "이메일을 확인해 주세요" })).toBeVisible()
+    expect(screen.queryByRole("button", { name: "회원가입 완료" })).toBeNull()
+    expect(signedIn).not.toHaveBeenCalled()
+    await userEvent.click(screen.getByRole("button", { name: "확인 이메일 다시 보내기" }))
+    expect(api.resend).toHaveBeenCalledWith("runner@example.com")
+    await userEvent.click(screen.getByRole("button", { name: "이메일 다시 입력" }))
+    expect(screen.getByLabelText("비밀번호")).toHaveValue("")
+    expect(screen.getByLabelText("비밀번호 확인")).toHaveValue("")
+    expect(screen.getByLabelText("비밀번호")).toHaveAttribute("type", "password")
+  })
+  it("switches normal signup/login and social methods without carrying a typed password", async () => {
+    const social = vi.fn().mockResolvedValue({ ok: true, message: "redirect" })
+    render(<AccountAuthGateway config={config} today="2026-11-14" onSocialSignIn={social} />)
+    expect(screen.getByRole("button", { name: "로그인", exact: true })).toBeVisible()
+    fireEvent.change(screen.getByLabelText("비밀번호"), { target: { value: "synthetic-password" } })
+    await userEvent.click(screen.getByRole("button", { name: "회원가입", exact: true }))
+    expect(screen.getByLabelText("비밀번호")).toHaveValue("")
+    expect(screen.getByLabelText("비밀번호 확인")).toBeVisible()
+    fireEvent.change(screen.getByLabelText("비밀번호"), { target: { value: "other-password" } })
+    await userEvent.click(screen.getByRole("button", { name: "Google로 회원가입" }))
+    expect(social).toHaveBeenCalledOnce()
+    expect(screen.getByLabelText("비밀번호")).toHaveValue("")
+    expect(screen.queryByLabelText("생년월일")).toBeNull()
+  })
+  it("requests recovery using only the email and returns with no retained password", async () => {
+    const api = actions(), signedIn = vi.fn()
+    render(<PasswordAuthPanel mode="login" actions={api} onSignedIn={signedIn} />)
+    fireEvent.change(screen.getByLabelText("비밀번호"), { target: { value: "synthetic-password" } })
+    await userEvent.click(screen.getByRole("button", { name: "비밀번호 찾기" }))
+    fireEvent.change(screen.getByLabelText("가입한 이메일"), { target: { value: "runner@example.com" } })
+    await userEvent.click(screen.getByRole("button", { name: "비밀번호 재설정 이메일 받기" }))
+    expect(api.requestRecovery).toHaveBeenCalledWith("runner@example.com")
+    expect(await screen.findByRole("heading", { name: "재설정 안내를 확인해 주세요" })).toBeVisible()
+    expect(signedIn).not.toHaveBeenCalled()
+    await userEvent.click(screen.getByRole("button", { name: "로그인으로 돌아가기" }))
+    expect(screen.getByLabelText("비밀번호")).toHaveValue("")
+  })
+  it("shows the verified recovery account until the exact update result confirms a fresh login is required", async () => {
+    const api = { complete: vi.fn().mockResolvedValue({ ...result("RECOVERY_READY"), recoveryEmail: "verified@example.com" }), update: vi.fn(), cancel: vi.fn() }, login = vi.fn()
+    let resolve!: (value: PasswordAuthResult) => void
+    api.update.mockImplementation(() => new Promise<PasswordAuthResult>(done => { resolve = done }))
+    render(<PasswordAuthCallbackPanel actions={api} onLoginRequired={login} />)
+    const password = await screen.findByLabelText("새 비밀번호")
+    expect(screen.getByText("변경할 계정: verified@example.com")).toBeVisible()
+    expect(password).toHaveAttribute("autocomplete", "new-password")
+    fireEvent.change(password, { target: { value: "new-synthetic-password" } })
+    fireEvent.change(screen.getByLabelText("새 비밀번호 확인"), { target: { value: "new-synthetic-password" } })
+    await userEvent.click(screen.getByRole("button", { name: "새 비밀번호 저장" }))
+    expect(password).toHaveValue("")
+    expect(login).not.toHaveBeenCalled()
+    await act(async () => resolve(result("PASSWORD_UPDATED", "새 비밀번호로 다시 로그인해 주세요.")))
+    expect(login).toHaveBeenCalledWith("새 비밀번호로 다시 로그인해 주세요.")
+  })
+  it("keeps an unknown or failed recovery closed and permits explicit cancellation", async () => {
+    const api = { complete: vi.fn().mockResolvedValue(result("ERROR", "확인하지 못했어요.")), update: vi.fn(), cancel: vi.fn().mockResolvedValue(result("PASSWORD_LOGIN_REQUIRED", "다시 로그인해 주세요.")) }, login = vi.fn()
+    render(<PasswordAuthCallbackPanel actions={api} onLoginRequired={login} />)
+    expect(await screen.findByRole("heading", { name: "이메일 확인을 마치지 못했어요" })).toBeVisible()
+    expect(screen.queryByLabelText("새 비밀번호")).toBeNull()
+    expect(login).not.toHaveBeenCalled()
+    await userEvent.click(screen.getByRole("button", { name: "로그인 화면으로 돌아가기" }))
+    await waitFor(() => expect(login).toHaveBeenCalledWith("다시 로그인해 주세요."))
+  })
+})

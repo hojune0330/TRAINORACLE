@@ -12,6 +12,7 @@ export type AccountConfig = {
   readonly googleAuthEnabled: boolean
   readonly emailAuthEnabled: boolean
   readonly phoneAuthEnabled: boolean
+  readonly passwordAuthEnabled?: boolean
   readonly privacyPolicy: AccountLegalDocument
   readonly termsOfService: AccountLegalDocument
 }
@@ -67,6 +68,9 @@ export function resolveAccountConfig(env: Readonly<Record<string, unknown>>): Ac
     phoneAuthEnabled: textValue(env, "VITE_PHONE_AUTH_ENABLED") === "true"
       && textValue(env, "VITE_PHONE_AUTH_OPERATIONS_APPROVED") === "true"
       && textValue(env, "VITE_KILL_PHONE_AUTH") !== "true",
+    passwordAuthEnabled: textValue(env, "VITE_PASSWORD_AUTH_ENABLED") === "true"
+      && textValue(env, "VITE_PASSWORD_AUTH_OPERATIONS_APPROVED") === "true"
+      && textValue(env, "VITE_KILL_PASSWORD_AUTH") !== "true",
     privacyPolicy,
     termsOfService,
   }

@@ -27,6 +27,15 @@ test("keeps the local-only release valid when every network feature is closed", 
   assert.deepEqual(validateHostedReleaseEnvironment({}), [])
 })
 
+test("password release requires account and actual operations approval and respects emergency off", () => {
+  const password = { VITE_PASSWORD_AUTH_ENABLED: "true" }
+  assert.deepEqual(validateHostedReleaseEnvironment(password), ["PASSWORD_AUTH_REQUIRES_ACCOUNT", "PASSWORD_AUTH_REQUIRES_OPERATIONAL_APPROVAL"])
+  const account = { ...connection, ...legalDocuments, ...storagePrivacyRelease, VITE_ACCOUNT_PUBLIC_ENABLED: "true", ...password }
+  assert.deepEqual(validateHostedReleaseEnvironment(account), ["PASSWORD_AUTH_REQUIRES_OPERATIONAL_APPROVAL"])
+  assert.deepEqual(validateHostedReleaseEnvironment({ ...account, VITE_PASSWORD_AUTH_OPERATIONS_APPROVED: "true" }), [])
+  assert.deepEqual(validateHostedReleaseEnvironment({ ...password, VITE_KILL_PASSWORD_AUTH: "true" }), [])
+})
+
 test("requires explicit current storage privacy release acknowledgement before account deployment", () => {
   const account = { ...connection, ...legalDocuments, VITE_ACCOUNT_PUBLIC_ENABLED: "true" }
   for (const proof of [

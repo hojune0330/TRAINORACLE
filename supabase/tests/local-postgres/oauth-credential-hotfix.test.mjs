@@ -24,7 +24,7 @@ test('actual admission SQL permits pure OAuth with a linked password credential 
    create function auth.uid()returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
    create function auth.jwt()returns jsonb language sql stable as $$select coalesce(nullif(current_setting('request.jwt.claims',true),''),'{}')::jsonb$$;
    grant usage on schema auth to anon,authenticated,service_role;grant execute on all functions in schema auth to anon,authenticated,service_role;`);
-  const chain=[...readdirSync(migrations).filter(name=>/^\d{4}_.+\.sql$/.test(name)&&name<'0059').sort(),
+  const chain=[...readdirSync(migrations).filter(name=>/^\d{4}_.+\.sql$/.test(name)&&name<'0066'&&!name.startsWith('0062_')).sort(),
    '20261104145316_account_legal_version_20261104.sql'];
   for(const file of chain)await db.exec(readFileSync(new URL(file,migrations),'utf8'));
   await owner("insert into auth.users(id,email_confirmed_at,encrypted_password)values($1,clock_timestamp(),'synthetic-linked-password'),($2,clock_timestamp(),null)",[A,B]);
@@ -50,5 +50,40 @@ test('actual admission SQL permits pure OAuth with a linked password credential 
   await owner('delete from auth.sessions where id=$1',[S]);await login(amr('oauth'));assert.equal(await admission(),'AUTH_SESSION_INACTIVE');
   const grants=await owner("select has_function_privilege('authenticated','public.current_jwt_auth_method_status()','execute')status,has_function_privilege('authenticated','public.current_jwt_auth_method_allowed()','execute')allowed");
   assert.deepEqual(grants.rows[0],{status:false,allowed:false});
+
+  // Owner explicitly adopted ordinary email/password accounts after the OAuth
+  // hotfix. Apply that additive policy and exercise its actual consumers too.
+  assert.equal((await owner("select to_regprocedure('public.oracle_profile_comparison_attested(text,text,text)')is null value")).rows[0].value,true,'production-like optional comparison is not installed');
+  await db.exec(readFileSync(new URL('20261114042129_password_account_auth_channel.sql',migrations),'utf8'));
+  assert.equal((await owner("select to_regprocedure('public.oracle_profile_comparison_attested(text,text,text)')is null value")).rows[0].value,true,'core migration must not create an absent comparison feature');
+  assert.equal((await owner("select enabled from public.service_feature_controls where feature_key='AUTH_PASSWORD'")).rows[0].enabled,false);
+  await owner("update auth.users set encrypted_password='synthetic-password',email_confirmed_at=clock_timestamp()where id=$1",[A]);
+  await owner('insert into auth.sessions values($1,$2,null)',[S,A]);
+  await login(amr('password'));assert.equal(await admission(),'AUTH_CHANNEL_DISABLED');
+  await owner("update public.service_feature_controls set enabled=true where feature_key='AUTH_PASSWORD'");
+  for(const methods of[amr('password'),amr('password','token_refresh'),amr('email/signup')]){
+   await login(methods);assert.equal(await admission(),'ADMITTED');assert.equal(await claim(),'ADMITTED_EXISTING');
+  }
+  assert.equal(await claim(B),'IDENTITY_MISMATCH');assert.equal(await claim(A,B),'SESSION_MISMATCH');assert.equal(await claim(A,S,'2026-10-05'),'LEGAL_VERSION_INVALID');
+  for(const methods of[amr('recovery'),amr('recovery','password'),amr('invite'),amr('anonymous'),amr('password','unknown'),amr('oauth','password'),amr('password','otp'),amr('token_refresh')]){
+   await login(methods);assert.equal(await admission(),'AUTH_METHOD_UNSUPPORTED');
+  }
+  await owner('update auth.users set email_confirmed_at=null where id=$1',[A]);await login(amr('password'));assert.equal(await admission(),'AUTH_METHOD_UNSUPPORTED');
+  await login(amr('email/signup'));assert.equal(await admission(),'AUTH_METHOD_UNSUPPORTED');
+  await owner('update auth.users set email_confirmed_at=clock_timestamp(),encrypted_password=null where id=$1',[A]);await login(amr('password'));assert.equal(await admission(),'AUTH_METHOD_UNSUPPORTED');
+  await login(amr('email/signup'));assert.equal(await admission(),'AUTH_CHANNEL_DISABLED','passwordless remains independently closed');
+  await owner("update auth.users set encrypted_password='synthetic-password'where id=$1",[A]);await login(amr('oauth'));assert.equal(await admission(),'ADMITTED','linked password does not change OAuth origin');
+  await owner("update public.lounge_admission_controls set enabled=true,privacy_policy_version='2026-11-04',terms_of_service_version='2026-11-04'where singleton");
+  await login(amr('password'));const lounge=(await db.query('select public.issue_lounge_grant()value')).rows[0].value;
+  const marker=(await owner("select requires_oauth,requires_passwordless,requires_password from public.lounge_session_grants where token_hash=extensions.digest($1,'sha256')",[lounge.grant])).rows[0];
+  assert.deepEqual(marker,{requires_oauth:false,requires_passwordless:false,requires_password:true});
+  const inspect=async()=>{await db.exec('reset role;set role anon');return(await db.query('select public.inspect_lounge_grant($1)value',[lounge.grant])).rows[0].value;};
+  assert.equal((await inspect()).eligible,true);
+  await owner("update public.service_feature_controls set enabled=false where feature_key='AUTH_OAUTH'");assert.equal((await inspect()).eligible,true,'OAuth stop does not stop password capabilities');
+  await owner("update public.service_feature_controls set enabled=false where feature_key='AUTH_PASSWORD'");assert.equal((await inspect()).eligible,false,'already-issued password capabilities recheck their gate');
+  await owner("update public.service_feature_controls set enabled=true where feature_key in('AUTH_PASSWORD','AUTH_OAUTH')");
+  assert.equal((await owner("select has_function_privilege('authenticated','public.current_jwt_auth_channels()','execute')value")).rows[0].value,false);
+  await owner("update public.service_feature_controls set enabled=true where feature_key='AUTH_PASSWORD'");
+  await owner("update auth.sessions set not_after=clock_timestamp()-interval '1 minute'where id=$1",[S]);await login(amr('password'));assert.equal(await admission(),'AUTH_SESSION_INACTIVE');
  }finally{await db.close();}
 });

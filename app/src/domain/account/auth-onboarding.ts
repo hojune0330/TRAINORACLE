@@ -4,7 +4,7 @@ import type { AccountActionResult, SaveProfileInput } from "./account-service"
 import { ageBandOn } from "./profile"
 import type { SocialAuthProvider } from "./auth"
 
-export type AuthMethod = SocialAuthProvider | "email" | "phone"
+export type AuthMethod = SocialAuthProvider | "email" | "phone" | "password"
 
 type ProfileAccountSetup = {
   readonly schemaVersion: 4
@@ -33,7 +33,7 @@ export type AuthOnlyAccountAttempt = Omit<ProfileAccountSetup, "schemaVersion" |
   readonly schemaVersion: 5
   readonly flow: "AUTH_ONLY"
   readonly entryMode: "login" | "signup"
-  readonly method: SocialAuthProvider
+  readonly method: SocialAuthProvider | "password"
   readonly birthDate: null
   readonly privacyPolicyVersion: null
   readonly termsOfServiceVersion: null
@@ -42,11 +42,13 @@ export type PendingAccountSetup = ProfileAccountSetup | AuthOnlyAccountAttempt
 export function isAuthOnlyAccountAttempt(pending: PendingAccountSetup): pending is AuthOnlyAccountAttempt {
   return pending.schemaVersion === 5 && pending.flow === "AUTH_ONLY"
 }
-export function createPendingAccountAuthAttempt(input: { method: SocialAuthProvider; entryMode: "login" | "signup"; createdAtMs?: number; attemptId?: string }): AuthOnlyAccountAttempt {
+export function createPendingAccountAuthAttempt(input: { method: SocialAuthProvider | "password"; entryMode: "login" | "signup"; expectedEmail?: string; createdAtMs?: number; attemptId?: string }): AuthOnlyAccountAttempt {
   const attemptId = input.attemptId ?? newAuthAttemptId()
-  if (!isAuthAttemptId(attemptId) || (input.method !== "google" && input.method !== "kakao")) throw new Error("INVALID_AUTH_ATTEMPT")
+  if (!isAuthAttemptId(attemptId) || (input.method !== "google" && input.method !== "kakao" && input.method !== "password")) throw new Error("INVALID_AUTH_ATTEMPT")
+  const email = input.method === "password" ? normalizeAuthEmail(input.expectedEmail ?? "") : null
+  if (input.method === "password" && email === null) throw new Error("INVALID_AUTH_EMAIL")
   return { schemaVersion: 5, flow: "AUTH_ONLY", entryMode: input.entryMode, attemptId, method: input.method, phase: "PREPARED",
-    verifiedUserId: null, verifiedMethod: null, verifiedSessionId: null, expectedEmail: null,
+    verifiedUserId: null, verifiedMethod: null, verifiedSessionId: null, expectedEmail: email,
     birthDate: null, privacyPolicyVersion: null, termsOfServiceVersion: null, createdAtMs: input.createdAtMs ?? Date.now() }
 }
 
@@ -160,6 +162,7 @@ export function readPendingAccountSetup(
       || parsed.method === "google"
       || parsed.method === "email"
       || parsed.method === "phone"
+      || parsed.method === "password"
     const verifiedUserIdValid = parsed.phase === "AUTH_VERIFIED"
       ? typeof parsed.verifiedUserId === "string" && VERIFIED_USER_ID_PATTERN.test(parsed.verifiedUserId)
       : parsed.verifiedUserId === null
@@ -177,7 +180,7 @@ export function readPendingAccountSetup(
       || normalizedExpectedEmail !== null && normalizedExpectedEmail === parsed.expectedEmail
     const authOnly = (parsed.schemaVersion as number) === 5 && parsed.flow === "AUTH_ONLY"
       && (parsed.entryMode === "login" || parsed.entryMode === "signup")
-      && (parsed.method === "google" || parsed.method === "kakao") && parsed.expectedEmail === null
+      && ((parsed.method === "google" || parsed.method === "kakao") && parsed.expectedEmail === null || parsed.method === "password" && normalizedExpectedEmail !== null)
       && parsed.birthDate === null && parsed.privacyPolicyVersion === null && parsed.termsOfServiceVersion === null
     const profileSetup = parsed.schemaVersion === 4
       && typeof parsed.birthDate === "string" && /^\d{4}-\d{2}-\d{2}$/u.test(parsed.birthDate)
@@ -377,7 +380,7 @@ export async function finalizePendingAccountSetup(input: {
   const redirectFlowMatches = pending.method !== "phone"
     && verifiedUserMatches
     && input.returnAttemptId === pending.attemptId
-  const verifiedPhoneMatches = pending.method === "phone"
+  const verifiedPhoneMatches = (pending.method === "phone" || pending.method === "password")
     && verifiedUserMatches
     && input.returnAttemptId === null
   if (!verifiedUserMatches || (!redirectFlowMatches && !verifiedPhoneMatches)) {

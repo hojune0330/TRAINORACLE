@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   loadSetup: vi.fn(),
   finalize: vi.fn(),
   pending: null as import("../domain/account/auth-onboarding").PendingAccountSetup | null,
+  passwordCallback: false, passwordActive: false, passwordComplete: vi.fn(),
   oauthResult: { handled: false } as { handled: boolean; ok?: boolean; message?: string },
   authListener: null as null | ((user: { id: string; email: string | null; phone: null; provider: "email" } | null) => void),
   gatewayEmailResult: null as null | {
@@ -48,6 +49,15 @@ vi.mock("../domain/account/auth-onboarding", () => ({
 
 vi.mock("../domain/account/email-auth-callback", () => ({
   consumeCapturedEmailAuthCallback: mocks.consumeEmailCallback,
+}))
+
+vi.mock("../domain/account/password-auth", () => ({
+  PASSWORD_MIN_LENGTH: 6, PASSWORD_MAX_LENGTH: 1024,
+  hasPasswordRecoveryCallback: () => mocks.passwordCallback,
+  isPasswordRecoveryActive: () => mocks.passwordActive,
+  onPasswordAuthStateChange: () => () => {},
+  completePasswordAuthCallback: mocks.passwordComplete,
+  signInWithEmailPassword: vi.fn(), signUpWithEmailPassword: vi.fn(), requestPasswordRecovery: vi.fn(), resendPasswordSignupEmail: vi.fn(), updateRecoveredPassword: vi.fn(), cancelPasswordRecovery: vi.fn(),
 }))
 
 vi.mock("../domain/account/oauth-auth-callback", () => ({
@@ -131,6 +141,8 @@ beforeEach(() => {
   mocks.consumeEmailCallback.mockResolvedValue({ handled: false })
   mocks.loadSetup.mockReset()
   mocks.loadSetup.mockResolvedValue({ ok: true, ready: true, message: "준비됨" })
+  mocks.passwordCallback = false; mocks.passwordActive = false
+  mocks.passwordComplete.mockReset(); mocks.passwordComplete.mockResolvedValue({ ok: true, state: "RECOVERY_READY", recoveryEmail: "verified@example.com", message: "새 비밀번호를 입력해 주세요." })
   mocks.pending = null
   mocks.oauthResult = { handled: false }
   mocks.finalize.mockReset(); mocks.finalize.mockResolvedValue({ attempted: false, result: null })
@@ -452,5 +464,47 @@ describe("auth-first admission", () => {
     expect(await screen.findByRole("button", { name: "로그아웃" })).toBeVisible()
     expect(mocks.loadSetup).toHaveBeenCalledTimes(2)
     expect(mocks.finalize).not.toHaveBeenCalled()
+  })
+})
+
+
+describe("password recovery account boundary", () => {
+  it("renders only recovery before quarantine or normal admission despite a cached account hint", async () => {
+    mocks.passwordCallback = true; mocks.passwordActive = true
+    render(<Account />)
+    expect(await screen.findByLabelText("새 비밀번호")).toBeVisible()
+    expect(screen.queryByTestId("required-signup-fields")).toBeNull()
+    expect(screen.queryByRole("button", { name: "합성 삭제 완료" })).toBeNull()
+    expect(mocks.loadSetup).not.toHaveBeenCalled()
+    expect(mocks.currentUser).not.toHaveBeenCalled()
+  })
+})
+
+
+describe("signup callback admission", () => {
+  it("continues a verified signup callback directly to required new-member information", async () => {
+    mocks.passwordCallback = true
+    mocks.passwordComplete.mockImplementation(async () => {
+      mocks.passwordCallback = false
+      return { ok: true, state: "SIGNED_IN", verifiedUserId: "athlete-a", message: "확인했어요." }
+    })
+    mocks.loadSetup.mockResolvedValue({ ok: true, ready: false, canComplete: true, message: "가입을 마무리해 주세요." })
+    render(<Account />)
+    expect(await screen.findByTestId("required-signup-fields")).toBeVisible()
+    expect(screen.queryByTestId("guest-auth-gateway")).toBeNull()
+    expect(mocks.currentUser).toHaveBeenCalledWith({ throwOnFailure: true })
+    expect(mocks.loadSetup).toHaveBeenCalled()
+  })
+  it("does not admit a substituted account after a signup callback", async () => {
+    mocks.passwordCallback = true
+    mocks.passwordComplete.mockImplementation(async () => {
+      mocks.passwordCallback = false
+      return { ok: true, state: "SIGNED_IN", verifiedUserId: "athlete-a", message: "확인했어요." }
+    })
+    mocks.currentUser.mockResolvedValue({ id: "athlete-b", email: "other@example.com", phone: null, provider: "email" })
+    render(<Account />)
+    expect(await screen.findByRole("heading", { name: "이메일 확인을 마치지 못했어요" })).toBeVisible()
+    expect(mocks.loadSetup).not.toHaveBeenCalled()
+    expect(screen.queryByTestId("required-signup-fields")).toBeNull()
   })
 })
