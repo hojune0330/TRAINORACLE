@@ -97,6 +97,10 @@ export function Account({ onBack, onOpenImport, onOpenFileImport, onOpenJournalR
   const [sessionVerificationFailed, setSessionVerificationFailed] = React.useState(false)
   const [sessionRetry, setSessionRetry] = React.useState(0)
   const [currentSurface, setCurrentSurface] = React.useState(surface)
+  const accountEntryRef = React.useRef<HTMLDivElement>(null)
+  // Keep the page title in view on auth entry and login/signup switches.
+  // The shared hook preserves browser-pop restoration and active editing.
+  useActiveContentScroll(currentSurface === "auth" ? `${currentSurface}:${authMode}` : null, accountEntryRef)
   const [requiredAction, setRequiredAction] = React.useState<PrivateProfileSetupStatus["requiredAction"]>("blocked")
   const admissionProof = React.useRef<PendingAccountSetup | null>(null)
   const notifiedAttempt = React.useRef<string | null>(null)
@@ -136,25 +140,33 @@ export function Account({ onBack, onOpenImport, onOpenFileImport, onOpenJournalR
   }, [])
   React.useEffect(() => { setCurrentSurface(surface) }, [surface])
 
-  React.useEffect(() => {
-    const pending = admissionProof.current
-    if (currentSurface !== "auth" || setupState !== "ready" || !user || passwordFlowActive || sessionVerificationFailed
+  const notifyAdmission = async (pending: PendingAccountSetup | null, isCurrent: () => boolean) => {
+    if (!isCurrent()) return false
+    if (currentSurface !== "auth") return true
+    if (!user || passwordFlowActive || sessionVerificationFailed
       || isAuthSessionQuarantined() || isPasswordRecoveryActive() || !pending || pending.phase !== "AUTH_VERIFIED"
       || pending.verifiedUserId !== user.id || pending.verifiedMethod !== pending.method
-      || !pending.verifiedSessionId || notifiedAttempt.current === pending.attemptId) return
-    if (readPendingAccountSetup()?.attemptId !== pending.attemptId) return
-    let cancelled = false
+      || !pending.verifiedSessionId) return false
+    if (notifiedAttempt.current === pending.attemptId) return true
+    if (readPendingAccountSetup()?.attemptId !== pending.attemptId) return false
     const generation = accountSessionGenerationRef.current
-    void isCurrentAccountAuthAttempt(user.id, pending.verifiedSessionId).then(current => {
-      if (!current || cancelled || generation !== accountSessionGenerationRef.current || activeUserIdRef.current !== user.id
-        || readPendingAccountSetup()?.attemptId !== pending.attemptId || notifiedAttempt.current === pending.attemptId) return
-      notifiedAttempt.current = pending.attemptId
-      clearPendingAccountSetupForAttempt(pending.attemptId)
-      const intent = pending.returnIntent ?? returnIntent
-      if (intent === "account" || intent === "data-rights") setCurrentSurface(intent === "account" ? "manage" : "data-rights")
-      onAdmissionReady?.({ userId: user.id, attemptId: pending.attemptId, returnIntent: intent,
-        entryMode: pending.schemaVersion === 5 ? pending.entryMode : "signup" })
-    })
+    const current = await isCurrentAccountAuthAttempt(user.id, pending.verifiedSessionId)
+    if (!current || !isCurrent() || generation !== accountSessionGenerationRef.current || activeUserIdRef.current !== user.id
+      || readPendingAccountSetup()?.attemptId !== pending.attemptId) return false
+    if (notifiedAttempt.current === pending.attemptId) return true
+    notifiedAttempt.current = pending.attemptId
+    clearPendingAccountSetupForAttempt(pending.attemptId)
+    const intent = pending.returnIntent ?? returnIntent
+    if (intent === "account" || intent === "data-rights") setCurrentSurface(intent === "account" ? "manage" : "data-rights")
+    onAdmissionReady?.({ userId: user.id, attemptId: pending.attemptId, returnIntent: intent,
+      entryMode: pending.schemaVersion === 5 ? pending.entryMode : "signup" })
+    return true
+  }
+
+  React.useEffect(() => {
+    if (setupState !== "ready") return
+    let cancelled = false
+    void notifyAdmission(admissionProof.current, () => !cancelled)
     return () => { cancelled = true }
   }, [currentSurface, setupState, user?.id, passwordFlowActive, sessionVerificationFailed, returnIntent, onAdmissionReady])
 
@@ -340,6 +352,7 @@ export function Account({ onBack, onOpenImport, onOpenFileImport, onOpenJournalR
           returnAttemptId,
           today,
           config,
+          onConfirmed: completed => notifyAdmission(completed, () => !cancelled && setupAttemptRef.current === attemptKey),
         })
         if (finalized.attempted) {
           return {
@@ -525,7 +538,7 @@ export function Account({ onBack, onOpenImport, onOpenFileImport, onOpenJournalR
   }
 
   return (
-    <div style={{ padding: "18px 20px 90px" }} aria-busy={loading || busy || setupState === "checking" || setupState === "saving"}>
+    <div ref={accountEntryRef} style={{ padding: "18px 20px 90px" }} aria-busy={loading || busy || setupState === "checking" || setupState === "saving"}>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         {onBack && (
           <button

@@ -46,6 +46,13 @@ describe("pre-auth account onboarding", () => {
     sessionStorage.setItem("trainoracle.account.pending-setup.v1", JSON.stringify({ ...pending, returnIntent: undefined }))
     expect(readPendingAccountSetup(sessionStorage, 1_001)?.attemptId).toBe(attemptA)
   })
+  it.each(["email", "phone"] as const)("preserves a bounded legacy %s return intent and rejects URL tampering", method => {
+    const pending = createPendingAccountSetup({ method, birthDate: "2000-01-01", config, returnIntent: "connection", createdAtMs: 1_000, attemptId: attemptA })
+    writePendingAccountSetup(pending)
+    expect(readPendingAccountSetup(sessionStorage, 1_001)?.returnIntent).toBe("connection")
+    sessionStorage.setItem("trainoracle.account.pending-setup.v1", JSON.stringify({ ...pending, returnIntent: "https://other.example" }))
+    expect(readPendingAccountSetup(sessionStorage, 1_001)).toBeNull()
+  })
   it("allows the exact 14th birthday and blocks the day before it", () => {
     expect(onlineAccountEligibility("2012-08-25", "2026-08-25")).toBe("ELIGIBLE")
     expect(onlineAccountEligibility("2012-08-26", "2026-08-25")).toBe("UNDER_14")
@@ -348,6 +355,38 @@ describe("pre-auth account onboarding", () => {
       onSaveProfile: save,
     })).resolves.toMatchObject({ attempted: true, result: { ok: true } })
     expect(save).toHaveBeenCalledOnce()
+  })
+
+  it.each(["success", "failed-save", "replaced-during-save", "replaced-in-callback", "cancelled-consumer"])("orders confirmed legacy navigation safely: %s", async scenario => {
+    const pending = createPendingAccountSetup({ method: "phone", birthDate: "2000-01-01", config, attemptId: attemptA, returnIntent: "connection" })
+    writePendingAccountSetup(pending)
+    markPendingAccountAuthStarted(attemptA)
+    markPendingAccountAuthVerified(attemptA, "athlete-phone", "phone", sessionA)
+    const replace = () => writePendingAccountSetup(createPendingAccountSetup({ method: "phone", birthDate: "2000-01-01", config, attemptId: attemptB }))
+    const events: string[] = []
+    const confirmed = vi.fn(async (completed: import("./auth-onboarding").PendingAccountSetup) => {
+      events.push("confirmed")
+      expect(completed).toMatchObject({ attemptId: attemptA, returnIntent: "connection", phase: "AUTH_VERIFIED" })
+      expect(readPendingAccountSetup()?.attemptId).toBe(attemptA)
+      if (scenario === "replaced-in-callback") replace()
+      if (scenario === "cancelled-consumer") return false
+    })
+    const save = vi.fn(async () => {
+      events.push("save")
+      if (scenario === "replaced-during-save") replace()
+      return { ok: scenario !== "failed-save", message: "result" }
+    })
+    await finalizePendingAccountSetup({ userId: "athlete-phone", returnAttemptId: null, today: "2026-08-25", config, onSaveProfile: save, onConfirmed: confirmed })
+    if (scenario === "success" || scenario === "replaced-in-callback" || scenario === "cancelled-consumer") {
+      expect(confirmed).toHaveBeenCalledOnce()
+      expect(events).toEqual(["save", "confirmed"])
+    } else expect(confirmed).not.toHaveBeenCalled()
+    expect(readPendingAccountSetup()?.attemptId ?? null).toBe(scenario.startsWith("replaced") ? attemptB : scenario === "failed-save" || scenario === "cancelled-consumer" ? attemptA : null)
+    if (scenario === "cancelled-consumer") {
+      const retained = readPendingAccountSetup()
+      expect(retained).toMatchObject({ attemptId: attemptA, phase: "AUTH_VERIFIED", returnIntent: "connection", createdAtMs: pending.createdAtMs })
+      expect(readPendingAccountSetup(sessionStorage, pending.createdAtMs + 15 * 60 * 1000 + 1)).toBeNull()
+    }
   })
 
   it("only clears the pending setup when the failed attempt still owns it", () => {

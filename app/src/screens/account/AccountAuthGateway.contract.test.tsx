@@ -21,14 +21,14 @@ afterEach(cleanup)
 describe("mobile-first account authentication gateway", () => {
   it("starts Google signup first without recording birth or consent facts", async () => {
     const social = vi.fn().mockResolvedValue({ ok: true, message: "redirect" })
-    render(<AccountAuthGateway config={config} today="2026-08-25" onSocialSignIn={social} />)
+    render(<AccountAuthGateway config={config} today="2026-08-25" onSocialSignIn={social} returnIntent="connection" />)
     await userEvent.click(screen.getByRole("button", { name: "회원가입" }))
     await userEvent.click(screen.getByRole("button", { name: "Google로 회원가입" }))
     expect(social).toHaveBeenCalledWith("google", expect.stringMatching(/^[a-f0-9]{32}$/u))
     expect(screen.queryByLabelText("생년월일")).toBeNull()
     expect(screen.queryByRole("checkbox")).toBeNull()
     expect(JSON.parse(sessionStorage.getItem("trainoracle.account.pending-setup.v1") ?? "{}")).toMatchObject({
-      schemaVersion: 5, flow: "AUTH_ONLY", entryMode: "signup", method: "google", phase: "AUTH_STARTED",
+      schemaVersion: 5, flow: "AUTH_ONLY", entryMode: "signup", method: "google", phase: "AUTH_STARTED", returnIntent: "connection",
       birthDate: null, privacyPolicyVersion: null, termsOfServiceVersion: null,
     })
     await userEvent.click(screen.getByRole("button", { name: "로그인" }))
@@ -110,6 +110,7 @@ describe("mobile-first account authentication gateway", () => {
         config={{ ...config, phoneAuthEnabled: true }}
         today="2026-08-25"
         onRequestPhoneOtp={send}
+        returnIntent="connection"
         onVerifyPhoneOtp={verify}
       />,
     )
@@ -125,6 +126,7 @@ describe("mobile-first account authentication gateway", () => {
     await userEvent.click(screen.getByRole("button", { name: "로그인 완료하기" }))
 
     expect(send).toHaveBeenCalledWith("010-1234-5678", expect.stringMatching(/^[a-f0-9]{32}$/u))
+    expect(JSON.parse(sessionStorage.getItem("trainoracle.account.pending-setup.v1") ?? "{}")).toMatchObject({ method: "phone", returnIntent: "connection" })
     expect(verify).toHaveBeenCalledWith("010-1234-5678", "123456", expect.stringMatching(/^[a-f0-9]{32}$/u))
     expect(screen.getByRole("button", { name: /다시 받기 \(60초\)/u })).toBeDisabled()
   })
@@ -173,6 +175,7 @@ describe("mobile-first account authentication gateway", () => {
         config={config}
         today="2026-08-25"
         onRequestEmailOtp={send}
+        returnIntent="connection"
       />,
     )
 
@@ -185,6 +188,7 @@ describe("mobile-first account authentication gateway", () => {
     await userEvent.click(screen.getByRole("button", { name: "확인 이메일 받기" }))
 
     expect(send).toHaveBeenCalledWith("runner@example.com", expect.stringMatching(/^[a-f0-9]{32}$/u))
+    expect(JSON.parse(sessionStorage.getItem("trainoracle.account.pending-setup.v1") ?? "{}")).toMatchObject({ method: "email", returnIntent: "connection" })
     expect(screen.getByRole("heading", { name: "이메일에서 확인 링크를 열어 주세요" })).toBeVisible()
     expect(screen.getByRole("button", { name: "확인 이메일 다시 받기" })).toBeVisible()
     expect(screen.queryByText(/6자리/u)).not.toBeInTheDocument()
@@ -204,6 +208,7 @@ describe("mobile-first account authentication gateway", () => {
         config={config}
         today="2026-08-25"
         emailCallbackAttemptId={attempt}
+        returnIntent="connection"
         onConsumeEmailCallback={consume}
       />,
     )
@@ -220,6 +225,7 @@ describe("mobile-first account authentication gateway", () => {
         config={config}
         today="2026-08-25"
         emailCallbackAttemptId={attempt}
+        returnIntent="connection"
         onConsumeEmailCallback={consume}
       />,
     )
@@ -231,6 +237,7 @@ describe("mobile-first account authentication gateway", () => {
     expect(consume).toHaveBeenCalledOnce()
     expect(JSON.parse(sessionStorage.getItem("trainoracle.account.pending-setup.v1") ?? "{}")).toMatchObject({
       expectedEmail: "runner@example.com",
+      returnIntent: "connection",
       phase: "AUTH_STARTED",
     })
   })

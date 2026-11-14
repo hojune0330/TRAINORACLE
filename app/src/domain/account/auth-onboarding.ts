@@ -114,6 +114,7 @@ export function onlineAccountEligibility(
 
 export function createPendingAccountSetup(input: {
   readonly method: AuthMethod
+  readonly returnIntent?: AuthReturnIntent
   readonly birthDate: string
   readonly config: AccountConfig
   readonly createdAtMs?: number
@@ -130,6 +131,7 @@ export function createPendingAccountSetup(input: {
   }
   return {
     schemaVersion: 4,
+    returnIntent: input.returnIntent ?? null,
     attemptId,
     method: input.method,
     phase: "PREPARED",
@@ -370,6 +372,7 @@ export async function finalizePendingAccountSetup(input: {
   readonly sessionStorage?: StoragePort
   readonly localStorage?: StoragePort
   readonly onSaveProfile?: (profile: SaveProfileInput) => Promise<AccountActionResult>
+  readonly onConfirmed?: (pending: PendingAccountSetup) => Promise<void | boolean>
 }): Promise<{ readonly attempted: boolean; readonly result: AccountActionResult | null }> {
   const sessionStorage = input.sessionStorage ?? window.sessionStorage
   const localStorage = input.localStorage ?? window.localStorage
@@ -418,9 +421,16 @@ export async function finalizePendingAccountSetup(input: {
     privacyPolicyVersion: pending.privacyPolicyVersion,
     termsOfServiceVersion: pending.termsOfServiceVersion,
   })
-  if (result.ok) {
+  if (result.ok && readPendingAccountSetup(sessionStorage)?.attemptId === pending.attemptId) {
     writeCurrentSetupReceipt(input.userId, input.config, localStorage)
-    clearPendingAccountSetup(sessionStorage)
+    // Complete the original navigation before the admission refresh remounts
+    // Account, then discard DOB/consent proof. Never clear a newer attempt.
+    // A concurrent scope refresh may already have replaced the caller. In
+    // that case the next Account verifies the admitted state and consumes the
+    // same expiring intent. Do not erase it before that replacement can read it.
+    let consume = false
+    try { consume = await input.onConfirmed?.(pending) !== false }
+    finally { if (consume) clearPendingAccountSetupForAttempt(pending.attemptId, sessionStorage) }
   }
   return { attempted: true, result }
 }

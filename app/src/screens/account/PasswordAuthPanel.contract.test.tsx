@@ -119,6 +119,32 @@ describe("password account UI", () => {
     await act(async () => resolve(result("PASSWORD_UPDATED", "새 비밀번호로 다시 로그인해 주세요.")))
     expect(login).toHaveBeenCalledWith("새 비밀번호로 다시 로그인해 주세요.")
   })
+  it("clears a rejected recovery password and permits a successful policy retry", async () => {
+    const api = { complete: vi.fn().mockResolvedValue({ ...result("RECOVERY_READY"), recoveryEmail: "verified@example.com" }),
+      update: vi.fn().mockResolvedValueOnce({ ...result("ERROR", "다른 새 비밀번호를 입력해 주세요."), retryable: true }).mockResolvedValueOnce(result("PASSWORD_UPDATED")), cancel: vi.fn() }, login = vi.fn()
+    render(<PasswordAuthCallbackPanel actions={api} onLoginRequired={login} />)
+    const password = await screen.findByLabelText("새 비밀번호")
+    fireEvent.change(password, { target: { value: "rejected-password" } })
+    await userEvent.click(screen.getByRole("checkbox", { name: "비밀번호 보기" }))
+    await userEvent.click(screen.getByRole("button", { name: "새 비밀번호 저장" }))
+    expect(screen.getByLabelText("새 비밀번호")).toHaveValue("")
+    expect(screen.getByLabelText("새 비밀번호")).toHaveAttribute("type", "password")
+    expect(screen.getByRole("status")).toHaveTextContent("다른 새 비밀번호")
+    expect(login).not.toHaveBeenCalled()
+    fireEvent.change(screen.getByLabelText("새 비밀번호"), { target: { value: "accepted-password" } })
+    await userEvent.click(screen.getByRole("button", { name: "새 비밀번호 저장" }))
+    expect(api.update).toHaveBeenNthCalledWith(2, "accepted-password")
+    expect(login).toHaveBeenCalledOnce()
+  })
+  it("closes the editor when the recovery session becomes invalid", async () => {
+    const api = { complete: vi.fn().mockResolvedValue({ ...result("RECOVERY_READY"), recoveryEmail: "verified@example.com" }),
+      update: vi.fn().mockResolvedValue({ ...result("ERROR", "변경 계정이 바뀌었어요."), unsafeSessionOpen: true }), cancel: vi.fn() }
+    render(<PasswordAuthCallbackPanel actions={api} onLoginRequired={vi.fn()} />)
+    fireEvent.change(await screen.findByLabelText("새 비밀번호"), { target: { value: "new-password" } })
+    await userEvent.click(screen.getByRole("button", { name: "새 비밀번호 저장" }))
+    expect(screen.queryByLabelText("새 비밀번호")).toBeNull()
+    expect(screen.getByRole("heading", { name: "이메일 확인을 마치지 못했어요" })).toBeVisible()
+  })
   it("keeps an unknown or failed recovery closed and permits explicit cancellation", async () => {
     const api = { complete: vi.fn().mockResolvedValue(result("ERROR", "확인하지 못했어요.")), update: vi.fn(), cancel: vi.fn().mockResolvedValue(result("PASSWORD_LOGIN_REQUIRED", "다시 로그인해 주세요.")) }, login = vi.fn()
     render(<PasswordAuthCallbackPanel actions={api} onLoginRequired={login} />)

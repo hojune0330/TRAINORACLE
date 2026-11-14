@@ -4,9 +4,10 @@ import { verifyReturnedAuthSession } from "./verified-auth-session"
 import { accountDeletionBoundaryState } from "./account-deletion-boundary"
 import { isAuthSessionQuarantined } from "./auth-session-quarantine"
 import { hasPasswordRecoveryCallback, isPasswordRecoveryActive, PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from "./password-auth"
+import { createAccountSettingsClient } from "./account-settings-client"
 
 type Client = NonNullable<Awaited<ReturnType<typeof supabase>>>
-type Context = { client: Client; userId: string; sessionId: string }
+type Context = { client: Client; userId: string; sessionId: string; credentials: { access_token: string; refresh_token: string } }
 export type AccountAuthMethods = { ok: boolean; providers: readonly string[]; hasPassword: boolean; message: string }
 export type AccountPasswordResult = { ok: boolean; state: "UPDATED" | "REAUTH_REQUIRED" | "LOGIN_REQUIRED" | "ERROR"; message: string }
 const denied = (): AccountAuthMethods => ({ ok: false, providers: [], hasPassword: false, message: "로그인 방법을 확인하지 못했어요. 잠시 후 다시 확인해 주세요." })
@@ -25,7 +26,7 @@ async function context(userId: string, existing?: Context): Promise<Context | nu
   const claims = await client.auth.getClaims(token)
   const amr = claims.data?.claims.amr
   if (claims.error || !Array.isArray(amr) || amr.some(item => typeof item !== "object" || item === null || ["recovery", "invite", "anonymous"].includes(item.method))) return null
-  return { client, userId, sessionId }
+  return { client, userId, sessionId, credentials: { access_token: token, refresh_token: session.data.session.refresh_token } }
 }
 
 async function methods(checked: Context): Promise<AccountAuthMethods> {
@@ -47,18 +48,23 @@ export async function isCurrentAccountAuthAttempt(userId: string, expectedSessio
 }
 
 export async function requestAccountPasswordReauthentication(userId: string): Promise<{ ok: boolean; message: string }> {
+  let isolated: Client | null = null
   try {
     if (!accountConfig()?.passwordAuthEnabled) return { ok: false, message: "비밀번호 설정이 잠시 닫혀 있어요." }
     const checked = await context(userId)
     if (!checked || !(await methods(checked)).ok) return denied()
-    const result = await checked.client.auth.reauthenticate()
+    isolated = await createAccountSettingsClient(checked.credentials)
+    if (!isolated || !await context(userId, checked)) return denied()
+    const result = await isolated.auth.reauthenticate()
     if (result.error || !await context(userId, checked)) return { ok: false, message: "추가 확인 메일을 보내지 못했어요. 다시 시도해 주세요." }
     return { ok: true, message: "이 계정의 확인 메일에 있는 인증번호를 입력해 주세요." }
   } catch { return { ok: false, message: "추가 확인 메일을 보내지 못했어요. 잠시 후 다시 시도해 주세요." } }
+  finally { await isolated?.auth.dispose() }
 }
 
 /** Update the existing account only. Passwords and nonce remain in caller memory. */
 export async function updateAccountPassword(input: { userId: string; password: string; currentPassword?: string; nonce?: string }): Promise<AccountPasswordResult> {
+  let isolated: Client | null = null
   const error = (message: string): AccountPasswordResult => ({ ok: false, state: "ERROR", message })
   if (!accountConfig()?.passwordAuthEnabled) return error("비밀번호 설정이 잠시 닫혀 있어요.")
   if (input.password.length < PASSWORD_MIN_LENGTH || input.password.length > PASSWORD_MAX_LENGTH) return error(`${PASSWORD_MIN_LENGTH}자 이상 새 비밀번호를 입력해 주세요.`)
@@ -68,7 +74,9 @@ export async function updateAccountPassword(input: { userId: string; password: s
     const methodState = await methods(checked)
     if (!methodState.ok) return error(methodState.message)
     if (methodState.hasPassword && !input.currentPassword) return error("현재 비밀번호를 입력해 주세요.")
-    const result = await checked.client.auth.updateUser({ password: input.password,
+    isolated = await createAccountSettingsClient(checked.credentials)
+    if (!isolated || !await context(input.userId, checked)) return error("현재 로그인 세션을 다시 확인한 뒤 시도해 주세요.")
+    const result = await isolated.auth.updateUser({ password: input.password,
       ...(methodState.hasPassword ? { current_password: input.currentPassword } : {}), ...(input.nonce ? { nonce: input.nonce } : {}) })
     if (result.error) {
       if (["reauthentication_needed", "reauthentication_not_valid"].includes(result.error.code ?? "")) {
@@ -85,6 +93,7 @@ export async function updateAccountPassword(input: { userId: string; password: s
     if (!session.error && session.data.session === null) return { ok: true, state: "LOGIN_REQUIRED", message: "비밀번호를 저장했어요. 새 비밀번호로 로그인해 주세요." }
     return error("비밀번호 저장 응답은 받았지만 현재 세션을 확인하지 못했어요. 다시 계정을 확인해 주세요.")
   } catch { return error("비밀번호 저장 결과를 확인하지 못했어요. 잠시 후 계정 상태를 다시 확인해 주세요.") }
+  finally { await isolated?.auth.dispose() }
 }
 
 export async function reacceptAccountTerms(userId: string, config: AccountConfig): Promise<{ ok: boolean; message: string }> {

@@ -131,6 +131,42 @@ describe("password recovery has no ordinary account authority", () => {
     expect((await api.updateRecoveredPassword(secret)).ok).toBe(false); expect(guard.isAuthSessionQuarantined()).toBe(true)
     expect((await api.cancelPasswordRecovery()).state).toBe("PASSWORD_LOGIN_REQUIRED"); expect(guard.isAuthSessionQuarantined()).toBe(false)
   })
+  it.each(["weak_password", "same_password"])("recovery retry allows %s only with renewed exact session proof", async errorCode => {
+    await recover()
+    mocks.client.auth.updateUser.mockResolvedValueOnce({ data: { user: null }, error: { code: errorCode, name: "AuthApiError" } })
+    expect(await api.updateRecoveredPassword(secret)).toMatchObject({ ok: false, retryable: true })
+    expect(api.isPasswordRecoveryActive()).toBe(true)
+    expect(guard.isAuthSessionQuarantined()).toBe(true)
+    expect(mocks.client.auth.signOut).not.toHaveBeenCalled()
+    expect((await api.updateRecoveredPassword("different-valid-password")).state).toBe("PASSWORD_UPDATED")
+    expect(api.isPasswordRecoveryActive()).toBe(false)
+  })
+  it("recovery retry allows a returned transient network rejection after renewed proof", async () => {
+    await recover()
+    mocks.client.auth.updateUser.mockResolvedValueOnce({ data: { user: null }, error: { name: "AuthRetryableFetchError", status: 503 } })
+    expect(await api.updateRecoveredPassword(secret)).toMatchObject({ ok: false, retryable: true })
+    expect(api.isPasswordRecoveryActive()).toBe(true)
+    expect(mocks.client.auth.signOut).not.toHaveBeenCalled()
+  })
+  it("recovery retry rejects policy errors when the session changes during the write", async () => {
+    await recover()
+    mocks.client.auth.updateUser.mockImplementationOnce(async () => {
+      mocks.client.auth.getClaims.mockResolvedValueOnce({ data: { claims: { sub: owner, session_id: "33333333-3333-4333-8333-333333333333" } }, error: null })
+      return { data: { user: null }, error: { code: "weak_password", name: "AuthApiError" } }
+    })
+    const result = await api.updateRecoveredPassword(secret)
+    expect(result.ok).toBe(false)
+    expect(result.retryable).not.toBe(true)
+    expect(guard.isAuthSessionQuarantined()).toBe(true)
+  })
+  it("recovery retry never permits another write after a successful update with failed cleanup", async () => {
+    await recover()
+    mocks.client.auth.signOut.mockResolvedValueOnce({ error: new Error("not confirmed") })
+    const result = await api.updateRecoveredPassword(secret)
+    expect(result).toMatchObject({ ok: false, unsafeSessionOpen: true })
+    expect(result.retryable).not.toBe(true)
+    expect(mocks.client.auth.updateUser).toHaveBeenCalledOnce()
+  })
   it("blocks a changed ambient session before changing any password", async () => {
     await recover(); mocks.client.auth.getSession.mockResolvedValueOnce({ data: { session: { ...session, access_token: "another-verified-session-token-12345678" } }, error: null }); mocks.client.auth.getClaims.mockResolvedValueOnce({ data: { claims: { sub: owner, session_id: "33333333-3333-4333-8333-333333333333", amr: [{ method: "recovery" }] } }, error: null })
     expect((await api.updateRecoveredPassword(secret)).ok).toBe(false); expect(mocks.client.auth.updateUser).not.toHaveBeenCalled(); expect(guard.isAuthSessionQuarantined()).toBe(true)

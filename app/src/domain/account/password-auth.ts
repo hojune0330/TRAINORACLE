@@ -8,7 +8,7 @@ import { authSessionQuarantinePhase, beginAuthSessionQuarantine, clearAuthSessio
 
 export const PASSWORD_MIN_LENGTH = 8
 export const PASSWORD_MAX_LENGTH = 1024
-export type PasswordAuthResult = AuthVerificationResult & { readonly state: "ERROR" | "SIGNED_IN" | "EMAIL_CONFIRMATION_REQUIRED" | "PASSWORD_LOGIN_REQUIRED" | "RECOVERY_EMAIL_SENT" | "RECOVERY_READY" | "PASSWORD_UPDATED"; readonly recoveryEmail?: string }
+export type PasswordAuthResult = AuthVerificationResult & { readonly state: "ERROR" | "SIGNED_IN" | "EMAIL_CONFIRMATION_REQUIRED" | "PASSWORD_LOGIN_REQUIRED" | "RECOVERY_EMAIL_SENT" | "RECOVERY_READY" | "PASSWORD_UPDATED"; readonly recoveryEmail?: string; readonly retryable?: boolean }
 type Client = NonNullable<Awaited<ReturnType<typeof supabase>>>
 type Intent = { purpose: "SIGNUP" | "RECOVERY"; nonce: string; email: string; createdAt: number }
 type Captured = { intent: Intent; code: string; tokenHash?: never } | { intent: Intent; tokenHash: string; code?: never } | { invalid: true } | { signupFallback: true }
@@ -202,7 +202,19 @@ export async function updateRecoveredPassword(password: string): Promise<Passwor
       const currentToken = ambient.data.session?.access_token
       if (ambient.error || !currentToken || await proof(client, currentToken, held.userId, held.intent.email, false) !== held.sessionId) return failure("비밀번호 변경 계정이 바뀌었어요. 변경을 취소하고 다시 요청해 주세요.", true)
       const updated = await client.auth.updateUser({ password })
-      if (updated.error || updated.data.user?.id !== held.userId) return failure("비밀번호를 바꾸지 못했어요. 새 비밀번호를 확인해 주세요.")
+      if (updated.error) {
+        const rejected = ["weak_password", "same_password"].includes(updated.error.code ?? "")
+        const network = updated.error.name === "AuthRetryableFetchError"
+        if ((rejected || network) && recovery === held && Date.now() - held.intent.createdAt <= ttl
+          && (held.isolated ? await ordinarySessionAbsent() : readIntent()?.nonce === held.intent.nonce)) {
+          const current = await client.auth.getSession(), token = current.data.session?.access_token
+          if (!current.error && token && await proof(client, token, held.userId, held.intent.email, false) === held.sessionId) {
+            return { ...failure(rejected ? "현재와 다른, 더 길고 추측하기 어려운 새 비밀번호를 입력해 다시 저장해 주세요." : "연결이 불안정해 저장 결과를 확인하지 못했어요. 연결을 확인한 뒤 새 비밀번호를 다시 입력해 주세요."), retryable: true }
+          }
+        }
+        return failure("비밀번호를 바꾸지 못했어요. 변경을 취소하고 다시 요청해 주세요.")
+      }
+      if (updated.data.user?.id !== held.userId) return failure("비밀번호 변경 계정이 바뀌었어요. 변경을 취소하고 다시 요청해 주세요.", true)
       const closed = await closeRecovery(client, held.intent.nonce, held.isolated)
       if (!closed) return failure("비밀번호를 바꿨지만 변경 세션을 끝내지 못했어요. 먼저 로그아웃해 주세요.", true)
       recovery = null; clearIntent(held.intent.nonce); completion = null; notify()

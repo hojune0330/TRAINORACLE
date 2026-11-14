@@ -5,13 +5,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   currentUser: vi.fn(), loadSetup: vi.fn(), pending: null as import("../domain/account/auth-onboarding").PendingAccountSetup | null,
-  recovery: false, quarantined: false, mounts: vi.fn(), currentAttempt: vi.fn(),
+  recovery: false, quarantined: false, mounts: vi.fn(), currentAttempt: vi.fn(), finalize: vi.fn(), scopeRefresh: vi.fn(),
 }))
 vi.mock("../domain/account/auth", () => ({ currentUser: mocks.currentUser, authReturnAttemptId: () => null,
   clearAuthReturnAttemptIdFromUrl: vi.fn(), onAuthChange: () => () => {}, signOut: vi.fn(), maskPhoneNumber: (s: string) => s }))
 vi.mock("../domain/account/auth-onboarding", () => ({ readPendingAccountSetup: () => mocks.pending,
   clearCurrentSetupReceipt: vi.fn(), clearPendingAccountSetup: vi.fn(), clearPendingAccountSetupForAttempt: vi.fn(),
-  writeCurrentSetupReceipt: vi.fn(), finalizePendingAccountSetup: vi.fn() }))
+  writeCurrentSetupReceipt: vi.fn(), finalizePendingAccountSetup: mocks.finalize }))
 vi.mock("../domain/account/email-auth-callback", () => ({ consumeCapturedEmailAuthCallback: async () => ({ handled: false }) }))
 vi.mock("../domain/account/oauth-auth-callback", () => ({ consumeCapturedOAuthAuthCallback: async () => ({ handled: false }) }))
 vi.mock("../domain/account/account-service", () => ({ loadPrivateProfileSetupStatus: mocks.loadSetup }))
@@ -24,7 +24,7 @@ vi.mock("../domain/account/config", () => ({ accountConfig: () => ({ passwordAut
   termsOfService: { url: "https://example.test/terms", version: "2026-11-04" } }) }))
 vi.mock("../domain/account/service-date", () => ({ koreaServiceDate: () => "2026-11-14" }))
 vi.mock("../domain/account/account-journal-api", () => ({ accountJournalPreviewEnabled: () => false }))
-vi.mock("../domain/account/verified-account-scope", () => ({ requestVerifiedAccountScopeRefresh: vi.fn() }))
+vi.mock("../domain/account/verified-account-scope", () => ({ requestVerifiedAccountScopeRefresh: mocks.scopeRefresh }))
 vi.mock("../hooks/useActiveContentScroll", () => ({ useActiveContentScroll: vi.fn() }))
 vi.mock("../domain/coaching-self-hosted", () => ({ coachingEndpoint: () => "https://example.test/coaching" }))
 vi.mock("../components/SelfHostedCoachingPanel", () => ({ SelfHostedCoachingPanel: () => { mocks.mounts("ai"); return <div data-testid="ai" /> } }))
@@ -56,11 +56,47 @@ beforeEach(() => {
   mocks.currentUser.mockReset().mockResolvedValue(user)
   mocks.loadSetup.mockReset().mockResolvedValue(ready)
   mocks.currentAttempt.mockReset().mockResolvedValue(true)
+  mocks.finalize.mockReset()
   mocks.pending = null; mocks.recovery = false; mocks.quarantined = false
 })
 afterEach(cleanup)
 
 describe("separate account surfaces", () => {
+  it("announces a confirmed legacy admission once before the scope refresh can remount Account", async () => {
+    mocks.pending = { schemaVersion: 4, method: "phone", returnIntent: "connection", attemptId: "a".repeat(32),
+      phase: "AUTH_VERIFIED", createdAtMs: Date.now(), verifiedUserId: user.id, verifiedMethod: "phone",
+      verifiedSessionId: "test-session", expectedEmail: null, birthDate: "2000-01-01",
+      privacyPolicyVersion: "2026-11-04", termsOfServiceVersion: "2026-11-04" }
+    mocks.loadSetup.mockResolvedValue({ ...ready, ready: false, canComplete: true, requiredAction: "profile" })
+    const events: string[] = []
+    const onAdmissionReady = vi.fn(() => { events.push("admission") })
+    mocks.scopeRefresh.mockImplementation(() => { events.push("refresh") })
+    mocks.finalize.mockImplementation(async ({ onConfirmed }: { onConfirmed: (pending: import("../domain/account/auth-onboarding").PendingAccountSetup | null) => Promise<void | boolean> }) => {
+      await onConfirmed(mocks.pending)
+      mocks.pending = null
+      return { attempted: true, result: { ok: true, message: "saved" } }
+    })
+    render(<Account surface="auth" onAdmissionReady={onAdmissionReady} />)
+    await waitFor(() => expect(mocks.scopeRefresh).toHaveBeenCalledOnce())
+    expect(events).toEqual(["admission", "refresh"])
+    expect(onAdmissionReady).toHaveBeenCalledExactlyOnceWith({ userId: user.id, attemptId: "a".repeat(32), returnIntent: "connection", entryMode: "signup" })
+    expect(mocks.currentAttempt).toHaveBeenCalledWith(user.id, "test-session")
+  })
+
+  it("a replacement ready Account consumes retained legacy proof once", async () => {
+    mocks.pending = { schemaVersion: 4, method: "phone", returnIntent: "connection", attemptId: "a".repeat(32),
+      phase: "AUTH_VERIFIED", createdAtMs: Date.now(), verifiedUserId: user.id, verifiedMethod: "phone",
+      verifiedSessionId: "test-session", expectedEmail: null, birthDate: "2000-01-01",
+      privacyPolicyVersion: "2026-11-04", termsOfServiceVersion: "2026-11-04" }
+    const onAdmissionReady = vi.fn()
+    const view = render(<Account surface="auth" onAdmissionReady={onAdmissionReady} />)
+    await waitFor(() => expect(onAdmissionReady).toHaveBeenCalledOnce())
+    expect(onAdmissionReady).toHaveBeenCalledWith({ userId: user.id, attemptId: "a".repeat(32), returnIntent: "connection", entryMode: "signup" })
+    view.rerender(<Account surface="auth" onAdmissionReady={onAdmissionReady} />)
+    expect(onAdmissionReady).toHaveBeenCalledOnce()
+    expect(mocks.finalize).not.toHaveBeenCalled()
+  })
+
   it.each([
     { name: "failed", status: { ...ready, ok: false, ready: false, requiredAction: "blocked", message: "확인 실패" }, settled: "계정을 확인하지 못했어요" },
     { name: "needs-profile", status: { ...ready, ready: false, canComplete: true, requiredAction: "complete-profile" }, settled: "회원가입 마무리" },

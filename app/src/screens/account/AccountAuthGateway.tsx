@@ -87,7 +87,7 @@ export function AccountAuthGateway({
   const [notice, setNotice] = React.useState<string | null>(null)
   const [noticeTone, setNoticeTone] = React.useState<NoticeTone>("pending")
   const activeStepRef = React.useRef<HTMLDivElement>(null)
-  useActiveContentScroll(step, activeStepRef, undefined, true)
+  useActiveContentScroll(step === "method" ? null : step, activeStepRef, undefined, true)
 
   const showNotice = (message: string, tone: NoticeTone) => {
     setNotice(message)
@@ -174,6 +174,7 @@ export function AccountAuthGateway({
       setNotice(null)
       const pending = createPendingAccountSetup({
         method: "email",
+        returnIntent,
         birthDate,
         config,
         attemptId: emailCallbackAttemptId,
@@ -207,7 +208,7 @@ export function AccountAuthGateway({
     }
     setBusy(true)
     setNotice(null)
-    const pending = createPendingAccountSetup({ method, birthDate, config })
+    const pending = createPendingAccountSetup({ method, birthDate, config, returnIntent })
     writePendingAccountSetup(pending)
     markPendingAccountAuthStarted(pending.attemptId)
     try {
@@ -232,7 +233,7 @@ export function AccountAuthGateway({
     }
     setBusy(true)
     setNotice(null)
-    const pending = createPendingAccountSetup({ method: "email", birthDate, config, expectedEmail })
+    const pending = createPendingAccountSetup({ method: "email", birthDate, config, expectedEmail, returnIntent })
     writePendingAccountSetup(pending)
     markPendingAccountAuthStarted(pending.attemptId)
     try {
@@ -252,7 +253,7 @@ export function AccountAuthGateway({
     if (phoneResendSeconds > 0) return
     setBusy(true)
     setNotice(null)
-    const pending = createPendingAccountSetup({ method: "phone", birthDate, config })
+    const pending = createPendingAccountSetup({ method: "phone", birthDate, config, returnIntent })
     writePendingAccountSetup(pending)
     markPendingAccountAuthStarted(pending.attemptId)
     try {

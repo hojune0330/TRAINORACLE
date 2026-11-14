@@ -24,6 +24,9 @@ const META_ROUTES = new Set([
 const LOUNGE_IDENTITY_ROUTES = new Set([
   "/rest/v1/rpc/get_lounge_admission", "/rest/v1/rpc/issue_lounge_grant",
 ])
+const ACCOUNT_SETTINGS_ROUTES = new Set([
+  "/rest/v1/rpc/get_account_auth_methods", "/rest/v1/rpc/reaccept_account_terms",
+])
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu
 function tokenSubject(authorization: string | null): string | null {
   try {
@@ -70,6 +73,23 @@ function tokenSessionId(authorization: string | null): string | null {
     const sessionId = (value as { session_id?: unknown })?.session_id
     return typeof sessionId === "string" && uuid.test(sessionId) ? sessionId : null
   } catch { return null }
+}
+
+// Account identity and legal consent are independent of optional health storage.
+// Accept only the SDK's captured, bounded metadata body; SQL authorizes it.
+function accountSettingsBody(path: string, body: unknown, subject: string | null, session: string | null): boolean {
+  if (!subject || !session || typeof body !== "string" || body.length > 1024) return false
+  try {
+    const value = JSON.parse(body)
+    if (!value || typeof value !== "object" || Array.isArray(value)) return false
+    const reaccept = path === "/rest/v1/rpc/reaccept_account_terms"
+    const keys = ["expected_user_id_input", "expected_session_id_input",
+      ...(reaccept ? ["privacy_policy_version_input", "terms_of_service_version_input"] : [])]
+    return Object.keys(value).sort().join(",") === keys.sort().join(",")
+      && value.expected_user_id_input === subject && value.expected_session_id_input === session
+      && (!reaccept || [value.privacy_policy_version_input, value.terms_of_service_version_input]
+        .every(version => typeof version === "string" && /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/u.test(version)))
+  } catch { return false }
 }
 
 export function createConsentCheckedFetch(serviceUrl: string, transport: typeof fetch = fetch): typeof fetch {
@@ -119,6 +139,14 @@ export function createConsentCheckedFetch(serviceUrl: string, transport: typeof 
     const subject = tokenSubject(headers.get("Authorization"))
     const withdrawal = comparison && comparisonWithdrawal(input, init)
     const signal = init?.signal ?? (input instanceof Request ? input.signal : undefined)
+    if (url.origin === service.origin && ACCOUNT_SETTINGS_ROUTES.has(url.pathname)) {
+      const method = (init?.method ?? (input instanceof Request ? input.method : "GET")).toUpperCase()
+      if (method !== "POST" || url.search || url.hash || url.username || url.password
+        || headers.get("Content-Type")?.split(";")[0]?.trim().toLowerCase() !== "application/json"
+        || !accountSettingsBody(url.pathname, init?.body, subject, tokenSessionId(headers.get("Authorization")))
+        || signal?.aborted) return denied()
+      return transport(url.href, { ...init, method: "POST", headers, signal })
+    }
     if (url.origin === service.origin && LOUNGE_IDENTITY_ROUTES.has(url.pathname)
       && !url.search && !url.hash && !url.username && !url.password
       && headers.get("Content-Type")?.split(";")[0]?.trim().toLowerCase() === "application/json"

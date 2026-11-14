@@ -13,6 +13,53 @@ const authorization=`Bearer x.${btoa(JSON.stringify({sub:A,session_id:B})).repla
 const receipt={userId:A,revision:1,purposeVersion:"2026-10-05",healthStorage:true,journalTextStorage:true,operationsReady:true}
 const init={method:"POST",headers:{Authorization:authorization,apikey:"synthetic-public"},body:'{"private":"synthetic-health"}'}
 beforeEach(()=>{localStorage.clear();rememberStorageConsentRevision(A,1)})
+
+describe("own-account settings metadata transport", () => {
+  const methods = { expected_user_id_input: A, expected_session_id_input: B }
+  const legal = { ...methods, privacy_policy_version_input: "2026-11-04", terms_of_service_version_input: "2026-11-04" }
+  const request = (body: unknown): RequestInit => ({ ...init, headers: { ...init.headers, "Content-Type": "application/json" }, body: JSON.stringify(body) })
+  it.each([["get_account_auth_methods", methods], ["reaccept_account_terms", legal]] as const)(
+    "lets the actual SDK reach %s without health consent, retaining server rejection", async (rpc, body) => {
+      holdStorageTransmission(A)
+      const transport = vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify({ message: "ACCOUNT_SETTINGS_UNAVAILABLE" }), { status: 403 }))
+      const sdk = createClient(origin, "synthetic-public", { global: { fetch: createConsentCheckedFetch(origin, transport), headers: { Authorization: authorization } },
+        auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, storageKey: `settings-${rpc}` } })
+      try {
+        await sdk.auth.initialize()
+        const result = await sdk.rpc(rpc, body)
+        expect(result.error?.message).toBe("ACCOUNT_SETTINGS_UNAVAILABLE")
+        expect(transport).toHaveBeenCalledTimes(1)
+        expect(String(transport.mock.calls[0]?.[0])).toBe(`${origin}/rest/v1/rpc/${rpc}`)
+        expect(JSON.parse(String(transport.mock.calls[0]?.[1]?.body))).toEqual(body)
+      } finally { releaseStorageTransmissionHold(A) }
+    })
+  it.each([
+    { rpc: "get_account_auth_methods", body: { ...methods, health: "private" } },
+    { rpc: "reaccept_account_terms", body: { ...legal, journal: "private" } },
+    { rpc: "get_account_auth_methods", body: { ...methods, expected_user_id_input: B } },
+    { rpc: "reaccept_account_terms", body: { ...legal, expected_session_id_input: A } },
+    { rpc: "reaccept_account_terms", body: { ...legal, privacy_policy_version_input: "x".repeat(65) } },
+    { rpc: "reaccept_account_terms", body: { ...legal, terms_of_service_version_input: { health: "private" } } },
+    { rpc: "reaccept_account_terms", body: methods },
+  ])("rejects an invalid metadata shape before any transport: $rpc $body", async ({ rpc, body }) => {
+    const transport = vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify(receipt)))
+    expect((await createConsentCheckedFetch(origin, transport)(`${origin}/rest/v1/rpc/${rpc}`, request(body))).status).toBe(403)
+    expect(transport).not.toHaveBeenCalled()
+  })
+  it.each(["GET", "PATCH"])("rejects %s metadata requests", async method => {
+    const transport = vi.fn<typeof fetch>()
+    expect((await createConsentCheckedFetch(origin, transport)(`${origin}/rest/v1/rpc/get_account_auth_methods`, { ...request(methods), method })).status).toBe(403)
+    expect(transport).not.toHaveBeenCalled()
+  })
+  it("does not exempt query overrides, raw Request streams or missing bearer sessions", async () => {
+    const transport = vi.fn<typeof fetch>(), wrapped = createConsentCheckedFetch(origin, transport)
+    const path = `${origin}/rest/v1/rpc/get_account_auth_methods`
+    expect((await wrapped(path + "?health=private", request(methods))).status).toBe(403)
+    expect((await wrapped(new Request(path, request(methods)))).status).toBe(403)
+    expect((await wrapped(path, { ...request(methods), headers: { "Content-Type": "application/json" } })).status).toBe(403)
+    expect(transport).not.toHaveBeenCalled()
+  })
+})
 describe("request-local collection send review", () => {
   const commitPath = origin + "/functions/v1/account-plan-collection"
   const guardedInit = (nonce: string): RequestInit => ({ ...init,

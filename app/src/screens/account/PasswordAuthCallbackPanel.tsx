@@ -27,6 +27,7 @@ export function PasswordAuthCallbackPanel({ onLoginRequired, onSignedIn, actions
       })
     }
     else if (result.ok && result.state === "RECOVERY_READY" && result.recoveryEmail) { setRecoveryEmail(result.recoveryEmail); setState("ready") }
+    else if (!result.ok && result.retryable === true && !result.unsafeSessionOpen && recoveryEmail) setState("ready")
     else setState("error")
   }
   React.useEffect(() => {
