@@ -35,7 +35,16 @@ const COMPLETABLE_ADMISSION_STATUSES = new Set([
   "BETA_NOT_ENROLLED",
 ])
 
+function authFailureMessage(value: unknown): string | null {
+  if (value === "AUTH_SESSION_INACTIVE") return "로그인 세션을 다시 확인해야 해요. 로그아웃한 뒤 다시 로그인해 주세요."
+  if (value === "AUTH_CHANNEL_DISABLED") return "이 로그인 방식의 계정 이용이 잠시 중단됐어요. 로그인은 확인했으며, 다시 로그인해도 현재 제한은 바뀌지 않아요. 잠시 후 다시 확인해 주세요."
+  if (value === "AUTH_METHOD_UNSUPPORTED") return "지원하지 않는 로그인 방식이에요. 로그아웃한 뒤 이메일 확인 링크나 간편 로그인으로 다시 시작해 주세요."
+  return null
+}
+
 function setupStatusFromServer(value: unknown): PrivateProfileSetupStatus {
+  const authMessage = authFailureMessage(value)
+  if (authMessage !== null) return { ok: false, ready: false, canComplete: false, message: authMessage }
   if (value === "ADMITTED") {
     return { ok: true, ready: true, canComplete: false, message: "가입 확인을 마쳤어요." }
   }
@@ -65,9 +74,6 @@ function setupStatusFromServer(value: unknown): PrivateProfileSetupStatus {
   }
   if (value === "LOGIN_REQUIRED" || value === "IDENTITY_MISMATCH") {
     return { ok: false, ready: false, canComplete: false, message: "로그인 정보를 다시 확인해 주세요." }
-  }
-  if (value === "AUTH_METHOD_UNSUPPORTED") {
-    return { ok: false, ready: false, canComplete: false, message: "지원하지 않는 로그인 방식이에요. 로그아웃한 뒤 이메일 확인 링크나 간편 로그인으로 다시 시작해 주세요." }
   }
   return { ok: false, ready: false, canComplete: false, message: "가입 확인 정보를 확인하지 못했어요." }
 }
@@ -182,9 +188,8 @@ export async function savePrivateProfile(input: SaveProfileInput): Promise<Accou
   if (data === "SESSION_MISMATCH") {
     return { ok: false, message: "로그인 세션이 바뀌었어요. 가입 확인을 처음부터 다시 진행해 주세요." }
   }
-  if (data === "AUTH_METHOD_UNSUPPORTED") {
-    return { ok: false, message: "지원하지 않는 로그인 방식이에요. 로그아웃한 뒤 이메일 확인 링크나 간편 로그인으로 다시 시작해 주세요." }
-  }
+  const authMessage = authFailureMessage(data)
+  if (authMessage !== null) return { ok: false, message: authMessage }
   if (data === "ACCOUNT_FEATURE_DISABLED") {
     return { ok: false, message: "계정 기능이 잠시 꺼져 있어요." }
   }

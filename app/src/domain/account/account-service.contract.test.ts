@@ -198,6 +198,17 @@ describe("beta account admission service", () => {
     })
   })
 
+  it("distinguishes an inactive session from an operational auth-channel stop on both admission paths", async () => {
+    for (const [status, message] of [
+      ["AUTH_SESSION_INACTIVE", "로그인 세션을 다시 확인해야 해요. 로그아웃한 뒤 다시 로그인해 주세요."],
+      ["AUTH_CHANNEL_DISABLED", "이 로그인 방식의 계정 이용이 잠시 중단됐어요. 로그인은 확인했으며, 다시 로그인해도 현재 제한은 바뀌지 않아요. 잠시 후 다시 확인해 주세요."],
+    ]) {
+      supabaseMock.mockResolvedValue(verifiedClient(vi.fn().mockResolvedValue({ data: status, error: null })))
+      await expect(loadPrivateProfileSetupStatus({ userId: "athlete-a" })).resolves.toEqual({ ok: false, ready: false, canComplete: false, message })
+      await expect(savePrivateProfile(profileInput)).resolves.toEqual({ ok: false, message })
+    }
+  })
+
   it("binds account deletion to the same server-verified user", async () => {
     const rpc = vi.fn().mockResolvedValue({ data: "2026-10-03T00:00:00.000Z", error: null })
     supabaseMock.mockResolvedValue(verifiedClient(rpc))

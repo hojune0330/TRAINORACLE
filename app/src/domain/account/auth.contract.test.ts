@@ -10,7 +10,7 @@ import {
   signOut,
   verifyPhoneOtp,
 } from "./auth"
-import { createPendingAccountSetup, markPendingAccountAuthStarted, writePendingAccountSetup } from "./auth-onboarding"
+import { createPendingAccountAuthAttempt, createPendingAccountSetup, markPendingAccountAuthStarted, writePendingAccountSetup } from "./auth-onboarding"
 import { beginAuthSessionQuarantine, isAuthSessionQuarantined } from "./auth-session-quarantine"
 
 const { accountConfigMock, supabaseMock } = vi.hoisted(() => ({
@@ -94,7 +94,7 @@ describe("simple social authentication", () => {
   })
 
   it.each(["kakao", "google"] as const)("starts %s through the same Supabase OAuth boundary", async (provider) => {
-    prepareAttempt(provider)
+    writePendingAccountSetup(createPendingAccountAuthAttempt({ method: provider, entryMode: "login", attemptId }))
     const signInWithOAuth = vi.fn().mockResolvedValue({ error: null })
     supabaseMock.mockResolvedValue({ auth: { signInWithOAuth } })
 

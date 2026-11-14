@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
   createPendingAccountSetup,
+  createPendingAccountAuthAttempt,
   clearPendingAccountSetupForAttempt,
   finalizePendingAccountSetup,
   hasCurrentSetupReceipt,
@@ -350,6 +351,30 @@ describe("pre-auth account onboarding", () => {
     clearPendingAccountSetupForAttempt(attemptA)
     expect(readPendingAccountSetup()?.attemptId).toBe(attemptB)
     clearPendingAccountSetupForAttempt(attemptB)
+    expect(readPendingAccountSetup()).toBeNull()
+  })
+})
+
+
+describe("auth-only account attempt", () => {
+  it("retains exact provider/user/session proof without creating enrollment facts or saving a profile", async () => {
+    const attempt = createPendingAccountAuthAttempt({ method: "google", entryMode: "signup", attemptId: attemptA })
+    writePendingAccountSetup(attempt)
+    expect(readPendingAccountSetup()).toMatchObject({ flow: "AUTH_ONLY", birthDate: null, privacyPolicyVersion: null, termsOfServiceVersion: null })
+    expect(markPendingAccountAuthStarted(attemptA)).toBe(true)
+    expect(markPendingAccountAuthVerified(attemptA, "athlete-a", "kakao", sessionA)).toBe(false)
+    expect(markPendingAccountAuthVerified(attemptA, "athlete-a", "google", sessionA)).toBe(true)
+    expect(markPendingAccountAuthVerified(attemptA, "athlete-b", "google", sessionA)).toBe(false)
+    const save = vi.fn()
+    await expect(finalizePendingAccountSetup({ userId: "athlete-a", returnAttemptId: attemptA, today: "2026-08-25", config, onSaveProfile: save }))
+      .resolves.toEqual({ attempted: false, result: null })
+    expect(save).not.toHaveBeenCalled()
+  })
+  it("rejects auth-only facts smuggling and expires an exact attempt after 15 minutes", () => {
+    const attempt = createPendingAccountAuthAttempt({ method: "kakao", entryMode: "login", attemptId: attemptA, createdAtMs: 1000 })
+    writePendingAccountSetup(attempt)
+    expect(readPendingAccountSetup(sessionStorage, 1000 + 15 * 60 * 1000 + 1)).toBeNull()
+    sessionStorage.setItem("trainoracle.account.pending-setup.v1", JSON.stringify({ ...attempt, createdAtMs: Date.now(), birthDate: "2000-01-01" }))
     expect(readPendingAccountSetup()).toBeNull()
   })
 })

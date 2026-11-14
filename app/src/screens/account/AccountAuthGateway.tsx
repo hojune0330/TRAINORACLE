@@ -15,6 +15,7 @@ import {
   clearPendingAccountSetup,
   clearPendingAccountSetupForAttempt,
   createPendingAccountSetup,
+  createPendingAccountAuthAttempt,
   markPendingAccountAuthStarted,
   normalizeAuthEmail,
   onlineAccountEligibility,
@@ -92,7 +93,26 @@ export function AccountAuthGateway({
     return () => window.clearTimeout(timer)
   }, [phoneResendSeconds])
 
-  const chooseMethod = (nextMethod: AuthMethod) => {
+  const chooseMethod = async (nextMethod: AuthMethod) => {
+    if (busy) return
+    if (nextMethod === "google" || nextMethod === "kakao") {
+      setNotice(null); setBusy(true)
+      let attemptId: string | null = null
+      const clearAttempt = () => { if (attemptId !== null) try { clearPendingAccountSetupForAttempt(attemptId) } catch { /* storage failure cannot keep the button busy */ } }
+      try {
+        clearPendingAccountSetup()
+        const pending = createPendingAccountAuthAttempt({ method: nextMethod, entryMode: mode })
+        attemptId = pending.attemptId
+        writePendingAccountSetup(pending)
+        if (!markPendingAccountAuthStarted(pending.attemptId)) throw new Error("AUTH_ATTEMPT_NOT_STARTED")
+        const result = await onSocialSignIn(nextMethod, pending.attemptId)
+        if (!result.ok) { clearAttempt(); showNotice(result.message, "error") }
+      } catch {
+        clearAttempt()
+        showNotice("간편 로그인을 시작하지 못했어요. 잠시 후 다시 시도해 주세요.", "error")
+      } finally { setBusy(false) }
+      return
+    }
     clearPendingAccountSetup()
     setMethod(nextMethod)
     setNotice(null)
@@ -275,16 +295,16 @@ export function AccountAuthGateway({
           </div>
           <div className="account-auth__methods" aria-label={`${actionLabel} 방법 선택`}>
             {config.kakaoAuthEnabled && (
-              <MethodButton className="account-auth__method--kakao" mark="K" label={`카카오로 ${actionLabel}`} onClick={() => chooseMethod("kakao")} />
+              <MethodButton className="account-auth__method--kakao" mark="K" label={`카카오로 ${actionLabel}`} disabled={busy} onClick={() => void chooseMethod("kakao")} />
             )}
             {config.googleAuthEnabled && (
-              <MethodButton mark="G" label={`Google로 ${actionLabel}`} onClick={() => chooseMethod("google")} />
+              <MethodButton mark="G" label={`Google로 ${actionLabel}`} disabled={busy} onClick={() => void chooseMethod("google")} />
             )}
             {config.emailAuthEnabled && (
-              <MethodButton icon={<Mail aria-hidden="true" size={19} />} label={`이메일로 ${actionLabel}`} onClick={() => chooseMethod("email")} />
+              <MethodButton icon={<Mail aria-hidden="true" size={19} />} label={`이메일로 ${actionLabel}`} disabled={busy} onClick={() => void chooseMethod("email")} />
             )}
             {config.phoneAuthEnabled && (
-              <MethodButton icon={<Phone aria-hidden="true" size={19} />} label={`휴대전화로 ${actionLabel}`} onClick={() => chooseMethod("phone")} />
+              <MethodButton icon={<Phone aria-hidden="true" size={19} />} label={`휴대전화로 ${actionLabel}`} disabled={busy} onClick={() => void chooseMethod("phone")} />
             )}
           </div>
           <div className="account-auth__mode-switch">
@@ -480,15 +500,16 @@ export function AccountAuthGateway({
   )
 }
 
-function MethodButton({ mark, icon, label, className = "", onClick }: {
+function MethodButton({ mark, icon, label, className = "", disabled = false, onClick }: {
   readonly mark?: string
   readonly icon?: React.ReactNode
   readonly label: string
   readonly className?: string
+  readonly disabled?: boolean
   readonly onClick: () => void
 }) {
   return (
-    <button className={`account-auth__method ${className}`} type="button" onClick={onClick}>
+    <button className={`account-auth__method ${className}`} type="button" disabled={disabled} onClick={onClick}>
       <span className="account-auth__method-mark" aria-hidden="true">{icon ?? mark}</span>
       <span>{label}</span>
       <ChevronRight aria-hidden="true" size={18} />

@@ -14,7 +14,7 @@ import {
   consumeCapturedOAuthAuthCallback,
 } from "./oauth-auth-callback"
 import {
-  createPendingAccountSetup,
+  createPendingAccountAuthAttempt,
   markPendingAccountAuthStarted,
   readPendingAccountSetup,
   writePendingAccountSetup,
@@ -36,10 +36,9 @@ const config = {
 }
 
 function prepareGoogleAttempt(): void {
-  writePendingAccountSetup(createPendingAccountSetup({
+  writePendingAccountSetup(createPendingAccountAuthAttempt({
     method: "google",
-    birthDate: "2000-01-01",
-    config,
+    entryMode: "signup",
     attemptId,
   }))
   markPendingAccountAuthStarted(attemptId)

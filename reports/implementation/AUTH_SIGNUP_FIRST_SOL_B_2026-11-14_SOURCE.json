@@ -1,0 +1,75 @@
+{
+  "date": "2026-11-14",
+  "worktree": "TRAINORACLE-auth-hotfix-20261114",
+  "baseline": "0db401",
+  "owner": "Sol B",
+  "sourceSetSha256": "2362f478cf6e751dd34619e52c16a48d5384ef4144b2ccc53a8c0e461b5bc03f",
+  "files": [
+    {
+      "path": "app/src/screens/account/AccountAuthGateway.tsx",
+      "bytes": 24727,
+      "sha256": "23e9c5b50bfb4fedfea5cbfebc0acf9449c69d8533f89eb47d11b6c9dbab4975"
+    },
+    {
+      "path": "app/src/domain/account/auth.ts",
+      "bytes": 19940,
+      "sha256": "3c6607a29e51b26fe89164ed3c66862c88e7bfe6b1a97ffd2b1e90028a906d24"
+    },
+    {
+      "path": "app/src/domain/account/auth-onboarding.ts",
+      "bytes": 16871,
+      "sha256": "c05d88c42d4068a3a01ae21b4f71311c49e6f175156fc2f6f5e15097e9444ad8"
+    },
+    {
+      "path": "app/src/screens/Account.tsx",
+      "bytes": 34269,
+      "sha256": "abac024bef0103ea3cc51c740a39cea41e2107ca9cdcf0f6eaaa8fadf6689b4f"
+    },
+    {
+      "path": "app/src/screens/account/BetaAccountSettings.tsx",
+      "bytes": 8108,
+      "sha256": "3a56d3908b223e152d906809dfbf06263cab48ca35d3f702b0f5c16f34834800"
+    },
+    {
+      "path": "app/src/screens/account/AccountAuthGateway.contract.test.tsx",
+      "bytes": 17376,
+      "sha256": "50b31fd557e6ae4207cf364890c7de585a3e385fbf4eb876eac0cd3281f93e10"
+    },
+    {
+      "path": "app/src/domain/account/auth-onboarding.contract.test.ts",
+      "bytes": 13973,
+      "sha256": "7b9cf8c917e3c64dc60425dde91916959e7757f07bef69b1fa591259641f2478"
+    },
+    {
+      "path": "app/src/domain/account/oauth-auth-callback.contract.test.ts",
+      "bytes": 9588,
+      "sha256": "19211272a2a298434b0fe1ebb0a9ca2a0f89d8f6b883fd0731b274103bfb3154"
+    },
+    {
+      "path": "app/src/domain/account/auth.contract.test.ts",
+      "bytes": 19536,
+      "sha256": "e2b6ed4dbd76fe47d7086a70409e9a39ee86fd36d6845634775187e8d9872083"
+    },
+    {
+      "path": "app/src/screens/Account.session-exit.contract.test.tsx",
+      "bytes": 24002,
+      "sha256": "874bee3f26cc472759e589b113b62516bb5dfd6273ead548793ce9547e873515"
+    }
+  ],
+  "validation": {
+    "command": "node node_modules/vitest/vitest.mjs run src/screens/account/AccountAuthGateway.contract.test.tsx src/domain/account/auth-onboarding.contract.test.ts src/domain/account/oauth-auth-callback.contract.test.ts src/domain/account/auth.contract.test.ts src/screens/Account.session-exit.contract.test.tsx --maxWorkers=1 --no-file-parallelism --testNamePattern 'mobile-first account authentication gateway|social auth preparation failure|pre-auth account onboarding|auth-only account attempt|attempt-bound OAuth PKCE callback|simple social authentication|auth-first admission' --reporter=verbose",
+    "cwd": "app",
+    "exitCode": 0,
+    "filesPassed": 5,
+    "testsPassed": 56,
+    "testNameFiltered": 44,
+    "durationSeconds": 57.18,
+    "postCheckDelta": "One neutral failure-state copy replacement in Account.tsx only; no rerun",
+    "fullSuite": "NOT_RUN",
+    "typecheck": "NOT_RUN_BY_B",
+    "build": "NOT_RUN_BY_B",
+    "visualBrowser": "NOT_RUN",
+    "liveAccount": "NOT_RUN",
+    "operations": "NONE_BY_B"
+  }
+}

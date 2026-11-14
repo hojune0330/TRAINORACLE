@@ -139,7 +139,7 @@ export function BetaAccountSettings({
             <span><a href={legalDocuments.termsOfService.url} target="_blank" rel="noreferrer">이용약관</a>을 읽었어요.</span>
           </label>
           <button type="button" style={primaryBtn} disabled={busy || birthDate === "" || !privacyAcknowledged || !termsAcknowledged} onClick={() => void save()}>
-            계정 정보 저장
+            {busy ? "가입 확인 중…" : completionOnly ? "회원가입 완료" : "계정 정보 저장"}
           </button>
         </>
       )}

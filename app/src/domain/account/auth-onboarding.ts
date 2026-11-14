@@ -6,7 +6,7 @@ import type { SocialAuthProvider } from "./auth"
 
 export type AuthMethod = SocialAuthProvider | "email" | "phone"
 
-export type PendingAccountSetup = {
+type ProfileAccountSetup = {
   readonly schemaVersion: 4
   readonly attemptId: string
   readonly method: AuthMethod
@@ -26,6 +26,28 @@ export type PendingAccountSetup = {
   readonly privacyPolicyVersion: string
   readonly termsOfServiceVersion: string
   readonly createdAtMs: number
+}
+
+/** Authentication proof only: no birth date or legal consent has been supplied. */
+export type AuthOnlyAccountAttempt = Omit<ProfileAccountSetup, "schemaVersion" | "birthDate" | "privacyPolicyVersion" | "termsOfServiceVersion"> & {
+  readonly schemaVersion: 5
+  readonly flow: "AUTH_ONLY"
+  readonly entryMode: "login" | "signup"
+  readonly method: SocialAuthProvider
+  readonly birthDate: null
+  readonly privacyPolicyVersion: null
+  readonly termsOfServiceVersion: null
+}
+export type PendingAccountSetup = ProfileAccountSetup | AuthOnlyAccountAttempt
+export function isAuthOnlyAccountAttempt(pending: PendingAccountSetup): pending is AuthOnlyAccountAttempt {
+  return pending.schemaVersion === 5 && pending.flow === "AUTH_ONLY"
+}
+export function createPendingAccountAuthAttempt(input: { method: SocialAuthProvider; entryMode: "login" | "signup"; createdAtMs?: number; attemptId?: string }): AuthOnlyAccountAttempt {
+  const attemptId = input.attemptId ?? newAuthAttemptId()
+  if (!isAuthAttemptId(attemptId) || (input.method !== "google" && input.method !== "kakao")) throw new Error("INVALID_AUTH_ATTEMPT")
+  return { schemaVersion: 5, flow: "AUTH_ONLY", entryMode: input.entryMode, attemptId, method: input.method, phase: "PREPARED",
+    verifiedUserId: null, verifiedMethod: null, verifiedSessionId: null, expectedEmail: null,
+    birthDate: null, privacyPolicyVersion: null, termsOfServiceVersion: null, createdAtMs: input.createdAtMs ?? Date.now() }
 }
 
 type StoragePort = Pick<Storage, "getItem" | "setItem" | "removeItem">
@@ -93,7 +115,7 @@ export function createPendingAccountSetup(input: {
   readonly createdAtMs?: number
   readonly attemptId?: string
   readonly expectedEmail?: string
-}): PendingAccountSetup {
+}): ProfileAccountSetup {
   const attemptId = input.attemptId ?? newAuthAttemptId()
   if (!isAuthAttemptId(attemptId)) throw new Error("INVALID_AUTH_ATTEMPT_ID")
   const expectedEmail = input.method === "email" && input.expectedEmail !== undefined
@@ -133,7 +155,7 @@ export function readPendingAccountSetup(
   const raw = storage.getItem(PENDING_SETUP_KEY)
   if (raw === null) return null
   try {
-    const parsed = JSON.parse(raw) as Partial<PendingAccountSetup>
+    const parsed = JSON.parse(raw) as Partial<Omit<ProfileAccountSetup, "schemaVersion" | "birthDate" | "privacyPolicyVersion" | "termsOfServiceVersion">> & { schemaVersion?: number; flow?: unknown; entryMode?: unknown; birthDate?: string | null; privacyPolicyVersion?: string | null; termsOfServiceVersion?: string | null }
     const methodValid = parsed.method === "kakao"
       || parsed.method === "google"
       || parsed.method === "email"
@@ -153,7 +175,15 @@ export function readPendingAccountSetup(
     const expectedEmailValid = parsed.expectedEmail === undefined
       || parsed.expectedEmail === null
       || normalizedExpectedEmail !== null && normalizedExpectedEmail === parsed.expectedEmail
-    const valid = parsed.schemaVersion === 4
+    const authOnly = (parsed.schemaVersion as number) === 5 && parsed.flow === "AUTH_ONLY"
+      && (parsed.entryMode === "login" || parsed.entryMode === "signup")
+      && (parsed.method === "google" || parsed.method === "kakao") && parsed.expectedEmail === null
+      && parsed.birthDate === null && parsed.privacyPolicyVersion === null && parsed.termsOfServiceVersion === null
+    const profileSetup = parsed.schemaVersion === 4
+      && typeof parsed.birthDate === "string" && /^\d{4}-\d{2}-\d{2}$/u.test(parsed.birthDate)
+      && typeof parsed.privacyPolicyVersion === "string" && parsed.privacyPolicyVersion.length > 0
+      && typeof parsed.termsOfServiceVersion === "string" && parsed.termsOfServiceVersion.length > 0
+    const valid = (authOnly || profileSetup)
       && isAuthAttemptId(parsed.attemptId)
       && methodValid
       && (parsed.phase === "PREPARED" || parsed.phase === "AUTH_STARTED" || parsed.phase === "AUTH_VERIFIED")
@@ -161,12 +191,6 @@ export function readPendingAccountSetup(
       && verifiedMethodValid
       && verifiedSessionIdValid
       && expectedEmailValid
-      && typeof parsed.birthDate === "string"
-      && /^\d{4}-\d{2}-\d{2}$/u.test(parsed.birthDate)
-      && typeof parsed.privacyPolicyVersion === "string"
-      && parsed.privacyPolicyVersion.length > 0
-      && typeof parsed.termsOfServiceVersion === "string"
-      && parsed.termsOfServiceVersion.length > 0
       && typeof parsed.createdAtMs === "number"
       && Number.isFinite(parsed.createdAtMs)
       && parsed.createdAtMs <= nowMs
@@ -361,6 +385,8 @@ export async function finalizePendingAccountSetup(input: {
     return { attempted: false, result: null }
   }
 
+  // Auth-only proof never supplies enrollment facts or triggers a profile write.
+  if (isAuthOnlyAccountAttempt(pending)) return { attempted: false, result: null }
   if (
     pending.privacyPolicyVersion !== input.config.privacyPolicy.version
     || pending.termsOfServiceVersion !== input.config.termsOfService.version

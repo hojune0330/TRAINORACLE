@@ -11,6 +11,9 @@ const mocks = vi.hoisted(() => ({
   clearReceipt: vi.fn(),
   consumeEmailCallback: vi.fn(),
   loadSetup: vi.fn(),
+  finalize: vi.fn(),
+  pending: null as import("../domain/account/auth-onboarding").PendingAccountSetup | null,
+  oauthResult: { handled: false } as { handled: boolean; ok?: boolean; message?: string },
   authListener: null as null | ((user: { id: string; email: string | null; phone: null; provider: "email" } | null) => void),
   gatewayEmailResult: null as null | {
     handled: true
@@ -37,9 +40,9 @@ vi.mock("../domain/account/auth-onboarding", () => ({
   clearCurrentSetupReceipt: mocks.clearReceipt,
   clearPendingAccountSetup: mocks.clearPending,
   clearPendingAccountSetupForAttempt: mocks.clearPendingForAttempt,
-  finalizePendingAccountSetup: vi.fn(),
+  finalizePendingAccountSetup: mocks.finalize,
   hasCurrentSetupReceipt: () => true,
-  readPendingAccountSetup: () => null,
+  readPendingAccountSetup: () => mocks.pending,
   writeCurrentSetupReceipt: vi.fn(),
 }))
 
@@ -48,7 +51,7 @@ vi.mock("../domain/account/email-auth-callback", () => ({
 }))
 
 vi.mock("../domain/account/oauth-auth-callback", () => ({
-  consumeCapturedOAuthAuthCallback: vi.fn().mockResolvedValue({ handled: false }),
+  consumeCapturedOAuthAuthCallback: vi.fn(async () => mocks.oauthResult),
 }))
 
 vi.mock("../domain/account/account-service", () => ({
@@ -72,7 +75,7 @@ vi.mock("../domain/account/service-date", () => ({ koreaServiceDate: () => "2026
 vi.mock("../domain/account/account-journal-api", () => ({ accountJournalPreviewEnabled: () => false }))
 vi.mock("../components/InstallShortcut", () => ({ InstallShortcutSuggestion: () => null }))
 vi.mock("./account/LoungeEntry", () => ({ LoungeEntry: () => null }))
-vi.mock("./account/BetaAccountSettings", () => ({ BetaAccountSettings: () => null }))
+vi.mock("./account/BetaAccountSettings", () => ({ BetaAccountSettings: ({ completionOnly, dataRightsOnly }: { completionOnly?: boolean; dataRightsOnly?: boolean }) => completionOnly ? <p data-testid="required-signup-fields">생년월일·필수 동의</p> : dataRightsOnly ? <p>합성 계정 삭제 관리</p> : null }))
 vi.mock("./account/AccountAuthGateway", () => ({
   AccountAuthGateway: ({ emailCallbackAttemptId, onEmailCallbackFinished }: {
     emailCallbackAttemptId?: string | null
@@ -128,6 +131,9 @@ beforeEach(() => {
   mocks.consumeEmailCallback.mockResolvedValue({ handled: false })
   mocks.loadSetup.mockReset()
   mocks.loadSetup.mockResolvedValue({ ok: true, ready: true, message: "준비됨" })
+  mocks.pending = null
+  mocks.oauthResult = { handled: false }
+  mocks.finalize.mockReset(); mocks.finalize.mockResolvedValue({ attempted: false, result: null })
   mocks.gatewayEmailResult = null
   mocks.authListener = null
 })
@@ -173,7 +179,7 @@ describe("Account session exit", () => {
 
     render(<Account onOpenImport={openImport} />)
 
-    expect(await screen.findByText("가입 정보를 안전하게 저장하고 있어요. 이 화면을 잠시 그대로 두세요.")).toBeVisible()
+    expect(await screen.findByText("로그인한 계정의 가입 상태를 확인하고 있어요.")).toBeVisible()
     await waitFor(() => expect(mocks.loadSetup).toHaveBeenCalled())
     expect(screen.queryByRole("button", { name: "합성 삭제 완료" })).not.toBeInTheDocument()
     expect(screen.queryByRole("heading", { name: "내 워치와 운동 기록" })).not.toBeInTheDocument()
@@ -406,5 +412,45 @@ describe("Account session exit", () => {
 
     expect(await screen.findByRole("heading", { name: "로그인 확인을 마치지 못했어요" })).toBeVisible()
     expect(screen.queryByTestId("guest-auth-gateway")).not.toBeInTheDocument()
+  })
+})
+
+
+describe("auth-first admission", () => {
+  const authOnly = () => ({ schemaVersion: 5 as const, flow: "AUTH_ONLY" as const, entryMode: "login" as const, method: "google" as const,
+    attemptId: "a".repeat(32), phase: "AUTH_VERIFIED" as const, verifiedUserId: "athlete-a", verifiedMethod: "google" as const,
+    verifiedSessionId: "11111111-1111-4111-8111-111111111111", expectedEmail: null, birthDate: null, privacyPolicyVersion: null, termsOfServiceVersion: null, createdAtMs: Date.now() })
+  it("opens an existing admitted account with no extra signup fields or profile write", async () => {
+    mocks.pending = authOnly()
+    render(<Account />)
+    expect(await screen.findByRole("button", { name: "로그아웃" })).toBeVisible()
+    expect(screen.queryByTestId("required-signup-fields")).toBeNull()
+    expect(mocks.finalize).not.toHaveBeenCalled()
+    expect(mocks.clearPendingForAttempt).toHaveBeenCalledWith("a".repeat(32))
+  })
+  it("shows new-member completion after auth and keeps account rights folded", async () => {
+    mocks.pending = authOnly()
+    mocks.loadSetup.mockResolvedValue({ ok: true, ready: false, canComplete: true, message: "아직 가입을 마치지 않았어요. 나이와 필수 약관을 확인해 주세요." })
+    render(<Account />)
+    expect(await screen.findByTestId("required-signup-fields")).toBeVisible()
+    expect(screen.getByText(/아직 가입을 마치지 않았어요/u)).toBeVisible()
+    expect(screen.queryByText(/확인 링크를 새 화면/u)).toBeNull()
+    const rights = screen.getByText("계정 자료 관리").closest("details")
+    expect(rights).not.toHaveAttribute("open")
+    expect(screen.getByRole("heading", { name: "내 자료 내려받기", hidden: true }).closest("details")).toBe(rights)
+    expect(mocks.finalize).not.toHaveBeenCalled()
+  })
+  it("rechecks current server status on retry without stale callback success or duplicate enrollment", async () => {
+    mocks.pending = authOnly()
+    mocks.oauthResult = { handled: true, ok: true, message: "간편 로그인을 확인했어요." }
+    mocks.loadSetup.mockResolvedValueOnce({ ok: false, ready: false, canComplete: false, message: "이 로그인 방식은 잠시 닫혀 있어요." })
+      .mockResolvedValue({ ok: true, ready: true, canComplete: false, message: "가입 확인을 마쳤어요." })
+    render(<Account />)
+    expect(await screen.findByRole("heading", { name: "계정을 확인하지 못했어요" })).toBeVisible()
+    expect(screen.queryByText("간편 로그인을 확인했어요.")).toBeNull()
+    await userEvent.click(screen.getByRole("button", { name: "다시 확인하기" }))
+    expect(await screen.findByRole("button", { name: "로그아웃" })).toBeVisible()
+    expect(mocks.loadSetup).toHaveBeenCalledTimes(2)
+    expect(mocks.finalize).not.toHaveBeenCalled()
   })
 })

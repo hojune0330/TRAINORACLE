@@ -9,6 +9,7 @@ import {
   normalizeAuthEmail,
   onlineAccountEligibility,
   readPendingAccountSetup,
+  isAuthOnlyAccountAttempt,
 } from "./auth-onboarding"
 import { koreaServiceDate } from "./service-date"
 import { clearEmailAuthBrowserProof, createEmailAuthBrowserProof } from "./email-auth-browser-proof"
@@ -120,8 +121,12 @@ function authorizeAuthStart(method: AuthMethodGate, attemptId: string): boolean 
   const pending = readPendingAccountSetup()
   if (pending === null || pending.attemptId !== attemptId || pending.method !== method) return false
   const config = accountConfig()
-  if (config === null
-    || pending.privacyPolicyVersion !== config.privacyPolicy.version
+  if (config === null) return false
+  if (isAuthOnlyAccountAttempt(pending)) {
+    if (method !== "google" && method !== "kakao") return false
+    return pending.phase === "PREPARED" ? markPendingAccountAuthStarted(attemptId) : pending.phase === "AUTH_STARTED"
+  }
+  if (pending.privacyPolicyVersion !== config.privacyPolicy.version
     || pending.termsOfServiceVersion !== config.termsOfService.version
     || onlineAccountEligibility(pending.birthDate, koreaServiceDate()) !== "ELIGIBLE") return false
   if (pending.phase === "PREPARED") return markPendingAccountAuthStarted(attemptId)
@@ -135,6 +140,7 @@ function authorizeAuthVerification(method: AuthMethodGate, attemptId: string): b
   return config !== null
     && pending?.attemptId === attemptId
     && pending.method === method
+    && !isAuthOnlyAccountAttempt(pending)
     && pending.phase === "AUTH_STARTED"
     && pending.privacyPolicyVersion === config.privacyPolicy.version
     && pending.termsOfServiceVersion === config.termsOfService.version

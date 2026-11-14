@@ -259,7 +259,22 @@ export function Account({ onBack, onOpenImport, onOpenFileImport, onOpenJournalR
     setSetupState("saving")
     setSetupNotice(null)
     const completion = (async () => {
-      if (pending !== null) {
+      const remote = await loadPrivateProfileSetupStatus({
+        userId: user.id,
+        privacyPolicyVersion: config.privacyPolicy.version,
+        termsOfServiceVersion: config.termsOfService.version,
+      })
+      if (cancelled || activeUserIdRef.current !== user.id) return { ...remote, pendingAttempted: false }
+      if (remote.ready) {
+        writeCurrentSetupReceipt(user.id, config)
+        if (pending !== null) clearPendingAccountSetupForAttempt(pending.attemptId)
+        return { ...remote, pendingAttempted: false }
+      }
+      clearCurrentSetupReceipt(user.id)
+      if (!remote.canComplete) return { ...remote, pendingAttempted: false }
+      // Email/phone legacy enrollment already contains explicitly supplied facts.
+      // Social auth-only attempts must collect those facts after admission lookup.
+      if (pending !== null && pending.schemaVersion === 4) {
         const finalized = await finalizePendingAccountSetup({
           userId: user.id,
           returnAttemptId,
@@ -276,13 +291,6 @@ export function Account({ onBack, onOpenImport, onOpenFileImport, onOpenJournalR
           }
         }
       }
-      const remote = await loadPrivateProfileSetupStatus({
-        userId: user.id,
-        privacyPolicyVersion: config.privacyPolicy.version,
-        termsOfServiceVersion: config.termsOfService.version,
-      })
-      if (remote.ready) writeCurrentSetupReceipt(user.id, config)
-      else clearCurrentSetupReceipt(user.id)
       return { ...remote, pendingAttempted: false }
     })()
     void completion
@@ -297,7 +305,7 @@ export function Account({ onBack, onOpenImport, onOpenFileImport, onOpenJournalR
           if (result.pendingAttempted) requestVerifiedAccountScopeRefresh()
         } else if (!result.pendingAttempted && result.canComplete) {
           setSetupState("needs-profile")
-          setSetupNotice("확인 링크를 새 화면에서 열었어요. 나이와 필수 약관만 다시 확인하면 가입이 끝나요.")
+          setSetupNotice(result.message)
         } else {
           setSetupState("failed")
           setSetupNotice(result.message)
@@ -452,7 +460,7 @@ export function Account({ onBack, onOpenImport, onOpenFileImport, onOpenJournalR
           {accountActionNotice.message}
         </p>
       )}
-      {authCallbackNotice !== null && (
+      {authCallbackNotice !== null && !authCallbackNotice.ok && (
         <p
           role={authCallbackNotice.ok ? "status" : "alert"}
           aria-live="polite"
@@ -554,21 +562,21 @@ export function Account({ onBack, onOpenImport, onOpenFileImport, onOpenJournalR
       ) : setupState === "saving" || setupState === "checking" ? (
         <div style={{ marginTop: 24 }}>
           <p role="status" style={{ fontFamily: "var(--sans)", fontSize: 14, lineHeight: 1.65, margin: 0 }}>
-            가입 정보를 안전하게 저장하고 있어요. 이 화면을 잠시 그대로 두세요.
+            로그인한 계정의 가입 상태를 확인하고 있어요.
           </p>
         </div>
       ) : setupState === "failed" ? (
         <div style={{ marginTop: 24, display: "flex", flexDirection: "column", gap: 12 }}>
-          <h2 style={{ fontFamily: "var(--sans)", fontSize: 18, margin: 0, letterSpacing: 0 }}>가입을 마무리하지 못했어요</h2>
+          <h2 style={{ fontFamily: "var(--sans)", fontSize: 18, margin: 0, letterSpacing: 0 }}>계정을 확인하지 못했어요</h2>
           <p role="alert" style={{ fontFamily: "var(--sans)", fontSize: 13, lineHeight: 1.65, color: "var(--ink-2)", margin: 0 }}>
-            {setupNotice} 이 기기의 일지와 훈련 계획은 그대로예요. 가입이 끝날 때까지 동기화는 열지 않아요.
+            {setupNotice} 이 기기의 일지와 훈련 계획은 그대로예요. 계정 확인 전까지 동기화는 대기해요.
           </p>
           <button type="button" style={primaryBtn} onClick={() => setSetupRetry(value => value + 1)}>다시 확인하기</button>
           <button type="button" style={secondaryBtn} disabled={busy} onClick={() => void handleSignOut()}>로그아웃하고 다시 시작</button>
         </div>
       ) : setupState === "needs-profile" ? (
         <div style={{ marginTop: 24, display: "flex", flexDirection: "column", gap: 14 }}>
-          <h2 style={{ fontFamily: "var(--sans)", fontSize: 18, margin: 0, letterSpacing: 0 }}>가입을 한 번만 더 확인해 주세요</h2>
+          <h2 style={{ fontFamily: "var(--sans)", fontSize: 18, margin: 0, letterSpacing: 0 }}>회원가입 마무리</h2>
           <p role="status" style={{ fontFamily: "var(--sans)", fontSize: 13, lineHeight: 1.65, color: "var(--ink-2)", margin: 0 }}>
             {setupNotice} 생년월일은 나이 확인에만 사용하고 코치, 분석, 포인트에는 보내지 않아요.
           </p>
@@ -579,6 +587,8 @@ export function Account({ onBack, onOpenImport, onOpenFileImport, onOpenJournalR
             completionOnly
             onCompleted={() => {
               focusConnection()
+              const pending = readPendingAccountSetup()
+              if (pending?.verifiedUserId === user.id) clearPendingAccountSetupForAttempt(pending.attemptId)
               writeCurrentSetupReceipt(user.id, config)
               setSetupState("ready")
               setSetupNotice("가입 확인을 마쳤어요.")
@@ -658,11 +668,12 @@ export function Account({ onBack, onOpenImport, onOpenFileImport, onOpenJournalR
 
       {!loading && user !== null && !unverifiedAccountSessionOpen && !deletedAccountSessionOpen
         && (setupState === "needs-profile" || setupState === "failed") && (
-        <div style={{ marginTop: 24, display: "flex", flexDirection: "column", gap: 16 }}>
+        <details className="account-local-tools" style={{ marginTop: 24 }}>
+          <summary>계정 자료 관리</summary>
           <AccountDataRightsPanel key={`rights-${user.id}`} userId={user.id} />
           <BetaAccountSettings key={`delete-${user.id}`} userId={user.id} today={today}
             legalDocuments={config} dataRightsOnly onDeletionCompleted={() => handleDeletionCompleted(user.id)} />
-        </div>
+        </details>
       )}
 
       {!loading && <details className="account-local-tools"><summary>이 기기의 백업·복원·삭제</summary>
