@@ -12,7 +12,7 @@ for (const width of [320, 375]) {
       await page.getByRole("button", { name: "더보기", exact: true }).click()
       await expect(page.getByRole("button", { name: "페이스 계산기", exact: true })).toBeVisible()
       await page.screenshot({ path: info.outputPath("more-tools.png"), fullPage: true })
-      for (const name of ["페이스 계산기", "경기 기록 추가·수정", "워치 파일 가져오기", "러닝 취향", "최고기록으로 풀이하기", "오라클 읽을거리", "일지 예시 보기", "훈련 용어집·도움말", "훈련법 읽기", "일지 꾸미기"]) {
+      for (const name of ["페이스 계산기", "경기 기록 추가·수정", "운동 가져오기", "러닝 취향", "최고기록으로 풀이하기", "오라클 읽을거리", "일지 예시 보기", "훈련 용어집·도움말", "훈련법 읽기", "일지 꾸미기"]) {
         const entry = page.getByRole("button", { name, exact: true })
         await expect(entry).toBeVisible()
         expect(await entry.evaluate(node => node.closest("details") === null)).toBe(true)
@@ -21,8 +21,10 @@ for (const width of [320, 375]) {
       await expect(page.getByRole("button", { name: "더보기로", exact: true })).toBeVisible()
       await page.goBack()
       await expect(page.getByRole("heading", { name: "더보기", exact: true })).toBeVisible()
-      await page.getByRole("button", { name: "워치 파일 가져오기", exact: true }).click()
+      await page.getByRole("button", { name: "운동 가져오기", exact: true }).click()
       await expect(page.getByRole("heading", { name: "운동 가져오기", exact: true })).toBeVisible()
+      await expect(page.getByRole("group", { name: "운동 기록 가져오는 방법", exact: true })
+        .getByRole("button", { name: "자동연동", exact: true })).toHaveAttribute("aria-pressed", "true")
       await page.getByRole("button", { name: "뒤로", exact: true }).click()
       await page.getByRole("button", { name: "오라클 읽을거리", exact: true }).click()
       await expect(page.getByRole("navigation", { name: "오라클 메뉴" })

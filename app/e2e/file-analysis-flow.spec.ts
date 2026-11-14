@@ -17,7 +17,11 @@ async function expectSharedRecordAction(page: Page, label: string) {
   const button = page.getByRole("button", { name: label, exact: true })
   await expect(button).toHaveClass(/record-action/u)
   await expect(button).toHaveAttribute("data-priority", "primary")
-  expect(await button.evaluate(element => {
+  await expect(button).toBeEnabled()
+  // The replacement CTA can appear under the pointer from the preceding save click.
+  // Check its base paint outside the intentional --brand-ink hover state.
+  await page.mouse.move(0, 0)
+  await expect.poll(() => button.evaluate(element => {
     const probe = document.createElement("span")
     probe.style.color = "var(--brand)"; document.body.append(probe)
     const style = getComputedStyle(element), brand = getComputedStyle(probe).color
