@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   currentUser: vi.fn(),
+  isCurrentAttempt: vi.fn(),
   signOut: vi.fn(),
   clearPending: vi.fn(),
   clearPendingForAttempt: vi.fn(),
@@ -81,6 +82,11 @@ vi.mock("../domain/account/config", () => ({
   }),
 }))
 
+vi.mock("../domain/account/account-settings", async importOriginal => ({
+  ...await importOriginal<typeof import("../domain/account/account-settings")>(),
+  isCurrentAccountAuthAttempt: mocks.isCurrentAttempt,
+}))
+
 vi.mock("../domain/account/service-date", () => ({ koreaServiceDate: () => "2026-10-03" }))
 vi.mock("../domain/account/account-journal-api", () => ({ accountJournalPreviewEnabled: () => false }))
 vi.mock("../components/InstallShortcut", () => ({ InstallShortcutSuggestion: () => null }))
@@ -126,6 +132,7 @@ import { startVerifiedAccountScope } from "../domain/account/verified-account-sc
 beforeEach(() => {
   localStorage.clear()
   setActiveLocalAccount(null)
+  mocks.isCurrentAttempt.mockReset(); mocks.isCurrentAttempt.mockResolvedValue(true)
   mocks.currentUser.mockReset()
   mocks.currentUser.mockResolvedValue({
     id: "athlete-a",
@@ -438,7 +445,7 @@ describe("auth-first admission", () => {
     expect(await screen.findByRole("heading", { name: "로그인 완료" })).toBeVisible()
     expect(screen.queryByTestId("required-signup-fields")).toBeNull()
     expect(mocks.finalize).not.toHaveBeenCalled()
-    expect(mocks.clearPendingForAttempt).toHaveBeenCalledWith("a".repeat(32))
+    await waitFor(() => expect(mocks.clearPendingForAttempt).toHaveBeenCalledWith("a".repeat(32)))
   })
   it("shows new-member completion after auth without mounting account rights", async () => {
     mocks.pending = authOnly()

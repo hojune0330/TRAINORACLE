@@ -62,7 +62,7 @@ it("does not interrupt general reading on unrelated journal revisions", () => {
 it("keeps welcome focused on training and inline work without a second coaching or example wrapper", () => {
   const model: TrainingHomeViewModel = { homeMode: "WELCOME", hasPlan: false, todayMessage: "", todayRecordCount: 0, journalSummary: "", flowSummary: "", planSummary: "저장된 계획 없음", analysisSummary: "", showMinjiPrompt: true, nextTraining: null, briefing: "" }
   render(<TrainingHome model={model} onOpenPlan={vi.fn()} onWriteLog={vi.fn()} onOpenOracle={vi.fn()} oraclePreview={<h2>오라클 미리보기</h2>} />)
-  const plan = screen.getByRole("button", { name: "훈련 계획 만들기" })
+  const plan = screen.getByRole("button", { name: "훈련 계획" })
   const write = screen.getByRole("button", { name: "운동 내용도 기록하기" })
   expect(plan).toBeVisible()
   expect(write).toBeVisible()

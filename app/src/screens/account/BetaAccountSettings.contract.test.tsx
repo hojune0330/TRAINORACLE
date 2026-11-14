@@ -223,7 +223,7 @@ describe("beta account settings", () => {
     await userEvent.type(screen.getByLabelText("생년월일"), "20000101")
     await userEvent.click(screen.getByRole("checkbox", { name: /개인정보 처리방침/u }))
     await userEvent.click(screen.getByRole("checkbox", { name: /이용약관/u }))
-    await userEvent.click(screen.getByRole("button", { name: "계정 정보 저장" }))
+    await userEvent.click(screen.getByRole("button", { name: "회원가입 완료" }))
 
     expect(screen.getByLabelText("생년월일")).toHaveValue("2000-01-01")
     expect(completed).toHaveBeenCalledOnce()

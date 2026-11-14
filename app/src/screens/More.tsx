@@ -203,7 +203,7 @@ export function More({
           <summary><Trash2 size={19} aria-hidden="true" /><span>휴지통 · {trashCount}개</span></summary>
           {trashCount === 0 ? <p>지운 일지가 없어요.</p> : <TrashBin onChanged={() => setTrashCount(loadTrash().length)} />}
         </details>
-        <EraseLocalData onOpenRestore={onOpenRestore} />
+        <EraseLocalData onOpenRestore={onOpenRestore} showBackup={false} />
         </>}
         {activeView === "about" && <>
         <MenuGroup title={onOpenImport ? "문의" : "문의와 기기"}>

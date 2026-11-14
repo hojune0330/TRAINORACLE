@@ -7,7 +7,9 @@ const input = Buffer.from(JSON.stringify([row]) + " ".repeat(70_000))
 async function openImport(page: import("@playwright/test").Page) {
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "기록하기" }).click()
-  await page.getByTestId("open-import").click()
+  await page.getByRole("button", { name: "운동 가져오기", exact: true }).click()
+  await page.getByRole("group", { name: "운동 기록 가져오는 방법", exact: true })
+    .getByRole("button", { name: "파일 가져오기", exact: true }).click()
 }
 
 test("larger JSON is parsed in a real worker on the device and saved only on confirmation", async ({ page }) => {

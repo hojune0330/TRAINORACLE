@@ -103,7 +103,9 @@ try {
 
     const file = await open(width)
     await nav(file.page, '기록하기').click()
-    await file.page.getByTestId('open-import').click()
+    await file.page.getByRole('button', { name: '운동 가져오기', exact: true }).click()
+    await file.page.getByRole('group', { name: '운동 기록 가져오는 방법', exact: true })
+      .getByRole('button', { name: '파일 가져오기', exact: true }).click()
     await picture(file.page, 'watch-file-v2.webp', 80)
     await capture(file.page, `file-start-${width}`)
     await file.context.close()

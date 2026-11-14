@@ -32,7 +32,7 @@ describe("compact home identity without onboarding promotion", () => {
     render(<TrainingHome model={model} onOpenPlan={plan} />)
     fireEvent.error(artwork()!)
     expect(artwork()).toBeNull()
-    fireEvent.click(screen.getByRole("button", { name: "훈련 계획 만들기" }))
+    fireEvent.click(screen.getByRole("button", { name: "훈련 계획" }))
     expect(plan).toHaveBeenCalledOnce()
     expect(screen.queryByRole("dialog")).toBeNull()
   })

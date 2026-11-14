@@ -1,7 +1,7 @@
 // 실제 브라우저에서 워치 파일 가져오기 전체 경로를 확인한다.
 //
 // 계약 테스트(jsdom)와 달리 여기서 확인하는 것:
-//  - 기록 탭 → "워치 기록 불러오기" 진입 경로가 실제로 이어져 있다.
+//  - 기록 탭 → 운동 가져오기 → 파일 가져오기 경로가 실제로 이어져 있다.
 //  - 브라우저 File API + DOMParser로 실제 TCX가 읽힌다(폴리필 아님).
 //  - 저장 후 일지 목록·상세에 "가져옴" 배지가 붙는다.
 //  - 가져온 기록은 홈 합계(주간 통계)에 들어가지 않는다.
@@ -23,7 +23,9 @@ function tcxFor(date: string): string {
 async function openImport(page: import("@playwright/test").Page) {
   await page.goto("/?app=1")
   await page.getByRole("navigation", { name: "주 탭" }).getByRole("button", { name: "기록하기" }).click()
-  await page.getByTestId("open-import").click()
+  await page.getByRole("button", { name: "운동 가져오기", exact: true }).click()
+  await page.getByRole("group", { name: "운동 기록 가져오는 방법", exact: true })
+    .getByRole("button", { name: "파일 가져오기", exact: true }).click()
   await expect(page.getByTestId("import-privacy-notice")).toBeVisible()
 }
 
@@ -31,12 +33,12 @@ test("imports a watch TCX file into the local journal and marks its source", asy
   const today = new Date().toISOString().slice(0, 10)
   await openImport(page)
 
-  // 자동 연동 준비 상태는 보이고, 자세한 일정 안내는 눌러 확인한다.
+  // 파일 경로에서도 실제 자동연동 선택지로 돌아가는 안내를 확인한다.
   const integrationStatus = page.getByTestId("oauth-status")
-  await expect(integrationStatus.locator("summary")).toHaveText("가민·코로스·WHOOP·스트라바 자동 연동은 준비 중이에요")
+  await expect(integrationStatus.locator("summary")).toHaveText("새 운동을 자동으로 가져오고 싶어요")
   await expect(integrationStatus.locator("details")).not.toHaveAttribute("open")
   await integrationStatus.locator("summary").click()
-  await expect(integrationStatus).toContainText("시작 날짜는 아직 정해지지 않았어요")
+  await expect(integrationStatus).toContainText("위의 자동연동에서 워치별 연결 가능 여부와 받은 기록을 확인할 수 있어요.")
 
   await page.getByLabel("가져올 운동 파일 선택", { exact: true }).setInputFiles({
     name: "garmin-activity.tcx",

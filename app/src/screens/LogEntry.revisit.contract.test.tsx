@@ -255,7 +255,7 @@ describe("past journal revisit forms", () => {
       expect(onDone).toHaveBeenNthCalledWith(index + 1, type)
     }
     expect(view.container.querySelectorAll("[data-testid^='entry-choice-']")).toHaveLength(4)
-    await user.click(screen.getByTestId("open-import"))
+    await user.click(screen.getByRole("button", { name: "운동 가져오기" }))
     expect(onOpenImport).toHaveBeenCalledOnce()
 
     view.rerender(<LogEntry entryType="choose" targetDate={recordedDate} onDone={onDone} onOpenImport={onOpenImport} />)

@@ -54,7 +54,7 @@ describe("DS-06 account presentation fixtures", () => {
     const user = userEvent.setup()
     render(<AccountAuthGateway config={config} today="2026-09-12" onRequestEmailOtp={send} />)
 
-    await user.click(screen.getByRole("button", { name: "이메일로 계속하기" }))
+    await user.click(screen.getByRole("button", { name: "이메일로 로그인" }))
     fireEvent.change(screen.getByLabelText("생년월일"), { target: { value: "2000-01-01" } })
     await user.click(screen.getByRole("checkbox", { name: /개인정보 처리방침/u }))
     await user.click(screen.getByRole("checkbox", { name: /이용약관/u }))
@@ -98,7 +98,7 @@ describe("DS-06 account presentation fixtures", () => {
       />,
     )
 
-    await user.click(screen.getByRole("button", { name: "휴대전화로 계속하기" }))
+    await user.click(screen.getByRole("button", { name: "휴대전화로 로그인" }))
     fireEvent.change(screen.getByLabelText("생년월일"), { target: { value: "2000-01-01" } })
     await user.click(screen.getByRole("checkbox", { name: /개인정보 처리방침/u }))
     await user.click(screen.getByRole("checkbox", { name: /이용약관/u }))

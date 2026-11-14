@@ -5,8 +5,9 @@ import { disposeGoalProgramDatabase } from "../../domain/account/goal-program-da
 import { SafeJournalExport } from "../home/DeviceJournal"
 import { secondaryBtn } from "./styles"
 
-export function EraseLocalData({ onOpenRestore }: {
+export function EraseLocalData({ onOpenRestore, showBackup = true }: {
   readonly onOpenRestore?: () => void
+  readonly showBackup?: boolean
 } = {}) {
   const [confirming, setConfirming] = React.useState(false)
   const [done, setDone] = React.useState<string | null>(null)
@@ -65,7 +66,7 @@ export function EraseLocalData({ onOpenRestore }: {
         이걸 지우면 나중에 다시 로그인해 동기화할 때 지운 일지가 서버에서 되살아나기 때문에 남겨 둬요.
       </p>
 
-      {done === null && <SafeJournalExport onOpenRestore={onOpenRestore} />}
+      {done === null && showBackup && <SafeJournalExport onOpenRestore={onOpenRestore} />}
 
       {done !== null ? (
         <div style={{ marginTop: 10 }}>

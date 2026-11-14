@@ -2,12 +2,12 @@ import React from "react"
 import { act, cleanup, render } from "@testing-library/react"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 const state = vi.hoisted(() => ({ owner: "A" as string | null, listeners: new Set<() => void>(),
-  journal: vi.fn(), decoration: vi.fn(), calendar: vi.fn(), plan: vi.fn(), rewards: vi.fn(),
+  journal: vi.fn(), background: vi.fn(), decoration: vi.fn(), calendar: vi.fn(), plan: vi.fn(), rewards: vi.fn(),
   disposeJournal: vi.fn(), disposeDecoration: vi.fn(), disposeCalendar: vi.fn(), disposePlan: vi.fn(), disposeRewards: vi.fn(), visit: vi.fn() }))
 vi.mock("./local-journal-ownership", () => ({ activeLocalAccount: () => state.owner,
   onLocalJournalScopeChange: (listener: () => void) => { state.listeners.add(listener); return () => state.listeners.delete(listener) } }))
 vi.mock("./account-journal-record-service", () => ({ accountJournalRecordsEnabled: () => state.owner !== null,
-  hydrateAccountJournalRecords: state.journal, disposeAccountJournalRecords: state.disposeJournal }))
+  hydrateAccountJournalRecords: state.journal, refreshAccountJournalRecordsInBackground: state.background, disposeAccountJournalRecords: state.disposeJournal }))
 vi.mock("./account-decoration-service", () => ({ hydrateAccountDecorations: state.decoration, disposeAccountDecorations: state.disposeDecoration }))
 vi.mock("./account-calendar-decoration-service", () => ({ hydrateAccountCalendarDecorations: state.calendar, disposeAccountCalendarDecorations: state.disposeCalendar }))
 vi.mock("./account-plan-service", () => ({ accountPlanService: () => state.owner ? { hydrate: state.plan } : null, disposeAccountPlans: state.disposePlan }))
@@ -15,13 +15,14 @@ vi.mock("./account-reward-service", () => ({ hydrateAccountRewards: state.reward
   recordAccountDailyVisit: state.visit }))
 import { useAccountJournalRuntime } from "./useAccountJournalRuntime"
 function Harness({ enabled = true }) { useAccountJournalRuntime(enabled); return <span>runtime</span> }
-beforeEach(() => { state.owner = "A"; state.listeners.clear(); vi.clearAllMocks() })
+beforeEach(() => { state.owner = "A"; state.listeners.clear(); vi.clearAllMocks(); state.background.mockResolvedValue(true) })
 afterEach(cleanup)
 
 it("hydrates every account projection on opening and reconnect, without awarding a visit", () => {
   const page = render(<Harness />)
   for (const read of [state.journal, state.decoration, state.calendar, state.plan, state.rewards]) expect(read).toHaveBeenCalledTimes(1)
   act(() => window.dispatchEvent(new Event("online")))
+  expect(state.background).toHaveBeenCalledOnce()
   for (const read of [state.journal, state.decoration, state.calendar, state.plan, state.rewards]) expect(read).toHaveBeenCalledTimes(2)
   expect(state.visit).not.toHaveBeenCalled()
   page.unmount()

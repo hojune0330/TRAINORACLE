@@ -1729,6 +1729,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
       <DeferredMobileScreens.ImportActivities
         reviewSession={importReviewSession.current}
         initialMethod={importMethod}
+        onMethodChange={setImportMethod}
         ownerId={activeLocalAccount()}
         onOpenAccount={accountEnabled ? openConnectionAccount : undefined}
         onOpenJournalRecord={openGarminJournalRecord}

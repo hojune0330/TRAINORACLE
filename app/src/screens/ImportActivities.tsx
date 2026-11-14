@@ -49,7 +49,7 @@ export type ImportReviewSession = {
   position: ReaderPosition | null
 }
 
-export function ImportActivities({ onBack, onOpenLog, onOpenEntry, onOpenAnalysis, onOpenSummary, reviewSession, initialMethod = "automatic", ownerId = null, onOpenAccount, onOpenJournalRecord }: {
+export function ImportActivities({ onBack, onOpenLog, onOpenEntry, onOpenAnalysis, onOpenSummary, reviewSession, initialMethod = "automatic", onMethodChange, ownerId = null, onOpenAccount, onOpenJournalRecord }: {
   readonly onBack?: () => void
   readonly onOpenLog?: () => void
   readonly onOpenEntry?: (date: string, entryId: string) => void
@@ -57,12 +57,14 @@ export function ImportActivities({ onBack, onOpenLog, onOpenEntry, onOpenAnalysi
   readonly onOpenSummary?: () => void
   readonly reviewSession?: ImportReviewSession
   readonly initialMethod?: ImportMethod
+  readonly onMethodChange?: (method: ImportMethod) => void
   readonly ownerId?: string | null
   readonly onOpenAccount?: () => void
   readonly onOpenJournalRecord?: OpenGarminJournalRecord
 }) {
   const restored = React.useRef(reviewSession?.scope === localJournalScopeGeneration() ? reviewSession.review : null).current
   const [method, setMethod] = React.useState<ImportMethod>(restored ? "file" : initialMethod)
+  const selectMethod = (next: ImportMethod) => { setMethod(next); onMethodChange?.(next) }
   const [connectionSubview, setConnectionSubview] = React.useState(false)
   const [stage, setStage] = React.useState<Stage>(restored?.stage ?? { step: "pick" })
   const [failure, setFailure] = React.useState<ReadFailure>(null)
@@ -329,17 +331,17 @@ export function ImportActivities({ onBack, onOpenLog, onOpenEntry, onOpenAnalysi
       </div>
 
       <div className="import-method app-choice-group" role="group" aria-label="운동 기록 가져오는 방법" hidden={connectionSubview}>
-        <button type="button" className="app-choice-control" aria-pressed={method === "automatic"} disabled={busy} onClick={() => setMethod("automatic")}>
+        <button type="button" className="app-choice-control" aria-pressed={method === "automatic"} disabled={busy} onClick={() => selectMethod("automatic")}>
           <Link2 size={20} aria-hidden="true" /><span>자동연동</span>
         </button>
-        <button type="button" className="app-choice-control" aria-pressed={method === "file"} disabled={busy} onClick={() => setMethod("file")}>
+        <button type="button" className="app-choice-control" aria-pressed={method === "file"} disabled={busy} onClick={() => selectMethod("file")}>
           <FileUp size={20} aria-hidden="true" /><span>파일 가져오기</span>
         </button>
       </div>
 
       {method === "automatic" ? <div className="import-method__automatic">
         <DeviceConnections ownerId={ownerId} onOpenAccount={onOpenAccount} onOpenJournalRecord={onOpenJournalRecord}
-          onSubviewChange={setConnectionSubview} showFileEntry={false} onOpenImport={() => setMethod("file")} />
+          onSubviewChange={setConnectionSubview} showFileEntry={false} onOpenImport={() => selectMethod("file")} />
       </div> : <div
         key={stage.step}
         ref={stageRef}
