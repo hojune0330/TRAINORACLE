@@ -4,7 +4,7 @@ import {
   PASSWORD_MIN_LENGTH, PASSWORD_MAX_LENGTH, signInWithEmailPassword, signUpWithEmailPassword,
   requestPasswordRecovery, resendPasswordSignupEmail, type PasswordAuthResult,
 } from "../../domain/account/password-auth"
-import { createPendingAccountAuthAttempt, writePendingAccountSetup, markPendingAccountAuthStarted, normalizeAuthEmail } from "../../domain/account/auth-onboarding"
+import { createPendingAccountAuthAttempt, writePendingAccountSetup, markPendingAccountAuthStarted, normalizeAuthEmail, type AuthReturnIntent } from "../../domain/account/auth-onboarding"
 import { useTaskFlowBack } from "../../hooks/useTaskFlowBack"
 
 type PasswordActions = {
@@ -15,16 +15,16 @@ const defaultActions: PasswordActions = { login: signInWithEmailPassword, signup
 type Step = "entry" | "confirmation" | "reset-email" | "reset-sent"
 
 /** Password values live only in this mounted form, never in onboarding storage. */
-export function PasswordAuthPanel({ mode, disabled = false, initialNotice = null, onBusyChange, onSignedIn, onRequireLogin, onUnsafeSessionDetected, actions = defaultActions }: {
-  mode: AccountEntryMode; disabled?: boolean; initialNotice?: string | null
+export function PasswordAuthPanel({ mode, returnIntent = null, disabled = false, initialNotice = null, onBusyChange, onSignedIn, onRequireLogin, onUnsafeSessionDetected, actions = defaultActions }: {
+  mode: AccountEntryMode; returnIntent?: AuthReturnIntent; disabled?: boolean; initialNotice?: string | null
   onBusyChange?: (busy: boolean) => void; onSignedIn?: (userId: string) => void; onRequireLogin?: (message: string) => void; onUnsafeSessionDetected?: () => void; actions?: PasswordActions
 }) {
-  const [email, setEmail] = React.useState(""), [password, setPassword] = React.useState(""), [confirmation, setConfirmation] = React.useState("")
+  const [email, setEmail] = React.useState(""), [password, setPassword] = React.useState("")
   const [showPassword, setShowPassword] = React.useState(false), [step, setStep] = React.useState<Step>("entry")
   const [busy, setBusy] = React.useState(false), [notice, setNotice] = React.useState<string | null>(initialNotice)
   const [error, setError] = React.useState(false)
   const operation = React.useRef(0), locked = React.useRef(false), mounted = React.useRef(true)
-  const clearSecrets = () => { setPassword(""); setConfirmation(""); setShowPassword(false) }
+  const clearSecrets = () => { setPassword(""); setShowPassword(false) }
   React.useEffect(() => { mounted.current = true; return () => { mounted.current = false; operation.current += 1 } }, [])
   const backToEntry = () => { if (locked.current) return; clearSecrets(); setStep("entry"); setNotice(null); setError(false) }
   useTaskFlowBack({ enabled: step !== "entry", busy, onBack: backToEntry })
@@ -54,10 +54,9 @@ export function PasswordAuthPanel({ mode, disabled = false, initialNotice = null
     if (!address) { setNotice("이메일 주소를 확인해 주세요."); setError(true); return }
     if (!password) { setNotice("비밀번호를 입력해 주세요."); setError(true); return }
     if (mode === "signup" && password.length < PASSWORD_MIN_LENGTH) { setNotice(`비밀번호는 ${PASSWORD_MIN_LENGTH}자 이상 입력해 주세요.`); setError(true); return }
-    if (mode === "signup" && password !== confirmation) { setNotice("비밀번호가 서로 달라요. 다시 확인해 주세요."); setError(true); return }
     const secret = password
     void run(() => {
-      const pending = createPendingAccountAuthAttempt({ method: "password", entryMode: mode, expectedEmail: address })
+      const pending = createPendingAccountAuthAttempt({ method: "password", entryMode: mode, expectedEmail: address, returnIntent })
       writePendingAccountSetup(pending)
       if (!markPendingAccountAuthStarted(pending.attemptId)) throw Error("AUTH_ATTEMPT_NOT_STARTED")
       return (mode === "signup" ? actions.signup : actions.login)(address, secret, pending.attemptId)
@@ -76,13 +75,9 @@ export function PasswordAuthPanel({ mode, disabled = false, initialNotice = null
       </div>
       <div className="account-auth__field-group">
         <label htmlFor="password-auth-password">비밀번호</label>
-        <input id="password-auth-password" name="password" type={showPassword ? "text" : "password"} autoComplete={mode === "signup" ? "new-password" : "current-password"} maxLength={PASSWORD_MAX_LENGTH} value={password} disabled={muted} onChange={event => setPassword(event.target.value)} required />
+        <input id="password-auth-password" name="password" type={showPassword ? "text" : "password"} autoComplete={mode === "signup" ? "new-password" : "current-password"} autoCapitalize="none" spellCheck={false} minLength={mode === "signup" ? PASSWORD_MIN_LENGTH : undefined} maxLength={PASSWORD_MAX_LENGTH} value={password} disabled={muted} onChange={event => setPassword(event.target.value)} required />
         {mode === "signup" && <small>{PASSWORD_MIN_LENGTH}자 이상 입력해 주세요.</small>}
       </div>
-      {mode === "signup" && <div className="account-auth__field-group">
-        <label htmlFor="password-auth-confirmation">비밀번호 확인</label>
-        <input id="password-auth-confirmation" name="passwordConfirmation" type={showPassword ? "text" : "password"} autoComplete="new-password" maxLength={PASSWORD_MAX_LENGTH} value={confirmation} disabled={muted} onChange={event => setConfirmation(event.target.value)} required />
-      </div>}
       <label className="account-password__show"><input type="checkbox" checked={showPassword} disabled={muted} onChange={event => setShowPassword(event.target.checked)} />비밀번호 보기</label>
       <button className="account-auth__primary" type="submit" disabled={muted}>{busy ? "확인하는 중…" : mode === "signup" ? "회원가입" : "로그인"}</button>
       {mode === "login" && <button className="account-auth__text-action" type="button" disabled={muted} onClick={() => { clearSecrets(); setStep("reset-email"); setNotice(null); setError(false) }}>비밀번호 찾기</button>}

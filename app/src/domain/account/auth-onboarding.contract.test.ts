@@ -36,6 +36,16 @@ beforeEach(() => {
 afterEach(() => vi.useRealTimers())
 
 describe("pre-auth account onboarding", () => {
+  it("binds an allowlisted return intent to the expiring attempt without storing navigation URLs", () => {
+    const pending = createPendingAccountAuthAttempt({ method: "google", entryMode: "login", returnIntent: "connection", createdAtMs: 1_000, attemptId: attemptA })
+    writePendingAccountSetup(pending)
+    expect(readPendingAccountSetup(sessionStorage, 1_001)?.returnIntent).toBe("connection")
+    expect(readPendingAccountSetup(sessionStorage, 1_000 + 15 * 60 * 1000 + 1)).toBeNull()
+    sessionStorage.setItem("trainoracle.account.pending-setup.v1", JSON.stringify({ ...pending, returnIntent: "https://other.example" }))
+    expect(readPendingAccountSetup(sessionStorage, 1_001)).toBeNull()
+    sessionStorage.setItem("trainoracle.account.pending-setup.v1", JSON.stringify({ ...pending, returnIntent: undefined }))
+    expect(readPendingAccountSetup(sessionStorage, 1_001)?.attemptId).toBe(attemptA)
+  })
   it("allows the exact 14th birthday and blocks the day before it", () => {
     expect(onlineAccountEligibility("2012-08-25", "2026-08-25")).toBe("ELIGIBLE")
     expect(onlineAccountEligibility("2012-08-26", "2026-08-25")).toBe("UNDER_14")

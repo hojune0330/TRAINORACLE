@@ -24,6 +24,7 @@ export type SaveProfileInput = {
 export type PrivateProfileSetupStatus = {
   readonly ok: boolean
   readonly ready: boolean
+  readonly requiredAction: "none" | "profile" | "legal-reconsent" | "enrollment" | "blocked"
   readonly canComplete: boolean
   readonly message: string
 }
@@ -38,51 +39,52 @@ const COMPLETABLE_ADMISSION_STATUSES = new Set([
 function authFailureMessage(value: unknown): string | null {
   if (value === "AUTH_SESSION_INACTIVE") return "로그인 세션을 다시 확인해야 해요. 로그아웃한 뒤 다시 로그인해 주세요."
   if (value === "AUTH_CHANNEL_DISABLED") return "이 로그인 방식의 계정 이용이 잠시 중단됐어요. 로그인은 확인했으며, 다시 로그인해도 현재 제한은 바뀌지 않아요. 잠시 후 다시 확인해 주세요."
-  if (value === "AUTH_METHOD_UNSUPPORTED") return "지원하지 않는 로그인 방식이에요. 로그아웃한 뒤 이메일 확인 링크나 간편 로그인으로 다시 시작해 주세요."
+  if (value === "AUTH_METHOD_UNSUPPORTED") return "지원하지 않는 로그인 방식이에요. 로그아웃한 뒤 가입할 때 사용한 로그인 방식으로 다시 시작해 주세요."
   return null
 }
 
 function setupStatusFromServer(value: unknown): PrivateProfileSetupStatus {
   const authMessage = authFailureMessage(value)
-  if (authMessage !== null) return { ok: false, ready: false, canComplete: false, message: authMessage }
+  if (authMessage !== null) return { ok: false, ready: false, canComplete: false, requiredAction: "blocked", message: authMessage }
   if (value === "ADMITTED") {
-    return { ok: true, ready: true, canComplete: false, message: "가입 확인을 마쳤어요." }
+    return { ok: true, ready: true, canComplete: false, requiredAction: "none", message: "가입 확인을 마쳤어요." }
   }
   if (typeof value === "string" && COMPLETABLE_ADMISSION_STATUSES.has(value)) {
     return {
       ok: true,
       ready: false,
       canComplete: true,
+      requiredAction: value === "LEGAL_RECONSENT_REQUIRED" ? "legal-reconsent" : value === "BETA_NOT_ENROLLED" ? "enrollment" : "profile",
       message: value === "LEGAL_RECONSENT_REQUIRED"
-        ? "필수 약관이 바뀌었어요. 나이와 약관을 다시 확인해 주세요."
+        ? "필수 약관이 바뀌었어요. 변경된 약관을 확인해 주세요."
         : "가입 확인을 마무리해 주세요.",
     }
   }
   if (value === "ACCOUNT_DISABLED") {
-    return { ok: false, ready: false, canComplete: false, message: "계정 기능이 잠시 꺼져 있어요." }
+    return { ok: false, ready: false, canComplete: false, requiredAction: "blocked", message: "계정 기능이 잠시 꺼져 있어요." }
   }
   if (value === "UNDER_14") {
     return {
       ok: false,
       ready: false,
-      canComplete: false,
+      canComplete: false, requiredAction: "blocked",
       message: "온라인 계정은 만 14세부터 이용할 수 있어요. 기기 일지와 훈련 계획은 그대로 사용할 수 있어요.",
     }
   }
   if (value === "DELETION_REQUESTED") {
-    return { ok: false, ready: false, canComplete: false, message: "삭제를 요청한 계정은 다시 사용할 수 없어요." }
+    return { ok: false, ready: false, canComplete: false, requiredAction: "blocked", message: "삭제를 요청한 계정은 다시 사용할 수 없어요." }
   }
   if (value === "LOGIN_REQUIRED" || value === "IDENTITY_MISMATCH") {
-    return { ok: false, ready: false, canComplete: false, message: "로그인 정보를 다시 확인해 주세요." }
+    return { ok: false, ready: false, canComplete: false, requiredAction: "blocked", message: "로그인 정보를 다시 확인해 주세요." }
   }
-  return { ok: false, ready: false, canComplete: false, message: "가입 확인 정보를 확인하지 못했어요." }
+  return { ok: false, ready: false, canComplete: false, requiredAction: "blocked", message: "가입 확인 정보를 확인하지 못했어요." }
 }
 
 function localProfileBoundaryStatus(userId: string): PrivateProfileSetupStatus | null {
   const state = accountDeletionBoundaryState(userId)
   if (state === "OPEN") return null
   if (state === "CLOSED") return setupStatusFromServer("DELETION_REQUESTED")
-  return { ok: false, ready: false, canComplete: false, message: "이 기기의 계정 보호 상태를 확인하지 못했어요. 기록은 유지하고 계정 기능을 잠시 멈췄어요." }
+  return { ok: false, ready: false, canComplete: false, requiredAction: "blocked", message: "이 기기의 계정 보호 상태를 확인하지 못했어요. 기록은 유지하고 계정 기능을 잠시 멈췄어요." }
 }
 
 export async function loadPrivateProfileSetupStatus(input: {
@@ -96,24 +98,24 @@ export async function loadPrivateProfileSetupStatus(input: {
   if (initialBoundary) return initialBoundary
   const client = await supabase()
   if (client === null) {
-    return { ok: false, ready: false, canComplete: false, message: "계정 확인 기능이 꺼져 있어요." }
+    return { ok: false, ready: false, canComplete: false, requiredAction: "blocked", message: "계정 확인 기능이 꺼져 있어요." }
   }
   try {
     const { data: userData, error: userError } = await client.auth.getUser()
     const checkedBoundary = localProfileBoundaryStatus(input.userId)
     if (checkedBoundary) return checkedBoundary
     if (userError != null || userData.user?.id !== input.userId) {
-      return { ok: false, ready: false, canComplete: false, message: "로그인 정보를 다시 확인해 주세요." }
+      return { ok: false, ready: false, canComplete: false, requiredAction: "blocked", message: "로그인 정보를 다시 확인해 주세요." }
     }
     const { data, error } = await client.rpc("get_current_account_admission_status", {
       expected_user_id_input: input.userId,
     })
     if (error != null) {
-      return { ok: false, ready: false, canComplete: false, message: "가입 확인 정보를 불러오지 못했어요." }
+      return { ok: false, ready: false, canComplete: false, requiredAction: "blocked", message: "가입 확인 정보를 불러오지 못했어요." }
     }
     return localProfileBoundaryStatus(input.userId) ?? setupStatusFromServer(data)
   } catch {
-    return { ok: false, ready: false, canComplete: false, message: "가입 확인 정보를 불러오지 못했어요." }
+    return { ok: false, ready: false, canComplete: false, requiredAction: "blocked", message: "가입 확인 정보를 불러오지 못했어요." }
   }
 }
 

@@ -9,9 +9,9 @@ export function PasswordAuthCallbackPanel({ onLoginRequired, onSignedIn, actions
   const [state, setState] = React.useState<"checking" | "ready" | "error">("checking")
   const [notice, setNotice] = React.useState<string | null>(null), [busy, setBusy] = React.useState(false)
   const [recoveryEmail, setRecoveryEmail] = React.useState<string | null>(null)
-  const [password, setPassword] = React.useState(""), [confirmation, setConfirmation] = React.useState(""), [showPassword, setShowPassword] = React.useState(false)
+  const [password, setPassword] = React.useState(""), [showPassword, setShowPassword] = React.useState(false)
   const mounted = React.useRef(true), locked = React.useRef(false), sequence = React.useRef(0)
-  const clearSecrets = () => { setPassword(""); setConfirmation(""); setShowPassword(false) }
+  const clearSecrets = () => { setPassword(""); setShowPassword(false) }
   const apply = React.useRef((result: PasswordAuthResult) => {})
   apply.current = result => {
     setNotice(result.message)
@@ -49,7 +49,6 @@ export function PasswordAuthCallbackPanel({ onLoginRequired, onSignedIn, actions
     event.preventDefault()
     if (locked.current) return
     if (password.length < PASSWORD_MIN_LENGTH) { setNotice(`비밀번호는 ${PASSWORD_MIN_LENGTH}자 이상 입력해 주세요.`); return }
-    if (password !== confirmation) { setNotice("비밀번호가 서로 달라요. 다시 확인해 주세요."); return }
     const secret = password
     void run(() => actions.update(secret))
   }
@@ -60,8 +59,7 @@ export function PasswordAuthCallbackPanel({ onLoginRequired, onSignedIn, actions
       <p><strong>변경할 계정: {recoveryEmail}</strong></p>
       <p>새 비밀번호를 저장한 뒤 로그인 화면에서 다시 로그인해 주세요.</p>
       <form onSubmit={submit}>
-        <div className="account-auth__field-group"><label htmlFor="recovered-password">새 비밀번호</label><input id="recovered-password" name="newPassword" type={showPassword ? "text" : "password"} autoComplete="new-password" maxLength={PASSWORD_MAX_LENGTH} value={password} disabled={busy} onChange={event => setPassword(event.target.value)} required /><small>{PASSWORD_MIN_LENGTH}자 이상 입력해 주세요.</small></div>
-        <div className="account-auth__field-group"><label htmlFor="recovered-password-confirmation">새 비밀번호 확인</label><input id="recovered-password-confirmation" name="newPasswordConfirmation" type={showPassword ? "text" : "password"} autoComplete="new-password" maxLength={PASSWORD_MAX_LENGTH} value={confirmation} disabled={busy} onChange={event => setConfirmation(event.target.value)} required /></div>
+        <div className="account-auth__field-group"><label htmlFor="recovered-password">새 비밀번호</label><input id="recovered-password" name="newPassword" type={showPassword ? "text" : "password"} autoComplete="new-password" autoCapitalize="none" spellCheck={false} minLength={PASSWORD_MIN_LENGTH} maxLength={PASSWORD_MAX_LENGTH} value={password} disabled={busy} onChange={event => setPassword(event.target.value)} required /><small>{PASSWORD_MIN_LENGTH}자 이상 입력해 주세요.</small></div>
         <label className="account-password__show"><input type="checkbox" checked={showPassword} disabled={busy} onChange={event => setShowPassword(event.target.checked)} />비밀번호 보기</label>
         <button className="account-auth__primary" type="submit" disabled={busy}>{busy ? "저장하는 중…" : "새 비밀번호 저장"}</button>
       </form>

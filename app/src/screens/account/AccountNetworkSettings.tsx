@@ -65,6 +65,7 @@ export function AccountNetworkSettings({
   storageSectionRef,
   onStorageGranted,
   onStorageStatus,
+  includeDataRights = true,
 }: {
   readonly userId: string
   readonly today: string
@@ -79,11 +80,12 @@ export function AccountNetworkSettings({
   readonly storageSectionRef?: RefObject<HTMLDivElement>
   readonly onStorageGranted?: () => void
   readonly onStorageStatus?: (state: "checking" | "required" | "ready" | "unavailable") => void
+  readonly includeDataRights?: boolean
 }) {
   const features = productFeatures()
   return (
     <>
-      {profileSetupComplete ? (
+      {profileSetupComplete ? includeDataRights && (
         <AccountSettingsDisclosure title="프로필·계정">
           <BetaAccountSettings
             userId={userId}
@@ -111,10 +113,10 @@ export function AccountNetworkSettings({
           <StorageConsentPanel key={userId} userId={userId} onGranted={onStorageGranted} onStatus={onStorageStatus} />
         </AccountSettingsDisclosure></div>
       )}
-      <AccountSettingsDisclosure title="내 자료·백업">
+      {includeDataRights && <AccountSettingsDisclosure title="내 자료·백업">
         <AccountDataRightsPanel key={`rights-${userId}`} userId={userId} />
         {features.planBackup && <PlanCloudBackupNotice />}
-      </AccountSettingsDisclosure>
+      </AccountSettingsDisclosure>}
       {(features.productAnalytics || features.publicProfile || features.sharing) && (
         <AccountSettingsDisclosure title="공유·동의">
           {features.productAnalytics && <ProductAnalyticsConsentPanel userId={userId} />}

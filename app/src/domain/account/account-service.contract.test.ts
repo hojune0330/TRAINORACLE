@@ -146,6 +146,7 @@ describe("beta account admission service", () => {
     await expect(loadPrivateProfileSetupStatus({ userId: "athlete-a" })).resolves.toEqual({
       ok: true,
       ready: true,
+      requiredAction: "none",
       canComplete: false,
       message: "가입 확인을 마쳤어요.",
     })
@@ -163,6 +164,7 @@ describe("beta account admission service", () => {
       await expect(loadPrivateProfileSetupStatus({ userId: "athlete-a" })).resolves.toMatchObject({
         ok: true,
         ready: false,
+        requiredAction: status === "LEGAL_RECONSENT_REQUIRED" ? "legal-reconsent" : status === "BETA_NOT_ENROLLED" ? "enrollment" : "profile",
         canComplete: true,
       })
     }
@@ -176,6 +178,7 @@ describe("beta account admission service", () => {
       await expect(loadPrivateProfileSetupStatus({ userId: "athlete-a" })).resolves.toMatchObject({
         ok: false,
         ready: false,
+        requiredAction: "blocked",
         canComplete: false,
       })
     }
@@ -188,13 +191,14 @@ describe("beta account admission service", () => {
     await expect(loadPrivateProfileSetupStatus({ userId: "athlete-a" })).resolves.toEqual({
       ok: false,
       ready: false,
+      requiredAction: "blocked",
       canComplete: false,
-      message: "지원하지 않는 로그인 방식이에요. 로그아웃한 뒤 이메일 확인 링크나 간편 로그인으로 다시 시작해 주세요.",
+      message: "지원하지 않는 로그인 방식이에요. 로그아웃한 뒤 가입할 때 사용한 로그인 방식으로 다시 시작해 주세요.",
     })
 
     await expect(savePrivateProfile(profileInput)).resolves.toEqual({
       ok: false,
-      message: "지원하지 않는 로그인 방식이에요. 로그아웃한 뒤 이메일 확인 링크나 간편 로그인으로 다시 시작해 주세요.",
+      message: "지원하지 않는 로그인 방식이에요. 로그아웃한 뒤 가입할 때 사용한 로그인 방식으로 다시 시작해 주세요.",
     })
   })
 
@@ -204,7 +208,7 @@ describe("beta account admission service", () => {
       ["AUTH_CHANNEL_DISABLED", "이 로그인 방식의 계정 이용이 잠시 중단됐어요. 로그인은 확인했으며, 다시 로그인해도 현재 제한은 바뀌지 않아요. 잠시 후 다시 확인해 주세요."],
     ]) {
       supabaseMock.mockResolvedValue(verifiedClient(vi.fn().mockResolvedValue({ data: status, error: null })))
-      await expect(loadPrivateProfileSetupStatus({ userId: "athlete-a" })).resolves.toEqual({ ok: false, ready: false, canComplete: false, message })
+      await expect(loadPrivateProfileSetupStatus({ userId: "athlete-a" })).resolves.toEqual({ ok: false, ready: false, canComplete: false, requiredAction: "blocked", message })
       await expect(savePrivateProfile(profileInput)).resolves.toEqual({ ok: false, message })
     }
   })

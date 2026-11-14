@@ -173,7 +173,7 @@ describe("Account session exit", () => {
         })
         return () => { stopScope(); stopAuth() }
       }, [])
-      return revision < 8 ? <Account key={revision} onOpenImport={() => {}} /> : <p role="alert">계정 화면 반복</p>
+      return revision < 8 ? <Account surface="manage" key={revision} onOpenImport={() => {}} /> : <p role="alert">계정 화면 반복</p>
     }
     render(<SignedInShell />)
     await waitFor(() => expect(activeLocalAccount()).toBe("athlete-a"))
@@ -189,7 +189,7 @@ describe("Account session exit", () => {
     mocks.loadSetup.mockImplementation(() => new Promise(resolve => { resolveSetup = resolve }))
     const openImport = vi.fn()
 
-    render(<Account onOpenImport={openImport} />)
+    render(<Account surface="manage" onOpenImport={openImport} />)
 
     expect(await screen.findByText("로그인한 계정의 가입 상태를 확인하고 있어요.")).toBeVisible()
     await waitFor(() => expect(mocks.loadSetup).toHaveBeenCalled())
@@ -210,7 +210,7 @@ describe("Account session exit", () => {
 
   it("introduces automatic connection before login without replacing the authentication steps", async () => {
     mocks.currentUser.mockResolvedValue(null)
-    render(<Account onOpenImport={vi.fn()} />)
+    render(<Account surface="auth" onOpenImport={vi.fn()} />)
     expect(await screen.findByTestId("guest-auth-gateway")).toBeVisible()
     expect(screen.getByText("Garmin 연결은 로그인 후 선택할 수 있어요.")).toBeVisible()
     expect(screen.queryByRole("button", { name: "운동 가져오기" })).toBeNull()
@@ -218,7 +218,7 @@ describe("Account session exit", () => {
 
   it("keeps the signed-in account and setup hints when local sign-out fails", async () => {
     mocks.signOut.mockResolvedValue({ ok: false, message: "로그아웃에 실패했어요." })
-    render(<Account />)
+    render(<Account surface="manage" />)
 
     const logout = await screen.findByRole("button", { name: "로그아웃" })
     mocks.clearPending.mockClear()
@@ -234,7 +234,7 @@ describe("Account session exit", () => {
 
   it("clears local setup state only after local sign-out succeeds", async () => {
     mocks.signOut.mockResolvedValue({ ok: true, message: "로그아웃되었어요." })
-    render(<Account />)
+    render(<Account surface="manage" />)
 
     const logout = await screen.findByRole("button", { name: "로그아웃" })
     mocks.clearPending.mockClear()
@@ -251,7 +251,7 @@ describe("Account session exit", () => {
     mocks.signOut
       .mockResolvedValueOnce({ ok: false, message: "global failed" })
       .mockResolvedValueOnce({ ok: false, message: "local failed" })
-    render(<Account />)
+    render(<Account surface="manage" />)
 
     await userEvent.click(await screen.findByRole("button", { name: "합성 삭제 완료" }))
 
@@ -271,7 +271,7 @@ describe("Account session exit", () => {
     let finish!: (result: { ok: boolean; message: string }) => void
     mocks.signOut.mockImplementationOnce(() => new Promise(done => { finish = done }))
       .mockResolvedValueOnce({ ok: false, message: "local failed" })
-    render(<Account />)
+    render(<Account surface="manage" />)
     const deleted = await screen.findByRole("button", { name: "합성 삭제 완료" })
     setActiveLocalAccount("athlete-a")
     const generation = localJournalScopeGeneration()
@@ -288,7 +288,7 @@ describe("Account session exit", () => {
   it("does not clear B or sign B out when A's deletion logout fails after account switching", async () => {
     let finish!: (result: { ok: boolean; message: string }) => void
     mocks.signOut.mockImplementationOnce(() => new Promise(done => { finish = done }))
-    render(<Account />)
+    render(<Account surface="manage" />)
     await userEvent.click(await screen.findByRole("button", { name: "합성 삭제 완료" }))
     const b = { id: "ui-delete-other-b", email: "synthetic-b@example.test", phone: null, provider: "email" as const }
     mocks.currentUser.mockResolvedValue(b)
@@ -307,7 +307,7 @@ describe("Account session exit", () => {
     const a = { id: "ui-confirmed-deleted-a", email: "synthetic-a@example.test", phone: null, provider: "email" as const }
     const b = { ...a, id: "ui-confirmed-normal-b" }
     mocks.currentUser.mockResolvedValue(a)
-    render(<Account />)
+    render(<Account surface="manage" />)
     await screen.findByRole("button", { name: "합성 삭제 완료" })
     await act(async () => { closeAccountDeletionBoundary(a.id, "2026-10-07T00:00:00Z") })
     expect(screen.queryByRole("button", { name: "합성 삭제 완료" })).not.toBeInTheDocument()
@@ -323,7 +323,7 @@ describe("Account session exit", () => {
   it("does not reuse A's deletion logout guard after an A to B to A session exchange", async () => {
     let finish!: (result: { ok: boolean; message: string }) => void
     mocks.signOut.mockImplementationOnce(() => new Promise(done => { finish = done }))
-    render(<Account />)
+    render(<Account surface="manage" />)
     await userEvent.click(await screen.findByRole("button", { name: "합성 삭제 완료" }))
     const deletionOptions = mocks.signOut.mock.calls[0]?.[0] as { expectedUserId: string; isCurrent: () => boolean }
     expect(deletionOptions.expectedUserId).toBe("athlete-a")
@@ -350,7 +350,7 @@ describe("Account session exit", () => {
       .mockResolvedValueOnce({ ok: false, message: "global failed" })
       .mockResolvedValueOnce({ ok: false, message: "local failed" })
       .mockImplementationOnce(() => new Promise(done => { finishRetry = done }))
-    render(<Account />)
+    render(<Account surface="manage" />)
     await userEvent.click(await screen.findByRole("button", { name: "합성 삭제 완료" }))
     await userEvent.click(await screen.findByRole("button", { name: "이 기기에서 다시 로그아웃" }))
     const retryOptions = mocks.signOut.mock.calls[2]?.[0] as { expectedUserId: string; isCurrent: () => boolean }
@@ -389,13 +389,13 @@ describe("Account session exit", () => {
       .mockResolvedValueOnce({ ok: false, message: "로그아웃에 실패했어요." })
       .mockResolvedValueOnce({ ok: true, message: "로그아웃되었어요." })
 
-    render(<Account />)
+    render(<Account surface="manage" />)
     await userEvent.click(await screen.findByRole("button", { name: "합성 이메일 확인 완료" }))
 
     expect(await screen.findByRole("heading", { name: "로그인 확인을 마치지 못했어요" })).toBeVisible()
     expect(screen.queryByRole("heading", { name: "내 계정" })).not.toBeInTheDocument()
     expect(mocks.clearPendingForAttempt).toHaveBeenCalledWith(attemptId)
-    expect(mocks.signOut).toHaveBeenNthCalledWith(1, { scope: "local" })
+    expect(mocks.signOut).toHaveBeenNthCalledWith(1, { scope: "local", expectedUserId: "athlete-email", isCurrent: expect.any(Function) })
 
     await userEvent.click(screen.getByRole("button", { name: "이 기기에서 다시 로그아웃" }))
     expect(await screen.findByTestId("guest-auth-gateway")).toBeVisible()
@@ -419,7 +419,7 @@ describe("Account session exit", () => {
     }
     mocks.currentUser.mockResolvedValueOnce(null)
 
-    render(<Account />)
+    render(<Account surface="manage" />)
     await userEvent.click(await screen.findByRole("button", { name: "합성 이메일 확인 완료" }))
 
     expect(await screen.findByRole("heading", { name: "로그인 확인을 마치지 못했어요" })).toBeVisible()
@@ -434,22 +434,22 @@ describe("auth-first admission", () => {
     verifiedSessionId: "11111111-1111-4111-8111-111111111111", expectedEmail: null, birthDate: null, privacyPolicyVersion: null, termsOfServiceVersion: null, createdAtMs: Date.now() })
   it("opens an existing admitted account with no extra signup fields or profile write", async () => {
     mocks.pending = authOnly()
-    render(<Account />)
-    expect(await screen.findByRole("button", { name: "로그아웃" })).toBeVisible()
+    render(<Account surface="auth" />)
+    expect(await screen.findByRole("heading", { name: "로그인 완료" })).toBeVisible()
     expect(screen.queryByTestId("required-signup-fields")).toBeNull()
     expect(mocks.finalize).not.toHaveBeenCalled()
     expect(mocks.clearPendingForAttempt).toHaveBeenCalledWith("a".repeat(32))
   })
-  it("shows new-member completion after auth and keeps account rights folded", async () => {
+  it("shows new-member completion after auth without mounting account rights", async () => {
     mocks.pending = authOnly()
     mocks.loadSetup.mockResolvedValue({ ok: true, ready: false, canComplete: true, message: "아직 가입을 마치지 않았어요. 나이와 필수 약관을 확인해 주세요." })
-    render(<Account />)
+    render(<Account surface="auth" />)
     expect(await screen.findByTestId("required-signup-fields")).toBeVisible()
     expect(screen.getByText(/아직 가입을 마치지 않았어요/u)).toBeVisible()
     expect(screen.queryByText(/확인 링크를 새 화면/u)).toBeNull()
-    const rights = screen.getByText("계정 자료 관리").closest("details")
-    expect(rights).not.toHaveAttribute("open")
-    expect(screen.getByRole("heading", { name: "내 자료 내려받기", hidden: true }).closest("details")).toBe(rights)
+    expect(screen.queryByText("계정 자료 관리")).toBeNull()
+    expect(screen.queryByRole("heading", { name: "내 자료 내려받기", hidden: true })).toBeNull()
+    expect(screen.queryByText("합성 계정 삭제 관리")).toBeNull()
     expect(mocks.finalize).not.toHaveBeenCalled()
   })
   it("rechecks current server status on retry without stale callback success or duplicate enrollment", async () => {
@@ -457,11 +457,11 @@ describe("auth-first admission", () => {
     mocks.oauthResult = { handled: true, ok: true, message: "간편 로그인을 확인했어요." }
     mocks.loadSetup.mockResolvedValueOnce({ ok: false, ready: false, canComplete: false, message: "이 로그인 방식은 잠시 닫혀 있어요." })
       .mockResolvedValue({ ok: true, ready: true, canComplete: false, message: "가입 확인을 마쳤어요." })
-    render(<Account />)
+    render(<Account surface="auth" />)
     expect(await screen.findByRole("heading", { name: "계정을 확인하지 못했어요" })).toBeVisible()
     expect(screen.queryByText("간편 로그인을 확인했어요.")).toBeNull()
     await userEvent.click(screen.getByRole("button", { name: "다시 확인하기" }))
-    expect(await screen.findByRole("button", { name: "로그아웃" })).toBeVisible()
+    expect(await screen.findByRole("heading", { name: "로그인 완료" })).toBeVisible()
     expect(mocks.loadSetup).toHaveBeenCalledTimes(2)
     expect(mocks.finalize).not.toHaveBeenCalled()
   })
@@ -471,7 +471,7 @@ describe("auth-first admission", () => {
 describe("password recovery account boundary", () => {
   it("renders only recovery before quarantine or normal admission despite a cached account hint", async () => {
     mocks.passwordCallback = true; mocks.passwordActive = true
-    render(<Account />)
+    render(<Account surface="auth" />)
     expect(await screen.findByLabelText("새 비밀번호")).toBeVisible()
     expect(screen.queryByTestId("required-signup-fields")).toBeNull()
     expect(screen.queryByRole("button", { name: "합성 삭제 완료" })).toBeNull()
@@ -489,7 +489,7 @@ describe("signup callback admission", () => {
       return { ok: true, state: "SIGNED_IN", verifiedUserId: "athlete-a", message: "확인했어요." }
     })
     mocks.loadSetup.mockResolvedValue({ ok: true, ready: false, canComplete: true, message: "가입을 마무리해 주세요." })
-    render(<Account />)
+    render(<Account surface="auth" />)
     expect(await screen.findByTestId("required-signup-fields")).toBeVisible()
     expect(screen.queryByTestId("guest-auth-gateway")).toBeNull()
     expect(mocks.currentUser).toHaveBeenCalledWith({ throwOnFailure: true })
@@ -502,7 +502,7 @@ describe("signup callback admission", () => {
       return { ok: true, state: "SIGNED_IN", verifiedUserId: "athlete-a", message: "확인했어요." }
     })
     mocks.currentUser.mockResolvedValue({ id: "athlete-b", email: "other@example.com", phone: null, provider: "email" })
-    render(<Account />)
+    render(<Account surface="auth" />)
     expect(await screen.findByRole("heading", { name: "이메일 확인을 마치지 못했어요" })).toBeVisible()
     expect(mocks.loadSetup).not.toHaveBeenCalled()
     expect(screen.queryByTestId("required-signup-fields")).toBeNull()

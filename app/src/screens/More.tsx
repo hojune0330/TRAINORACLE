@@ -7,6 +7,7 @@ import { feedbackConfig } from "../domain/feedback/feedback-config"
 import { SafeJournalExport } from "./home/DeviceJournal"
 import { InstallShortcutMenuEntry } from "../components/InstallShortcut"
 import { TrashBin } from "./home/TrashBin"
+import { EraseLocalData } from "./account/EraseLocalData"
 import { loadTrash } from "../domain/journal-trash"
 import "../styles/home-menu.css"
 import { captureReaderPosition, restoreReaderPosition, type ReaderPosition } from "../navigation/readerPosition"
@@ -202,6 +203,7 @@ export function More({
           <summary><Trash2 size={19} aria-hidden="true" /><span>휴지통 · {trashCount}개</span></summary>
           {trashCount === 0 ? <p>지운 일지가 없어요.</p> : <TrashBin onChanged={() => setTrashCount(loadTrash().length)} />}
         </details>
+        <EraseLocalData onOpenRestore={onOpenRestore} />
         </>}
         {activeView === "about" && <>
         <MenuGroup title={onOpenImport ? "문의" : "문의와 기기"}>

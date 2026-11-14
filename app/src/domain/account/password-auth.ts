@@ -6,7 +6,7 @@ import { authReturnUrl } from "./auth"
 import { clearPendingAccountSetupForAttempt, markPendingAccountAuthStarted, markPendingAccountAuthVerified, normalizeAuthEmail, readPendingAccountSetup, isAuthOnlyAccountAttempt } from "./auth-onboarding"
 import { authSessionQuarantinePhase, beginAuthSessionQuarantine, clearAuthSessionQuarantine, markAuthSessionExchangeStarted, withAuthSessionQuarantineLock } from "./auth-session-quarantine"
 
-export const PASSWORD_MIN_LENGTH = 6
+export const PASSWORD_MIN_LENGTH = 8
 export const PASSWORD_MAX_LENGTH = 1024
 export type PasswordAuthResult = AuthVerificationResult & { readonly state: "ERROR" | "SIGNED_IN" | "EMAIL_CONFIRMATION_REQUIRED" | "PASSWORD_LOGIN_REQUIRED" | "RECOVERY_EMAIL_SENT" | "RECOVERY_READY" | "PASSWORD_UPDATED"; readonly recoveryEmail?: string }
 type Client = NonNullable<Awaited<ReturnType<typeof supabase>>>

@@ -23,7 +23,7 @@ import {
   readPendingAccountSetup,
   writePendingAccountSetup,
 } from "../../domain/account/auth-onboarding"
-import type { AuthMethod } from "../../domain/account/auth-onboarding"
+import type { AuthMethod, AuthReturnIntent } from "../../domain/account/auth-onboarding"
 import { formatBirthDateInput } from "./birth-date-input"
 import { useActiveContentScroll } from "../../hooks/useActiveContentScroll"
 import { useTaskFlowBack } from "../../hooks/useTaskFlowBack"
@@ -34,6 +34,7 @@ type GatewayStep = "method" | "eligibility" | "email" | "email-sent" | "phone" |
 type NoticeTone = "pending" | "success" | "error"
 
 export type AccountAuthGatewayProps = {
+  readonly returnIntent?: AuthReturnIntent
   readonly passwordNotice?: string | null
   readonly onPasswordSignedIn?: (userId: string) => void
   readonly mode?: AccountEntryMode
@@ -54,6 +55,7 @@ export function AccountAuthGateway({
   config,
   today,
   passwordNotice = null,
+  returnIntent = null,
   onPasswordSignedIn,
   mode: controlledMode,
   onModeChange,
@@ -109,7 +111,7 @@ export function AccountAuthGateway({
       const clearAttempt = () => { if (attemptId !== null) try { clearPendingAccountSetupForAttempt(attemptId) } catch { /* storage failure cannot keep the button busy */ } }
       try {
         clearPendingAccountSetup()
-        const pending = createPendingAccountAuthAttempt({ method: nextMethod, entryMode: mode })
+        const pending = createPendingAccountAuthAttempt({ method: nextMethod, entryMode: mode, returnIntent })
         attemptId = pending.attemptId
         writePendingAccountSetup(pending)
         if (!markPendingAccountAuthStarted(pending.attemptId)) throw new Error("AUTH_ATTEMPT_NOT_STARTED")
@@ -302,7 +304,7 @@ export function AccountAuthGateway({
           <div className="account-auth__intro">
             <p>{mode === "signup" ? "사용할 계정을 선택해 주세요." : "가입할 때 쓴 계정으로 로그인하세요."}</p>
           </div>
-          {config.passwordAuthEnabled === true && <PasswordAuthPanel key={mode + ":" + passwordRevision} mode={mode} disabled={busy}
+          {config.passwordAuthEnabled === true && <PasswordAuthPanel key={mode + ":" + passwordRevision} mode={mode} returnIntent={returnIntent} disabled={busy}
             initialNotice={passwordLoginNotice} onBusyChange={setBusy} onSignedIn={onPasswordSignedIn} onUnsafeSessionDetected={onUnsafeSessionDetected}
             onRequireLogin={message => { setLocalMode("login"); onModeChange?.("login"); resetPasswordForm(); setPasswordLoginNotice(message) }} />}
           {config.passwordAuthEnabled === true && (config.googleAuthEnabled || config.kakaoAuthEnabled) && <p className="account-auth__alternative-label">간편 {actionLabel}</p>}

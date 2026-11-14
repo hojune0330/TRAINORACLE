@@ -1,5 +1,7 @@
 import React from "react"
 import type { AccountEntryMode } from "./components/AccountEntryButton"
+import type { AccountSurface, AccountAdmissionReady } from "./screens/Account"
+import { readPendingAccountSetup } from "./domain/account/auth-onboarding"
 import { arenaInvitation } from "./screens/treadmill/arena-types"
 import { isPlainHomeEntry } from "./screens/home/HomeIntroduction"
 import { acknowledgeAnnouncement, MINIGAME_ANNOUNCEMENT } from "./domain/product-announcements"
@@ -229,6 +231,11 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
   const [oracleAuthResolved, setOracleAuthResolved] = React.useState(() => !accountFeatureEnabled())
   const [accountScopeRevision, setAccountScopeRevision] = React.useState(0)
   const [accountEntryMode, setAccountEntryMode] = React.useState<AccountEntryMode>("login")
+  const [accountSurface, setAccountSurface] = React.useState<AccountSurface>("auth")
+  const [initialAccountIntent, setInitialAccountIntent] = React.useState(() => {
+    try { return readPendingAccountSetup()?.returnIntent ?? null } catch { return null }
+  })
+  const consumedAccountAdmission = React.useRef<string | null>(null)
   const [, refreshAccountJournals] = React.useReducer((revision: number) => revision + 1, 0)
   const [v, setV] = React.useState(() => {
     if (hasGarminCallback()) return INITIAL_VIEW_STATE
@@ -1373,12 +1380,22 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
   })
   const openImport = () => openImportWithMethod("automatic")
   const openFileImport = () => openImportWithMethod("file")
-  const openAccount = (mode: AccountEntryMode = "login") => runViewTransition("push", () => {
-    setAccountEntryMode(mode)
+  const openAccount = (mode?: AccountEntryMode) => runViewTransition("push", () => {
+    setAccountEntryMode(mode ?? "login")
+    setAccountSurface(mode === undefined && activeLocalAccount() ? "manage" : "auth")
     setV(s => ({ ...s, accountOpen: true }))
   })
+  const openAccountManagement = (mode?: AccountEntryMode) => {
+    if (mode !== undefined) { openAccount(mode); return }
+    runViewTransition("push", () => {
+    setAccountSurface("manage")
+    setAccountEntryMode("login")
+    setV(s => ({ ...s, tab: "home", accountOpen: true }))
+    })
+  }
   const openConnectionAccount = () => runViewTransition("push", () => {
     setAccountEntryMode("login")
+    setAccountSurface(activeLocalAccount() ? "manage" : "auth")
     connectionAccountReturn.current = captureRecordingOrigin(false)
     connectionAccountRequested.current = true
     setUtilityView(null)
@@ -1396,6 +1413,24 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
     }
     setV(s => ({ ...s, accountOpen: false }))
   })
+  const accountAdmissionReady = (event: AccountAdmissionReady) => {
+    if (consumedAccountAdmission.current === event.attemptId) return
+    consumedAccountAdmission.current = event.attemptId
+    setInitialAccountIntent(null)
+    if (event.returnIntent === "account" || event.returnIntent === "data-rights") {
+      setAccountSurface(event.returnIntent === "account" ? "manage" : "data-rights")
+      return
+    }
+    if (event.returnIntent === "connection" || connectionAccountRequested.current) {
+      // Restore the original reader only for its same owner. A new owner gets
+      // the connection entrance, never another owner's draft or an auto-save.
+      const origin = connectionAccountReturn.current
+      connectionAccountReturn.current = null; connectionAccountRequested.current = false
+      if (origin && origin.owner === event.userId && activeLocalAccount() === event.userId) {
+        runViewTransition("replace", () => restoreRecordingOrigin(origin))
+      } else openImportWithMethod("automatic")
+    }
+  }
   const closeImport = () => runViewTransition("pop", () => {
     const point = importReturnRef.current
     importReturnRef.current = null
@@ -1454,6 +1489,9 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
       <ConnectionAccountBackBoundary enabled={connectionAccountRequested.current} onBack={closeAccount}>
       <DeferredMobileScreens.Account
         initialAuthMode={accountEntryMode}
+        surface={loungeEntryIntent().requested ? "manage" : accountSurface}
+        returnIntent={connectionAccountRequested.current ? "connection" : accountSurface === "manage" ? "account" : accountSurface === "data-rights" ? "data-rights" : initialAccountIntent}
+        onAdmissionReady={accountAdmissionReady}
         loungeRequested={loungeEntryIntent().requested}
         onOpenJournal={() => goTab("journal")}
         onOpenPlan={() => goTab("plan")}
@@ -1505,7 +1543,7 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
         onOpenJournal={() => startRecording("quick-session")}
         onOpenAnalysis={() => goTab("trends")}
         onOpenFeedback={() => openOverlay({ kind: "feedback" })}
-        onOpenAccount={accountEnabled ? openAccount : undefined}
+        onOpenAccount={accountEnabled ? openAccountManagement : undefined}
         onOpenRestore={openRestore}
       />
     )

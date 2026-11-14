@@ -435,6 +435,7 @@ export async function currentUser(options?: { throwOnFailure?: boolean }): Promi
       return null
     }
     const { data, error } = await client.auth.getUser()
+    if (error?.name === "AuthSessionMissingError" || error?.status === 401) return null
     if (error) throw new Error("AUTH_UNAVAILABLE")
     const user = data.user
     return user ? toAccountUser(user) : null

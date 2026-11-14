@@ -10,6 +10,7 @@ enabled = true
 enabled = false
 
 [auth]
+minimum_password_length = 8
 site_url = "http://127.0.0.1:4173"
 additional_redirect_urls = [
   "http://localhost:4173",
@@ -19,6 +20,7 @@ additional_redirect_urls = [
 ]
 
 [auth.email]
+enable_confirmations = true
 otp_length = 6
 otp_expiry = 600
 max_frequency = "1m"
@@ -29,7 +31,11 @@ content_path = "./supabase/templates/magic-link.html"
 
 [auth.email.template.confirmation]
 subject = "TrainOracle 이메일 확인"
-content_path = "./supabase/templates/confirm-signup.html"
+content_path = "./supabase/templates/confirm-password-signup.html"
+
+[auth.email.template.recovery]
+subject = "TrainOracle 비밀번호 재설정"
+content_path = "./supabase/templates/password-recovery.html"
 
 # 실제 SMS 공급자와 CAPTCHA 검증 전에는 로컬 Supabase도 전화 가입을 열지 않는다.
 [auth.sms]

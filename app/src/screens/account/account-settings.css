@@ -1,0 +1,15 @@
+.account-settings { display: grid; gap: 16px; padding: 20px; border: 1px solid var(--line); border-radius: var(--r-task-surface, 16px); color: var(--ink); font-family: var(--sans); overflow-wrap: anywhere; }
+.account-settings h2, .account-settings h3, .account-settings p { margin: 0; }
+.account-settings h2 { font-size: 18px; }
+.account-settings h3 { font-size: 16px; }
+.account-settings form, .account-settings label, .account-settings__reauth { display: grid; gap: 12px; }
+.account-settings label { font-size: 14px; }
+.account-settings input:not([type="checkbox"]) { width: 100%; min-width: 0; min-height: 44px; box-sizing: border-box; padding: 12px; border: 1px solid var(--line); border-radius: var(--r-action, 12px); background: var(--surface); color: inherit; font: inherit; }
+.account-settings button { min-height: 44px; padding: 10px 16px; border-radius: 12px; font: inherit; cursor: pointer; }
+.account-settings button:disabled { cursor: default; opacity: .6; }
+.account-settings button[type="submit"] { background: var(--ink); color: var(--bg); border: 1px solid var(--ink); }
+.account-settings__secondary { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+.account-settings__hint { font-size: 14px; line-height: 1.5; }
+.account-settings__actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.account-settings label.account-settings__check { display: flex; align-items: center; min-height: 44px; gap: 12px; }
+.account-settings__check input { width: 20px; height: 20px; flex-shrink: 0; }
