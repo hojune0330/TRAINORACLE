@@ -1381,12 +1381,13 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
   const openImport = () => openImportWithMethod("automatic")
   const openFileImport = () => openImportWithMethod("file")
   const openAccount = (mode?: AccountEntryMode) => runViewTransition("push", () => {
-    setAccountEntryMode(mode ?? "login")
-    setAccountSurface(mode === undefined && activeLocalAccount() ? "manage" : "auth")
+    const explicitMode = mode === "login" || mode === "signup" ? mode : null
+    setAccountEntryMode(explicitMode ?? "login")
+    setAccountSurface(explicitMode === null && activeLocalAccount() ? "manage" : "auth")
     setV(s => ({ ...s, accountOpen: true }))
   })
   const openAccountManagement = (mode?: AccountEntryMode) => {
-    if (mode !== undefined) { openAccount(mode); return }
+    if (mode === "login" || mode === "signup") { openAccount(mode); return }
     runViewTransition("push", () => {
     setAccountSurface("manage")
     setAccountEntryMode("login")
