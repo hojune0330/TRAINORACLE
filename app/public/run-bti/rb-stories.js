@@ -120,11 +120,15 @@ window.RBStories = (() => {
         `${image(story,true)}<div><h3>${esc(story.title)}</h3><p>${esc(reason)}</p></div>${icon("arrow")}`, "story-recommendation")).join("");
       return `<section class="panel story-recommendations">${picks.length ? `<div class="story-result-head"><h2>${pack === "profile" ? "이어서 읽을 이야기" : "내 답과 이어지는 이야기"}</h2>${browse}</div>${cards}` : browse}</section>`;
     }
-    function resultSection(pack, record) {
+    function resultParts(pack, record) {
       const combined = profile();
-      const preview = window.RBProfileUI.summary(combined, {esc});
-      const content = preview + (record ? recommendations(pack, record, combined) : "");
-      return content ? `<div class="story-result-section" data-story-result="${esc(pack)}">${content}</div>` : "";
+      const wrap = content => content ? `<div class="story-result-section" data-story-result="${esc(pack)}">${content}</div>` : "";
+      return {summary:wrap(window.RBProfileUI.summary(combined, {esc})),
+        suggestions:record ? wrap(recommendations(pack, record, combined)) : ""};
+    }
+    function resultSection(pack, record) {
+      const parts = resultParts(pack, record);
+      return parts.summary + parts.suggestions;
     }
     let fileProfileBack = null;
     const profileURL = () => {
@@ -219,10 +223,10 @@ window.RBStories = (() => {
     function reflection(s, choice) {
       if (shared || !choice || !Array.isArray(choice.signals) || !choice.signals.length || choice.id !== latestPick(s.id)) return "";
       const excluded = isExcluded(s.id);
-      const rows = excluded ? [] : profile().rows.filter(row => row.storyEvidence.some(e => e.id === s.id && e.choiceId === choice.id));
+      const rows = excluded ? [] : profile().rows.filter(row => row.storyEvidence.some(e => e.id === s.id && e.choiceId === choice.id && e.specific));
       const labels = rows.map(row => esc(row.label)).join(" · ");
       const overlap = rows.find(row => row.quizEvidence.length);
-      const copy = excluded ? "이 답은 내 러닝 성향에서 뺐어요." : "내 러닝 성향에 담은 행동";
+      const copy = excluded ? "이 답은 내 러닝 성향에서 뺐어요." : rows.length ? "다른 보기와 달리 이 답에서 고른 행동" : "이 장면에서 고른 답을 남겼어요. 어느 보기를 골라도 함께 나오는 행동은 경향을 비교할 때 빼요.";
       return `<div class="story-reflection"><p>${copy}${labels ? `<br><strong>${labels}</strong>` : ""}</p>${overlap ? `<p>검사에서도 ‘${esc(overlap.label)}’에 해당하는 답을 골랐어요.</p>` : ""}<div><button class="btn light sm" data-story-act="profile">내 러닝 성향 보기</button><button class="linkbtn" data-story-act="toggle-profile">${excluded ? "내 성향에 다시 담기" : "이 답은 성향에서 빼기"}</button></div></div>`;
     }
     function read(s, choice, fromFriend = false) {
@@ -240,7 +244,10 @@ window.RBStories = (() => {
       const recap = `<details class="story-recap"${shared ? " open" : ""}><summary>처음 장면 보기</summary><p>${esc(s.opening)}</p></details>`;
       const outcome = choice ? `<div class="story-ending">${recap}<p class="story-picked">${shared ? "이 링크에 담긴 선택" : "내가 고른 선택"} · ${esc(choice.label)}</p><p class="story-then">${esc(choice.then)}</p><blockquote>${esc(choice.line)}</blockquote><div class="story-talk"><h2>같이 얘기해 볼까?</h2><p>${esc(s.question)}</p></div><div class="actions"><button class="btn primary" data-story-act="share">${icon("share")} 이 장면 공유하기</button><button class="btn light" data-story-act="again">${shared ? "나는 어떻게 할까?" : "다른 선택 해보기"}</button></div></div>` : "";
       const back = resultLink();
-      output(`<article class="story-reader"><div class="story-reader-nav">${back}${shelfLink()}</div>${context ? `<p class="story-status">${esc(context)}</p>` : ""}<div class="story-spread"><div class="story-art">${image(s)}</div><div class="story-prose">${meta}<h1>${esc(s.title)}</h1>${choice ? outcome + reflection(s, choice) : decision}</div></div>${choice ? related(s, choice) : ""}${sourceInfo(s)}${choice && back ? `<div class="story-end-return">${back}</div>` : ""}</article>`, "stories");
+      const endingImage = choice && window.RBRepresentative.endingArt(s, choice);
+      const art = endingImage ? `<img src="${esc(asset(endingImage.art))}" alt="${esc(endingImage.alt)}">` : image(s);
+      const artCaption = choice ? `<small class="story-art-label">${endingImage ? (shared ? "친구가 고른 행동" : "내가 고른 행동") : "이야기의 첫 장면"}</small>` : "";
+      output(`<article class="story-reader"><div class="story-reader-nav">${back}${shelfLink()}</div>${context ? `<p class="story-status">${esc(context)}</p>` : ""}<div class="story-spread"><div class="story-art">${art}${artCaption}</div><div class="story-prose">${meta}<h1>${esc(s.title)}</h1>${choice ? outcome + reflection(s, choice) : decision}</div></div>${choice ? related(s, choice) : ""}${sourceInfo(s)}${choice && back ? `<div class="story-end-return">${back}</div>` : ""}</article>`, "stories");
     }
     function open(id, selected, filter = category) {
       window.RBScene.audio.stop();
@@ -278,7 +285,7 @@ window.RBStories = (() => {
         input.focus(); input.select();
       }
     }
-    main.addEventListener("click", event => {
+    main.addEventListener("click", async event => {
       const control = event.target.closest("[data-story-act]");
       if (!control || (control.tagName === "A" && (event.ctrlKey || event.shiftKey || event.metaKey || event.altKey))) return;
       event.preventDefault();
@@ -286,7 +293,15 @@ window.RBStories = (() => {
       const panel = control.closest("[data-story-result]");
       const origin = panel ? {pack:panel.dataset.storyResult, steps:0, scroll:window.scrollY,
         ratio:main.querySelector('[data-act="ratio"][aria-pressed="true"]')?.dataset.r, story:control.dataset.storyId || null, action} : null;
-      if (action === "result") {
+      if (action === "save-representative" || action === "share-representative") {
+        const includeAnswers = !!control.closest(".rb-rep")?.querySelector("[data-rep-proof]")?.checked;
+        control.disabled = true;
+        try {
+          notify(await window.RBRepresentative.send(profile(), includeAnswers, action === "share-representative"));
+        } catch (error) {
+          if (error.name !== "AbortError") notify("이미지를 보내지 못했어요. 성향 화면을 캡처해 주세요.");
+        } finally { control.disabled = false; }
+      } else if (action === "result") {
         returnFromStory();
       } else if (action === "profile") {
         if (!origin && readerOrigin()?.pack === "profile") returnFromStory();
@@ -328,7 +343,7 @@ window.RBStories = (() => {
         share();
       }
     });
-    return {homeFeature, savedEntry, resultSection, open, openProfile, clearRoute};
+    return {homeFeature, savedEntry, resultSection, resultParts, open, openProfile, clearRoute};
   }
   return {create};
 })();

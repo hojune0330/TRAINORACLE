@@ -25,7 +25,7 @@
     },
     {
       "id": "at-the-end",
-      "signals": ["encouragement", "plan"],
+      "signals": ["encouragement"],
       "label": "다 뛰고 먹고 싶다던 간식",
       "then": "친구가 먼저 골라 둔 빵을 사서 약속한 곳으로 가는 길이야. 봉지에 김이 차서 입구를 살짝 열어 뒀어.",
       "line": "다 끝나면 바로 먹자. 네가 말한 빵 사 놨어.",

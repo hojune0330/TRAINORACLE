@@ -22,7 +22,7 @@ CATEGORIES = {"weather", "race", "gear", "community", "routine", "travel"}
 SIGNALS = {
     "explore", "scenery", "body", "numbers", "plan", "reset", "reflect", "photo", "company",
     "conversation", "encouragement", "pace", "routine", "goal", "finish", "travel",
-    "movement", "enjoyment", "route", "adjust", "solo", "privacy", "compare", "verify",
+    "movement", "enjoyment", "route", "adjust", "solo", "privacy", "compare", "verify", "log", "pause",
 }
 
 

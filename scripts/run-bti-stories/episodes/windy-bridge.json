@@ -23,7 +23,7 @@
     },
     {
       "id": "stay-for-view",
-      "signals": ["scenery", "enjoyment"],
+      "signals": ["scenery", "pause"],
       "label": "모자 벗어 넣고 잠깐 강만 보고 가자",
       "then": "모자를 주머니에 넣고 넓은 전망 쉼터에 섰어. 둘이 한참 강만 보다가 다음엔 어느 쪽 강변을 뛸지 골랐어.",
       "line": "오늘 다리에서 건진 건 거리보다 이 풍경이야.",

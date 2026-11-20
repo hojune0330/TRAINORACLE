@@ -17,14 +17,14 @@
     },
     {
       "id": "wait-a-bit",
-      "signals": ["adjust", "company"],
+      "signals": ["pause", "adjust"],
       "label": "비 그친 김에 커피부터 마실까?",
       "then": "창가에 앉아 젖은 운동화를 내려다보다가 밀린 얘기가 먼저 나왔어. 다 마신 뒤에야 둘이 바깥을 다시 봐.",
       "line": "운동화 신고 나와서 커피만 마신 날도 기억나더라."
     },
     {
       "id": "pick-another-day",
-      "signals": ["plan"],
+      "signals": ["plan", "adjust"],
       "label": "오늘은 들어가고 날짜 다시 잡자",
       "then": "우산을 털면서 둘이 나란히 달력을 열었어. 이번엔 둘 다 서두르지 않아도 되는 날에 동그라미를 쳤어.",
       "line": "오늘은 양말 뽀송한 채로 집에 갈래. 토요일 어때?"

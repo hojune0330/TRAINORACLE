@@ -16,14 +16,14 @@
     },
     {
       "id": "change",
-      "signals": ["adjust", "company"],
+      "signals": ["adjust", "plan"],
       "label": "둘 다 편한 시간으로 다시 잡자",
       "then": "친구도 조금 늦게 만나고 싶었대. 둘 다 되는 시간을 찾고 나니 약속이 더 편해졌어.",
       "line": "우리 둘 다 좀 여유 있을 때 나가자."
     },
     {
       "id": "other",
-      "signals": ["movement", "company"],
+      "signals": ["movement", "adjust"],
       "label": "이번엔 실내에서 같이 움직이자",
       "then": "집 근처에서 가기 쉬운 실내 장소를 하나 골랐어. 만나자는 약속은 그대로 남았어.",
       "line": "오늘은 안에서 만나자. 동네 한 바퀴는 다음에도 되잖아."
