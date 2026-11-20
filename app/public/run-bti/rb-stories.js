@@ -31,7 +31,7 @@ window.RBStories = (() => {
       const day = kstDay();
       const news = [], lanes = new Map(Object.keys(groups).map(key => [key, []]));
       for (const story of catalog) {
-        if (!available(story, day)) continue;
+        if (story.archived || !available(story, day)) continue;
         if (story.validFrom || story.validUntil) news.push(story);
         else lanes.get(story.category).push(story);
       }
@@ -172,11 +172,16 @@ window.RBStories = (() => {
     function homeFeature() {
       const list = active();
       if (!list.length) return "";
-      const covers = ["race", "gear", "weather"].map(k => list.find(s => s.category === k)).filter(Boolean);
-      return `<section class="story-feature"><div><h2>러닝 이야기</h2><p>비가 그친 저녁부터 대회 전날까지. 한 장면을 골라 내 이야기로 이어 가요.</p><a href="${esc(urlFor())}" data-story-act="shelf" class="btn primary">이야기 ${list.length}편 보기 ${icon("arrow")}</a></div><div class="story-strip" aria-hidden="true">${covers.map(s => image(s, true)).join("")}</div></section>`;
+      const featured = byId.get("after-run-post");
+      const shelfButton = `<a href="${esc(urlFor())}" data-story-act="shelf" class="story-browse">러닝 이야기 ${list.length}편 보기 ${icon("arrow")}</a>`;
+      if (!featured) return shelfButton;
+      const strip = window.RBStoryMatch.postQuestion.choices.filter(c => c.art)
+        .map(c => `<img src="${esc(asset(c.art))}" alt="" loading="lazy">`).join("");
+      return `<section class="story-feature"><div><h2>오늘 뛴 거 올릴까?</h2><p>기록 화면 한 장? 땀 식기 전에 찍은 셀카? 오늘은 그냥 넘어가도 좋아요.</p>
+        <div class="actions">${episodeLink(featured, "내 답 고르기 " + icon("arrow"), "btn primary")}${shelfButton}</div></div><div class="story-strip" aria-hidden="true">${strip}</div></section>`;
     }
     function savedEntry() {
-      const n = active().filter(s => s.choices.some(c => c.id === latestPick(s.id))).length;
+      const n = catalog.filter(s => s.choices.some(c => c.id === latestPick(s.id))).length;
       return n ? `<section class="panel sectionhead"><div><h2>내가 고른 이야기</h2><p>결말까지 읽은 이야기 ${n}편을 다시 볼 수 있어요.</p></div><button class="btn light sm" data-story-act="mine">내 이야기 보기</button></section>` : "";
     }
     function tile(s) {
@@ -191,7 +196,7 @@ window.RBStories = (() => {
     function shelf(message = "") {
       current = ending = null;
       shared = false;
-      const stories = active();
+      const stories = category === "mine" ? catalog : active();
       const filtered = stories.filter(matchesFilter);
       const filters = {all:"전체", ...groups, mine:"읽은 이야기"};
       const buttons = Object.entries(filters).map(([key,label]) =>
@@ -213,10 +218,10 @@ window.RBStories = (() => {
     function related(s, choice) {
       const today = kstDay();
       const direct = byId.get(choice.next);
-      const next = direct && direct.id !== s.id && available(direct, today) ? direct : null;
+      const next = direct && !direct.archived && direct.id !== s.id && available(direct, today) ? direct : null;
       const previous = catalog.filter(t => t.links?.includes(s.id) || t.choices.some(c => c.next === s.id)).map(t => t.id);
       const ids = [...new Set([...(s.links || []), ...previous])];
-      const also = ids.map(id => byId.get(id)).filter(t => t && t.id !== s.id && t.id !== next?.id && available(t, today));
+      const also = ids.map(id => byId.get(id)).filter(t => t && !t.archived && t.id !== s.id && t.id !== next?.id && available(t, today));
       const links = also.map(t => episodeLink(t, esc(t.title) + icon("arrow"), "story-next")).join("");
       return `${next ? `<section class="story-related"><h2>이 선택으로 이어지는 이야기</h2>${episodeLink(next, esc(next.title) + icon("arrow"), "story-next")}</section>` : ""}${also.length ? `<section class="story-related"><h2>관련 이야기</h2>${links}</section>` : ""}`;
     }
@@ -237,15 +242,20 @@ window.RBStories = (() => {
       const span = [s.validFrom && formatDate(s.validFrom) + "부터", s.validUntil && formatDate(s.validUntil) + "까지"].filter(Boolean).join(" ");
       const context = archived ? `지난 이야기 · 한국시간 ${formatDate(s.validUntil)}까지 소개했어요.` : span ? `소개 기간 · 한국시간 ${span}` : "";
       const meta = `<p class="story-meta">${esc(groups[s.category])} · ${s.source ? "자료로 만든 이야기" : "창작 이야기"}</p>`;
-      const options = s.choices.map(c => `<button type="button" data-story-act="pick" data-choice="${esc(c.id)}">${esc(c.label)}${icon("arrow")}</button>`).join("");
+      const options = s.choices.map(c => {
+        const posting = window.RBStoryMatch.postQuestion.choices.find(p => c.signals?.includes(p.signal));
+        const thumb = posting?.art ? `<img src="${esc(asset(posting.art))}" alt="" class="rb-post-thumb">` : "";
+        return `<button type="button" data-story-act="pick" data-choice="${esc(c.id)}">${thumb}<span>${esc(c.label)}</span>${icon("arrow")}</button>`;
+      }).join("");
       const usesSignals = s.choices.some(c => Array.isArray(c.signals) && c.signals.length);
       const pickNote = isExcluded(s.id) ? "이 이야기에서 고른 답은 내 성향에서 빼 두었어요." : "여기서 고른 답을 내 러닝 성향에 담아요. 다시 고르면 새 답만 남아요.";
       const decision = `<div class="story-opening"><p>${esc(s.opening)}</p><h2>${esc(s.prompt)}</h2>${usesSignals ? `<p class="story-pick-note">${pickNote}</p>` : ""}<div class="story-answers">${options}</div></div>`;
       const recap = `<details class="story-recap"${shared ? " open" : ""}><summary>처음 장면 보기</summary><p>${esc(s.opening)}</p></details>`;
-      const outcome = choice ? `<div class="story-ending">${recap}<p class="story-picked">${shared ? "이 링크에 담긴 선택" : "내가 고른 선택"} · ${esc(choice.label)}</p><p class="story-then">${esc(choice.then)}</p><blockquote>${esc(choice.line)}</blockquote><div class="story-talk"><h2>같이 얘기해 볼까?</h2><p>${esc(s.question)}</p></div><div class="actions"><button class="btn primary" data-story-act="share">${icon("share")} 이 장면 공유하기</button><button class="btn light" data-story-act="again">${shared ? "나는 어떻게 할까?" : "다른 선택 해보기"}</button></div></div>` : "";
+      const outcome = choice ? `<div class="story-ending">${recap}<p class="story-picked">${shared ? "이 링크에 담긴 선택" : "내가 고른 선택"} · ${esc(choice.label)}</p><p class="story-then">${esc(choice.then)}</p><blockquote>${esc(choice.line)}</blockquote><div class="story-talk"><h2>같이 얘기해 볼까?</h2><p>${esc(s.question)}</p></div><div class="actions">${choice.signals?.includes("keepPrivate") ? "" : `<button class="btn primary" data-story-act="share">${icon("share")} 이 장면 공유하기</button>`}<button class="btn light" data-story-act="again">${shared ? "나는 어떻게 할까?" : "다른 선택 해보기"}</button></div></div>` : "";
       const back = resultLink();
       const endingImage = choice && window.RBRepresentative.endingArt(s, choice);
-      const art = endingImage ? `<img src="${esc(asset(endingImage.art))}" alt="${esc(endingImage.alt)}">` : image(s);
+      const art = !endingImage ? image(s) : endingImage.art ? `<img src="${esc(asset(endingImage.art))}" alt="${esc(endingImage.alt)}">` :
+        `<div class="rb-post-unpublished">${esc(choice.line)}</div>`;
       const artCaption = choice ? `<small class="story-art-label">${endingImage ? (shared ? "친구가 고른 행동" : "내가 고른 행동") : "이야기의 첫 장면"}</small>` : "";
       output(`<article class="story-reader"><div class="story-reader-nav">${back}${shelfLink()}</div>${context ? `<p class="story-status">${esc(context)}</p>` : ""}<div class="story-spread"><div class="story-art">${art}${artCaption}</div><div class="story-prose">${meta}<h1>${esc(s.title)}</h1>${choice ? outcome + reflection(s, choice) : decision}</div></div>${choice ? related(s, choice) : ""}${sourceInfo(s)}${choice && back ? `<div class="story-end-return">${back}</div>` : ""}</article>`, "stories");
     }
@@ -297,7 +307,9 @@ window.RBStories = (() => {
         const includeAnswers = !!control.closest(".rb-rep")?.querySelector("[data-rep-proof]")?.checked;
         control.disabled = true;
         try {
-          notify(await window.RBRepresentative.send(profile(), includeAnswers, action === "share-representative"));
+          const result = profile();
+          const scope = control.closest(".rb-posting") && result.posting ? {...result, direction:result.posting} : result;
+          notify(await window.RBRepresentative.send(scope, includeAnswers, action === "share-representative"));
         } catch (error) {
           if (error.name !== "AbortError") notify("이미지를 보내지 못했어요. 성향 화면을 캡처해 주세요.");
         } finally { control.disabled = false; }

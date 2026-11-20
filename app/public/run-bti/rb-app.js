@@ -481,6 +481,21 @@
     return id === "base" ? `${labels.join(" · ")} 순서로 골랐어요. 세 영역에서 자주 고른 답을 모아 이 캐릭터를 골랐어요.`
       : `${labels.slice(0,2).join(" · ")} 쪽을 자주 골라 이 캐릭터가 나왔어요. 마지막 영역에서 자주 고른 ${labels[2]} 쪽 답은 대사에 담았어요.`;
   }
+  function postingQuestion(record) {
+    const q = window.RBStoryMatch.postQuestion;
+    const picked = q.choices.find(c => c.signal === record.postChoice);
+    if (!picked && record.postQuestionSkipped) {
+      return `<div class="panel rb-post-skipped"><button type="button" class="linkbtn" data-act="post-open">러닝 인증 질문 다시 보기</button></div>`;
+    }
+    const prompt = record.mode === "imagine" ? q.imagine : q.prompt;
+    return `<section class="panel rb-post-question"><h2 id="post-choice-heading" tabindex="-1">${esc(prompt)}</h2>
+      <div class="rb-post-options" role="group" aria-labelledby="post-choice-heading">${q.choices.map(c =>
+        `<button type="button" data-act="post-select" data-signal="${esc(c.signal)}" aria-pressed="${c === picked}">
+          ${c.art ? `<img src="${esc(asset(c.art))}" alt="">` : ""}
+          <span>${esc(c.label)}</span>${c === picked ? '<b aria-hidden="true">✓</b>' : ""}</button>`).join("")}</div>
+      <div class="rb-post-controls"><span>${picked ? "고른 답을 내 러닝 성향에 반영했어요." : "가까운 답 하나를 골라 주세요."}</span>
+      <button type="button" class="linkbtn" data-act="post-omit">${picked ? "이 답 빼기" : "이 질문 건너뛰기"}</button></div></section>`;
+  }
   function showResult(id, animate = false, ratio = "4:5") {
     if (!library[id]) return pick(id);
     state = { id, view: "result", ratio };
@@ -489,6 +504,7 @@
       v = sourceResult(),
       m = model();
     const storyResult = storyUI.resultParts(id, r);
+    if (id === "record") storyResult.summary = postingQuestion(r) + storyResult.summary;
     output(
       `${head(m.name, packTitle(id) + (r.mode === "imagine" ? " · 첫 러닝을 상상한 카드" : " · 검사에서 받은 카드"), storyResult.summary)}<p class="desc" data-pack-reason>${esc(packCardReason(id,v,r.custom))}</p><div class="results"><section>${picturePicker(id, v, m)}<div class="scene-wrap"><canvas id="scene" width="1080" height="1350" role="img" aria-label="${esc(m.name + " · " + m.line)}"></canvas></div>${m.sceneArt || m.charIndex < 0 || matchMedia("(prefers-reduced-motion: reduce)").matches ? "" : '<div class="scene-actions"><button data-act="replay">캐릭터 등장 장면 다시 보기</button><button data-act="skipmotion" hidden>마지막 장면 보기</button></div>'}<div class="actions">${btn("capture", "캡처 화면", "primary", "image")}${btn("download", "이미지 저장", "light", "download")}${btn("share", "친구에게", "light", "share")}</div><div class="work-actions">${["4:5", "9:16"].map((s, i) => `<button class="btn sm light ${s === ratio ? "active-ratio" : ""}" data-act="ratio" data-r="${s}" aria-pressed="${s === ratio}">${s} ${i ? "스토리" : "피드"}</button>`).join("")}</div></section><section class="stack">${motiveUI.fromResult()}${v.kind === "open" ? openPicker(id) : ""}<div class="panel"><h2>한눈에 보는 내 러닝</h2><div class="summary-grid">${p.domains
         .map((d, j) => {
@@ -871,6 +887,30 @@
       id = b.dataset.id || state.id,
       i = Number(b.dataset.i);
     switch (act) {
+      case "post-select":
+      case "post-omit":
+      case "post-open": {
+        const record = library.record;
+        if (state.view !== "result" || state.id !== "record" || !record) break;
+        if (act === "post-select") {
+          const selection = window.RBStoryMatch.postQuestion.choices.find(c => c.signal === b.dataset.signal);
+          if (!selection) break;
+          record.postChoice = selection.signal;
+          delete record.postQuestionSkipped;
+        } else if (act === "post-omit") {
+          delete record.postChoice;
+          record.postQuestionSkipped = true;
+        } else {
+          delete record.postQuestionSkipped;
+        }
+        const stored = save(storageKey, library);
+        showResult("record", false, state.ratio);
+        const target = act === "post-select" ? '.rb-post-options [aria-pressed="true"]' :
+          act === "post-omit" ? '[data-act="post-open"]' : "#post-choice-heading";
+        main.querySelector(target)?.focus({preventScroll:true});
+        if (!stored) notify("이번에 연 화면에서만 바뀌었어요.");
+        break;
+      }
       case "modalclose":
         modal.close();
         break;

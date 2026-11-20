@@ -33,6 +33,25 @@ window.RBStoryMatch = (() => {
     ],
   };
 
+  // The optional record question has a stable ID. Existing six-item answers concern
+  // personal records and cannot tell us what the respondent would actually post.
+  const postQuestion = {
+    id:"after-run-sharing", scene:"이번 달 러닝을 돌아볼 때",
+    prompt:"이번 달에 뛴 날들을 돌아봤어. SNS에 딱 하나 올린다면 뭘 고를래?",
+    imagine:"첫 러닝이 이번 달에 제일 기억에 남았어. SNS에 딱 하나 올린다면 뭘 고를래?",
+    choices:[
+      {signal:"postStats", short:"기록 화면만", label:"거리랑 시간이 나온 기록 화면만 올려",
+        character:"러닝 기록만 올리는 러너", art:"art/post-stats.webp", caption:"사진 없이 달린 코스만 보이는 러닝 앱 화면이에요."},
+      {signal:"postSelfie", short:"내 셀카", label:"막 뛰고 난 내 얼굴이 나온 셀카를 올려",
+        character:"뛰고 난 내 모습을 올리는 러너", art:"art/post-selfie.webp", caption:"달리기를 마치고 찍은 셀카예요."},
+      {signal:"postScenery", short:"풍경 사진", label:"뛰다가 본 풍경 사진을 올려",
+        character:"달리다 본 풍경을 올리는 러너", art:"art/bg-00.webp", caption:"사람이 나오지 않은 강변 풍경이에요."},
+      {signal:"keepPrivate", short:"올리지 않기", label:"오늘 뛴 건 따로 안 올려",
+        character:"오늘은 안 올리는 러너", art:"", caption:"이번에 고른 답은 ‘따로 올리지 않기’예요."},
+    ],
+  };
+  const postingSignals = new Set(postQuestion.choices.map(c => c.signal));
+
   // Use the specific motive item: a self-set distance need not involve a race,
   // and an interest in weight management alone says nothing about a preferred activity.
   const motiveSignals = {
@@ -82,12 +101,25 @@ window.RBStoryMatch = (() => {
     stamina: ["일상 체력 기르기", "평소 계단에서 숨이 덜 차면 좋겠다고 답했어요."],
     // Kept in the personal report only when the person explicitly endorses a weight item.
     weight: ["체중 관리", "달리고 싶은 이유로 체중 관리를 꼽았어요."],
+    postStats: ["기록 화면만 올리기", "거리와 시간이 나온 기록 화면만 올리는 답을 골랐어요."],
+    postSelfie: ["내 셀카 올리기", "내 얼굴이 나온 셀카를 올리는 답을 골랐어요."],
+    postScenery: ["풍경 사진 올리기", "뛰다가 본 풍경을 찍어 올리는 답을 골랐어요."],
+    keepPrivate: ["따로 올리지 않기", "오늘 뛴 건 따로 올리지 않는 답을 골랐어요."],
   };
 
   function quizObservations(packId, record) {
-    if (!record?.answers) return [];
+    if (!record) return [];
     const rows = [];
     const mode = record.mode === "imagine" ? "imagine" : "experience";
+    if (packId === "record") {
+      const choice = postQuestion.choices.find(c => c.signal === record.postChoice);
+      if (choice) {
+        const evidence = {id:packId,title:window.RB.packs.record.title,scene:postQuestion.scene,
+          itemId:postQuestion.id,mode,answer:choice.label};
+        rows.push({signal:choice.signal,evidence,leading:true,weight:1});
+      }
+    }
+    if (!record.answers) return rows;
     if (packId === "motive") {
       const {groups, score, scale, title} = window.RBMotives;
       const {leaders, singles} = score(record.answers);
@@ -170,6 +202,42 @@ window.RBStoryMatch = (() => {
     return result.sort((a,b) => order[a.status] - order[b.status]
       || Math.max(b.leftOnly,b.rightOnly) - Math.max(a.leftOnly,a.rightOnly) || b.both-a.both
       || b.total-a.total || a.left.localeCompare(b.left) || a.right.localeCompare(b.right));
+  }
+
+  function postingProfile(occasions) {
+    const counts = postQuestion.choices.map(c => ({signal:c.signal,label:c.short,count:0}));
+    const evidence = [];
+    let quizCount = 0, storyCount = 0;
+    for (const {options, picks, story} of occasions) {
+      // A selfie can be taken, saved, or posted. Count only decisions that explicitly
+      // offer all four posting choices on equal terms, one action per alternative.
+      const offered = options.map(tags => tags.filter(tag => postingSignals.has(tag)));
+      if (offered.length !== counts.length || offered.some(tags => tags.length !== 1) ||
+          new Set(offered.flat()).size !== counts.length) continue;
+      const choices = picks.filter(e => postingSignals.has(e.signal));
+      if (choices.length !== 1) continue;
+      const [choice] = choices;
+      counts.find(c => c.signal === choice.signal).count++;
+      evidence.push(choice);
+      if (story) storyCount++; else quizCount++;
+    }
+    const total = evidence.length;
+    if (!total) return null;
+    const chosen = counts.filter(c => c.count).sort((a,b) => b.count-a.count);
+    const most = chosen[0], leaders = chosen.filter(c => c.count === most.count);
+    const gap = most.count - (chosen[1]?.count || 0);
+    const status = total === 1 ? "sparse" : leaders.length > 1 ? "tied" :
+      most.count > total/2 && gap >= 2 ? "clear" : "mixed";
+    const represented = status === "mixed" ? chosen : leaders;
+    const names = represented.map(c => c.label).join(" · ");
+    const title = status === "sparse" ? "이번에 고른 답 · " + names :
+      status === "clear" ? themes[most.signal][0] :
+      status === "tied" ? "같은 횟수로 고른 답 · " + names : "장면에 따라 다르게 골랐어요";
+    const tally = chosen.map(c => `‘${c.label}’ ${c.count}번`).join(", ");
+    const reason = total === 1 ? `내가 답한 한 장면에서는 ‘${most.label}’ 쪽을 골랐어요.` :
+      `러닝을 공유할지 정하는 장면 ${total}개에서 ${tally} 골랐어요.`;
+    return {status,title,reason,signals:represented.map(c => c.signal),evidence,
+      counts,total,quizCount,storyCount};
   }
 
   function compareMotives(record) {
@@ -278,7 +346,10 @@ window.RBStoryMatch = (() => {
         if (!questions.has(evidence.itemId)) questions.set(evidence.itemId, []);
         questions.get(evidence.itemId).push({...evidence,signal});
       }
-      for (const [q,picks] of questions) occasions.push({story:false,options:sceneSignals[packId][q].map(tag=>[tag]),picks});
+      for (const [q,picks] of questions) {
+        const signals = q === postQuestion.id ? postQuestion.choices.map(c => c.signal) : sceneSignals[packId][q];
+        occasions.push({story:false,options:signals.map(tag => [tag]),picks});
+      }
     }
     const answered = new Set();
     for (const story of catalog || []) {
@@ -312,13 +383,18 @@ window.RBStoryMatch = (() => {
     rows.sort((a,b) => b.specificCount-a.specificCount || a.signal.localeCompare(b.signal));
     const comparisons = comparisonsFor(occasions);
     const motiveComparison = compareMotives(records?.motive);
-    const direction = decideDirection(comparisons,rows,motiveComparison,answered.size,quizCount);
+    const posting = postingProfile(occasions);
+    const otherRows = posting ? rows.filter(row => !postingSignals.has(row.signal)) : rows;
+    const other = decideDirection(comparisons,otherRows,motiveComparison,answered.size,quizCount);
+    const postingLeads = posting && ((!otherRows.some(r => r.specificCount) && !motiveComparison) ||
+      (posting.total >= 2 && (other.status === "none" || other.status === "sparse")));
+    const direction = postingLeads ? posting : other;
     let baseline = null;
     if (quizCount && answered.size) {
       const {status, signals, title} = profile([], records).direction;
       baseline = {status, signals, title};
     }
-    return {rows, storyCount:answered.size, quizCount,comparisons,direction,motiveComparison,baseline};
+    return {rows, storyCount:answered.size, quizCount,comparisons,direction,motiveComparison,baseline,posting};
   }
 
   function quizReason(evidence) {
@@ -381,5 +457,5 @@ window.RBStoryMatch = (() => {
     return [first, ...others.slice(0, 1)].map(({story, reason}) => ({story, reason}));
   }
 
-  return {profile, recommend};
+  return {profile, recommend, postQuestion};
 })();

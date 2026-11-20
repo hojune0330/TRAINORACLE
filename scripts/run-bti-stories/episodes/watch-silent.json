@@ -28,12 +28,12 @@
       "label": "끝나고 친구랑 같은 자리에서 사진 찍자",
       "then": "처음 만난 벤치로 돌아와 신발 두 켤레를 찍었어. 친구가 보낸 사진에는 둘 다 끈이 한쪽씩 풀려 있어.",
       "line": "몇 킬로였는진 모르겠고 우리 신발 사진은 남았어.",
-      "next": "photo-permission"
+      "next": "after-run-post"
     }
   ],
   "question": "거리가 얼마였는지 몰라도 아직 떠오르는 러닝이 있어?",
   "links": [
     "one-lap",
-    "photo-permission"
+    "after-run-post"
   ]
 }

@@ -21,7 +21,7 @@
       "label": "친구가 지나가는 순간 한 컷",
       "then": "통행을 비켜 선 자리에서 휴대폰을 들었어. 막상 사진에는 얼굴보다 나를 알아보고 흔들던 손이 더 크게 찍혔어.",
       "line": "조금 흔들렸는데 너 손 흔드는 건 제대로 나왔어.",
-      "next": "photo-permission"
+      "next": "after-run-post"
     },
     {
       "id": "at-the-end",
@@ -42,6 +42,6 @@
   },
   "links": [
     "finish-reunion",
-    "photo-permission"
+    "after-run-post"
   ]
 }

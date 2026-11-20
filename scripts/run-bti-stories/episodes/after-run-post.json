@@ -1,0 +1,41 @@
+{
+  "id": "after-run-post",
+  "signals": ["postStats", "postSelfie", "postScenery", "keepPrivate"],
+  "category": "routine",
+  "title": "오늘 달린 거 올릴까?",
+  "art": "art/q-06.webp",
+  "opening": "강변을 뛰고 집에 왔어. 운동화를 벗고 휴대폰을 보니 오늘 달린 기록도 있고 아까 찍은 사진도 몇 장 있어.",
+  "prompt": "오늘 러닝을 SNS에 어떻게 남길래?",
+  "choices": [
+    {
+      "id": "stats",
+      "signals": ["postStats"],
+      "label": "거리랑 시간이 나온 기록 화면만 올려",
+      "then": "러닝 앱에서 오늘 기록을 캡처했어. 달린 거리랑 걸린 시간이 보이게 잘라서 올렸어.",
+      "line": "오늘은 기록만 딱 한 장."
+    },
+    {
+      "id": "selfie",
+      "signals": ["postSelfie"],
+      "label": "다 뛰고 찍은 내 셀카를 올려",
+      "then": "강변에서 찍은 셀카 두 장을 넘겨 봤어. 바람에 머리가 살짝 날린 쪽이 더 마음에 들어서 그걸 올렸어.",
+      "line": "다 뛰고 난 내 표정이 딱 이랬어."
+    },
+    {
+      "id": "view",
+      "signals": ["postScenery"],
+      "label": "뛰다가 찍은 강변 풍경만 올려",
+      "then": "강물 옆으로 난 길이 길게 나온 사진을 골랐어. ‘오늘 여기 뛰었어’ 한 줄을 붙였어.",
+      "line": "오늘 내가 달린 길이야."
+    },
+    {
+      "id": "keep",
+      "signals": ["keepPrivate"],
+      "label": "오늘은 안 올리고 나만 봐",
+      "then": "휴대폰으로 오늘 기록을 한 번 보고 화면을 껐어. 사진은 나중에 다시 보고 싶을 때 열어 보기로 했어.",
+      "line": "오늘 뛴 건 그냥 나만 볼래."
+    }
+  ],
+  "question": "뛰고 나서 올리고 싶은 사진이 따로 있어? 그냥 폰에 남겨 두는 사진은?",
+  "links": ["weekend-run-post"]
+}

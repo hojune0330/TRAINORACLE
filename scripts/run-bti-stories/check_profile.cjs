@@ -69,6 +69,61 @@ function check(root) {
   assert.equal(changed.direction.status, "tied");
   assert.ok(changed.direction.signals.includes("photo") && changed.direction.signals.includes("reflect"));
 
+  // Looking at a photo or a running log is not evidence that the person posts it.
+  for (const choice of ["shadows", "private", "words"]) {
+    const legacy = profile({"photo-permission":choice}, onePhoto);
+    assert.equal(legacy.posting, null);
+    assert.equal(legacy.storyCount, 1);
+    assert.ok(legacy.rows.some(r => r.storyEvidence.some(e => e.choiceId === choice)));
+  }
+  assert.equal(catalog.find(s => s.id === "photo-permission").archived, true);
+  assert.equal(profile({}, {record:{mode:"experience",answers:[[1],[1],[1],[1],[1],[1]]}}).posting, null);
+
+  const storyIds = ["after-run-post", "weekend-run-post"];
+  const posting = {stats:"postStats", selfie:"postSelfie", view:"postScenery", keep:"keepPrivate"};
+  const recordWith = postChoice => ({record:{mode:"experience",answers:[],postChoice}});
+  const postingAssets = new Set();
+  for (const [id, signal] of Object.entries(posting)) {
+    const inQuiz = profile({}, recordWith(signal));
+    assert.deepEqual([inQuiz.posting.status, inQuiz.posting.quizCount, inQuiz.posting.storyCount], ["sparse", 1, 0]);
+    const quizAnswer = matcher.postQuestion.choices.find(c => c.signal === signal).label;
+    assert.equal(inQuiz.posting.evidence[0].answer, quizAnswer);
+    for (const storyId of storyIds) {
+      const story = catalog.find(s => s.id === storyId);
+      assert.equal(story.choices.length, 4);
+      assert.ok(!story.archived);
+      const choice = story.choices.find(c => c.id === id);
+      assert.deepEqual(Array.from(choice.signals), [signal]);
+      const view = profile({[storyId]:id}, recordWith(signal));
+      const p = view.posting;
+      assert.deepEqual([p.status, p.quizCount, p.storyCount, p.total], ["clear", 1, 1, 2]);
+      assert.equal(p.counts.find(c => c.signal === signal).count, 2);
+      assert.equal(p.counts.filter(c => c.count === 0).length, 3);
+      assert.deepEqual(Array.from(p.evidence, e => e.answer).sort(), [quizAnswer, choice.label].sort());
+      const panel = representative.select(view).panels.find(p => p.signal === signal);
+      assert.ok(panel);
+      if (id === "keep") {
+        assert.equal(panel.art, "");
+      } else {
+        assert.ok(fs.statSync(path.join(root, panel.art)).isFile());
+        assert.equal(representative.endingArt(story, choice).art, panel.art);
+        postingAssets.add(panel.art);
+      }
+    }
+  }
+  assert.equal(postingAssets.size, 3);
+  for (const [a, signalA] of Object.entries(posting)) {
+    for (const [b, signalB] of Object.entries(posting)) {
+      const view = profile({[storyIds[0]]:a,[storyIds[1]]:b});
+      const p = view.posting;
+      assert.equal(p.total, 2);
+      assert.equal(p.status, a === b ? "clear" : "tied");
+      assert.deepEqual(new Set(p.signals), new Set([signalA, signalB]));
+    }
+  }
+  assert.equal(profile({}, recordWith("unknown")).posting, null);
+  assert.equal(profile({[storyIds[0]]:"shadows"}).posting, null);
+
   const coSelected = [null, null, null, [0, 2], [0, 2], [0, 2], null, null, null];
   const quiz = profile({}, { base: { mode: "experience", answers: coSelected } });
   const focus = quiz.comparisons.find(c => c.left === "numbers" && c.right === "scenery");

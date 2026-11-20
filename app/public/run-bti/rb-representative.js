@@ -60,7 +60,12 @@ window.RBRepresentative = (() => {
     "motive/my-landmark":["반환점을 정하고 나서는 러너", "o-00-1", "반환점으로 삼을 다리를 그림에 담았어요."],
     "motive/previous-best":["지난 기록을 다시 보는 러너", "life-record", "휴대폰에서 달린 기록을 살피는 모습을 담았어요."],
   };
+  function postingChoice(signal) {
+    return window.RBStoryMatch.postQuestion.choices.find(c => c.signal === signal);
+  }
   function endingArt(story, choice) {
+    const post = (choice.signals || []).map(postingChoice).filter(Boolean);
+    if (post.length === 1) return {art:post[0].art,alt:post[0].caption};
     const role = endings[story.id + "/" + choice.id];
     return role?.[1] ? {art:"art/" + role[1] + ".webp", alt:role[2]} : null;
   }
@@ -91,6 +96,9 @@ window.RBRepresentative = (() => {
     const quiz = selectedQuizArt(e);
     const art = quiz?.[0] || file;
     const description = quiz ? quiz[1] : caption || "";
+    const post = postingChoice(signal);
+    if (post) return {signal,name:post.character,art:post.art,caption:post.caption,
+      alt:post.caption,evidence:e,moreEvidence};
     return {signal, name, art:art ? "art/" + art + ".webp" : "", caption:description,
       alt:description, evidence:e, moreEvidence};
   }
@@ -112,6 +120,7 @@ window.RBRepresentative = (() => {
   const source = e => e.choiceId ? e.title : [e.mode === "imagine" ? "첫 러닝 상상" : "", e.title, e.scene].filter(Boolean).join(" · ");
   const url = path => window.RBScene.assetURL(path);
   function panelHeading(rep) {
+    if (rep.panels.length && rep.panels.every(p => postingChoice(p.signal))) return "내가 고른 러닝 인증";
     if (rep.status === "sparse") return "이번에 고른 장면";
     if (rep.status === "repeated") return "여러 번 고른 행동";
     return rep.panels.length === 1 ? "내 답을 담은 캐릭터" : "내 답에 함께 나온 모습";

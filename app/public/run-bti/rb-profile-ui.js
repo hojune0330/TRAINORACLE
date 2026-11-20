@@ -12,6 +12,7 @@ window.RBProfileUI = (() => {
     return `<section class="panel rb-profile-summary"><p class="rb-profile-meta">내 러닝 성향 · ${countLine(profile)}</p>
       <h2>${esc(direction.title)}</h2><p>${esc(direction.reason)}</p>
       ${window.RBRepresentative.html(profile, {esc}, true)}
+      ${profile.posting && direction !== profile.posting ? `<p class="rb-post-summary"><b>러닝 인증</b> ${esc(profile.posting.title)}</p>` : ""}
       <button type="button" class="btn light sm" data-story-act="profile">내 러닝 성향 보기</button></section>`;
   }
 
@@ -83,6 +84,12 @@ window.RBProfileUI = (() => {
     const shown = comparisons.slice(0, 2);
     const remaining = comparisons.slice(2);
     const motives = profile.motiveComparison;
+    const posting = profile.posting;
+    const mainIsPosting = posting && direction === posting;
+    const postSection = posting ? `<section class="panel rb-posting" data-post-status="${esc(posting.status)}">
+      <h2>러닝 인증에서 고른 것</h2>${mainIsPosting ? "" : `<p><strong>${esc(posting.title)}</strong></p><p>${esc(posting.reason)}</p>`}
+      <ul class="rb-post-counts">${posting.counts.map(c => `<li><span>${esc(c.label)}</span><b>${c.count}번</b></li>`).join("")}</ul>
+      ${mainIsPosting ? "" : window.RBRepresentative.html({...profile,direction:posting},{esc})}</section>` : "";
     const detail = rows.map(row => {
       const proof = [...row.storyEvidence, ...row.quizEvidence];
       return `<details class="rb-profile-signal"><summary><b>${esc(row.label)}</b><small>답 ${proof.length}개</small></summary>
@@ -92,6 +99,7 @@ window.RBProfileUI = (() => {
     return `<article class="rb-profile-report"><header>${heading}<p class="rb-profile-meta">${countLine(profile)}${imagined ? "<br>첫 러닝을 상상하며 고른 답도 들어 있어요." : ""}</p></header>
       <section class="panel rb-verdict" data-direction-status="${esc(direction.status)}"><h2>${esc(direction.title)}</h2><p>${esc(direction.reason)}</p>
         ${window.RBRepresentative.html(profile, {esc})}</section>
+      ${postSection}
       ${storyImpact(profile, esc)}
       ${shown.length ? `<section class="panel"><h2>두 행동을 고를 수 있었을 때</h2>
         ${shown.map(c => comparison(c, esc)).join("")}${remaining.length ? `<details class="rb-more-comparisons"><summary>다른 비교 ${remaining.length}개 보기</summary>${remaining.map(c=>comparison(c,esc)).join("")}</details>` : ""}</section>` : ""}

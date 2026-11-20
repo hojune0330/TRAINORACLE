@@ -1,0 +1,41 @@
+{
+  "id": "weekend-run-post",
+  "signals": ["postStats", "postSelfie", "postScenery", "keepPrivate"],
+  "category": "travel",
+  "title": "주말에 처음 뛰어 본 코스",
+  "art": "art/bg-03.webp",
+  "opening": "주말 아침에 친구가 알려 준 강변 코스에 가 봤어. 처음 보는 다리를 지나 공원 입구로 돌아오니 벤치가 하나 비어 있네. 앉아서 아까 찍은 사진이랑 오늘 기록을 꺼내 봤어.",
+  "prompt": "처음 가 본 코스라면 뭐 하나 올릴래?",
+  "choices": [
+    {
+      "id": "view",
+      "signals": ["postScenery"],
+      "label": "다리 위에서 찍은 풍경만 올려",
+      "then": "다리 난간 옆에서 찍은 사진을 골랐어. 사진 아래쪽에 내가 뛰어온 길도 조금 보여.",
+      "line": "저기 물 따라 난 길로 뛰어왔어."
+    },
+    {
+      "id": "selfie",
+      "signals": ["postSelfie"],
+      "label": "공원 입구에서 내 얼굴 나오게 찍은 셀카를 올려",
+      "then": "공원 이름하고 내 얼굴이 같이 나온 사진이 있어. ‘주말엔 여기까지 왔다’ 하고 올렸어.",
+      "line": "여기 처음 와 봤어. 뒤에 공원 이름 보여?"
+    },
+    {
+      "id": "stats",
+      "signals": ["postStats"],
+      "label": "달린 코스랑 거리가 나온 기록만 올려",
+      "then": "러닝 앱에서 지도를 열었어. 강을 따라 돌아온 코스랑 오늘 달린 거리가 한눈에 보이는 화면을 올렸어.",
+      "line": "이렇게 한 바퀴 돌면 이 거리야."
+    },
+    {
+      "id": "keep",
+      "signals": ["keepPrivate"],
+      "label": "올리진 않고 내 폰에만 남겨 둬",
+      "then": "다음에 또 오고 싶을 때 보려고 오늘 달린 코스를 저장했어. 오늘 사진도 내 사진첩에 그대로 뒀어.",
+      "line": "다음에 또 와야지. 오늘 건 내가 갖고 있을래."
+    }
+  ],
+  "question": "처음 가 본 곳에서 뛴 날이랑 늘 가는 데서 뛴 날은 올리고 싶은 게 달라?",
+  "links": ["after-run-post", "postcard-run"]
+}

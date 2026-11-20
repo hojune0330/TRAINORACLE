@@ -1,5 +1,6 @@
 {
   "id": "photo-permission",
+  "archived": true,
   "signals": ["photo", "privacy", "reflect", "conversation"],
   "category": "community",
   "title": "단톡에는 올려도 돼. 스토리에는 잠깐!",

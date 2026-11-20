@@ -23,6 +23,7 @@ SIGNALS = {
     "explore", "scenery", "body", "numbers", "plan", "reset", "reflect", "photo", "company",
     "conversation", "encouragement", "pace", "routine", "goal", "finish", "travel",
     "movement", "enjoyment", "route", "adjust", "solo", "privacy", "compare", "verify", "log", "pause",
+    "postStats", "postSelfie", "postScenery", "keepPrivate",
 }
 
 
@@ -72,7 +73,9 @@ def check_signals(obj, limit):
 
 def check_story(row, root):
     mandatory = ("id", "category", "title", "art", "opening", "prompt", "choices", "question")
-    fields(row, mandatory, ("source", "links", "validFrom", "validUntil", "signals"))
+    fields(row, mandatory, ("source", "links", "validFrom", "validUntil", "signals", "archived"))
+    if "archived" in row:
+        require(isinstance(row["archived"], bool), "archived에는 true나 false를 넣으세요.")
     check_signals(row, 4)
     words(row, ("title", "opening", "prompt", "question", "category", "art"))
     slug(row["id"])
@@ -80,7 +83,7 @@ def check_story(row, root):
     art = row["art"]
     require(re.fullmatch(r"art/[a-z0-9-]+\.webp", art) and (root / art).is_file(), f"그림 파일을 찾을 수 없습니다: {art}")
     choices = row["choices"]
-    require(isinstance(choices, list) and len(choices) == 3, "선택지 세 개가 필요합니다.")
+    require(isinstance(choices, list) and 3 <= len(choices) <= 4, "선택지가 세 개 또는 네 개 필요합니다.")
     for choice in choices:
         fields(choice, ("id", "label", "then", "line"), ("next", "signals"))
         check_signals(choice, 2)
@@ -88,7 +91,8 @@ def check_story(row, root):
         words(choice, ("label", "then", "line"))
         if "next" in choice:
             slug(choice["next"])
-    require(len({c["id"] for c in choices}) == 3 and len({c["label"] for c in choices}) == 3, "선택지 ID와 문구가 겹칩니다.")
+    require(len({c["id"] for c in choices}) == len(choices) and len({c["label"] for c in choices}) == len(choices),
+            "선택지 ID와 문구가 겹칩니다.")
     links = row.get("links", [])
     require(isinstance(links, list), "links에는 에피소드 ID 목록을 넣으세요.")
     for link in links:
