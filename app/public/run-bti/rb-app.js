@@ -103,6 +103,7 @@
     cardObserver = null;
     document.body.classList.remove("has-card-return");
     currentCanvas = null;
+    if (state.view === "stories" && view !== "stories") storyUI.clearRoute();
     state.view = view;
     main.innerHTML = html;
     window.scrollTo(0, 0);
@@ -127,6 +128,7 @@
       }
     },
   });
+  const storyUI = window.RBStories.create({main, output, esc, asset, icon, load, save, notify, note});
   function header() {
     document.querySelector("#mast").innerHTML =
       `<div class="shell mast"><button class="brand" data-act="home" aria-label="런비티아이 홈"><span class="brand-art" aria-hidden="true"><i></i><i></i><i></i></span>런비티아이<em>RUN-BTI</em></button><nav class="nav" aria-label="메뉴"><button class="toolbtn nav-home" data-act="home">테스트</button><button class="toolbtn" data-act="library">${icon("book")} 내 보관함</button><button class="toolbtn icononly ${scene.audio.enabled() ? "sound-on" : ""}" aria-label="${scene.audio.enabled() ? "소리 끄기" : "소리 켜기"}" title="${scene.audio.enabled() ? "소리 끄기" : "소리 켜기"}" aria-pressed="${scene.audio.enabled()}" data-act="sound">${icon(scene.audio.enabled() ? "volume" : "mute")}</button></nav></div>`;
@@ -170,7 +172,7 @@
   function home() {
     scene.audio.stop();
     output(
-      `<section class="hero"><div class="hero-copy"><span class="eyebrow">러닝 성향 테스트</span><h1>달릴 때의 나는<br> <em>어떤 사람일까?</em></h1><p>달릴 때 뭘 보고 집에 와서 뭘 기억하나요? 내가 고른 장면으로 러닝 캐릭터를 만들거나 달리는 이유부터 알아볼 수 있어요.</p><div class="actions">${btn("start-exp", "뛰어 본 날 떠올리기", "primary", "arrow")}${btn("start-img", "첫 러닝 상상하기", "light")}${btn("motives", "나는 왜 달릴까?", "light")}</div></div><div class="hero-art"><img src="${asset("hero-run.webp")}" fetchpriority="high" alt="한강에서 손목시계를 든 러너가 손을 흔드는 친구를 돌아보는 장면">${cameosButton()}</div></section>${draftPanel()}<section><div class="sectionhead"><h2>러닝 테스트 고르기</h2><small>궁금한 주제부터 해 보세요.</small></div><div class="packs">${motiveUI.packCard()}${ids.map(packCard).join("")}</div></section>`,
+      `<section class="hero"><div class="hero-copy"><span class="eyebrow">러닝 성향 테스트</span><h1>달릴 때의 나는<br> <em>어떤 사람일까?</em></h1><p>달릴 때 뭘 보고 집에 와서 뭘 기억하나요? 내가 고른 장면으로 러닝 캐릭터를 만들거나 달리는 이유부터 알아볼 수 있어요.</p><div class="actions">${btn("start-exp", "뛰어 본 날 떠올리기", "primary", "arrow")}${btn("start-img", "첫 러닝 상상하기", "light")}${btn("motives", "나는 왜 달릴까?", "light")}</div></div><div class="hero-art"><img src="${asset("hero-run.webp")}" fetchpriority="high" alt="한강에서 손목시계를 든 러너가 손을 흔드는 친구를 돌아보는 장면">${cameosButton()}</div></section>${draftPanel()}${storyUI.homeFeature()}<section><div class="sectionhead"><h2>러닝 테스트 고르기</h2><small>궁금한 주제부터 해 보세요.</small></div><div class="packs">${motiveUI.packCard()}${ids.map(packCard).join("")}</div></section>`,
       "home",
     );
   }
@@ -355,7 +357,7 @@
     scene.audio.stop();
     let owned = ids.filter((id) => library[id]);
     output(
-      `${head("내 캐릭터 보관함")}<p class="desc">이 브라우저에서 받은 러닝 캐릭터를 모았어요.</p>${motiveUI.libraryEntry()}${
+      `${head("내 캐릭터 보관함")}<p class="desc">이 브라우저에서 받은 러닝 캐릭터를 모았어요.</p>${storyUI.savedEntry()}${motiveUI.libraryEntry()}${
         owned.length
           ? `<div class="gallery" style="margin-top:18px">${owned
               .map((id) => {
@@ -1082,7 +1084,7 @@
   window.addEventListener("hashchange", () => {
     const c = decodeCard();
     if (c) friendPage(c);
-    else home();
+    else route();
   });
   modal.addEventListener("close", () => {
     if (!modal.open) {
@@ -1091,15 +1093,23 @@
       modal.removeAttribute("aria-labelledby");
     }
   });
-  header();
-  const c = decodeCard();
-  const requestedTest = new URLSearchParams(location.search).get("test");
-  if (c) friendPage(c);
-  else if (requestedTest === "motives") motiveUI.open();
-  else {
-    home();
-    if (location.hash.startsWith("#card="))
-      notify("이 링크로는 카드를 열 수 없어요. 친구에게 링크를 다시 받아 보세요.");
-    else if (requestedTest === "buddy") pick("buddy");
+  function route() {
+    const params = new URLSearchParams(location.search);
+    const card = decodeCard();
+    if (card) friendPage(card);
+    else if (params.get("test") === "stories" || params.has("story")) storyUI.open(params.get("story"), params.get("choice"), params.get("topic"));
+    else if (params.get("test") === "motives") motiveUI.open();
+    else {
+      home();
+      if (location.hash.startsWith("#card="))
+        notify("이 링크로는 카드를 열 수 없어요. 친구에게 링크를 다시 받아 보세요.");
+      else if (params.get("test") === "buddy") pick("buddy");
+    }
   }
+  window.addEventListener("popstate", () => {
+    const params = new URLSearchParams(location.search);
+    if (state.view === "stories" || params.get("test") === "stories" || params.has("story")) route();
+  });
+  header();
+  route();
 })();
