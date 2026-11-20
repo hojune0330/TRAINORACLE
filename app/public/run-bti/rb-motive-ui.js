@@ -46,13 +46,16 @@ window.RBMotiveUI = {
       draft.group = index;
       persist();
       const g = groups[index];
+      const hint = draft.mode === "imagine"
+        ? "처음 뛰는 날을 떠올려 보세요. 나와는 상관없는 상황이면 ‘해당 없어’를 골라도 돼요. 해 보고 싶지 않다면 ‘전혀 아니야’를 골라 주세요."
+        : "해 본 적이 없으면 ‘해당 없어’를 골라 주세요. 해 봤지만 내 얘기와 다르면 ‘전혀 아니야’를 고르면 돼요.";
       const questions = g.items.map(it => {
         const wording = draft.mode === "imagine" ? it.imagine : it.text;
         return `<fieldset class="motive-item"><legend>${esc(wording)}</legend><div class="motive-ratings">${reasons.map(r =>
           `<label><input type="radio" name="${it.id}" value="${r.value}" ${draft.answers[it.id] === r.value ? "checked" : ""}><span>${esc(r.label)}</span></label>`
         ).join("")}</div></fieldset>`;
       }).join("");
-      page(`${head(g.title,title)}<div class="motive-topline"><span>${index + 1} / ${groups.length} 주제</span>${button("hub","주제 고르기","light sm")}</div><p>${esc(g.context)}</p><p class="hint">해 본 적이 없으면 ‘해당 없어’를 골라 주세요. 경험이나 생각은 있지만 내 얘기와 다르면 ‘전혀 아니야’를 고르면 돼요.</p>${g.items.some(it=>draft.answers[it.id] === undefined) ? button("omit","이 주제의 남은 질문은 해당 없어","light sm") : ""}<div class="motive-items">${questions}</div><div class="actions">${index < groups.length-1 ? button("next","다음 주제","primary") : ""}${button("finish","여기까지 결과 보기",index === groups.length-1 ? "primary" : "light")}</div>`, "topic");
+      page(`${head(g.title,title)}<div class="motive-topline"><span>${index + 1} / ${groups.length} 주제</span>${button("hub","주제 고르기","light sm")}</div><p>${esc(g.context)}</p><p class="hint">${hint}</p>${g.items.some(it=>draft.answers[it.id] === undefined) ? button("omit","이 주제의 남은 질문은 해당 없어","light sm") : ""}<div class="motive-items">${questions}</div><div class="actions">${index < groups.length-1 ? button("next","다음 주제","primary") : ""}${button("finish","여기까지 결과 보기",index === groups.length-1 ? "primary" : "light")}</div>`, "topic");
     }
     function profileRows(profiles) {
       return profiles.filter(p=>p.count).map(p => `<div class="motive-stat"><span>${esc(p.name)}</span><meter value="${p.mean}" min="0" max="3" aria-label="${esc(p.name)} 평균"></meter><small>${p.mean.toFixed(1)} / 3 · ${p.count}개 답</small></div>`).join("");
@@ -61,7 +64,7 @@ window.RBMotiveUI = {
       const m = motives[id];
       const card = {pack:"base",mode:saved.mode,name:m.name,line:saved.mode === "imagine" ? m.imagineLine || m.line : m.line,sceneArt:m.art,sceneLabel:"내가 달리는 이유",prop:-1,expression:-1,charIndex:-1};
       const section = main.querySelector("#reason-selection");
-      section.innerHTML = `<canvas id="reason-poster" width="1080" height="1350" aria-label="${esc(m.name + ' · ' + m.line)}" role="img"></canvas><p class="reason-action"><b>다음에 해 볼 일</b> ${esc(m.action)}</p><div class="actions">${button("download","이 이유만 이미지로 저장","primary")}${button("use","이 대사를 캐릭터 카드에 쓰기")}</div><p class="hint">지금 고른 그림과 한 줄만 이미지에 들어가요.</p>`;
+      section.innerHTML = `<canvas id="reason-poster" width="1080" height="1350" aria-label="${esc(m.name + ' · ' + card.line)}" role="img"></canvas><p class="reason-action"><b>다음에 해 볼 일</b> ${esc(m.action)}</p><div class="actions">${button("download","이 이유만 이미지로 저장","primary")}${button("use","이 대사를 캐릭터 카드에 쓰기")}</div><p class="hint">지금 고른 그림과 한 줄만 이미지에 들어가요.</p>`;
       window.RBScene.draw(section.querySelector("canvas"),card,"4:5").catch(()=>notify("그림을 불러오지 못했어요."));
       return card;
     }
