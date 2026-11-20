@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f6f6fb">
+  <title>러닝 캐릭터 비교 · 런비티아이</title>
+  <style>
+    :root{color-scheme:light;--paper:#f6f6fb;--ink:#252a45;--teal:#414773;--rule:#b8bbd0}
+    *{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.65 system-ui,"Malgun Gothic",sans-serif;word-break:keep-all}
+    main{max-width:760px;margin:auto;padding:24px 20px 54px}header{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--rule);padding:8px 0 18px}
+    h1,h2{line-height:1.27;letter-spacing:-.04em;margin:24px 0 12px}h1{font-size:clamp(30px,5.4vw,48px)}h2{font-size:23px}a{color:var(--teal)}
+    fieldset{border:0;padding:0;margin:21px 0}legend{font-weight:750;margin-bottom:7px}label{cursor:pointer}button,select,textarea{font:inherit;color:var(--ink)}
+    button,select{min-height:44px;background:transparent;border:1px solid var(--rule);border-radius:12px;padding:8px 15px;cursor:pointer}
+    button.primary{background:var(--teal);color:white;border-color:var(--teal);font-weight:700}button:disabled{opacity:.45;cursor:default}button:focus-visible,a:focus-visible,label:focus-within,textarea:focus-visible,select:focus-visible{outline:3px solid #c36933;outline-offset:3px}
+    .note{font-size:.91rem;color:#565e79}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.choices{display:flex;gap:7px;flex-wrap:wrap}.choices label{display:inline-flex;gap:5px;align-items:center;min-height:42px;padding:6px 10px;border:1px solid var(--rule);border-radius:10px}
+    .choices label:has(:checked){border-color:var(--teal);background:#e5e7f8}.gallery{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:20px 0}
+    figure{margin:0;border:1px solid var(--rule);border-radius:17px;padding:9px;text-align:center;background:#fcfcff}figure img{display:block;width:min(104px,100%);height:104px;object-fit:contain;margin:auto}
+    .gallery.large img{width:100%;height:auto;aspect-ratio:1}figcaption{font-weight:740}textarea{display:block;width:100%;min-height:67px;padding:10px;border:1px solid var(--rule);border-radius:10px;background:#fcfcff;resize:vertical}
+    [hidden]{display:none!important}#status{min-height:1.4em}.actions{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:24px}.saying{background:#e8eaf6;border-radius:12px;padding:12px 16px}
+    @media(max-width:380px){main{padding:16px 12px 40px}.gallery{gap:5px}.choices label{padding:5px 7px}}
+  </style>
+</head>
+<body>
+<main>
+  <header><strong>런비티아이</strong><a href="./index.html">테스트로 돌아가기</a></header>
+  <section id="intro">
+    <h1>어느 쪽이 달릴 때 내 모습과 더 닮았나요?</h1>
+    <p>세 장면을 두 가지 그림체로 그렸어요. 먼저 작은 그림에서 어떤 행동이 보이는지 적어 주세요. 크게 본 뒤에는 마음이 가는 쪽을 고르면 돼요.</p>
+    <label for="cohort">달리기는 얼마나 해 보셨나요?</label>
+    <select id="cohort"><option value="">선택해 주세요</option><option value="none">아직 뛰어본 적 없어요</option><option value="new">이제 막 시작했어요</option><option value="regular">꾸준히 달려요</option><option value="unspecified">응답하지 않을래요</option></select>
+    <p><label><input type="checkbox" id="remember"> 이 기기에 저장하고 다음에 이어서 하기</label></p>
+    <p class="note">이름이나 연락처는 묻지 않아요. 다 고르면 내 답을 파일로 저장할 수 있어요.</p>
+    <button class="primary" id="start" type="button">그림 비교 시작</button>
+  </section>
+  <section id="trial" hidden>
+    <p id="step" class="note"></p><h1 id="trial-title" tabindex="-1">먼저 작은 그림을 봐 주세요</h1>
+    <div class="gallery" id="gallery"><figure><img id="artA" alt="비교 그림 A"><figcaption>A</figcaption></figure><figure><img id="artB" alt="비교 그림 B"><figcaption>B</figcaption></figure></div>
+    <div id="smallstep">
+      <label for="action"><strong>그림 속 러너는 뭘 하고 있나요?</strong></label>
+      <textarea id="action" maxlength="240" placeholder="눈에 띈 행동을 한 줄로 적어 주세요. 잘 안 보였다면 ‘잘 모르겠어요’라고 써도 돼요."></textarea>
+      <p><button type="button" id="expand" class="primary">크게 보기</button></p>
+    </div>
+    <form id="ratings" hidden>
+      <p id="caption" class="saying"></p>
+      <div id="criteria"></div>
+      <label for="detail"><strong>어떤 점을 보고 골랐나요?</strong> <span class="note">(선택)</span></label>
+      <textarea id="detail" maxlength="240" placeholder="표정이나 손에 든 물건처럼 눈에 띈 점을 적어 주세요."></textarea>
+      <div class="actions"><button type="button" id="back">작은 그림 다시 보기</button><button type="submit" id="next" class="primary">다음 그림</button></div>
+    </form>
+  </section>
+  <section id="finished" hidden>
+    <h1 tabindex="-1" id="end-title">세 장면을 모두 봤어요.</h1>
+    <p>파일에는 내가 고른 답과 그림이 나온 순서가 담겨요. 진행자에게 보내고 싶다면 먼저 파일을 저장해 주세요.</p>
+    <div class="row"><button type="button" id="download" class="primary">내 응답 파일 저장</button><button type="button" id="reset">새 응답 시작</button></div>
+  </section>
+  <p id="status" role="status" aria-live="polite" class="note"></p>
+</main>
+<script>
+(() => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const storageKey = 'run-bti.design-study.1';
+  const captions = [
+    '처음 가는 길이라 지도를 한 번 더 펼쳐 봐.',
+    '저 다리까지 가기 전에 노을 좀 보고 갈래.',
+    '이 사진 봐. 아까 뛰다가 찍었어.',
+  ];
+  const criteria = [
+    ['self', '어느 그림이 평소 내 모습과 더 닮았나요?'],
+    ['legible', '작게 봤을 때는 어느 쪽 동작이 더 잘 보였나요?'],
+    ['keep', '한 장만 간직한다면 어느 쪽을 고를래요?'],
+  ];
+  const sides = ['human', 'mascot'];
+  let state;
+  let loaded = false;
+  let loadNumber = 0;
+
+  for (const [name, title] of criteria) {
+    const fieldset = document.createElement('fieldset');
+    const legend = document.createElement('legend');
+    legend.textContent = title;
+    fieldset.append(legend);
+    const group = document.createElement('div');
+    group.className = 'choices';
+    for (const [value, text] of [['A', 'A'], ['B', 'B'], ['either', '둘 다 비슷해요'], ['neither', '둘 다 아쉬워요']]) {
+      const label = document.createElement('label');
+      const radio = document.createElement('input');
+      radio.type = 'radio'; radio.name = name; radio.value = value; radio.required = true;
+      label.append(radio, text); group.append(label);
+    }
+    fieldset.append(group); $('criteria').append(fieldset);
+  }
+
+  function persist() {
+    if (!state || !state.remember) return;
+    try { localStorage.setItem(storageKey, JSON.stringify(state)); }
+    catch { $('status').textContent = '이 기기에는 답을 임시로 저장할 수 없어요. 마칠 때까지 이 화면을 열어 두세요.'; }
+  }
+  function round() { return state.rounds[state.at]; }
+  function setStage(stage) {
+    for (const id of ['intro','trial','finished']) $(id).hidden = id !== stage;
+  }
+  function shuffle(values) {
+    for (let i = values.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [values[i], values[j]] = [values[j], values[i]];
+    }
+    return values;
+  }
+  function newState() {
+    const order = shuffle([0,1,2]);
+    const first = Math.floor(Math.random() * 2);
+    return {
+      version: 1, cohort: $('cohort').value, remember: $('remember').checked,
+      started: new Date().toISOString(), at: 0,
+      rounds: order.map((scene, index) => ({
+        scene, left: sides[(first + index) % 2], action: '', detail: '', votes: {}, expanded: false,
+      })),
+    };
+  }
+  function restore() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(storageKey));
+      if (!saved || saved.version !== 1 || !saved.remember || !Number.isInteger(saved.at) ||
+          saved.at < 0 || saved.at > 3 || saved.rounds?.length !== 3 ||
+          new Set(saved.rounds.map(r => r.scene)).size !== 3 ||
+          !saved.rounds.every(r => Number.isInteger(r.scene) && r.scene >= 0 && r.scene <= 2 && sides.includes(r.left) && r.votes)) return;
+      state = saved; render();
+    } catch { /* A private browser can keep the study in memory. */ }
+  }
+  function layout() {
+    const expanded = round().expanded;
+    $('gallery').classList.toggle('large', expanded);
+    $('smallstep').hidden = expanded;
+    $('ratings').hidden = !expanded;
+    $('expand').disabled = !loaded;
+    $('next').disabled = !loaded;
+    $('trial-title').textContent = expanded ? '이제 큰 그림을 보고 골라 주세요' : '먼저 작은 그림을 봐 주세요';
+  }
+  function render() {
+    $('status').textContent = '';
+    if (state.at === 3) {
+      setStage('finished'); $('end-title').focus(); return;
+    }
+    setStage('trial');
+    loaded = false;
+    const revision = ++loadNumber;
+    const item = round();
+    $('step').textContent = (state.at + 1) + ' / 3';
+    $('caption').textContent = '“' + captions[item.scene] + '”';
+    $('action').value = item.action || '';
+    $('detail').value = item.detail || '';
+    for (const radio of $('criteria').querySelectorAll('input')) radio.checked = item.votes[radio.name] === radio.value;
+    $('next').textContent = state.at === 2 ? '비교 마치기' : '다음 그림';
+    const sidesForThisRound = [item.left, sides.find(side => side !== item.left)];
+    const settled = sidesForThisRound.map((style, i) => new Promise(resolve => {
+      const img = $(i ? 'artB' : 'artA');
+      img.onload = () => resolve(true);
+      img.onerror = () => resolve(false);
+      img.src = './art/reference-' + style + '-' + item.scene + '.webp';
+    }));
+    layout();
+    Promise.all(settled).then(outcomes => {
+      if (loadNumber !== revision) return;
+      loaded = outcomes.every(Boolean);
+      if (!loaded) $('status').textContent = '그림을 모두 열지 못했어요. 화면을 새로고침해 주세요.';
+      layout();
+    });
+    $('trial-title').focus();
+  }
+  $('start').onclick = () => {
+    if (!$('cohort').value) {
+      $('status').textContent = '먼저 러닝 경험을 골라 주세요. 답하고 싶지 않다면 ‘응답하지 않을래요’를 골라도 돼요.';
+      $('cohort').focus(); return;
+    }
+    state = newState(); persist(); render();
+  };
+  $('expand').onclick = () => {
+    if (!$('action').value.trim()) {
+      $('status').textContent = '어떤 동작이 보였는지 한 줄 적어 주세요. 잘 안 보였다면 ‘잘 모르겠어요’라고 써 주세요.';
+      $('action').focus(); return;
+    }
+    $('status').textContent = '';
+    round().expanded = true; round().action = $('action').value.trim(); persist(); layout();
+    $('trial-title').focus();
+  };
+  $('back').onclick = () => { round().expanded = false; persist(); layout(); $('action').focus(); };
+  for (const field of ['action','detail']) {
+    $(field).oninput = () => { round()[field] = $(field).value; persist(); };
+  }
+  $('criteria').onchange = event => {
+    if (event.target instanceof HTMLInputElement) { round().votes[event.target.name] = event.target.value; persist(); }
+  };
+  $('ratings').onsubmit = event => {
+    event.preventDefault();
+    if (!loaded || !criteria.every(([name]) => round().votes[name])) return;
+    state.at++;
+    if (state.at === 3) state.completed = new Date().toISOString();
+    persist(); render();
+  };
+  $('download').onclick = () => {
+    const href = URL.createObjectURL(new Blob([JSON.stringify(state, null, 2)], {type:'application/json;charset=utf-8'}));
+    const link = document.createElement('a');
+    link.href = href; link.download = '런비티아이-화풍비교-' + state.started.replace(/[:.]/g, '-') + '.json';
+    document.body.append(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(href), 1000);
+    $('status').textContent = '브라우저의 다운로드 목록에서 응답 파일을 확인해 주세요.';
+  };
+  $('reset').onclick = () => {
+    if (!window.confirm('지금까지 고른 답을 지우고 다시 시작할까요? 간직하려면 먼저 응답 파일을 저장해 주세요.')) return;
+    try { localStorage.removeItem(storageKey); } catch {}
+    state = null; $('cohort').value = ''; $('remember').checked = false;
+    $('status').textContent = ''; setStage('intro'); $('cohort').focus();
+  };
+  restore();
+})();
+</script>
+</body>
+</html>
