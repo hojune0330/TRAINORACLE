@@ -8,7 +8,6 @@ window.RBMotiveUI = {
     const read = r => r && ["experience","imagine"].includes(r.mode) && typeof r.answers === "object" && r.answers !== null ? r : null;
     let draft = read(original.draft), saved = read(original.saved), view = "";
     const reasons = [...scale, {value:"na", label:"해당 없어"}, {value:"unsure", label:"잘 모르겠어"}];
-    const topics = ["art/o-03-0.webp","art/o-01-0.webp","art/o-07-1.webp","art/o-20-1.webp","art/o-09-0.webp","art/o-20-0.webp"];
     const persist = () => save(key, {draft, saved});
     function button(act, text, cls = "light", extra = "") {
       return `<button type="button" class="btn ${cls}" data-motive="${act}" ${extra}>${esc(text)}</button>`;
@@ -37,7 +36,7 @@ window.RBMotiveUI = {
       const tracker = groups.map((g,i) => {
         const marked = g.items.filter(it => draft.answers[it.id] !== undefined).length;
         const allNA = g.items.every(it => draft.answers[it.id] === "na");
-        return `<button class="motive-topic" data-motive="topic" data-group="${i}"><img src="${asset(topics[i])}" alt=""><span><b>${esc(g.title)}</b><small>${allNA ? "해당 없음" : marked ? `${marked}/${g.items.length}개 표시` : `${g.items.length}문항`}</small></span><span aria-hidden="true">›</span></button>`;
+        return `<button class="motive-topic" data-motive="topic" data-group="${i}"><img src="${asset(g.art)}" alt=""><span><b>${esc(g.title)}</b><small>${allNA ? "해당 없음" : marked ? `${marked}/${g.items.length}개 표시` : `${g.items.length}문항`}</small></span><span aria-hidden="true">›</span></button>`;
       }).join("");
       page(`${head("어떤 얘기부터 해 볼까요?", title)}<p>내 얘기가 있는 주제부터 열어 보세요. 답한 만큼만 결과에 담아요.</p>${saved ? '<p class="hint">결과를 저장하면 보관함에 새 답이 반영돼요.</p>' : ""}<div class="motive-topics">${tracker}</div><div class="actions">${button("finish","지금까지 답한 결과 보기","primary")}${saved ? button("saved","지난번 결과 보기") : ""}</div>${research}`,"hub");
     }
@@ -55,14 +54,21 @@ window.RBMotiveUI = {
           `<label><input type="radio" name="${it.id}" value="${r.value}" ${draft.answers[it.id] === r.value ? "checked" : ""}><span>${esc(r.label)}</span></label>`
         ).join("")}</div></fieldset>`;
       }).join("");
-      page(`${head(g.title,title)}<div class="motive-topline"><span>${index + 1} / ${groups.length} 주제</span>${button("hub","주제 고르기","light sm")}</div><p>${esc(g.context)}</p><p class="hint">${hint}</p>${g.items.some(it=>draft.answers[it.id] === undefined) ? button("omit","이 주제의 남은 질문은 해당 없어","light sm") : ""}<div class="motive-items">${questions}</div><div class="actions">${index < groups.length-1 ? button("next","다음 주제","primary") : ""}${button("finish","여기까지 결과 보기",index === groups.length-1 ? "primary" : "light")}</div>`, "topic");
+      const scene = `<figure class="motive-vignette"><img src="${asset(g.art)}" alt=""><figcaption>${esc(g.context)}</figcaption></figure>`;
+      page(`${head(g.title,title)}<div class="motive-topline"><span>${index + 1} / ${groups.length} 주제</span>${button("hub","주제 고르기","light sm")}</div>${scene}<p class="hint">${hint}</p>${g.items.some(it=>draft.answers[it.id] === undefined) ? button("omit","이 주제의 남은 질문은 해당 없어","light sm") : ""}<div class="motive-items">${questions}</div><div class="actions">${index < groups.length-1 ? button("next","다음 주제","primary") : ""}${button("finish","여기까지 결과 보기",index === groups.length-1 ? "primary" : "light")}</div>`, "topic");
     }
     function profileRows(profiles) {
       return profiles.filter(p=>p.count).map(p => `<div class="motive-stat"><span>${esc(p.name)}</span><meter value="${p.mean}" min="0" max="3" aria-label="${esc(p.name)} 평균"></meter><small>${p.mean.toFixed(1)} / 3 · ${p.count}개 답</small></div>`).join("");
     }
     function preview(id) {
       const m = motives[id];
-      const card = {pack:"base",mode:saved.mode,name:m.name,line:saved.mode === "imagine" ? m.imagineLine || m.line : m.line,sceneArt:m.art,sceneLabel:"내가 달리는 이유",prop:-1,expression:-1,charIndex:-1};
+      let art = m.art;
+      if (id === "finish") {
+        const race = saved.answers["race-prep"];
+        const solo = saved.answers["finish-line"];
+        if (Number.isInteger(race) && race > 0 && (!Number.isInteger(solo) || race >= solo)) art = "art/life-finish.webp";
+      }
+      const card = {pack:"base",mode:saved.mode,name:m.name,line:saved.mode === "imagine" ? m.imagineLine || m.line : m.line,sceneArt:art,sceneLabel:"내가 달리는 이유",prop:-1,expression:-1,charIndex:-1};
       const section = main.querySelector("#reason-selection");
       section.innerHTML = `<canvas id="reason-poster" width="1080" height="1350" aria-label="${esc(m.name + ' · ' + card.line)}" role="img"></canvas><p class="reason-action"><b>다음에 해 볼 일</b> ${esc(m.action)}</p><div class="actions">${button("download","이 이유만 이미지로 저장","primary")}${button("use","이 대사를 캐릭터 카드에 쓰기")}</div><p class="hint">지금 고른 그림과 한 줄만 이미지에 들어가요.</p>`;
       window.RBScene.draw(section.querySelector("canvas"),card,"4:5").catch(()=>notify("그림을 불러오지 못했어요."));

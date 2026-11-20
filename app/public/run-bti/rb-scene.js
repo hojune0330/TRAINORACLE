@@ -40,10 +40,12 @@
   const two = n => String(n).padStart(2, '0');
   const clean = v => typeof v === 'string' ? v.trim() : '';
   const answerArt = path => typeof path === 'string' && /^art\/o-(?:0\d|1\d|20)-[0-2]\.webp$/.test(path) ? path : null;
+  const motiveArt = new Set(['afterwork', 'finish', 'practice', 'record', 'stairs', 'travel'].map(key => 'art/life-' + key + '.webp'));
+  const revisedArt = new Set(['q-10', 'q-14', 'o-10-1', 'o-10-2', 'o-14-1', 'o-14-2'].map(key => 'art/' + key + '.webp'));
   const ease = t => 1 - (1 - Math.max(0, Math.min(1, t))) ** 3;
 
   function normalize(m = {}) {
-    const sceneArt = answerArt(m.sceneArt);
+    const sceneArt = motiveArt.has(m.sceneArt) ? m.sceneArt : answerArt(m.sceneArt);
     const charIndex = bounded(m.charIndex, 44, -1);
     const actionLabel = clean(m.actionLabel).slice(0, 100);
     const actionArt = !sceneArt && charIndex >= 0 && actionLabel ? answerArt(m.actionArt) : null;
@@ -64,7 +66,7 @@
   function assetURL(path) {
     const entries = window.RBAssets || {};
     const entry = entries[path] || entries['./' + path] || entries[path.replace(/^art\//, '')];
-    return (typeof entry === 'string' ? entry : entry?.url || entry?.src) || path;
+    return (typeof entry === 'string' ? entry : entry?.url || entry?.src) || (revisedArt.has(path) ? path + '?v=runner-stories-1' : path);
   }
 
   function load(path) {
@@ -621,5 +623,5 @@
   window.addEventListener('pagehide', stop);
   const audio = {enabled: () => opted, set: setSound, effect, ambient, stop};
   // Previously cached app.js builds ask the renderer for hotspots.
-  window.RBScene = {draw, motion, skip, blob, download, labels, effectKeys, ambientKeys, audio, hotspots: () => []};
+  window.RBScene = {draw, motion, skip, blob, download, assetURL, labels, effectKeys, ambientKeys, audio, hotspots: () => []};
 })();

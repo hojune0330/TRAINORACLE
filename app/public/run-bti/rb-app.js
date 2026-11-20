@@ -1,7 +1,7 @@
 "use strict";
 (function app() {
   "use strict";
-  const { packs, score } = window.RB,
+  const { packs, score, answerOptions } = window.RB,
     scene = window.RBScene;
   const main = document.querySelector("#main"),
     modal = document.querySelector("#modal");
@@ -43,7 +43,7 @@
         })[c],
     );
   const pad = (n) => String(n).padStart(2, "0"),
-    asset = (path) => window.RBAssets?.[path] || "./" + path;
+    asset = scene.assetURL;
   const thumb = (type, n, sub) =>
     asset(`art/${type}-${pad(n)}${sub === undefined ? "" : "-" + sub}.webp`);
   const btn = (action, label, cls = "light", ico = "") =>
@@ -111,7 +111,8 @@
   function note(title, inner) {
     if (modal.open) modal.close();
     modal.className = "";
-    modal.innerHTML = `<h2>${esc(title)}</h2>${inner}<div class="actions">${btn("modalclose", "닫기", "primary sm")}</div>`;
+    modal.setAttribute("aria-labelledby", "dialog-title");
+    modal.innerHTML = `<h2 id="dialog-title">${esc(title)}</h2>${inner}<div class="actions">${btn("modalclose", "닫기", "primary sm")}</div>`;
     modal.showModal();
   }
   const motiveUI = window.RBMotiveUI.create({ main, output, head, btn, esc, asset, load, save, notify,
@@ -221,7 +222,7 @@
       mode,
       index: 0,
       answers: packs[id].questions.map(() => []),
-      blankReasons: [], cardLine,
+      blankReasons: [], cardLine, chatScenes: id === "buddy",
     };
     saveDraft();
     question();
@@ -232,13 +233,36 @@
       mode: state.mode,
       index: state.index,
       answers: state.answers,
-      blankReasons: state.blankReasons, cardLine: state.cardLine,
+      blankReasons: state.blankReasons, cardLine: state.cardLine, chatScenes: state.chatScenes,
     });
   }
-  function opts(q, mode) {
-    return mode === "imagine" && q.imagineOptions
-      ? q.imagineOptions
-      : q.options;
+  function promptFor(q, mode, chatScenes) {
+    const text = chatScenes && q.chat ? q.chat : q;
+    return mode === "imagine" ? text.imagine : text.prompt;
+  }
+  function outgoingBubbles(chat, selected) {
+    if (!selected.length) return "";
+    const replies = selected.map(i => {
+      const photo = chat.photo?.choice === i
+        ? `<button type="button" class="chat-attachment" data-act="chat-photo" aria-haspopup="dialog"><img src="${asset(chat.photo.src)}" alt=""><span>${esc(chat.photo.title)} 크게 보기</span></button>`
+        : "";
+      return `<p class="chat-bubble">${photo}${esc(chat.replies[i])}</p>`;
+    });
+    return `<small class="chat-speaker">내가 고른 답장</small>${replies.join("")}`;
+  }
+  function questionChoices(q, mode, n, selected, chatScenes) {
+    const chat = chatScenes && q.chat;
+    const labels = chat ? chat.choices : answerOptions(q, mode, chatScenes);
+    const buttons = labels.map((text, i) => {
+      const pressed = selected.includes(i);
+      return `<button type="button" class="opt" data-act="opt" data-i="${i}" aria-pressed="${pressed}"><img src="${thumb("o", n, i)}" alt=""><span>${esc(text)}</span><b aria-hidden="true">${pressed ? "✓" : ""}</b></button>`;
+    }).join("");
+    if (!chat) return `<p class="guide">내 얘기 같은 답을 골라 주세요. 두 개까지 골라도 돼요.</p><div class="options">${buttons}</div>`;
+    return `<section class="chat-scene" aria-label="가상의 친구 대화">
+      <div class="chat-incoming"><small class="chat-speaker">친구 · ${esc(chat.when)}</small><p class="chat-bubble">${esc(chat.incoming)}</p></div>
+      <div class="chat-composer"><p class="guide" id="reply-guide">답장을 골라 보세요. 두 개까지 골라도 돼요.</p><div class="chat-choices" role="group" aria-labelledby="reply-guide">${buttons}</div></div>
+      <div class="chat-outgoing" aria-live="polite" aria-atomic="true">${outgoingBubbles(chat, selected)}</div>
+    </section>`;
   }
   function question() {
     const { id, mode, index, answers } = state,
@@ -248,17 +272,9 @@
       a = answers[index],
       last = index === p.questions.length - 1;
     output(
-      `<div class="narrow"><div class="head"><button class="back" data-act="home">${icon("left")} 테스트 홈</button></div><section class="question"><div class="qhead"><span>${esc(packTitle(id))}</span><small>${index + 1} / ${p.questions.length}</small></div><div class="progress" role="progressbar" aria-label="검사 진행" aria-valuemin="1" aria-valuemax="${p.questions.length}" aria-valuenow="${index + 1}"><i style="width:${(100 * (index + 1)) / p.questions.length}%"></i></div><div class="qscene"><img src="${thumb("q", n)}" alt=""><span>${esc(q.scene)}</span></div><h1>${esc(mode === "imagine" ? q.imagine : q.prompt)}</h1><p class="guide">내 얘기 같은 답을 골라 주세요. 두 개까지 골라도 돼요.</p><div class="options">${opts(
-        q,
-        mode,
-      )
-        .map(
-          (s, i) =>
-            `<button class="opt" data-act="opt" data-i="${i}" aria-pressed="${a.includes(i)}"><img src="${thumb("o", n, i)}" alt=""><span>${esc(s)}</span><b aria-hidden="true">${a.includes(i) ? "✓" : ""}</b></button>`,
-        )
-        .join(
-          "",
-        )}</div><div class="qbar">${btn("prev", "이전", "light sm", "left")}<div class="actions"><button class="linkbtn" data-act="unsure">아직 모르겠어</button><button class="btn primary" data-act="next" ${a.length ? "" : "disabled"}>${last ? "내 결과 보기" : "다음"} ${icon("arrow")}</button></div></div><div class="question-omit"><button data-act="na">나한텐 해당 없어</button><details><summary>건너뛰기</summary><button data-act="pass">이 질문만 건너뛰기</button>${p.questions[index + 1]?.domain === q.domain ? `<button data-act="na-group">‘${esc(p.domains[q.domain].title)}’ 남은 질문은 해당 없어</button>` : ""}</details></div></section></div>`,
+      `<div class="narrow"><div class="head"><button class="back" data-act="home">${icon("left")} 테스트 홈</button></div><section class="question"><div class="qhead"><span>${esc(packTitle(id))}</span><small>${index + 1} / ${p.questions.length}</small></div><div class="progress" role="progressbar" aria-label="검사 진행" aria-valuemin="1" aria-valuemax="${p.questions.length}" aria-valuenow="${index + 1}"><i style="width:${(100 * (index + 1)) / p.questions.length}%"></i></div><div class="qscene"><img src="${thumb("q", n)}" alt=""><span>${esc(q.scene)}</span></div><h1>${esc(promptFor(q, mode, state.chatScenes))}</h1>
+      ${questionChoices(q, mode, n, a, state.chatScenes)}
+      <div class="qbar">${btn("prev", "이전", "light sm", "left")}<div class="actions"><button class="linkbtn" data-act="unsure">아직 모르겠어</button><button class="btn primary" data-act="next" ${a.length ? "" : "disabled"}>${last ? "내 결과 보기" : "다음"} ${icon("arrow")}</button></div></div><div class="question-omit"><button data-act="na">나한텐 해당 없어</button><details><summary>건너뛰기</summary><button data-act="pass">이 질문만 건너뛰기</button>${p.questions[index + 1]?.domain === q.domain ? `<button data-act="na-group">‘${esc(p.domains[q.domain].title)}’ 남은 질문은 해당 없어</button>` : ""}</details></div></section></div>`,
       "quiz",
     );
     if (!last) {
@@ -286,6 +302,8 @@
       el.querySelector("b").textContent = a.includes(j) ? "✓" : "";
     });
     main.querySelector("[data-act=next]").disabled = !a.length;
+    const outgoing = main.querySelector(".chat-outgoing");
+    if (outgoing) outgoing.innerHTML = outgoingBubbles(packs[state.id].questions[state.index].chat, a);
     scene.audio.effect("tap");
   }
   function advance(reason) {
@@ -316,7 +334,7 @@
     library[id] = {
       mode,
       answers: answers.map((a) => [...a]),
-      blankReasons: state.blankReasons || [],
+      blankReasons: state.blankReasons || [], chatScenes: state.chatScenes,
       custom: {},
       date: Date.now(),
     };
@@ -355,7 +373,7 @@
   }
   function sourceResult(id = state.id) {
     let r = library[id];
-    return score(id, r.answers, r.mode);
+    return score(id, r.answers, r.mode, r.chatScenes);
   }
   function optionArt(id, choice) {
     return "art/o-" + pad(offsets[id] + choice.q) + "-" + choice.i + ".webp";
@@ -420,7 +438,7 @@
   }
   function proofText(id, q, i) {
     let r = library[id];
-    return opts(packs[id].questions[q], r.mode)[i];
+    return answerOptions(packs[id].questions[q], r.mode, r.chatScenes)[i];
   }
   function proof(v, p, d) {
     return v.evidence.find((e) => p.questions[e.q].domain === d);
@@ -496,9 +514,9 @@
     return `<label class="field">바꿔 볼 장면<select id="trial-q">${packs[id].questions.map((q, i) => `<option value="${i}">${i + 1}. ${esc(q.scene)}</option>`).join("")}</select></label><div id="trial-choices">${trialChoices(id, 0)}</div><div id="trial-out" aria-live="polite"></div>`;
   }
   function trialChoices(id, i) {
-    return `<div class="work-actions">${opts(
+    return `<div class="work-actions">${answerOptions(
       packs[id].questions[i],
-      library[id].mode,
+      library[id].mode, library[id].chatScenes,
     )
       .map(
         (s, j) =>
@@ -607,7 +625,7 @@
       r = library[id];
     note(
       pack.questions[q].scene,
-      `<p>${esc(r.mode === "imagine" ? pack.questions[q].imagine : pack.questions[q].prompt)}</p><p><strong>${esc(r.answers[q].map((i) => proofText(id, q, i)).join(" / ") || ({na:"나한텐 해당 없어",pass:"건너뛴 장면"}[r.blankReasons?.[q]] || "아직 모르겠어"))}</strong></p>`,
+      `<p>${esc(promptFor(pack.questions[q], r.mode, r.chatScenes))}</p><p><strong>${esc(r.answers[q].map((i) => proofText(id, q, i)).join(" / ") || ({na:"나한텐 해당 없어",pass:"건너뛴 장면"}[r.blankReasons?.[q]] || "아직 모르겠어"))}</strong></p>`,
     );
   }
   function compare(id, c) {
@@ -795,6 +813,7 @@
       r = state.ratio;
     if (modal.open) modal.close();
     modal.className = "capture";
+    modal.removeAttribute("aria-labelledby");
     modal.innerHTML = `<button class="shot-close" data-act="modalclose">편집으로 돌아가기</button><canvas aria-label="${esc(m.name + " · 화면을 누르면 편집으로 돌아가요")}" role="img"></canvas>`;
     modal.showModal();
     scene
@@ -884,6 +903,13 @@
       case "opt":
         toggleOpt(i);
         break;
+      case "chat-photo": {
+        const photo = state.view === "quiz" && packs[state.id].questions[state.index].chat?.photo;
+        if (photo && state.answers[state.index].includes(photo.choice)) {
+          note(photo.title, `<img class="chat-photo-full" src="${asset(photo.src)}" alt="${esc(photo.alt)}">`);
+        }
+        break;
+      }
       case "next":
         advance(false);
         break;
@@ -968,7 +994,7 @@
           r = library[id],
           a = r.answers.map((z) => [...z]);
         a[qi] = [i];
-        let v = score(id, a, r.mode);
+        let v = score(id, a, r.mode, r.chatScenes);
         let target = main.querySelector("#trial-out");
         target.innerHTML = `<div class="trial"><p class="hint">원래 장면 → 바꿔 본 장면</p><div class="trial-pair"><img src="${resultThumb(model(id))}" alt="지금 카드 그림"><span>→</span><img src="${trialThumb(id, v)}" alt="답을 바꾸면 나오는 그림"></div><strong>${esc(sourceResult().name)} → ${esc(v.name)}</strong><p>${esc(v.line)}</p><p class="hint">${esc(packs[id].questions[qi].scene)} · ${esc(proofText(id, qi, i))}</p><button class="btn light sm" data-act="applytrial" data-i="${i}" data-q="${qi}">이 답으로 수정</button></div>`;
         break;
@@ -1062,15 +1088,18 @@
     if (!modal.open) {
       modal.className = "";
       modal.innerHTML = "";
+      modal.removeAttribute("aria-labelledby");
     }
   });
   header();
   const c = decodeCard();
+  const requestedTest = new URLSearchParams(location.search).get("test");
   if (c) friendPage(c);
-  else if (new URLSearchParams(location.search).get("test") === "motives") motiveUI.open();
+  else if (requestedTest === "motives") motiveUI.open();
   else {
     home();
     if (location.hash.startsWith("#card="))
       notify("이 링크로는 카드를 열 수 없어요. 친구에게 링크를 다시 받아 보세요.");
+    else if (requestedTest === "buddy") pick("buddy");
   }
 })();

@@ -1336,3 +1336,95 @@ dialog.capture canvas {
   .motive-ratings label { font-size:13px; }
   .card-return span { max-width:43vw; font-size:13px; }
 }
+.chat-scene {
+  background:#e9edf5;
+  border:1px solid #cbd2e1;
+  border-radius:15px;
+  padding:clamp(12px,2vw,20px);
+  margin:16px 0;
+}
+.chat-speaker {
+  display:block;
+  color:#515b73;
+  font-size:12px;
+  font-weight:700;
+  margin-bottom:5px;
+}
+.chat-bubble {
+  width:fit-content;
+  max-width:min(90%,34em);
+  padding:9px 13px;
+  margin:0;
+  border-radius:3px 15px 15px;
+  color:var(--ink);
+  background:white;
+  font-size:15px;
+  line-height:1.45;
+  overflow-wrap:anywhere;
+}
+.chat-composer {
+  padding:12px;
+  margin-top:14px;
+  border-radius:12px;
+  background:var(--white);
+}
+.chat-composer .guide { margin:0 0 8px; }
+.chat-choices {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:6px;
+}
+.chat-choices .opt {
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  justify-content:flex-start;
+  gap:0;
+  padding:0;
+  overflow:hidden;
+  border-radius:8px;
+  font-size:13px;
+  line-height:1.35;
+}
+.chat-choices .opt img {
+  width:100%;
+  height:clamp(48px,14vw,98px);
+  object-fit:cover;
+  border-radius:0;
+}
+.chat-choices .opt span { display:block; padding:7px; word-break:keep-all; overflow-wrap:anywhere; }
+.chat-choices .opt b {
+  position:absolute;
+  top:3px; right:3px;
+  background:var(--ink);
+  color:white;
+  border:1px solid white;
+}
+.chat-choices .opt[aria-pressed=false] b { visibility:hidden; }
+.chat-outgoing:not(:empty) {
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:4px;
+  margin-top:14px;
+}
+.chat-outgoing .chat-speaker { margin-bottom:0; }
+.chat-outgoing .chat-bubble { background:#ffe6a3; border-radius:15px 3px 15px 15px; }
+.chat-attachment {
+  display:block;
+  margin-bottom:6px;
+  padding:0;
+  text-align:left;
+}
+.chat-attachment img {
+  display:block;
+  width:min(100%,128px);
+  height:auto;
+  border-radius:8px;
+}
+.chat-attachment span { font-size:12px; text-decoration:underline; text-underline-offset:2px; }
+.chat-photo-full { display:block; max-width:100%; max-height:65dvh; margin:auto; object-fit:contain; }
+.motive-vignette { display:flex; align-items:center; gap:16px; margin:16px 0; }
+.motive-vignette img { width:clamp(88px,27%,150px); aspect-ratio:1; object-fit:cover; border-radius:10px; flex:none; }
+.motive-vignette figcaption { margin:0; line-height:1.55; word-break:keep-all; }
