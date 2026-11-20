@@ -3,6 +3,7 @@ import { AppHeading } from "../components/AppHeading"
 import { ArrowLeft, ArrowRight, BookOpen, Bookmark, Check, ChevronRight, Pencil, RotateCcw, Settings, Trash2, Users, X } from "lucide-react"
 import { InfoDisclosure } from "../components/InfoDisclosure"
 import { CategoryCard } from "../components/CategoryCard"
+import { RunBtiLink } from "../components/RunBtiLink"
 import { OracleSectionNavigation } from "../components/OracleSectionNavigation"
 import { ProfileCompanion } from "../components/ProfileCompanion"
 import { PreferenceRadar } from "../components/PreferenceRadar"
@@ -305,6 +306,7 @@ export function OracleProfileExperience(props: OracleProfileExperienceProps) {
         </>}
         </section>
         <div className="oracle-v2__secondary-actions" role="group" aria-label="러닝 취향 다른 메뉴">
+          <RunBtiLink />
           <CategoryCard category="oracle" icon={Pencil} variant="row" title="다른 취향 알아보기" onClick={() => setInterestsOpen(true)} />
           <CategoryCard category="oracle" icon={Users} variant="row" title="친구와 비교" onClick={() => props.onNavigate("FRIENDS")} />
           <CategoryCard category="oracle" icon={Settings} variant="row" title="내 응답·정보" onClick={() => setSettingsOpen(true)} />
@@ -314,6 +316,7 @@ export function OracleProfileExperience(props: OracleProfileExperienceProps) {
         <AppHeading variant="screen" accent>주제 골라 읽기</AppHeading>
         <ViewSwitcher label="읽을거리 주제" category="oracle" value={group} onValueChange={setGroup}
           options={groups.map(({ id, label }) => ({ value: id, label }))} className="oracle-v2__groups" />
+        {group === "A" && <RunBtiLink />}
         <div className="oracle-v2__topics">{ORACLE_CONTENT_CATALOG.filter(item => item.group === group).map(item => <CategoryCard key={item.id} category="oracle" icon={BookOpen} variant="row" title={item.title} onClick={() => setTopicId(item.id)} />)}</div>
       </>}
       {activeView === "saved" && <><AppHeading variant="screen" accent>보관한 풀이</AppHeading><div className="oracle-v2__topics">{props.readings.map(item => <CategoryCard category="oracle" icon={Bookmark} variant="row" title={`${item.source.answeredAt.slice(0, 10)} · 당시 응답`} key={item.source.revision} onClick={() => setSavedReading(item)} />)}</div></>}

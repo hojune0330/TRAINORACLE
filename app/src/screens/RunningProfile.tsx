@@ -2,6 +2,7 @@ import React from "react"
 import { AppHeading } from "../components/AppHeading"
 import { ArrowLeft, ArrowRight, Check, ChevronRight, Pencil, RotateCcw, Trash2, X, Compass, Flag, Activity, Users } from "lucide-react"
 import { InfoDisclosure } from "../components/InfoDisclosure"
+import { RunBtiLink } from "../components/RunBtiLink"
 import { PROFILE_QUESTIONS, describeRunningPreferences, toggleProfileAnswer, type RunningProfileAnswers, type RunningProfileStage } from "../domain/running-profile"
 import { createRunningProfileService, runningProfileEditToken, type RunningProfileStore } from "../domain/account/account-running-profile-service"
 import { accountJournalPreviewEnabled } from "../domain/account/account-journal-api"
@@ -189,6 +190,7 @@ export function RunningProfile({ stage, today, onStageChange, onBack, onClose }:
         </div>
         <button className="running-profile__primary" type="button" disabled={!canEdit} onClick={() => edit("motives")}>{description.answeredCount ? "내 응답 바꾸기" : "3문항으로 시작"}<ArrowRight size={18} aria-hidden="true" /></button>
         {description.answeredCount > 0 && <p>{description.title}</p>}
+        <RunBtiLink />
         <InfoDisclosure title="어떻게 해석하나요?"><p>선호는 직접 고른 응답으로, 기록과 변화는 확인된 일지로 설명해요. 검증된 성격 검사나 타고난 능력 판정은 아니에요.</p><p>응답 때문에 훈련 강도·양·횟수가 자동으로 바뀌지 않아요.</p></InfoDisclosure>
       </section>}
 

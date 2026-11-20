@@ -52,6 +52,12 @@ describe("service worker cache integrity", () => {
     expect(h.result()).toBeUndefined()
     expect(h.fetch).not.toHaveBeenCalled()
   })
+  it("leaves the standalone Run-BTI page out of app shell caching", () => {
+    const h = harness(new Response("<html>quiz</html>", { headers: { "content-type": "text/html" } }))
+    h.handlers.fetch!(h.event("https://example.test/app/run-bti/index.html?edition=train"))
+    expect(h.result()).toBeUndefined()
+    expect(h.fetch).not.toHaveBeenCalled()
+  })
   it("preserves old assets and unrelated origin caches on activation", async () => {
     const h = harness(new Response("ok"))
     h.handlers.activate!({ waitUntil: (promise: Promise<unknown>) => h.pending.push(promise) })

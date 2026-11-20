@@ -10,6 +10,7 @@
  */
 const VERSION = `trainoracle-v6:${self.registration.scope}`;
 const SHELL = ["./", "./manifest.webmanifest"];
+const RUN_BTI_PATH = new URL("run-bti/", self.registration.scope).pathname;
 
 self.addEventListener("install", (e) => {
   e.waitUntil(
@@ -35,6 +36,8 @@ self.addEventListener("fetch", (e) => {
   if (url.origin !== self.location.origin) return; // 외부 요청은 관여하지 않음
   // Recovery probes must reach the server, not an offline shell.
   if (url.searchParams.has("screen-recovery-check")) return;
+  // The standalone quiz has its own HTML entry; keep the offline app shell intact.
+  if (url.pathname.startsWith(RUN_BTI_PATH)) return;
 
   // 내비게이션: network-first, 오프라인이면 캐시된 셸
   if (req.mode === "navigate") {
