@@ -249,9 +249,12 @@
       const image = new Image();
       image.src = thumb("q", n + 1);
     }
-    scene.audio.ambient(
-      ["track", "river", "park", "street", "rain", "night"][index % 6],
-    );
+    playQuestionAmbience(q.scene);
+  }
+  function playQuestionAmbience(place) {
+    const sound = { "강변의 첫 5분": "river", "잠깐 멈춤": "street" }[place];
+    if (sound) scene.audio.ambient(sound);
+    else scene.audio.stop();
   }
   function toggleOpt(i) {
     let a = state.answers[state.index];
@@ -266,36 +269,7 @@
       el.querySelector("b").textContent = a.includes(j) ? "✓" : "";
     });
     main.querySelector("[data-act=next]").disabled = !a.length;
-    const chosen = opts(packs[state.id].questions[state.index], state.mode)[i];
-    const beat = /사진|찍/.test(chosen)
-      ? "camera"
-      : /시계|거리|시간|숫자/.test(chosen)
-        ? "watch"
-        : /숨|호흡/.test(chosen)
-          ? "breath"
-          : /길|골목|발걸음/.test(chosen)
-            ? "steps"
-            : "tap";
-    scene.audio.effect(a.includes(i) ? beat : "turn");
-    const el = main.querySelectorAll(".opt")[i].querySelector("img");
-    if (
-      a.includes(i) &&
-      !matchMedia("(prefers-reduced-motion: reduce)").matches
-    ) {
-      const keyframes =
-        beat === "camera" || beat === "watch"
-          ? [
-              { transform: "scale(.92)" },
-              { transform: "scale(1.06)" },
-              { transform: "scale(1)" },
-            ]
-          : [
-              { transform: "translateX(-3px) rotate(-4deg)" },
-              { transform: "translateX(3px) rotate(3deg)" },
-              { transform: "none" },
-            ];
-      el.animate(keyframes, { duration: 230, easing: "ease-out" });
-    }
+    scene.audio.effect("tap");
   }
   function advance(reason) {
     state.blankReasons ||= [];
@@ -336,7 +310,7 @@
           ? `<div class="gallery" style="margin-top:18px">${owned
               .map((id) => {
                 let m = model(id);
-                return `<button class="p-card" data-act="result" data-id="${id}"><div class="p-img"><img src="${m.charIndex >= 0 ? thumb("portrait", m.charIndex) : thumb("q", offsets[id])}" alt=""></div><div class="p-copy"><h3>${esc(m.name)}</h3><p>${esc(packTitle(id))}</p></div></button>`;
+                return `<button class="p-card" data-act="result" data-id="${id}"><div class="p-img"><img src="${resultThumb(m)}" alt=""></div><div class="p-copy"><h3>${esc(m.name)}</h3><p>${esc(packTitle(id))}</p></div></button>`;
               })
               .join("")}</div>`
           : `<div class="empty"><h2>아직 받은 캐릭터가 없어요.</h2><p>테스트를 마치면 여기에 내 캐릭터가 생겨요.</p>${btn("start-exp", "첫 검사 시작", "primary")}</div>`
@@ -351,65 +325,62 @@
     let r = library[id];
     return score(id, r.answers, r.mode);
   }
-  function visualDefaults(id, v) {
-    const [a, b, c] = v.digest;
-    if (id === "buddy")
-      return {
-        prop: [36, 38, 44][a] ?? 40,
-        background: [2, 0, 3][b] ?? 6,
-        expression: [3, 11, 17][c] ?? 0,
-      };
-    if (id === "record")
-      return {
-        prop: [46, 32, 43][b] ?? 43,
-        background: [6, 4, 11][a] ?? 6,
-        expression: [14, 7, 3][c] ?? 0,
-      };
-    return {
-      prop:
-        v.characterIndex === 9
-          ? 0
-          : b === 2
-            ? 0
-            : b === 1
-              ? 2
-              : a === 0
-                ? 1
-                : a === 1
-                  ? 0
-                  : 5,
-      background: b === 0 ? 1 : b === 1 ? 5 : b === 2 ? 4 : 3,
-      expression: [11, 7, 3][c] ?? 0,
-    };
+  function optionArt(id, choice) {
+    return "art/o-" + pad(offsets[id] + choice.q) + "-" + choice.i + ".webp";
+  }
+  function resultScenes(v, id) {
+    return v.evidence.filter(e => packs[id].questions[e.q].domain === v.focusDomain).map(e => ({
+      ...e, key: e.q * 3 + e.i, art: optionArt(id, e),
+      label: packs[id].questions[e.q].scene,
+      topic: packs[id].domains[v.focusDomain].labels[e.i],
+    }));
+  }
+  function usesCharacter(custom) {
+    // Keep cards styled in the earlier editor when reopening a saved result.
+    return custom.cardStyle ? custom.cardStyle === "character"
+      : ["pose", "background", "charIndex", "prop", "expression", "frame"].some(k => custom[k] !== undefined);
   }
   function model(id = state.id) {
-    let r = library[id],
-      v = sourceResult(id),
-      c = r.custom || {},
-      ix = v.characterIndex,
-      def = visualDefaults(id, v);
-    const evidenceList = r.answers.flatMap((indices, q) =>
-      indices.map((i) => ({ q, i, text: proofText(id, q, i) })),
-    );
-    const selected =
-      evidenceList.find((e) => e.q * 3 + e.i === c.clue) || v.evidence[0];
+    const r = library[id], v = sourceResult(id), c = r.custom || {};
+    const pictures = resultScenes(v, id);
+    const picture = !usesCharacter(c) && (pictures.find(e => e.key === c.sceneChoice) || pictures[0]);
+    const answers = r.answers.flatMap((indices, q) => indices.map(i => ({ q, i, text: proofText(id, q, i) })));
+    const selected = answers.find(e => e.q * 3 + e.i === c.clue) || v.evidence[0];
+    const [a, b] = v.digest;
+    const background = id === "base" ? [1, 5, 4][b] : id === "buddy" ? [2, 0, 3][b] : [6, 4, 11][a];
     return {
-      charIndex: c.charIndex ?? (v.kind === "open" ? -1 : ix),
-      name: v.name,
-      line: c.line ?? v.line,
-      pose: c.pose ?? (v.kind === "clear" && ix === 9 ? 0 : 2),
-      prop: c.prop ?? def.prop,
-      background: c.background ?? def.background,
-      expression: c.expression ?? def.expression,
-      frame: c.frame ?? 0,
-      evidence: selected?.text || "",
-      evidenceArt: selected
-        ? "art/o-" + pad(offsets[id] + selected.q) + "-" + selected.i + ".webp"
-        : "",
-      includeEvidence: !!c.includeEvidence,
-      mode: r.mode,
-      pack: id,
+      charIndex: c.charIndex ?? (v.kind === "open" ? -1 : v.characterIndex),
+      name: v.name, line: c.line ?? v.line,
+      pose: c.pose ?? (v.kind === "clear" && v.characterIndex === 9 ? 0 : 2),
+      prop: c.prop ?? -1, expression: c.expression ?? -1,
+      background: c.background ?? background ?? 3, frame: c.frame ?? 0,
+      sceneArt: picture?.art || "", sceneLabel: picture?.label || "",
+      evidence: selected?.text || "", evidenceArt: selected ? optionArt(id, selected) : "",
+      includeEvidence: !!c.includeEvidence, mode: r.mode, pack: id,
     };
+  }
+  function resultThumb(m) {
+    if (m.sceneArt) return asset(m.sceneArt);
+    return m.charIndex >= 0 ? thumb("portrait", m.charIndex) : thumb("q", offsets[m.pack]);
+  }
+  function picturePicker(id, v, m) {
+    if (!m.sceneArt) return "";
+    const pictures = resultScenes(v, id);
+    const selected = pictures.find(e => e.art === m.sceneArt);
+    if (pictures.length === 1) return `<p class="scene-caption">내가 고른 답 · ${esc(selected.text)}</p>`;
+    const n = v.counts[v.focusDomain][selected.i];
+    const count = ["", "한", "두", "세"][n] || String(n);
+    return `<section class="picture-picker" aria-labelledby="picture-title">
+      <h2 id="picture-title">카드에 담을 장면</h2>
+      <p>${pictures.length === 2 ? "두" : "세"} 가지 답을 ${count} 번씩 골랐어요. 남기고 싶은 장면을 눌러 보세요.</p>
+      <div class="picture-choices">${pictures.map(e => `<button type="button" data-act="pick-scene" data-choice="${e.key}" aria-pressed="${e.art === m.sceneArt}" aria-label="${esc(e.topic + ' 장면 선택')}"><img src="${asset(e.art)}" alt=""><span>${esc(e.topic)}</span></button>`).join("")}</div>
+      <p class="scene-caption" aria-live="polite">내가 고른 답 · <span>${esc(selected.text)}</span></p>
+    </section>`;
+  }
+  function trialThumb(id, result) {
+    const choice = resultScenes(result, id)[0];
+    if (choice) return asset(choice.art);
+    return result.kind === "open" ? thumb("q", offsets[id]) : thumb("portrait", result.characterIndex);
   }
   function proofText(id, q, i) {
     let r = library[id];
@@ -418,18 +389,18 @@
   function proof(v, p, d) {
     return v.evidence.find((e) => p.questions[e.q].domain === d);
   }
-  function showResult(id, animate = false) {
+  function showResult(id, animate = false, ratio = "4:5") {
     if (!library[id]) return pick(id);
-    state = { id, view: "result", ratio: "4:5" };
+    state = { id, view: "result", ratio };
     let p = packs[id],
       r = library[id],
       v = sourceResult(),
       m = model();
     output(
-      `${head(m.name, r.mode === "imagine" ? "내가 그려 본 첫 러닝" : "내가 달릴 때의 모습")}<div class="results"><section><div class="scene-wrap"><canvas id="scene" width="1080" height="1350" role="img" aria-label="${esc(m.name + " · " + m.line)}"></canvas></div><div class="scene-actions"><button data-act="replay">▷ 다시 보기</button><button data-act="skipmotion">바로 보기</button><button data-act="evi">그림에 담긴 내 답</button></div><div class="actions">${btn("capture", "캡처 화면", "primary", "image")}${btn("download", "이미지 저장", "light", "download")}${btn("share", "친구에게", "light", "share")}</div><div class="work-actions">${["4:5", "9:16"].map((s, i) => `<button class="btn sm light ${i ? "" : "active-ratio"}" data-act="ratio" data-r="${s}" aria-pressed="${!i}">${s} ${i ? "스토리" : "피드"}</button>`).join("")}</div></section><section class="stack">${v.kind === "open" ? openPicker(id) : ""}<div class="panel"><h2>한눈에 보는 내 러닝</h2><div class="summary-grid">${p.domains
+      `${head(m.name, r.mode === "imagine" ? "내가 그려 본 첫 러닝" : "내가 달릴 때의 모습")}<div class="results"><section>${picturePicker(id, v, m)}<div class="scene-wrap"><canvas id="scene" width="1080" height="1350" role="img" aria-label="${esc(m.name + " · " + m.line)}"></canvas></div>${m.sceneArt || m.charIndex < 0 || matchMedia("(prefers-reduced-motion: reduce)").matches ? "" : '<div class="scene-actions"><button data-act="replay">캐릭터 등장 장면 다시 보기</button><button data-act="skipmotion" hidden>마지막 장면 보기</button></div>'}<div class="actions">${btn("capture", "캡처 화면", "primary", "image")}${btn("download", "이미지 저장", "light", "download")}${btn("share", "친구에게", "light", "share")}</div><div class="work-actions">${["4:5", "9:16"].map((s, i) => `<button class="btn sm light ${s === ratio ? "active-ratio" : ""}" data-act="ratio" data-r="${s}" aria-pressed="${s === ratio}">${s} ${i ? "스토리" : "피드"}</button>`).join("")}</div></section><section class="stack">${v.kind === "open" ? openPicker(id) : ""}<div class="panel"><h2>한눈에 보는 내 러닝</h2><div class="summary-grid">${p.domains
         .map((d, j) => {
           let e = proof(v, p, j);
-          return `<div class="stat">${e ? `<img src="${thumb("o", offsets[id] + e.q, e.i)}" alt="">` : ""}<small>${esc(d.title)}</small><b>${esc(v.leaders[j].map((i) => d.labels[i]).join(" · ") || "아직 고른 답 없음")}</b></div>`;
+          return `<div class="stat">${e ? `<img src="${thumb("o", offsets[id] + e.q, e.i)}" alt="">` : ""}<small>${esc(d.title)}</small><b>${esc(v.leaders[j].map((i) => d.labels[i]).join(" · ") || "아직 고른 답 없음")}</b>${e ? `<p>“${esc(e.text)}”</p>` : ""}</div>`;
         })
         .join(
           "",
@@ -458,7 +429,7 @@
             .map((q, k) => (q.domain === j ? k : -1))
             .filter((k) => k >= 0),
           s = indices.length;
-        return `<h3 style="margin-top:14px">${esc(d.title)}</h3>${d.labels.map((l, i) => `<button data-act="graph" data-domain="${j}" data-i="${i}" class="graph-row"><span>${esc(l)}</span><span class="dots">${Array.from({ length: s }, (_, k) => `<i class="${k < v.counts[j][i] ? "on" : ""}"></i>`).join("")}　${v.counts[j][i]}/${s}</span></button>`).join("")}<small class="muted">아직 모름 ${indices.filter((k) => !library[id].answers[k].length && library[id].blankReasons?.[k] !== "pass").length}장면 · 건너뜀 ${indices.filter((k) => !library[id].answers[k].length && library[id].blankReasons?.[k] === "pass").length}장면</small>`;
+        return `<h3 style="margin-top:14px">${esc(d.title)}</h3>${d.labels.map((l, i) => `<button data-act="graph" data-domain="${j}" data-i="${i}" class="graph-row" ${v.counts[j][i] ? "" : "disabled"}><span>${esc(l)}</span><span class="dots">${Array.from({ length: s }, (_, k) => `<i class="${k < v.counts[j][i] ? "on" : ""}"></i>`).join("")}　${v.counts[j][i]}/${s}</span></button>`).join("")}<small class="muted">아직 모름 ${indices.filter((k) => !library[id].answers[k].length && library[id].blankReasons?.[k] !== "pass").length}장면 · 건너뜀 ${indices.filter((k) => !library[id].answers[k].length && library[id].blankReasons?.[k] === "pass").length}장면</small>`;
       })
       .join("")}`;
   }
@@ -509,14 +480,15 @@
   };
   function selectField(key, title, count, value) {
     let ls = scene.labels?.[key] || labels[key];
-    return `<label>${title}<select data-edit="${key}">${Array.from({ length: count }, (_, i) => `<option value="${i}"${value === i ? " selected" : ""}>${esc(ls?.[i] || title + " " + (i + 1))}</option>`).join("")}</select></label>`;
+    const none = ["prop", "expression"].includes(key) ? `<option value="-1"${value === -1 ? " selected" : ""}>없음</option>` : "";
+    return `<label>${title}<select data-edit="${key}">${none}${Array.from({ length: count }, (_, i) => `<option value="${i}"${value === i ? " selected" : ""}>${esc(ls?.[i] || title + " " + (i + 1))}</option>`).join("")}</select></label>`;
   }
   function editor(id, m) {
     const choices = library[id].answers.flatMap((indices, q) =>
       indices.map((i) => ({ value: q * 3 + i, text: proofText(id, q, i) })),
     );
     const clueSelect = choices.length
-      ? '<label class="field wide">담고 싶은 한 컷<select data-edit="clue">' +
+      ? `<label class="field wide" id="clue-field"${m.includeEvidence ? "" : " hidden"}>함께 보낼 답<select data-edit="clue">` +
         choices
           .map(
             (e) =>
@@ -531,10 +503,17 @@
           .join("") +
         "</select></label>"
       : "";
-    return `<div class="controls">${selectField("pose", "포즈", 3, m.pose)}${selectField("expression", "표정 스티커", 18, m.expression)}${selectField("prop", "소품", id === "base" ? 36 : 48, m.prop)}${selectField("background", "배경", 12, m.background)}${selectField("frame", "프레임", 9, m.frame)}<label class="field wide">내 대사<textarea rows="2" maxlength="100" data-edit="line">${esc(m.line)}</textarea></label><label class="check wide"><input type="checkbox" data-edit="includeEvidence" ${m.includeEvidence ? "checked" : ""}>공유 카드에 내가 고른 장면 한 컷 넣기</label>${clueSelect}</div><div class="work-actions">${btn("reset", "처음 나온 모습으로 되돌리기", "light sm")}</div>`;
+    const v = sourceResult(id);
+    const style = v.focusDomain == null ? "" : `<label class="field wide">카드 그림<select data-edit="cardStyle"><option value="scene"${m.sceneArt ? " selected" : ""}>내가 고른 장면</option><option value="character"${m.sceneArt ? "" : " selected"}>캐릭터로 꾸미기</option></select></label>`;
+    const characterFields = m.sceneArt ? "" : [
+      selectField("pose", "포즈", 3, m.pose), selectField("expression", "표정 스티커", 18, m.expression),
+      selectField("prop", "소품", id === "base" ? 36 : 48, m.prop),
+      selectField("background", "배경", 12, m.background), selectField("frame", "프레임", 9, m.frame),
+    ].join("");
+    return `<div class="controls">${style}${characterFields}<label class="field wide">내 대사<textarea rows="2" maxlength="100" data-edit="line">${esc(m.line)}</textarea></label><label class="check wide"><input type="checkbox" data-edit="includeEvidence" ${m.includeEvidence ? "checked" : ""}>공유 카드에 내가 고른 답도 적기</label>${clueSelect}</div><div class="work-actions">${btn("reset", "처음 나온 모습으로 되돌리기", "light sm")}</div>`;
   }
   function changeCustom(changes) {
-    Object.assign(library[state.id].custom, changes);
+    Object.assign(library[state.id].custom ||= {}, changes);
     save(storageKey, library);
     renderScene(false);
   }
@@ -545,32 +524,20 @@
     let m = model();
     canvas.setAttribute("aria-label", m.name + " · " + m.line);
     canvas.style.aspectRatio = state.ratio === "9:16" ? "9/16" : "4/5";
-    let wrap = canvas.parentNode;
-    wrap.querySelectorAll(".spot").forEach((el) => el.remove());
-    const result = sourceResult();
-    if (result.evidence.length)
-      scene.hotspots(state.ratio, m).forEach((h, j) => {
-        const e = proof(result, packs[state.id], j);
-        if (!e) return;
-        const b = document.createElement("button");
-        b.className = "spot";
-        b.textContent = "+";
-        b.style.left = h.x * 100 + "%";
-        b.style.top = h.y * 100 + "%";
-        b.dataset.act = "timeline";
-        b.dataset.i = String(e.q);
-        b.setAttribute(
-          "aria-label",
-          packs[state.id].domains[j].title + " · 장면 열기",
-        );
-        wrap.append(b);
-      });
-    let p = motion
-      ? scene.motion(canvas, m, state.ratio)
-      : scene.draw(canvas, m, state.ratio);
-    Promise.resolve(p).catch(() =>
-      notify("그림을 불러오지 못했어요. ‘바로 보기’를 눌러 다시 열어 주세요."),
-    );
+    const token = ++animationToken;
+    const replay = main.querySelector('[data-act="replay"]');
+    const skip = main.querySelector('[data-act="skipmotion"]');
+    function playing(on) {
+      if (replay) replay.hidden = on;
+      if (skip) skip.hidden = !on;
+    }
+    playing(Boolean(motion && replay));
+    const paint = motion && replay ? scene.motion : scene.draw;
+    paint(canvas, m, state.ratio).catch(() => {
+      if (token === animationToken) notify("그림을 불러오지 못했어요. 페이지를 새로 열어 주세요.");
+    }).finally(() => {
+      if (token === animationToken) playing(false);
+    });
   }
   function showAnswer(q) {
     let id = state.id,
@@ -591,9 +558,7 @@
         .map(
           (m, j) =>
             '<figure><img src="' +
-            (m.charIndex >= 0
-              ? thumb("portrait", m.charIndex)
-              : thumb("q", offsets[id])) +
+            resultThumb(m) +
             '" alt=""><figcaption>' +
             esc((j ? "친구 · " : "나 · ") + m.name) +
             "</figcaption></figure>",
@@ -623,7 +588,7 @@
       m = model();
     note(
       "친구에게 내 장면 보내기",
-      `<p>${esc(m.name)} · ${esc(m.line)}</p><label class="check"><input id="allow-compare" type="checkbox" checked>친구와 비교할 수 있게 세 항목의 결과도 보내기</label><p class="share-note">친구는 링크에서 지금 카드와 내가 공개한 항목을 볼 수 있어요. 카드를 고쳤다면 새 링크를 보내 주세요.</p><div class="actions">${location.protocol === "file:" ? "" : btn("sendlink", "카드 링크 보내기", "primary", "share")}${btn(folderFile ? "capture" : "shareimage", folderFile ? "캡처 화면 열기" : "이미지로 보내기", "light", "image")}</div>${folderFile ? '<p class="hint">여기서는 ‘캡처 화면 열기’를 누른 뒤 화면을 캡처해 주세요. 이미지 파일은 웹 버전이나 ‘런비티아이 체험판.html’에서 저장할 수 있어요.</p>' : location.protocol === "file:" ? '<p class="hint">여기서는 카드를 이미지로 보낼 수 있어요. 친구와 결과를 비교하려면 웹 버전에서 링크를 보내 주세요.</p>' : ""}<div id="manual-link"></div>`,
+      `<p>${esc(m.name)} · ${esc(m.line)}</p><label class="check"><input id="allow-compare" type="checkbox" checked>친구와 비교할 수 있게 세 항목의 결과도 보내기</label><p class="share-note">지금 보이는 그림과 대사를 친구에게 보내요. 비교 항목은 따로 고를 수 있어요.</p><div class="actions">${location.protocol === "file:" ? "" : btn("sendlink", "카드 링크 보내기", "primary", "share")}${btn(folderFile ? "capture" : "shareimage", folderFile ? "캡처 화면 열기" : "이미지로 보내기", "light", "image")}</div>${folderFile ? '<p class="hint">여기서는 ‘캡처 화면 열기’를 누른 뒤 화면을 캡처해 주세요. 이미지 파일은 웹 버전이나 ‘런비티아이 체험판.html’에서 저장할 수 있어요.</p>' : location.protocol === "file:" ? '<p class="hint">여기서는 카드를 이미지로 보낼 수 있어요. 친구와 결과를 비교하려면 웹 버전에서 링크를 보내 주세요.</p>' : ""}<div id="manual-link"></div>`,
     );
   }
   function sharedCard() {
@@ -665,11 +630,14 @@
         (c.charIndex !== -1 && !validInt("charIndex", ...ranges[c.pack])) ||
         !validInt("pose", 0, 2) ||
         !validInt("frame", 0, 8) ||
-        !validInt("expression", 0, 17) ||
-        !validInt("prop", 0, 47) ||
+        !validInt("expression", -1, 17) ||
+        !validInt("prop", -1, 47) ||
         !validInt("background", 0, 11)
       )
         return null;
+      const sceneMatch = typeof c.sceneArt === "string" && /^art\/o-(\d{2})-[0-2]\.webp$/.exec(c.sceneArt);
+      const sceneNumber = sceneMatch ? Number(sceneMatch[1]) : -1;
+      const sharedSceneArt = sceneNumber >= offsets[c.pack] && sceneNumber < offsets[c.pack] + packs[c.pack].questions.length ? c.sceneArt : "";
       const leaders =
         Array.isArray(c.leaders) &&
         c.leaders.length === 3 &&
@@ -688,6 +656,8 @@
         charIndex: c.charIndex,
         pose: c.pose,
         frame: c.frame,
+        sceneArt: sharedSceneArt,
+        sceneLabel: sharedSceneArt ? packs[c.pack].questions[sceneNumber - offsets[c.pack]].scene : "",
         expression: c.expression,
         prop: c.prop,
         background: c.background,
@@ -817,6 +787,7 @@
         scene.audio.set(!scene.audio.enabled());
         header();
         if (scene.audio.enabled()) {
+          if (state.view === "quiz") playQuestionAmbience(packs[id].questions[state.index].scene);
           scene.audio.effect("tap");
           notify("소리를 켰어요.");
         } else notify("소리를 껐어요.");
@@ -899,13 +870,14 @@
         );
         break;
       }
-      case "evi": {
-        let v = sourceResult();
-        note(
-          "그림에 담긴 내 답",
-          v.evidence.map((j) => `<p>“${esc(j.text)}”</p>`).join("") ||
-            "<p>아직 고른 장면이 없어요.</p>",
-        );
+      case "pick-scene": {
+        const v = sourceResult(id);
+        const choice = resultScenes(v, id).find(e => e.key === Number(b.dataset.choice));
+        if (!choice || b.getAttribute("aria-pressed") === "true") break;
+        changeCustom({ sceneChoice: choice.key, cardStyle: "scene" });
+        for (const el of main.querySelectorAll('[data-act="pick-scene"]'))
+          el.setAttribute("aria-pressed", String(el === b));
+        main.querySelector(".scene-caption span").textContent = choice.text;
         break;
       }
       case "trial": {
@@ -915,7 +887,7 @@
         a[qi] = [i];
         let v = score(id, a, r.mode);
         let target = main.querySelector("#trial-out");
-        target.innerHTML = `<div class="trial"><p class="hint">원래 장면 → 바꿔 본 장면</p><div class="trial-pair"><img src="${thumb("runner", sourceResult().characterIndex, 0)}" alt="원래 캐릭터"><span>→</span><img src="${thumb("runner", v.characterIndex, 0)}" alt="가상 캐릭터"></div><strong>${esc(sourceResult().name)} → ${esc(v.name)}</strong><p>${esc(v.line)}</p><p class="hint">${esc(packs[id].questions[qi].scene)} · ${esc(proofText(id, qi, i))}</p><button class="btn light sm" data-act="applytrial" data-i="${i}" data-q="${qi}">이 답으로 수정</button></div>`;
+        target.innerHTML = `<div class="trial"><p class="hint">원래 장면 → 바꿔 본 장면</p><div class="trial-pair"><img src="${resultThumb(model(id))}" alt="지금 카드 그림"><span>→</span><img src="${trialThumb(id, v)}" alt="답을 바꾸면 나오는 그림"></div><strong>${esc(sourceResult().name)} → ${esc(v.name)}</strong><p>${esc(v.line)}</p><p class="hint">${esc(packs[id].questions[qi].scene)} · ${esc(proofText(id, qi, i))}</p><button class="btn light sm" data-act="applytrial" data-i="${i}" data-q="${qi}">이 답으로 수정</button></div>`;
         break;
       }
       case "applytrial": {
@@ -975,10 +947,23 @@
       main.querySelector("#trial-out").innerHTML = "";
       return;
     }
-    if (k && k !== "line")
-      changeCustom({
-        [k]: k === "includeEvidence" ? el.checked : Number(el.value),
-      });
+    if (k === "cardStyle") {
+      const { id, ratio } = state;
+      library[id].custom ||= {};
+      library[id].custom.cardStyle = el.value;
+      save(storageKey, library);
+      showResult(id, false, ratio);
+      const panel = main.querySelector("#edit-panel");
+      panel.open = true;
+      panel.querySelector('[data-edit="cardStyle"]').focus({preventScroll: true});
+      main.querySelector("#scene").scrollIntoView({block: "center"});
+      return;
+    }
+    if (k && k !== "line") {
+      changeCustom({ [k]: k === "includeEvidence" ? el.checked : Number(el.value) });
+      if (k === "includeEvidence" && main.querySelector("#clue-field"))
+        main.querySelector("#clue-field").hidden = !el.checked;
+    }
   });
   main.addEventListener("input", (e) => {
     if (e.target.dataset.edit === "line")

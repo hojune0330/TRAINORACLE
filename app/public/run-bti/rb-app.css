@@ -131,6 +131,7 @@ body > main:focus {
 }
 .brand {
   gap: 9px;
+  white-space: nowrap;
   font-family: var(--display);
   font-weight: 1000;
   font-size: 26px;
@@ -180,6 +181,7 @@ body > main:focus {
 }
 .toolbtn {
   gap: 7px;
+  white-space: nowrap;
   padding: 10px 14px;
   font-weight: 750;
   font-size: 14px;
@@ -1045,27 +1047,34 @@ dialog.capture canvas {
     transition-duration: 0.001ms !important;
   }
 }
+@media (max-width: 360px) {
+  .mast { gap: 5px; }
+  .brand { gap: 4px; font-size: 20px; }
+  .nav .toolbtn { padding-inline: 5px; }
+  .toolbtn.icononly { width: 36px; height: 36px; }
+}
 
-.spot {
-  position: absolute;
-  z-index: 1;
-  transform: translate(-50%, -50%);
-  background: var(--white);
-  color: var(--ink);
-  border: 1.5px solid var(--ink);
-  border-radius: 50%;
-  width: 26px;
-  height: 26px;
-  line-height: 20px;
-  font-size: 20px;
-  font-weight: 800;
-  box-shadow: 0 1px 4px #14252233;
+.picture-picker {
+  max-width: 570px;
+  margin: 0 0 14px;
 }
-.spot:before {
-  content: "";
-  position: absolute;
-  inset: -7px;
+.picture-picker h2 { margin: 0; font-size: 19px; }
+.picture-picker p, .scene-caption { margin: 6px 0 10px; font-size: 14px; }
+.picture-choices { display: flex; gap: 6px; flex-wrap: wrap; }
+.picture-choices button {
+  display: inline-flex; align-items: center; gap: 5px;
+  min-height: 44px; padding: 4px 8px 4px 4px;
+  background: var(--white); color: var(--ink);
+  border: 1px solid var(--line); border-radius: 9px; font: inherit; font-size: 13px;
 }
+.picture-choices button[aria-pressed="true"] {
+  border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); font-weight: 700;
+}
+.picture-choices img { width: 30px; height: 30px; border-radius: 5px; object-fit: cover; }
+.picture-picker .scene-caption { margin: 10px 0 0; color: var(--muted); }
+.stat p { margin: 7px 0 0; font-size: 13px; line-height: 1.5; }
+#clue-field[hidden] { display: none; }
+.graph-row:disabled { cursor: default; }
 .trial-pair {
   display: flex;
   align-items: center;

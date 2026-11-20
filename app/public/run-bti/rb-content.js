@@ -195,23 +195,68 @@
     ],
   };
 
-  // Short, speakable tie lines keep a dual choice legible on a phone-sized poster.
-  // Keys are 01, 02, 12 and a three-way tie respectively.
-  const mixedLines = {
+  // Within each domain the combinations are 01, 02, 12 and 012.
+  // Each card has a title, a runner's line, and a line for someone imagining a first run.
+  const mixedCards = {
     base: [
-      ['새 길이 궁금해서 나가기도 하고 정해 둔 데까지 가 보려고 나가기도 해.', '안 가 본 길을 발견하면 누구랑 같이 가 볼까 싶어.', '혼자 정해 둔 날에도 나가고 친구랑 약속한 날에도 나가.', '새 길이 궁금한 날도 있고 가기로 한 데나 만나기로 한 친구가 있는 날도 있어.'],
-      ['바깥 풍경도 내 발소리도 놓치기 아까워.', '어디까지 왔나 보다가도 하늘이 예쁘면 잠깐 올려다봐.', '숨이 얼마나 찼는지 느껴 보고 어디까지 왔는지도 봐.', '주변을 구경하며 뛰다가 내 발소리도 듣고 가끔 거리도 확인해.'],
-      ['마음먹은 데까지 뛰고 나면 뿌듯하고 머리도 좀 맑아져.', '다 뛰고 나서 어땠는지 누군가한테 들려주고 싶어.', '오늘 어디까지 갔는지 얘기해 주고 싶은 사람이 떠올라.', '정한 데까지 뛰고 나면 그렇게 개운해. 그 기분을 누구한테 얘기하고 싶어.'],
+      [
+        ['다음 코스를 찜하는 러너', '처음 보는 길이 궁금할 때도 있고 오늘 가려던 데까지 가 보고 싶은 날도 있어.', '처음 보는 골목도 가 보고 싶고 내가 정한 데까지 뛰어 보고도 싶어.'],
+        ['같이 갈 길을 찾는 러너', '안 가 본 길을 발견하면 누구랑 같이 가 볼까 싶어.', '궁금한 길이 생기면 친구한테 같이 갈래 하고 물어볼래.'],
+        ['약속 잡으면 나가는 러너', '나 혼자 뛰기로 한 날에도 나가고 친구랑 약속한 날에도 나가.', '혼자 뛰기로 한 날엔 혼자서도 나가고 친구랑 시간이 맞으면 같이 갈래.'],
+        ['오늘 뛸 이유가 많은 러너', '궁금한 골목이 있을 때도 나가고 나랑 한 약속이나 친구랑 한 약속 때문에 나가기도 해.', '어떤 날은 궁금한 길로 가 볼래. 달리기로 정한 날이나 친구가 부르는 날에도 좋겠어.'],
+      ],
+      [
+        ['풍경 보며 숨 고르는 러너', '뛰면서 길가도 구경하고 내 발소리가 어떻게 들리나 귀도 기울여.', '길가도 구경하고 내 발걸음이랑 숨소리도 들어 볼래.'],
+        ['길 구경하고 거리도 보는 러너', '어디까지 왔나 보다가도 하늘이 예쁘면 잠깐 올려다봐.', '얼마나 왔는지도 보고 가는 길 풍경도 구경할래.'],
+        ['숨도 거리도 챙기는 러너', '숨이 얼마나 찼는지 느껴 보고 어디까지 왔는지도 봐.', '숨이 어떤지 한번 살피고 얼마나 왔는지도 볼래.'],
+        ['뛰면서 이것저것 살피는 러너', '길가를 구경하다가 내 발소리도 듣고 얼마나 왔나 가끔 봐.', '길가도 구경하고 내 발소리도 들어 볼래. 얼마나 왔는지도 궁금해.'],
+      ],
+      [
+        ['해내고 나면 개운한 러너', '마음먹은 데까지 뛰고 나면 뿌듯하고 머리도 좀 맑아져.', '가려던 데까지 다녀오면 뿌듯할 것 같아. 뛰면서 머리도 좀 식히고 싶어.'],
+        ['뛴 뒤 기분을 나누는 러너', '다 뛰고 나서 어땠는지 누군가한테 들려주고 싶어.', '처음 뛰고 어떤 기분이 들었는지 친구한테 얘기하고 싶어.'],
+        ['뛰고 나면 할 말이 생기는 러너', '오늘 어디까지 갔는지 얘기해 주고 싶은 사람이 떠올라.', '내가 가 보려던 데까지 다녀오면 누군가한테 들려주고 싶어.'],
+        ['뛴 날 얘기가 많은 러너', '가려던 데까지 뛰고 나면 개운해. 어디까지 갔고 어땠는지 얘기하고 싶어.', '가려던 데까지 뛰어 보고 싶어. 끝나면 어디까지 갔고 기분은 어땠는지 얘기할래.'],
+      ],
     ],
     buddy: [
-      ['수다도 좋고 말없이 나란히 뛰는 것도 좋아.', '밀린 얘기도 하고 내가 좋아하는 길도 보여 주고 싶어.', '둘이 발을 맞춰 뛰다가 같은 풍경을 좀 보고 싶어.', '나란히 뛰면서 얘기하다가 구경할 게 생기면 둘 다 멈춰도 좋겠어.'],
-      ['먼저 말을 걸고 친구가 편하게 얘기할 수 있게 속도도 맞춰.', '얘기하다가도 둘이 볼 게 생기면 바로 가리켜.', '옆 사람한테 걸음을 맞추면 같은 데서 같이 돌아보게 돼.', '먼저 말을 걸고 발을 맞춰. 가다가 눈에 띄는 게 있으면 같이 봐.'],
-      ['헤어질 땐 못다 한 얘기 마저 하자고 다음 약속을 잡고 싶어.', '헤어지고 나서도 아까 같이 본 걸로 얘기가 이어져.', '둘이 봤던 풍경이 떠오르면 거기 또 갈 날짜부터 잡고 싶어.', '아까 본 걸로 수다 떨다 보면 다음에 언제 볼지도 정하게 돼.'],
+      [
+        ['수다도 침묵도 편한 짝꿍', '밀린 얘기도 좋고 말없이 나란히 뛰는 것도 좋아.', '밀린 얘기도 좀 하고 말없이 나란히 뛰어 보고도 싶어.'],
+        ['길 구경 좋아하는 수다 짝꿍', '밀린 얘기도 하고 내가 좋아하는 길도 보여 주고 싶어.', '얘기하면서 뛰다가 보여 주고 싶던 길로 같이 가 볼래.'],
+        ['나란히 구경하는 짝꿍', '둘이 편한 속도로 뛰면서 같은 풍경을 보는 게 좋아.', '둘이 편한 속도로 뛰면서 좋은 풍경도 같이 보고 싶어.'],
+        ['같이 뛰는 재미를 아는 짝꿍', '발 맞춰 수다 떨고 가다 볼 게 생기면 같이 멈춰 서는 게 좋아.', '나란히 뛰면서 얘기하다가 구경할 게 생기면 같이 멈춰 볼래.'],
+      ],
+      [
+        ['발 맞춰 얘기하는 짝꿍', '먼저 말을 걸고 친구랑 얘기하기 편한 속도로 뛰어.', '내가 먼저 말 걸고 둘이 얘기하기 편한 속도를 찾아볼래.'],
+        ['이것 좀 보라는 짝꿍', '얘기하다가도 옆에 재밌는 게 보이면 바로 가리켜.', '얘기하다가 재밌는 게 보이면 친구한테도 가리켜 줄래.'],
+        ['걸음 맞춰 구경하는 짝꿍', '옆 사람한테 걸음을 맞추고 눈에 띄는 건 같이 봐.', '친구랑 보폭을 맞추고 가다 눈에 띄는 건 같이 구경할래.'],
+        ['둘이 할 게 많은 짝꿍', '먼저 말을 걸고 발을 맞춰. 가다가 눈에 띄는 게 있으면 같이 봐.', '말도 먼저 걸어 보고 발도 맞춰 볼래. 가다가 볼 게 생기면 같이 보고 싶어.'],
+      ],
+      [
+        ['다음에 마저 얘기하자는 짝꿍', '헤어질 땐 못다 한 얘기 마저 하자고 다음 약속을 잡고 싶어.', '하던 얘기는 다음에 마저 하자고 하고 언제 또 뛸지 정할래.'],
+        ['집에 가서도 얘기하는 짝꿍', '헤어지고 나서도 아까 같이 본 걸로 얘기가 이어져.', '헤어진 다음에도 같이 본 장면이 떠오르면 하던 얘기를 이어 갈래.'],
+        ['거기 또 가자는 짝꿍', '둘이 봤던 풍경이 떠오르면 거기 또 갈 날짜부터 잡고 싶어.', '같이 본 풍경이 좋으면 언제 거기 또 갈지 정하고 싶어.'],
+        ['다음 러닝까지 얘기하는 짝꿍', '아까 본 걸로 수다 떨다 보면 다음에 언제 볼지도 정하게 돼.', '같이 본 걸로 좀 더 얘기하다 다음에 언제 뛸지도 정할래.'],
+      ],
     ],
     record: [
-      ['어느 길로 돌아왔는지 보고 얼마나 걸렸는지도 봐.', '어디를 달릴 때 어떤 기분이었는지 떠올려 봐.', '몇 분 뛰었는지 보면서 그때 내 기분도 떠올려.', '오늘 뛴 길과 걸린 시간을 보고 그날 기분도 떠올려.'],
-      ['사진 한 장 옆에 숫자 하나를 남길래.', '사진 옆에 내 말 한 줄 쓰고 싶어.', '숫자도 적고 내 말도 한 줄 붙일래.', '사진 한 장에 오늘 뛴 거리랑 짧은 한마디를 같이 남기고 싶어.'],
-      ['다시 가 볼 길도 찾고 그때랑 기록이 얼마나 달라졌는지도 보고 싶어.', '다시 가고 싶은 코스를 누군가에게 보여줄래.', '예전이랑 지금이 얼마나 다른지 누군가랑 같이 보고 싶어.', '다시 갈 길을 찾다가 예전 기록이 눈에 띄면 얼마나 달라졌는지 친구한테도 보여 주고 싶어.'],
+      [
+        ['지도랑 시간을 같이 보는 러너', '어느 길로 돌아왔는지 보고 얼마나 걸렸는지도 봐.', '어느 길로 돌았는지 지도로 보고 몇 분 걸렸는지도 볼래.'],
+        ['지도를 보며 그날을 떠올리는 러너', '어디를 달릴 때 어떤 기분이었는지 떠올려 봐.', '내가 뛴 길을 보면서 어디서 어떤 기분이 들었는지 떠올려 볼래.'],
+        ['기록을 보며 기분도 돌아보는 러너', '몇 분 뛰었는지 보면서 그때 내 기분도 떠올려.', '몇 분이나 뛰었는지 보고 그때 내 기분도 떠올려 볼래.'],
+        ['뛴 날을 되짚어 보는 러너', '뛴 길이랑 걸린 시간을 보고 그날 기분도 떠올려.', '내가 뛴 길이랑 시간을 보고 그날 기분까지 기억해 두고 싶어.'],
+      ],
+      [
+        ['사진에 기록을 적는 러너', '사진 한 장 옆에 오늘 뛴 거리도 적어 둬.', '사진 한 장 옆에 오늘 얼마나 뛰었나 적어 볼래.'],
+        ['사진에 한 줄 붙이는 러너', '사진 옆에 그날 내가 하고 싶은 말을 한 줄 적어.', '사진 옆에 내 말로 짧게 한 줄 남기고 싶어.'],
+        ['숫자 옆에 한 줄 쓰는 러너', '숫자도 적고 내 말도 한 줄 붙여.', '숫자도 적고 그 옆에 내 말도 한 줄 붙일래.'],
+        ['사진으로 러닝 일기 쓰는 러너', '사진 한 장에 오늘 뛴 거리랑 짧은 한마디를 같이 남겨.', '사진 한 장에 뛴 거리랑 내 말 한 줄을 같이 남길래.'],
+      ],
+      [
+        ['예전 코스와 기록을 찾는 러너', '다시 가 볼 길도 찾고 그때랑 기록이 얼마나 달라졌는지도 봐.', '다시 가 보고 싶은 길도 찾고 처음이랑 얼마나 달라졌나 보고 싶어.'],
+        ['또 갈 길을 보여 주는 러너', '다시 가고 싶은 코스를 누군가에게 보여 주려고 열어 봐.', '다시 가고 싶은 코스를 찾아서 누군가한테도 보여줄래.'],
+        ['달라진 기록을 보여 주는 러너', '예전이랑 지금이 얼마나 다른지 누군가랑 같이 보고 싶어.', '나중에 기록이 어떻게 달라졌나 누군가랑 같이 열어 보고 싶어.'],
+        ['예전 기록을 같이 꺼내 보는 러너', '그 길에 또 가고 싶을 때 기록을 열어. 그때랑 얼마나 달라졌는지 친구한테도 보여 주고 싶어.', '다시 갈 길을 찾아보고 처음이랑 얼마나 달라졌나 친구랑 같이 볼래.'],
+      ],
     ],
   };
 
@@ -240,7 +285,7 @@
     const repeated = counts.map(row => Math.max(...row) >= 2);
     const kind = unknown ? 'open' : tieDomain >= 0 ? 'mixed' : repeated.every(Boolean) ? 'clear' : 'scene';
 
-    // A visual anchor is needed even for a mixed scene. Only leaders/digest express a preference.
+    // Keep legacy character indices stable for saved results and existing share cards.
     const anchor = leaders.map((indices, domain) => {
       const choice = selections.find(s => s.domain === domain && indices.includes(s.i));
       return choice?.i ?? 0;
@@ -252,7 +297,7 @@
     if (isImagination) line = imaginedLines[packId][localIndex];
     if (kind === 'clear' && extensionEndings[packId]) line += ' ' + extensionEndings[packId][anchor[2]];
 
-    // Display one observed choice per domain, reserving a second slot for a tied behaviour.
+    // Keep one actual response for each leading choice, including ties.
     const evidence = [];
     for (const [domain, indices] of leaders.entries()) {
       for (const i of indices) {
@@ -260,22 +305,24 @@
         if (choice) evidence.push({ q: choice.q, i: choice.i, text: choice.text });
       }
     }
+    let focusDomain = null;
     if (kind === 'open') {
       name = '내가 고르는 첫 장면';
       line = '오늘은 마음에 드는 장면부터 골라 볼래.';
     } else if (kind === 'mixed') {
       const indices = leaders[tieDomain];
-      const labels = indices.map(i => pack.domains[tieDomain].labels[i]);
-      name = labels.join(' · ');
+      focusDomain = tieDomain;
       const tieKey = ['01', '02', '12', '012'].indexOf(indices.join(''));
-      line = mixedLines[packId][tieDomain][tieKey];
+      const card = mixedCards[packId][tieDomain][tieKey];
+      name = card[0];
+      line = card[isImagination ? 2 : 1];
     } else if (kind === 'scene') {
-      const bestDomain = counts.map(row => Math.max(...row)).indexOf(Math.max(...counts.flat()));
-      name = pack.domains[bestDomain].labels[anchor[bestDomain]] + ' 한 컷';
-      line = evidence.find(e => pack.questions[e.q].domain === bestDomain).text;
+      focusDomain = counts.map(row => Math.max(...row)).indexOf(Math.max(...counts.flat()));
+      name = pack.domains[focusDomain].labels[anchor[focusDomain]] + ' 한 컷';
+      line = evidence.find(e => pack.questions[e.q].domain === focusDomain).text;
     }
     const id = packId + '-' + leaders.map(indices => indices.length ? indices.join('') : 'x').join('-');
-    return { counts, leaders, digest, name, line, evidence, id, characterIndex, kind };
+    return { counts, leaders, digest, name, line, evidence, id, characterIndex, kind, focusDomain };
   }
 
   window.RB = { packs, score };

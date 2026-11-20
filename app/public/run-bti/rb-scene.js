@@ -39,34 +39,21 @@
   const bounded = (n, max, fallback = 0) => Number.isInteger(n) && n >= 0 && n <= max ? n : fallback;
   const two = n => String(n).padStart(2, '0');
   const clean = v => typeof v === 'string' ? v.trim() : '';
+  const answerArt = path => typeof path === 'string' && /^art\/o-(?:0\d|1\d|20)-[0-2]\.webp$/.test(path) ? path : null;
   const ease = t => 1 - (1 - Math.max(0, Math.min(1, t))) ** 3;
-  const actions = {
-    snap:   {pattern: /셔터|사진|카메라/, fx: 'camera', dx: 7, tilt: -.035, dip: .03},
-    glance: {pattern: /노을|풍경|하늘|골목|샛길|꽃|바다/, fx: 'leaf', dx: -16, tilt: -.06, dip: .015},
-    watch:  {pattern: /시계|기록|거리|페이스|워치|km/i, fx: 'watch', dx: 6, tilt: .035, dip: .055},
-    listen: {pattern: /노래|소리|목소리|음악|귀|듣/, fx: 'bell', dx: -7, tilt: -.085, dip: .015},
-    wave:   {pattern: /인사|친구|함께|나란히|손 흔|반가/, fx: 'grass', dx: -22, tilt: .065, dip: .045},
-    lace:   {pattern: /운동화|신발|끈|출발/, fx: 'lace', dx: 3, tilt: .085, dip: .16},
-    stop:   {pattern: /멈|정지|걷/, fx: 'steps', dx: -56, tilt: -.04, dip: .055},
-    breathe:{pattern: /숨|호흡|기분|쉬/, fx: 'breath', dx: 0, tilt: .017, dip: .06}
-  };
-  function selectAction(m) {
-    if (Object.hasOwn(actions, m.action)) return m.action;
-    const clue = [m.evidence, m.name, m.line].filter(v => typeof v === 'string').join(' ');
-    return Object.keys(actions).find(key => actions[key].pattern.test(clue)) || 'breathe';
-  }
 
   function normalize(m = {}) {
+    const sceneArt = answerArt(m.sceneArt);
     return {
       charIndex: bounded(m.charIndex, 44, -1), pose: bounded(m.pose, 2),
-      prop: bounded(m.prop, 47), background: bounded(m.background, 11),
-      expression: bounded(m.expression, 17), frame: bounded(m.frame, 8),
+      prop: bounded(m.prop, 47, -1), background: bounded(m.background, 11),
+      expression: bounded(m.expression, 17, -1), frame: bounded(m.frame, 8),
       mode: m.mode === 'imagine' ? 'imagine' : 'experience',
       pack: Object.hasOwn(packs, m.pack) ? m.pack : 'base',
       name: clean(m.name) || '내 러닝 장면', line: clean(m.line),
+      sceneArt, sceneLabel: sceneArt ? clean(m.sceneLabel).slice(0, 50) : '',
       evidence: m.includeEvidence ? clean(m.evidence) : '',
-      evidenceArt: m.includeEvidence && /^art\/o-(?:0\d|1\d|20)-[0-2]\.webp$/.test(m.evidenceArt)
-        ? m.evidenceArt : null, action: selectAction(m)
+      evidenceArt: m.includeEvidence && m.evidenceArt !== sceneArt ? answerArt(m.evidenceArt) : null
     };
   }
 
@@ -108,10 +95,16 @@
   }
 
   async function materials(m, animate) {
+    if (m.sceneArt) {
+      const [scene, evidenceArt] = await Promise.all([load(m.sceneArt), load(m.evidenceArt)]);
+      if (!scene) throw new Error('고른 장면을 불러오지 못했어요.');
+      return {scene, evidenceArt};
+    }
     const files = [
       'art/bg-' + two(m.background) + '.webp',
       m.charIndex < 0 ? null : 'art/runner-' + two(m.charIndex) + '-' + m.pose + '.webp',
-      'art/prop-' + two(m.prop) + '.webp', 'art/face-' + two(m.expression) + '.webp',
+      m.prop < 0 ? null : 'art/prop-' + two(m.prop) + '.webp',
+      m.expression < 0 ? null : 'art/face-' + two(m.expression) + '.webp',
       'art/frame-' + two(m.frame) + '.webp', 'art/fx-' + two((m.background + m.pose * 4) % 16) + '.webp',
       animate && m.charIndex >= 0 ? 'art/runner-' + two(m.charIndex) + '-' + (m.pose === 1 ? 0 : 1) + '.webp' : null,
       m.evidenceArt, m.charIndex >= 0 ? 'art/portrait-' + two(m.charIndex) + '.webp' : null
@@ -120,22 +113,29 @@
     return {bg, runner, prop, face, frame, fx, approach, evidenceArt, portrait};
   }
 
-  function layout(ratio, model) {
+  const cardHeight = ratio => ratio === '9:16' ? 1920 : 1350;
+  const textInset = 64;
+  const textWidth = W - 2 * textInset;
+  function layout(ctx, ratio, model) {
     const story = ratio === '9:16';
-    const h = story ? 1920 : 1350;
-    const room = model && !model.includeEvidence && !model.evidenceArt && !model.evidence;
-    const shortCaption = model && clean(model.line).length < 37 && clean(model.name).length < 16;
-    let extra = 0;
-    if (room) extra = clean(model.line).length > 72 ? 54 : (story ? 150 : 112);
-    else if (shortCaption) extra = story ? 90 : 62;
-    const x = 44, y = story ? 192 : 114, w = W - x * 2, ah = (story ? 932 : 692) + extra;
-    return {h, x, y, w, ah, story, header: story ? 144 : 76, bottom: story ? 1734 : 1290};
-  }
-
-  function hotspots(ratio = '4:5', model) {
-    const {x, y, w, ah, h} = layout(ratio, model ? normalize(model) : null);
-    return [['runner', .54, .50], ['prop', .79, .74], ['place', .83, .23]]
-      .map(([id, u, v]) => ({id, x: (x + w * u) / W, y: (y + ah * v) / h}));
+    const h = cardHeight(ratio), bottom = story ? 1734 : 1290;
+    const square = Boolean(model.sceneArt);
+    const header = square ? (story ? 126 : 62) : (story ? 144 : 76);
+    const y = square ? (story ? 174 : 105) : (story ? 192 : 114);
+    const title = measuredRows(ctx, model.name, textWidth - 44, story ? 82 : 75, 52, 900, 1, 1.18);
+    const quote = measuredRows(ctx, model.line, textWidth, story ? 55 : 49, 32, 600, 4, 1.27);
+    const evidenceInset = model.evidenceArt ? 145 : 0;
+    const evidenceText = model.evidence ? '내가 고른 장면  ·  ' + model.evidence : model.evidenceArt ? '내가 고른 장면' : '';
+    const evidence = measuredRows(ctx, evidenceText, textWidth - evidenceInset, 34, 27, 600, 3, 1.27);
+    const evidenceHeight = Math.max(evidence.height + (evidenceText ? 6 : 0), model.evidenceArt ? 112 : 0);
+    const evidenceY = bottom - evidenceHeight;
+    const titleGap = square ? 12 : -14, quoteGap = model.line ? (story ? 38 : 33) : 0;
+    const maxArt = evidenceY - (evidenceHeight ? 38 : 0) - quote.height - quoteGap - title.height - 20 - titleGap - y;
+    const targetArt = square ? (story ? 992 : 944) : (story ? 1082 : 804);
+    const ah = Math.max(1, Math.min(targetArt, Math.floor(maxArt)));
+    const w = square ? ah : W - 88, x = (W - w) / 2;
+    const titleY = y + ah + titleGap, quoteY = titleY + title.height + 20 + quoteGap;
+    return {h, x, y, w, ah, header, title, titleY, quote, quoteY, evidence, evidenceY, evidenceInset};
   }
 
   function borderPath(ctx, x, y, w, h, radius = 24) {
@@ -223,12 +223,10 @@
     }
     if (a.frame) ctx.drawImage(a.frame, x, y, w, ah);
     const size = Math.min(ah * .975, w * .89);
-    const foot = y + ah * .958, cx = x + w * .535, act = actions[m.action];
-    const beat = progress < .78 ? Math.sin(Math.PI * progress / .78) : 0;
+    const foot = y + ah * .958, cx = x + w * .535;
     if (a.runner) {
       ctx.save();
-      ctx.translate(cx + (1 - arrive) * act.dx, foot); ctx.rotate(beat * act.tilt);
-      ctx.scale(1 + beat * act.dip * .17, 1 - beat * act.dip);
+      ctx.translate(cx - (1 - arrive) * 20, foot);
       const transition = a.approach ? ease((progress - .26) / .26) : 1;
       if (a.approach && transition < 1) {
         ctx.globalAlpha = (.65 + .35 * arrive) * (1 - transition);
@@ -261,16 +259,6 @@
       drawInside(ctx, a.face, chipX + 3, chipY + 3, f - 6, f - 6);
       ctx.fillStyle = ink; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
       ctx.fillText(label, chipX + f + 6, chipY + f * .52);
-      ctx.restore();
-    }
-    if (beat > 0 && ['snap', 'watch', 'listen', 'wave'].includes(m.action)) {
-      const focus = m.action === 'watch' ? [.795, .745] : m.action === 'snap' ? [.8, .25] : [.54, .38];
-      ctx.save(); ctx.translate(x + w * focus[0], y + ah * focus[1]); ctx.globalAlpha = beat * .56;
-      ctx.strokeStyle = '#fffbea'; ctx.lineWidth = 4; ctx.lineCap = 'round';
-      for (let i = 0; i < 2; i++) {
-        const r = 19 + (1 - beat) * 16 + i * 13;
-        ctx.beginPath(); ctx.arc(0, 0, r, -.94, .58); ctx.stroke();
-      }
       ctx.restore();
     }
     ctx.restore();
@@ -313,42 +301,37 @@
     return {size, lines};
   }
 
-  function textBlock(ctx, text, {x, y, width, maxRows, size, min, weight, leading = 1.25}) {
-    const block = fitted(ctx, text, width, maxRows, size, min, weight);
-    const height = block.size * leading;
-    for (const line of block.lines) { ctx.fillText(line, x, y); y += height; }
-    return y;
-  }
-
-  function caption(ctx, text, x, y, width, available, initialSize) {
-    const leading = 1.25;
-    let rows, size = initialSize;
-    for (; size >= 27; size -= 2) {
-      setFont(ctx, size, 600); rows = cutLines(ctx, text, width);
-      if (rows.length * size * leading <= available) {
-        for (const row of rows) { ctx.fillText(row, x, y); y += size * leading; }
-        return;
-      }
+  function measuredRows(ctx, text, width, start, min, weight, preferredRows, leading) {
+    // Preserve deliberate short line breaks. Excessive pasted breaks still keep every word.
+    const paragraphs = text.split(/\r?\n/);
+    if (paragraphs.length > preferredRows + 1) text = paragraphs.join(' ').replace(/\s+/g, ' ').trim();
+    let size = start, lines;
+    for (;;) {
+      setFont(ctx, size, weight);
+      lines = text ? cutLines(ctx, text, width) : [];
+      if (lines.length <= preferredRows || size === min) break;
+      size = Math.max(size - 2, min);
     }
-    // A pasted series of line breaks may not fit even at reading size on the card.
-    // Flatten those breaks before abbreviating; the accessible label retains the source text.
-    const compact = text.replace(/\s+/g, ' ');
-    const maxRows = Math.max(1, Math.floor(available / (27 * leading)));
-    textBlock(ctx, compact, {x, y, width, maxRows, size: 27, min: 27, weight: 600, leading});
+    const step = size * leading;
+    return {lines, size, weight, step, height: Math.ceil(lines.length * step)};
   }
 
-  function nameplate(ctx, title, x, y, width, story) {
+  function drawRows(ctx, block, x, y) {
+    setFont(ctx, block.size, block.weight);
+    block.lines.forEach((line, i) => ctx.fillText(line, x, y + i * block.step));
+  }
+
+  function nameplate(ctx, title, x, y, width) {
     const inset = 22;
-    const {size, lines} = fitted(ctx, title, width - inset * 2, 2, story ? 82 : 75, 51, 900);
-    const rowStep = size * 1.18;
+    const {size, lines, step: rowStep} = title;
+    setFont(ctx, size, title.weight);
     const boxW = Math.min(width, Math.max(...lines.map(line => ctx.measureText(line).width)) + inset * 2);
-    const boxH = rowStep * lines.length + 20;
+    const boxH = title.height + 20;
     ctx.fillStyle = '#272641'; ctx.fillRect(x + 7, y + 7, boxW, boxH);
     ctx.fillStyle = '#fff'; ctx.fillRect(x, y, boxW, boxH);
     ctx.strokeStyle = '#171a32'; ctx.lineWidth = 4; ctx.strokeRect(x, y, boxW, boxH);
     ctx.textBaseline = 'middle'; ctx.textAlign = 'left'; ctx.fillStyle = '#161a30';
     lines.forEach((line, i) => ctx.fillText(line, x + inset, y + 10 + rowStep * (i + .52)));
-    return y + boxH;
   }
 
   function render(ctx, m, a, l, progress, pixels) {
@@ -357,51 +340,49 @@
     ctx.clearRect(0, 0, W, l.h); ctx.fillStyle = paper; ctx.fillRect(0, 0, W, l.h);
     ctx.fillStyle = ink; ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
     ctx.font = '900 46px "Arial Black", Arial, sans-serif'; ctx.fillText('RUN·BTI', 58, l.header);
-    setFont(ctx, 32, 650); ctx.textAlign = 'right';
-    ctx.fillText(packs[m.pack] + (m.mode === 'imagine' ? ' · 첫 러닝을 상상하며' : ''), W - 58, l.header);
+    const section = (m.sceneLabel || packs[m.pack]) + (m.mode === 'imagine' ? ' · 첫 러닝을 상상하며' : '');
+    const heading = fitted(ctx, section, W - 355, 1, 32, 26, 650);
+    ctx.textAlign = 'right'; ctx.fillText(heading.lines[0], W - 58, l.header);
     ctx.textAlign = 'left';
-    art(ctx, m, a, l, progress);
-    ctx.save(); ctx.globalAlpha = .38 + .62 * ease((progress - .42) / .52);
-    const x = 64, width = W - x * 2;
-    let y = nameplate(ctx, m.name, x, l.y + l.ah - 14, width, l.story);
-    y += l.story ? 38 : 33;
-    ctx.textBaseline = 'top'; ctx.fillStyle = '#323648';
-    const withEvidence = Boolean(m.evidence || m.evidenceArt);
-    if (m.line) {
-      const available = Math.max(100, l.bottom - y - (withEvidence ? 145 : 0));
-      caption(ctx, m.line, x, y, width, available, l.story ? 55 : 49);
+    if (m.sceneArt) {
+      // The answer illustrations are square. Keep the entire image, including hands at its edges.
+      if (a.scene) ctx.drawImage(a.scene, l.x, l.y, l.w, l.ah);
+    } else {
+      art(ctx, m, a, l, progress);
     }
-    if (withEvidence) {
-      const by = l.bottom - 112;
+    ctx.save(); ctx.globalAlpha = .38 + .62 * ease((progress - .42) / .52);
+    const x = textInset, width = textWidth;
+    nameplate(ctx, l.title, x, l.titleY, width);
+    ctx.textBaseline = 'top'; ctx.fillStyle = '#323648';
+    drawRows(ctx, l.quote, x, l.quoteY);
+    if (l.evidence.lines.length) {
+      const by = l.evidenceY;
       ctx.fillStyle = '#a6a5be';
       ctx.fillRect(Math.round(x * scale) / scale, Math.round((by - 17) * scale) / scale,
         Math.round(width * scale) / scale, Math.max(1, Math.round(2 * scale)) / scale);
-      let inset = 0;
       if (a.evidenceArt) {
         ctx.save(); borderPath(ctx, x, by, 122, 112, 14); ctx.clip();
         ctx.fillStyle = '#e4e5f8'; ctx.fillRect(x, by, 122, 112);
         drawInside(ctx, a.evidenceArt, x, by, 122, 112); ctx.restore();
-        inset = 145;
       }
       ctx.fillStyle = '#38405b';
-      textBlock(ctx, '내가 고른 장면' + (m.evidence ? '  ·  ' + m.evidence : ''),
-        {x: x + inset, y: by + 3, width: width - inset, maxRows: 3, size: 34, min: 27, weight: 600});
+      drawRows(ctx, l.evidence, x + l.evidenceInset, by + 3);
     }
     ctx.restore();
   }
 
   function setup(canvas, ratio, opts, model) {
-    const l = layout(ratio, model);
+    const h = cardHeight(ratio);
     const pixels = Number.isFinite(opts.width) ? Math.max(260, Math.min(1440, Math.round(opts.width))) : 864;
-    const height = Math.round(pixels * l.h / W);
+    const height = Math.round(pixels * h / W);
     if (canvas.width !== pixels) canvas.width = pixels;
     if (canvas.height !== height) canvas.height = height;
-    canvas.style.aspectRatio = W + ' / ' + l.h;
+    canvas.style.aspectRatio = W + ' / ' + h;
     // Use the same rasterizer for the visible illustration and detached PNG canvas.
     // GPU-backed previews can otherwise differ in small Korean strokes and sticker shadows.
     const ctx = canvas.getContext('2d', {willReadFrequently: true, alpha: false});
     if (!ctx) throw new Error('이미지를 표시할 수 없어요.');
-    return {l, pixels, ctx};
+    return {l: layout(ctx, ratio, model), pixels, ctx};
   }
 
   function skip(canvas) {
@@ -414,7 +395,7 @@
     const m = normalize(model);
     const placeholder = !canvas.dataset.rbPainted || canvas.dataset.rbPainted !== ratio;
     const {ctx, l, pixels} = setup(canvas, ratio, opts, m);
-    canvas.setAttribute('aria-label', [m.name, m.line, m.evidence].filter(Boolean).join(' · '));
+    canvas.setAttribute('aria-label', [m.name, m.sceneLabel, m.line, m.evidence].filter(Boolean).join(' · '));
     if (placeholder) render(ctx, m, {}, l, 1, pixels);
     canvas.dataset.rbPainted = ratio;
     const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -426,12 +407,14 @@
     const a = await materials(m, animate && !reduced);
     if (active.get(canvas) !== ticket) return;
     const show = p => render(ctx, m, a, l, p, pixels);
-    if (!animate || reduced || skipped || document.hidden) {
+    if (m.sceneArt || m.charIndex < 0 || !animate || reduced || skipped || document.hidden) {
       show(1); active.delete(canvas); return;
     }
     await new Promise(resolve => {
       let frame, timer, lastFrame = -Infinity;
-      let done = false;
+      let done = false, sounded = false;
+      // These finishing poses actually lift a phone for a photograph.
+      const shutter = m.pose === 2 && (m.charIndex === 36 || m.charIndex === 42);
       const start = performance.now();
       ticket.finish = () => {
         if (done) return;
@@ -445,13 +428,15 @@
         if (done) return;
         const p = Math.min(1, (now - start) / 1850);
         if (p >= 1) { ticket.finish(); return; }
+        if (!sounded && p >= .50 && a.runner && (shutter || m.pose === 1)) {
+          sounded = true;
+          audio.effect(shutter ? 'camera' : 'steps');
+        }
         if (now - lastFrame >= 1000 / 30) { show(p); lastFrame = now; }
         frame = requestAnimationFrame(tick);
       };
       document.addEventListener('visibilitychange', afterVisibility);
       timer = setTimeout(ticket.finish, 2400);
-      audio.ambient([0,0,2,3,4,1,0,1,1,1,0,5][m.background]);
-      audio.effect(actions[m.action].fx);
       tick(start);
     });
   }
@@ -476,7 +461,7 @@
     } finally {
       link.remove(); setTimeout(() => URL.revokeObjectURL(href), 30000);
     }
-    return {width: W, height: layout(ratio).h, filename};
+    return {width: W, height: cardHeight(ratio), filename};
   }
 
   /* Local Web Audio foley. Each event is one short sound gesture. The mixer allows
@@ -608,6 +593,6 @@
   document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); });
   window.addEventListener('pagehide', stop);
   const audio = {enabled: () => opted, set: setSound, effect, ambient, stop};
-  window.RBScene = {draw, motion, skip, blob, download, hotspots, labels, effectKeys, ambientKeys, audio,
-    actions: Object.keys(actions)};
+  // Previously cached app.js builds ask the renderer for hotspots.
+  window.RBScene = {draw, motion, skip, blob, download, labels, effectKeys, ambientKeys, audio, hotspots: () => []};
 })();
