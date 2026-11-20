@@ -1490,8 +1490,56 @@ dialog.capture canvas {
 .story-source p { line-height:1.55; }
 .story-source a { display:inline-block; margin:7px 0; font-size:14px; font-weight:700; }
 .story-source small { display:block; font-size:13px; }
+.story-result-head, .story-reader-nav { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px 14px; }
+.story-result-head h2 { margin:0; }
+.story-browse { display:inline-flex; gap:5px; align-items:center; min-height:40px; color:var(--soft); font-size:14px; font-weight:700; text-decoration:none; }
+.story-recommendation { display:grid; grid-template-columns:clamp(68px,8vw,98px) minmax(0,1fr) auto; align-items:center; gap:12px; padding:13px 0; border-top:1px solid var(--line); text-decoration:none; }
+.story-recommendation:first-of-type { margin-top:8px; }
+.story-recommendation:last-child { padding-bottom:2px; }
+.story-recommendation img { width:100%; aspect-ratio:1.25; object-fit:cover; border-radius:8px; }
+.story-recommendation h3 { font-size:17px; line-height:1.4; margin:0 0 4px; }
+.story-recommendation p { color:var(--soft); font-size:14px; line-height:1.5; margin:0; }
+.story-recommendation > .ico, .story-browse .ico { width:15px; height:15px; }
+.story-reader-nav .story-back:only-child { margin-right:auto; }
+.story-end-return { padding-top:12px; }
+.story-opening > .story-pick-note { margin:0 0 12px; color:var(--soft); font-size:14px; }
+.story-reflection { margin-top:18px; padding-top:14px; border-top:1px solid var(--line); }
+.story-reflection p { color:var(--soft); font-size:14px; margin-bottom:7px; }
+.story-reflection > div { display:flex; flex-wrap:wrap; align-items:center; gap:6px; }
+.story-profile-page { margin:24px auto 50px; }
+.story-result-section { display:grid; gap:12px; }
+.motive-page .story-result-section { margin-top:16px; }
+.motive-page .story-result-section .panel { margin:0; }
+.rb-profile-summary { border-left:4px solid #6b5796; }
+.rb-profile-summary h2 { margin:4px 0 6px; }
+.rb-profile-summary p { margin:0 0 10px; }
+.rb-profile-summary .btn { margin-top:3px; }
+.rb-profile-meta, .rb-profile-help, .rb-profile-key { color:var(--soft); font-size:14px; line-height:1.6; }
+.rb-profile-report { max-width:740px; margin:16px auto 32px; display:grid; gap:16px; }
+.rb-profile-report h1 { margin:0; font-size:clamp(32px,5vw,46px); }
+.rb-profile-report h2 { font-size:clamp(19px,3vw,23px); margin:0 0 10px; }
+.rb-profile-report p { margin:5px 0 12px; line-height:1.65; }
+.rb-profile-report :is(.rb-profile-chart,.rb-profile-evidence) { list-style:none; padding:0; margin:12px 0; }
+.rb-profile-chart li { padding:6px 0; }
+.rb-profile-chart li > div:first-child, .rb-profile-signal summary { display:flex; gap:6px 14px; align-items:baseline; justify-content:space-between; flex-wrap:wrap; }
+.rb-profile-chart small, .rb-profile-signal summary small { color:var(--soft); font-size:13px; }
+.rb-profile-track { height:8px; display:flex; border-radius:12px; overflow:hidden; background:#eeeef4; margin-top:6px; }
+.rb-profile-track i:first-child, .rb-profile-key i:first-child { background:#5e518c; }
+.rb-profile-track i:nth-child(2), .rb-profile-key i:nth-child(2) { background:#d6654c; }
+.rb-profile-key { display:flex; align-items:center; gap:6px; }
+.rb-profile-key i { width:9px; height:9px; border-radius:2px; }
+.rb-profile-key i + i, .rb-profile-key i:nth-child(2) { margin-left:10px; }
+.rb-profile-signal { border-top:1px solid var(--line); }
+.rb-profile-signal summary { cursor:pointer; padding:13px 0; justify-content:flex-start; }
+.rb-profile-signal summary::after { content:"⌄"; margin-inline-start:auto; font-weight:700; }
+.rb-profile-signal[open] summary::after { transform:rotate(180deg); }
+.rb-profile-evidence li { padding:4px 0 4px 12px; margin:9px 0; border-inline-start:3px solid #c1b8d6; }
+.rb-profile-evidence li span { color:var(--soft); font-size:13px; }
+.rb-profile-evidence li p { margin:3px 0; }
+.rb-profile-pair li:last-child { border-color:#dfae9f; }
 @media(hover:hover) {
   .story-tile:hover, .story-answers button:hover, .story-next:hover { border-color:#686b91; background:#f0f0fa; }
+  .story-recommendation:hover h3, .story-browse:hover { text-decoration:underline; }
 }
 @media(max-width:720px) {
   .story-shelf, .story-reader { margin-top:18px; }

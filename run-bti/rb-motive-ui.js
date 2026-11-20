@@ -1,6 +1,6 @@
 "use strict";
 window.RBMotiveUI = {
-  create({main, output, head, btn, esc, asset, load, save, notify, useLine}) {
+  create({main, output, head, btn, esc, asset, load, save, notify, useLine, resultStories}) {
     const {title, groups, motives, scale, score} = window.RBMotives;
     const items = groups.flatMap(g => g.items);
     const key = "runbti.motives.v1";
@@ -85,6 +85,7 @@ window.RBMotiveUI = {
       const heading = top ? "요즘 내가 달리는 이유" : positive.length ? "내 답에서 찾은 이유" : c.answered ? "내가 뛰는 이유가 또 있나요?" : "아직 답으로 읽을 수 있는 이유가 없어요";
       const useSaved = positive.some(p=>p.id === saved.selection);
       page(`${head(heading,saved.mode === "imagine" ? "첫 러닝을 상상하며" : "뛰어 본 날을 떠올리며")}<div class="panel motive-overview">${top ? `<h2>${esc(top)}</h2><p>두 문항에 모두 답한 이유 중 평균이 가장 높았어요.</p>` : `<p>${c.answered ? "한 가지 이유로 묶지 않고 답한 내용 그대로 담았어요." : "아직 숫자로 답한 문항이 없어요. 궁금한 주제만 열어 봐도 돼요."}</p>`}${single ? `<p><b>한 문항에서 마음이 갔던 이유</b><br>${esc(single)}</p>` : ""}<small>답함 ${c.answered} · 해당 없음 ${c.na} · 잘 모르겠어 ${c.unsure} · 건너뜀·미응답 ${c.skipped+c.unanswered}</small></div>
+      ${resultStories(saved)}
       ${positive.length ? `<section class="panel"><h2>카드에는 어떤 이유를 남길까요?</h2><div class="actions motive-chips">${chips}</div><div id="reason-selection"></div></section>` : ""}
       <details class="panel"><summary>동기별로 내 답 보기</summary><p>숫자 답만 평균을 냈어요. 0은 ‘전혀 아니야’이고 3은 ‘정말 그래’예요.</p>${profileRows(profiles) || "<p>아직 숫자로 답한 문항이 없어요.</p>"}</details>
       <section class="panel"><label class="field"><b>내 이유를 직접 쓴다면?</b><textarea id="reason-note" rows="2" maxlength="100" placeholder="예: 주말에 들른 빵집에 한 번 더 가고 싶어서">${esc(saved.note || "")}</textarea></label><p class="hint">여기에 쓴 말은 내 보관함에 남아요.</p>${button("use-note","내 문장을 캐릭터 카드에 쓰기","light sm")}</section>
@@ -147,6 +148,6 @@ window.RBMotiveUI = {
         }
       }
     });
-    return {open, packCard, libraryEntry, fromResult};
+    return {open, packCard, libraryEntry, fromResult, showResult:result, savedResult:() => saved};
   },
 };

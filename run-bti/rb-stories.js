@@ -15,13 +15,17 @@ window.RBStories = (() => {
     } catch { return ""; }
   }
 
-  function create({main, output, esc, asset, icon, load, save, notify, note}) {
+  function create({main, output, esc, asset, icon, load, save, notify, note, ownResults, canReturnToResult, restoreResult}) {
     const data = Array.isArray(window.RBStoryCatalog) ? window.RBStoryCatalog : [];
     const catalog = data.filter(s => s && Object.hasOwn(groups, s.category) && Array.isArray(s.choices));
     const byId = new Map(catalog.map(s => [s.id, s]));
     const memory = new Map();
+    const exclusions = new Map(), exclusionKey = "runbti.story.excluded.v1.";
     let category = "all", current = null, ending = null, shared = false, shelfPosition = 0;
     const latestPick = id => memory.get(id) ?? load(storagePrefix + id, null);
+    const isExcluded = id => exclusions.get(id) ?? (load(exclusionKey + id, false) === true);
+    const includedPick = id => isExcluded(id) ? null : latestPick(id);
+    const profile = () => window.RBStoryMatch.profile(catalog, ownResults(), includedPick);
     const illustration = s => asset(/^art\/[a-z0-9-]+\.webp$/.test(s.art) ? s.art : "art/q-00.webp");
     function active() {
       const day = kstDay();
@@ -65,16 +69,32 @@ window.RBStories = (() => {
       try { history.replaceState({...history.state, rbStoryScroll:shelfPosition}, ""); } catch {}
     }
     window.addEventListener("pagehide", rememberPosition);
-    function navigate(id, replace = false) {
+    // This context belongs to this browser's history. Public story links only carry the episode and ending.
+    let fileOrigin = null;
+    function readerOrigin() {
+      const origin = fileOrigin || history.state?.rbStoryOrigin;
+      return origin && canReturnToResult(origin.pack) ? origin : null;
+    }
+    function navigate(id, replace = false, returnPoint = null) {
       rememberPosition();
       const next = urlFor(id, null, false, category);
       if (location.href !== next) {
-        try { history[replace ? "replaceState" : "pushState"](id ? null : {rbStoryScroll:shelfPosition}, "", next); } catch {}
+        const origin = returnPoint || readerOrigin();
+        const entry = id ? {} : {rbStoryScroll:shelfPosition};
+        if (origin) entry.rbStoryOrigin = {...origin, steps:origin.steps + (replace ? 0 : 1)};
+        try {
+          if (returnPoint) history.replaceState({...history.state, rbTestReturn:returnPoint}, "");
+          history[replace ? "replaceState" : "pushState"](entry, "", next);
+          fileOrigin = null;
+        } catch {
+          fileOrigin = origin;
+        }
       }
     }
     function clearRoute() {
+      fileOrigin = null;
       const url = new URL(location.href);
-      if (url.searchParams.get("test") !== "stories" && !url.searchParams.has("story")) return;
+      if (!["stories","profile"].includes(url.searchParams.get("test")) && !url.searchParams.has("story")) return;
       for (const key of ["test", "story", "choice", "topic"]) url.searchParams.delete(key);
       try { history.replaceState(null, "", url.href); } catch {}
     }
@@ -86,6 +106,64 @@ window.RBStories = (() => {
     }
     function shelfLink() {
       return `<a class="back story-back" data-story-act="shelf" href="${esc(urlFor(null,null,false,category))}">${icon("left")} 이야기 목록</a>`;
+    }
+    function resultLink() {
+      const origin = readerOrigin();
+      return origin ? `<button type="button" class="back story-back" data-story-act="result">${icon("left")} ${origin.pack === "profile" ? "내 러닝 성향으로" : "내 검사 결과로"}</button>` : "";
+    }
+    function recommendations(pack, record, combined = profile()) {
+      const stories = active();
+      if (!stories.length) return "";
+      const picks = window.RBStoryMatch.recommend(stories, pack, record, {profile:combined, readPick:latestPick});
+      const browse = `<a class="story-browse" data-story-act="shelf" href="${esc(urlFor())}">${picks.length ? "전체 보기" : "러닝 이야기 둘러보기"} ${icon("arrow")}</a>`;
+      const cards = picks.map(({story, reason}) => episodeLink(story,
+        `${image(story,true)}<div><h3>${esc(story.title)}</h3><p>${esc(reason)}</p></div>${icon("arrow")}`, "story-recommendation")).join("");
+      return `<section class="panel story-recommendations">${picks.length ? `<div class="story-result-head"><h2>${pack === "profile" ? "이어서 읽을 이야기" : "내 답과 이어지는 이야기"}</h2>${browse}</div>${cards}` : browse}</section>`;
+    }
+    function resultSection(pack, record) {
+      const combined = profile();
+      const preview = window.RBProfileUI.summary(combined, {esc});
+      const content = preview + (record ? recommendations(pack, record, combined) : "");
+      return content ? `<div class="story-result-section" data-story-result="${esc(pack)}">${content}</div>` : "";
+    }
+    let fileProfileBack = null;
+    const profileURL = () => {
+      const url = new URL(urlFor());
+      url.searchParams.set("test", "profile");
+      return url.href;
+    };
+    function openProfile() {
+      window.RBScene.audio.stop();
+      const combined = profile();
+      const back = fileProfileBack || history.state?.rbProfileBack;
+      const from = back?.kind === "story" ? "이야기로 돌아가기" : back?.kind === "result" ? "내 검사 결과로" : "내 보관함으로";
+      const suggestions = combined.rows.length ? recommendations("profile", null, combined) : "";
+      output(`<div class="narrow story-profile-page" data-story-result="profile"><button class="back story-back" data-story-act="profile-back">${icon("left")} ${from}</button>${window.RBProfileUI.report(combined, {esc})}${suggestions}</div>`, "profile");
+    }
+    function visitProfile(origin) {
+      const back = origin ? {kind:origin.pack === "library" ? "library" : "result", origin} : {kind:"story", story:current?.id};
+      try {
+        if (origin) history.replaceState({...history.state, rbTestReturn:origin}, "");
+        history.pushState({rbProfileBack:back}, "", profileURL());
+        fileProfileBack = null;
+      } catch {
+        fileProfileBack = back;
+      }
+      openProfile();
+    }
+    function leaveProfile() {
+      if (!fileProfileBack && history.state?.rbProfileBack) { history.back(); return; }
+      const back = fileProfileBack;
+      fileProfileBack = null;
+      clearRoute();
+      if (back?.kind === "story" && back.story) open(back.story);
+      else restoreResult(back?.origin || {pack:"library"});
+    }
+    function returnFromStory() {
+      const origin = readerOrigin();
+      if (!origin) return;
+      if (!fileOrigin && origin.steps > 0) history.go(-origin.steps);
+      else { clearRoute(); restoreResult(origin); }
     }
     function homeFeature() {
       const list = active();
@@ -115,7 +193,7 @@ window.RBStories = (() => {
       const buttons = Object.entries(filters).map(([key,label]) =>
         `<button type="button" data-story-act="filter" data-filter="${key}" aria-pressed="${key === category}">${label}</button>`).join("");
       const empty = category === "mine" ? "마음에 드는 이야기에서 다음 장면을 골라 보세요. 여기에서 다시 볼 수 있어요." : "지금 이 주제로 읽을 수 있는 이야기가 없어요.";
-      output(`<div class="story-shelf"><button class="back story-back" data-act="home">${icon("left")} 테스트 홈</button><div class="story-shelf-head"><h1>러닝 이야기</h1><p>이럴 때 나는 어떻게 할까? 마음에 드는 이야기부터 펼쳐 보세요.</p></div>${message ? `<p class="story-status" role="status">${esc(message)}</p>` : ""}<div class="story-filters" role="group" aria-label="이야기 주제">${buttons}</div><div class="story-grid">${filtered.map(tile).join("") || `<p class="story-empty">${empty}</p>`}</div></div>`, "stories");
+      output(`<div class="story-shelf">${resultLink() || `<button class="back story-back" data-act="home">${icon("left")} 테스트 홈</button>`}<div class="story-shelf-head"><h1>러닝 이야기</h1><p>이럴 때 나는 어떻게 할까? 마음에 드는 이야기부터 펼쳐 보세요.</p></div>${message ? `<p class="story-status" role="status">${esc(message)}</p>` : ""}<div class="story-filters" role="group" aria-label="이야기 주제">${buttons}</div><div class="story-grid">${filtered.map(tile).join("") || `<p class="story-empty">${empty}</p>`}</div></div>`, "stories");
     }
     function sourceInfo(s) {
       const src = s.source;
@@ -138,6 +216,15 @@ window.RBStories = (() => {
       const links = also.map(t => episodeLink(t, esc(t.title) + icon("arrow"), "story-next")).join("");
       return `${next ? `<section class="story-related"><h2>이 선택으로 이어지는 이야기</h2>${episodeLink(next, esc(next.title) + icon("arrow"), "story-next")}</section>` : ""}${also.length ? `<section class="story-related"><h2>관련 이야기</h2>${links}</section>` : ""}`;
     }
+    function reflection(s, choice) {
+      if (shared || !choice || !Array.isArray(choice.signals) || !choice.signals.length || choice.id !== latestPick(s.id)) return "";
+      const excluded = isExcluded(s.id);
+      const rows = excluded ? [] : profile().rows.filter(row => row.storyEvidence.some(e => e.id === s.id && e.choiceId === choice.id));
+      const labels = rows.map(row => esc(row.label)).join(" · ");
+      const overlap = rows.find(row => row.quizEvidence.length);
+      const copy = excluded ? "이 답은 내 러닝 성향에서 뺐어요." : "내 러닝 성향에 담은 행동";
+      return `<div class="story-reflection"><p>${copy}${labels ? `<br><strong>${labels}</strong>` : ""}</p>${overlap ? `<p>검사에서도 ‘${esc(overlap.label)}’에 해당하는 답을 골랐어요.</p>` : ""}<div><button class="btn light sm" data-story-act="profile">내 러닝 성향 보기</button><button class="linkbtn" data-story-act="toggle-profile">${excluded ? "내 성향에 다시 담기" : "이 답은 성향에서 빼기"}</button></div></div>`;
+    }
     function read(s, choice, fromFriend = false) {
       current = s;
       ending = choice || null;
@@ -147,10 +234,13 @@ window.RBStories = (() => {
       const context = archived ? `지난 이야기 · 한국시간 ${formatDate(s.validUntil)}까지 소개했어요.` : span ? `소개 기간 · 한국시간 ${span}` : "";
       const meta = `<p class="story-meta">${esc(groups[s.category])} · ${s.source ? "자료로 만든 이야기" : "창작 이야기"}</p>`;
       const options = s.choices.map(c => `<button type="button" data-story-act="pick" data-choice="${esc(c.id)}">${esc(c.label)}${icon("arrow")}</button>`).join("");
-      const decision = `<div class="story-opening"><p>${esc(s.opening)}</p><h2>${esc(s.prompt)}</h2><div class="story-answers">${options}</div></div>`;
+      const usesSignals = s.choices.some(c => Array.isArray(c.signals) && c.signals.length);
+      const pickNote = isExcluded(s.id) ? "이 이야기에서 고른 답은 내 성향에서 빼 두었어요." : "여기서 고른 답을 내 러닝 성향에 담아요. 다시 고르면 새 답만 남아요.";
+      const decision = `<div class="story-opening"><p>${esc(s.opening)}</p><h2>${esc(s.prompt)}</h2>${usesSignals ? `<p class="story-pick-note">${pickNote}</p>` : ""}<div class="story-answers">${options}</div></div>`;
       const recap = `<details class="story-recap"${shared ? " open" : ""}><summary>처음 장면 보기</summary><p>${esc(s.opening)}</p></details>`;
       const outcome = choice ? `<div class="story-ending">${recap}<p class="story-picked">${shared ? "이 링크에 담긴 선택" : "내가 고른 선택"} · ${esc(choice.label)}</p><p class="story-then">${esc(choice.then)}</p><blockquote>${esc(choice.line)}</blockquote><div class="story-talk"><h2>같이 얘기해 볼까?</h2><p>${esc(s.question)}</p></div><div class="actions"><button class="btn primary" data-story-act="share">${icon("share")} 이 장면 공유하기</button><button class="btn light" data-story-act="again">${shared ? "나는 어떻게 할까?" : "다른 선택 해보기"}</button></div></div>` : "";
-      output(`<article class="story-reader">${shelfLink()}${context ? `<p class="story-status">${esc(context)}</p>` : ""}<div class="story-spread"><div class="story-art">${image(s)}</div><div class="story-prose">${meta}<h1>${esc(s.title)}</h1>${choice ? outcome : decision}</div></div>${choice ? related(s, choice) : ""}${sourceInfo(s)}</article>`, "stories");
+      const back = resultLink();
+      output(`<article class="story-reader"><div class="story-reader-nav">${back}${shelfLink()}</div>${context ? `<p class="story-status">${esc(context)}</p>` : ""}<div class="story-spread"><div class="story-art">${image(s)}</div><div class="story-prose">${meta}<h1>${esc(s.title)}</h1>${choice ? outcome + reflection(s, choice) : decision}</div></div>${choice ? related(s, choice) : ""}${sourceInfo(s)}${choice && back ? `<div class="story-end-return">${back}</div>` : ""}</article>`, "stories");
     }
     function open(id, selected, filter = category) {
       window.RBScene.audio.stop();
@@ -193,32 +283,52 @@ window.RBStories = (() => {
       if (!control || (control.tagName === "A" && (event.ctrlKey || event.shiftKey || event.metaKey || event.altKey))) return;
       event.preventDefault();
       const action = control.dataset.storyAct;
-      if (action === "shelf" || action === "mine") {
+      const panel = control.closest("[data-story-result]");
+      const origin = panel ? {pack:panel.dataset.storyResult, steps:0, scroll:window.scrollY,
+        ratio:main.querySelector('[data-act="ratio"][aria-pressed="true"]')?.dataset.r, story:control.dataset.storyId || null, action} : null;
+      if (action === "result") {
+        returnFromStory();
+      } else if (action === "profile") {
+        if (!origin && readerOrigin()?.pack === "profile") returnFromStory();
+        else visitProfile(origin);
+      } else if (action === "profile-back") {
+        leaveProfile();
+      } else if (action === "shelf" || action === "mine") {
         if (action === "mine") category = "mine";
         else if (!control.closest(".story-reader")) category = "all";
         if (!control.closest(".story-reader")) shelfPosition = 0;
-        navigate(); open();
+        navigate(null, false, origin); open();
       } else if (action === "filter") {
         if (category === control.dataset.filter) return;
         category = control.dataset.filter;
         navigate(null, true); open();
         main.querySelector('[data-story-act="filter"][aria-pressed="true"]').focus({preventScroll:true});
       } else if (action === "episode") {
-        navigate(control.dataset.storyId); open(control.dataset.storyId);
+        navigate(control.dataset.storyId, false, origin); open(control.dataset.storyId);
       } else if (action === "pick" && current) {
         const pick = current.choices.find(c => c.id === control.dataset.choice);
         if (!pick) return;
-        memory.set(current.id, pick.id);
         const stored = save(storagePrefix + current.id, pick.id);
+        if (stored) memory.delete(current.id);
+        else memory.set(current.id, pick.id);
         navigate(current.id, true); read(current, pick);
         if (!stored) notify("이 브라우저에는 선택을 저장하기 어려워요. 장면 링크를 복사해 두세요.");
       } else if (action === "again" && current) {
         navigate(current.id, true); read(current, null);
+      } else if (action === "toggle-profile" && current && ending && !shared) {
+        const exclude = !isExcluded(current.id);
+        const stored = save(exclusionKey + current.id, exclude);
+        if (stored) exclusions.delete(current.id);
+        else exclusions.set(current.id, exclude);
+        const box = control.closest(".story-reflection");
+        box.outerHTML = reflection(current, ending);
+        main.querySelector('[data-story-act="toggle-profile"]').focus({preventScroll:true});
+        notify(!stored ? "이번에 연 화면에서만 바뀌었어요." : exclude ? "내 성향에서 이 답을 뺐어요." : "내 성향에 다시 담았어요.");
       } else if (action === "share") {
         share();
       }
     });
-    return {homeFeature, savedEntry, open, clearRoute};
+    return {homeFeature, savedEntry, resultSection, open, openProfile, clearRoute};
   }
   return {create};
 })();

@@ -1,11 +1,11 @@
 {
   "kind": "TRAINORACLE_RELEASE_BUILD_PACKAGE",
-  "sourceSha": "ce8b430ff180892efae093bdcb1bb709ee82a897",
-  "previousPagesSha": "879e4e2af3fc7328b5a793095fb5ca779922d7bf",
+  "sourceSha": "2c6598049543e14cee19cb85b63875e9f28ec039",
+  "previousPagesSha": "491f940d8e7ed047da86667f625df9ed3c63f493",
   "deploymentStatus": "NOT_PUBLISHED",
   "previewOnly": false,
   "accountHeld": true,
-  "publicConfigurationSourceSha": "879e4e2af3fc7328b5a793095fb5ca779922d7bf",
+  "publicConfigurationSourceSha": "491f940d8e7ed047da86667f625df9ed3c63f493",
   "oracleV2Enabled": true,
   "files": {
     ".nojekyll": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
@@ -1056,19 +1056,21 @@
     "run-bti/art/story-rain.webp": "a943c445bcdb5ce3b3736309416a314ea44d7a4dc2a35c8f420931e16ae7ce24",
     "run-bti/art/story-shoes.webp": "e4e0e8c5ea15c4aecc541251251ae926b91ecc6b09b2f3c88a58efb4eaa1747c",
     "run-bti/hero-run.webp": "ed61b03102b998ebbe386c6eea3bc5cf3ad7d290e3e14e067167d630c66b75eb",
-    "run-bti/index.html": "c34d2712555d8c8e3722dac634fce170eda53cdd23b4d27eff5203c9ae8150d7",
-    "run-bti/rb-app.css": "0b340f4bb6bfab8e54b72bed6c21d0f3a4e60aabf7725211d3de7a5119237628",
-    "run-bti/rb-app.js": "59ceaf24ed1508aee717e7dc975e47ccff3390be2985bd5eb50a8afb4f373c45",
+    "run-bti/index.html": "4e92b3b60392c8265b1c13d936c8a4d98de66d631bdac0479e5c6c304ac18b3a",
+    "run-bti/rb-app.css": "fc697e6a0936d3a29554c25ec612c530a8c911ae5c5938abd084f1f4bca59634",
+    "run-bti/rb-app.js": "b0be2e93822a84b962c8bf2bfbb4d20a900b1d02a0fb00e283b26c3049c13cf2",
     "run-bti/rb-content.js": "c0477babdde4581c6fbddfdf7923500e9f35327e97075ad3bac7ed817f37850f",
-    "run-bti/rb-motive-ui.js": "2784606b67d8469998ec0b8927d5b63c14d679a7da97a1004ace454063e0779c",
+    "run-bti/rb-motive-ui.js": "8e88d6b030027a80b0a6c372069d74e13cf67f3b96a5671fa2a2f2d72944b793",
     "run-bti/rb-motives.js": "fd9bee844491771d8730fec4af4741333b69f6cfa07e01365224355ec730c83a",
+    "run-bti/rb-profile-ui.js": "25c2ab3757acaa8ac25718c69c4edc7bee7a2f6c38d55e89bb1e061b6a972991",
     "run-bti/rb-scene.js": "d70bd16b50dda479db5d41d9e939c40b392fa6324d959b87a10b6ae9bf6857de",
-    "run-bti/rb-stories.js": "4fb5171dbf3a3e465b540dbb28114dbadb8a95b9a0b34554e8b65291d1fa80fb",
-    "run-bti/rb-story-catalog.js": "c06520b8551f4f7fada27faa516ceca337031d9437adc41215e37893a1c81057",
+    "run-bti/rb-stories.js": "58de4138072427fd2bb12cd9c2da5424e1243d2d2df7264db69c4975a7b6331e",
+    "run-bti/rb-story-catalog.js": "ddf9bbe9c769d77f89a32d4aeaafeba29ae1274d79bbc1fb14dbfb22277cf1e7",
+    "run-bti/rb-story-match.js": "421ce0841a4adee4158d17dc466061eb7405ec369c8b72315fb6f29c5ed9aada",
     "run-bti/studio.html": "6d6ea18b4763afe970e01950c75995cd7bb5e3d8edbb9c67a900efec2b1303bc",
     "support.html": "59227a301f9bcad9645d4c270fbf1cdfc7374fd700e88a387fad996b841c57cf",
     "sw.js": "b5c0ecc5a132aa2f1dd96c791223cd5189947887f88ae6f6b512d8a2ea18f836"
   },
   "backendVerification": "NOT_CONFIRMED",
-  "builtAt": "2026-11-20T08:03:34.354Z"
+  "builtAt": "2026-11-20T08:51:24.831Z"
 }
