@@ -1,5 +1,6 @@
 {
   "id": "postcard-run",
+  "signals": ["travel", "reflect", "photo", "route"],
   "category": "travel",
   "title": "친구에게 보낼 사진 한 장",
   "art": "art/o-14-2.webp",
@@ -8,18 +9,21 @@
   "choices": [
     {
       "id": "sunset",
+      "signals": ["photo", "scenery"],
       "label": "노을 사진에 한마디만 붙여",
       "then": "그림자가 둘로 길게 늘어진 사진을 보냈어. 친구는 몇 킬로 뛰었냐는 말보다 저 끝에 보이는 다리 이름부터 물어봐.",
       "line": "난 저 다리 나오기 직전이 제일 좋더라."
     },
     {
       "id": "route",
+      "signals": ["route"],
       "label": "갈림길을 표시한 지도를 보내",
       "then": "한 번 길을 잘못 든 자리에 동그라미를 쳤어. 다음에 갈 친구는 빵집 간판에서 어느 쪽으로 돌아야 하는지 알 거야.",
       "line": "나처럼 한 바퀴 더 돌기 싫으면 저 골목에서 왼쪽이야."
     },
     {
       "id": "voice",
+      "signals": ["reflect", "conversation"],
       "label": "그날 들린 소리부터 음성으로 얘기해",
       "then": "말을 하다 보니 아침에 가게 셔터가 올라가던 소리까지 떠올랐어. 친구도 자기 동네에서 뛰면 무슨 소리가 나는지 들려줘.",
       "line": "사진에는 없는데 그날 시장 문 여는 소리가 진짜 좋았어."

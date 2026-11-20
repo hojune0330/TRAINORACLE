@@ -1,5 +1,6 @@
 {
   "id": "finish-reunion",
+  "signals": ["finish", "company", "conversation"],
   "category": "race",
   "title": "다 뛰었어. 근데 너 어디야?",
   "art": "art/life-finish.webp",
@@ -8,18 +9,21 @@
   "choices": [
     {
       "id": "pin",
+      "signals": ["route"],
       "label": "내가 서 있는 곳을 지도에 찍어 줄게",
       "then": "사람들이 지나가는 길에서 벗어나 핀을 보냈어. 친구가 같은 방향에서 두 번이나 내 앞을 지났다는 걸 알고 둘이 웃었어.",
       "line": "잠깐만, 나 여기서 가만히 있을게. 핀 보이지?"
     },
     {
       "id": "bakery",
+      "signals": ["company"],
       "label": "우리 둘 다 아는 빵집에서 보자",
       "then": "북적이는 출구를 지나 빵집에 들어가니 친구가 먼저 와 있었어. 둘이 앉고 나서야 누가 어느 구간에서 누구를 봤는지 얘기가 맞춰졌어.",
       "line": "여기 오니까 진짜 끝난 것 같다. 자리부터 잡자."
     },
     {
       "id": "later",
+      "signals": ["solo", "conversation"],
       "label": "혼자 좀 쉬고 이따 집에서 통화하자",
       "then": "조용한 데 앉아서 신발 끈을 느슨하게 풀었어. 집에 와서 전화를 걸었더니 이제야 할 말이 한가득이야.",
       "line": "방금은 숨부터 돌리고 싶었어. 이제 얘기할까?"

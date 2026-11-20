@@ -103,9 +103,15 @@
     cardObserver = null;
     document.body.classList.remove("has-card-return");
     currentCanvas = null;
-    if (state.view === "stories" && view !== "stories") storyUI.clearRoute();
+    if (["stories","profile"].includes(state.view) && !["stories","profile"].includes(view)) storyUI.clearRoute();
     state.view = view;
     main.innerHTML = html;
+    const marker = history.state?.rbTestReturn;
+    if (marker && marker.pack !== main.querySelector("[data-story-result]")?.dataset.storyResult) {
+      const entry = {...history.state};
+      delete entry.rbTestReturn;
+      try { history.replaceState(entry, ""); } catch {}
+    }
     window.scrollTo(0, 0);
     main.focus({ preventScroll: true });
   }
@@ -117,6 +123,7 @@
     modal.showModal();
   }
   const motiveUI = window.RBMotiveUI.create({ main, output, head, btn, esc, asset, load, save, notify,
+    resultStories: record => storyUI.resultSection("motive", record),
     useLine(line, mode) {
       if (library.base) {
         library.base.custom ||= {};
@@ -128,7 +135,23 @@
       }
     },
   });
-  const storyUI = window.RBStories.create({main, output, esc, asset, icon, load, save, notify, note});
+  const storyUI = window.RBStories.create({main, output, esc, asset, icon, load, save, notify, note,
+    ownResults:() => ({...library, motive:motiveUI.savedResult()}), canReturnToResult, restoreResult:restoreStoryResult});
+  function canReturnToResult(pack) {
+    return pack === "library" || pack === "profile" || (pack === "motive" ? !!motiveUI.savedResult() : ids.includes(pack) && !!library[pack]);
+  }
+  function restoreStoryResult(origin) {
+    if (!origin || !canReturnToResult(origin.pack)) return false;
+    if (origin.pack === "profile") storyUI.openProfile();
+    else if (origin.pack === "library") libraryPage();
+    else if (origin.pack === "motive") motiveUI.showResult();
+    else showResult(origin.pack, false, origin.ratio === "9:16" ? "9:16" : "4:5");
+    const links = main.querySelectorAll("[data-story-result] [data-story-act]");
+    const link = [...links].find(el => el.dataset.storyAct === origin.action && (el.dataset.storyId || null) === origin.story);
+    link?.focus({preventScroll:true});
+    window.scrollTo(0, origin.scroll || 0);
+    return true;
+  }
   function header() {
     document.querySelector("#mast").innerHTML =
       `<div class="shell mast"><button class="brand" data-act="home" aria-label="런비티아이 홈"><span class="brand-art" aria-hidden="true"><i></i><i></i><i></i></span>런비티아이<em>RUN-BTI</em></button><nav class="nav" aria-label="메뉴"><button class="toolbtn nav-home" data-act="home">테스트</button><button class="toolbtn" data-act="library">${icon("book")} 내 보관함</button><button class="toolbtn icononly ${scene.audio.enabled() ? "sound-on" : ""}" aria-label="${scene.audio.enabled() ? "소리 끄기" : "소리 켜기"}" title="${scene.audio.enabled() ? "소리 끄기" : "소리 켜기"}" aria-pressed="${scene.audio.enabled()}" data-act="sound">${icon(scene.audio.enabled() ? "volume" : "mute")}</button></nav></div>`;
@@ -357,7 +380,7 @@
     scene.audio.stop();
     let owned = ids.filter((id) => library[id]);
     output(
-      `${head("내 캐릭터 보관함")}<p class="desc">이 브라우저에서 받은 러닝 캐릭터를 모았어요.</p>${storyUI.savedEntry()}${motiveUI.libraryEntry()}${
+      `${head("내 캐릭터 보관함")}<p class="desc">이 브라우저에서 받은 러닝 캐릭터를 모았어요.</p>${storyUI.resultSection("library")}${storyUI.savedEntry()}${motiveUI.libraryEntry()}${
         owned.length
           ? `<div class="gallery" style="margin-top:18px">${owned
               .map((id) => {
@@ -460,7 +483,7 @@
         })
         .join(
           "",
-        )}</div><p class="ev">${esc(v.line)}</p></div>${panel("내 선택 그래프", graph(id, v))}${panel("장면 다시 보기", timeline(id))}${panel("그때 다르게 골랐다면?", sandbox(id))}${panel("내 장면 꾸미기", editor(id, m), "edit-panel")}${received?.pack === id ? panel("친구와 나란히 보기", compare(id, received), "friend-panel", true) : ""}</section></div><section style="margin-top:32px"><div class="sectionhead"><h2>다른 러닝 테스트</h2></div><div class="packs">${ids
+        )}</div><p class="ev">${esc(v.line)}</p></div>${storyUI.resultSection(id, r)}${panel("내 선택 그래프", graph(id, v))}${panel("장면 다시 보기", timeline(id))}${panel("그때 다르게 골랐다면?", sandbox(id))}${panel("내 장면 꾸미기", editor(id, m), "edit-panel")}${received?.pack === id ? panel("친구와 나란히 보기", compare(id, received), "friend-panel", true) : ""}</section></div><section style="margin-top:32px"><div class="sectionhead"><h2>다른 러닝 테스트</h2></div><div class="packs">${ids
         .filter((k) => k !== id)
         .map(packCard)
         .join(
@@ -1081,11 +1104,7 @@
     if (e.target.dataset.edit === "line")
       changeCustom({ line: e.target.value });
   });
-  window.addEventListener("hashchange", () => {
-    const c = decodeCard();
-    if (c) friendPage(c);
-    else route();
-  });
+  window.addEventListener("hashchange", route);
   modal.addEventListener("close", () => {
     if (!modal.open) {
       modal.className = "";
@@ -1095,9 +1114,11 @@
   });
   function route() {
     const params = new URLSearchParams(location.search);
+    if (restoreStoryResult(history.state?.rbTestReturn)) return;
     const card = decodeCard();
     if (card) friendPage(card);
     else if (params.get("test") === "stories" || params.has("story")) storyUI.open(params.get("story"), params.get("choice"), params.get("topic"));
+    else if (params.get("test") === "profile") storyUI.openProfile();
     else if (params.get("test") === "motives") motiveUI.open();
     else {
       home();
@@ -1108,7 +1129,7 @@
   }
   window.addEventListener("popstate", () => {
     const params = new URLSearchParams(location.search);
-    if (state.view === "stories" || params.get("test") === "stories" || params.has("story")) route();
+    if (history.state?.rbTestReturn || ["stories","profile"].includes(state.view) || ["stories","profile"].includes(params.get("test")) || params.has("story")) route();
   });
   header();
   route();

@@ -1,5 +1,6 @@
 {
   "id": "afterwork-door",
+  "signals": ["routine", "reset", "movement", "plan"],
   "category": "routine",
   "title": "저녁밥 되는 데 스무 분",
   "art": "art/life-afterwork.webp",
@@ -8,19 +9,22 @@
   "choices": [
     {
       "id": "near-loop",
+      "signals": ["movement"],
       "label": "휴대폰만 들고 집 앞 한 바퀴",
-      "then": "아파트 앞 나무를 돌아오니 밥솥에서 김 빠지는 소리가 났어. 짧아도 나갔다 왔다는 게 제법 마음에 들어.",
+      "then": "아파트 앞 나무를 돌아오니 밥솥에서 김 빠지는 소리가 났어. 문득 생각해 보니 뛰는 동안엔 회사 일을 한 번도 안 떠올렸네.",
       "line": "밥 되는 동안에 한 바퀴가 되네.",
       "next": "one-lap"
     },
     {
       "id": "prep-tomorrow",
+      "signals": ["plan"],
       "label": "저녁 준비하고 내일 뛸 옷을 꺼내 둬",
       "then": "반찬을 하나 만들고 운동복을 문고리에 걸어 놨어. 내일 현관을 나설 때는 양말만 찾으면 돼.",
       "line": "오늘은 양말까지 운동화 안에 넣어 뒀어."
     },
     {
       "id": "call-to-walk",
+      "signals": ["company", "movement"],
       "label": "친구한테 저녁 먹고 걸을지 물어봐",
       "then": "친구가 설거지만 하고 나오겠다고 답했어. 밥을 먹는 동안 오늘 뛸 마음은 나란히 걸을 약속으로 바뀌었어.",
       "line": "뛰긴 애매한데 너랑 한 바퀴 걷기엔 딱이야."

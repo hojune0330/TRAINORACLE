@@ -1,5 +1,6 @@
 {
   "id": "back-of-pack",
+  "signals": ["company", "pace", "encouragement"],
   "category": "community",
   "title": "오늘은 맨 뒤에서 같이 걸을래요",
   "art": "art/o-12-1.webp",
@@ -8,18 +9,21 @@
   "choices": [
     {
       "id": "walk-last",
+      "signals": ["company", "pace"],
       "label": "친구랑 맨 뒤에서 걸어 볼래",
       "then": "평소엔 금방 지나던 갈림길에서 일행이 다 건너올 때까지 기다렸어. 제일 늦게 들어와도 아무도 혼자가 아니었어.",
       "line": "오늘은 뒤를 한번 돌아보는 게 내 할 일이었어."
     },
     {
       "id": "corner",
+      "signals": ["encouragement", "route"],
       "label": "처음 온 사람이 헷갈린다는 갈림길에 설래",
       "then": "모임 진행자와 자리를 정한 뒤 손을 들어 길을 알려 줬어. 마지막에 오던 친구가 웃으며 같은 손짓으로 인사했어.",
       "line": "다들 여기서 한번씩 멈칫하더라. 다음에도 내가 설게."
     },
     {
       "id": "participant",
+      "signals": ["movement", "company"],
       "label": "오늘은 걷는 사람으로 같이 가 보고 싶어",
       "then": "누구를 챙겨야 한다는 부담 없이 걸었어. 길이 좁아져 한 줄로 바뀔 때 옆 사람과 조용히 순서를 바꿨어.",
       "line": "가끔은 같이 걷는 사람 한 명이면 좋더라."

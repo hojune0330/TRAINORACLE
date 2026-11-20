@@ -1,5 +1,6 @@
 {
   "id": "early-dark",
+  "signals": ["adjust", "routine", "route"],
   "category": "weather",
   "title": "퇴근했더니 벌써 깜깜해",
   "art": "art/bg-11.webp",
@@ -8,6 +9,7 @@
   "choices": [
     {
       "id": "lit-track",
+      "signals": ["adjust", "movement"],
       "label": "불 켜진 운동장에서 한 바퀴만 뛰자",
       "then": "트랙에 들어가니 걷는 사람도 몇 명 보여. 한 바퀴를 돌고 나서야 오늘 더 뛸 마음이 있는지 알 것 같아.",
       "line": "불 켜진 데서 한 바퀴만. 그다음은 돌아보고 정할래.",
@@ -15,12 +17,14 @@
     },
     {
       "id": "neighborhood",
+      "signals": ["adjust", "route"],
       "label": "가게들 문 열려 있는 큰길로 걷자",
       "then": "환한 큰길을 따라 걷다가 늘 그냥 지나던 분식집에 들어갔어. 러닝 기록 대신 저녁 메뉴가 바뀐 날이야.",
       "line": "오늘은 운동복 입고 떡볶이 사러 온 걸로."
     },
     {
       "id": "morning",
+      "signals": ["plan", "route"],
       "label": "주말 낮에 가려고 길만 저장해 둬",
       "then": "지도에 강변 입구를 표시해 두고 집으로 갔어. 주말 일정에는 해가 떠 있는 시간으로 약속 하나가 생겼어.",
       "line": "여긴 햇빛 있을 때 다시 와서 천천히 보고 싶어."

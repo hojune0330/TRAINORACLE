@@ -1,5 +1,6 @@
 {
   "id": "missed-week",
+  "signals": ["routine", "plan", "encouragement"],
   "category": "routine",
   "title": "달력에 빈칸이 일주일",
   "art": "art/o-14-1.webp",
@@ -8,6 +9,7 @@
   "choices": [
     {
       "id": "short-return",
+      "signals": ["routine", "movement"],
       "label": "집 앞 운동장 한 바퀴부터",
       "then": "운동장 끝까지 다녀왔어. 예전보다 몇 초 느렸는지는 모르지만 다시 나갈 때 어느 문으로 들어가는지는 기억났어.",
       "line": "다시 시작하는 날은 한 바퀴도 한 번으로 칠래.",
@@ -15,6 +17,7 @@
     },
     {
       "id": "set-time",
+      "signals": ["plan", "routine"],
       "label": "실제로 비는 날 하나만 달력에 잡아",
       "then": "저녁 약속이 없는 목요일을 찾았어. 친구한테 목요일은 뛸 수 있을 것 같다는 답장도 보냈어.",
       "line": "매일 말고 목요일. 이건 진짜 나갈 수 있어.",
@@ -22,6 +25,7 @@
     },
     {
       "id": "leave-blank",
+      "signals": ["conversation"],
       "label": "날짜는 비워 두고 친구에게 근황부터 말해",
       "then": "요즘은 퇴근하면 저녁 챙기기도 바쁘다고 솔직히 썼어. 친구는 답을 재촉하지 않고 자기가 본 노을 사진 한 장을 보내 줬어.",
       "line": "아직은 약속 못 잡겠어. 네가 뛴 얘기는 듣고 싶다."

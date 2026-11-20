@@ -1,5 +1,6 @@
 {
   "id": "pack-light",
+  "signals": ["travel", "explore", "plan"],
   "category": "travel",
   "title": "여행 가방이 안 닫혀",
   "art": "art/life-travel.webp",
@@ -8,6 +9,7 @@
   "choices": [
     {
       "id": "pack-shoes",
+      "signals": ["travel", "plan"],
       "label": "옷 한 벌 덜고 러닝화는 넣어",
       "then": "신발을 가방 안쪽에 나란히 눕히니 지퍼가 닫혔어. 친구가 보낸 빵집 하나를 내일 아침 반환점으로 찍어 뒀어.",
       "line": "짐 하나 덜면 아침에 모르는 골목 한 번 더 갈 수 있잖아.",
@@ -15,6 +17,7 @@
     },
     {
       "id": "wear-shoes",
+      "signals": ["travel", "adjust"],
       "label": "러닝화는 기차 탈 때부터 신어",
       "then": "짐칸에 가방을 가볍게 올렸어. 숙소 가는 길에 강이 보여서 내일 다시 와 볼 다리 사진을 한 장 찍었어.",
       "line": "신고 오니까 여기서 저 다리까지 얼마나 걸릴지부터 보이더라.",
@@ -22,6 +25,7 @@
     },
     {
       "id": "just-walk",
+      "signals": ["movement", "travel"],
       "label": "이번엔 걷기 편한 신발 한 켤레만",
       "then": "가방에 공간이 남아 친구가 부탁한 간식도 들어갔어. 도착하고 나서는 시간 안 재고 시장 끝까지 걸었어.",
       "line": "이번 여행은 뛰는 길보다 뭐 파는 골목인지가 더 궁금해.",

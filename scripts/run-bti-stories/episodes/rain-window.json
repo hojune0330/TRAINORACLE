@@ -1,5 +1,6 @@
 {
   "id": "rain-window",
+  "signals": ["adjust", "explore", "company"],
   "category": "weather",
   "title": "비 그쳤다. 원래 길로 갈까?",
   "art": "art/story-rain.webp",
@@ -8,6 +9,7 @@
   "choices": [
     {
       "id": "upper-street",
+      "signals": ["adjust", "route"],
       "label": "물이 덜 고인 위쪽 큰길로 가자",
       "then": "하천에 내려가지 않고 큰길로 올라갔어. 처음 지나 보는 골목 끝에서 고소한 냄새가 나.",
       "line": "이 길에 빵집 있었어? 다음엔 여기서 만나자.",
@@ -15,12 +17,14 @@
     },
     {
       "id": "wait-a-bit",
+      "signals": ["adjust", "company"],
       "label": "비 그친 김에 커피부터 마실까?",
       "then": "창가에 앉아 젖은 운동화를 내려다보다가 밀린 얘기가 먼저 나왔어. 다 마신 뒤에야 둘이 바깥을 다시 봐.",
       "line": "운동화 신고 나와서 커피만 마신 날도 기억나더라."
     },
     {
       "id": "pick-another-day",
+      "signals": ["plan"],
       "label": "오늘은 들어가고 날짜 다시 잡자",
       "then": "우산을 털면서 둘이 나란히 달력을 열었어. 이번엔 둘 다 서두르지 않아도 되는 날에 동그라미를 쳤어.",
       "line": "오늘은 양말 뽀송한 채로 집에 갈래. 토요일 어때?"

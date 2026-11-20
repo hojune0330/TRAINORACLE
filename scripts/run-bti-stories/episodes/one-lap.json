@@ -1,5 +1,6 @@
 {
   "id": "one-lap",
+  "signals": ["goal", "pace", "finish", "movement"],
   "category": "routine",
   "title": "딱 한 바퀴라더니",
   "art": "art/life-practice.webp",
@@ -8,12 +9,14 @@
   "choices": [
     {
       "id": "stop-here",
+      "signals": ["goal", "finish"],
       "label": "처음 정한 대로 여기서 마쳐",
       "then": "시계를 멈추고 물을 한 모금 마셨어. 더 할 수 있을 때 끝냈더니 다음에 또 올 마음이 남아 있어.",
       "line": "오늘은 한 바퀴 한다더니 진짜 한 바퀴 하고 왔어."
     },
     {
       "id": "another-lap",
+      "signals": ["pace"],
       "label": "같은 속도로 한 바퀴 더 돌아",
       "then": "두 번째엔 어느 코너에서 어깨에 힘이 들어가는지 눈치챘어. 다 돌고 나니 두 바퀴의 느낌을 비교할 수 있네.",
       "line": "한 바퀴 더 도니 내 발소리가 언제 달라지는지 알겠더라.",
@@ -21,6 +24,7 @@
     },
     {
       "id": "walk-home",
+      "signals": ["movement", "adjust"],
       "label": "운동장은 나와서 집까지 걸어가",
       "then": "바깥 골목으로 나오니 저녁 장사 준비하는 소리가 들려. 오늘은 돌아가는 길까지가 좋았다고 메모했어.",
       "line": "더 뛸 수는 있는데 집에 천천히 걸어가는 것도 좋네.",

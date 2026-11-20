@@ -1,5 +1,6 @@
 {
   "id": "windy-bridge",
+  "signals": ["scenery", "adjust", "enjoyment", "route"],
   "category": "weather",
   "title": "다리 위에서 모자가 날아갈 뻔했어",
   "art": "art/bg-06.webp",
@@ -8,18 +9,21 @@
   "choices": [
     {
       "id": "under-bridge",
+      "signals": ["adjust", "route"],
       "label": "나무 있는 아래쪽 길로 가자",
       "then": "다리 밑으로 내려서니 옆 사람 말소리가 다시 들려. 친구가 아까 바람 때문에 놓친 얘기를 처음부터 해 줬어.",
       "line": "아까 뭐라고 했어? 이제 들려."
     },
     {
       "id": "short-loop",
+      "signals": ["adjust"],
       "label": "다리는 다음에 건너고 여기서 돌아가자",
       "then": "왔던 길로 돌아가니 익숙한 가게 간판이 보여. 오늘 반환점은 지도 위 다리 한가운데보다 조금 앞이야.",
       "line": "다리 꼭 건너야 해? 오늘은 여기까지도 딱 좋아."
     },
     {
       "id": "stay-for-view",
+      "signals": ["scenery", "enjoyment"],
       "label": "모자 벗어 넣고 잠깐 강만 보고 가자",
       "then": "모자를 주머니에 넣고 넓은 전망 쉼터에 섰어. 둘이 한참 강만 보다가 다음엔 어느 쪽 강변을 뛸지 골랐어.",
       "line": "오늘 다리에서 건진 건 거리보다 이 풍경이야.",

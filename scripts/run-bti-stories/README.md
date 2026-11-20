@@ -37,9 +37,22 @@ $paths = @('--root','reports/run-bti','--source-dir','reports/run-bti/stories/ep
 | `id`, `category` | 영문 소문자·숫자·붙임표로 된 고유 ID와 `weather`, `race`, `gear`, `community`, `routine`, `travel` 중 하나 |
 | `title`, `art`, `opening`, `prompt` | 제목, 앱에 실제 있는 `art/이름.webp`, 첫 장면, 바로 답할 질문 |
 | `choices` | 서로 다른 보기 세 개. 각각 `id`, 내가 할 일 `label`, 선택 뒤의 일 `then`, 카드에 남길 말 `line`. 해당 답에서 이어질 편이 있으면 `next` 추가 |
+| `signals` | 이 편에서 다루는 행동 1~4개. 검사 결과에 이어 보여 줄 이야기를 고를 때 쓴다. 생략한 편도 이야기 목록에서 읽을 수 있다. |
+| `choices[].signals` | 그 보기를 고르면 알 수 있는 행동 1~2개. 보기마다 따로 고른다. 단서를 생략하거나 빈 배열을 넣으면 해당 선택은 분석에서 제외된다. |
 | `question`, `links` | 친구에게 물을 질문, 원하는 경우 함께 볼 기존 에피소드 ID 목록 |
 | `source` | `kind`(event·brand·community·weather), 발행처 `name`, HTTPS 원문 `url`, 자료의 기준일 `asOf`, 실제로 확인한 사실 `note`. 예보는 발표 시각 `issuedAt`도 기록 |
 | `validFrom`, `validUntil` | 한국시간으로 첫날과 마지막 날을 모두 포함하는 YYYY-MM-DD. 기한이 있는 모집·행사와 예보에서는 두 날짜를 함께 쓴다. 지난 행사를 돌아보는 상시 에피소드에는 당시 연도를 명시한다. |
+
+예를 들어 서울마라톤 응원 편에는 `["encouragement", "photo"]`를 붙인다. 별명 피켓을 든 보기에는 `["encouragement"]`를, 친구를 찍는 보기에는 `["photo"]`를 넣는다. 피켓을 든 사람이 사진 찍기를 좋아한다고 해석할 근거는 없다. 기사에서 ‘마라톤’이나 ‘러닝화’를 발견했다는 이유로 독자의 기록 욕심이나 구매 의향을 짐작하지 않는다. 보기를 바꿀 때 기존 선택이 가리키는 행동까지 바뀐다면 새 보기 ID를 쓴다.
+
+| 이 단서는 언제 쓰나 | 쓸 수 있는 값 |
+| --- | --- |
+| 길과 장소 | `explore` 낯선 길 가 보기 · `route` 코스와 지도 확인 · `scenery` 풍경 보기 · `travel` 여행지에서 움직이기 |
+| 달리는 동안 | `body` 몸의 감각과 착화감 살피기 · `pace` 속도 맞추기 · `numbers` 거리·시간 살피기 · `movement` 잠깐이라도 움직이기 |
+| 목표와 일정 | `goal` 정한 지점이나 목표 챙기기 · `finish` 정한 코스 마치기 · `plan` 미리 정하기 · `routine` 일상에서 꾸준히 할 시간 찾기 · `adjust` 상황에 맞게 바꾸기 |
+| 기분과 기록 | `reset` 머리 식히기 · `enjoyment` 달리며 즐길 거리 찾기 · `reflect` 돌아보고 남기기 · `photo` 사진으로 남기기 |
+| 확인하는 방법 | `compare` 조건을 바꿔 직접 비교하기 · `verify` 공식 글 등 원문에서 사실 확인하기 |
+| 사람과의 거리 | `company` 함께하기 · `conversation` 얘기 나누기 · `encouragement` 응원 주고받기 · `solo` 혼자 할 시간 챙기기 · `privacy` 사진이나 기록을 누가 볼지 정하기 |
 
 에이전트가 작성한 UTF-8 JSON을 파일이나 표준입력으로 넘긴다. 오프라인에서 동작한다. 출처가 없는 창작 에피소드에는 `--fiction`을 붙인다. 후속편 여러 개가 서로를 가리키면 원본 폴더에 함께 둔 뒤 `build`로 연결을 검사한다.
 

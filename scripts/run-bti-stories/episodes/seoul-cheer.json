@@ -1,5 +1,6 @@
 {
   "id": "seoul-cheer",
+  "signals": ["encouragement", "photo"],
   "category": "race",
   "title": "서울마라톤에 내 배번호가 없어도",
   "art": "art/story-cheer.webp",
@@ -8,6 +9,7 @@
   "choices": [
     {
       "id": "nickname",
+      "signals": ["encouragement"],
       "label": "둘만 아는 별명을 쓴 피켓",
       "then": "사람들 사이에서 피켓을 보더니 친구가 손을 번쩍 들었어. 서로 본 시간은 고작 몇 초인데 피켓을 접기가 아까워.",
       "line": "내 목소리는 안 들려도 이 별명은 보이겠지?",
@@ -15,6 +17,7 @@
     },
     {
       "id": "snap",
+      "signals": ["photo"],
       "label": "친구가 지나가는 순간 한 컷",
       "then": "통행을 비켜 선 자리에서 휴대폰을 들었어. 막상 사진에는 얼굴보다 나를 알아보고 흔들던 손이 더 크게 찍혔어.",
       "line": "조금 흔들렸는데 너 손 흔드는 건 제대로 나왔어.",
@@ -22,6 +25,7 @@
     },
     {
       "id": "at-the-end",
+      "signals": ["encouragement", "plan"],
       "label": "다 뛰고 먹고 싶다던 간식",
       "then": "친구가 먼저 골라 둔 빵을 사서 약속한 곳으로 가는 길이야. 봉지에 김이 차서 입구를 살짝 열어 뒀어.",
       "line": "다 끝나면 바로 먹자. 네가 말한 빵 사 놨어.",

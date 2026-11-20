@@ -1,5 +1,6 @@
 {
   "id": "first-meet",
+  "signals": ["conversation", "company", "solo", "pace"],
   "category": "community",
   "title": "처음 간 모임에 아는 얼굴이 하나도 없어",
   "art": "art/q-09.webp",
@@ -8,12 +9,14 @@
   "choices": [
     {
       "id": "route-question",
+      "signals": ["route", "conversation"],
       "label": "네. 혹시 어디까지 갔다 와요?",
       "then": "옆 사람이 손으로 멀리 보이는 다리를 가리켰어. 돌아오는 길이 겹치는 걸 알고 나니 출발할 때도 자연스럽게 옆에 섰어.",
       "line": "처음 만난 사람한텐 코스 얘기가 제일 쉽더라."
     },
     {
       "id": "walk-group",
+      "signals": ["pace", "company"],
       "label": "네. 오늘 걷뛰하는 분들도 있어요?",
       "then": "옆 사람이 뒤쪽에서 출발하는 몇 명을 소개해 줬어. 첫 구간을 걷는 동안 서로 이름을 하나씩 들었어.",
       "line": "뛰다 좀 걸어도 되냐고 물어보길 잘했네.",
@@ -21,6 +24,7 @@
     },
     {
       "id": "solo-start",
+      "signals": ["solo"],
       "label": "네. 오늘은 혼자 뛰고 끝날 때 인사드릴게요",
       "then": "출발할 땐 내 속도로 갔어. 돌아와서 처음 말 걸어 준 사람한테 손을 흔드니 이번엔 얼굴이 바로 보였어.",
       "line": "오늘은 얼굴 한 명 익힌 걸로 충분해."

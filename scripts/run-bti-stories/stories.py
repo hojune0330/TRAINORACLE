@@ -19,6 +19,11 @@ APP = Path(__file__).resolve().parents[2]
 KST = timezone(timedelta(hours=9))
 ID = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
 CATEGORIES = {"weather", "race", "gear", "community", "routine", "travel"}
+SIGNALS = {
+    "explore", "scenery", "body", "numbers", "plan", "reset", "reflect", "photo", "company",
+    "conversation", "encouragement", "pace", "routine", "goal", "finish", "travel",
+    "movement", "enjoyment", "route", "adjust", "solo", "privacy", "compare", "verify",
+}
 
 
 def require(ok, message):
@@ -56,9 +61,19 @@ def issued_at(source):
     return moment
 
 
+def check_signals(obj, limit):
+    if "signals" in obj:
+        values = obj["signals"]
+        require(isinstance(values, list) and len(values) <= limit
+                and all(isinstance(s, str) and s in SIGNALS for s in values),
+                f"signals에는 지원하는 행동 단서를 최대 {limit}개 넣으세요.")
+        require(len(values) == len(set(values)), "같은 행동 단서가 두 번 들어갔습니다.")
+
+
 def check_story(row, root):
     mandatory = ("id", "category", "title", "art", "opening", "prompt", "choices", "question")
-    fields(row, mandatory, ("source", "links", "validFrom", "validUntil"))
+    fields(row, mandatory, ("source", "links", "validFrom", "validUntil", "signals"))
+    check_signals(row, 4)
     words(row, ("title", "opening", "prompt", "question", "category", "art"))
     slug(row["id"])
     require(row["category"] in CATEGORIES, "지원하지 않는 주제입니다.")
@@ -67,7 +82,8 @@ def check_story(row, root):
     choices = row["choices"]
     require(isinstance(choices, list) and len(choices) == 3, "선택지 세 개가 필요합니다.")
     for choice in choices:
-        fields(choice, ("id", "label", "then", "line"), ("next",))
+        fields(choice, ("id", "label", "then", "line"), ("next", "signals"))
+        check_signals(choice, 2)
         slug(choice["id"])
         words(choice, ("label", "then", "line"))
         if "next" in choice:
@@ -161,6 +177,13 @@ def compile_rows(entries, root):
     return ("window.RBStoryCatalog = " + data + ";\n").encode("utf-8")
 
 
+def story_content(row):
+    """Compare the underlying story when importing a feed processed by an older authoring tool."""
+    clean = {key: value for key, value in row.items() if key != "signals"}
+    clean["choices"] = [{k: v for k, v in choice.items() if k != "signals"} for choice in row["choices"]]
+    return clean
+
+
 def apply(args, new=None, from_feed=False):
     root = args.root.resolve()
     directory = (args.source_dir or root / "stories/episodes").resolve()
@@ -180,6 +203,8 @@ def apply(args, new=None, from_feed=False):
             old = entries.get(key)
             dest = directory / (key + ".json")
             original = dest.read_bytes() if old is not None else None
+            if from_feed and old and story_content(old) == story_content(new):
+                new = old  # Keep any previously edited or omitted annotations.
             if old and old != new:
                 old_src, src = old.get("source", {}), new.get("source", {})
                 require(not old_src or (old_src.get("url") == src.get("url") and
@@ -194,7 +219,8 @@ def apply(args, new=None, from_feed=False):
                     src = other.get("source", {})
                     require(other["id"] == key or src.get("url") != new["source"]["url"] or other["title"] != new["title"],
                             "같은 출처와 제목의 에피소드가 있습니다.")
-                    if from_feed and other["id"] != key and other["opening"] == new["opening"] and other["choices"] == new["choices"]:
+                    if (from_feed and other["id"] != key and other["opening"] == new["opening"]
+                            and story_content(other)["choices"] == story_content(new)["choices"]):
                         print(f"같은 장면 {other['id']}이 있어 추가하지 않았습니다. 새 줄거리는 feed community --items에서 시작하세요.", file=sys.stderr)
                         return
             entries[key] = new
