@@ -7,7 +7,7 @@
   const ink = '#161b35';
   const paper = '#f8f9fd';
   const font = '"Pretendard Variable", Pretendard, "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif';
-  const packs = {base: '내 러닝 성향', buddy: '함께 뛰는 나', record: '기록을 보는 나'};
+  const packs = {base: '기본 검사', buddy: '동행 검사', record: '기록 검사'};
   const active = new WeakMap();
   const images = new Map();
   const light = [
@@ -368,7 +368,9 @@
     ctx.clearRect(0, 0, W, l.h); ctx.fillStyle = paper; ctx.fillRect(0, 0, W, l.h);
     ctx.fillStyle = ink; ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
     ctx.font = '900 46px "Arial Black", Arial, sans-serif'; ctx.fillText('RUN·BTI', 58, l.header);
-    const section = (m.sceneLabel || packs[m.pack]) + (m.mode === 'imagine' ? ' · 첫 러닝을 상상하며' : '');
+    const section = (m.sceneLabel === '내가 달리는 이유' ? '동기 검사' : packs[m.pack])
+      + (m.sceneLabel ? ' · ' + m.sceneLabel : ' · 내 러닝 캐릭터')
+      + (m.mode === 'imagine' ? ' · 첫 러닝을 상상하며' : '');
     const heading = fitted(ctx, section, W - 355, 1, 32, 26, 650);
     ctx.textAlign = 'right'; ctx.fillText(heading.lines[0], W - 58, l.header);
     ctx.textAlign = 'left';

@@ -373,8 +373,8 @@
         "지금은 보관함에 저장할 수 없어요. 결과를 간직하려면 카드를 이미지로 저장해 주세요.",
       );
   }
-  function head(title, kicker = "") {
-    return `<div class="head"><button class="back" data-act="home">${icon("left")} 테스트 홈</button>${kicker ? `<p class="eyebrow">${esc(kicker)}</p>` : ""}<h1>${esc(title)}</h1></div>`;
+  function head(title, kicker = "", beforeTitle = "") {
+    return `<div class="head"><button class="back" data-act="home">${icon("left")} 테스트 홈</button>${beforeTitle}${kicker ? `<p class="eyebrow">${esc(kicker)}</p>` : ""}<h1>${esc(title)}</h1></div>`;
   }
   function libraryPage() {
     scene.audio.stop();
@@ -446,6 +446,7 @@
     if (!m.sceneArt) return "";
     const pictures = resultScenes(v, id);
     const selected = pictures.find(e => e.art === m.sceneArt);
+    if (!selected) return "";
     if (pictures.length === 1) return `<p class="scene-caption">내가 고른 답 · ${esc(selected.text)}</p>`;
     const n = v.counts[v.focusDomain][selected.i];
     const count = ["", "한", "두", "세"][n] || String(n);
@@ -468,6 +469,33 @@
   function proof(v, p, d) {
     return v.evidence.find((e) => p.questions[e.q].domain === d);
   }
+  function packCardReason(id, v, custom = {}) {
+    const domain = packs[id].domains;
+    if (Object.keys(custom || {}).some(k => ["pose","background","charIndex","prop","expression","frame","line","sceneChoice","cardStyle","actionChoice"].includes(k))) {
+      return "직접 꾸민 검사 카드예요. 카드 그림이나 대사를 바꿔도 내가 고른 답은 그대로예요.";
+    }
+    if (v.kind === "open") return "이 검사에서 아직 고른 장면이 없어요. 아래에서 첫 장면을 고를 수 있어요.";
+    if (v.kind === "mixed") return "이 검사에서 같은 횟수로 고른 행동이 있어요. 그중 한 장면을 카드에 담았어요.";
+    if (v.kind === "scene") return "이 검사에서 눈길이 갔던 장면 하나를 카드에 담았어요.";
+    const labels = v.digest.map((i,d) => "‘" + domain[d].labels[i] + "’");
+    return id === "base" ? `${labels.join(" · ")} 순서로 골랐어요. 세 영역에서 자주 고른 답을 모아 이 캐릭터를 골랐어요.`
+      : `${labels.slice(0,2).join(" · ")} 쪽을 자주 골라 이 캐릭터가 나왔어요. 마지막 영역에서 자주 고른 ${labels[2]} 쪽 답은 대사에 담았어요.`;
+  }
+  function postingQuestion(record) {
+    const q = window.RBStoryMatch.postQuestion;
+    const picked = q.choices.find(c => c.signal === record.postChoice);
+    if (!picked && record.postQuestionSkipped) {
+      return `<div class="panel rb-post-skipped"><button type="button" class="linkbtn" data-act="post-open">러닝 인증 질문 다시 보기</button></div>`;
+    }
+    const prompt = record.mode === "imagine" ? q.imagine : q.prompt;
+    return `<section class="panel rb-post-question"><h2 id="post-choice-heading" tabindex="-1">${esc(prompt)}</h2>
+      <div class="rb-post-options" role="group" aria-labelledby="post-choice-heading">${q.choices.map(c =>
+        `<button type="button" data-act="post-select" data-signal="${esc(c.signal)}" aria-pressed="${c === picked}">
+          ${c.art ? `<img src="${esc(asset(c.art))}" alt="">` : ""}
+          <span>${esc(c.label)}</span>${c === picked ? '<b aria-hidden="true">✓</b>' : ""}</button>`).join("")}</div>
+      <div class="rb-post-controls"><span>${picked ? "고른 답을 내 러닝 성향에 반영했어요." : "가까운 답 하나를 골라 주세요."}</span>
+      <button type="button" class="linkbtn" data-act="post-omit">${picked ? "이 답 빼기" : "이 질문 건너뛰기"}</button></div></section>`;
+  }
   function showResult(id, animate = false, ratio = "4:5") {
     if (!library[id]) return pick(id);
     state = { id, view: "result", ratio };
@@ -475,15 +503,17 @@
       r = library[id],
       v = sourceResult(),
       m = model();
+    const storyResult = storyUI.resultParts(id, r);
+    if (id === "record") storyResult.summary = postingQuestion(r) + storyResult.summary;
     output(
-      `${head(m.name, r.mode === "imagine" ? "내가 그려 본 첫 러닝" : "내가 달릴 때의 모습")}<div class="results"><section>${picturePicker(id, v, m)}<div class="scene-wrap"><canvas id="scene" width="1080" height="1350" role="img" aria-label="${esc(m.name + " · " + m.line)}"></canvas></div>${m.sceneArt || m.charIndex < 0 || matchMedia("(prefers-reduced-motion: reduce)").matches ? "" : '<div class="scene-actions"><button data-act="replay">캐릭터 등장 장면 다시 보기</button><button data-act="skipmotion" hidden>마지막 장면 보기</button></div>'}<div class="actions">${btn("capture", "캡처 화면", "primary", "image")}${btn("download", "이미지 저장", "light", "download")}${btn("share", "친구에게", "light", "share")}</div><div class="work-actions">${["4:5", "9:16"].map((s, i) => `<button class="btn sm light ${s === ratio ? "active-ratio" : ""}" data-act="ratio" data-r="${s}" aria-pressed="${s === ratio}">${s} ${i ? "스토리" : "피드"}</button>`).join("")}</div></section><section class="stack">${motiveUI.fromResult()}${v.kind === "open" ? openPicker(id) : ""}<div class="panel"><h2>한눈에 보는 내 러닝</h2><div class="summary-grid">${p.domains
+      `${head(m.name, packTitle(id) + (r.mode === "imagine" ? " · 첫 러닝을 상상한 카드" : " · 검사에서 받은 카드"), storyResult.summary)}<p class="desc" data-pack-reason>${esc(packCardReason(id,v,r.custom))}</p><div class="results"><section>${picturePicker(id, v, m)}<div class="scene-wrap"><canvas id="scene" width="1080" height="1350" role="img" aria-label="${esc(m.name + " · " + m.line)}"></canvas></div>${m.sceneArt || m.charIndex < 0 || matchMedia("(prefers-reduced-motion: reduce)").matches ? "" : '<div class="scene-actions"><button data-act="replay">캐릭터 등장 장면 다시 보기</button><button data-act="skipmotion" hidden>마지막 장면 보기</button></div>'}<div class="actions">${btn("capture", "캡처 화면", "primary", "image")}${btn("download", "이미지 저장", "light", "download")}${btn("share", "친구에게", "light", "share")}</div><div class="work-actions">${["4:5", "9:16"].map((s, i) => `<button class="btn sm light ${s === ratio ? "active-ratio" : ""}" data-act="ratio" data-r="${s}" aria-pressed="${s === ratio}">${s} ${i ? "스토리" : "피드"}</button>`).join("")}</div></section><section class="stack">${motiveUI.fromResult()}${v.kind === "open" ? openPicker(id) : ""}<div class="panel"><h2>한눈에 보는 내 러닝</h2><div class="summary-grid">${p.domains
         .map((d, j) => {
           let e = proof(v, p, j);
           return `<div class="stat">${e ? `<img src="${thumb("o", offsets[id] + e.q, e.i)}" alt="">` : ""}<small>${esc(d.title)}</small><b>${esc(v.leaders[j].map((i) => d.labels[i]).join(" · ") || "아직 고른 답 없음")}</b>${e ? `<p>“${esc(e.text)}”</p>` : ""}</div>`;
         })
         .join(
           "",
-        )}</div><p class="ev">${esc(v.line)}</p></div>${storyUI.resultSection(id, r)}${panel("내 선택 그래프", graph(id, v))}${panel("장면 다시 보기", timeline(id))}${panel("그때 다르게 골랐다면?", sandbox(id))}${panel("내 장면 꾸미기", editor(id, m), "edit-panel")}${received?.pack === id ? panel("친구와 나란히 보기", compare(id, received), "friend-panel", true) : ""}</section></div><section style="margin-top:32px"><div class="sectionhead"><h2>다른 러닝 테스트</h2></div><div class="packs">${ids
+        )}</div><p class="ev">${esc(v.line)}</p></div>${storyResult.suggestions}${panel("내 선택 그래프", graph(id, v))}${panel("장면 다시 보기", timeline(id))}${panel("그때 다르게 골랐다면?", sandbox(id))}${panel("내 장면 꾸미기", editor(id, m), "edit-panel")}${received?.pack === id ? panel("친구와 나란히 보기", compare(id, received), "friend-panel", true) : ""}</section></div><section style="margin-top:32px"><div class="sectionhead"><h2>다른 러닝 테스트</h2></div><div class="packs">${ids
         .filter((k) => k !== id)
         .map(packCard)
         .join(
@@ -625,6 +655,8 @@
     if (!canvas) return;
     currentCanvas = canvas;
     let m = model();
+    const scope = main.querySelector("[data-pack-reason]");
+    if (scope) scope.textContent = packCardReason(state.id, sourceResult(), library[state.id].custom);
     const dockArt = main.querySelector(".card-return img");
     if (dockArt) dockArt.src = resultThumb(m);
     canvas.setAttribute("aria-label", m.name + " · " + m.line);
@@ -693,7 +725,7 @@
       m = model();
     note(
       "친구에게 내 장면 보내기",
-      `<p>${esc(m.name)} · ${esc(m.line)}</p><label class="check"><input id="allow-compare" type="checkbox" checked>친구와 비교할 수 있게 세 항목의 결과도 보내기</label><p class="share-note">지금 보이는 그림과 대사를 친구에게 보내요. 비교 항목은 따로 고를 수 있어요.</p><div class="actions">${location.protocol === "file:" ? "" : btn("sendlink", "카드 링크 보내기", "primary", "share")}${btn(folderFile ? "capture" : "shareimage", folderFile ? "캡처 화면 열기" : "이미지로 보내기", "light", "image")}</div>${folderFile ? '<p class="hint">여기서는 ‘캡처 화면 열기’를 누른 뒤 화면을 캡처해 주세요. 이미지 파일은 웹 버전이나 ‘런비티아이 체험판.html’에서 저장할 수 있어요.</p>' : location.protocol === "file:" ? '<p class="hint">여기서는 카드를 이미지로 보낼 수 있어요. 친구와 결과를 비교하려면 웹 버전에서 링크를 보내 주세요.</p>' : ""}<div id="manual-link"></div>`,
+      `<p>${esc(m.name)} · ${esc(m.line)}</p><label class="check"><input id="allow-compare" type="checkbox" checked>친구와 비교할 수 있게 세 항목의 결과도 보내기</label><p class="share-note">이 검사 카드에 담긴 그림과 대사를 친구에게 보내요. 비교 항목은 따로 고를 수 있어요.</p><div class="actions">${location.protocol === "file:" ? "" : btn("sendlink", "카드 링크 보내기", "primary", "share")}${btn(folderFile ? "capture" : "shareimage", folderFile ? "캡처 화면 열기" : "이미지로 보내기", "light", "image")}</div>${folderFile ? '<p class="hint">여기서는 ‘캡처 화면 열기’를 누른 뒤 화면을 캡처해 주세요. 이미지 파일은 웹 버전이나 ‘런비티아이 체험판.html’에서 저장할 수 있어요.</p>' : location.protocol === "file:" ? '<p class="hint">여기서는 카드를 이미지로 보낼 수 있어요. 친구와 결과를 비교하려면 웹 버전에서 링크를 보내 주세요.</p>' : ""}<div id="manual-link"></div>`,
     );
   }
   function sharedCard() {
@@ -793,7 +825,7 @@
     received = c;
     state = { id: c.pack };
     output(
-      `${head(c.name, "친구가 보낸 러닝 장면")}<div class="results"><div class="scene-wrap"><canvas id="friend-scene" width="1080" height="1350" role="img" aria-label="${esc(c.line)}"></canvas></div><div class="stack"><div class="panel"><h2>친구의 한 줄</h2><p>${esc(c.line)}</p>${c.includeEvidence ? `<p class="hint">${esc(c.evidence)}</p>` : ""}</div>${library[c.pack] ? `<div class="panel"><h2>우리 둘이 달리면</h2>${compare(c.pack, c)}</div>` : ""}<div class="actions"><button class="btn primary" data-act="${library[c.pack] ? "result" : "pick"}" data-id="${c.pack}">${library[c.pack] ? "내 결과도 보기" : "나도 해보기"}</button>${btn("home", "테스트 둘러보기", "light")}</div></div></div>`,
+      `${head(c.name, "친구가 보낸 검사 카드 · " + packTitle(c.pack))}<div class="results"><div class="scene-wrap"><canvas id="friend-scene" width="1080" height="1350" role="img" aria-label="${esc(c.line)}"></canvas></div><div class="stack"><div class="panel"><h2>친구의 한 줄</h2><p>${esc(c.line)}</p>${c.includeEvidence ? `<p class="hint">${esc(c.evidence)}</p>` : ""}</div>${library[c.pack] ? `<div class="panel"><h2>우리 둘이 달리면</h2>${compare(c.pack, c)}</div>` : ""}<div class="actions"><button class="btn primary" data-act="${library[c.pack] ? "result" : "pick"}" data-id="${c.pack}">${library[c.pack] ? "내 결과도 보기" : "나도 해보기"}</button>${btn("home", "테스트 둘러보기", "light")}</div></div></div>`,
       "friend",
     );
     scene
@@ -855,6 +887,30 @@
       id = b.dataset.id || state.id,
       i = Number(b.dataset.i);
     switch (act) {
+      case "post-select":
+      case "post-omit":
+      case "post-open": {
+        const record = library.record;
+        if (state.view !== "result" || state.id !== "record" || !record) break;
+        if (act === "post-select") {
+          const selection = window.RBStoryMatch.postQuestion.choices.find(c => c.signal === b.dataset.signal);
+          if (!selection) break;
+          record.postChoice = selection.signal;
+          delete record.postQuestionSkipped;
+        } else if (act === "post-omit") {
+          delete record.postChoice;
+          record.postQuestionSkipped = true;
+        } else {
+          delete record.postQuestionSkipped;
+        }
+        const stored = save(storageKey, library);
+        showResult("record", false, state.ratio);
+        const target = act === "post-select" ? '.rb-post-options [aria-pressed="true"]' :
+          act === "post-omit" ? '[data-act="post-open"]' : "#post-choice-heading";
+        main.querySelector(target)?.focus({preventScroll:true});
+        if (!stored) notify("이번에 연 화면에서만 바뀌었어요.");
+        break;
+      }
       case "modalclose":
         modal.close();
         break;
@@ -1028,7 +1084,8 @@
         let r = library[id];
         r.answers[Number(b.dataset.q)] = [i];
         if (r.blankReasons) r.blankReasons[Number(b.dataset.q)] = null;
-        r.custom = {};
+        // The renderer resolves scene and evidence picks against the revised answers.
+        // Keep the person's own dialogue, styling and sharing preferences.
         save(storageKey, library);
         showResult(id);
         break;

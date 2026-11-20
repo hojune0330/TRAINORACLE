@@ -308,7 +308,13 @@
     });
     const digest = leaders.map(indices => indices.length === 1 ? indices[0] : null);
     const unknown = leaders.every(indices => indices.length === 0);
-    const tieDomain = leaders.findIndex(indices => indices.length > 1);
+    const itemsAnswered = pack.domains.map((_, domain) =>
+      new Set(selections.filter(s => s.domain === domain).map(s => s.q)).size);
+    // Two picks on a single screen describe that scene. A mixed result needs separate scenes.
+    const tieDomain = leaders.reduce((best, indices, domain) => {
+      if (indices.length < 2 || itemsAnswered[domain] < 2) return best;
+      return best < 0 || itemsAnswered[domain] > itemsAnswered[best] ? domain : best;
+    }, -1);
     const repeated = counts.map(row => Math.max(...row) >= 2);
     const kind = unknown ? 'open' : tieDomain >= 0 ? 'mixed' : repeated.every(Boolean) ? 'clear' : 'scene';
 
@@ -345,8 +351,14 @@
       line = card[isImagination ? 2 : 1];
     } else if (kind === 'scene') {
       focusDomain = counts.map(row => Math.max(...row)).indexOf(Math.max(...counts.flat()));
-      name = pack.domains[focusDomain].labels[anchor[focusDomain]] + ' 한 컷';
-      line = evidence.find(e => pack.questions[e.q].domain === focusDomain).text;
+      const picked = evidence.filter(e => pack.questions[e.q].domain === focusDomain);
+      if (leaders[focusDomain].length > 1) {
+        name = pack.questions[picked[0].q].scene + '에서 고른 두 답';
+        line = picked.map(e => e.text).join(' / ');
+      } else {
+        name = pack.domains[focusDomain].labels[anchor[focusDomain]] + ' 한 컷';
+        line = picked[0].text;
+      }
     }
     const id = packId + '-' + leaders.map(indices => indices.length ? indices.join('') : 'x').join('-');
     return { counts, leaders, digest, name, line, evidence, id, characterIndex, kind, focusDomain };
