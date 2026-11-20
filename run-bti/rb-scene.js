@@ -40,27 +40,33 @@
   const two = n => String(n).padStart(2, '0');
   const clean = v => typeof v === 'string' ? v.trim() : '';
   const answerArt = path => typeof path === 'string' && /^art\/o-(?:0\d|1\d|20)-[0-2]\.webp$/.test(path) ? path : null;
+  const motiveArt = new Set(['afterwork', 'finish', 'practice', 'record', 'stairs', 'travel'].map(key => 'art/life-' + key + '.webp'));
+  const revisedArt = new Set(['q-10', 'q-14', 'o-10-1', 'o-10-2', 'o-14-1', 'o-14-2'].map(key => 'art/' + key + '.webp'));
   const ease = t => 1 - (1 - Math.max(0, Math.min(1, t))) ** 3;
 
   function normalize(m = {}) {
-    const sceneArt = answerArt(m.sceneArt);
+    const sceneArt = motiveArt.has(m.sceneArt) ? m.sceneArt : answerArt(m.sceneArt);
+    const charIndex = bounded(m.charIndex, 44, -1);
+    const actionLabel = clean(m.actionLabel).slice(0, 100);
+    const actionArt = !sceneArt && charIndex >= 0 && actionLabel ? answerArt(m.actionArt) : null;
     return {
-      charIndex: bounded(m.charIndex, 44, -1), pose: bounded(m.pose, 2),
+      charIndex, pose: bounded(m.pose, 2),
       prop: bounded(m.prop, 47, -1), background: bounded(m.background, 11),
       expression: bounded(m.expression, 17, -1), frame: bounded(m.frame, 8),
       mode: m.mode === 'imagine' ? 'imagine' : 'experience',
       pack: Object.hasOwn(packs, m.pack) ? m.pack : 'base',
       name: clean(m.name) || '내 러닝 장면', line: clean(m.line),
       sceneArt, sceneLabel: sceneArt ? clean(m.sceneLabel).slice(0, 50) : '',
+      actionArt, actionLabel: actionArt ? actionLabel : '',
       evidence: m.includeEvidence ? clean(m.evidence) : '',
-      evidenceArt: m.includeEvidence && m.evidenceArt !== sceneArt ? answerArt(m.evidenceArt) : null
+      evidenceArt: m.includeEvidence && m.evidenceArt !== sceneArt && m.evidenceArt !== actionArt ? answerArt(m.evidenceArt) : null
     };
   }
 
   function assetURL(path) {
     const entries = window.RBAssets || {};
     const entry = entries[path] || entries['./' + path] || entries[path.replace(/^art\//, '')];
-    return (typeof entry === 'string' ? entry : entry?.url || entry?.src) || path;
+    return (typeof entry === 'string' ? entry : entry?.url || entry?.src) || (revisedArt.has(path) ? path + '?v=runner-stories-1' : path);
   }
 
   function load(path) {
@@ -106,11 +112,12 @@
       m.prop < 0 ? null : 'art/prop-' + two(m.prop) + '.webp',
       m.expression < 0 ? null : 'art/face-' + two(m.expression) + '.webp',
       'art/frame-' + two(m.frame) + '.webp', 'art/fx-' + two((m.background + m.pose * 4) % 16) + '.webp',
-      animate && m.charIndex >= 0 ? 'art/runner-' + two(m.charIndex) + '-' + (m.pose === 1 ? 0 : 1) + '.webp' : null,
-      m.evidenceArt, m.charIndex >= 0 ? 'art/portrait-' + two(m.charIndex) + '.webp' : null
+      animate && !m.actionArt && m.charIndex >= 0 ? 'art/runner-' + two(m.charIndex) + '-' + (m.pose === 1 ? 0 : 1) + '.webp' : null,
+      m.evidenceArt, m.charIndex >= 0 ? 'art/portrait-' + two(m.charIndex) + '.webp' : null, m.actionArt
     ];
-    const [bg, runner, prop, face, frame, fx, approach, evidenceArt, portrait] = await Promise.all(files.map(load));
-    return {bg, runner, prop, face, frame, fx, approach, evidenceArt, portrait};
+    const [bg, runner, prop, face, frame, fx, approach, evidenceArt, portrait, action] = await Promise.all(files.map(load));
+    if (m.actionArt && (!action || !runner)) throw new Error('캐릭터와 고른 장면을 불러오지 못했어요.');
+    return {bg, runner, prop, face, frame, fx, approach, evidenceArt, portrait, action};
   }
 
   const cardHeight = ratio => ratio === '9:16' ? 1920 : 1350;
@@ -125,17 +132,23 @@
     const title = measuredRows(ctx, model.name, textWidth - 44, story ? 82 : 75, 52, 900, 1, 1.18);
     const quote = measuredRows(ctx, model.line, textWidth, story ? 55 : 49, 32, 600, 4, 1.27);
     const evidenceInset = model.evidenceArt ? 145 : 0;
-    const evidenceText = model.evidence ? '내가 고른 장면  ·  ' + model.evidence : model.evidenceArt ? '내가 고른 장면' : '';
+    const evidenceHeading = model.actionArt ? '함께 보낸 답' : '내가 고른 장면';
+    const evidenceText = model.evidence ? evidenceHeading + '  ·  ' + model.evidence : model.evidenceArt ? evidenceHeading : '';
     const evidence = measuredRows(ctx, evidenceText, textWidth - evidenceInset, 34, 27, 600, 3, 1.27);
     const evidenceHeight = Math.max(evidence.height + (evidenceText ? 6 : 0), model.evidenceArt ? 112 : 0);
     const evidenceY = bottom - evidenceHeight;
     const titleGap = square ? 12 : -14, quoteGap = model.line ? (story ? 38 : 33) : 0;
-    const maxArt = evidenceY - (evidenceHeight ? 38 : 0) - quote.height - quoteGap - title.height - 20 - titleGap - y;
+    const actionSide = story ? 224 : 170;
+    const action = measuredRows(ctx, model.actionLabel, textWidth - actionSide - 54, story ? 44 : 40, 31, 700, 2, 1.23);
+    const actionHeight = model.actionArt ? Math.max(actionSide, action.height + 70) : 0;
+    const actionGap = actionHeight ? (story ? 34 : 25) : 0;
+    const maxArt = evidenceY - (evidenceHeight ? 38 : 0) - actionHeight - actionGap - quote.height - quoteGap - title.height - 20 - titleGap - y;
     const targetArt = square ? (story ? 992 : 944) : (story ? 1082 : 804);
     const ah = Math.max(1, Math.min(targetArt, Math.floor(maxArt)));
     const w = square ? ah : W - 88, x = (W - w) / 2;
     const titleY = y + ah + titleGap, quoteY = titleY + title.height + 20 + quoteGap;
-    return {h, x, y, w, ah, header, title, titleY, quote, quoteY, evidence, evidenceY, evidenceInset};
+    return {h, x, y, w, ah, header, title, titleY, quote, quoteY, evidence, evidenceY, evidenceInset,
+      action, actionHeight, actionSide, actionY: quoteY + quote.height + actionGap};
   }
 
   function borderPath(ctx, x, y, w, h, radius = 24) {
@@ -334,6 +347,21 @@
     lines.forEach((line, i) => ctx.fillText(line, x + inset, y + 10 + rowStep * (i + .52)));
   }
 
+  function actionPanel(ctx, image, l) {
+    const {actionY: y, actionHeight: h, actionSide: side, action} = l;
+    const x = textInset;
+    ctx.save();
+    ctx.fillStyle = '#eceef7'; ctx.fillRect(x, y, textWidth, h);
+    const imageY = y + (h - side) / 2;
+    ctx.drawImage(image, x, imageY, side, side);
+    const left = x + side + 26, top = y + (h - action.height - 44) / 2;
+    ctx.textBaseline = 'top'; ctx.textAlign = 'left';
+    setFont(ctx, 29, 650); ctx.fillStyle = '#505972';
+    ctx.fillText('내가 고른 장면', left, top);
+    ctx.fillStyle = ink; drawRows(ctx, action, left, top + 44);
+    ctx.restore();
+  }
+
   function render(ctx, m, a, l, progress, pixels) {
     const scale = pixels / W;
     ctx.setTransform(scale, 0, 0, scale, 0, 0);
@@ -347,9 +375,11 @@
     if (m.sceneArt) {
       // The answer illustrations are square. Keep the entire image, including hands at its edges.
       if (a.scene) ctx.drawImage(a.scene, l.x, l.y, l.w, l.ah);
-    } else {
-      art(ctx, m, a, l, progress);
+    } else if (!m.actionArt || a.runner) {
+      // With an answer panel the runner keeps their final pose while the result is revealed.
+      art(ctx, m, a, l, m.actionArt ? 1 : progress);
     }
+    if (a.action) actionPanel(ctx, a.action, l);
     ctx.save(); ctx.globalAlpha = .38 + .62 * ease((progress - .42) / .52);
     const x = textInset, width = textWidth;
     nameplate(ctx, l.title, x, l.titleY, width);
@@ -395,14 +425,13 @@
     const m = normalize(model);
     const placeholder = !canvas.dataset.rbPainted || canvas.dataset.rbPainted !== ratio;
     const {ctx, l, pixels} = setup(canvas, ratio, opts, m);
-    canvas.setAttribute('aria-label', [m.name, m.sceneLabel, m.line, m.evidence].filter(Boolean).join(' · '));
+    canvas.setAttribute('aria-label', [m.name, m.sceneLabel, m.line, m.actionLabel, m.evidence].filter(Boolean).join(' · '));
     if (placeholder) render(ctx, m, {}, l, 1, pixels);
     canvas.dataset.rbPainted = ratio;
     const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
     let skipped = false;
     ticket.finish = () => {
       skipped = true;
-      if (active.get(canvas) === ticket) render(ctx, m, {}, l, 1, pixels);
     };
     const a = await materials(m, animate && !reduced);
     if (active.get(canvas) !== ticket) return;
@@ -426,9 +455,9 @@
       const afterVisibility = () => { if (document.hidden) ticket.finish(); };
       const tick = now => {
         if (done) return;
-        const p = Math.min(1, (now - start) / 1850);
+        const p = Math.min(1, (now - start) / (m.actionArt ? 1050 : 1850));
         if (p >= 1) { ticket.finish(); return; }
-        if (!sounded && p >= .50 && a.runner && (shutter || m.pose === 1)) {
+        if (!m.actionArt && !sounded && p >= .50 && a.runner && (shutter || m.pose === 1)) {
           sounded = true;
           audio.effect(shutter ? 'camera' : 'steps');
         }
@@ -594,5 +623,5 @@
   window.addEventListener('pagehide', stop);
   const audio = {enabled: () => opted, set: setSound, effect, ambient, stop};
   // Previously cached app.js builds ask the renderer for hotspots.
-  window.RBScene = {draw, motion, skip, blob, download, labels, effectKeys, ambientKeys, audio, hotspots: () => []};
+  window.RBScene = {draw, motion, skip, blob, download, assetURL, labels, effectKeys, ambientKeys, audio, hotspots: () => []};
 })();
