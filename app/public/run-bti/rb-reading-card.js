@@ -138,7 +138,6 @@ window.RBReadingCard = (() => {
     const canvas = makeCanvas(card), ctx=canvas.getContext("2d"), W=canvas.width,H=canvas.height;
     const person = model().cast[card.who], bg=backgrounds.find(x=>x.id===card.bg), ink=frames[card.frame].color;
     const backdrop = bg.image || person?.background || backgrounds[1].image;
-    const [background,runner] = await Promise.all([picture(backdrop),picture(person?.image)]);
     const name = person?.name || "내 러닝 한 장";
     const left=66, right=W-left, innerWidth=right-left;
     font(ctx,38,true);
@@ -147,6 +146,10 @@ window.RBReadingCard = (() => {
     const noteLines=card.note ? wrapped(ctx,card.note,innerWidth-28) : [];
     const textHeight=176+quoteLines.length*55+(noteLines.length ? 61+noteLines.length*44 : 0)+(card.post ? 70 : 0);
     const base=H-textHeight-52, top=112, picX=42, picW=W-84, picH=base-top;
+    // A long note can leave a square picture window even on a story card.
+    const tallerPanel = card.ratio === "9:16" && picH / picW > 1.22;
+    const panelArt = tallerPanel ? backdrop.replace(".webp", "-tall.webp") : backdrop;
+    const [background,runner] = await Promise.all([picture(panelArt),picture(person?.image)]);
     ctx.fillStyle="#faf7f0"; ctx.fillRect(0,0,W,H);
     ctx.fillStyle=ink; ctx.fillRect(0,0,W,14);
     font(ctx,36,true); ctx.fillText("RUN·BTI",left,74);

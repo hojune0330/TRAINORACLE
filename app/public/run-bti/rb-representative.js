@@ -199,9 +199,9 @@ window.RBRepresentative = (() => {
       if (document.hidden || reduced.matches || !img.complete || !img.naturalWidth || !img.animate) return;
       active.get(btn)?.();
       const kind = btn.dataset.repReplay;
-      const frames = kind === "postSelfie" ? [{transform:"scale(1.16) translateY(2%)"}, {transform:"scale(1)",offset:.61},{transform:"scale(1)"}] :
-        kind === "postScenery" ? [{transform:"scale(1.25) translateX(7%)"}, {transform:"scale(1.1) translateX(-2%)",offset:.55},{transform:"scale(1)"}] :
-        [{clipPath:"inset(0 0 94% 0)"},{clipPath:"inset(0 0 0 0)"}];
+      const frames = kind === "postSelfie" ? [{filter:"brightness(1)"},{filter:"brightness(1.2)",offset:.45},{filter:"brightness(1)"}] :
+        kind === "postScenery" ? [{filter:"saturate(.45)"},{filter:"saturate(1)"}] :
+        [{opacity:.55},{opacity:1}];
       const animation = img.animate(frames, {duration:1100,easing:"ease-in-out"});
       const finder = view.querySelector(".rb-viewfinder");
       const focus = finder?.animate([{opacity:0,transform:"scale(1.12)"},{opacity:1,transform:"scale(1)",offset:.53},{opacity:1,offset:.62},{opacity:0}],{duration:1100});
