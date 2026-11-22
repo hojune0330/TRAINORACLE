@@ -1004,12 +1004,56 @@ test('P4 concurrent identical relation nonces replay while distinct stale writer
 });
 
 async function fixedStateId(kind,owner=OWNER) {
-  const namespace = kind === 'RUNNING_PROFILE' ? 'trainoracle.account.running-profile.v1' : kind === 'MINIGAME_PROGRESS' ? 'trainoracle.account.minigame-progress.v1' : kind === 'PLAN' ? 'trainoracle.account.plan.v1' : 'trainoracle.account.decorations.v1';
+  const namespace = {
+    RUNNING_PROFILE: 'trainoracle.account.running-profile.v1', RUN_BTI_PROFILE: 'trainoracle.account.run-bti-profile.v1',
+    MINIGAME_PROGRESS: 'trainoracle.account.minigame-progress.v1', PLAN: 'trainoracle.account.plan.v1',
+  }[kind] ?? 'trainoracle.account.decorations.v1';
   const bytes=new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify([namespace,owner]))));
   bytes[6]=(bytes[6]&15)|80;bytes[8]=(bytes[8]&63)|128;
   const h=Buffer.from(bytes.slice(0,16)).toString('hex');
   return `${h.slice(0,8)}-${h.slice(8,12)}-${h.slice(12,16)}-${h.slice(16,20)}-${h.slice(20)}`;
 }
+
+test('Run-BTI profile accepts only selected fields from this version, owner and namespace', async () => {
+  const support = {kind:'run-bti-profile-support',version:1,eligible:true};
+  const f = await fixture({ dependencies:{validateDocument:validateAccountJournalDocument}, repo:{runBtiProfileSupport:async()=>support} });
+  const documentId = await fixedStateId('RUN_BTI_PROFILE');
+  const data = {version:'pairs-1',source:'self-report',answeredAt:'2026-01-01T00:00:00.000Z',defaultKey:'distance+familiar',
+    preferences:{style:[1/3,1.5],signals:[null,2]},learning:'solo',summer:'less',snow:'want',training:['drills']};
+  const document = {version:3,state:'ACCOUNT_STATE',kind:'RUN_BTI_PROFILE',data};
+  await response(await f.request({action:'runBtiProfileSupport'}),200,support);
+  await response(await f.request(save({documentId:await fixedStateId('RUNNING_PROFILE'),document})),422);
+  await response(await f.request(save({documentId:await fixedStateId('RUN_BTI_PROFILE',OTHER),document})),422);
+  for (const patch of [{motives:['weight']},{eagerness:'reluctant'},{body:'free text'},{version:'pairs-2'},
+    {defaultKey:'speed+distance'},{learning:'these words'}, {training:['drills','drills']},
+    {preferences:{style:[null,null]}},{preferences:{signals:[3,0]}},{preferences:{extra:[0,2]}},
+    {answeredAt:'2099-01-01T00:00:00.000Z'}]) {
+    await response(await f.request(save({documentId,document:{...document,data:{...data,...patch}}})),422);
+  }
+  await response(await f.request(save({documentId,document})),200);
+  const privateRow = f.docs.get(f.key(OWNER,documentId));
+  assert.ok(!JSON.stringify(privateRow).includes('distance+familiar'));
+  assert.deepEqual(f.operations.get(f.key(OWNER,OP)).trusted_metadata,
+    {kind:'RUN_BTI_PROFILE',occurrenceId:null,journalDate:null,eligible:false});
+  assert.deepEqual((await response(await f.request({action:'read',documentId}),200)).document, document);
+  assert.equal((await response(await f.request({action:'list'}),200)).documents.length,0);
+  support.eligible=false;
+  await response(await f.request({action:'runBtiProfileSupport'}),200,support);
+  await response(await f.request(save({documentId,document})),403);
+  await response(await f.request({action:'read',documentId}),403);
+  assert.equal(f.calls.commit,1);
+});
+
+test('Run-BTI fails closed on stale capability and disallows restoring previously disconnected fields',async()=>{
+  const documentId=await fixedStateId('RUN_BTI_PROFILE');
+  for(const value of [null,{kind:'run-bti-profile-support',version:1}, {kind:'run-bti-profile-support',version:1,eligible:'yes'},
+    {kind:'run-bti-profile-support',version:1,eligible:true,birthDate:'1990-01-01'}]) {
+    const f=await fixture({repo:{runBtiProfileSupport:async()=>value}});
+    await response(await f.request({action:'runBtiProfileSupport'}),503);
+  }
+  const f=await fixture({repo:{runBtiProfileSupport:async()=>({kind:'run-bti-profile-support',version:1,eligible:true})}});
+  await response(await f.request({action:'restore',documentId,operationId:OP,expectedRevision:2,sourceRevision:1}),422);
+});
 
 test('running profile requires support and protects identity, privacy and reward metadata',async()=>{
   const document={version:3,state:'ACCOUNT_STATE',kind:'RUNNING_PROFILE',data:{version:'RUNNING_PROFILE_V1',answeredAt:'2026-10-04T00:00:00.000Z',answers:{motives:['health'],intensity:['unknown']}}};

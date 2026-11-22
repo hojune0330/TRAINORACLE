@@ -25,7 +25,7 @@ const denied=(work,code='22023')=>assert.rejects(work,error=>error.code===code);
 before(async()=>{
   await loadOracleMigrationChain(db);
   await db.exec('reset role');
-  for(const file of ['0063_lounge_identity_deletion_outbox.sql','0064_minigame_progress_account_storage.sql'])
+  for(const file of ['0063_lounge_identity_deletion_outbox.sql','0064_minigame_progress_account_storage.sql','20261122000000_run_bti_account_storage.sql'])
     await db.exec(readFileSync(new URL(`../../migrations/${file}`,import.meta.url),'utf8'));
   for(const actor of [owner,other]) {
     await db.query("insert into auth.users(id,created_at,email_confirmed_at,encrypted_password) values($1,'2020-01-01',clock_timestamp(),null)",[actor]);
@@ -68,6 +68,7 @@ after(()=>db.close());
 
 test('additive attested support keeps existing storage admission and draft CAS intact',async()=>{
   assert.deepEqual(await submit({},'goalProgramSupport'),{kind:'goal-program-support',version:1});
+  assert.deepEqual(await submit({},'runBtiProfileSupport'),{kind:'run-bti-profile-support',version:1,eligible:true});
   assert.deepEqual(await submit({},'minigameProgressSupport'),{kind:'minigame-progress-support',version:1});
   assert.deepEqual(await submit({},'runningProfileSupport'),{kind:'running-profile-support',version:1});
   assert.deepEqual(await submit({},'oracleV2RestartSupport'),{kind:'oracle-v2-restart-support',version:1});

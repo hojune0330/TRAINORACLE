@@ -45,10 +45,10 @@ export async function approveSyntheticOracleStorage(db) {
     (purpose_version,evidence_reference,reviewed_at,approved) values($1,'SYNTHETIC_LOCAL_PGLITE_ONLY_NOT_PRODUCTION_EVIDENCE',clock_timestamp(),true)`,[ORACLE_STORAGE_VERSION]);
 }
 
-export async function admitOracleStorage(db,ownerId,sessionId) {
+export async function admitOracleStorage(db,ownerId,sessionId,birthDate='1990-01-01') {
   await setOracleAuth(db,ownerId,sessionId);
   assert.equal((await db.query('select public.claim_beta_seat($1,$2,$3::date,$4,$4) result',
-    [ownerId,sessionId,'1990-01-01',ORACLE_STORAGE_VERSION])).rows[0].result,'ADMITTED_NEW');
+    [ownerId,sessionId,birthDate,ORACLE_STORAGE_VERSION])).rows[0].result,'ADMITTED_NEW');
   const before=(await db.query('select public.get_account_storage_consent($1) consent',[ownerId])).rows[0].consent;
   assert.equal(before.revision,0);
   assert.equal(before.healthStorage,false);

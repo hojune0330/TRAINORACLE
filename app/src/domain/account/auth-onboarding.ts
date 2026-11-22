@@ -5,7 +5,7 @@ import { ageBandOn } from "./profile"
 import type { SocialAuthProvider } from "./auth"
 
 export type AuthMethod = SocialAuthProvider | "email" | "phone" | "password"
-export type AuthReturnIntent = "connection" | "account" | "data-rights" | null
+export type AuthReturnIntent = "connection" | "account" | "data-rights" | "run-bti" | null
 
 type ProfileAccountSetup = {
   readonly returnIntent?: AuthReturnIntent
@@ -191,7 +191,7 @@ export function readPendingAccountSetup(
       && typeof parsed.privacyPolicyVersion === "string" && parsed.privacyPolicyVersion.length > 0
       && typeof parsed.termsOfServiceVersion === "string" && parsed.termsOfServiceVersion.length > 0
     const valid = (authOnly || profileSetup)
-      && (parsed.returnIntent === undefined || parsed.returnIntent === null || ["connection", "account", "data-rights"].includes(parsed.returnIntent))
+      && (parsed.returnIntent === undefined || parsed.returnIntent === null || ["connection", "account", "data-rights", "run-bti"].includes(parsed.returnIntent))
       && isAuthAttemptId(parsed.attemptId)
       && methodValid
       && (parsed.phase === "PREPARED" || parsed.phase === "AUTH_STARTED" || parsed.phase === "AUTH_VERIFIED")

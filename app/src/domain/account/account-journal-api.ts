@@ -34,6 +34,7 @@ return z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("calendar-decoration-support"), version: z.literal(1) }).strict(),
   z.object({ kind: z.literal("athlete-record-support"), version: z.literal(1) }).strict(),
   z.object({ kind: z.literal("running-profile-support"), version: z.literal(1) }).strict(),
+  z.object({ kind: z.literal("run-bti-profile-support"), version: z.literal(1), eligible: z.boolean() }).strict(),
   z.object({ kind: z.literal("minigame-progress-support"), version: z.literal(1) }).strict(),
   z.object({ kind: z.literal("goal-program-support"), version: z.literal(1) }).strict(),
   z.object({ kind: z.literal("oracle-v2-support"), version: z.literal(2) }).strict(),
@@ -62,6 +63,7 @@ export type AccountJournalResponse<T = AccountJournalDraft> =
   | { kind: "calendar-decoration-support"; version: 1 }
   | { kind: "athlete-record-support"; version: 1 }
   | { kind: "running-profile-support"; version: 1 }
+  | { kind: "run-bti-profile-support"; version: 1; eligible: boolean }
   | { kind: "minigame-progress-support"; version: 1 }
   | { kind: "goal-program-support"; version: 1 }
   | { kind: "oracle-v2-support"; version: 2 }
@@ -83,6 +85,7 @@ export type AccountJournalRequest<T = AccountJournalDraft> = { supportedRunningP
   | { action: "calendarDecorationSupport" }
   | { action: "athleteRecordSupport" }
   | { action: "runningProfileSupport" }
+  | { action: "runBtiProfileSupport" }
   | { action: "minigameProgressSupport" }
   | { action: "goalProgramSupport" }
   | { action: "oracleV2Support" }
@@ -358,6 +361,7 @@ async function executeAccountDocument<T>(
       : request.action === "calendarDecorationSupport" ? result.kind === "calendar-decoration-support"
       : request.action === "athleteRecordSupport" ? result.kind === "athlete-record-support"
       : request.action === "runningProfileSupport" ? result.kind === "running-profile-support"
+      : request.action === "runBtiProfileSupport" ? result.kind === "run-bti-profile-support"
       : request.action === "minigameProgressSupport" ? result.kind === "minigame-progress-support"
       : request.action === "goalProgramSupport" ? result.kind === "goal-program-support"
       : request.action === "oracleV2Support" ? result.kind === "oracle-v2-support"

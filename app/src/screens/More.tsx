@@ -2,6 +2,7 @@ import React from "react"
 import { ArrowLeft, BookOpen, Calculator, ChartNoAxesCombined, CircleHelp, CircleUserRound, Compass, DatabaseBackup, Flag, Gamepad2, Heart, Info, LibraryBig, MessageSquareText, NotebookPen, ScrollText, ShieldCheck, Sticker, Trash2, Watch } from "lucide-react"
 import { AppHeading } from "../components/AppHeading"
 import { MenuAction } from "../components/MenuAction"
+import { RunBtiLink } from "../components/RunBtiLink"
 import { DataSafetyNotice } from "../components/DataSafetyNotice"
 import { feedbackConfig } from "../domain/feedback/feedback-config"
 import { SafeJournalExport } from "./home/DeviceJournal"
@@ -149,12 +150,13 @@ export function More({
           {onOpenMinigame && <MenuAction icon={Gamepad2} label="게임 라운지" illustration="running-game-announcement" onClick={onOpenMinigame} />}
           {onOpenPaceCalculator && <MenuAction category="training" icon={Calculator} label="페이스 계산기" detail="거리와 기록으로 페이스·구간 시간 계산" illustration="pace-calculator-announcement" onClick={onOpenPaceCalculator} />}
         </MenuGroup>}
-        {(onOpenRunningProfile || onOpenRecordReading || onOpenOracleLibrary || onOpenRewards) && <MenuGroup title="취향·꾸미기">
+        <MenuGroup title="취향·꾸미기">
+          <RunBtiLink showSaved={false} />
           {onOpenRunningProfile && <MenuAction category="oracle" icon={Heart} label="러닝 취향" onClick={onOpenRunningProfile} />}
           {onOpenRecordReading && <MenuAction category="oracle" icon={ChartNoAxesCombined} label="최고기록으로 풀이하기" onClick={onOpenRecordReading} />}
           {onOpenRewards && <MenuAction category="journal" icon={NotebookPen} label="일지 꾸미기" onClick={onOpenRewards} />}
           {onOpenOracleLibrary && <MenuAction category="oracle" icon={BookOpen} label="오라클 읽을거리" onClick={onOpenOracleLibrary} />}
-        </MenuGroup>}
+        </MenuGroup>
         <InstallShortcutMenuEntry />
         {onOpenRecords && <MenuGroup title="기록 도구">
           {onOpenRecords && <MenuAction category="record" icon={Flag} label="경기 기록 추가·수정" onClick={onOpenRecords} />}

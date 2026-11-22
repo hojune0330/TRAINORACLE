@@ -1,6 +1,10 @@
 "use strict";
 (function app() {
   "use strict";
+  if (window.RBPairsUI?.ownsRoute()) {
+    window.RBPairsUI.start();
+    return;
+  }
   const { packs, score, answerOptions } = window.RB,
     scene = window.RBScene;
   const main = document.querySelector("#main"),
@@ -204,6 +208,13 @@
     },
   ];
   function home() {
+    if (new URLSearchParams(location.search).get("legacy") === "archive") {
+      const url = new URL(location.href);
+      url.searchParams.delete("legacy");
+      url.hash = "";
+      location.assign(url);
+      return;
+    }
     scene.audio.stop();
     const extras = `<div class="packs journey-packs">${motiveUI.packCard()}${["buddy","record"].map(packCard).join("")}</div>${draftPanel()}${storyUI.homeFeature()}`;
     reading({view:"home",extras});
@@ -1371,6 +1382,10 @@
     const readingCard = window.RBReadingCard.read();
     if (readingCard) { reading({view:"friend",shared:readingCard}); return; }
     if (openSharedMoment()) return;
+    if (params.get("legacy") === "archive" && !location.hash) {
+      libraryPage();
+      return;
+    }
     const card = decodeCard();
     if (card) friendPage(card);
     else if (restoreStoryResult(history.state?.rbTestReturn)) return;

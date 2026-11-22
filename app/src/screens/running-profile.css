@@ -5,6 +5,10 @@
 .running-profile__header { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: center; text-align: center; padding: 4px 12px; border-bottom: 1px solid var(--line); font-size: 13px; }
 .running-profile__header button { display: grid; place-items: center; background: transparent; border: 0; padding: 0; }
 .running-profile__body { max-width: 620px; margin-inline: auto; padding: 16px; }
+.run-bti-account section { margin-block: 20px; padding: 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+.run-bti-account dl { display: grid; grid-template-columns: minmax(5.5em, auto) 1fr; gap: 10px 14px; line-height: 1.55; }
+.run-bti-account dt { color: var(--ink-2); }
+.run-bti-account dd { margin: 0; overflow-wrap: anywhere; }
 .running-profile .app-heading.app-heading--screen { margin: var(--space-3) 0 var(--space-5); }
 .running-profile h1:focus { outline: none; }
 .running-profile .app-heading.app-heading--section { margin: var(--space-3) 0; }

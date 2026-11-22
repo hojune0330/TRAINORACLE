@@ -241,6 +241,7 @@ async function stateIdentityValid(ownerId, documentId, document) {
   if (document.kind === 'CALENDAR_DECORATIONS') return documentId === await namespacedId(['trainoracle.account.calendar-decorations.v1',ownerId]);
   if (document.kind === 'ATHLETE_RECORDS') return documentId === await namespacedId(['trainoracle.account.athlete-records.v1',ownerId]);
   if (document.kind === 'RUNNING_PROFILE') return documentId === await namespacedId(['trainoracle.account.running-profile.v1',ownerId]);
+  if (document.kind === 'RUN_BTI_PROFILE') return documentId === await namespacedId(['trainoracle.account.run-bti-profile.v1',ownerId]);
   if (document.kind === 'MINIGAME_PROGRESS') return documentId === await namespacedId(['trainoracle.account.minigame-progress.v1',ownerId]);
   if (document.kind === 'PLAN') return documentId === await namespacedId(['trainoracle.account.plan.v1',ownerId]);
   if (['GOAL_PROGRAM_BODY', 'GOAL_PROGRAM_PROGRESS', 'GOAL_PROGRAM_INDEX'].includes(document.kind)) {
@@ -326,6 +327,7 @@ function parseAction(input, validateDocument, maxCorrectionBytes = FILE_CORRECTI
   if (action === 'calendarDecorationSupport') valid = keys(input, ['action']);
   if (action === 'athleteRecordSupport') valid = keys(input, ['action']);
   if (action === 'runningProfileSupport') valid = keys(input, ['action']);
+  if (action === 'runBtiProfileSupport') valid = keys(input, ['action']);
   if (action === 'minigameProgressSupport') valid = keys(input, ['action']);
   if (action === 'goalProgramSupport') valid = keys(input, ['action']);
   if (action === 'oracleV2Support') valid = keys(input, ['action']);
@@ -475,6 +477,22 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
         if (enabled !== true) fail(503, 'UNAVAILABLE');
       };
       await checkGate();
+      if (input.action === 'runBtiProfileSupport' || input.action === 'save' && input.document.kind === 'RUN_BTI_PROFILE'
+        || ['read', 'history', 'restore'].includes(input.action) && input.documentId === await namespacedId(['trainoracle.account.run-bti-profile.v1', ownerId])) {
+        if (typeof repo.runBtiProfileSupport !== 'function' || !accountState.validateAccountStateDocument({
+          version: 3, state: 'ACCOUNT_STATE', kind: 'RUN_BTI_PROFILE',
+          data: { version: 'pairs-1', source: 'self-report', answeredAt: '2026-01-01T00:00:00.000Z', learning: 'solo' },
+        })) fail(503, 'UNAVAILABLE');
+        const support = await repo.runBtiProfileSupport();
+        await checkGate();
+        if (!keys(support, ['kind', 'version', 'eligible']) || support.kind !== 'run-bti-profile-support'
+          || support.version !== 1 || typeof support.eligible !== 'boolean') fail(503, 'UNAVAILABLE');
+        if (input.action === 'runBtiProfileSupport') return respond(200, support);
+        if (!support.eligible) fail(403, 'ACCESS_DENIED');
+        // Restoring older choices could reconnect fields the runner removed.
+        if (input.action === 'restore') fail(422, 'INVALID_DOCUMENT_UPDATE');
+        if (input.action === 'save' && Date.parse(input.document.data.answeredAt) > Date.now() + 300_000) fail(422, 'INVALID_DOCUMENT');
+      }
       if (input.action === 'journalLargeFileSupport') {
         if (typeof CompressionStream !== 'function' || typeof DecompressionStream !== 'function') fail(503, 'UNAVAILABLE');
         return respond(200, { kind: 'journal-large-file-support', version: 1, maxDocumentBytes: FILE_DOCUMENT_MAX_BYTES, maxCompressedBytes: FILE_COMPRESSED_MAX_BYTES, maxCorrectionBytes });
@@ -1071,6 +1089,8 @@ export function createAccountJournalHandler({ authenticate, getMaterial, validat
         const encryptedPayload = await encode(input.document, input.documentId);
         try { receipt = receiptFor(await repo.commit({ documentId: input.documentId,
           operationId: input.operationId, expectedRevision: input.expectedRevision, encryptedPayload,
+          // Signed only for the SQL age check. Not persisted as plaintext metadata.
+          ...(input.document.kind === 'RUN_BTI_PROFILE' ? { runBtiAnsweredAt: input.document.data.answeredAt } : {}),
           metadata: { ...accountJournalMetadata(input.document), ...await calendarOwnershipMetadata(input.document), ...await goalProgramMetadata(input.document, currentRow?.revision === input.expectedRevision ? currentDocument : undefined), ...(input.document.state === 'FINALIZED'
             ? { awardAllowed: awardAllowed(input) } : {}),
             ...(input.document.kind === 'DECORATIONS' && input.writePurpose === 'MIGRATION' && input.expectedRevision === 0
@@ -1126,6 +1146,7 @@ export function createAccountJournalRepository(client, { ownerId, attest } = {})
     calendarDecorationSupport: () => mutate('calendarDecorationSupport', {}),
     athleteRecordSupport: () => mutate('athleteRecordSupport', {}),
     runningProfileSupport: () => mutate('runningProfileSupport', {}),
+    runBtiProfileSupport: () => mutate('runBtiProfileSupport', {}),
     minigameProgressSupport: () => mutate('minigameProgressSupport', {}),
     goalProgramSupport: () => mutate('goalProgramSupport', {}),
     oracleV2Support: () => mutate('oracleV2Support', {}),

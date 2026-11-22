@@ -1,4 +1,5 @@
 import React from "react"
+import { clearRunBtiLoginReturn, isRunBtiEntry, rememberRunBtiLogin, takeRunBtiLoginReturn, type RunBtiLoginReturn } from "./domain/account/run-bti-login-return"
 import type { AccountEntryMode } from "./components/AccountEntryButton"
 import type { AccountSurface, AccountAdmissionReady } from "./screens/Account"
 import { readPendingAccountSetup } from "./domain/account/auth-onboarding"
@@ -86,6 +87,7 @@ import { isPaceToolStage, type PaceToolRequest } from "./domain/pace-tools"
 import { isEligiblePaceRecordCurrent } from "./domain/account/eligible-account-pace-records"
 import type { ImportMethod, ImportReviewSession } from "./screens/ImportActivities"
 import type { OpenGarminJournalRecord } from "./components/GarminConnectionPanel"
+const RunBtiAccountPanel = React.lazy(() => import("./screens/RunBtiAccountPanel"))
 const ImportedRecords = React.lazy(() => import("./screens/ImportedRecords").then(module => ({ default: module.ImportedRecords })))
 const JOURNAL_REWARD_MESSAGE = {
   AWARDED: "기록한 날 +4P가 반영됐어요.",
@@ -230,6 +232,14 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
   const [oracleEntryRevision, refreshOracleEntry] = React.useReducer((revision: number) => revision + 1, 0)
   const [oracleAuthResolved, setOracleAuthResolved] = React.useState(() => !accountFeatureEnabled())
   const [accountScopeRevision, setAccountScopeRevision] = React.useState(0)
+  const [runBtiProfileEntry, setRunBtiProfileEntry] = React.useState(() => {
+    if (typeof window === "undefined") return null
+    const entry = new URLSearchParams(window.location.search).get("run-bti-profile")
+    return isRunBtiEntry(entry) ? entry : null
+  })
+  const runBtiLogin = React.useRef<RunBtiLoginReturn | null>(null)
+  const runBtiOwner = React.useRef<string | null>(null)
+  const [runBtiReturnExpired, setRunBtiReturnExpired] = React.useState(false)
   const [accountEntryMode, setAccountEntryMode] = React.useState<AccountEntryMode>("login")
   const [accountSurface, setAccountSurface] = React.useState<AccountSurface>("auth")
   const [initialAccountIntent, setInitialAccountIntent] = React.useState(() => {
@@ -453,6 +463,29 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
     }
     applyOverlay(null)
   }, [applyOverlay])
+
+  const closeRunBtiEntry = React.useCallback(() => {
+    runBtiLogin.current = null
+    runBtiOwner.current = null
+    clearRunBtiLoginReturn()
+    const url = new URL(window.location.href)
+    url.searchParams.delete("run-bti-profile")
+    window.history.replaceState(window.history.state, "", url)
+    setRunBtiProfileEntry(null)
+    setRunBtiReturnExpired(false)
+  }, [])
+  React.useEffect(() => {
+    if (!runBtiProfileEntry || v.accountOpen) return
+    const bindOwner = (scopeChanged = false) => {
+      const owner = activeLocalAccount()
+      if (runBtiOwner.current && runBtiOwner.current !== owner && (owner || scopeChanged)) { closeRunBtiEntry(); return false }
+      if (owner) runBtiOwner.current = owner
+      return true
+    }
+    if (!bindOwner()) return
+    openOverlay({kind: "running-profile", stage: "overview"}, true)
+    return onLocalJournalScopeChange(() => { bindOwner(true) })
+  }, [runBtiProfileEntry, v.accountOpen, openOverlay, closeRunBtiEntry])
 
   React.useEffect(() => {
     if (!oracleV2Enabled()) { clearOracleInvitationReturn(); return }
@@ -1403,6 +1436,9 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
     setV(s => ({ ...s, tab: "home", accountOpen: true, importOpen: false }))
   })
   const closeAccount = () => runViewTransition("pop", () => {
+    if (runBtiLogin.current || initialAccountIntent === "run-bti") {
+      closeRunBtiEntry(); setInitialAccountIntent(null)
+    }
     setOracleEntry({ requested: false, invitation: null }); clearOracleInvitationReturn()
     const origin = connectionAccountReturn.current, returnToConnection = connectionAccountRequested.current
     connectionAccountReturn.current = null; connectionAccountRequested.current = false
@@ -1418,6 +1454,19 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
     if (consumedAccountAdmission.current === event.attemptId) return
     consumedAccountAdmission.current = event.attemptId
     setInitialAccountIntent(null)
+    if (event.returnIntent === "run-bti") {
+      const entry = takeRunBtiLoginReturn(runBtiLogin.current)
+      runBtiLogin.current = null
+      runBtiOwner.current = event.userId
+      setRunBtiReturnExpired(entry === null)
+      setRunBtiProfileEntry(entry ?? "saved")
+      const url = new URL(window.location.href)
+      url.searchParams.delete("account")
+      url.searchParams.delete("run-bti-profile")
+      window.history.replaceState(window.history.state, "", url)
+      setV(viewForTab("home"))
+      return
+    }
     if (event.returnIntent === "account" || event.returnIntent === "data-rights") {
       setAccountSurface(event.returnIntent === "account" ? "manage" : "data-rights")
       return
@@ -1487,11 +1536,11 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
     )
   } else if (v.tab === "home" && v.accountOpen && accountEnabled) {
     screen = (
-      <ConnectionAccountBackBoundary enabled={connectionAccountRequested.current} onBack={closeAccount}>
+      <ConnectionAccountBackBoundary enabled={connectionAccountRequested.current || Boolean(runBtiLogin.current) || initialAccountIntent === "run-bti"} onBack={closeAccount}>
       <DeferredMobileScreens.Account
         initialAuthMode={accountEntryMode}
         surface={loungeEntryIntent().requested ? "manage" : accountSurface}
-        returnIntent={connectionAccountRequested.current ? "connection" : accountSurface === "manage" ? "account" : accountSurface === "data-rights" ? "data-rights" : initialAccountIntent}
+        returnIntent={connectionAccountRequested.current ? "connection" : runBtiLogin.current ? "run-bti" : accountSurface === "manage" ? "account" : accountSurface === "data-rights" ? "data-rights" : initialAccountIntent}
         onAdmissionReady={accountAdmissionReady}
         loungeRequested={loungeEntryIntent().requested}
         onOpenJournal={() => goTab("journal")}
@@ -1946,7 +1995,17 @@ export function AppShell({ multiPlanRuntime, systemStatus }: {
         )}
         {overlay?.kind === "running-profile" && (
           <div className="app-flow-stage" data-overlay="running-profile">
-            {oracleV2Enabled() ?
+            {runBtiProfileEntry ? <React.Suspense fallback={<p role="status">프로필을 불러오고 있어요.</p>}>
+              {runBtiReturnExpired && <p role="status">로그인하는 동안 검사 연결이 끝났어요. 검사 결과에서 다시 연결해 주세요.</p>}
+              <RunBtiAccountPanel key={accountScopeRevision} token={runBtiProfileEntry}
+                onLogin={() => runViewTransition("push", () => {
+                  runBtiLogin.current = rememberRunBtiLogin(runBtiProfileEntry)
+                  applyOverlay(null)
+                  setAccountSurface("auth"); setAccountEntryMode("login")
+                  setV({...viewForTab("home"), accountOpen: true})
+                })}
+                onClose={closeRunBtiEntry} />
+            </React.Suspense> : oracleV2Enabled() ?
               <DeferredMobileScreens.OracleProfileV2 key={`oracle-v2-${accountScopeRevision}-${oracleEntryRevision}`} today={todayISO()} onBack={closeOverlay}
                 navigationState={profileNavigationState} onNavigationStateChange={setProfileNavigationState}
                 onOpenTraining={() => switchOracleSection("training")}

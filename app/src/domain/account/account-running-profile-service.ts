@@ -16,12 +16,13 @@ type Ports = {
   isOwner: () => boolean
   exclusive: <T>(work: () => Promise<T>) => Promise<T>
 }
-export async function runningProfileDocumentId(ownerId: string) {
-  const bytes = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify([RUNNING_PROFILE_NAMESPACE, ownerId]))))
+export async function namespacedAccountDocumentId(namespace: string, ownerId: string) {
+  const bytes = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify([namespace, ownerId]))))
   bytes[6] = (bytes[6]! & 15) | 80; bytes[8] = (bytes[8]! & 63) | 128
   const hex = [...bytes.slice(0, 16)].map(value => value.toString(16).padStart(2, "0")).join("")
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`
 }
+export const runningProfileDocumentId = (ownerId: string) => namespacedAccountDocumentId(RUNNING_PROFILE_NAMESPACE, ownerId)
 export function runningProfileEditToken(state: RunningProfileStore) {
   return JSON.stringify([state.revision, state.sequence, state.document])
 }
