@@ -66,7 +66,7 @@ export default function RunBtiAccountPanel({token, onClose, onLogin}: {token: st
       if (!current()) return
       if (!support.ok || support.data.kind !== "run-bti-profile-support") throw Error("support unavailable")
       if (!support.data.eligible) { setStatus("ineligible"); return }
-      const modelURL = new URL(import.meta.env.BASE_URL + "run-bti/rb-pairs-model.js", location.href).href
+      const modelURL = new URL(import.meta.env.BASE_URL + "run-bti/rb-pairs-model.js?v=pairs-2", location.href).href
       await import(/* @vite-ignore */ modelURL)
       const labels = (window as Window & {RBPairsModel?: Catalog}).RBPairsModel
       if (!labels) throw Error("labels unavailable")

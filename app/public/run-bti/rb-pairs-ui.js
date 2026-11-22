@@ -77,7 +77,12 @@
   }
   function badge(axis) {
     if (axis.direction) return axis.sides.find(side => side.id === axis.direction).label;
-    return {both:"양쪽 다 좋아", neither:"둘 다 별로", middle:"한쪽으로 기울지 않았어요",
+    if (axis.state === "middle") {
+      if (axis.sides.some(side => side.lows === 3)) return "한쪽은 덜 끌려요";
+      if (axis.sides.every(side => !side.likes && !side.lows)) return "양쪽 다 그저 그래요";
+      return "문항마다 달라요";
+    }
+    return {both:"양쪽 다 좋아", neither:"둘 다 별로",
       insufficient:"아직 판단하기 어려워요"}[axis.state];
   }
   function start() {
@@ -178,6 +183,7 @@
       }
       return item.options;
     }
+    const noteLabels = {strength:"어떤 걸 자신 있어 해?", goal:"어떤 목표가 있어?", motives:"또 어떤 이유로 뛰어?"};
     function question(item, answers) {
       const multi = item.multiple === true;
       const options = choices(item);
@@ -190,7 +196,10 @@
           return '<label class="fp-option"><input type="' + (multi ? 'checkbox' : 'radio') + '" name="' +
             item.id + '" value="' + escape(option.id) + '"' + (checked ? ' checked' : '') + '><span>' +
             escape(option.label) + '</span></label>';
-        }).join("") + '</div></fieldset>';
+        }).join("") + '</div>' + (noteLabels[item.id] ?
+          '<label class="fp-other-note"' + ((multi ? selected?.includes("other") : selected === "other") ? '' : ' hidden') +
+          '><span>' + noteLabels[item.id] + '</span><input type="text" maxlength="100" data-note="' + item.id +
+          '" value="' + escape(current.notes?.[item.id] || "") + '" autocomplete="off"><small>원하면 적어 줘. 직접 쓴 말은 지금 보는 결과에만 나와.</small></label>' : '') + '</fieldset>';
     }
     function quiz() {
       frame("quiz", '<section class="fp-quiz"><header class="fp-progress">' +
@@ -199,7 +208,8 @@
         '<progress aria-label="검사 진행" value="' + (page + 1) + '" max="' + pages.length + '"></progress>' +
         (page === 1 ? '<p class="fp-guide">문장마다 하나씩 고르세요. 처음이라면 해 보고 싶은 정도로 골라요.</p>' : '') +
         '<div class="fp-question-set">' + pages[page].map(item => question(item, current.answers)).join("") +
-        '</div><div class="fp-quiz-foot">' + button("next", page === pages.length - 1 ? "내 결과 보기" : "다음", true) +
+        '</div><div class="fp-quiz-foot">' + (current.finished && page < pages.length - 1 ? button("return-result", "결과로 돌아가기") : '') +
+        button("next", page === pages.length - 1 ? "내 결과 보기" : "다음", true) +
         '</div></section>');
     }
     function setAnswer(input) {
@@ -208,12 +218,6 @@
       if (!item) return;
       const option = choices(item).find(row => String(row.id) === input.value);
       if (!option) return;
-      if (current.finished) {
-        snapshot();
-        current = {...current,id:newId(),at:new Date().toISOString(),answers:{...current.answers},finished:false};
-        storyState = {}; personalName = ""; selectedComparison = "";
-        remember("quiz",false);
-      }
       if (item.multiple) {
         const id = option.id;
         const values = new Set(current.answers[item.id] || []);
@@ -223,9 +227,17 @@
           values.add(id);
         } else values.delete(id);
         current.answers[item.id] = [...values];
-        for (const other of input.closest("fieldset").querySelectorAll("input")) other.checked = values.has(other.value);
+        for (const other of input.closest("fieldset").querySelectorAll('input[type="checkbox"]')) other.checked = values.has(other.value);
       } else current.answers[item.id] = option.id;
-      saveDraft();
+      const field = input.closest("fieldset").querySelector(".fp-other-note");
+      if (field) {
+        field.hidden = item.multiple ? !current.answers[item.id].includes("other") : option.id !== "other";
+        if (field.hidden) {
+          if (current.notes) delete current.notes[item.id];
+          field.querySelector("input").value = "";
+        }
+      }
+      if (current.finished) snapshot(); else saveDraft();
     }
     function proof(ids, answers) {
       const list = ids.map(id => {
@@ -240,43 +252,49 @@
     function score(side) {
       return side.mean === null ? '응답 없음' : (Math.round(side.mean * 100) / 100) + '/2점';
     }
+    function nameProof(result, choice, answers) {
+      if (!choice.evidence.length) return "";
+      const sides = choice.key.split("+");
+      const rows = result.axes.filter(axis => sides.includes(axis.direction)).map(axis => {
+        const gap = Number(axis.gap.toFixed(2));
+        return '<li>' + axis.sides.map(side => escape(side.label) + ' ' + score(side)).join(' · ') +
+          ' <strong>(' + gap + '점 차이)</strong></li>';
+      });
+      return '<details><summary>이 이름이 나온 내 답</summary><p>' +
+        (rows.length === 1 ? '한쪽 취향이 뚜렷하게 나온 짝이에요.' : '한쪽 취향이 뚜렷한 짝 중 양쪽의 평균 점수 차이가 큰 두 짝을 담았어요.') +
+        '</p><ul class="fp-name-scores">' + rows.join("") + '</ul>' + proof(choice.evidence, answers) + '</details>';
+    }
     function axisPanel(axis, answers) {
+      const readings = axis.sides.map(side => model.sideReading(side, answers));
+      const claims = [...readings.map(row => row.summary), ...readings.map(row => row.likes[0])].filter(Boolean);
       return '<section class="fp-axis"><h3><span>' + escape(axis.label) + '</span><strong>' +
         escape(badge(axis)) + '</strong></h3>' +
         '<div class="fp-bars">' + axis.sides.map(side => '<div><b>' + escape(side.label) + '</b>' +
           (side.mean === null ? '' : '<progress max="2" value="' + side.mean + '" aria-label="' +
              escape(side.label) + ' 응답 평균"></progress>') + '<small>' + score(side) +
           (side.count ? ' · 답 ' + side.count + '개' : '') + '</small></div>').join("") + '</div>' +
-        '<details><summary>내가 고른 답</summary>' +
+        claims.map(claim => '<p class="fp-axis-reading" data-fp-evidence="' +
+          escape(claim.evidence.map(entry => entry.id + "=" + entry.value).join(" ")) + '">' +
+          escape(claim.text) + '</p>').join("") + '<details><summary>내가 고른 답</summary>' +
         proof(model.items.filter(item => item.axisId === axis.id).map(item => item.id), answers) + '</details></section>';
     }
     const factTitles = {strength:"자신 있는 것", goal:"다음 목표", learning:"배우고 싶은 방식",
       motives:"요즘 뛰는 이유", eagerness:"달릴 날을 기다리는 마음", distanceLevel:"쉬지 않고 뛰어 본 거리", challenge:"힘들어지는 구간"};
-    function fact(id, answers) {
+    function fact(id, answers, notes = {}) {
       const item = extraById.get(id);
       const values = Array.isArray(answers[id]) ? answers[id] : [answers[id]];
       const picked = item.options.filter(option => values.includes(option.id));
       if (!picked.length) return '<div class="fp-empty-fact"><b>' + factTitles[id] + '</b><span>답하지 않음</span></div>';
-      const label = picked.map(option => option.label).join(" · ");
+      const label = picked.map(option => {
+        if (option.id !== "other") return option.label;
+        const note = typeof notes[id] === "string" ? notes[id].trim() : "";
+        return note || "보기에 없는 답을 골랐어요";
+      }).join(" · ");
       return '<details class="fp-fact"><summary><b>' + factTitles[id] + '</b><span>' + escape(label) +
         '</span></summary><p>' + escape(item.text) + ' → ' + escape(label) + '</p></details>';
     }
-    function reasonText(result, answers) {
-      const sides = result.defaultKey.split("+");
-      const reasons = {distance:"조금 더 멀리 달리는", speed:"짧게 속도를 내는", numbers:"페이스를 숫자로 확인하는",
-        senses:"몸의 느낌을 살피는", familiar:"아는 길을 다시 뛰는", explore:"새 길로 뛰어 보는",
-        plan:"미리 정해 두는", improvise:"그날 정하는"};
-      if (sides.every(side => reasons[side])) return sides.length === 2 ?
-        reasons[sides[0]] + " 것도 좋고 " + reasons[sides[1]] + " 것도 좋다고 답했어요." :
-        reasons[sides[0]] + " 게 좋다고 답했어요.";
-      const both = result.axes.filter(axis => axis.state === "both").map(axis => axis.label);
-      if (both.length) return both.join(", ") + "에서 두 가지 모두 좋아한다고 답했어요.";
-      const neither = result.axes.filter(axis => axis.state === "neither").map(axis => axis.label);
-      if (neither.length) return neither.join(", ") + "에서 두 쪽 모두 별로 끌리지 않는다고 답했어요.";
-      if (!result.anyAnswered) return model.items.some(item => answers[item.id] === "unknown") ?
-        "‘아직 모르겠어’로 남긴 문항에는 점수를 매기지 않았어요." : "아직 성향 문항에서 고른 답이 없어요.";
-      if (result.axes.every(axis => axis.state === "insufficient")) return "두 쪽을 비교하기엔 아직 고른 답이 적어요.";
-      return "지금은 한쪽으로 뚜렷하게 기울지 않았어요. 짝마다 고른 답을 펼쳐 보세요.";
+    function reasonText(result, answers, selected = result.defaultKey) {
+      return model.resultReason(result, answers, selected);
     }
     function compareBlock(result) {
       const previous = records().filter(row => row.id !== current.id && row.at < current.at);
@@ -295,31 +313,28 @@
     function resultView(focus = true) {
       const answers = current.answers;
       const result = model.evaluate(answers);
-      const art = extras?.artFor?.(result, result.defaultName);
-      const artSide = result.axes.flatMap(axis => axis.sides).find(side => side.id === art?.direction);
-      const canonical = result.choices.find(choice => choice.name === personalName);
-      personalName = canonical?.name || result.defaultName;
+      const canonical = model.choiceFor(result, personalName);
+      personalName = canonical.key;
       const head = '<section class="fp-result-top"><div class="fp-result-copy"><p class="fp-eyebrow">내 러닝 성향</p>' +
-        '<h1>' + escape(result.defaultName) + '</h1><p class="fp-reading">' + escape(reasonText(result,answers)) + '</p>' +
-        (result.evidence.length ? '<details><summary>이 이름이 나온 내 답</summary>' + proof(result.evidence, answers) + '</details>' : '') +
-        '</div>' + (art?.image ? '<figure class="fp-runner"><img src="' + asset(art.image) + '" alt="' +
-        escape(art.alt || "") + '">' + (artSide ? '<figcaption>' + escape(artSide.label) +
-        '를 그린 캐릭터</figcaption>' : '') + '</figure>' : '') + '</section>';
-      const nameChoice = result.choices.length > 1 ? '<section class="fp-section"><label class="fp-select-label">이미지에 넣을 별명 ' +
-        '<select data-fp-change="name">' + result.choices.map(choice => '<option' +
-          (choice.name === personalName ? ' selected' : '') + '>' + escape(choice.name) + '</option>').join("") +
+        '<h1>' + escape(canonical.name) + '</h1><p class="fp-reading">' + escape(reasonText(result,answers,canonical.key)) + '</p>' +
+        nameProof(result, canonical, answers) +
+        '</div><figure class="fp-runner" data-result-art></figure></section>';
+      const nameChoice = result.choices.length > 1 ? '<section class="fp-section"><label class="fp-select-label">내 카드에 쓸 별명 ' +
+        '<select data-fp-change="name">' + result.choices.map(choice => '<option value="' + escape(choice.key) + '"' +
+          (choice.key === personalName ? ' selected' : '') + '>' + escape(choice.name) + '</option>').join("") +
         '</select></label><p>동점인 별명 중에서 골라요. 친구에게 보내는 링크에는 기본 별명이 담겨요.</p></section>' : '';
       frame("result", head + '<section class="fp-section"><h2>네 짝으로 보는 내 취향</h2><div class="fp-axis-list">' +
         result.axes.map(axis => axisPanel(axis, answers)).join("") + '</div></section>' +
         '<section class="fp-section"><h2>지금의 나</h2><div class="fp-facts">' +
-        Object.keys(factTitles).map(id => fact(id, answers)).join("") + '</div></section>' +
+        Object.keys(factTitles).map(id => fact(id, answers, current.notes)).join("") + '</div></section>' +
         nameChoice + '<div id="fp-extras"></div><div id="fp-profile"></div>' +
         '<section class="fp-section fp-save"><h2>이번 답 보관하기</h2><p>이 기기에서 지난 답과 다시 비교할 수 있어요. 민감한 답은 보관하지 않아요.</p>' +
         '<div class="fp-actions">' + button("save", "내 보관함에 저장", true) +
         button("archive", "내 보관함") + button("edit", "내 답 다시 보기") + '</div></section>' +
         compareBlock(result), focus);
+      window.RBPairArt.mount(main.querySelector("[data-result-art]"), window.RBPairArt.select(result,canonical.key));
       const featureHost = main.querySelector("#fp-extras");
-      extras?.mount(featureHost, {result, answers, selectedName:personalName, storyState, shared:received,
+      extras?.mount(featureHost, {result, answers, selectedName:canonical.name, storyState, shared:received,
         onStoryChange: next => { if (next && typeof next === "object") storyState = next; }});
       const projection = {};
       for (const id of ["learning","distanceLevel","strength","goal"]) if (answers[id]) projection[id] = answers[id];
@@ -327,8 +342,10 @@
         () => extras?.profilePreferences?.(storyState) || {});
     }
     function saveResult() {
+      const result = model.evaluate(current.answers);
+      const choice = model.choiceFor(result, personalName);
       const entry = {id:current.id, version:model.version, at:current.at, answers:safeAnswers(current.answers),
-        stories:extras?.archiveStories?.(storyState) || {}, personalName};
+        stories:extras?.archiveStories?.(storyState) || {}, personalKey:choice.key, personalName:choice.name};
       if (write("localStorage", archivePrefix + entry.id, entry)) notify("이번 답을 이 기기에 보관했어요.");
       else notify("이 브라우저에서는 보관할 수 없어요. 카드를 이미지로 저장해 주세요.");
     }
@@ -336,7 +353,7 @@
       const entries = records();
       frame("archive", '<section class="fp-section fp-library"><h1>내 러너 보관함</h1>' +
         (entries.length ? '<ul>' + entries.map(row => '<li><button data-fp="open" data-id="' + escape(row.id) +
-          '"><small>' + escape(dateLabel(row.at)) + '</small><b>' + escape(model.evaluate(row.answers).defaultName) +
+          '"><small>' + escape(dateLabel(row.at)) + '</small><b>' + escape(model.choiceFor(model.evaluate(row.answers),row.personalKey || row.personalName).name) +
           '</b></button><button class="fp-text" data-fp="remove" data-id="' + escape(row.id) +
           '" aria-label="' + escape(dateLabel(row.at)) + ' 답 지우기">지우기</button></li>').join("") + '</ul>' :
           '<p>아직 보관한 답이 없어요. 결과에서 ‘내 보관함에 저장’을 누르면 여기에 남아요.</p>') +
@@ -347,7 +364,7 @@
       if (!validRecord(record)) { archive(); return; }
       snapshot();
       current = {...record, answers:safeAnswers(record.answers), finished:true};
-      personalName = typeof record.personalName === "string" ? record.personalName : "";
+      personalName = record.personalKey || record.personalName || "";
       selectedComparison = "";
       storyState = extras?.archiveStories?.(record.stories) || {};
       resultView();
@@ -385,13 +402,13 @@
         case "previous":
           if (page > 0 && history.state?.wasQuiz) { history.back(); }
           else if (page > 0) { page--; saveDraft(); remember("quiz",false); quiz(); }
+          else if (current?.finished) { remember("result",false); resultView(); }
           else { remember("home",false); home(); }
           break;
         case "next": nextPage(); break;
         case "edit":
-          snapshot();
-          current = {id:newId(), version:model.version, at:new Date().toISOString(), answers:{...current.answers},finished:false};
-          page = 0; storyState = {}; selectedComparison = ""; personalName = ""; saveDraft(); remember("quiz"); quiz(); break;
+          page = 0; snapshot(); remember("quiz"); quiz(); break;
+        case "return-result": snapshot(); remember("result"); resultView(); break;
         case "save": saveResult(); break;
         case "archive": remember("archive"); archive(); break;
         case "open": openSaved(target.dataset.id); if (view === "result") remember("result"); break;
@@ -415,6 +432,12 @@
       }
     };
     document.addEventListener("click", click);
+    main.addEventListener("input", event => {
+      const id = event.target.dataset.note;
+      if (view !== "quiz" || !Object.hasOwn(noteLabels, id) || !current || event.target.closest("label")?.hidden) return;
+      current.notes ??= {};
+      current.notes[id] = event.target.value.trim().slice(0, 100);
+    });
     main.addEventListener("change", changed);
     window.addEventListener("rb-pairs-start", begin);
     function initial(focus = false) {

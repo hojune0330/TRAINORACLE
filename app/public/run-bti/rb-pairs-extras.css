@@ -34,12 +34,15 @@
 .rpx-link-area{border-top:1px solid #c8c7b8;margin-top:1.15rem;padding-top:1rem}
 .rpx-consent{display:flex;align-items:center;gap:.45rem;min-height:44px;line-height:1.5}
 .rpx-consent input{width:1.1rem;height:1.1rem;accent-color:#29433e}
+.rpx-controls > .rpx-consent{margin:.7rem 0;align-items:flex-start}
+.rpx-controls > .rpx-consent input{flex:none;margin-top:.25rem}
+.rpx-controls > .rpx-consent small{display:block}
 .rpx-actions .rpx-btn{flex:1}
 .rpx-copy{display:block;margin:.4rem 0}
 .rpx-compare-line{border-top:1px solid #cbcbbf;padding:.8rem 0}
 .rpx-compare-line p{margin:.3rem 0 .55rem;font-size:1.08rem}
 .rpx-received{text-align:center;margin:2rem auto;max-width:42rem}
-.rpx-received-art{display:block;width:auto;max-width:100%;max-height:45vh;margin:1rem auto}
+.rpx-received-art{width:min(100%,31rem);margin:1rem auto}
 .rpx-dialog{box-sizing:border-box;border:0;border-radius:12px;background:#faf7ed;max-width:min(96vw,38rem);max-height:97dvh;padding:.65rem;text-align:center}
 .rpx-dialog::backdrop{background:#15232bdd}
 .rpx-dialog img{display:block;width:auto;height:auto;max-width:100%;max-height:calc(94dvh - 65px);object-fit:contain;margin:0 auto .45rem}

@@ -57,7 +57,10 @@
 .fp-ratings .fp-option span { justify-content: center; text-align: center; font-size: .92rem; }
 .fp-option input:checked + span { font-weight: 750; color: #7a351f; border-color: var(--fp-accent); box-shadow: inset 0 0 0 1px var(--fp-accent); background: #f5e6d9; }
 .fp-option input:focus-visible + span { outline: 3px solid #18639e; outline-offset: 2px; }
-.fp-quiz-foot { display: flex; justify-content: flex-end; padding-top: 8px; }
+.fp-quiz-foot { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; padding-top: 8px; }
+.fp-other-note:not([hidden]) { display: grid; gap: 6px; margin-top: 12px; }
+.fp-other-note input { min-width: 0; padding: 10px; border: 1px solid var(--fp-muted); border-radius: 8px; font: inherit; color: inherit; background: white; }
+.fp-other-note small { color: var(--fp-muted); }
 .fp-quiz-foot .fp-button { min-width: 140px; }
 .fp-result-top { grid-template-columns: minmax(0,1.45fr) minmax(200px,.65fr); margin-bottom: 24px; }
 .fp-result-top:has(> :only-child) { grid-template-columns: 1fr; }
@@ -65,11 +68,9 @@
 .fp-reading { color: #444959; font-size: clamp(.96rem,1.8vw,1.1rem); }
 .fp-result-copy > details { margin-top: 12px; }
 .fp-runner { padding: clamp(9px,2vw,20px); background: #ebe8e1; }
-.fp-runner img { width: 100%; height: clamp(190px,32vw,340px); object-fit: contain; }
-@media (prefers-reduced-motion: no-preference) {
-  .fp-runner img { animation: fp-discover .5s ease-out both; }
-  @keyframes fp-discover { from { opacity: .2; transform: translateY(5px); } to { opacity: 1; transform: none; } }
-}
+.rb-pair-art canvas { display: block; width: 100%; height: auto; border: 1px solid #303844; }
+.rb-pair-art figcaption { margin: .55rem 0 0; font-size: .86rem; line-height: 1.45; text-align: center; word-break: keep-all; }
+.rpx-received .rpx-received-art { width: min(100%, 520px); max-height: none; margin: 1rem auto; }
 .fp-section { margin: 0 0 20px; padding: clamp(18px,3vw,34px); border: 1px solid var(--fp-rule); background: var(--fp-card); border-radius: 8px; min-width: 0; }
 .fp-section > h2 { font-size: clamp(1.35rem,2.4vw,1.74rem); margin: 0 0 15px; }
 .fp-section p { margin: 6px 0 13px; }

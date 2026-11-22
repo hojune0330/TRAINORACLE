@@ -54,7 +54,95 @@ test("a unique first side stays in every candidate at a tied second-place cutoff
   }
   const fullTie = asResult({ distance: 2, speed: 0, numbers: 2, senses: 0, familiar: 2, explore: 0, plan: 2, improvise: 0 });
   assert.equal(fullTie.choices.length, 6);
-  assert.equal(fullTie.defaultName, "숫자 보며 한 바퀴 더");
+  assert.equal(fullTie.defaultKey, "distance+numbers");
+  assert.equal(fullTie.defaultName, "장거리 숫자파");
+  assert.equal(model.choiceFor(fullTie, "미리 정하고 길게").key, "distance+plan");
+  assert.equal(model.choiceFor(fullTie, "distance+plan").key, "distance+plan");
+  assert.equal(model.choiceFor(fullTie, model.names["distance+plan"]).key, "distance+plan");
+  assert.equal(model.choiceFor(fullTie, "내키면 한 바퀴 더").key, fullTie.defaultKey);
+  const fullAnswers = fillSides({distance:2, speed:0, numbers:2, senses:0, familiar:2, explore:0, plan:2, improvise:0});
+  assert.match(model.resultReason(fullTie, fullAnswers, "미리 정하고 길게"), /거리 쪽과 계획 쪽/);
+  assert.doesNotMatch(model.resultReason(fullTie, fullAnswers, "distance+plan"), /숫자/);
+});
+
+test("distance without another lap and split times without current pace are traced to their own questions", () => {
+  const answers = fillSides({
+    distance:[2, 0, 2], speed:0, numbers:[0, 2, 2], senses:0,
+  });
+  const result = model.evaluate(answers);
+  assert.equal(result.defaultKey, "distance+numbers");
+  assert.deepEqual(result.evidence, ["distance-1", "distance-3", "numbers-2", "numbers-3"]);
+  const readings = [result.axes[0].sides[0], result.axes[1].sides[0]].map(side => model.sideReading(side, answers));
+  const firstResult = [result.defaultName, model.resultReason(result, answers),
+    ...readings.flatMap(row => row.likes.map(claim => claim.text))].join(" ");
+  assert.doesNotMatch(firstResult, /한 바퀴 더|지금 페이스를 숫자로/);
+  assert.match(firstResult, /조금 더 멀리/);
+  assert.match(firstResult, /구간이 끝나면 걸린 시간/);
+  for (const row of readings) {
+    for (const claim of row.likes) {
+      assert.equal(claim.evidence.length, 1);
+      const [{id, value}] = claim.evidence;
+      assert.equal(value, 2);
+      assert.equal(answers[id], value);
+      assert.ok(claim.text.includes(model.items.find(item => item.id === id).text));
+    }
+  }
+});
+
+test("all three low speed ratings remain visible even without a directional nickname", () => {
+  const answers = fillSides({distance:[2, 1, 1], speed:0});
+  const result = model.evaluate(answers);
+  assert.equal(result.defaultKey, "open");
+  assert.equal(result.axes[0].state, "middle");
+  const low = model.sideReading(result.axes[0].sides[1], answers).summary;
+  assert.deepEqual(low.evidence, [
+    {id:"speed-1", value:0}, {id:"speed-2", value:0}, {id:"speed-3", value:0},
+  ]);
+  assert.match(model.resultReason(result, answers), /거리 쪽은 ‘좋아’ 1개, ‘그저 그래’ 2개/);
+  assert.ok(model.resultReason(result, answers).includes(low.text));
+  assert.match(low.text, /속도 쪽 세 문항에 모두 ‘별로 안 끌려’/);
+  assert.doesNotMatch(model.resultReason(result, answers), /한쪽으로 기울지/);
+});
+
+test("each specific preference in every nickname combination requires its own positive item", () => {
+  const seenNames = new Set();
+  for (const [index, axis] of model.axes.entries()) {
+    for (const next of model.axes.slice(index + 1)) {
+      for (const a of axis.sides) for (const b of next.sides) {
+        const key = a.id + "+" + b.id;
+        seenNames.add(model.names[key]);
+        for (const target of [a, b]) for (const offset of [0, 1, 2]) {
+          const specific = model.items.find(item => item.sideId === target.id && item.id.endsWith("-" + (offset + 1)));
+          for (const rejected of [0, 1, "unknown", undefined]) {
+            const sides = Object.fromEntries([...axis.sides, ...next.sides].map(side =>
+              [side.id, side === a || side === b ? 2 : 0]));
+            const answers = fillSides(sides);
+            if (rejected === undefined) delete answers[specific.id];
+            else answers[specific.id] = rejected;
+            const result = model.evaluate(answers);
+            assert.equal(result.defaultKey, key);
+            assert.equal(result.defaultName, model.names[key]);
+            assert.ok(!result.evidence.includes(specific.id));
+            const side = result.axes.flatMap(row => row.sides).find(part => part.id === target.id);
+            const {likes} = model.sideReading(side, answers);
+            assert.equal(likes.length, 2);
+            const claimIds = new Set(likes.map(claim => claim.evidence[0].id));
+            assert.ok(!claimIds.has(specific.id));
+            for (const claim of likes) {
+              const [{id, value}] = claim.evidence;
+              const expectedItem = model.items.find(item => item.id === id);
+              assert.equal(value, 2);
+              assert.equal(answers[id], value);
+              assert.equal(claim.text, "“" + expectedItem.text + "”에 ‘좋아’라고 답했어요.");
+            }
+            const publicTitleAndReason = result.defaultName + model.resultReason(result, answers);
+            assert.doesNotMatch(publicTitleAndReason, /한 바퀴|발걸음|내킬|내키는|뛰며 정|미리 정|조금 더 멀리|페이스를 숫자로|구간 시간|중간 기록|숨소리|갈림길/);
+          }
+        }
+      }
+    }
+  }
+  assert.equal(seenNames.size, 24);
 });
 
 test("all 24 titles are reachable and traceable; context, goals and property order cannot score", () => {

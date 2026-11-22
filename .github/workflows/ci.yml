@@ -325,6 +325,15 @@ jobs:
         working-directory: app
         run: npx playwright install --with-deps chromium
 
+      - name: Verify Run-BTI artwork and shared PNGs
+        working-directory: app
+        env:
+          RUN_BTI_BROWSER: "1"
+          RUN_BTI_BROWSER_CHANNEL: chromium
+        run: |
+          npm run test:run-bti:art
+          node --test --test-name-pattern="^Chrome:" scripts/run-bti-presentation.test.mjs
+
       - name: Verify calendar decoration interaction
         working-directory: app
         run: npm run test:e2e:calendar-decoration

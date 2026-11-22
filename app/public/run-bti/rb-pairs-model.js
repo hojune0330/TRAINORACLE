@@ -22,7 +22,7 @@
       ],
       prompts: [
         "시간 넉넉한 날엔 어디까지 가 보고 싶어?",
-        "한 바퀴 더 돌 때랑 속도가 붙을 때, 너는 언제 더 신나?",
+        "같이 뛴다면 거리랑 속도 중에 뭐부터 맞춰 볼까?",
         "속도를 낼 때 특히 좋아하는 구간 있어?",
       ],
     },
@@ -41,9 +41,9 @@
         ] },
       ],
       prompts: [
-        "뛰면서 제일 궁금한 숫자가 뭐야?",
+        "러닝 기록에서 숫자 하나만 본다면 뭐가 궁금해?",
         "중간 기록은 뛰면서 알려 줄까? 끝나고 같이 볼까?",
-        "오늘 발이 가볍다는 걸 넌 언제 처음 느껴?",
+        "뛰는 날 몸이 가벼운지 어떻게 알아?",
       ],
     },
     {
@@ -136,6 +136,29 @@
   const names = Object.assign(Object.create(null), {
     open: "내 러닝 취향", unanswered: "지금까지 고른 답",
     ...Object.fromEntries(axes.flatMap(axis => axis.sides.map(side => [side.id, side.label]))),
+  });
+
+  // Only a shared side descriptor and a side label may contribute words to a nickname.
+  // Keep a question's specific action in the evidence that quotes that question.
+  const titleWords = {
+    distance: "장거리", speed: "스피드",
+    familiar: "단골길", explore: "새 길", plan: "계획형", improvise: "즉흥형",
+  };
+  for (const [index, axis] of axes.entries()) {
+    for (const next of axes.slice(index + 1)) {
+      for (const a of axis.sides) {
+        for (const b of next.sides) {
+          const key = a.id + "+" + b.id;
+          names[key] = axis.id === "signals"
+            ? titleWords[b.id] + " " + a.label
+            : titleWords[a.id] + " " + b.label;
+        }
+      }
+    }
+  }
+
+  // Earlier local archives stored the displayed Korean title instead of the key.
+  const legacyTitles = {
     "distance+numbers": "숫자 보며 한 바퀴 더", "distance+senses": "발걸음 느끼며 길게",
     "speed+numbers": "속도 내는 숫자파", "speed+senses": "속도 내는 감각파",
     "distance+familiar": "단골길 한 바퀴 더", "distance+explore": "새 길로 한 바퀴 더",
@@ -148,7 +171,7 @@
     "senses+plan": "미리 정하는 감각파", "senses+improvise": "뛰며 정하는 감각파",
     "familiar+plan": "계획대로 단골길", "familiar+improvise": "일단 단골길부터",
     "explore+plan": "계획 있는 탐험가", "explore+improvise": "발길 닿는 탐험가",
-  });
+  };
 
   const axisOrder = Object.fromEntries(axes.map((axis, index) => [axis.id, index]));
   const sideItems = new Map(axes.flatMap(axis =>
@@ -234,6 +257,65 @@
     };
   }
 
+  function choiceFor(result, saved) {
+    return result.choices.find(choice => choice.key === saved || choice.name === saved ||
+      (typeof saved === "string" && legacyTitles[choice.key] === saved)) || result.choices[0];
+  }
+
+  const sideTopics = {
+    distance: "거리", speed: "속도", numbers: "숫자", senses: "몸의 감각",
+    familiar: "익숙한 길", explore: "새 길", plan: "계획", improvise: "즉흥",
+  };
+
+  // Produce concrete preference statements exclusively from a liked question.
+  // Quoting the question keeps the wording and its required answer inseparable.
+  function likedClaim(item, answers) {
+    if (answers[item.id] !== 2) return null;
+    return { text: "“" + item.text + "”에 ‘좋아’라고 답했어요.", evidence: [{id:item.id, value:2}] };
+  }
+
+  function sideReading(side, answers) {
+    const sideQuestions = sideItems.get(side.id);
+    const likes = sideQuestions.map(item => likedClaim(item, answers)).filter(Boolean);
+    const evidence = side.answered.map(id => ({id, value:answers[id]}));
+    const topic = sideTopics[side.id] + " 쪽";
+    let text = "";
+    if (side.count === sideQuestions.length && side.lows === side.count) {
+      text = topic + " 세 문항에 모두 ‘별로 안 끌려’라고 답했어요.";
+    } else if (side.count === sideQuestions.length && !side.likes && !side.lows) {
+      text = topic + " 세 문항에 모두 ‘그저 그래’라고 답했어요.";
+    } else if (new Set(evidence.map(entry => entry.value)).size > 1) {
+      const counts = [2, 1, 0].map(value => ({value, count:evidence.filter(entry => entry.value === value).length}));
+      text = topic + "은 " + counts.filter(entry => entry.count).map(entry =>
+        "‘" + labels[entry.value] + "’ " + entry.count + "개").join(", ") + "였어요.";
+    }
+    return {summary: text ? {text, evidence} : null, likes};
+  }
+
+  function resultReason(result, answers, selected = result.defaultKey) {
+    const choice = choiceFor(result, selected);
+    const sides = choice.key.split("+");
+    if (sides.every(id => Object.hasOwn(sideTopics, id))) {
+      return sides.map(id => sideTopics[id] + " 쪽").join("과 ") +
+        (sides.length > 1 ? "에서 각각" : "에서") + " 두 문항 이상에 ‘좋아’라고 답했어요.";
+    }
+    for (const axis of result.axes) {
+      // Even without a directional nickname, a clear dislike is worth reporting.
+      if (axis.sides.some(side => side.count === 3 && side.lows === 3)) {
+        return axis.sides.map(side => sideReading(side, answers).summary?.text).filter(Boolean).join(" ");
+      }
+    }
+    const both = result.axes.filter(axis => axis.state === "both").map(axis => axis.label);
+    if (both.length) return both.join(" · ") + "에서 양쪽 모두 두 문항 이상에 ‘좋아’라고 답했어요.";
+    const neither = result.axes.filter(axis => axis.state === "neither").map(axis => axis.label);
+    if (neither.length) return neither.join(" · ") + "에서 양쪽 모두 두 문항 이상에 ‘별로 안 끌려’라고 답했어요.";
+    if (!result.anyAnswered) return items.some(item => answers[item.id] === "unknown") ?
+      "‘아직 모르겠어’로 남긴 문항에는 점수를 매기지 않았어요." : "아직 성향 문항에서 고른 답이 없어요.";
+    if (result.axes.every(axis => axis.state === "insufficient")) return "두 쪽을 비교하기엔 아직 고른 답이 적어요.";
+    const summary = result.axes.flatMap(axis => axis.sides.map(side => sideReading(side, answers).summary)).find(Boolean);
+    return summary?.text || "이번 답만으로는 어느 쪽이 더 좋은지 정하기 어려워요.";
+  }
+
   function likedSides(result, axis) {
     if (!result) return [];
     if (result.state === "both") return axis.sides;
@@ -264,5 +346,6 @@
     return lines;
   }
 
-  globalThis.RBPairsModel = { version, labels, axes, items, extras, names, evaluate, compare };
+  globalThis.RBPairsModel = { version, labels, axes, items, extras, names, evaluate, compare,
+    choiceFor, sideReading, resultReason };
 })();
