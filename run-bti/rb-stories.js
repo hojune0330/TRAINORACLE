@@ -4,6 +4,8 @@ window.RBStories = (() => {
   const groups = {weather:"날씨", race:"대회", gear:"러닝화·장비", community:"러닝 친구", routine:"일상", travel:"여행"};
   const sourceNames = {event:"대회 안내", brand:"브랜드 발표", community:"커뮤니티 글", weather:"날씨 자료"};
   const storagePrefix = "runbti.story.v1.";
+  const modes = {experience:"뛰어 본 날", imagine:"상상한 러닝", unspecified:"이전 답"};
+  const recordKey = "runbti.story.v2.";
   const kstDay = () => new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10);
   const available = (s, day) => (!s.validFrom || day >= s.validFrom) && (!s.validUntil || day <= s.validUntil);
   const formatDate = date => String(date || "").replace(/^(\d{4})-(\d{2})-(\d{2})$/, (_,y,m,d) => `${y}년 ${+m}월 ${+d}일`);
@@ -20,12 +22,38 @@ window.RBStories = (() => {
     const catalog = data.filter(s => s && Object.hasOwn(groups, s.category) && Array.isArray(s.choices));
     const byId = new Map(catalog.map(s => [s.id, s]));
     const memory = new Map();
-    const exclusions = new Map(), exclusionKey = "runbti.story.excluded.v1.";
     let category = "all", current = null, ending = null, shared = false, shelfPosition = 0;
-    const latestPick = id => memory.get(id) ?? load(storagePrefix + id, null);
-    const isExcluded = id => exclusions.get(id) ?? (load(exclusionKey + id, false) === true);
-    const includedPick = id => isExcluded(id) ? null : latestPick(id);
-    const profile = () => window.RBStoryMatch.profile(catalog, ownResults(), includedPick);
+    let viewMode = null, reportMode = null;
+    const modeOf = window.RBStoryMatch.modeOf;
+    function entries(id) {
+      const value = memory.get(id) ?? load(recordKey + id, {});
+      const all = value && typeof value === "object" ? {...value} : {};
+      const old = load(storagePrefix + id, null);
+      if (!all.unspecified && typeof old === "string") all.unspecified = {mode:"unspecified",choiceId:old,
+        excluded:load("runbti.story.excluded.v1." + id, false) === true};
+      return all;
+    }
+    function saveEntry(id, entry) {
+      const all = {...entries(id),[entry.mode]:entry};
+      const stored = save(recordKey + id, all);
+      if (stored) memory.delete(id); else memory.set(id, all);
+      return stored;
+    }
+    const newest = list => list.filter(Boolean).sort((a,b) => (b.at || 0) - (a.at || 0))[0];
+    const latestEntry = id => newest(Object.values(entries(id)));
+    function defaultMode() {
+      const latest = Object.values(ownResults() || {}).filter(Boolean)
+        .sort((a,b) => (b.date || b.at || 0) - (a.date || a.at || 0))[0];
+      if (latest) return modeOf(latest.mode);
+      return newest(catalog.map(s => latestEntry(s.id)))?.mode || "experience";
+    }
+    function profile(mode = defaultMode()) {
+      return window.RBStoryMatch.profile(catalog,ownResults(mode),id => entries(id)[mode],mode);
+    }
+    function knownModes() {
+      return Object.keys(modes).filter(mode => Object.values(ownResults(mode) || {}).some(r => r && modeOf(r.mode) === mode) ||
+        catalog.some(s => entries(s.id)[mode]));
+    }
     const illustration = s => asset(/^art\/[a-z0-9-]+\.webp$/.test(s.art) ? s.art : "art/q-00.webp");
     function active() {
       const day = kstDay();
@@ -75,12 +103,13 @@ window.RBStories = (() => {
       const origin = fileOrigin || history.state?.rbStoryOrigin;
       return origin && canReturnToResult(origin.pack) ? origin : null;
     }
-    function navigate(id, replace = false, returnPoint = null) {
+    function navigate(id, replace = false, returnPoint = null, mode) {
       rememberPosition();
       const next = urlFor(id, null, false, category);
       if (location.href !== next) {
         const origin = returnPoint || readerOrigin();
         const entry = id ? {} : {rbStoryScroll:shelfPosition};
+        if (mode) entry.rbStoryMode = mode;
         if (origin) entry.rbStoryOrigin = {...origin, steps:origin.steps + (replace ? 0 : 1)};
         try {
           if (returnPoint) history.replaceState({...history.state, rbTestReturn:returnPoint}, "");
@@ -114,15 +143,15 @@ window.RBStories = (() => {
     function recommendations(pack, record, combined = profile()) {
       const stories = active();
       if (!stories.length) return "";
-      const picks = window.RBStoryMatch.recommend(stories, pack, record, {profile:combined, readPick:latestPick});
+      const picks = window.RBStoryMatch.recommend(stories, pack, record, {profile:combined, readPick:id => entries(id)[combined.mode]});
       const browse = `<a class="story-browse" data-story-act="shelf" href="${esc(urlFor())}">${picks.length ? "전체 보기" : "러닝 이야기 둘러보기"} ${icon("arrow")}</a>`;
-      const cards = picks.map(({story, reason}) => episodeLink(story,
-        `${image(story,true)}<div><h3>${esc(story.title)}</h3><p>${esc(reason)}</p></div>${icon("arrow")}`, "story-recommendation")).join("");
+      const cards = picks.map(({story, reason, label}) => episodeLink(story,
+        `${image(story,true)}<div><small>${esc(label)}</small><h3>${esc(story.title)}</h3><p>${esc(reason)}</p></div>${icon("arrow")}`, "story-recommendation")).join("");
       return `<section class="panel story-recommendations">${picks.length ? `<div class="story-result-head"><h2>${pack === "profile" ? "이어서 읽을 이야기" : "내 답과 이어지는 이야기"}</h2>${browse}</div>${cards}` : browse}</section>`;
     }
     function resultParts(pack, record) {
-      const combined = profile();
-      const wrap = content => content ? `<div class="story-result-section" data-story-result="${esc(pack)}">${content}</div>` : "";
+      const combined = profile(record ? modeOf(record.mode) : defaultMode());
+      const wrap = content => content ? `<div class="story-result-section" data-story-result="${esc(pack)}" data-score-mode="${combined.mode}">${content}</div>` : "";
       return {summary:wrap(window.RBProfileUI.summary(combined, {esc})),
         suggestions:record ? wrap(recommendations(pack, record, combined)) : ""};
     }
@@ -136,24 +165,34 @@ window.RBStories = (() => {
       url.searchParams.set("test", "profile");
       return url.href;
     };
-    function openProfile() {
+    function openProfile(requestedMode) {
       window.RBScene.audio.stop();
-      const combined = profile();
+      reportMode = modeOf(requestedMode || history.state?.rbScoreMode || defaultMode());
+      const combined = profile(reportMode);
+      const scopes = [...new Set([...knownModes(),reportMode])];
+      const switcher = scopes.length > 1 ? `<div class="story-filters" role="group" aria-label="어떤 러닝을 볼까요?">${scopes.map(mode =>
+        `<button type="button" data-story-act="scope" data-mode="${mode}" aria-pressed="${mode === reportMode}">${modes[mode]}</button>`).join("")}</div>` : "";
+      const context = reportMode === "imagine" ? "처음 뛴다면 어떻게 할지 상상하며 고른 답이에요." :
+        reportMode === "unspecified" ? "뛰어 본 날과 상상한 날을 구분하기 전에 남긴 답이에요." : "직접 뛰어 본 날을 떠올리며 고른 답이에요.";
+      const base = ownResults(reportMode)?.base;
+      const type = base && modeOf(base.mode) === reportMode &&
+        window.RB.score("base",base.answers,reportMode,base.chatScenes,base.typePicks);
+      const identity = type?.typeKey ? `<p class="rb-profile-meta">내 러닝 유형 · <strong>${esc(type.name)}</strong></p>` : "";
       const back = fileProfileBack || history.state?.rbProfileBack;
       const from = back?.kind === "story" ? "이야기로 돌아가기" : back?.kind === "result" ? "내 검사 결과로" : "내 보관함으로";
       const suggestions = combined.rows.length ? recommendations("profile", null, combined) : "";
-      output(`<div class="narrow story-profile-page" data-story-result="profile"><button class="back story-back" data-story-act="profile-back">${icon("left")} ${from}</button>${window.RBProfileUI.report(combined, {esc})}${suggestions}</div>`, "profile");
+      output(`<div class="narrow story-profile-page" data-story-result="profile" data-score-mode="${reportMode}"><button class="back story-back" data-story-act="profile-back">${icon("left")} ${from}</button>${switcher}${identity}<p class="desc">${context}</p>${window.RBProfileUI.report(combined, {esc})}${suggestions}</div>`, "profile");
     }
-    function visitProfile(origin) {
+    function visitProfile(origin, mode) {
       const back = origin ? {kind:origin.pack === "library" ? "library" : "result", origin} : {kind:"story", story:current?.id};
       try {
         if (origin) history.replaceState({...history.state, rbTestReturn:origin}, "");
-        history.pushState({rbProfileBack:back}, "", profileURL());
+        history.pushState({rbProfileBack:back,rbScoreMode:mode}, "", profileURL());
         fileProfileBack = null;
       } catch {
         fileProfileBack = back;
       }
-      openProfile();
+      openProfile(mode);
     }
     function leaveProfile() {
       if (!fileProfileBack && history.state?.rbProfileBack) { history.back(); return; }
@@ -181,16 +220,16 @@ window.RBStories = (() => {
         <div class="actions">${episodeLink(featured, "내 답 고르기 " + icon("arrow"), "btn primary")}${shelfButton}</div></div><div class="story-strip" aria-hidden="true">${strip}</div></section>`;
     }
     function savedEntry() {
-      const n = catalog.filter(s => s.choices.some(c => c.id === latestPick(s.id))).length;
+      const n = catalog.filter(s => savedChoice(s, latestEntry(s.id))).length;
       return n ? `<section class="panel sectionhead"><div><h2>내가 고른 이야기</h2><p>결말까지 읽은 이야기 ${n}편을 다시 볼 수 있어요.</p></div><button class="btn light sm" data-story-act="mine">내 이야기 보기</button></section>` : "";
     }
     function tile(s) {
-      const read = s.choices.some(c => c.id === latestPick(s.id));
+      const read = !!savedChoice(s, latestEntry(s.id));
       const meta = `<span class="story-meta">${esc(groups[s.category])}${read ? '<span class="story-read">읽음</span>' : ""}</span>`;
       return episodeLink(s, `<div class="story-tile-art">${image(s,true)}</div><div class="story-tile-copy">${meta}<h3>${esc(s.title)}</h3></div>`, "story-tile");
     }
     function matchesFilter(s) {
-      if (category === "mine") return s.choices.some(c => c.id === latestPick(s.id));
+      if (category === "mine") return !!savedChoice(s, latestEntry(s.id));
       return category === "all" || category === s.category;
     }
     function shelf(message = "") {
@@ -222,16 +261,17 @@ window.RBStories = (() => {
       const previous = catalog.filter(t => t.links?.includes(s.id) || t.choices.some(c => c.next === s.id)).map(t => t.id);
       const ids = [...new Set([...(s.links || []), ...previous])];
       const also = ids.map(id => byId.get(id)).filter(t => t && !t.archived && t.id !== s.id && t.id !== next?.id && available(t, today));
-      const links = also.map(t => episodeLink(t, esc(t.title) + icon("arrow"), "story-next")).join("");
+      const links = also.slice(0,next ? 1 : 2).map(t => episodeLink(t, esc(t.title) + icon("arrow"), "story-next")).join("");
       return `${next ? `<section class="story-related"><h2>이 선택으로 이어지는 이야기</h2>${episodeLink(next, esc(next.title) + icon("arrow"), "story-next")}</section>` : ""}${also.length ? `<section class="story-related"><h2>관련 이야기</h2>${links}</section>` : ""}`;
     }
     function reflection(s, choice) {
-      if (shared || !choice || !Array.isArray(choice.signals) || !choice.signals.length || choice.id !== latestPick(s.id)) return "";
-      const excluded = isExcluded(s.id);
-      const rows = excluded ? [] : profile().rows.filter(row => row.storyEvidence.some(e => e.id === s.id && e.choiceId === choice.id && e.specific));
+      const entry = entries(s.id)[viewMode];
+      if (shared || !choice || !Array.isArray(choice.signals) || !choice.signals.length || choice.id !== entry?.choiceId) return "";
+      const excluded = entry.excluded;
+      const rows = excluded ? [] : profile(viewMode).rows.filter(row => row.storyEvidence.some(e => e.id === s.id && e.choiceId === choice.id && e.specific));
       const labels = rows.map(row => esc(row.label)).join(" · ");
       const overlap = rows.find(row => row.quizEvidence.length);
-      const copy = excluded ? "이 답은 내 러닝 성향에서 뺐어요." : rows.length ? "다른 보기와 달리 이 답에서 고른 행동" : "이 장면에서 고른 답을 남겼어요. 어느 보기를 골라도 함께 나오는 행동은 경향을 비교할 때 빼요.";
+      const copy = excluded ? "이 답은 내 러닝 성향에서 뺐어요." : rows.length ? modes[viewMode] + "에서 내가 고른 행동" : "이 장면에서 고른 답은 여기에 남아요. 같은 행사에서 새로 고른 행동이나 모든 보기에 공통으로 나오는 행동은 한 번 더 세지 않아요.";
       return `<div class="story-reflection"><p>${copy}${labels ? `<br><strong>${labels}</strong>` : ""}</p>${overlap ? `<p>검사에서도 ‘${esc(overlap.label)}’에 해당하는 답을 골랐어요.</p>` : ""}<div><button class="btn light sm" data-story-act="profile">내 러닝 성향 보기</button><button class="linkbtn" data-story-act="toggle-profile">${excluded ? "내 성향에 다시 담기" : "이 답은 성향에서 빼기"}</button></div></div>`;
     }
     function read(s, choice, fromFriend = false) {
@@ -248,16 +288,31 @@ window.RBStories = (() => {
         return `<button type="button" data-story-act="pick" data-choice="${esc(c.id)}">${thumb}<span>${esc(c.label)}</span>${icon("arrow")}</button>`;
       }).join("");
       const usesSignals = s.choices.some(c => Array.isArray(c.signals) && c.signals.length);
-      const pickNote = isExcluded(s.id) ? "이 이야기에서 고른 답은 내 성향에서 빼 두었어요." : "여기서 고른 답을 내 러닝 성향에 담아요. 다시 고르면 새 답만 남아요.";
-      const decision = `<div class="story-opening"><p>${esc(s.opening)}</p><h2>${esc(s.prompt)}</h2>${usesSignals ? `<p class="story-pick-note">${pickNote}</p>` : ""}<div class="story-answers">${options}</div></div>`;
+      const selector = `<div class="story-filters" role="group" aria-label="무엇을 떠올리며 고를까요?">${["experience","imagine"].map(mode =>
+        `<button type="button" data-story-act="pick-mode" data-mode="${mode}" aria-pressed="${viewMode === mode}">${mode === "experience" ? "해 본 일" : "상상한 일"}</button>`).join("")}</div>`;
+      const recorded = entries(s.id)[viewMode];
+      const past = Object.entries(entries(s.id)).filter(([mode,entry]) => Object.hasOwn(modes,mode) && savedChoice(s,entry));
+      const versions = !shared && past.length > 1 ? `<div class="story-filters" role="group" aria-label="전에 고른 답">${past.map(([mode]) =>
+        `<button type="button" data-story-act="history-mode" data-mode="${mode}" aria-pressed="${mode === viewMode}">${modes[mode]}에서 고른 답</button>`).join("")}</div>` : "";
+      const restored = savedChoice(s, recorded);
+      const previous = restored ? `<p class="story-pick-note">전에 고른 답 · ${esc(restored.label)}</p>` : "";
+      const decision = `<div class="story-opening"><p>${esc(s.opening)}</p><h2>${esc(s.prompt)}</h2>${usesSignals ? `${selector}${previous}<label class="story-pick-note"><input type="checkbox" data-story-include ${recorded?.excluded ? "" : "checked"}> 이 답을 내 성향에 담기</label>` : ""}<div class="story-answers">${options}</div><button class="linkbtn" type="button" data-story-act="pass">내 얘기 같지 않아</button></div>`;
       const recap = `<details class="story-recap"${shared ? " open" : ""}><summary>처음 장면 보기</summary><p>${esc(s.opening)}</p></details>`;
       const outcome = choice ? `<div class="story-ending">${recap}<p class="story-picked">${shared ? "이 링크에 담긴 선택" : "내가 고른 선택"} · ${esc(choice.label)}</p><p class="story-then">${esc(choice.then)}</p><blockquote>${esc(choice.line)}</blockquote><div class="story-talk"><h2>같이 얘기해 볼까?</h2><p>${esc(s.question)}</p></div><div class="actions">${choice.signals?.includes("keepPrivate") ? "" : `<button class="btn primary" data-story-act="share">${icon("share")} 이 장면 공유하기</button>`}<button class="btn light" data-story-act="again">${shared ? "나는 어떻게 할까?" : "다른 선택 해보기"}</button></div></div>` : "";
       const back = resultLink();
       const endingImage = choice && window.RBRepresentative.endingArt(s, choice);
-      const art = !endingImage ? image(s) : endingImage.art ? `<img src="${esc(asset(endingImage.art))}" alt="${esc(endingImage.alt)}">` :
-        `<div class="rb-post-unpublished">${esc(choice.line)}</div>`;
+      const postSignal = window.RBStoryMatch.postQuestion.choices.find(p => choice?.signals?.includes(p.signal))?.signal;
+      const motionScene = postSignal && window.RBRepresentative.postingScene?.(postSignal,{esc,auto:!shared});
+      const art = motionScene || (!endingImage ? image(s) : endingImage.art ? `<img src="${esc(asset(endingImage.art))}" alt="${esc(endingImage.alt)}">` :
+        `<div class="rb-post-unpublished">${esc(choice.line)}</div>`);
       const artCaption = choice ? `<small class="story-art-label">${endingImage ? (shared ? "친구가 고른 행동" : "내가 고른 행동") : "이야기의 첫 장면"}</small>` : "";
-      output(`<article class="story-reader"><div class="story-reader-nav">${back}${shelfLink()}</div>${context ? `<p class="story-status">${esc(context)}</p>` : ""}<div class="story-spread"><div class="story-art">${art}${artCaption}</div><div class="story-prose">${meta}<h1>${esc(s.title)}</h1>${choice ? outcome + reflection(s, choice) : decision}</div></div>${choice ? related(s, choice) : ""}${sourceInfo(s)}${choice && back ? `<div class="story-end-return">${back}</div>` : ""}</article>`, "stories");
+      const followUp = !choice ? "" : shared ? related(s,choice) :
+        `<div data-followup-mode="${viewMode}">${recommendations("profile",null,profile(viewMode))}</div>`;
+      output(`<article class="story-reader"><div class="story-reader-nav">${back}${shelfLink()}</div>${context ? `<p class="story-status">${esc(context)}</p>` : ""}<div class="story-spread"><div class="story-art">${art}${artCaption}</div><div class="story-prose">${meta}<h1>${esc(s.title)}</h1>${choice ? versions + outcome + reflection(s, choice) : decision}</div></div>${followUp}${sourceInfo(s)}${choice && back ? `<div class="story-end-return">${back}</div>` : ""}</article>`, "stories");
+    }
+    function savedChoice(s, entry) {
+      if (!entry) return null;
+      return entry.snapshot?.choice || s.choices.find(c => c.id === entry.choiceId);
     }
     function open(id, selected, filter = category) {
       window.RBScene.audio.stop();
@@ -273,25 +328,31 @@ window.RBStories = (() => {
         shelf("지금은 이 이야기를 열 수 없어요. 목록에서 다른 이야기를 골라 보세요.");
         return;
       }
-      const saved = s.choices.find(c => c.id === latestPick(id));
+      const originMode = history.state?.rbStoryMode || readerOrigin()?.mode;
+      const entry = originMode ? entries(id)[originMode] : latestEntry(id);
+      viewMode = entry?.mode || (originMode && originMode !== "unspecified" ? originMode : "imagine");
+      const saved = savedChoice(s, entry);
       const linked = s.choices.find(c => c.id === selected);
       read(s, selected ? linked : saved, !!linked);
     }
     async function share() {
       if (!current || !ending) return;
-      const url = urlFor(current.id, ending.id, true);
+      const live = current.choices.find(c => c.id === ending.id);
+      const text = ending.line + "\n" + current.question;
+      const url = live?.label === ending.label && live?.line === ending.line ? urlFor(current.id, ending.id, true) : null;
       if (navigator.share && location.protocol !== "file:") {
         try {
-          await navigator.share({title: "런비티아이 · " + current.title, text: ending.line + "\n" + current.question, url});
+          await navigator.share({title:"런비티아이 · " + current.title,text,...(url ? {url} : {})});
           return;
         } catch (error) { if (error.name === "AbortError") return; }
       }
       try {
-        await navigator.clipboard.writeText(url);
-        notify("이 장면의 링크를 복사했어요.");
+        await navigator.clipboard.writeText(url || text);
+        notify(url ? "이 장면의 링크를 복사했어요." : "전에 고른 장면의 대사를 복사했어요.");
       } catch {
-        note("이 장면 공유하기", `<label class="field">복사할 이야기 링크<input type="url" readonly value="${esc(url)}"></label>`);
-        const input = document.querySelector("#modal input");
+        note("이 장면 공유하기", url ? `<label class="field">복사할 이야기 링크<input type="url" readonly value="${esc(url)}"></label>` :
+          `<label class="field">복사할 대사<textarea readonly>${esc(text)}</textarea></label>`);
+        const input = document.querySelector("#modal input, #modal textarea");
         input.focus(); input.select();
       }
     }
@@ -302,12 +363,16 @@ window.RBStories = (() => {
       const action = control.dataset.storyAct;
       const panel = control.closest("[data-story-result]");
       const origin = panel ? {pack:panel.dataset.storyResult, steps:0, scroll:window.scrollY,
-        ratio:main.querySelector('[data-act="ratio"][aria-pressed="true"]')?.dataset.r, story:control.dataset.storyId || null, action} : null;
-      if (action === "save-representative" || action === "share-representative") {
+        mode:panel.dataset.scoreMode, ratio:main.querySelector('[data-act="ratio"][aria-pressed="true"]')?.dataset.r, story:control.dataset.storyId || null, action} : null;
+      if (action === "ask-friend") {
+        const result = profile(origin?.mode || defaultMode());
+        const scope = control.closest(".rb-posting") && result.posting ? {...result, direction:result.posting} : result;
+        window.RBFriend.askProfile(scope, {note, esc, notify});
+      } else if (action === "save-representative" || action === "share-representative") {
         const includeAnswers = !!control.closest(".rb-rep")?.querySelector("[data-rep-proof]")?.checked;
         control.disabled = true;
         try {
-          const result = profile();
+          const result = profile(origin?.mode || defaultMode());
           const scope = control.closest(".rb-posting") && result.posting ? {...result, direction:result.posting} : result;
           notify(await window.RBRepresentative.send(scope, includeAnswers, action === "share-representative"));
         } catch (error) {
@@ -316,8 +381,12 @@ window.RBStories = (() => {
       } else if (action === "result") {
         returnFromStory();
       } else if (action === "profile") {
-        if (!origin && readerOrigin()?.pack === "profile") returnFromStory();
-        else visitProfile(origin);
+        if (!origin && readerOrigin()?.pack === "profile" && readerOrigin().mode === viewMode) returnFromStory();
+        else visitProfile(origin, origin?.mode || viewMode || defaultMode());
+      } else if (action === "scope" && Object.hasOwn(modes,control.dataset.mode)) {
+        try { history.replaceState({...history.state,rbScoreMode:control.dataset.mode},""); } catch {}
+        openProfile(control.dataset.mode);
+        main.querySelector('[data-story-act="scope"][aria-pressed="true"]')?.focus({preventScroll:true});
       } else if (action === "profile-back") {
         leaveProfile();
       } else if (action === "shelf" || action === "mine") {
@@ -331,22 +400,39 @@ window.RBStories = (() => {
         navigate(null, true); open();
         main.querySelector('[data-story-act="filter"][aria-pressed="true"]').focus({preventScroll:true});
       } else if (action === "episode") {
-        navigate(control.dataset.storyId, false, origin); open(control.dataset.storyId);
+        navigate(control.dataset.storyId, false, origin,control.closest("[data-followup-mode]")?.dataset.followupMode); open(control.dataset.storyId);
+      } else if (action === "pick-mode" && current && ["experience","imagine"].includes(control.dataset.mode)) {
+        viewMode = control.dataset.mode;
+        read(current,null);
+        main.querySelector('[data-story-act="pick-mode"][aria-pressed="true"]')?.focus({preventScroll:true});
+      } else if (action === "history-mode" && current && !shared && Object.hasOwn(modes,control.dataset.mode)) {
+        const oldChoice = savedChoice(current,entries(current.id)[control.dataset.mode]);
+        if (!oldChoice) return;
+        viewMode = control.dataset.mode;
+        read(current,oldChoice);
+        try { history.replaceState({...history.state,rbStoryMode:viewMode},""); } catch {}
+        main.querySelector('[data-story-act="history-mode"][aria-pressed="true"]')?.focus({preventScroll:true});
+      } else if (action === "pass" && current) {
+        navigate(null); open();
       } else if (action === "pick" && current) {
         const pick = current.choices.find(c => c.id === control.dataset.choice);
         if (!pick) return;
-        const stored = save(storagePrefix + current.id, pick.id);
-        if (stored) memory.delete(current.id);
-        else memory.set(current.id, pick.id);
-        navigate(current.id, true); read(current, pick);
+        const include = main.querySelector("[data-story-include]")?.checked !== false;
+        const snapshot = {event:window.RBStoryMatch.eventKey(current), title:current.title,prompt:current.prompt,
+          options:current.choices.map(c => c.signals || []),choice:{...pick}};
+        const stored = saveEntry(current.id,{choiceId:pick.id,mode:viewMode,at:Date.now(),version:current.version || 1,excluded:!include,snapshot});
+        navigate(current.id, true);
+        try { history.replaceState({...history.state,rbStoryMode:viewMode},""); } catch {}
+        read(current, pick);
         if (!stored) notify("이 브라우저에는 선택을 저장하기 어려워요. 장면 링크를 복사해 두세요.");
       } else if (action === "again" && current) {
+        if (viewMode === "unspecified") viewMode = "imagine";
         navigate(current.id, true); read(current, null);
       } else if (action === "toggle-profile" && current && ending && !shared) {
-        const exclude = !isExcluded(current.id);
-        const stored = save(exclusionKey + current.id, exclude);
-        if (stored) exclusions.delete(current.id);
-        else exclusions.set(current.id, exclude);
+        const entry = entries(current.id)[viewMode];
+        if (!entry) return;
+        const exclude = !entry.excluded;
+        const stored = saveEntry(current.id,{...entry,excluded:exclude});
         const box = control.closest(".story-reflection");
         box.outerHTML = reflection(current, ending);
         main.querySelector('[data-story-act="toggle-profile"]').focus({preventScroll:true});
@@ -355,7 +441,7 @@ window.RBStories = (() => {
         share();
       }
     });
-    return {homeFeature, savedEntry, resultSection, resultParts, open, openProfile, clearRoute};
+    return {homeFeature, savedEntry, resultSection, resultParts, open, openProfile, clearRoute, profile};
   }
   return {create};
 })();

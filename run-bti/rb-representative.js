@@ -108,8 +108,10 @@ window.RBRepresentative = (() => {
     const panels = [];
     for (const signal of new Set(direction.signals)) {
       const evidence = direction.evidence.filter(e => e.signal === signal);
-      const panel = illustrate(signal, evidence, profile.rows.find(r => r.signal === signal)?.label);
+      const label = profile.rows.find(r => r.signal === signal)?.label;
+      const panel = illustrate(signal, evidence, label);
       if (!panel) continue;
+      panel.actionName = label || panel.name;
       // A single ending may describe two actions. Its identical drawing and quote belong together.
       if (!panels.some(p => p.name === panel.name && p.art === panel.art && p.evidence.id === panel.evidence.id &&
         p.evidence.choiceId === panel.evidence.choiceId && p.evidence.itemId === panel.evidence.itemId)) panels.push(panel);
@@ -119,6 +121,40 @@ window.RBRepresentative = (() => {
 
   const source = e => e.choiceId ? e.title : [e.mode === "imagine" ? "첫 러닝 상상" : "", e.title, e.scene].filter(Boolean).join(" · ");
   const url = path => window.RBScene.assetURL(path);
+  const postingScenes = {
+    postSelfie:{caption:"팔을 뻗어 카메라를 내 쪽으로 돌렸어요.",replay:"셀카 찍는 장면 다시 보기"},
+    postScenery:{caption:"내가 멈춰 본 강변 풍경을 사진 한 장에 담았어요.",replay:"강변 풍경 다시 보기"},
+    postStats:{caption:"거리와 시간이 보이는 기록 화면을 골랐어요.",replay:"기록 화면 다시 펼치기"},
+  };
+  const sampleRecord = "예시 기록  ·  5.00 km  ·  32분";
+  function viewImage(p, esc, interactive) {
+    if (!p.art) return "";
+    return `<div class="rb-rep-view"><img loading="lazy" src="${esc(url(p.art))}" alt="${esc(p.alt || p.caption)}">
+      ${interactive && p.signal === "postSelfie" ? '<i class="rb-viewfinder" aria-hidden="true"></i>' : ""}</div>
+      ${p.signal === "postStats" ? `<p class="rb-sample-record">${sampleRecord}</p>` : ""}`;
+  }
+  function replayButton(signal, esc, auto) {
+    return `<button type="button" class="btn light sm rb-rep-replay" data-rep-replay="${esc(signal)}" ${auto ? "data-rep-auto" : ""}>${esc(postingScenes[signal].replay)}</button>`;
+  }
+  function postingScene(signal, {esc,auto = false}) {
+    const choice = postingChoice(signal);
+    if (!choice) return "";
+    if (!choice.art) return `<p class="rb-post-unpublished">${esc(choice.label)}</p>`;
+    return `<figure class="rb-rep-frame rb-post-scene" data-rep-signal="${esc(signal)}">${viewImage(choice,esc,true)}
+      <figcaption><b>${esc(choice.short)}</b>${replayButton(signal,esc,auto)}</figcaption></figure>`;
+  }
+  function displayName(p, status) {
+    if (status !== "sparse" && status !== "mixed" && status !== "tied") return p.name;
+    return postingChoice(p.signal)?.short || p.actionName;
+  }
+  function forExport(profile) {
+    const weightItems = new Set(window.RBMotives.groups.flatMap(g => g.items).filter(i => i.motive === "weight").map(i => i.id));
+    const d = profile.direction;
+    const evidence = d.evidence.filter(e => e.signal !== "weight" && !(e.id === "motive" && weightItems.has(e.itemId)));
+    if (evidence.length === d.evidence.length) return select(profile);
+    const signals = d.signals.filter(signal => evidence.some(e => e.signal === signal));
+    return select({...profile,direction:{status:"sparse",title:"내가 고른 러닝 장면",reason:"내보낼 수 있는 장면만 담았어요.",signals,evidence}});
+  }
   function panelHeading(rep) {
     if (rep.panels.length && rep.panels.every(p => postingChoice(p.signal))) return "내가 고른 러닝 인증";
     if (rep.status === "sparse") return "이번에 고른 장면";
@@ -129,16 +165,74 @@ window.RBRepresentative = (() => {
     const rep = select(profile);
     if (!rep.panels.length) return "";
     const proof = e => `<small>${esc(source(e))}${e.rating ? " · " + esc(e.rating) : ""}</small><p>“${esc(e.answer)}”</p>`;
-    const frame = p => `<figure class="rb-rep-frame" data-rep-signal="${esc(p.signal)}">
-      ${p.art ? `<img loading="lazy" src="${esc(url(p.art))}" alt="${esc(p.alt)}">` : ""}
-      <figcaption><b>${esc(p.name)}</b>${p.art && !compact ? `<p>${esc(p.caption)}</p>` : ""}
-      ${proof(p.evidence)}${p.moreEvidence && !compact ? proof(p.moreEvidence) : ""}</figcaption></figure>`;
+    const frame = p => {
+      const scene = postingScenes[p.signal];
+      const motion = scene && p.art && !compact;
+      return `<figure class="rb-rep-frame" data-rep-signal="${esc(p.signal)}">
+        ${viewImage(p,esc,motion)}
+        <figcaption><b>${esc(displayName(p, rep.status))}</b>
+          ${p.art && !compact ? `<p>${esc(scene?.caption || p.caption)}</p>` : ""}
+          ${motion ? replayButton(p.signal,esc,rep.status === "clear" && rep.panels.length === 1) : ""}
+          ${proof(p.evidence)}${p.moreEvidence && !compact ? proof(p.moreEvidence) : ""}
+        </figcaption></figure>`;
+    };
     // Large profiles keep all represented directions visible by name in the compact summary.
-    if (compact && rep.panels.length > 2) return `<div class="rb-rep rb-rep-compact"><strong>${esc(panelHeading(rep))}</strong><p>${rep.panels.map(p => esc(p.name)).join(" · ")}</p></div>`;
+    if (compact && rep.panels.length > 2) return `<div class="rb-rep rb-rep-compact"><strong>${esc(panelHeading(rep))}</strong><p>${rep.panels.map(p => esc(displayName(p,rep.status))).join(" · ")}</p></div>`;
+    const askFriend = !compact && /^https?:$/.test(window.location?.protocol) && window.RBFriend?.fromProfile(profile);
+    const canExport = !compact && forExport(profile).panels.length > 0;
     return `<div class="rb-rep${compact ? " rb-rep-compact" : ""}"><h3>${esc(panelHeading(rep))}</h3>
       <div class="rb-rep-frames">${rep.panels.map(frame).join("")}</div>
-      ${compact ? "" : `<label class="rb-rep-proof"><input type="checkbox" data-rep-proof> 저장할 이미지에 내가 고른 답도 넣기</label>
-      <div class="actions"><button type="button" class="btn light sm" data-story-act="save-representative">성향 이미지 저장</button><button type="button" class="btn light sm" data-story-act="share-representative">이미지로 공유</button></div>`}</div>`;
+      ${compact ? "" : !canExport ? "<p>체중 관리에 관해 고른 답은 내 화면에서만 볼 수 있어요.</p>" : `<label class="rb-rep-proof"><input type="checkbox" data-rep-proof> 저장할 이미지에 내가 고른 답도 넣기</label>
+      <div class="actions"><button type="button" class="btn light sm" data-story-act="save-representative">성향 이미지 저장</button><button type="button" class="btn light sm" data-story-act="share-representative">이미지로 공유</button>
+      ${askFriend ? '<button type="button" class="btn light sm" data-story-act="ask-friend">친구에게 한 장면 묻기</button>' : ""}</div>`}</div>`;
+  }
+  let release = () => {};
+  function prepare(container) {
+    release();
+    const buttons = Array.from(container.querySelectorAll("[data-rep-replay]"));
+    if (!buttons.length) return;
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const cleanups = [];
+    const active = new Map();
+    function play(btn) {
+      const view = btn.closest("figure").querySelector(".rb-rep-view"), img = view.querySelector("img");
+      if (document.hidden || reduced.matches || !img.complete || !img.naturalWidth || !img.animate) return;
+      active.get(btn)?.();
+      const kind = btn.dataset.repReplay;
+      const frames = kind === "postSelfie" ? [{transform:"scale(1.16) translateY(2%)"}, {transform:"scale(1)",offset:.61},{transform:"scale(1)"}] :
+        kind === "postScenery" ? [{transform:"scale(1.25) translateX(7%)"}, {transform:"scale(1.1) translateX(-2%)",offset:.55},{transform:"scale(1)"}] :
+        [{clipPath:"inset(0 0 94% 0)"},{clipPath:"inset(0 0 0 0)"}];
+      const animation = img.animate(frames, {duration:1100,easing:"ease-in-out"});
+      const finder = view.querySelector(".rb-viewfinder");
+      const focus = finder?.animate([{opacity:0,transform:"scale(1.12)"},{opacity:1,transform:"scale(1)",offset:.53},{opacity:1,offset:.62},{opacity:0}],{duration:1100});
+      const timer = kind === "postSelfie" ? setTimeout(() => {
+        if (btn.isConnected && !document.hidden && !reduced.matches) window.RBScene.audio.effect("camera");
+      },670) : null;
+      const end = () => {
+        clearTimeout(timer); animation.cancel(); focus?.cancel(); active.delete(btn);
+      };
+      active.set(btn,end); animation.onfinish = end;
+    }
+    const observer = typeof IntersectionObserver === "function" ? new IntersectionObserver(entries => {
+      for (const entry of entries) if (entry.isIntersecting && !document.hidden) {
+        observer.unobserve(entry.target);
+        play(entry.target.closest("figure").querySelector("[data-rep-replay]"));
+      }
+    }, {threshold:.55}) : null;
+    for (const btn of buttons) {
+      const view = btn.closest("figure").querySelector(".rb-rep-view"), img = view.querySelector("img");
+      const watch = () => { if (img.naturalWidth && btn.hasAttribute("data-rep-auto") && !reduced.matches) observer?.observe(view); };
+      const replay = () => { observer?.unobserve(view); play(btn); };
+      if (img.complete) watch(); else img.addEventListener("load",watch,{once:true});
+      btn.addEventListener("click",replay);
+      cleanups.push(() => { btn.removeEventListener("click",replay); img.removeEventListener("load",watch); });
+    }
+    const stop = () => { if (document.hidden || reduced.matches) { for (const finish of active.values()) finish(); } };
+    document.addEventListener("visibilitychange",stop); reduced.addEventListener?.("change",stop);
+    release = () => {
+      observer?.disconnect(); cleanups.forEach(fn => fn()); for (const finish of active.values()) finish();
+      document.removeEventListener("visibilitychange",stop); reduced.removeEventListener?.("change",stop); release = () => {};
+    };
   }
   function exportReason(rep) {
     if (rep.status === "clear" || rep.status === "tied" || rep.status === "mixed" || rep.status === "repeated") return rep.reason;
@@ -146,7 +240,7 @@ window.RBRepresentative = (() => {
   }
 
   async function imageFile(profile, includeAnswers) {
-    const rep = select(profile);
+    const rep = forExport(profile);
     if (!rep.panels.length) throw new Error("먼저 장면을 골라 주세요.");
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
@@ -166,7 +260,8 @@ window.RBRepresentative = (() => {
       return output;
     }
     const title = lines(rep.title, 46, 750, W - 2 * margin);
-    const reason = lines(exportReason(rep), 25, 450, W - 2 * margin);
+    const modeLabel = profile.mode === "imagine" ? "첫 러닝을 상상하며 고른 장면" : profile.mode === "experience" ? "직접 뛰어 본 날을 떠올리며 고른 장면" : "내가 고른 러닝 장면";
+    const reason = lines(includeAnswers ? exportReason(rep) : modeLabel, 25, 450, W - 2 * margin);
     const top = 142 + 62 * title.length + 39 * reason.length;
     const cells = await Promise.all(rep.panels.map(async p => {
       const img = p.art ? await new Promise((resolve, reject) => {
@@ -177,12 +272,14 @@ window.RBRepresentative = (() => {
       }) : null;
       const artH = img ? (columnCount === 1 ? 520 : 260) : 0;
       const w = cellWidth - 40;
-      const name = lines(p.name, 29, 700, w);
-      const caption = lines(p.caption, 23, 450, w);
-      const quote = includeAnswers ? lines("“" + p.evidence.answer + "”", 24, 600, w) : [];
-      const origin = includeAnswers ? lines(source(p.evidence), 20, 450, w) : [];
-      const height = artH + name.length*39 + caption.length*33 + quote.length*35 + origin.length*29 + 52;
-      return {img,artH,name,caption,quote,origin,height};
+      const name = lines(displayName(p,rep.status), 29, 700, w);
+      const caption = lines(postingScenes[p.signal]?.caption || p.caption, 23, 450, w);
+      if (p.signal === "postStats") caption.push(...lines(sampleRecord,23,450,w));
+      const proof = includeAnswers ? [p.evidence,p.moreEvidence].filter(Boolean).map(e => ({
+        quote:lines("“" + e.answer + "”", 24, 600, w),origin:lines(source(e), 20, 450, w)
+      })) : [];
+      const height = artH + name.length*39 + caption.length*33 + proof.reduce((n,e)=>n+e.quote.length*35+e.origin.length*29+9,0) + 52;
+      return {img,artH,name,caption,proof,height};
     }));
     let bottom = top;
     cells.forEach((cell, index) => {
@@ -215,8 +312,10 @@ window.RBRepresentative = (() => {
       const left = c.x+20;
       y = write(c.name,left,c.y+c.artH+19,29,700,"#202536",39);
       y = write(c.caption,left,y+3,23,450,"#50596c",33);
-      y = write(c.quote,left,y+6,24,600,"#202536",35);
-      write(c.origin,left,y+3,20,450,"#596170",29);
+      for (const e of c.proof) {
+        y = write(e.quote,left,y+6,24,600,"#202536",35);
+        y = write(e.origin,left,y+3,20,450,"#596170",29);
+      }
     }
     write(["검사 " + profile.quizCount + "개 · 내가 고른 이야기 " + profile.storyCount + "편"],margin,height-46,20,450,"#515a67",30);
     const blob = await new Promise((resolve, reject) => canvas.toBlob(b => b ? resolve(b) : reject(new Error("이미지를 만들지 못했어요.")), "image/png"));
@@ -235,5 +334,5 @@ window.RBRepresentative = (() => {
     } finally { link.remove(); setTimeout(() => URL.revokeObjectURL(href), 30000); }
     return share ? "공유할 성향 이미지를 저장했어요." : "성향 이미지를 저장했어요.";
   }
-  return {select, html, endingArt, imageFile, send};
+  return {select, html, prepare, postingScene, endingArt, imageFile, send};
 })();

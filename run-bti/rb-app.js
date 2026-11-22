@@ -60,6 +60,14 @@
   function save(key, val) {
     try {
       localStorage.setItem(key, JSON.stringify(val));
+      if (key === storageKey) {
+        for (const mode of ["experience", "imagine"]) {
+          const current = Object.fromEntries(ids.filter(id => val[id]?.mode === mode).map(id => [id, val[id]]));
+          if (!Object.keys(current).length) continue;
+          const archiveKey = storageKey + "." + mode;
+          localStorage.setItem(archiveKey, JSON.stringify({...load(archiveKey, {}), ...current}));
+        }
+      }
       return true;
     } catch {
       storeUnavailable = true;
@@ -106,6 +114,7 @@
     if (["stories","profile"].includes(state.view) && !["stories","profile"].includes(view)) storyUI.clearRoute();
     state.view = view;
     main.innerHTML = html;
+    window.RBRepresentative?.prepare?.(main);
     const marker = history.state?.rbTestReturn;
     if (marker && marker.pack !== main.querySelector("[data-story-result]")?.dataset.storyResult) {
       const entry = {...history.state};
@@ -125,7 +134,7 @@
   const motiveUI = window.RBMotiveUI.create({ main, output, head, btn, esc, asset, load, save, notify,
     resultStories: record => storyUI.resultSection("motive", record),
     useLine(line, mode) {
-      if (library.base) {
+      if (library.base?.mode === mode) {
         library.base.custom ||= {};
         library.base.custom.line = line;
         save(storageKey, library);
@@ -136,7 +145,17 @@
     },
   });
   const storyUI = window.RBStories.create({main, output, esc, asset, icon, load, save, notify, note,
-    ownResults:() => ({...library, motive:motiveUI.savedResult()}), canReturnToResult, restoreResult:restoreStoryResult});
+    ownResults, canReturnToResult, restoreResult:restoreStoryResult});
+  function ownResults(mode) {
+    if (!["experience","imagine"].includes(mode)) return {...library, motive:motiveUI.savedResult()};
+    const archived = load(storageKey + "." + mode, {});
+    const records = {};
+    for (const id of ids) {
+      const r = library[id]?.mode === mode ? library[id] : archived?.[id];
+      if (validRecord(r, id) && r.mode === mode) records[id] = r;
+    }
+    return {...records, motive:motiveUI.savedResult(mode)};
+  }
   function canReturnToResult(pack) {
     return pack === "library" || pack === "profile" || (pack === "motive" ? !!motiveUI.savedResult() : ids.includes(pack) && !!library[pack]);
   }
@@ -159,6 +178,9 @@
       `<div class="shell foot"><span>런비티아이 · 트레인오라클 × 애슬리트타임</span><div><button data-act="about">테스트 소개</button>${["train", "athlete"].includes(edition) ? ` · <a href="${edition === "train" ? "../?oracleV2=1" : "../"}">서비스로 돌아가기</a>` : ""}</div></div>`;
   }
   function packCard(id) {
+    if (id === "base") {
+      return `<button class="p-card" data-act="home"><div class="p-img"><img src="${asset("art/life-afterwork.webp")}" alt="" loading="lazy"><span class="label">기본 검사 · 6장면</span></div><div class="p-copy"><h3>달릴 때 나는 어떤 사람일까?</h3><p>내 러닝 캐릭터와 풀이를 만나 보세요.</p></div></button>`;
+    }
     let p = packs[id],
       n = offsets[id],
       label = { base: "기본 검사", buddy: "동행", record: "기록" }[id];
@@ -166,38 +188,32 @@
   }
   const cameos = [
     {
-      id: 11,
-      label: "끈을 한 번 더 묶는 러너",
+      id: 16,
+      label: "반환점 찍고 오는 러너",
       text: "신발 끈을 고쳐 묶으며 오늘 어디까지 뛸지 정해요.",
     },
     {
       id: 18,
-      label: "먼저 와서 손 흔드는 러너",
-      text: "약속 장소에 먼저 와서 친구가 보이면 손부터 흔들어요.",
+      label: "노을 같이 보는 친구",
+      text: "친구가 부르면 나가요. 둘이 본 노을이 집에 와서도 생각나요.",
     },
     {
       id: 0,
-      label: "샛길이 궁금한 러너",
+      label: "샛길로 한 바퀴",
       text: "늘 뛰던 길에서도 낯선 골목을 만나면 안쪽을 슬쩍 들여다봐요.",
     },
   ];
-  function cameosButton() {
-    return (
-      '<button class="cameos" data-act="cameos" aria-label="러닝 캐릭터 세 명 미리 보기"><span class="cameo-faces">' +
-      cameos
-        .map((c) => '<img src="' + thumb("portrait", c.id) + '" alt="">')
-        .join("") +
-      "</span><span>캐릭터 미리보기</span>" +
-      icon("arrow") +
-      "</button>"
-    );
-  }
   function home() {
     scene.audio.stop();
-    output(
-      `<section class="hero"><div class="hero-copy"><span class="eyebrow">러닝 성향 테스트</span><h1>달릴 때의 나는<br> <em>어떤 사람일까?</em></h1><p>달릴 때 뭘 보고 집에 와서 뭘 기억하나요? 내가 고른 장면으로 러닝 캐릭터를 만들거나 달리는 이유부터 알아볼 수 있어요.</p><div class="actions">${btn("start-exp", "뛰어 본 날 떠올리기", "primary", "arrow")}${btn("start-img", "첫 러닝 상상하기", "light")}${btn("motives", "나는 왜 달릴까?", "light")}</div></div><div class="hero-art"><img src="${asset("hero-run.webp")}" fetchpriority="high" alt="한강에서 손목시계를 든 러너가 손을 흔드는 친구를 돌아보는 장면">${cameosButton()}</div></section>${draftPanel()}${storyUI.homeFeature()}<section><div class="sectionhead"><h2>러닝 테스트 고르기</h2><small>궁금한 주제부터 해 보세요.</small></div><div class="packs">${motiveUI.packCard()}${ids.map(packCard).join("")}</div></section>`,
-      "home",
-    );
+    const extras = `<div class="packs journey-packs">${motiveUI.packCard()}${["buddy","record"].map(packCard).join("")}</div>${draftPanel()}${storyUI.homeFeature()}`;
+    reading({view:"home",extras});
+  }
+  function reading(options) {
+    output('<div id="reading-root" class="rd-app"></div>',"reading");
+    window.RBReadingUI.open(main.firstElementChild,{...options,notify,onHome:()=>{
+      if(location.hash.startsWith("#card=")) history.replaceState(null,"",location.href.split("#")[0]);
+      home();
+    }});
   }
   function getDraft() {
     let v = load(draftKey, null);
@@ -278,7 +294,9 @@
   function questionChoices(q, mode, n, selected, chatScenes) {
     const chat = chatScenes && q.chat;
     const labels = chat ? chat.choices : answerOptions(q, mode, chatScenes);
-    const buttons = labels.map((text, i) => {
+    const order = [n % 3, (n + 1) % 3, (n + 2) % 3];
+    const buttons = order.map(i => {
+      const text = labels[i];
       const pressed = selected.includes(i);
       return `<button type="button" class="opt" data-act="opt" data-i="${i}" aria-pressed="${pressed}"><img src="${thumb("o", n, i)}" alt=""><span>${esc(text)}</span><b aria-hidden="true">${pressed ? "✓" : ""}</b></button>`;
     }).join("");
@@ -297,7 +315,7 @@
       a = answers[index],
       last = index === p.questions.length - 1;
     output(
-      `<div class="narrow"><div class="head"><button class="back" data-act="home">${icon("left")} 테스트 홈</button></div><section class="question"><div class="qhead"><span>${esc(packTitle(id))}</span><small>${index + 1} / ${p.questions.length}</small></div><div class="progress" role="progressbar" aria-label="검사 진행" aria-valuemin="1" aria-valuemax="${p.questions.length}" aria-valuenow="${index + 1}"><i style="width:${(100 * (index + 1)) / p.questions.length}%"></i></div><div class="qscene"><img src="${thumb("q", n)}" alt=""><span>${esc(q.scene)}</span></div><h1>${esc(promptFor(q, mode, state.chatScenes))}</h1>
+      `<div class="narrow"><div class="head"><button class="back" data-act="home">${icon("left")} 테스트 홈</button></div><section class="question"><div class="qhead"><span>${esc(p.domains[q.domain].title)} <small>· ${mode === "imagine" ? "첫 러닝 상상" : "내 경험"}</small></span><small>${index + 1} / ${p.questions.length}</small></div><div class="progress" role="progressbar" aria-label="검사 진행" aria-valuemin="1" aria-valuemax="${p.questions.length}" aria-valuenow="${index + 1}"><i style="width:${(100 * (index + 1)) / p.questions.length}%"></i></div><div class="qscene"><img src="${thumb("q", n)}" alt=""><span>${esc(q.scene)}</span></div><h1>${esc(promptFor(q, mode, state.chatScenes))}</h1>
       ${questionChoices(q, mode, n, a, state.chatScenes)}
       <div class="qbar">${btn("prev", "이전", "light sm", "left")}<div class="actions"><button class="linkbtn" data-act="unsure">아직 모르겠어</button><button class="btn primary" data-act="next" ${a.length ? "" : "disabled"}>${last ? "내 결과 보기" : "다음"} ${icon("arrow")}</button></div></div><div class="question-omit"><button data-act="na">나한텐 해당 없어</button><details><summary>건너뛰기</summary><button data-act="pass">이 질문만 건너뛰기</button>${p.questions[index + 1]?.domain === q.domain ? `<button data-act="na-group">‘${esc(p.domains[q.domain].title)}’ 남은 질문은 해당 없어</button>` : ""}</details></div></section></div>`,
       "quiz",
@@ -322,7 +340,8 @@
     }
     if (a.length && state.blankReasons) state.blankReasons[state.index] = null;
     saveDraft();
-    main.querySelectorAll(".opt").forEach((el, j) => {
+    main.querySelectorAll(".opt").forEach(el => {
+      const j = Number(el.dataset.i);
       el.setAttribute("aria-pressed", a.includes(j));
       el.querySelector("b").textContent = a.includes(j) ? "✓" : "";
     });
@@ -356,6 +375,7 @@
       return;
     }
     const { id, mode, answers } = state;
+    if (library[id] && library[id].mode !== mode) save(storageKey, library);
     library[id] = {
       mode,
       answers: answers.map((a) => [...a]),
@@ -378,27 +398,30 @@
   }
   function libraryPage() {
     scene.audio.stop();
-    let owned = ids.filter((id) => library[id]);
+    const readingMaps = window.RBReadingUI.libraryHTML();
+    const owned = ["experience","imagine"].flatMap(mode => {
+      const records = ownResults(mode);
+      return ids.filter(id => records[id]).map(id => ({id, mode, record:records[id]}));
+    });
     output(
-      `${head("내 캐릭터 보관함")}<p class="desc">이 브라우저에서 받은 러닝 캐릭터를 모았어요.</p>${storyUI.resultSection("library")}${storyUI.savedEntry()}${motiveUI.libraryEntry()}${
+      `${head("내 캐릭터 보관함")}<p class="desc">뛰어 본 날과 상상한 날의 카드를 따로 모았어요.</p>${readingMaps}${
         owned.length
           ? `<div class="gallery" style="margin-top:18px">${owned
-              .map((id) => {
-                let m = model(id);
-                return `<button class="p-card" data-act="result" data-id="${id}"><div class="p-img"><img src="${resultThumb(m)}" alt=""></div><div class="p-copy"><h3>${esc(m.name)}</h3><p>${esc(packTitle(id))}</p></div></button>`;
+              .map(({id,mode,record}) => {
+                const m = model(id,record);
+                return `<button class="p-card" data-act="result" data-id="${id}" data-mode="${mode}"><div class="p-img"><img src="${resultThumb(m)}" alt=""></div><div class="p-copy"><h3>${esc(m.name)}</h3><p>${mode === "imagine" ? "첫 러닝 상상" : "내 경험"} · ${esc(packTitle(id))}</p></div></button>`;
               })
               .join("")}</div>`
-          : `<div class="empty"><h2>아직 받은 캐릭터가 없어요.</h2><p>테스트를 마치면 여기에 내 캐릭터가 생겨요.</p>${btn("start-exp", "첫 검사 시작", "primary")}</div>`
-      }<div style="margin-top:28px" class="packs">${ids
+          : readingMaps ? "" : `<div class="empty"><h2>아직 보관한 캐릭터가 없어요.</h2><p>결과에서 ‘내 지도 보관하기’를 누르면 여기서 다시 볼 수 있어요.</p>${btn("start-exp", "첫 검사 시작", "primary")}</div>`
+      }${storyUI.resultSection("library")}${storyUI.savedEntry()}${motiveUI.libraryEntry()}<div style="margin-top:28px" class="packs">${ids
         .filter((id) => !library[id])
         .map(packCard)
         .join("")}</div>${draftPanel()}`,
       "library",
     );
   }
-  function sourceResult(id = state.id) {
-    let r = library[id];
-    return score(id, r.answers, r.mode, r.chatScenes);
+  function sourceResult(id = state.id, r = library[id]) {
+    return score(id, r.answers, r.mode, r.chatScenes, r.typePicks);
   }
   function optionArt(id, choice) {
     return "art/o-" + pad(offsets[id] + choice.q) + "-" + choice.i + ".webp";
@@ -415,11 +438,11 @@
     return custom.cardStyle ? custom.cardStyle === "character"
       : ["pose", "background", "charIndex", "prop", "expression", "frame"].some(k => custom[k] !== undefined);
   }
-  function model(id = state.id) {
-    const r = library[id], v = sourceResult(id), c = r.custom || {};
+  function model(id = state.id, r = library[id]) {
+    const v = sourceResult(id, r), c = r.custom || {};
     const pictures = resultScenes(v, id);
     const picture = !usesCharacter(c) && (pictures.find(e => e.key === c.sceneChoice) || pictures[0]);
-    const answers = r.answers.flatMap((indices, q) => indices.map(i => ({ q, i, text: proofText(id, q, i) })));
+    const answers = r.answers.flatMap((indices, q) => indices.map(i => ({ q, i, text: proofText(id, q, i, r) })));
     const selected = answers.find(e => e.q * 3 + e.i === c.clue) || v.evidence[0];
     const action = !picture && v.kind === "clear" ? answers.find(e => e.q * 3 + e.i === c.actionChoice)
       || v.evidence.find(e => packs[id].questions[e.q].domain === 1) : null;
@@ -462,8 +485,7 @@
     if (choice) return asset(choice.art);
     return result.kind === "open" ? thumb("q", offsets[id]) : thumb("portrait", result.characterIndex);
   }
-  function proofText(id, q, i) {
-    let r = library[id];
+  function proofText(id, q, i, r = library[id]) {
     return answerOptions(packs[id].questions[q], r.mode, r.chatScenes)[i];
   }
   function proof(v, p, d) {
@@ -471,6 +493,19 @@
   }
   function packCardReason(id, v, custom = {}) {
     const domain = packs[id].domains;
+    if (id === "base") {
+      if (!v.typeKey) return "아직 정하지 않은 항목이 있어요. 아래에서 내 쪽에 가까운 답을 고를 수 있어요.";
+      const [a,b,c] = v.digest;
+      if (library.base.mode === "imagine") {
+        return ["처음엔 새 길이 궁금해서 나가 보고 싶어요.", "처음엔 어디까지 갈지 정해 두고 나가고 싶어요.", "처음엔 같이 뛰자는 사람이 있으면 나가 보고 싶어요."][a] + " " +
+          ["풍경을 구경하며 뛰고 나면", "내 호흡에 맞춰 뛰고 나면", "거리와 시간을 살피며 뛰고 나면"][b] + " " +
+          ["집에 와서 한결 개운할 것 같아요.", "어디까지 해냈는지 떠올리며 뿌듯할 것 같아요.", "집에 와서 누군가에게 그날 얘기를 하고 싶을 것 같아요."][c];
+      }
+      const start = ["낯선 길이 궁금해서 나가요.", "어디까지 뛸지 정해 두면 나가기 쉬워요.", "같이 뛰자는 사람이 있으면 나가고 싶어져요."][a];
+      const focus = ["뛸 땐 주변 풍경을 보고", "뛸 땐 발걸음과 호흡을 살피고", "뛸 땐 거리와 시간을 확인하고"][b];
+      const end = ["집에 와서는 기분이 얼마나 풀렸는지 느껴요.", "집에 와서는 오늘 어디까지 해냈는지 떠올려요.", "집에 와서는 오늘 있었던 일을 누군가에게 들려주고 싶어요."][c];
+      return start + " " + focus + " " + end;
+    }
     if (Object.keys(custom || {}).some(k => ["pose","background","charIndex","prop","expression","frame","line","sceneChoice","cardStyle","actionChoice"].includes(k))) {
       return "직접 꾸민 검사 카드예요. 카드 그림이나 대사를 바꿔도 내가 고른 답은 그대로예요.";
     }
@@ -481,7 +516,36 @@
     return id === "base" ? `${labels.join(" · ")} 순서로 골랐어요. 세 영역에서 자주 고른 답을 모아 이 캐릭터를 골랐어요.`
       : `${labels.slice(0,2).join(" · ")} 쪽을 자주 골라 이 캐릭터가 나왔어요. 마지막 영역에서 자주 고른 ${labels[2]} 쪽 답은 대사에 담았어요.`;
   }
+  function typeQuestions(v) {
+    const prompts = ["뛰러 나갈 때 어느 쪽 마음이 더 커?", "뛰고 있을 때 뭐가 더 자주 눈에 들어와?", "다 뛰고 돌아오면 뭐가 더 오래 남아?"];
+    const options = [
+      ["안 가 본 길에 뭐가 있나 궁금해", "오늘 가기로 한 데까지 가고 싶어", "같이 뛰기로 한 사람이 기다려"],
+      ["지나가는 길에 보이는 풍경", "숨이 차거나 발걸음이 가벼워지는 느낌", "얼마나 뛰었나 알려 주는 거리나 시간"],
+      ["나갔다 온 뒤 달라진 기분", "마음먹은 만큼 해냈다는 생각", "누군가한테 들려주고 싶은 얘기"],
+    ];
+    const open = v.digest.findIndex(x => x === null);
+    if (open < 0) return "";
+    const n = v.digest.filter(x => x === null).length;
+    const tied = v.leaders[open].length > 1;
+    return `<section class="type-decider" aria-labelledby="type-prompt"><p class="eyebrow">내 유형 마무리 · ${n}개 남음</p><h2 id="type-prompt" tabindex="-1">${prompts[open]}</h2><p>${tied ? "여러 답을 같은 횟수로 골랐어요. 딱 하나만 남긴다면 어느 쪽이에요?" : "이 부분은 아직 고른 답이 없어요. 지금 떠올려 보고 고르거나 나중에 다시 와도 돼요."}</p><div class="type-choices">${v.candidates[open].map(i => `<button class="btn light" data-act="type-pick" data-domain="${open}" data-i="${i}">${esc(options[open][i])}</button>`).join("")}</div><button class="linkbtn" data-act="type-later">지금까지 고른 답 보기</button></section>`;
+  }
+  function typeEvidence(v) {
+    if (!v.typeKey) return "";
+    const p = packs.base;
+    return `<section class="panel type-evidence"><h2>어떤 답에서 이 유형이 나왔을까?</h2>${p.domains.map((d,j) => {
+      const i = v.digest[j], evidence = proof(v,p,j);
+      const label = v.candidates[j].length > 1 ? "마지막에 직접 고름" : v.counts[j][i] + "개 장면에서 고름";
+      return `<div class="type-trait"><div><small>${esc(d.title)}</small><strong>${esc(d.labels[i])}</strong><span>${label}</span></div>${evidence ? `<button data-act="timeline" data-i="${evidence.q}">“${esc(evidence.text)}” ${icon("arrow")}</button>` : ""}</div>`;
+    }).join("")}${v.candidates.some(row => row.length > 1) ? '<button class="linkbtn" data-act="type-revise">마지막에 고른 답 다시 보기</button>' : ""}</section>`;
+  }
+  function typeReaction(v) {
+    const opinion = library.base.reaction;
+    const current = opinion?.type === v.typeKey ? opinion.value : "";
+    return `<section class="panel type-reaction"><h2>읽어 보니 내 얘기 같아?</h2><div class="actions">${["내 얘기 같아","조금 달라"].map((text,i) => `<button class="btn light sm" data-act="type-react" data-i="${i}" aria-pressed="${current === text}">${text}</button>`).join("")}</div><div class="reaction-next" aria-live="polite">${current === "내 얘기 같아" ? btn("share","친구도 이렇게 볼까? 카드 보내기","light sm","share") : current === "조금 달라" ? `<p>어느 부분이 달랐어요? 그때 고른 답을 다시 볼 수 있어요.</p><div class="work-actions">${packs.base.domains.map((d,j) => `<button class="linkbtn" data-act="review-domain" data-domain="${j}">${esc(d.title)}</button>`).join("")}</div>` : ""}</div></section>`;
+  }
   function postingQuestion(record) {
+    const own = ownResults(record.mode);
+    record = own[window.RBStoryMatch.latestPost(own)] || record;
     const q = window.RBStoryMatch.postQuestion;
     const picked = q.choices.find(c => c.signal === record.postChoice);
     if (!picked && record.postQuestionSkipped) {
@@ -493,7 +557,7 @@
         `<button type="button" data-act="post-select" data-signal="${esc(c.signal)}" aria-pressed="${c === picked}">
           ${c.art ? `<img src="${esc(asset(c.art))}" alt="">` : ""}
           <span>${esc(c.label)}</span>${c === picked ? '<b aria-hidden="true">✓</b>' : ""}</button>`).join("")}</div>
-      <div class="rb-post-controls"><span>${picked ? "고른 답을 내 러닝 성향에 반영했어요." : "가까운 답 하나를 골라 주세요."}</span>
+      ${picked ? window.RBRepresentative.postingScene(picked.signal,{esc,auto:true}) : ""}<div class="rb-post-controls"><span>${picked ? "고른 답을 내 러닝 성향에 반영했어요." : "가까운 답 하나를 골라 주세요."}</span>
       <button type="button" class="linkbtn" data-act="post-omit">${picked ? "이 답 빼기" : "이 질문 건너뛰기"}</button></div></section>`;
   }
   function showResult(id, animate = false, ratio = "4:5") {
@@ -503,22 +567,30 @@
       r = library[id],
       v = sourceResult(),
       m = model();
+    if (id === "base" && !v.typeKey) {
+      const answered = r.answers.filter(a => a.length).length;
+      output(`${head("내 러닝 유형 마무리", r.mode === "imagine" ? "첫 러닝을 상상한 답" : "뛰어 본 날을 떠올린 답")}<div class="pending-result">${typeQuestions(v)}${panel("지금까지 고른 답 · " + answered + "장면", timeline(id) + graph(id,v), "partial-answers")}${storyUI.resultSection(id,r)}<div class="actions">${btn("library","보관함에 두고 나가기","light")}</div></div>`, "result");
+      return;
+    }
     const storyResult = storyUI.resultParts(id, r);
-    if (id === "record") storyResult.summary = postingQuestion(r) + storyResult.summary;
+    const summary = id === "base" ? typeEvidence(v) : `<section class="panel"><h2>내 답에서 보이는 세 가지</h2><div class="summary-grid">${p.domains.map((d,j) => {
+      const e = proof(v,p,j);
+      return `<div class="stat"><small>${esc(d.title)}</small><b>${esc(v.leaders[j].map(i => d.labels[i]).join(" · ") || "아직 고른 답 없음")}</b>${e ? `<p>“${esc(e.text)}”</p>` : ""}</div>`;
+    }).join("")}</div></section>`;
+    const modeLabel = r.mode === "imagine" ? "첫 러닝을 상상한 답" : "뛰어 본 날을 떠올린 답";
+    const kicker = (id === "base" ? "내 러닝 유형" : packTitle(id)) + " · " + modeLabel;
+    const replay = scene.canReplay(m) && !matchMedia("(prefers-reduced-motion: reduce)").matches
+      ? '<div class="scene-actions"><button data-act="replay">내 답이 카드에 담기는 장면 다시 보기</button><button data-act="skipmotion" hidden>마지막 장면 보기</button></div>' : "";
     output(
-      `${head(m.name, packTitle(id) + (r.mode === "imagine" ? " · 첫 러닝을 상상한 카드" : " · 검사에서 받은 카드"), storyResult.summary)}<p class="desc" data-pack-reason>${esc(packCardReason(id,v,r.custom))}</p><div class="results"><section>${picturePicker(id, v, m)}<div class="scene-wrap"><canvas id="scene" width="1080" height="1350" role="img" aria-label="${esc(m.name + " · " + m.line)}"></canvas></div>${m.sceneArt || m.charIndex < 0 || matchMedia("(prefers-reduced-motion: reduce)").matches ? "" : '<div class="scene-actions"><button data-act="replay">캐릭터 등장 장면 다시 보기</button><button data-act="skipmotion" hidden>마지막 장면 보기</button></div>'}<div class="actions">${btn("capture", "캡처 화면", "primary", "image")}${btn("download", "이미지 저장", "light", "download")}${btn("share", "친구에게", "light", "share")}</div><div class="work-actions">${["4:5", "9:16"].map((s, i) => `<button class="btn sm light ${s === ratio ? "active-ratio" : ""}" data-act="ratio" data-r="${s}" aria-pressed="${s === ratio}">${s} ${i ? "스토리" : "피드"}</button>`).join("")}</div></section><section class="stack">${motiveUI.fromResult()}${v.kind === "open" ? openPicker(id) : ""}<div class="panel"><h2>한눈에 보는 내 러닝</h2><div class="summary-grid">${p.domains
-        .map((d, j) => {
-          let e = proof(v, p, j);
-          return `<div class="stat">${e ? `<img src="${thumb("o", offsets[id] + e.q, e.i)}" alt="">` : ""}<small>${esc(d.title)}</small><b>${esc(v.leaders[j].map((i) => d.labels[i]).join(" · ") || "아직 고른 답 없음")}</b>${e ? `<p>“${esc(e.text)}”</p>` : ""}</div>`;
-        })
-        .join(
-          "",
-        )}</div><p class="ev">${esc(v.line)}</p></div>${storyResult.suggestions}${panel("내 선택 그래프", graph(id, v))}${panel("장면 다시 보기", timeline(id))}${panel("그때 다르게 골랐다면?", sandbox(id))}${panel("내 장면 꾸미기", editor(id, m), "edit-panel")}${received?.pack === id ? panel("친구와 나란히 보기", compare(id, received), "friend-panel", true) : ""}</section></div><section style="margin-top:32px"><div class="sectionhead"><h2>다른 러닝 테스트</h2></div><div class="packs">${ids
-        .filter((k) => k !== id)
-        .map(packCard)
-        .join(
-          "",
-        )}</div><div class="work-actions">${btn("library", "내 보관함", "light sm", "book")}<button class="btn light sm" data-act="pick" data-id="${id}">다시 검사하기</button></div></section>`,
+      `${head(m.name,kicker)}<p class="desc result-description" data-pack-reason>${esc(packCardReason(id,v,r.custom))}</p>
+       <div class="results"><section class="result-card-column">${picturePicker(id,v,m)}
+       <div class="scene-wrap"><canvas id="scene" width="1080" height="1350" role="img" aria-label="${esc(m.name + " · " + m.line)}"></canvas></div>${replay}
+       <div class="actions">${btn("share","친구에게 보내기","primary","share")}${btn("edit-card","내 카드 꾸미기","light")}</div>
+       <div class="work-actions">${btn("capture","캡처 화면","light sm","image")}${btn("download","이미지 저장","light sm","download")}${["4:5","9:16"].map((s,i) => `<button class="btn sm light ${s === ratio ? "active-ratio" : ""}" data-act="ratio" data-r="${s}" aria-pressed="${s === ratio}">${i ? "스토리" : "피드"} ${s}</button>`).join("")}</div>
+       </section><section class="stack">${summary}${id === "base" ? typeReaction(v) : ""}${received?.pack === id ? panel("친구와 나란히 보기",compare(id,received),"friend-panel",true) : ""}
+       ${panel("내 장면 꾸미기",editor(id,m),"edit-panel")}${panel("내 선택 그래프",graph(id,v))}${panel("장면별로 내 답 보기",timeline(id))}${panel("그때 다르게 골랐다면?",sandbox(id))}
+       ${id === "record" || id === "base" ? postingQuestion(r) : ""}${storyResult.summary}${storyResult.suggestions}${motiveUI.fromResult()}${v.kind === "open" ? openPicker(id) : ""}</section></div>
+       <section class="more-tests"><div class="sectionhead"><h2>다른 날의 내 모습도 궁금하다면</h2></div><div class="packs">${ids.filter(k => k !== id).map(packCard).join("")}</div><div class="work-actions">${btn("library","내 보관함","light sm","book")}<button class="btn light sm" data-act="pick" data-id="${id}">다시 검사하기</button></div></section>`,
       "result",
     );
     renderScene(animate);
@@ -686,9 +758,8 @@
     );
   }
   function compare(id, c) {
-    let v = sourceResult(id),
-      p = packs[id];
-    const mine = model(id);
+    const record = ownResults(c.mode)[id] || library[id];
+    const v = sourceResult(id,record), p = packs[id], mine = model(id,record);
     const portraits =
       '<div class="compare-portraits">' +
       [mine, c]
@@ -702,6 +773,8 @@
         )
         .join("") +
       "</div>";
+    if (c.mode !== mine.mode)
+      return `${portraits}<p>한 사람은 뛰어 본 날을 떠올렸고 한 사람은 첫 러닝을 상상했어요. 두 사람이 쓴 한 줄을 함께 읽어 보세요.</p><p>나 · ${esc(mine.line)}</p><p>친구 · ${esc(c.line)}</p>`;
     if (!c.leaders)
       return `${portraits}<p>친구가 카드를 보낼 때 비교 항목은 뺐어요. 두 사람의 대사를 읽어 보세요.</p><p>나 · ${esc(mine.line)}</p><p>친구 · ${esc(c.line)}</p>`;
     let same = null,
@@ -718,35 +791,83 @@
       if (!diff && (aa !== undefined || bb !== undefined))
         diff = `‘${p.domains[j].title}’에서 나는 ‘${a.map((k) => p.domains[j].labels[k]).join("·")}’ 쪽을, 친구는 ‘${b.map((k) => p.domains[j].labels[k]).join("·")}’ 쪽을 골랐어요.`;
     }
-    return `<div class="compare">${portraits}<strong>${esc(v.name)} × ${esc(c.name)}</strong><p>${esc(same || "지금 비교할 수 있는 답 중에는 겹치는 게 없어요.")}</p><p>${esc(diff || "지금 비교할 수 있는 답 중에는 다른 게 없어요.")}</p><p>${esc({ base: "다음에 같이 뛰면 어디서 잠깐 쉬어 갈까?", buddy: "우리 같이 뛴다면 뭘 먼저 정할까?", record: "오늘 뛴 기록 중에 나한테 하나만 보여 준다면 뭐야?" }[id])}</p></div>`;
+    const sameType = id === "base" && c.typeKey && c.typeKey === v.typeKey;
+    return `<div class="compare">${portraits}<strong>${esc(mine.name)} × ${esc(c.name)}</strong>${sameType ? "<p>기본 검사에서 두 사람의 대표 선택 세 가지가 모두 같아요.</p>" : ""}${same ? `<p>${esc(same)}</p>` : ""}${diff ? `<p>${esc(diff)}</p>` : ""}${!same && !diff ? "<p>둘 다 답한 항목이 아직 없어요.</p>" : ""}</div>`;
+  }
+  function conversationScenes(id, m) {
+    const r = library[id];
+    const clues = r.answers.flatMap((row, q) => row.map(i => ({q, i})));
+    const first = clues.find(({q,i}) => optionArt(id,{q,i}) === m.evidenceArt);
+    const refs = (first ? [first,...clues.filter(c => c !== first)] : clues)
+      .map(({q,i}) => ({source:"quiz", pack:id, mode:r.mode, q, choice:i, chat:r.chatScenes === true}));
+    if (id === "record" || id === "base") {
+      const results = ownResults(r.mode);
+      const post = results[window.RBStoryMatch.latestPost(results)];
+      if (post && window.RBStoryMatch.postQuestion.choices.some(c => c.signal === post.postChoice))
+        refs.unshift({source:"post", mode:r.mode, choice:post.postChoice});
+    }
+    return refs;
+  }
+  function publicQuestion(pack, mode) {
+    return pack === "buddy" ? {source:"quiz", pack, mode, q:0} : {source:"post", mode};
   }
   function shareSheet() {
-    let id = state.id,
-      m = model();
+    const m = model(), refs = conversationScenes(state.id, m);
+    const items = refs.map(ref => {
+      const q = window.RBFriend.read(ref);
+      return q.title + " · " + q.choices.find(c => c.id === ref.choice).text;
+    });
+    const web = location.protocol !== "file:";
     note(
       "친구에게 내 장면 보내기",
-      `<p>${esc(m.name)} · ${esc(m.line)}</p><label class="check"><input id="allow-compare" type="checkbox" checked>친구와 비교할 수 있게 세 항목의 결과도 보내기</label><p class="share-note">이 검사 카드에 담긴 그림과 대사를 친구에게 보내요. 비교 항목은 따로 고를 수 있어요.</p><div class="actions">${location.protocol === "file:" ? "" : btn("sendlink", "카드 링크 보내기", "primary", "share")}${btn(folderFile ? "capture" : "shareimage", folderFile ? "캡처 화면 열기" : "이미지로 보내기", "light", "image")}</div>${folderFile ? '<p class="hint">여기서는 ‘캡처 화면 열기’를 누른 뒤 화면을 캡처해 주세요. 이미지 파일은 웹 버전이나 ‘런비티아이 체험판.html’에서 저장할 수 있어요.</p>' : location.protocol === "file:" ? '<p class="hint">여기서는 카드를 이미지로 보낼 수 있어요. 친구와 결과를 비교하려면 웹 버전에서 링크를 보내 주세요.</p>' : ""}<div id="manual-link"></div>`,
+      `<canvas id="share-preview-art" role="img" aria-label="보낼 카드 미리보기" style="display:block;width:min(43%,12rem);height:auto;margin:0 auto"></canvas><p><strong>${esc(m.name)}</strong><br>${esc(m.line)}</p>
+      <p class="hint">${web ? "친구가 내 카드를 보고 질문 하나에 답할 수 있어요." : "이 카드를 이미지로 간직하거나 친구에게 보낼 수 있어요."}</p>
+      ${items.length ? `<label class="check"><input id="allow-answer" type="checkbox">내가 고른 답 한 줄도 보내기</label>
+        <label class="field" id="echo-field" hidden>보내고 싶은 답<select id="echo-selection">${items.map((item,i) => `<option value="${i}">${esc(item)}</option>`).join("")}</select></label>` : ""}
+      ${web ? '<label class="check"><input id="allow-compare" type="checkbox">링크에 세 영역의 결과도 담기</label>' : ""}
+      <p class="share-note" id="send-preview" aria-live="polite"></p>
+      <div class="actions">${web ? btn("sendlink","친구에게 링크 보내기","primary","share") : ""}
+      ${btn(folderFile ? "capture" : "shareimage", folderFile ? "캡처 화면 열기" : "이미지로 보내기","light","image")}
+      ${btn("modalclose","나만 간직하기","light")}</div><div id="manual-link"></div>`,
     );
+    function preview() {
+      const c = sharedCard();
+      const picker = modal.querySelector("#echo-field");
+      if (picker) picker.hidden = !c.includeEvidence;
+      const areas = c.leaders?.map((group,i) => group.map(k => packs[c.pack].domains[i].labels[k]).join(" / ")).filter(Boolean);
+      modal.querySelector("#send-preview").textContent = [web ? "친구에게 물어볼 질문 · " + window.RBFriend.read(c.echo).prompt : "",
+        areas?.length ? "함께 보낼 결과 · " + areas.join(" · ") : ""].filter(Boolean).join("  ");
+      modal.querySelector("#manual-link").replaceChildren();
+      const previous = modal.querySelector("#share-preview-art");
+      const canvas = previous.cloneNode(false);
+      previous.replaceWith(canvas);
+      scene.draw(canvas, c, state.ratio, {width:540}).catch(() => canvas.hidden = true);
+    }
+    modal.querySelectorAll("input,select").forEach(el => el.addEventListener("change", preview));
+    preview();
   }
   function sharedCard() {
-    let m = model(),
-      id = state.id;
+    const m = model(), ref = conversationScenes(state.id,m)[Number(modal.querySelector("#echo-selection")?.value || 0)];
+    const showAnswer = !!modal.querySelector("#allow-answer")?.checked;
+    const echo = window.RBFriend.clean(showAnswer ? ref : publicQuestion(m.pack,m.mode), showAnswer);
+    const answer = showAnswer && window.RBFriend.read(echo).choices.find(c => c.id === echo.choice);
     return {
-      ...m,
+      pack:m.pack, mode:m.mode, name:m.name, charIndex:m.charIndex, pose:m.pose,
+      background:m.background, frame:m.frame, expression:m.expression, prop:m.prop,
+      sceneArt:m.sceneArt, sceneLabel:m.sceneLabel, actionArt:m.actionArt, actionLabel:m.actionLabel,
       v: 2,
       ratio: state.ratio === "9:16" ? "9:16" : "4:5",
       leaders: document.querySelector("#allow-compare")?.checked
         ? sourceResult().leaders
         : null,
-      evidence: m.includeEvidence ? m.evidence : "",
-      evidenceArt: m.includeEvidence ? m.evidenceArt : "",
+      typeKey:modal.querySelector("#allow-compare")?.checked ? sourceResult().typeKey || "" : "",
+      echo, includeEvidence:!!answer, evidence:answer ? answer.text : "",
+      evidenceArt:answer && ref.source === "quiz" ? optionArt(state.id, {q:ref.q, i:ref.choice}) : "",
       line: m.line.slice(0, 160),
     };
   }
   function cardUrl(card) {
-    let u = new URL(location.href);
-    u.hash = "card=" + encodeURIComponent(JSON.stringify(card));
-    return u.href;
+    return window.RBFriend.url("card", card);
   }
   function decodeCard() {
     if (!location.hash.startsWith("#card=") || location.hash.length > 12000)
@@ -816,6 +937,9 @@
             ? c.evidenceArt
             : "",
         leaders,
+        typeKey:leaders && c.pack === "base" && /^base-[0-2]-[0-2]-[0-2]$/.test(c.typeKey) ? c.typeKey : "",
+        echo:c.echo && c.echo.mode === c.mode && ((c.echo.source === "post" && ["base","record"].includes(c.pack)) ||
+          (c.echo.source === "quiz" && c.echo.pack === c.pack)) ? window.RBFriend.clean(c.echo,c.includeEvidence === true) : null,
       };
     } catch {
       return null;
@@ -825,48 +949,54 @@
     received = c;
     state = { id: c.pack };
     output(
-      `${head(c.name, "친구가 보낸 검사 카드 · " + packTitle(c.pack))}<div class="results"><div class="scene-wrap"><canvas id="friend-scene" width="1080" height="1350" role="img" aria-label="${esc(c.line)}"></canvas></div><div class="stack"><div class="panel"><h2>친구의 한 줄</h2><p>${esc(c.line)}</p>${c.includeEvidence ? `<p class="hint">${esc(c.evidence)}</p>` : ""}</div>${library[c.pack] ? `<div class="panel"><h2>우리 둘이 달리면</h2>${compare(c.pack, c)}</div>` : ""}<div class="actions"><button class="btn primary" data-act="${library[c.pack] ? "result" : "pick"}" data-id="${c.pack}">${library[c.pack] ? "내 결과도 보기" : "나도 해보기"}</button>${btn("home", "테스트 둘러보기", "light")}</div></div></div>`,
+      `${head(c.name, "친구가 보낸 검사 카드 · " + packTitle(c.pack))}<div class="results"><div class="scene-wrap"><canvas id="friend-scene" width="1080" height="1350" role="img" aria-label="${esc(c.line)}"></canvas></div><div class="stack"><div class="panel"><h2>친구의 한 줄</h2><p>${esc(c.line)}</p>${c.includeEvidence && c.echo?.choice === undefined ? `<p class="hint">${esc(c.evidence)}</p>` : ""}</div><section class="panel" id="friend-echo"></section>${library[c.pack] ? `<details class="panel"><summary>내 결과와 같이 보기</summary><div class="stack" data-compare-own></div></details>` : ""}<div class="actions"><button class="btn primary" data-act="${library[c.pack] ? "result" : "pick"}" data-id="${c.pack}">${library[c.pack] ? "내 결과도 보기" : "나도 해보기"}</button>${btn("home", "테스트 둘러보기", "light")}</div></div></div>`,
       "friend",
     );
+    window.RBFriend.mount(main.querySelector("#friend-echo"), c.echo || publicQuestion(c.pack,c.mode), {esc,notify});
+    const comparison = main.querySelector("[data-compare-own]");
+    if (comparison) comparison.parentElement.addEventListener("toggle", () => {
+      if (comparison.parentElement.open && !comparison.childElementCount) comparison.innerHTML = compare(c.pack,c);
+    });
     scene
       .draw(document.querySelector("#friend-scene"), c, c.ratio)
       .catch(() => notify("그림을 불러오지 못했어요."));
+  }
+  function openSharedMoment() {
+    if (!location.hash.startsWith("#moment=") || location.hash.length > 1000) return false;
+    try {
+      const ref = window.RBFriend.clean(JSON.parse(decodeURIComponent(location.hash.slice(8))),true);
+      if (!ref) return false;
+      const q = window.RBFriend.read(ref);
+      output(`<div class="narrow">${head(q.title, "친구가 보낸 러닝 장면")}<section class="panel" id="friend-echo"></section><div class="actions">${btn("home","내 러닝 캐릭터도 만나 보기","primary")}</div></div>`, "friend");
+      window.RBFriend.mount(main.querySelector("#friend-echo"),ref,{esc,notify});
+      return true;
+    } catch { return false; }
   }
   async function transfer(type) {
     let box = document.querySelector("#manual-link");
     try {
       if (type === "sendlink") {
-        let url = cardUrl(sharedCard());
-        if (navigator.share) {
-          await navigator.share({ title: "내 런비티아이", url });
-          return;
-        }
-        if (navigator.clipboard) {
-          try {
-            await navigator.clipboard.writeText(url);
-            notify("카드 링크를 복사했어요.");
-            return;
-          } catch {}
-        }
-        box.innerHTML = `<label class="field">복사할 카드 링크<input readonly value="${esc(url)}"></label>`;
-        box.querySelector("input").select();
+        await window.RBFriend.deliver(cardUrl(sharedCard()),{link:true,useShare:true,output:box,notify});
       } else {
-        const blob = await scene.blob(model(), state.ratio),
+        const card = sharedCard();
+        const blob = await scene.blob(card, state.ratio),
           f = new File([blob], "런비티아이.png", { type: "image/png" });
         if (navigator.canShare?.({ files: [f] })) {
           await navigator.share({ files: [f], title: "내 러닝 캐릭터" });
         } else {
-          await scene.download(model(), state.ratio);
+          await scene.download(card, state.ratio);
           notify("카드를 이미지로 저장했어요. 친구에게 보내 보세요.");
         }
       }
     } catch (e) {
-      if (e.name !== "AbortError")
-        notify("카드를 보내지 못했어요. 이미지를 저장한 뒤 다시 보내 보세요.");
+      if (e.name !== "AbortError" && type === "shareimage") {
+        capture();
+        notify("이미지를 바로 보내기 어려워요. 이 카드를 캡처해 주세요.");
+      } else if (e.name !== "AbortError") notify("링크를 보내지 못했어요. 다시 눌러 주세요.");
     }
   }
   function capture() {
-    let m = model(),
+    let m = modal.open && modal.querySelector("#send-preview") ? sharedCard() : model(),
       r = state.ratio;
     if (modal.open) modal.close();
     modal.className = "capture";
@@ -887,11 +1017,60 @@
       id = b.dataset.id || state.id,
       i = Number(b.dataset.i);
     switch (act) {
+      case "type-pick": {
+        if (state.view !== "result" || id !== "base") break;
+        const r = library.base, v = sourceResult(id), d = Number(b.dataset.domain);
+        if (v.digest[d] !== null || !v.candidates[d]?.includes(i)) break;
+        r.typePicks ||= [];
+        r.typePicks[d] = i;
+        save(storageKey, library);
+        showResult(id, true);
+        main.querySelector("#type-prompt")?.focus({preventScroll:true});
+        break;
+      }
+      case "type-revise":
+        if (state.id !== "base" || !library.base) break;
+        delete library.base.typePicks;
+        save(storageKey, library);
+        showResult("base");
+        break;
+      case "type-later": {
+        const details = main.querySelector("#partial-answers");
+        details.open = true;
+        details.querySelector("summary").focus();
+        break;
+      }
+      case "edit-card": {
+        const details = main.querySelector("#edit-panel");
+        details.open = true;
+        details.querySelector("summary").focus();
+        break;
+      }
+      case "type-react": {
+        if (state.id !== "base" || state.view !== "result" || ![0,1].includes(i)) break;
+        const v = sourceResult("base");
+        if (!v.typeKey) break;
+        library.base.reaction = {type:v.typeKey, value:["내 얘기 같아","조금 달라"][i]};
+        save(storageKey,library);
+        main.querySelector(".type-reaction").outerHTML = typeReaction(v);
+        main.querySelector('[data-act="type-react"][aria-pressed="true"]').focus({preventScroll:true});
+        break;
+      }
+      case "review-domain": {
+        const q = packs.base.questions.findIndex(row => row.domain === Number(b.dataset.domain));
+        const select = main.querySelector("#trial-q");
+        if (q < 0 || !select) break;
+        select.closest("details").open = true;
+        select.value = String(q);
+        select.dispatchEvent(new Event("change", {bubbles:true}));
+        select.focus();
+        break;
+      }
       case "post-select":
       case "post-omit":
       case "post-open": {
-        const record = library.record;
-        if (state.view !== "result" || state.id !== "record" || !record) break;
+        const record = library[id];
+        if (state.view !== "result" || !["record","base"].includes(id) || !record) break;
         if (act === "post-select") {
           const selection = window.RBStoryMatch.postQuestion.choices.find(c => c.signal === b.dataset.signal);
           if (!selection) break;
@@ -902,9 +1081,11 @@
           record.postQuestionSkipped = true;
         } else {
           delete record.postQuestionSkipped;
+          delete record.postChoice;
         }
+        record.postChoiceAt = Date.now();
         const stored = save(storageKey, library);
-        showResult("record", false, state.ratio);
+        showResult(id, false, state.ratio);
         const target = act === "post-select" ? '.rb-post-options [aria-pressed="true"]' :
           act === "post-omit" ? '[data-act="post-open"]' : "#post-choice-heading";
         main.querySelector(target)?.focus({preventScroll:true});
@@ -936,19 +1117,28 @@
       case "about":
         note(
           "런비티아이",
-          `<p>달릴 때의 취향을 알아보는 심리테스트예요. 그래프에서는 각 답을 몇 번 골랐는지 볼 수 있어요.</p><p>러너들이 평소 쓰는 말과 국내 러닝 앱 후기를 참고해 질문을 만들었어요.</p><a href="https://www.jksqm.org/upload/pdf/jksqm-53-1-19.pdf" target="_blank" rel="noopener">국내 러닝 앱 후기 연구 읽기</a>`,
+          `<p>여섯 장면에서 내가 얼마나 자주 하는 행동인지 골라요. 첫 러닝을 상상한다면 얼마나 해 보고 싶은지 답하면 돼요.</p><p>회복·기록·함께·탐색 네 가지를 살펴보고 답과 어울리는 캐릭터와 풀이를 보여 줘요. 나를 돌아보는 창작 성향 테스트예요.</p>`,
         );
         break;
       case "home":
-        if (location.hash.startsWith("#card="))
+        if (/^#(?:card|moment)=/.test(location.hash))
           history.replaceState(null, "", location.href.split("#")[0]);
         home();
         break;
       case "library":
         libraryPage();
         break;
+      case "reading-open":
+        reading({view:"result",id:b.dataset.record});
+        break;
+      case "reading-delete":
+        if (confirm("이 기기에 보관한 이 지도와 한 줄을 지울까요?")) {
+          notify(window.RBReadingUI.remove(b.dataset.record) ? "지도를 지웠어요." : "지도를 지우지 못했어요.");
+          libraryPage();
+        }
+        break;
       case "pick":
-        pick(id);
+        if (id === "base") home(); else pick(id);
         break;
       case "sound":
         scene.audio.set(!scene.audio.enabled());
@@ -960,10 +1150,10 @@
         } else notify("소리를 껐어요.");
         break;
       case "start-exp":
-        start("base", "experience");
+        reading({view:"start",mode:"experience"});
         break;
       case "start-img":
-        start("base", "imagine");
+        reading({view:"start",mode:"imagine"});
         break;
       case "begin":
         start(id, b.dataset.mode);
@@ -1024,6 +1214,13 @@
         break;
       }
       case "result":
+        if (b.dataset.mode && library[id]?.mode !== b.dataset.mode) {
+          const previous = ownResults(b.dataset.mode)[id];
+          if (!previous) break;
+          save(storageKey,library);
+          library[id] = previous;
+          save(storageKey,library);
+        }
         showResult(id);
         break;
       case "replay":
@@ -1075,7 +1272,7 @@
           r = library[id],
           a = r.answers.map((z) => [...z]);
         a[qi] = [i];
-        let v = score(id, a, r.mode, r.chatScenes);
+        let v = score(id, a, r.mode, r.chatScenes, r.typePicks);
         let target = main.querySelector("#trial-out");
         target.innerHTML = `<div class="trial"><p class="hint">원래 장면 → 바꿔 본 장면</p><div class="trial-pair"><img src="${resultThumb(model(id))}" alt="지금 카드 그림"><span>→</span><img src="${trialThumb(id, v)}" alt="답을 바꾸면 나오는 그림"></div><strong>${esc(sourceResult().name)} → ${esc(v.name)}</strong><p>${esc(v.line)}</p><p class="hint">${esc(packs[id].questions[qi].scene)} · ${esc(proofText(id, qi, i))}</p><button class="btn light sm" data-act="applytrial" data-i="${i}" data-q="${qi}">이 답으로 수정</button></div>`;
         break;
@@ -1171,15 +1368,18 @@
   });
   function route() {
     const params = new URLSearchParams(location.search);
-    if (restoreStoryResult(history.state?.rbTestReturn)) return;
+    const readingCard = window.RBReadingCard.read();
+    if (readingCard) { reading({view:"friend",shared:readingCard}); return; }
+    if (openSharedMoment()) return;
     const card = decodeCard();
     if (card) friendPage(card);
+    else if (restoreStoryResult(history.state?.rbTestReturn)) return;
     else if (params.get("test") === "stories" || params.has("story")) storyUI.open(params.get("story"), params.get("choice"), params.get("topic"));
     else if (params.get("test") === "profile") storyUI.openProfile();
     else if (params.get("test") === "motives") motiveUI.open();
     else {
       home();
-      if (location.hash.startsWith("#card="))
+      if (/^#(?:card|moment)=/.test(location.hash))
         notify("이 링크로는 카드를 열 수 없어요. 친구에게 링크를 다시 받아 보세요.");
       else if (params.get("test") === "buddy") pick("buddy");
     }

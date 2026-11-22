@@ -8,7 +8,14 @@ window.RBMotiveUI = {
     const read = r => r && ["experience","imagine"].includes(r.mode) && typeof r.answers === "object" && r.answers !== null ? r : null;
     let draft = read(original.draft), saved = read(original.saved), view = "";
     const reasons = [...scale, {value:"na", label:"해당 없어"}, {value:"unsure", label:"잘 모르겠어"}];
-    const persist = () => save(key, {draft, saved});
+    const byMode = Object.fromEntries(["experience", "imagine"].flatMap(mode => {
+      const item = saved?.mode === mode ? saved : read(original.byMode?.[mode]);
+      return item?.mode === mode ? [[mode, item]] : [];
+    }));
+    const persist = () => {
+      if (saved) byMode[saved.mode] = saved;
+      return save(key, {draft, saved, byMode});
+    };
     function button(act, text, cls = "light", extra = "") {
       return `<button type="button" class="btn ${cls}" data-motive="${act}" ${extra}>${esc(text)}</button>`;
     }
@@ -148,6 +155,6 @@ window.RBMotiveUI = {
         }
       }
     });
-    return {open, packCard, libraryEntry, fromResult, showResult:result, savedResult:() => saved};
+    return {open, packCard, libraryEntry, fromResult, showResult:result, savedResult:mode => mode ? byMode[mode] : saved};
   },
 };

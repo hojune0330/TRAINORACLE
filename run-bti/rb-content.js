@@ -11,9 +11,9 @@
       title: '나의 러닝 캐릭터',
       subtitle: '운동화 끈을 묶을 때부터 집에 돌아올 때까지 나는 어떤 러너일까?',
       domains: [
-        { title: '나가게 하는 것', labels: ['새로운 길', '나와 한 약속', '함께할 사람'] },
+        { title: '뛰러 나가는 이유', labels: ['새로운 길', '내가 정한 목표', '함께할 사람'] },
         { title: '뛰면서 신경 쓰는 것', labels: ['주변 풍경', '몸의 리듬', '거리와 시간'] },
-        { title: '끝나고 남는 것', labels: ['남은 기분', '해낸 일', '나눌 이야기'] },
+        { title: '끝나고 남는 것', labels: ['뛰고 난 기분', '해낸 일', '나눌 이야기'] },
       ],
       questions: [
         question(0, '현관 앞', '최근에 뛰러 나간 날을 떠올려 봐. 왜 나가기로 했어?', '처음 뛰러 나가는 날엔 무슨 생각으로 운동화를 신을 것 같아?',
@@ -287,7 +287,7 @@
     return mode === 'imagine' && q.imagineOptions ? q.imagineOptions : q.options;
   }
 
-  function score(packId, answers, mode = 'experience', chatScenes = false) {
+  function score(packId, answers, mode = 'experience', chatScenes = false, typePicks = []) {
     const pack = packs[packId];
     if (!Object.hasOwn(packs, packId)) throw new RangeError('알 수 없는 런비티아이 검사입니다.');
     const isImagination = mode === 'imagine';
@@ -306,6 +306,33 @@
       const max = Math.max(...row);
       return max === 0 ? [] : row.map((count, i) => count === max ? i : -1).filter(i => i >= 0);
     });
+    // Keep one actual response for each leading choice, including ties.
+    const evidence = [];
+    for (const [domain, indices] of leaders.entries()) {
+      for (const i of indices) {
+        const choice = selections.find(s => s.domain === domain && s.i === i);
+        if (choice) evidence.push({ q: choice.q, i: choice.i, text: choice.text });
+      }
+    }
+    if (packId === 'base') {
+      // Each runner uses the same three axes. A separate choice can resolve a tie
+      // or fill an unanswered axis without fabricating votes in the evidence graph.
+      const candidates = leaders.map(indices => indices.length ? indices : [0, 1, 2]);
+      const directions = candidates.map((options, d) => options.length === 1 ? options[0] :
+        options.includes(typePicks?.[d]) ? typePicks[d] : null);
+      const complete = directions.every(Number.isInteger);
+      const typeKey = complete ? 'base-' + directions.join('-') : '';
+      if (complete) {
+        const index = directions[0] * 9 + directions[1] * 3 + directions[2];
+        const firstPicks = evidence.filter(e => e.i === directions[pack.questions[e.q].domain]);
+        return { counts, leaders, digest:directions, name:baseCast[index][0],
+          line:isImagination ? imaginedLines.base[index] : baseCast[index][1], evidence:firstPicks,
+          id:typeKey, typeKey, candidates, characterIndex:index, kind:'clear', focusDomain:null };
+      }
+      return {counts, leaders, digest:directions, name:'내 러닝 유형 고르기',
+        line:'나랑 더 가까운 답이 뭔지 조금 더 생각해 볼래.',
+        evidence, id:'base-pending', typeKey, candidates, characterIndex:-1, kind:'open', focusDomain:null};
+    }
     const digest = leaders.map(indices => indices.length === 1 ? indices[0] : null);
     const unknown = leaders.every(indices => indices.length === 0);
     const itemsAnswered = pack.domains.map((_, domain) =>
@@ -323,21 +350,13 @@
       const choice = selections.find(s => s.domain === domain && indices.includes(s.i));
       return choice?.i ?? 0;
     });
-    const localIndex = packId === 'base' ? 9 * anchor[0] + 3 * anchor[1] + anchor[2] : 3 * anchor[0] + anchor[1];
-    const characterIndex = localIndex + ({ base: 0, buddy: 27, record: 36 })[packId];
-    const cast = ({ base: baseCast, buddy: buddyCast, record: recordCast })[packId];
+    const localIndex = 3 * anchor[0] + anchor[1];
+    const characterIndex = localIndex + ({ buddy: 27, record: 36 })[packId];
+    const cast = ({ buddy: buddyCast, record: recordCast })[packId];
     let [name, line] = cast[localIndex];
     if (isImagination) line = imaginedLines[packId][localIndex];
     if (kind === 'clear' && extensionEndings[packId]) line += ' ' + extensionEndings[packId][anchor[2]];
 
-    // Keep one actual response for each leading choice, including ties.
-    const evidence = [];
-    for (const [domain, indices] of leaders.entries()) {
-      for (const i of indices) {
-        const choice = selections.find(s => s.domain === domain && s.i === i);
-        if (choice) evidence.push({ q: choice.q, i: choice.i, text: choice.text });
-      }
-    }
     let focusDomain = null;
     if (kind === 'open') {
       name = '내가 고르는 첫 장면';
@@ -388,5 +407,5 @@
     ['다시 가고 싶은 길 찾기', '처음 기록과 비교해 보기', '친구에게 첫 기록 보여주기'],
     ['다시 갈 코스 지도 간직하기', '달라진 기록 모아 보기', '같이 볼 기록 간직하기'],
   ];
-  window.RB = { packs, score, actionCaptions, answerOptions };
+  window.RB = { packs, score, actionCaptions, answerOptions, typeNames:baseCast.map(row => row[0]) };
 })();
