@@ -110,11 +110,11 @@ window.RBStoryMatch = (() => {
   function quizObservations(packId, record) {
     if (!record) return [];
     const rows = [];
-    const mode = record.mode === "imagine" ? "imagine" : "experience";
-    if (packId === "record") {
+    const mode = modeOf(record.mode);
+    if (packId === "record" || packId === "base") {
       const choice = postQuestion.choices.find(c => c.signal === record.postChoice);
       if (choice) {
-        const evidence = {id:packId,title:window.RB.packs.record.title,scene:postQuestion.scene,
+        const evidence = {id:packId,title:window.RB.packs[packId].title,scene:postQuestion.scene,
           itemId:postQuestion.id,mode,answer:choice.label};
         rows.push({signal:choice.signal,evidence,leading:true,weight:1});
       }
@@ -177,13 +177,18 @@ window.RBStoryMatch = (() => {
     for (const [topic, left, right] of pairs) {
       const counts = {leftOnly:0, rightOnly:0, both:0, other:0, quizCount:0, storyCount:0};
       const evidence = [];
+      const answersBySide = {left:[],right:[],both:[],other:[]};
+      const seen = new Set();
       for (const occasion of occasions) {
         const canPickAlone = (a, b) => occasion.options.some(tags => tags.includes(a) && !tags.includes(b));
         if (!canPickAlone(left, right) || !canPickAlone(right, left)) continue;
+        if (occasion.event && seen.has(occasion.event)) continue;
+        if (occasion.event) seen.add(occasion.event);
         const hasLeft = occasion.picks.some(e => e.signal === left);
         const hasRight = occasion.picks.some(e => e.signal === right);
         const side = hasLeft ? (hasRight ? "both" : "leftOnly") : (hasRight ? "rightOnly" : "other");
         counts[side]++;
+        answersBySide[side === "leftOnly" ? "left" : side === "rightOnly" ? "right" : side].push(occasion.picks);
         counts[occasion.story ? "storyCount" : "quizCount"]++;
         evidence.push(...occasion.picks.filter(e => e.signal === left || e.signal === right));
       }
@@ -196,7 +201,7 @@ window.RBStoryMatch = (() => {
       const winner = clear ? (counts.leftOnly > counts.rightOnly ? left : right) : null;
       const status = total === 1 ? "sparse" : clear ? "clear" : gap === 0 ? "tied" : "mixed";
       result.push({topic, left, right, leftLabel:themes[left][0], rightLabel:themes[right][0],
-        ...counts, total, status, winner, evidence});
+        ...counts, total, status, winner, evidence, answersBySide});
     }
     const order = {clear:0, tied:1, mixed:2, sparse:3};
     return result.sort((a,b) => order[a.status] - order[b.status]
@@ -208,7 +213,8 @@ window.RBStoryMatch = (() => {
     const counts = postQuestion.choices.map(c => ({signal:c.signal,label:c.short,count:0}));
     const evidence = [];
     let quizCount = 0, storyCount = 0;
-    for (const {options, picks, story} of occasions) {
+    const seen = new Set();
+    for (const {options, picks, story, event} of occasions) {
       // A selfie can be taken, saved, or posted. Count only decisions that explicitly
       // offer all four posting choices on equal terms, one action per alternative.
       const offered = options.map(tags => tags.filter(tag => postingSignals.has(tag)));
@@ -216,6 +222,8 @@ window.RBStoryMatch = (() => {
           new Set(offered.flat()).size !== counts.length) continue;
       const choices = picks.filter(e => postingSignals.has(e.signal));
       if (choices.length !== 1) continue;
+      if (event && seen.has(event)) continue;
+      if (event) seen.add(event);
       const [choice] = choices;
       counts.find(c => c.signal === choice.signal).count++;
       evidence.push(choice);
@@ -325,7 +333,37 @@ window.RBStoryMatch = (() => {
       evidence};
   }
 
-  function profile(catalog, records = {}, readPick = () => null) {
+  function modeOf(value) {
+    return value === "experience" || value === "imagine" ? value : "unspecified";
+  }
+
+  function latestPost(records) {
+    const packs = ["record","base"].filter(id => {
+      const r = records?.[id];
+      return r && (r.postChoice || r.postQuestionSkipped || r.postChoiceAt);
+    });
+    const time = id => records[id].postChoiceAt ?? records[id].date ?? 0;
+    return packs.sort((a,b) => time(b) - time(a))[0] || null;
+  }
+
+  function eventKey(story) {
+    if (story.eventKey) return "event/" + story.eventKey;
+    if (!story.source?.url) return "scene/" + story.id;
+    const [path, search = ""] = story.source.url.split("#")[0].split("?");
+    const query = search.split("&").filter(p => p && !/^(?:utm_[^=]+|fbclid|gclid)=/i.test(p)).sort().join("&");
+    const url = path.replace(/\/$/,"") + (query ? "?" + query : "");
+    return "source/" + url + (story.source.kind === "weather" ? "/" + (story.validFrom || story.source.asOf) : "");
+  }
+
+  function profile(catalog, records = {}, readPick = () => null, requestedMode) {
+    const saved = (catalog || []).map(story => {
+      const raw = readPick(story.id);
+      const entry = typeof raw === "string" ? {choiceId:raw} : raw;
+      return {story, entry};
+    }).filter(({entry}) => entry?.choiceId && !entry.excluded);
+    const firstRecord = Object.values(records || {}).find(Boolean);
+    const mode = requestedMode === undefined ? modeOf(firstRecord ? firstRecord.mode : saved[0]?.entry.mode) : modeOf(requestedMode);
+    records = Object.fromEntries(Object.entries(records || {}).filter(([,record]) => record && modeOf(record.mode) === mode));
     const groups = new Map();
     const occasions = [];
     function add(signal, field, evidence) {
@@ -334,8 +372,9 @@ window.RBStoryMatch = (() => {
       groups.get(signal)[field].push({...evidence,signal});
     }
     let quizCount = 0;
+    const postPack = latestPost(records);
     for (const packId of ["base", "buddy", "record", "motive"]) {
-      const observations = quizObservations(packId, records?.[packId]);
+      const observations = quizObservations(packId, records?.[packId]).filter(row => row.evidence.itemId !== postQuestion.id || packId === postPack);
       if (observations.length || (packId === "motive" && records?.motive?.answers &&
           window.RBMotives.score(records.motive.answers).coverage.answered > 0)) quizCount++;
       const questions = new Map();
@@ -352,22 +391,35 @@ window.RBStoryMatch = (() => {
       }
     }
     const answered = new Set();
-    for (const story of catalog || []) {
+    // Newest decision about a given event takes precedence only for the alternatives
+    // actually offered together. A different question in the same event still counts.
+    const seenSignal = new Map(), events = new Set();
+    saved.sort((a,b) => (b.entry.at || 0) - (a.entry.at || 0) || a.story.id.localeCompare(b.story.id));
+    for (const {story, entry} of saved) {
+      if (modeOf(entry.mode) !== mode) continue;
       if (answered.has(story.id)) continue;
-      const picked = readPick(story.id);
-      const choice = story.choices?.find(c => c.id === picked);
+      const snapshot = entry.snapshot;
+      const choice = snapshot?.choice?.id === entry.choiceId ? snapshot.choice : story.choices?.find(c => c.id === entry.choiceId);
       if (!choice) continue;
       answered.add(story.id);
-      const evidence = {id: story.id, choiceId: choice.id, title: story.title, scene: story.prompt, answer: choice.label, mode: null};
+      const event = snapshot?.event || eventKey(story);
+      events.add(event);
+      const evidence = {id:story.id,choiceId:choice.id,title:snapshot?.title || story.title,scene:snapshot?.prompt || story.prompt,
+        answer:choice.label,mode,version:entry.version || 1};
       // An episode's cover tags describe the premise, not the action the reader chose.
-      const options = story.choices.map(c => c.signals || []);
+      const options = snapshot?.options || story.choices.map(c => c.signals || []);
+      const seen = seenSignal.get(event) || new Set();
       const picks = [];
       for (const signal of new Set(choice.signals || [])) {
         const picked = {...evidence,signal,specific:options.some(tags=>!tags.includes(signal))};
-        add(signal, "storyEvidence", picked);
+        if (!seen.has(signal)) add(signal, "storyEvidence", picked);
         picks.push(picked);
       }
-      occasions.push({story:true,options,picks});
+      for (const signal of new Set(options.flat())) {
+        if (options.some(tags => !tags.includes(signal))) seen.add(signal);
+      }
+      seenSignal.set(event, seen);
+      occasions.push({story:true,options,picks,event});
     }
     const rows = [...groups.values()];
     for (const row of rows) {
@@ -391,10 +443,10 @@ window.RBStoryMatch = (() => {
     const direction = postingLeads ? posting : other;
     let baseline = null;
     if (quizCount && answered.size) {
-      const {status, signals, title} = profile([], records).direction;
+      const {status, signals, title} = profile([], records, undefined, mode).direction;
       baseline = {status, signals, title};
     }
-    return {rows, storyCount:answered.size, quizCount,comparisons,direction,motiveComparison,baseline,posting};
+    return {mode,rows,storyCount:answered.size,eventCount:events.size,quizCount,comparisons,direction,motiveComparison,baseline,posting,postPack};
   }
 
   function quizReason(evidence) {
@@ -409,6 +461,7 @@ window.RBStoryMatch = (() => {
     const evidence = new Map();
     for (const row of quizObservations(packId, record)) {
       if (!row.leading) continue;
+      if (row.evidence.itemId === postQuestion.id && mine && mine.postPack !== packId) continue;
       const old = evidence.get(row.signal);
       if (!old) evidence.set(row.signal, {strength: row.weight, reason: quizReason(row.evidence)});
       else old.strength += row.weight;
@@ -430,32 +483,39 @@ window.RBStoryMatch = (() => {
         evidence.set(row.signal, {strength: specificStories.length, reason: `‘${story.title}’에서 고른 답이에요. “${story.answer}”`});
       }
     }
-    const choices = [];
+    const read = new Set((mine?.rows || []).flatMap(row => row.storyEvidence.map(e => e.id)));
+    const visitedCategories = new Set(), usedEvents = new Set(), seenIds = new Set();
     for (const story of stories || []) {
-      if ((story.validFrom && story.validFrom > today) || (story.validUntil && story.validUntil < today)) continue;
-      if (!Array.isArray(story.signals)) continue;
-      const matches = story.signals.filter(tag => evidence.has(tag));
-      const picked = readPick(story.id);
-      const read = story.choices?.some(c => c.id === picked) || false;
-      for (const tag of matches) {
-        const {reason, strength} = evidence.get(tag);
-        choices.push({story, tag, read, reason, strength, order: story.signals.indexOf(tag), overlap: matches.length});
-      }
+      if (readPick(story.id)) seenIds.add(story.id);
+      if (!read.has(story.id)) continue;
+      visitedCategories.add(story.category);
+      usedEvents.add(eventKey(story));
     }
-    function rank(a, b) {
-      const dated = story => Number(Boolean(story.validFrom || story.validUntil));
-      const date = story => story.source?.asOf || story.validFrom || "";
-      return Number(a.read) - Number(b.read) || b.strength - a.strength || a.order - b.order || b.overlap - a.overlap ||
-        dated(b.story) - dated(a.story) || date(b.story).localeCompare(date(a.story));
+    const eligible = (stories || []).filter(story => !story.archived && !seenIds.has(story.id) && !usedEvents.has(eventKey(story)) &&
+      !(story.validFrom && story.validFrom > today) && !(story.validUntil && story.validUntil < today) && story.choices?.length);
+    const candidates = eligible.map(story => {
+      const options = story.choices.map(c => c.signals || []);
+      const offered = [...new Set(options.flat())].filter(tag => options.some(tags => !tags.includes(tag)));
+      const matched = offered.filter(tag => evidence.has(tag))
+        .sort((a,b) => evidence.get(b).strength - evidence.get(a).strength);
+      return {story, matched, offered};
+    });
+    const similar = candidates.filter(c => c.matched.length).sort((a,b) =>
+      evidence.get(b.matched[0]).strength - evidence.get(a.matched[0]).strength)[0];
+    const picks = [];
+    if (similar) picks.push({story:similar.story,label:"다른 날에도 그렇게 할까?",
+      reason:evidence.get(similar.matched[0]).reason});
+    const others = candidates.filter(c => !similar || (eventKey(c.story) !== eventKey(similar.story) && c.story.category !== similar.story.category));
+    others.sort((a,b) => Number(visitedCategories.has(a.story.category)) - Number(visitedCategories.has(b.story.category)) ||
+      Number(a.matched.length > 0) - Number(b.matched.length > 0));
+    for (const candidate of others) {
+      if (picks.length === 2) break;
+      if (picks.some(p => p.story.category === candidate.story.category || eventKey(p.story) === eventKey(candidate.story))) continue;
+      picks.push({story:candidate.story, label:picks.length ? "다른 주제도 골라 볼까?" : "이 장면이라면?",
+        reason:candidate.story.prompt});
     }
-    choices.sort(rank);
-    if (!choices.length) return [];
-    const first = choices[0];
-    const others = choices.filter(c => c.story.id !== first.story.id && c.tag !== first.tag);
-    others.sort((a, b) => rank(a, b) ||
-      Number(a.story.category === first.story.category) - Number(b.story.category === first.story.category));
-    return [first, ...others.slice(0, 1)].map(({story, reason}) => ({story, reason}));
+    return picks;
   }
 
-  return {profile, recommend, postQuestion};
+  return {profile, recommend, postQuestion, modeOf, eventKey, latestPost};
 })();

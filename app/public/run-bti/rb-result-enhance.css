@@ -1,0 +1,62 @@
+.rb-rep-view {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background: #efedf4;
+}
+.rb-rep-view > img { transform-origin: 50% 44%; }
+.rb-viewfinder {
+  position: absolute;
+  inset: 24% 29%;
+  opacity: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(white, white) top left / 19px 2px,
+    linear-gradient(white, white) top left / 2px 19px,
+    linear-gradient(white, white) top right / 19px 2px,
+    linear-gradient(white, white) top right / 2px 19px,
+    linear-gradient(white, white) bottom left / 19px 2px,
+    linear-gradient(white, white) bottom left / 2px 19px,
+    linear-gradient(white, white) bottom right / 19px 2px,
+    linear-gradient(white, white) bottom right / 2px 19px;
+  background-repeat: no-repeat;
+  filter: drop-shadow(0 1px 2px #151827);
+}
+.rb-rep-frame .rb-sample-record {
+  margin: 0;
+  padding: 7px 14px;
+  color: #374053;
+  background: #f3f1e9;
+  font-size: 13px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+.rb-rep-frame .rb-rep-replay { margin: 5px 0; }
+.rb-post-question .rb-post-scene { margin-top: 14px; }
+.rb-post-scene figcaption { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; line-height: 1.45; }
+.story-art:has(.rb-post-scene) { max-height: none; align-self: start; }
+.story-art .rb-post-scene img { min-height: 0; height: auto; aspect-ratio: 1.28; max-height: 430px; }
+.story-art .rb-post-scene ~ .story-art-label { position: static; display: block; background: transparent; }
+.rb-compare-bars .rb-bar-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.rb-bar-detail { width: 100%; }
+.rb-bar-detail summary { display: block; cursor: pointer; min-height: 44px; padding: 4px 10px; border-radius: 6px; }
+.rb-bar-detail summary::-webkit-details-marker { display: none; }
+.rb-bar-detail summary:focus-visible { outline: 2px solid #625486; }
+.rb-bar-detail summary:hover, .rb-bar-detail[open] summary { background: #f2eff6; }
+.rb-bar-detail summary b::after {
+  display: inline-block;
+  content: "";
+  width: 6px;
+  height: 6px;
+  margin: 0 2px 3px 10px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg);
+}
+.rb-bar-detail[open] summary b::after { transform: rotate(225deg); margin-bottom: 0; }
+.rb-compare-bars > .rb-bar-static { padding: 8px 10px; }
+.rb-compare-bars .rb-compare-track { display: block; }
+.rb-bar-detail .rb-profile-evidence { list-style: none; padding-inline: 10px; }
+@media (prefers-reduced-motion: reduce) {
+  .rb-rep-frame .rb-rep-replay { display: none; }
+}

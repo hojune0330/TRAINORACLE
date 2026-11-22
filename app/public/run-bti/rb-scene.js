@@ -86,7 +86,7 @@
         finished = true;
         clearTimeout(timeout);
         img.onload = img.onerror = null;
-        if (!value) setTimeout(() => images.delete(href), 5000);
+        if (!value) images.delete(href);
         resolve(value);
       };
       img.decoding = 'async';
@@ -100,7 +100,7 @@
     return pending;
   }
 
-  async function materials(m, animate) {
+  async function materials(m) {
     if (m.sceneArt) {
       const [scene, evidenceArt] = await Promise.all([load(m.sceneArt), load(m.evidenceArt)]);
       if (!scene) throw new Error('고른 장면을 불러오지 못했어요.');
@@ -112,12 +112,11 @@
       m.prop < 0 ? null : 'art/prop-' + two(m.prop) + '.webp',
       m.expression < 0 ? null : 'art/face-' + two(m.expression) + '.webp',
       'art/frame-' + two(m.frame) + '.webp', 'art/fx-' + two((m.background + m.pose * 4) % 16) + '.webp',
-      animate && !m.actionArt && m.charIndex >= 0 ? 'art/runner-' + two(m.charIndex) + '-' + (m.pose === 1 ? 0 : 1) + '.webp' : null,
       m.evidenceArt, m.charIndex >= 0 ? 'art/portrait-' + two(m.charIndex) + '.webp' : null, m.actionArt
     ];
-    const [bg, runner, prop, face, frame, fx, approach, evidenceArt, portrait, action] = await Promise.all(files.map(load));
-    if (m.actionArt && (!action || !runner)) throw new Error('캐릭터와 고른 장면을 불러오지 못했어요.');
-    return {bg, runner, prop, face, frame, fx, approach, evidenceArt, portrait, action};
+    const [bg, runner, prop, face, frame, fx, evidenceArt, portrait, action] = await Promise.all(files.map(load));
+    if ((m.charIndex >= 0 && !runner) || (m.actionArt && !action)) throw new Error('캐릭터와 고른 장면을 불러오지 못했어요.');
+    return {bg, runner, prop, face, frame, fx, evidenceArt, portrait, action};
   }
 
   const cardHeight = ratio => ratio === '9:16' ? 1920 : 1350;
@@ -222,49 +221,36 @@
     ctx.restore(); panel(); ctx.strokeStyle = ink; ctx.lineWidth = 4; ctx.stroke(); ctx.restore();
   }
 
-  function art(ctx, m, a, l, progress) {
+  function art(ctx, m, a, l) {
     const {x, y, w, ah} = l;
-    const arrive = ease(progress / .62);
-    const touch = ease((progress - .16) / .52);
-    const settle = ease((progress - .45) / .45);
     ctx.save(); borderPath(ctx, x, y, w, ah, 7); ctx.clip();
     if (a.bg) drawCover(ctx, a.bg, x, y, w, ah);
     else paperScene(ctx, x, y, w, ah, m.background);
     if (a.fx) {
-      ctx.save(); ctx.globalAlpha = .25 + settle * .21;
+      ctx.save(); ctx.globalAlpha = .46;
       drawInside(ctx, a.fx, x + w * .53, y + ah * .055, w * .41, ah * .46); ctx.restore();
     }
     if (a.frame) ctx.drawImage(a.frame, x, y, w, ah);
     const size = Math.min(ah * .975, w * .89);
     const foot = y + ah * .958, cx = x + w * .535;
     if (a.runner) {
-      ctx.save();
-      ctx.translate(cx - (1 - arrive) * 20, foot);
-      const transition = a.approach ? ease((progress - .26) / .26) : 1;
-      if (a.approach && transition < 1) {
-        ctx.globalAlpha = (.65 + .35 * arrive) * (1 - transition);
-        drawInside(ctx, a.approach, -size / 2, -size, size, size);
-      }
-      ctx.globalAlpha = transition;
-      drawInside(ctx, a.runner, -size / 2, -size, size, size);
-      ctx.restore();
+      drawInside(ctx, a.runner, cx - size / 2, foot - size, size, size);
     } else noRunner(ctx, cx, y + ah * .64, size * .87);
     const obj = Math.min(ah * .29, 217);
     if (a.prop) {
-      ctx.save(); ctx.translate(x + w * .795, y + ah * .745 + (1 - touch) * 14);
-      ctx.rotate(-.045 - (1 - touch) * .08); ctx.globalAlpha = .4 + .6 * touch;
+      ctx.save(); ctx.translate(x + w * .795, y + ah * .745);
+      ctx.rotate(-.045);
       ctx.shadowColor = 'rgba(49,43,29,.25)'; ctx.shadowBlur = 10; ctx.shadowOffsetY = 5;
       drawInside(ctx, a.prop, -obj / 2, -obj / 2, obj, obj); ctx.restore();
     }
     const insetX = x + w * .049, insetY = y + ah * .072;
     const panelW = w * .285, panelH = Math.min(ah * .38, panelW * .89);
     if (a.portrait) {
-      ctx.save(); ctx.globalAlpha = .5 + .5 * settle;
-      portraitWindow(ctx, a.portrait, insetX, insetY, panelW, panelH); ctx.restore();
+      portraitWindow(ctx, a.portrait, insetX, insetY, panelW, panelH);
     }
     if (a.face) {
       const f = 56, chipX = insetX, chipY = insetY + (a.portrait ? panelH + 14 : 0);
-      ctx.save(); ctx.globalAlpha = settle;
+      ctx.save();
       setFont(ctx, 27, 780);
       const label = labels.expression[m.expression], chipW = f + ctx.measureText(label).width + 25;
       borderPath(ctx, chipX, chipY, chipW, f, 7);
@@ -347,13 +333,13 @@
     lines.forEach((line, i) => ctx.fillText(line, x + inset, y + 10 + rowStep * (i + .52)));
   }
 
-  function actionPanel(ctx, image, l) {
+  function actionPanel(ctx, image, l, landed) {
     const {actionY: y, actionHeight: h, actionSide: side, action} = l;
     const x = textInset;
     ctx.save();
     ctx.fillStyle = '#eceef7'; ctx.fillRect(x, y, textWidth, h);
     const imageY = y + (h - side) / 2;
-    ctx.drawImage(image, x, imageY, side, side);
+    if (landed) ctx.drawImage(image, x, imageY, side, side);
     const left = x + side + 26, top = y + (h - action.height - 44) / 2;
     ctx.textBaseline = 'top'; ctx.textAlign = 'left';
     setFont(ctx, 29, 650); ctx.fillStyle = '#505972';
@@ -378,11 +364,10 @@
       // The answer illustrations are square. Keep the entire image, including hands at its edges.
       if (a.scene) ctx.drawImage(a.scene, l.x, l.y, l.w, l.ah);
     } else if (!m.actionArt || a.runner) {
-      // With an answer panel the runner keeps their final pose while the result is revealed.
-      art(ctx, m, a, l, m.actionArt ? 1 : progress);
+      art(ctx, m, a, l);
     }
-    if (a.action) actionPanel(ctx, a.action, l);
-    ctx.save(); ctx.globalAlpha = .38 + .62 * ease((progress - .42) / .52);
+    if (a.action) actionPanel(ctx, a.action, l, progress === 1);
+    ctx.save();
     const x = textInset, width = textWidth;
     nameplate(ctx, l.title, x, l.titleY, width);
     ctx.textBaseline = 'top'; ctx.fillStyle = '#323648';
@@ -401,6 +386,25 @@
       drawRows(ctx, l.evidence, x + l.evidenceInset, by + 3);
     }
     ctx.restore();
+    // Rewind the answer thumbnail to its source scene, then file that exact drawing
+    // next to its caption. At rest the permanent card and its PNG use the same render.
+    if (a.action && progress < 1) {
+      const travel = ease((progress - .29) / .71);
+      const startSize = Math.min(l.w, l.ah);
+      const side = startSize + (l.actionSide - startSize) * travel;
+      const startX = l.x + (l.w - startSize) / 2;
+      const startY = l.y + (l.ah - startSize) / 2;
+      const destinationY = l.actionY + (l.actionHeight - l.actionSide) / 2;
+      const x = startX + (textInset - startX) * travel, y = startY + (destinationY - startY) * travel;
+      ctx.drawImage(a.action, x, y, side, side);
+      if (travel < .45) {
+        ctx.save(); ctx.globalAlpha = 1 - travel / .45;
+        setFont(ctx, 31, 700); ctx.textBaseline = 'top'; ctx.textAlign = 'left';
+        const label = '내가 고른 장면';
+        ctx.fillStyle = ink; ctx.fillRect(x, y, ctx.measureText(label).width + 36, 55);
+        ctx.fillStyle = paper; ctx.fillText(label, x + 18, y + 11); ctx.restore();
+      }
+    }
   }
 
   function setup(canvas, ratio, opts, model) {
@@ -421,31 +425,60 @@
     active.get(canvas)?.finish?.();
   }
 
+  function paintNotice(ctx, l, message) {
+    ctx.save();
+    ctx.fillStyle = '#eceaf4'; ctx.fillRect(l.x, l.y, l.w, l.ah);
+    ctx.fillStyle = '#473f5a'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const text = fitted(ctx, message, l.w - 50, 2, 32, 22, 650);
+    text.lines.forEach((line,i) => ctx.fillText(line, l.x + l.w/2, l.y + l.ah/2 + (i - (text.lines.length-1)/2) * text.size * 1.4));
+    ctx.restore();
+  }
+
   async function paint(canvas, model, ratio, opts, animate) {
     skip(canvas);
     const ticket = {}; active.set(canvas, ticket);
     const m = normalize(model);
-    const placeholder = !canvas.dataset.rbPainted || canvas.dataset.rbPainted !== ratio;
+    const placeholder = canvas.dataset.rbReady !== 'true' || canvas.dataset.rbPainted !== ratio;
     const {ctx, l, pixels} = setup(canvas, ratio, opts, m);
     canvas.setAttribute('aria-label', [m.name, m.sceneLabel, m.line, m.actionLabel, m.evidence].filter(Boolean).join(' · '));
-    if (placeholder) render(ctx, m, {}, l, 1, pixels);
+    canvas.dataset.rbReady = 'false';
+    canvas.setAttribute('aria-busy','true');
+    if (placeholder) {
+      render(ctx, m, {}, l, 1, pixels);
+      paintNotice(ctx, l, '내 러닝 장면을 불러오고 있어요.');
+    }
     canvas.dataset.rbPainted = ratio;
     const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
     let skipped = false;
     ticket.finish = () => {
       skipped = true;
     };
-    const a = await materials(m, animate && !reduced);
+    let a;
+    try {
+      a = await materials(m);
+    } catch (error) {
+      if (active.get(canvas) !== ticket) return;
+      render(ctx, m, {}, l, 1, pixels);
+      paintNotice(ctx, l, '그림을 불러오지 못했어요. 페이지를 새로 열어 주세요.');
+      canvas.setAttribute('aria-busy','false');
+      canvas.setAttribute('aria-label',m.name + ' · 그림을 불러오지 못했어요.');
+      active.delete(canvas);
+      throw error;
+    }
     if (active.get(canvas) !== ticket) return;
-    const show = p => render(ctx, m, a, l, p, pixels);
-    if (m.sceneArt || m.charIndex < 0 || !animate || reduced || skipped || document.hidden) {
+    const show = p => {
+      render(ctx, m, a, l, p, pixels);
+      if (canvas.dataset.rbReady !== 'true') {
+        canvas.dataset.rbReady = 'true';
+        canvas.setAttribute('aria-busy','false');
+      }
+    };
+    if (!a.action || !animate || reduced || skipped || document.hidden) {
       show(1); active.delete(canvas); return;
     }
     await new Promise(resolve => {
       let frame, timer, lastFrame = -Infinity;
-      let done = false, sounded = false;
-      // These finishing poses actually lift a phone for a photograph.
-      const shutter = m.pose === 2 && (m.charIndex === 36 || m.charIndex === 42);
+      let done = false;
       const start = performance.now();
       ticket.finish = () => {
         if (done) return;
@@ -457,12 +490,8 @@
       const afterVisibility = () => { if (document.hidden) ticket.finish(); };
       const tick = now => {
         if (done) return;
-        const p = Math.min(1, (now - start) / (m.actionArt ? 1050 : 1850));
+        const p = Math.min(1, (now - start) / 1350);
         if (p >= 1) { ticket.finish(); return; }
-        if (!m.actionArt && !sounded && p >= .50 && a.runner && (shutter || m.pose === 1)) {
-          sounded = true;
-          audio.effect(shutter ? 'camera' : 'steps');
-        }
         if (now - lastFrame >= 1000 / 30) { show(p); lastFrame = now; }
         frame = requestAnimationFrame(tick);
       };
@@ -625,5 +654,6 @@
   window.addEventListener('pagehide', stop);
   const audio = {enabled: () => opted, set: setSound, effect, ambient, stop};
   // Previously cached app.js builds ask the renderer for hotspots.
-  window.RBScene = {draw, motion, skip, blob, download, assetURL, labels, effectKeys, ambientKeys, audio, hotspots: () => []};
+  window.RBScene = {draw, motion, skip, blob, download, assetURL, labels, effectKeys, ambientKeys, audio,
+    canReplay: model => Boolean(normalize(model).actionArt), hotspots: () => []};
 })();

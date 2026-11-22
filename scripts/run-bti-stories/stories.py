@@ -73,7 +73,11 @@ def check_signals(obj, limit):
 
 def check_story(row, root):
     mandatory = ("id", "category", "title", "art", "opening", "prompt", "choices", "question")
-    fields(row, mandatory, ("source", "links", "validFrom", "validUntil", "signals", "archived"))
+    fields(row, mandatory, ("source", "links", "validFrom", "validUntil", "signals", "archived", "eventKey", "version"))
+    if "eventKey" in row:
+        slug(row["eventKey"])
+    if "version" in row:
+        require(type(row["version"]) is int and row["version"] > 0, "version에는 1 이상의 정수를 넣으세요.")
     if "archived" in row:
         require(isinstance(row["archived"], bool), "archived에는 true나 false를 넣으세요.")
     check_signals(row, 4)

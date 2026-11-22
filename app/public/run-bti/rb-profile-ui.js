@@ -9,16 +9,30 @@ window.RBProfileUI = (() => {
   function summary(profile, {esc}) {
     if (!profile || (!profile.quizCount && !profile.storyCount && !profile.motiveComparison)) return "";
     const direction = profile.direction;
-    return `<section class="panel rb-profile-summary"><p class="rb-profile-meta">내 러닝 성향 · ${countLine(profile)}</p>
+    return `<section class="panel rb-profile-summary"><p class="rb-profile-meta">내가 고른 러닝 장면 · ${countLine(profile)}</p>
       <h2>${esc(direction.title)}</h2><p>${esc(direction.reason)}</p>
       ${window.RBRepresentative.html(profile, {esc}, true)}
       ${profile.posting && direction !== profile.posting ? `<p class="rb-post-summary"><b>러닝 인증</b> ${esc(profile.posting.title)}</p>` : ""}
-      <button type="button" class="btn light sm" data-story-act="profile">내 러닝 성향 보기</button></section>`;
+      <button type="button" class="btn light sm" data-story-act="profile">내가 고른 장면 자세히 보기</button></section>`;
   }
 
   function citation(e, esc) {
     const caption = e.choiceId ? e.title : [e.mode === "imagine" ? "첫 러닝 상상" : "", e.title, e.scene].filter(Boolean).join(" · ");
     return `<li><span>${esc(caption)}</span><p>${esc(e.answer)}${e.rating ? ` <small>· ${esc(e.rating)}</small>` : ""}</p>${e.specific === false ? "<small>모든 보기에 들어 있는 행동이라 방향을 가를 때는 제외했어요.</small>" : ""}</li>`;
+  }
+
+  function choiceBar(label, n, total, kind, occasions, esc) {
+    const bar = `<span class="rb-bar-heading"><span>${esc(label)}</span><b>${n}번</b></span>
+      <span class="rb-compare-track" aria-hidden="true"><i class="rb-compare-${kind}" style="width:${100*n/total}%"></i></span>`;
+    if (!n || !occasions?.length) return `<li class="rb-bar-static">${bar}</li>`;
+    const proof = occasions.map(picks => {
+      // One choice may describe several behaviors, but was still one answer to one scene.
+      const answers = [...new Map(picks.map(e => [e.answer,e])).values()];
+      if (!answers.length) return "";
+      return citation({...answers[0],answer:answers.map(e=>e.answer).join(" / ")},esc);
+    }).join("");
+    return `<li><details class="rb-bar-detail"><summary aria-label="${esc(label)} ${n}번 · 내가 고른 답 보기">${bar}</summary>
+      <ul class="rb-profile-evidence">${proof}</ul></details></li>`;
   }
 
   function storyImpact(profile, esc) {
@@ -60,7 +74,7 @@ window.RBProfileUI = (() => {
     ];
     if (c.both) options.push(["둘 다 담은 답", c.both, "both"]);
     if (c.other) options.push(["다른 답", c.other, "other"]);
-    const breakdown = options.map(([label, n, kind]) => `<li><div><span>${esc(label)}</span><b>${n}번</b></div><div aria-hidden="true" class="rb-compare-track"><i class="rb-compare-${kind}" style="width:${100*n/c.total}%"></i></div></li>`).join("");
+    const breakdown = options.map(([label,n,kind]) => choiceBar(label,n,c.total,kind,c.answersBySide?.[kind],esc)).join("");
     const finding = c.winner ? `이 장면들에서는 ‘${c.winner === c.left ? c.leftLabel : c.rightLabel}’ 쪽을 더 자주 골랐어요.`
       : c.status === "sparse" ? "비교할 장면이 한 개라서 이번 선택만 보여 드려요."
       : c.both === c.total ? "매번 두 행동을 함께 골랐어요."
@@ -73,7 +87,7 @@ window.RBProfileUI = (() => {
   }
 
   function report(profile, {esc}) {
-    const heading = '<h1>내 러닝 성향</h1>';
+    const heading = '<h1>내가 고른 러닝 장면</h1>';
     const rows = profile?.rows || [];
     if (!rows.length && !profile?.motiveComparison && !profile?.direction?.evidence?.length) return `<article class="rb-profile-report">${heading}
       <p>${esc(profile?.direction?.reason || "아직 성향을 설명할 답이 없어요.")}</p>
@@ -88,7 +102,8 @@ window.RBProfileUI = (() => {
     const mainIsPosting = posting && direction === posting;
     const postSection = posting ? `<section class="panel rb-posting" data-post-status="${esc(posting.status)}">
       <h2>러닝 인증에서 고른 것</h2>${mainIsPosting ? "" : `<p><strong>${esc(posting.title)}</strong></p><p>${esc(posting.reason)}</p>`}
-      <ul class="rb-post-counts">${posting.counts.map(c => `<li><span>${esc(c.label)}</span><b>${c.count}번</b></li>`).join("")}</ul>
+      <p class="rb-profile-meta">네 가지 보기가 함께 나온 ${posting.total}개 장면에서 고른 답이에요. 막대를 누르면 그때 고른 답을 볼 수 있어요.</p>
+      <ul class="rb-compare-bars rb-post-bars">${posting.counts.map(c => choiceBar(c.label,c.count,posting.total,"left",posting.evidence.filter(e=>e.signal===c.signal).map(e=>[e]),esc)).join("")}</ul>
       ${mainIsPosting ? "" : window.RBRepresentative.html({...profile,direction:posting},{esc})}</section>` : "";
     const detail = rows.map(row => {
       const proof = [...row.storyEvidence, ...row.quizEvidence];
@@ -101,7 +116,7 @@ window.RBProfileUI = (() => {
         ${window.RBRepresentative.html(profile, {esc})}</section>
       ${postSection}
       ${storyImpact(profile, esc)}
-      ${shown.length ? `<section class="panel"><h2>두 행동을 고를 수 있었을 때</h2>
+      ${shown.length ? `<section class="panel"><h2>두 행동을 고를 수 있었을 때</h2><p class="rb-profile-meta">막대를 누르면 어느 장면에서 고른 답인지 볼 수 있어요.</p>
         ${shown.map(c => comparison(c, esc)).join("")}${remaining.length ? `<details class="rb-more-comparisons"><summary>다른 비교 ${remaining.length}개 보기</summary>${remaining.map(c=>comparison(c,esc)).join("")}</details>` : ""}</section>` : ""}
       ${motives ? `<section class="panel"><h2>${esc(motives.title)}</h2><p>${esc(motives.reason)}</p>
         <ul class="rb-motive-means">${motives.rated.map(m=>`<li><span>${esc(m.name)}</span><b>${Number(m.mean).toFixed(1)} / 3점</b></li>`).join("")}</ul></section>` : ""}
@@ -110,7 +125,7 @@ window.RBProfileUI = (() => {
         <p>이 브라우저에서 내가 고른 행동을 비교했어요. 한 이야기에서는 마지막으로 남긴 답 한 개를 써요. 결말에서 답을 바꾸거나 뺄 수 있어요.</p>
         <p>두 행동이 각각 보기에 나온 장면끼리 비교해요. 한쪽만 고른 횟수가 다른 쪽보다 두 번 이상 많고 전체 비교 장면의 절반을 넘으면 그쪽을 자주 골랐다고 표시해요. 둘 다 고른 장면은 따로 세요.</p>
         <p>달리는 이유는 내가 표시한 0~3점으로 살펴봐요. 같은 동기에 관한 두 문항에 모두 답했을 때 그 평균을 비교해요. 캐릭터 그림은 내가 고른 행동을 보여 주는 예시예요.</p>
-        <p>문항의 주제에는 러닝 동기 연구를 참고했어요. 이 문항과 캐릭터의 재검사 신뢰도나 한국 러너 집단의 백분위는 아직 확인되지 않았어요. <a href="https://pubmed.ncbi.nlm.nih.gov/8341836/" target="_blank" rel="noopener noreferrer">러닝 동기 연구 원문</a></p></details></article>`;
+        <p>문항의 주제에는 러닝 동기 연구를 참고했어요. 런비티아이 결과가 실제 러닝 습관을 얼마나 잘 설명하는지는 아직 검증 전이에요. <a href="https://pubmed.ncbi.nlm.nih.gov/8341836/" target="_blank" rel="noopener noreferrer">러닝 동기 연구 원문</a></p></details></article>`;
   }
   return {summary, report};
 })();

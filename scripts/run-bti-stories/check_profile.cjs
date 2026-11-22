@@ -12,7 +12,7 @@ function check(root) {
   }
   const { RBStoryCatalog: catalog, RBStoryMatch: matcher, RBRepresentative: representative } = scope.window;
   const profile = (chosen = {}, records = {}, stories = catalog) =>
-    matcher.profile(stories, records, id => chosen[id] || null);
+    matcher.profile(stories, records, id => chosen[id] ? {choiceId:chosen[id],mode:"experience"} : null);
 
   assert.equal(profile().direction.status, "none");
   let endings = 0;
