@@ -15,7 +15,7 @@
 .type-directory details { border-top: 1px solid var(--line); }
 .type-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; padding-bottom: 16px; }
 .type-grid > div { display: grid; grid-template-columns: 64px 1fr; align-content: center; column-gap: 12px; background: white; border: 1px solid var(--line); padding: 10px; border-radius: 12px; }
-.type-grid img { grid-row: span 2; width: 64px; height: 64px; border-radius: 8px; object-fit: cover; }
+.type-grid img { grid-row: span 2; width: 64px; height: 64px; border-radius: 8px; object-fit: contain; }
 .type-grid strong { align-self: end; }
 .type-grid small { color: var(--soft); }
 .qhead span small { color: var(--soft); font-weight: 500; }
