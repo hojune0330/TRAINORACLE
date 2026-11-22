@@ -1,0 +1,101 @@
+/* Run-BTI panel system. Keep each illustrated action intact at every viewport. */
+:root {
+  --panel-paper: #faf7f0;
+  --panel-ink: #2d3141;
+  --panel-matte: #e8e5db;
+  --panel-rule: #a6a8a8;
+  --panel-clay: #984b36;
+  --panel-slate: #39465d;
+  --paper: var(--panel-paper);
+  --ink: var(--panel-ink);
+  --teal: var(--panel-slate);
+  --rule: var(--panel-rule);
+}
+body, body:has(.rd-app), body:has(.rd-app) #mast {
+  background: var(--panel-paper);
+}
+.rd-app, .rd-archive, .rrc-studio {
+  --rd-paper: var(--panel-paper);
+  --rd-ink: var(--panel-ink);
+  --rd-accent: var(--panel-clay);
+  --rd-line: var(--panel-rule);
+  --rrc-ink: var(--panel-ink);
+}
+.rd-cover, .rd-quiz-grid, .rd-ready, .rd-reveal, .rd-block {
+  border: 1px solid var(--panel-ink);
+  border-radius: 6px;
+}
+.rd-cover, .rd-quiz-grid { background: var(--panel-paper); }
+.rd-cover {
+  min-height: 0;
+  grid-template-columns: minmax(0,.88fr) minmax(0,1.12fr);
+  box-shadow: none;
+}
+.rd-cover-art, .rd-location {
+  display: grid;
+  align-content: center;
+  height: auto;
+  min-height: 0;
+  background: var(--panel-matte);
+}
+.rd-cover-art img, .rd-location img, .rd-ready-image img {
+  position: static;
+  height: auto;
+  width: 100%;
+  object-fit: contain;
+}
+.rd-location { align-self: center; margin: clamp(14px,2.2vw,28px) 0 clamp(14px,2.2vw,28px) clamp(14px,2.2vw,28px) !important; border: 1px solid var(--panel-ink); }
+.rd-location figcaption, .qscene span, .p-img .label {
+  position: static;
+  box-shadow: none;
+  border: 0;
+  border-top: 1px solid var(--panel-ink);
+  border-radius: 0;
+  padding: 6px 12px;
+  background: var(--panel-paper);
+  color: var(--panel-ink);
+}
+.rd-ready-image { height: auto; border-radius: 3px; }
+.rd-reveal { background: var(--panel-slate); align-items: center; }
+.rd-poster {
+  align-self: center;
+  aspect-ratio: 1;
+  background: var(--panel-matte);
+}
+.rd-poster .rd-character { inset: 4%; width: 92%; height: 92%; object-position: center bottom; }
+.rd-intro .rd-replay { position: static; margin: 8px; }
+.rd-animate .rd-character { animation-name: panel-appear; }
+@keyframes panel-appear { from { opacity: .35; } to { opacity: 1; } }
+.rd-button, .rd-options button[aria-pressed="true"], .rrc-primary {
+  background: var(--panel-slate);
+  border-color: var(--panel-slate);
+  color: white;
+}
+.rd-track i.filled { background: var(--panel-clay); }
+.rd-quiz-grid .rd-paper { min-width: 0; }
+.p-img:has(.label), .qscene:has(span) {
+  display: flex;
+  flex-direction: column;
+  height: auto;
+  aspect-ratio: auto;
+}
+.p-img:has(.label) img, .qscene:has(span) img {
+  width: 100%;
+  height: auto;
+  max-height: 280px;
+  min-height: 0;
+  object-fit: contain;
+}
+.story-strip img, .story-tile-art img, .story-recommendation img,
+.chat-choices .opt img, .motive-intro img, .rb-rep-frame img {
+  background: var(--panel-matte);
+  object-fit: contain;
+}
+.story-tile-art { aspect-ratio: auto; }
+.story-tile-art img, .story-strip img { display: block; height: auto; min-height: 0; }
+.gallery.large img { aspect-ratio: auto; }
+@media (max-width: 700px) {
+  .rd-cover { grid-template-columns: minmax(0,1fr); }
+  .rd-location { margin: 0 !important; border-width: 0 0 1px; }
+  .rd-cover-art { height: auto; }
+}

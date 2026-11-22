@@ -3,9 +3,9 @@ window.RBReadingCard = (() => {
   "use strict";
   const backgrounds = [
     {id:"original", label:"캐릭터 대표 배경", image:null, color:"#e0dfcc"},
-    {id:"alley", label:"동네 골목", image:"art/bg-02.webp", color:"#e8cdb9"},
-    {id:"river", label:"강변", image:"art/bg-00.webp", color:"#c2decf"},
-    {id:"dusk", label:"노을", image:"art/bg-01.webp", color:"#e8bbb2"}
+    {id:"alley", label:"동네 골목", image:"art/club-bg-alley.webp", color:"#e8cdb9"},
+    {id:"river", label:"강변", image:"art/club-bg-river.webp", color:"#c2decf"},
+    {id:"dusk", label:"노을", image:"art/club-bg-track.webp", color:"#e8bbb2"}
   ];
   const frames = {ink:{label:"먹색 테두리",color:"#222c39"}, coral:{label:"코랄 테두리",color:"#903e35"}, green:{label:"초록 테두리",color:"#265746"}};
   const posts = {stats:"거리와 시간만",selfie:"내 셀카",scenery:"달리다 본 풍경",private:"안 올림"};
@@ -137,8 +137,7 @@ window.RBReadingCard = (() => {
   async function paint(card) {
     const canvas = makeCanvas(card), ctx=canvas.getContext("2d"), W=canvas.width,H=canvas.height;
     const person = model().cast[card.who], bg=backgrounds.find(x=>x.id===card.bg), ink=frames[card.frame].color;
-    const builtInScene=person?.image === "art/reading-soyi.webp";
-    const backdrop = bg.image || (builtInScene ? null : (person?.background || backgrounds[1].image));
+    const backdrop = bg.image || person?.background || backgrounds[1].image;
     const [background,runner] = await Promise.all([picture(backdrop),picture(person?.image)]);
     const name = person?.name || "내 러닝 한 장";
     const left=66, right=W-left, innerWidth=right-left;
@@ -148,20 +147,25 @@ window.RBReadingCard = (() => {
     const noteLines=card.note ? wrapped(ctx,card.note,innerWidth-28) : [];
     const textHeight=176+quoteLines.length*55+(noteLines.length ? 61+noteLines.length*44 : 0)+(card.post ? 70 : 0);
     const base=H-textHeight-52, top=112, picX=42, picW=W-84, picH=base-top;
-    ctx.fillStyle="#fff9ed"; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle="#faf7f0"; ctx.fillRect(0,0,W,H);
     ctx.fillStyle=ink; ctx.fillRect(0,0,W,14);
     font(ctx,36,true); ctx.fillText("RUN·BTI",left,74);
     font(ctx,27); ctx.textAlign="right";ctx.fillText(modeLabel(card.mode),right,74);ctx.textAlign="left";
     ctx.save(); ctx.beginPath(); ctx.rect(picX,top,picW,picH);ctx.clip();
     ctx.fillStyle=bg.color;ctx.fillRect(picX,top,picW,picH);
+    let stageBottom = top + picH;
+    let stageHeight = picH;
     if(background) {
-      const ratio=Math.max(picW/background.width,picH/background.height);
-      ctx.drawImage(background,picX+(picW-background.width*ratio)/2,top+(picH-background.height*ratio)/2,background.width*ratio,background.height*ratio);
+      const ratio=Math.min(picW/background.width,picH/background.height);
+      stageHeight = background.height * ratio;
+      const stageTop = top + (picH - stageHeight) / 2;
+      stageBottom = stageTop + stageHeight;
+      ctx.drawImage(background,picX+(picW-background.width*ratio)/2,stageTop,background.width*ratio,stageHeight);
     }
     if(runner) {
-      const ratio=Math.min((picW*(builtInScene?1:.99))/runner.width,(picH*(builtInScene?1:.98))/runner.height);
+      const ratio=Math.min(picW*.92/runner.width,stageHeight*.92/runner.height);
       const w=runner.width*ratio,h=runner.height*ratio;
-      ctx.drawImage(runner,picX+(picW-w)/2,builtInScene ? top+(picH-h)/2 : top+picH-h,w,h);
+      ctx.drawImage(runner,picX+(picW-w)/2,stageBottom-stageHeight*.04-h,w,h);
     }
     ctx.restore();
     ctx.strokeStyle=ink;ctx.lineWidth=7;ctx.strokeRect(picX,top,picW,picH);

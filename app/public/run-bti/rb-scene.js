@@ -158,12 +158,6 @@
     ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
   }
 
-  function drawCover(ctx, image, x, y, w, h) {
-    const scale = Math.max(w / image.naturalWidth, h / image.naturalHeight);
-    const sw = w / scale, sh = h / scale;
-    ctx.drawImage(image, (image.naturalWidth - sw) / 2, (image.naturalHeight - sh) / 2, sw, sh, x, y, w, h);
-  }
-
   function drawInside(ctx, image, x, y, w, h) {
     const scale = Math.min(w / image.naturalWidth, h / image.naturalHeight);
     const iw = image.naturalWidth * scale, ih = image.naturalHeight * scale;
@@ -217,15 +211,15 @@
     ctx.fillStyle = '#888fc0'; ctx.beginPath(); ctx.moveTo(0, h * .72); ctx.lineTo(w * .18, h);
     ctx.lineTo(0, h); ctx.fill();
     // The production portrait is cropped from the very same runner sheet shown on the right.
-    drawInside(ctx, image, (w - h * 1.05) / 2, -h * .025, h * 1.05, h * 1.05);
+    drawInside(ctx, image, 4, 4, w - cut - 8, h - 8);
     ctx.restore(); panel(); ctx.strokeStyle = ink; ctx.lineWidth = 4; ctx.stroke(); ctx.restore();
   }
 
   function art(ctx, m, a, l) {
     const {x, y, w, ah} = l;
     ctx.save(); borderPath(ctx, x, y, w, ah, 7); ctx.clip();
-    if (a.bg) drawCover(ctx, a.bg, x, y, w, ah);
-    else paperScene(ctx, x, y, w, ah, m.background);
+    paperScene(ctx, x, y, w, ah, m.background);
+    if (a.bg) drawInside(ctx, a.bg, x, y, w, ah);
     if (a.fx) {
       ctx.save(); ctx.globalAlpha = .46;
       drawInside(ctx, a.fx, x + w * .53, y + ah * .055, w * .41, ah * .46); ctx.restore();
@@ -339,7 +333,7 @@
     ctx.save();
     ctx.fillStyle = '#eceef7'; ctx.fillRect(x, y, textWidth, h);
     const imageY = y + (h - side) / 2;
-    if (landed) ctx.drawImage(image, x, imageY, side, side);
+    if (landed) drawInside(ctx, image, x, imageY, side, side);
     const left = x + side + 26, top = y + (h - action.height - 44) / 2;
     ctx.textBaseline = 'top'; ctx.textAlign = 'left';
     setFont(ctx, 29, 650); ctx.fillStyle = '#505972';
@@ -362,7 +356,7 @@
     ctx.textAlign = 'left';
     if (m.sceneArt) {
       // The answer illustrations are square. Keep the entire image, including hands at its edges.
-      if (a.scene) ctx.drawImage(a.scene, l.x, l.y, l.w, l.ah);
+      if (a.scene) drawInside(ctx, a.scene, l.x, l.y, l.w, l.ah);
     } else if (!m.actionArt || a.runner) {
       art(ctx, m, a, l);
     }
@@ -396,7 +390,7 @@
       const startY = l.y + (l.ah - startSize) / 2;
       const destinationY = l.actionY + (l.actionHeight - l.actionSide) / 2;
       const x = startX + (textInset - startX) * travel, y = startY + (destinationY - startY) * travel;
-      ctx.drawImage(a.action, x, y, side, side);
+      drawInside(ctx, a.action, x, y, side, side);
       if (travel < .45) {
         ctx.save(); ctx.globalAlpha = 1 - travel / .45;
         setFont(ctx, 31, 700); ctx.textBaseline = 'top'; ctx.textAlign = 'left';

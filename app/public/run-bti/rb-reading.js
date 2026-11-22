@@ -61,7 +61,7 @@
       const params=new URLSearchParams(location.search);
       const crewMode=params.has("crew")&&modes.includes(params.get("crewMode"))?params.get("crewMode"):null;
       html(`<div class="rd-cover">
-        <div class="rd-cover-art">${image("art/life-afterwork.webp","현관에서 운동화 끈을 묶고 뛰러 나갈 준비를 하는 모습",'fetchpriority="high"')}
+        <div class="rd-cover-art">${image("art/club-cover.webp","현관에서 운동화 끈을 묶고 뛰러 나갈 준비를 하는 모습",'fetchpriority="high"')}
         </div>
         <div class="rd-cover-text"><p class="rd-kicker">러닝 성향 테스트</p>
           <h1 tabindex="-1">달릴 때 나는 <br>어떤 사람일까<span>?</span></h1>
@@ -131,19 +131,20 @@
       const emptyReading=result.status==="pending"?"답한 장면이 부족해서 별명을 비워 뒀어요. 아래에서 이번에 고른 답을 볼 수 있어요.":
         result.status==="low"?(current.mode==="imagine"?"해 보고 싶다고 고른 행동이 드물었어요. 끌리는 게 따로 있다면 내 말로 남겨 보세요.":"이번 장면에는 자주 한다고 고른 행동이 드물었어요. 내가 뛰는 이유가 따로 있다면 한 줄로 남겨 보세요."):
         "한 가지 모습으로 부르기엔 답이 다양했어요. 아래 막대를 펼쳐 내 답을 읽어 보세요.";
-      const cover=c?.background||"art/bg-02.webp";
+      const cover=c?.background||"art/club-bg-alley.webp";
       html(`<section class="rd-result"><div class="rd-quiz-nav"><button class="rd-link" data-rd="home">← 테스트 홈</button><span>${esc(label(current.mode))}</span></div>
         <div class="rd-reveal ${animate?"rd-animate":""}"><div class="rd-poster">${image(cover,"",'class="rd-backdrop"')}
-        ${c?image(c.image,c.name+"의 러닝 장면",`class="rd-character ${c.id==="recovery+explore"?"rd-full":""}"`):""}
-        ${c?'<button class="rd-replay" data-rd="replay">↻ 다시 보기</button>':""}</div>
+        ${c?image(c.image,c.name+"의 러닝 장면",`class="rd-character"`):""}
+        </div>
         <div class="rd-intro"><p class="rd-kicker">${c?esc(c.nickname):"열린 러닝 카드"}</p><h1 tabindex="-1">${esc(labelName)}</h1><p class="rd-quote">${esc(c?result.line:emptyReading)}</p>${paragraphs[0]?`<div class="rd-summary"><h2>${esc(paragraphs[0].title)}</h2><p>${esc(paragraphs[0].text)}</p>${evidenceDetails(paragraphs[0])}</div>`:""}
-        <button class="rd-button" data-rd="card">내 카드 보기 ${logoArrow}</button></div></div>
+        <button class="rd-button" data-rd="card">내 카드 보기 ${logoArrow}</button>
+        ${c?'<button class="rd-replay" data-rd="replay">↻ 다시 보기</button>':""}</div></div>
         <section class="rd-block"><div class="rd-block-head"><h2>내 러닝 지도</h2><span>5점 만점</span></div><p>막대를 누르면 어느 장면에서 뭐라고 답했는지 볼 수 있어요.</p><div class="rd-axes"></div>
         <label class="rd-compare" hidden>지난 지도와 겹쳐 보기 <select></select></label></section>
         ${paragraphs.slice(1).map(p=>{
           const secondCut=result.secondary&&p.itemIds.some(item=>item.endsWith("-"+result.secondary))&&c;
-          const pose=secondCut?c.image.replace(/-0\.webp$/,"-1.webp"):"";
-          return `<section class="rd-block rd-reading-text ${pose?"rd-with-cut":""}">${pose?image(pose,c.name+"의 두 번째 컷",'loading="lazy"'):""}<div><h2>${esc(p.title)}</h2><p>${esc(p.text)}</p>${evidenceDetails(p)}</div></section>`;
+          const scene=secondCut && model.scenes.find(entry=>entry.items.some(item=>p.itemIds.includes(item.id)));
+          return `<section class="rd-block rd-reading-text ${scene?"rd-with-cut":""}">${scene?image(scene.image,scene.title,'loading="lazy"'):""}<div><h2>${esc(p.title)}</h2><p>${esc(p.text)}</p>${evidenceDetails(p)}</div></section>`;
         }).join("")}
         <section class="rd-block rd-basket"><h2>내 얘기가 덜 담겼어요?</h2><label for="rd-free">더 떠오르는 이유가 있다면 내 말로 남겨 보세요.</label><textarea id="rd-free" maxlength="180" rows="2">${esc(freeText)}</textarea>
         <details><summary>떠오르는 말 골라 보기</summary><div class="rd-chips">${reasons.map(r=>`<label><input type="checkbox" value="${esc(r)}" ${selectedReasons.includes(r)?"checked":""}>${esc(r)}</label>`).join("")}</div></details>
