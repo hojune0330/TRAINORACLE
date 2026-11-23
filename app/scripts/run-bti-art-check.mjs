@@ -8,63 +8,60 @@ import { chromium } from "playwright";
 // Run from app: node scripts/run-bti-art-check.mjs [--out path/to/contact-sheets]
 // All results are produced from fabricated answers. The renderer and portraits are the product's.
 const root=fileURLToPath(new URL("../public/run-bti/",import.meta.url));
-// These exact originals were visually checked for phones, watches, maps, equipment and gestures.
-const reviewed={
-  distance:["portrait-09","276cc967cd2bed73d9250eb871b1fd208cc34b8b4edb908f56db0ee511afb14d"],
-  speed:["portrait-26","5597b2028dc0295503621a253b2661c9c1720e26cd0fa4e278ad160f4c1102e3"],
-  numbers:["portrait-24","276c30062cb940de6a2319785a37e9cfcb783963bbbb3600308721c0d9c0ef26"],
-  senses:["portrait-31","f7afff76b6e378549c7ae89b244cb61299c4e81d3360e87f2ed6ea8f1e26b32e"],
-  familiar:["portrait-25","9c82149f8b6bd06a1fbd994fb470d9e8ecaea415062009d7b777533e4461b7e2"],
-  explore:["club-solo-explore","dc6198aff15343ecf82b64f2b52e3c2a59af0e959bed7b69d0f2835e6cab9984"],
-  plan:["club-solo-plan","61c2405e30acb882e6f7169f31df5f7503f38cf851de9fd39b75ea843a224d33"],
-  improvise:["club-solo-improvise","061aa66c31ccb832896bb8294d4357ae53b984efa42799c3dce714beff60273b"]
+// Reviewed animal portraits: a replacement or duplicated image needs visual checking.
+const reviewedPortraits={
+  "distance":"84223fd92634fc5d3f83a424b0be7afdef057b3966794f79dc9f753cfe781a34",
+  "speed":"91f3242fe81f02d0aa8c54115acd3df0bfdbd66b144603aaa6e6653b592ec749",
+  "numbers":"07d5b4774a9479960f05a35e700b3cbb97a213fbe170209a8ce1f62fe8dec211",
+  "senses":"40acf7d76c8350eef1b8eb096136b2c53d38fc99b9136dbd31d5f55dc1a35396",
+  "familiar":"8473a6c969e495394211d656ccfd18b504994cd8badd0a016f19ffa43839eb86",
+  "explore":"a758975d592b8dfcc766b55a0aec8acf3cbf9cc1346f6458fd0411eca30ed7e0",
+  "plan":"7a34d0b6b1d37de6bc3d6895b9235801fac62b9ed891facf40a655ba1baf78a6",
+  "improvise":"47171eabb37314b054f60b3821e1495acae0414f13b218b528bf2c04f8900335",
+  "distance-numbers":"5931937db83b8ca0dc191f7b9aecf45ffe141c8792ad32dff72fb54fef63ea29",
+  "distance-senses":"c2b8c0fb4d1416d747fe51a6985d398d3ca02b8ef7a7434ef08cd7d956dd7a22",
+  "speed-numbers":"f53323a8d2dc3407239246fa6e21b6628b928e0685663452cf3b86f02f0a5086",
+  "speed-senses":"7a865f104d3f2a6ace49bf1df2f7eb521c3ec49aeccc9e935df723bba82ee300",
+  "distance-familiar":"e3550aa9a8d1605628c3628948ea7d7b3144470929cbd3969c4d2e7ba3176662",
+  "distance-explore":"c51009db1e95229e8405c1f481a6a261dd3225d609c74ba7486e03c577d4c611",
+  "speed-familiar":"fffe78d1f9f3fc957d6e298a9ca0f5e4b4347194021d2d82f381054477dac48a",
+  "speed-explore":"16e2d9ef2c3fba24786a7e4511bbb590646492e6b11d4a1c2daecc92501b7352",
+  "distance-plan":"e47bfa7c732c492dad1fe83287975717ff77edf9fe6f641160f7b358e9f5624b",
+  "distance-improvise":"1c80a60232a34e14e0acea6dd69b4c2ea57fa93ab2c5e46ebf50aa9a1921bf30",
+  "speed-plan":"96004d1b34ce72b2f4278e75a15fc6f408294b497f7365bce8ff854487b2a7f5",
+  "speed-improvise":"196169c4c754638aeaeb6aad1e212613f9852713f2b4e5ca7ebf89b9d297ed84",
+  "numbers-familiar":"e2e6047253c616cc5c89a2bf3b509aa98894efffba643de3c581fe187a527193",
+  "numbers-explore":"3c90a811ed225f3b91e6161ec3df4548c1b2a172c1819dbbc6258591652c691e",
+  "senses-familiar":"c89951234ff650e92aa27ebd07aa4d25821712ab6242d8db0cc028553a67c600",
+  "senses-explore":"36060b5dc28951774f3ba2b14711d853aaae8c5fe1d16c9020493f92f04d71db",
+  "numbers-plan":"7cad34806f730e1679e34a1d1b9152b77f5327790ab8d25274fa7a24dfad6435",
+  "numbers-improvise":"9a006c7fc848db8fd6d34b5e12c3deb391cfdd03fcfd74a3226b1b6bc7900d4a",
+  "senses-plan":"ab798de4b9335ec8e8285343c1aaa55ce64eff91621516c443eed0967f4083ab",
+  "senses-improvise":"c36ae279931c3fe45efd0e2ccd3ad702366c9548f1cc02110c149b0339fe47ac",
+  "familiar-plan":"beb7db4e342a1f477983e343ef58d5ec21027da08e6353275bea20e5ee9e5730",
+  "familiar-improvise":"789b4ba8ed466dcdb00a6bcfd585a1ad044860d5651d2db6f0ed43378f740199",
+  "explore-plan":"8aed0f6b56a4b53bd48643ace5a4fcc8d74770e14e4f2a9d9a8ed9b727b115a9",
+  "explore-improvise":"faaafc98090114076cccdb817ec96fa01338f9ff5e0a4c529feb3592ba98affc",
 };
-// A swapped or re-used pair illustration must prompt a new visual review even if names still match.
-const reviewedPairs={
-  "distance-explore":"f026a1d772f499292f45e504186f5d311e885344afad0dfcddd3954019cf2dfa",
-  "distance-familiar":"8df82556084684273cd0d46ca22b1720f5bf6f3f0943280ff39ec039242f1a08",
-  "distance-improvise":"1e4b601465061643965ac253c19eacf695d11f6a7b23b13cb08e740404e0c543",
-  "distance-numbers":"f34407396353488d826ac91c3afb7464d2b1264e4096e27c191928e6c6621b1b",
-  "distance-plan":"0060bef17a93fb500744316771bb59e25be73a0abc5dc99c433974d23dc5f89c",
-  "distance-senses":"7672aa9888ac1f1cc4bf6ea70196d36047e78dea170728294357877cc55c257e",
-  "explore-improvise":"2a68e35a59a24d4fa981ab8757df71c866d90ffb0372ce67540cf9b7b9a781e5",
-  "explore-plan":"572546aab31c498c1f987c1227b9f880cded3f35a7739be042e4eb73783bac47",
-  "familiar-improvise":"1eb1b3e218f629752101c00667ef292c172cca5f53f7e55e8ab5fd3c7ccaa393",
-  "familiar-plan":"2a62ccf0a8bbd1cf9717527b308699889ffc21e4f3f766edf5649f616dd36973",
-  "numbers-explore":"5e9662ce392d91f5b028f5059139839e05b0d512df19fe1f5651855779d991c7",
-  "numbers-familiar":"af0cbd3ffcb279ebd53579dfd436fbb07b22af0223c26103378429afe5e0324d",
-  "numbers-improvise":"0f2ca063666072d9713b405ee9235a03077a59de26169e2a1fcd6d4e5b181f94",
-  "numbers-plan":"15d9453af85999d351f5a7915b6215243641ef62f3cc5470b2605c522a8b1e94",
-  "senses-explore":"7ce8a105b3b1bb6af5b00868b705dd9a259d6416e8a587528c7ebdbed2493204",
-  "senses-familiar":"bf25d96a4ab45c6a994b119b3f6aa0d1bcd8403b06676a5023b59c65bdc7f375",
-  "senses-improvise":"7c3a1440ba6187310dee04a22e2b7f47f8301bc34e5a25937b2b649a0779dad2",
-  "senses-plan":"db5a61fa18b8462099330a7a86c97675ea30ab78fa4959d5337b048685d0c6a8",
-  "speed-explore":"415fd76c4dcf8bc1c975138bc81286adffe1d7b5057c1284621dcb0650095c91",
-  "speed-familiar":"52f2521580b743a87bd60a545882981fe72a40455707e33c7d06a2d6997c6530",
-  "speed-improvise":"22040b936887215ebdf9ff112aa2416ce9c3e3a9309e1db30b4ca904cbb04e5d",
-  "speed-numbers":"2914852856299654bd6e35338eee589a4e1b81ab7ceab3e602b133a3dbc4ea0b",
-  "speed-plan":"25552d663f503e4547f5824183145dbd01737e0f782e958c35186439e170cf93",
-  "speed-senses":"530352c2f638f1d0036c0e8c8f3b5a859ec5197aa59d15447ed900f66fabef08",
-};
-assert.equal(new Set(Object.values(reviewedPairs)).size,24);
-const pairFiles=Object.entries(reviewedPairs).map(([key,sha])=>["club-pair-"+key,sha]);
-for(const [file,sha] of [...Object.values(reviewed),...pairFiles]) {
-  const actual=createHash("sha256").update(await readFile(join(root,"art",file+".webp"))).digest("hex");
-  assert.equal(actual,sha,file+" 그림이 바뀌었어요. 원본의 자세와 소품을 다시 확인해 주세요.");
+assert.equal(new Set(Object.values(reviewedPortraits)).size,32);
+for(const [key,sha] of Object.entries(reviewedPortraits)) {
+  const file="club-animal-"+key+".webp";
+  const actual=createHash("sha256").update(await readFile(join(root,"art",file))).digest("hex");
+  assert.equal(actual,sha,file+" 그림이 바뀌었어요. 동물과 소품을 다시 확인해 주세요.");
 }
 const out=process.argv.includes("--out") ? resolve(process.argv[process.argv.indexOf("--out")+1]) : null;
 if(out)await mkdir(out,{recursive:true});
-const browser=await chromium.launch();
+const browser=await chromium.launch({channel:process.env.RUN_BTI_BROWSER_CHANNEL});
 try {
   const page=await browser.newPage();
   await page.route("http://art.test/**",async route=>{
     const file=new URL(route.request().url()).pathname.slice(1);
     if(!file)return route.fulfill({contentType:"text/html",body:'<!doctype html><meta charset="utf-8"><script src="/rb-pairs-model.js"></script><script src="/rb-pairs-art.js"></script><script src="/rb-pairs-extras.js"></script>'});
-    if(!/^(rb-pairs-(model|art|extras)\.js|art\/(portrait-\d{2}|club-(pair|solo)-[a-z-]+)\.webp)$/.test(file))return route.abort();
+    if(!/^(rb-pairs-(model|art|extras)\.js|art\/club-animal-[a-z-]+\.webp)$/.test(file))return route.abort();
     return route.fulfill({contentType:file.endsWith(".js")?"text/javascript":"image/webp",body:await readFile(join(root,file))});
   });
   await page.goto("http://art.test/");
-  const results=await page.evaluate(async(reviewed)=>{
+  const results=await page.evaluate(async()=>{
     const m=window.RBPairsModel,a=window.RBPairArt,extras=window.RBPairsExtras,axes=m.axes;
     const check=(condition,message)=>{if(!condition)throw new Error(message);};
     const categories=[[],[],[],[]],keys=new Set(),cast=new Set(),pairImages=new Set(),fingerprints=new Set();
@@ -92,7 +89,7 @@ try {
           check(result.defaultKey===key,"점수와 별명이 일치해야 합니다: "+key);
           const plate=a.select(result,result.defaultName);
           check(plate.direction===(leading===0?left.id:leading===1?right.id:null),"그림 우선순위 "+key);
-          check(plate.image==="art/club-pair-"+left.id+"-"+right.id+".webp","순위가 바뀌어도 별명의 얼굴이 같아야 합니다 "+key);
+          check(plate.image==="art/club-animal-"+left.id+"-"+right.id+".webp","순위가 바뀌어도 별명의 얼굴이 같아야 합니다 "+key);
           pairImages.add(plate.image);
           check(plate.sides.length===2 && plate.sides.includes(left.id) && plate.sides.includes(right.id),"두 번째 표식 누락 "+key);
           if(plate.direction)cast.add(plate.direction);
@@ -113,7 +110,7 @@ try {
     for(const axis of axes)for(const side of axis.sides){
       const result=m.evaluate(answers([[axis,side.id,2]])),plate=a.select(result);
       check(plate.direction===side.id && plate.sides.length===1,"단일 성향");
-      check(plate.image==="art/"+reviewed[side.id][0]+".webp","검수한 단일 성향 원본");
+      check(plate.image==="art/club-animal-"+side.id+".webp","검수한 단일 성향 원본 "+side.id);
       categories[3].push({image:await render(plate),title:result.defaultName,sub:"한 방향만 뚜렷"});
     }
     const open=m.evaluate(Object.fromEntries(m.items.map(i=>[i.id,1]))), empty=m.evaluate({});
@@ -134,7 +131,7 @@ try {
     const sample=answers([[axes[0],"distance",2],[axes[1],"numbers",2]]);
     sample["numbers-1"]=0;sample["distance-2"]=0;sample["speed-1"]=1;
     const plate=a.select(m.evaluate(sample));
-    check(plate.key==="distance+numbers" && plate.image==="art/club-pair-distance-numbers.webp","거부한 자세 사용");
+    check(plate.key==="distance+numbers" && plate.image==="art/club-animal-distance-numbers.webp","개별 행동을 거절해도 같은 별명의 캐릭터 유지");
     const privateArt=a.select(m.evaluate({...sample,motives:["weight"],pride:"yes",embarrassed:"uneasy"}));
     check(JSON.stringify(plate)===JSON.stringify(privateArt),"민감 응답이 공개 그림을 바꿈");
     categories[3].push({image:await render(plate),title:"손목 확인 · 한 바퀴 더",sub:"두 행동에 ‘별로’라고 답함"});
@@ -196,7 +193,7 @@ try {
     });
     sheets.push(proof.toDataURL("image/webp",.9).split(",")[1]);
     return {sheets,count:keys.size,faces:pairImages.size,renders:fingerprints.size,directions:cast.size};
-  },reviewed);
+  });
   assert.equal(results.count,24);assert.equal(results.faces,24);assert.equal(results.renders,72);assert.equal(results.directions,8);
   if(out)for (const [i,name] of ["대표그림-24개","대표그림-순위반전","대표그림-동점","대표그림-예외","대표그림-공유카드"].entries())
     await writeFile(join(out,name+".webp"),Buffer.from(results.sheets[i],"base64"));

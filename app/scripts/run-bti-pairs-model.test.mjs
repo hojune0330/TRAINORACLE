@@ -40,6 +40,33 @@ test("likes, low ratings, middle, unknowns and unavailable experience remain dis
   assert.equal(asResult({ distance: 2, speed: 0 }).defaultKey, "distance");
 });
 
+test("every animal title uses the two source codes in order or the one supported side", () => {
+  const sides = Object.fromEntries(model.axes.flatMap(axis => axis.sides.map(s => [s.id, s.label.slice(0,-1)])));
+  assert.equal(Object.keys(model.characters).length,32);
+  assert.equal(new Set(Object.values(model.characters).map(c => c.nickname)).size,32);
+  for (const [key, character] of Object.entries(model.characters)) {
+    const code = key.split("+").map(side => sides[side]).join("·");
+    assert.equal(model.names[key], code + " | " + character.nickname);
+    assert.ok(character.reading && character.art);
+  }
+  for (const axis of model.axes) {
+    for (const side of axis.sides) {
+      const other = axis.sides.find(s => s !== side);
+      for (let i=0; i<3; i++) {
+        const ratings=[2,2,2]; ratings[i]=0;
+        const result = asResult({[side.id]:ratings,[other.id]:0});
+        assert.equal(result.defaultKey,side.id);
+        assert.ok(!result.evidence.includes(side.id+"-"+(i+1)));
+      }
+    }
+  }
+  assert.equal(model.names.senses,"감각 | 손수건 고양이");
+  assert.equal(model.names["speed+numbers"],"속도·숫자 | 송골매");
+  assert.equal(model.names["senses+explore"],"감각·탐험 | 호랑나비");
+  assert.equal(model.characters.distance.reading, "길게 달리는 날이 좋아.");
+  assert.equal(model.items.find(i => i.id === "numbers-3").reading,"뛰면서 중간 기록을 듣는 게 좋아.");
+});
+
 test("a unique first side stays in every candidate at a tied second-place cutoff", () => {
   const result = asResult({
     distance: 2, speed: 0,
@@ -55,7 +82,8 @@ test("a unique first side stays in every candidate at a tied second-place cutoff
   const fullTie = asResult({ distance: 2, speed: 0, numbers: 2, senses: 0, familiar: 2, explore: 0, plan: 2, improvise: 0 });
   assert.equal(fullTie.choices.length, 6);
   assert.equal(fullTie.defaultKey, "distance+numbers");
-  assert.equal(fullTie.defaultName, "장거리 숫자파");
+  assert.equal(fullTie.defaultName, "거리·숫자 | 황제펭귄");
+  assert.equal(model.choiceFor(fullTie, "단골길 계획파").key, "familiar+plan");
   assert.equal(model.choiceFor(fullTie, "미리 정하고 길게").key, "distance+plan");
   assert.equal(model.choiceFor(fullTie, "distance+plan").key, "distance+plan");
   assert.equal(model.choiceFor(fullTie, model.names["distance+plan"]).key, "distance+plan");
@@ -84,7 +112,7 @@ test("distance without another lap and split times without current pace are trac
       const [{id, value}] = claim.evidence;
       assert.equal(value, 2);
       assert.equal(answers[id], value);
-      assert.ok(claim.text.includes(model.items.find(item => item.id === id).text));
+      assert.equal(claim.text, model.items.find(item => item.id === id).reading);
     }
   }
 });
@@ -133,7 +161,8 @@ test("each specific preference in every nickname combination requires its own po
               const expectedItem = model.items.find(item => item.id === id);
               assert.equal(value, 2);
               assert.equal(answers[id], value);
-              assert.equal(claim.text, "“" + expectedItem.text + "”에 ‘좋아’라고 답했어요.");
+              assert.equal(claim.text, expectedItem.reading);
+              assert.ok(!claim.text.includes("?"));
             }
             const publicTitleAndReason = result.defaultName + model.resultReason(result, answers);
             assert.doesNotMatch(publicTitleAndReason, /한 바퀴|발걸음|내킬|내키는|뛰며 정|미리 정|조금 더 멀리|페이스를 숫자로|구간 시간|중간 기록|숨소리|갈림길/);

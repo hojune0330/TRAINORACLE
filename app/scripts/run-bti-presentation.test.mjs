@@ -31,6 +31,63 @@ function setup(t, { answers = {}, state = {} , shared = null } = {}) {
   return { w,host,extras,click,share, copiedURL:() => new URL(copied) };
 }
 
+test("same riverside runners only diverge after the relevant chapter answer", t => {
+  const answers = {
+    goal:"speed", learning:"solo", distanceLevel:"10k", strength:"endurance",
+    challenge:"finish", motives:["routine"], eagerness:"eager",
+  };
+  const m = setup(t).w.RBPairsModel;
+  for (const item of m.items) {
+    answers[item.id] = ["distance","numbers"].includes(item.sideId) ? 2
+      : ["speed","senses"].includes(item.sideId) ? 0 : 1;
+  }
+  assert.equal(Object.keys(answers).length,31);
+  const expected = m.evaluate(answers);
+  const a = setup(t,{answers}), b = setup(t,{answers:{...answers}});
+  function chapter(runner,index) {
+    return runner.host.querySelectorAll(".rpx-chapter")[index];
+  }
+  function reading(runner,index) {
+    return chapter(runner,index).querySelector(".rpx-reading").textContent;
+  }
+  function answer(runner,index,field,value) {
+    const panel = chapter(runner,index), menu = panel.querySelector("select");
+    menu.value=field;
+    menu.dispatchEvent(new runner.w.Event("change"));
+    panel.querySelector('[data-value="'+value+'"]').click();
+  }
+  function snapshot(runner) {
+    const result = runner.w.RBPairsModel.evaluate(answers);
+    return JSON.stringify([result.defaultKey,result.defaultName,result.axes.map(axis=>axis.sides.map(s=>s.mean)),
+      runner.w.RBPairArt.select(result).image]);
+  }
+  const first = snapshot(a);
+  assert.equal(expected.defaultKey,"distance+numbers");
+  assert.equal(snapshot(b),first);
+  assert.equal(reading(a,1),"");
+  assert.equal(reading(b,1),"");
+  for (const runner of [a,b]) answer(runner,1,"travelRoute","explore");
+  answer(a,1,"homeRoute","compare");
+  answer(b,1,"homeRoute","lit");
+  const travelA=reading(a,1), travelB=reading(b,1);
+  assert.match(travelA,/비교/);
+  assert.doesNotMatch(travelA,/밤에도 밝/);
+  assert.match(travelB,/밤에도 밝/);
+  assert.doesNotMatch(travelB,/지난 기록과 비교/);
+  for (const travel of [travelA,travelB]) assert.match(travel,/둘러보고|구경하고/);
+  for (const runner of [a,b]) answer(runner,4,"watch","after");
+  const bodyBefore=reading(b,4);
+  assert.match(bodyBefore,/다 뛴 뒤/);
+  assert.equal(reading(a,4),bodyBefore);
+  answer(a,4,"watch","during");
+  assert.match(reading(a,4),/뛰면서 숫자를 보고/);
+  assert.doesNotMatch(reading(a,4),/다 뛴 뒤/);
+  assert.equal(reading(b,4),bodyBefore);
+  assert.equal(reading(a,1),travelA);
+  assert.equal(reading(b,1),travelB);
+  for (const runner of [a,b]) assert.equal(snapshot(runner),first);
+});
+
 test("independent story readings cite exactly their own answers and leave other answers visible", t => {
   const {host,click} = setup(t,{ answers:{goal:"speed",learning:"class",eagerness:"reluctant"},
     state:{summer:"less",winter:"outside",snowExperience:"no",snow:"want",rainExperience:"no",rain:"want",
@@ -74,30 +131,31 @@ test("each story illustration depicts its selected answer and clears when that a
   };
   // Lock the actual reviewed pixels as well as the filenames. A replacement needs a fresh visual review.
   const reviewed = {
-    "club-drill-study":["31d0b634299648840e5b7211aa60cf8506171863e79787ac7b7515aa5c903c6a","트랙에 낮은 허들이 놓여 있고 러너가 한쪽 무릎을 들어 첫 허들을 넘고 있어요."],
-    "life-travel":["66dfacd3177c6287926a6f4bb53a213e6dc0ff7fb61e5e689b2ca1b34902d2cc","여행 가방을 펼쳐 놓고 옷 옆에 운동화 한 켤레를 넣고 있어요."],
-    "life-record":["aac0e8d8e4ecbb9654967fb46e360ee5ef0b13b8985e5acd7a508f89d3aeada7","러너가 트랙 옆 벤치에 앉아 수첩을 펼치고 손목시계를 보고 있어요."],
+    "club-anime-cover":["5f6172beb6e3144f4d910ab4044de2d9385148789cf8404241164ac555966413","현관에서 운동화 끈을 묶는 러너"],
+    "club-anime-drill":["3f2998c68fb5d0d3b4c9d2a0c0281df39ed1b4baccafb6aea64e61560dd452e9","트랙에 낮은 허들이 놓여 있고 러너가 한쪽 무릎을 들어 첫 허들을 넘고 있어요."],
+    "club-anime-travel":["e5248ba692a6cb1cae6ec489477bfc06464040b1a535d736d6ebadb773f6e5eb","여행 가방을 펼쳐 놓고 옷 옆에 운동화 한 켤레를 넣고 있어요."],
+    "club-anime-record":["378b099c5752dcb8e0312f995b31e2199eaff6e2abe5a8ec78b4b9e3420ce6db","러너가 트랙 옆 벤치에 앉아 수첩을 펼치고 손목시계를 보고 있어요."],
   };
   for (const [file,[hash]] of Object.entries(reviewed)) {
     assert.equal(createHash("sha256").update(await readFile(new URL("art/"+file+".webp",files))).digest("hex"),hash,file);
   }
   const trips=byTopic("travelRun");
   trips.expectNone();trips.choose("always");
-  trips.expectScene("life-travel",reviewed["life-travel"][1],"여행 가방을 쌀 때","always");
+  trips.expectScene("club-anime-travel",reviewed["club-anime-travel"][1],"여행 가방을 쌀 때","always");
   trips.choose("wish");
-  trips.expectScene("life-travel",reviewed["life-travel"][1],"다음 여행에 해 보고 싶은 일","wish");
+  trips.expectScene("club-anime-travel",reviewed["club-anime-travel"][1],"다음 여행에 해 보고 싶은 일","wish");
   trips.choose("wish");trips.expectNone();
   for (const option of ["sometimes","rest","limited","disliked"]) { trips.choose(option);trips.expectNone(); }
 
   const practice=byTopic("training");
   practice.choose("strength");practice.expectNone();
-  practice.choose("drills");practice.expectScene("club-drill-study",reviewed["club-drill-study"][1],"배워 보고 싶은 동작","drills");
+  practice.choose("drills");practice.expectScene("club-anime-drill",reviewed["club-anime-drill"][1],"배워 보고 싶은 동작","drills");
   practice.choose("drills");practice.expectNone();
   for (const option of ["speed","distance"]) { practice.choose(option);practice.expectNone(); }
 
   const record=byTopic("watch");
   record.choose("new");record.expectNone();
-  record.choose("after");record.expectScene("life-record",reviewed["life-record"][1],"기록을 보고 싶은 때","after");
+  record.choose("after");record.expectScene("club-anime-record",reviewed["club-anime-record"][1],"기록을 보고 싶은 때","after");
   record.choose("during");record.expectNone();
   record.choose("after");record.choose("after");record.expectNone();
   record.choose("without");record.expectNone();
@@ -248,6 +306,9 @@ if (process.env.RUN_BTI_BROWSER === "1") test("Chrome: withdrawing either a stor
     const page = await browser.newPage({viewport:{width:390,height:844}});
     await page.context().grantPermissions(["clipboard-read","clipboard-write"]);
     await page.goto("http://127.0.0.1:"+server.address().port+"/");
+    const cover = page.locator(".fp-cover img");
+    assert.equal(await cover.getAttribute("src"),"art/club-anime-cover.webp");
+    await cover.evaluate(image => image.decode());
     await page.locator('[data-fp="start"]').click();
     const ratings = {numbers:[2,2,0],senses:[0,0,0],explore:[2,2,2],familiar:[0,0,0]};
     for (let i=0;i<20 && await page.locator('[data-fp="next"]').count();i++) {

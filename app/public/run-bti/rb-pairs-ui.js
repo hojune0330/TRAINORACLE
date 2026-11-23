@@ -163,7 +163,7 @@
         '<div class="fp-meta">31문항 · 약 4분</div><div class="fp-cover-actions">' +
         button(resume ? "resume" : "start", resume ? (page + 1) + "번째 화면부터 이어하기" : "내 러닝 성향 알아보기", true) +
         (resume ? button("restart", "처음부터 다시 하기") : "") + '</div></div>' +
-        '<figure><img width="1200" height="800" src="' + asset("art/club-cover.webp") +
+        '<figure><img width="1200" height="800" src="' + asset("art/club-anime-cover.webp") +
         '" fetchpriority="high" alt="현관에서 운동화 끈을 묶는 러너"></figure></section>', focus);
     }
     function begin() {
@@ -260,7 +260,7 @@
         return '<li>' + axis.sides.map(side => escape(side.label) + ' ' + score(side)).join(' · ') +
           ' <strong>(' + gap + '점 차이)</strong></li>';
       });
-      return '<details><summary>이 이름이 나온 내 답</summary><p>' +
+      return '<details><summary>왜 이 이름이야?</summary><p>' + escape(model.resultReason(result, answers, choice.key)) + '</p><p>' +
         (rows.length === 1 ? '한쪽 취향이 뚜렷하게 나온 짝이에요.' : '한쪽 취향이 뚜렷한 짝 중 양쪽의 평균 점수 차이가 큰 두 짝을 담았어요.') +
         '</p><ul class="fp-name-scores">' + rows.join("") + '</ul>' + proof(choice.evidence, answers) + '</details>';
     }
@@ -293,9 +293,6 @@
       return '<details class="fp-fact"><summary><b>' + factTitles[id] + '</b><span>' + escape(label) +
         '</span></summary><p>' + escape(item.text) + ' → ' + escape(label) + '</p></details>';
     }
-    function reasonText(result, answers, selected = result.defaultKey) {
-      return model.resultReason(result, answers, selected);
-    }
     function compareBlock(result) {
       const previous = records().filter(row => row.id !== current.id && row.at < current.at);
       if (!previous.length) return "";
@@ -316,13 +313,15 @@
       const canonical = model.choiceFor(result, personalName);
       personalName = canonical.key;
       const head = '<section class="fp-result-top"><div class="fp-result-copy"><p class="fp-eyebrow">내 러닝 성향</p>' +
-        '<h1>' + escape(canonical.name) + '</h1><p class="fp-reading">' + escape(reasonText(result,answers,canonical.key)) + '</p>' +
+        '<h1>' + escape(canonical.name) + '</h1><p class="fp-reading">' +
+        escape(model.characters[canonical.key]?.reading || model.resultReason(result,answers,canonical.key)) + '</p>' +
         nameProof(result, canonical, answers) +
         '</div><figure class="fp-runner" data-result-art></figure></section>';
       const nameChoice = result.choices.length > 1 ? '<section class="fp-section"><label class="fp-select-label">내 카드에 쓸 별명 ' +
         '<select data-fp-change="name">' + result.choices.map(choice => '<option value="' + escape(choice.key) + '"' +
           (choice.key === personalName ? ' selected' : '') + '>' + escape(choice.name) + '</option>').join("") +
-        '</select></label><p>동점인 별명 중에서 골라요. 친구에게 보내는 링크에는 기본 별명이 담겨요.</p></section>' : '';
+        '</select></label><p>여기서 고른 별명은 내 결과와 저장할 이미지에 담겨요. 친구에게 보낼 링크에는 기본 별명 ‘' +
+        escape(result.defaultName) + '’이 담겨요.</p></section>' : '';
       frame("result", head + '<section class="fp-section"><h2>네 짝으로 보는 내 취향</h2><div class="fp-axis-list">' +
         result.axes.map(axis => axisPanel(axis, answers)).join("") + '</div></section>' +
         '<section class="fp-section"><h2>지금의 나</h2><div class="fp-facts">' +

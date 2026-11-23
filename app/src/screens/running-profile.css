@@ -46,3 +46,6 @@
 @media (prefers-reduced-motion: reduce) { .running-profile__stage { animation: none; } }
 .running-profile[data-reduced-motion] .running-profile__stage { animation: none; }
 @media (max-width: 350px) { .running-profile__map button { grid-template-columns: 24px minmax(0,1fr); } .running-profile__map button > svg:last-child { display: none; } }
+.run-bti-account__coach { margin-block: 16px; border-block: 1px solid var(--line); }
+.run-bti-account__coach summary { cursor: pointer; padding-block: 12px; font-weight: 700; }
+.run-bti-account__coach p { margin: 0 0 12px; }
