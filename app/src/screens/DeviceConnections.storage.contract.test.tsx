@@ -49,7 +49,7 @@ describe("watch connection outside account settings", () => {
     expect(requestGarminIntegration).not.toHaveBeenCalled()
     vi.mocked(isAccountStoragePaused).mockReturnValue(false)
     await act(async () => finish({ ok:true, consent:{ ...receipt, healthStorage:true, journalTextStorage:true } }))
-    expect(await screen.findByRole("button", { name:"동의하고 Garmin 연결" })).toBeEnabled()
+    expect(await screen.findByRole("button", { name:"동의하고 Garmin 연결" })).toBeDisabled()
     expect(loadAccountStorageConsent).toHaveBeenCalledTimes(1)
     expect(vi.mocked(requestGarminIntegration).mock.calls.map(([,req]) => req.action)).toEqual(["status"])
   })
