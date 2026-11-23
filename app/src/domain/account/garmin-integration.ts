@@ -74,9 +74,9 @@ export type GarminRequest = z.infer<typeof garminRequestSchema>
 export type GarminConfirmation = z.infer<typeof confirmedSchema>
 export type GarminResponse = z.infer<typeof preferencesSchema> | GarminStatus | z.infer<typeof inboxSchema> | z.infer<typeof connectSchema> | z.infer<typeof connectionResponseSchema> | GarminConfirmation | z.infer<typeof dismissedSchema> | z.infer<typeof detailSchema> | { schemaVersion: typeof GARMIN_VERSION; item: GarminItem }
 const serverError = z.enum(["AUTH_REQUIRED", "ACCESS_DENIED", "SOURCE_CHANGED", "CONNECTION_CHANGED", "OPERATION_CONFLICT", "CONSENT_CHANGED", "REVIEW_REQUIRED", "PROVIDER_CONFIGURATION_PENDING", "OPERATIONS_PENDING", "INVALID_INPUT", "PROVIDER_UNAVAILABLE", "PROVIDER_RESPONSE_INVALID", "PROVIDER_SCOPE_MISMATCH", "OAUTH_RESTART_REQUIRED", "JOURNAL_CONTRACT_UNAVAILABLE", "ENCRYPTED_DATA_UNAVAILABLE", "STORAGE_CONSENT_REQUIRED", "REVOKE_PENDING", "PROVIDER_PERMISSION_REQUIRED", "PROVIDER_ACCOUNT_ALREADY_BOUND", "ALREADY_CONNECTED", "BUSY", "DETAIL_UNAVAILABLE"])
-export type GarminError = z.infer<typeof serverError> | "UNAVAILABLE" | "INVALID_RESPONSE" | "STALE_RESPONSE" | "LOCAL_STATE_UNAVAILABLE"
+export type GarminError = z.infer<typeof serverError> | "UNAVAILABLE" | "INVALID_RESPONSE" | "STALE_RESPONSE" | "LOCAL_STATE_UNAVAILABLE" | "CALLBACK_SESSION_LOST" | "CALLBACK_INVALID"
 export type GarminResult = { ok: true; data: GarminResponse } | { ok: false; code: GarminError }
-export type GarminTransport = (owner: string, request: GarminRequest, signal: AbortSignal, isCurrent: () => boolean) => Promise<GarminResult>
+export type GarminTransport = (owner: string, request: GarminRequest, signal: AbortSignal, isCurrent: () => boolean, beforeSend?: () => boolean) => Promise<GarminResult>
 
 export function garminIntegrationEnabled(env: Readonly<Record<string, unknown>> = import.meta.env) {
   return env.VITE_FEATURE_GARMIN_INTEGRATION === "true" && env.VITE_KILL_GARMIN_INTEGRATION !== "true"
@@ -120,7 +120,7 @@ export function parseGarminResponse(request: GarminRequest, value: unknown): Gar
 }
 
 /** IDs only; storage/auth/rights remain server authority. Never send an edited observation. */
-export const requestGarminIntegration: GarminTransport = async (owner, request, signal, isCurrent) => {
+export const requestGarminIntegration: GarminTransport = async (owner, request, signal, isCurrent, beforeSend) => {
   if (!garminRequestSchema.safeParse(request).success) return { ok: false, code: "INVALID_INPUT" }
   const management = request.action === "status" || request.action === "disconnect"
   const generation = localJournalScopeGeneration(), consentRevision = currentStorageConsentRevision(owner)
@@ -140,7 +140,9 @@ export const requestGarminIntegration: GarminTransport = async (owner, request, 
   controller.signal.addEventListener("abort", interrupt, { once: true })
   const within = <T>(work: PromiseLike<T>) => Promise.race([work, interrupted])
   signal.addEventListener("abort", abort, { once: true })
-  const removeScopeListener = onLocalJournalScopeChange(abort)
+  const removeScopeListener = onLocalJournalScopeChange(() => {
+    if (request.action !== "complete" || !current()) abort()
+  })
   const removeDeletionListener = onAccountDeletionBoundaryChange(changed => { if (changed === owner) abort() })
   const deadline = setTimeout(abort, ACCOUNT_NETWORK_DEADLINE_MS)
   let unsubscribe = () => undefined as void
@@ -158,6 +160,7 @@ export const requestGarminIntegration: GarminTransport = async (owner, request, 
     const verified = await within(client.auth.getUser(token))
     if (!current() || controller.signal.aborted) return { ok: false, code: "STALE_RESPONSE" }
     if (verified.error || verified.data.user?.id !== owner) return { ok: false, code: "AUTH_REQUIRED" }
+    if (beforeSend && !beforeSend()) return { ok: false, code: "OAUTH_RESTART_REQUIRED" }
     const response = await within(fetch(endpoint, { method: "POST", credentials: "omit", cache: "no-store", redirect: "error",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, "x-trainoracle-storage-revision": String(consentRevision) }, body: JSON.stringify(request), signal: controller.signal }))
     if (!current() || controller.signal.aborted) return { ok: false, code: "STALE_RESPONSE" }
@@ -190,18 +193,22 @@ export function rememberGarminAttempt(owner: string, value: z.infer<typeof conne
   if (!safeGarminAuthorizationUrl(value.authorizationUrl, value.state) || Date.parse(value.expiresAt) <= Date.now() || Date.parse(value.expiresAt) > Date.now() + 660000) return false
   try { const raw = JSON.stringify({ owner, state: value.state, expiresAt: value.expiresAt }); sessionStorage.setItem(attemptKey, raw); return sessionStorage.getItem(attemptKey) === raw } catch { return false }
 }
-export function consumeGarminCallback(owner: string): Extract<GarminRequest, { action: "complete" }> | "invalid" | null {
+type GarminCompletion = Extract<GarminRequest, { action: "complete" }>
+export function readGarminCallback(owner: string, sending?: GarminCompletion): GarminCompletion | "CALLBACK_INVALID" | "CALLBACK_SESSION_LOST" | "OAUTH_RESTART_REQUIRED" | null {
   captureGarminCallback()
   const callback = capturedCallback
   if (!callback) return null
-  capturedCallback = null
+  if (sending && (sending.code !== callback.code || sending.state !== callback.state)) return "OAUTH_RESTART_REQUIRED"
+  const discard = <T extends GarminError>(reason: T) => { capturedCallback = null; return reason }
   try {
-    const attempt = attemptSchema.safeParse(JSON.parse(sessionStorage.getItem(attemptKey) ?? "null"))
-    sessionStorage.removeItem(attemptKey)
-    if (!attempt.success || attempt.data.owner !== owner || Date.parse(attempt.data.expiresAt) <= Date.now() || callback.error || callback.state !== attempt.data.state) return "invalid"
     const request = garminRequestSchema.safeParse({ action: "complete", code: callback.code, state: callback.state })
-    return request.success && request.data.action === "complete" ? request.data : "invalid"
-  } catch { return "invalid" }
+    if (callback.error || !request.success || request.data.action !== "complete") return discard("CALLBACK_INVALID")
+    const attempt = attemptSchema.safeParse(JSON.parse(sessionStorage.getItem(attemptKey) ?? "null"))
+    if (!attempt.success) return discard("CALLBACK_SESSION_LOST")
+    if (attempt.data.owner !== owner || Date.parse(attempt.data.expiresAt) <= Date.now() || callback.state !== attempt.data.state) return discard("OAUTH_RESTART_REQUIRED")
+    if (sending) { capturedCallback = null; sessionStorage.removeItem(attemptKey) }
+    return request.data
+  } catch { return discard("CALLBACK_SESSION_LOST") }
 }
 
 /** Only retry identifiers are retained. A lost ACK reuses its exact operation and consent. */
@@ -221,6 +228,8 @@ export function prepareGarminOperation(owner: string, item: GarminItem, action: 
 export function clearGarminOperation(owner: string, inboxId: string): void { try { sessionStorage.removeItem(pendingKey(owner, inboxId)) } catch { /* no authority */ } }
 
 export const garminErrorMessage: Record<GarminError, string> = {
+  CALLBACK_SESSION_LOST: "이 창에서 시작한 Garmin 연결 요청을 찾지 못했어요. 처음 연결한 창에서 다시 시작해 주세요.",
+  CALLBACK_INVALID: "Garmin 승인 결과를 확인하지 못했어요. 연결을 다시 시작해 주세요.",
   AUTH_REQUIRED: "로그인 상태를 다시 확인해 주세요.", ACCESS_DENIED: "이 계정에서 기록을 열 권한을 확인하지 못했어요.",
   SOURCE_CHANGED: "원본 기록이 바뀌었어요. 목록을 다시 불러와 검토해 주세요.", CONNECTION_CHANGED: "연결 상태가 바뀌었어요. 현재 상태를 다시 확인해 주세요.",
   OPERATION_CONFLICT: "다른 저장 요청과 겹쳤어요. 목록과 일지를 다시 확인해 주세요.", CONSENT_CHANGED: "보관 동의가 바뀌었어요. 계정 설정을 확인해 주세요.",
