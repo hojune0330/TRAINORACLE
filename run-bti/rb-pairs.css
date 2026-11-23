@@ -68,6 +68,13 @@
 .fp-reading { color: #444959; font-size: clamp(.96rem,1.8vw,1.1rem); }
 .fp-result-copy > details { margin-top: 12px; }
 .fp-runner { padding: clamp(9px,2vw,20px); background: #ebe8e1; }
+@media (prefers-reduced-motion: no-preference) {
+  .fp-runner canvas[data-render="portrait"] { animation: fp-portrait-arrives 220ms ease-out; }
+  @keyframes fp-portrait-arrives {
+    from { opacity: .55; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
 .rb-pair-art canvas { display: block; width: 100%; height: auto; border: 1px solid #303844; }
 .rb-pair-art figcaption { margin: .55rem 0 0; font-size: .86rem; line-height: 1.45; text-align: center; word-break: keep-all; }
 .rpx-received .rpx-received-art { width: min(100%, 520px); max-height: none; margin: 1rem auto; }

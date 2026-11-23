@@ -1,18 +1,17 @@
 /* The same plate is drawn in the result, the shared link and both PNG formats. */
 (() => {
   "use strict";
-  // These portraits contain no clock-reading, phone, medal, map or training action.
-  // Only the printed emblems depict preferences. Wardrobe and facial features are casting.
   const styles = {
-    distance:  {face:"portrait-09", label:"거리파", ink:"#284d70", paper:"#d7e5ec"},
-    speed:     {face:"portrait-26", label:"속도파", ink:"#963a34", paper:"#f4d7c6"},
-    numbers:   {face:"portrait-24", label:"숫자파", ink:"#58376c", paper:"#e9ddec"},
-    senses:    {face:"portrait-31", label:"감각파", ink:"#794753", paper:"#f5dfe0"},
-    familiar:  {face:"portrait-25", label:"단골파", ink:"#2e6158", paper:"#d9e9db"},
-    explore:   {face:"club-solo-explore", label:"탐험파", ink:"#7c4e2b", paper:"#f3e2b9"},
-    plan:      {face:"club-solo-plan", label:"계획파", ink:"#42567a", paper:"#dce3f2"},
-    improvise: {face:"club-solo-improvise", label:"즉흥파", ink:"#346665", paper:"#d5e9e7"},
+    distance:  {label:"거리파", ink:"#284d70", paper:"#d7e5ec"},
+    speed:     {label:"속도파", ink:"#963a34", paper:"#f4d7c6"},
+    numbers:   {label:"숫자파", ink:"#58376c", paper:"#e9ddec"},
+    senses:    {label:"감각파", ink:"#794753", paper:"#f5dfe0"},
+    familiar:  {label:"단골파", ink:"#2e6158", paper:"#d9e9db"},
+    explore:   {label:"탐험파", ink:"#7c4e2b", paper:"#f3e2b9"},
+    plan:      {label:"계획파", ink:"#42567a", paper:"#dce3f2"},
+    improvise: {label:"즉흥파", ink:"#346665", paper:"#d5e9e7"},
   };
+  // The model supplies the same character description to the result, PNG and shared link.
   const neutral = {ink:"#5a5c67", paper:"#eceae3"};
   const paper="#fff9ea", outline="#25323e";
   const font=size=>"700 "+size+'px "Pretendard", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif';
@@ -27,17 +26,16 @@
         if (gaps[0] !== gaps[1]) primary = sides[gaps[0] > gaps[1] ? 0 : 1];
       } else if (sides.includes(result.art)) primary = result.art;
     }
-    const ordered = primary ? [primary,...sides.filter(side=>side!==primary)] : sides;
-    // The nickname owns its portrait. Reversing the two margins changes the emblems only.
-    const cast = sides.length===2 ? "club-pair-"+sides.join("-") : primary ? styles[primary].face : null;
-    const image = cast ? "art/"+cast+".webp" : null;
+    const animal = Object.hasOwn(window.RBPairsModel.characters, key) ? window.RBPairsModel.characters[key].art : null;
+    const image = animal ? "art/club-animal-"+key.replace("+","-")+".webp" : null;
     let caption;
-    if (ordered.length === 2) {
-      const [a,b] = ordered.map(side=>styles[side].label);
-      caption = primary ? a+"가 더 뚜렷해서 큰 표식에 담았어요. 작은 표식은 "+b+"예요." : a+"와 "+b+"를 함께 담았어요.";
-    } else if (primary) caption=styles[primary].label+"를 캐릭터의 표식에 담았어요.";
+    if (sides.length === 2) {
+      const [a,b] = sides.map(side=>styles[side].label);
+      caption = primary ? styles[primary].label+"가 더 뚜렷해서 큰 표식에 담았어요." : a+"와 "+b+"를 함께 담았어요.";
+    } else if (primary) caption="대표 성향은 "+styles[primary].label+"예요.";
     else caption=key==="unanswered" ? "유니폼의 이름표를 비워 뒀어요." : "이번 유니폼엔 취향 표식을 달지 않았어요.";
-    return {key,sides:ordered,direction:primary,image,caption,alt:image ? "러닝 캐릭터와 취향 표식. "+caption : "러닝 유니폼. "+caption};
+    if (animal) caption = animal+"　"+caption;
+    return {key,sides,direction:primary,image,caption,alt:caption};
   }
   const imageCache=new Map();
   function load(path) {
@@ -92,78 +90,28 @@
     ctx.fillStyle=paper;ctx.fillRect(92,107,66,38);ctx.strokeRect(92,107,66,38);
     ctx.setLineDash([5,5]);ctx.lineWidth=2;ctx.strokeRect(98,113,54,26);ctx.restore();
   }
-  const WIDTH=700,HEIGHT=500;
-  const matteColors=new WeakMap();
-  function paperAtEdge(img) {
-    if(matteColors.has(img))return matteColors.get(img);
-    const sample=document.createElement("canvas");
-    sample.width=4;sample.height=1;
-    const ctx=sample.getContext("2d",{willReadFrequently:true});
-    const edge=3, xs=[edge,img.naturalWidth-1-edge],ys=[edge,img.naturalHeight-1-edge];
-    let index=0;
-    for(const y of ys)for(const x of xs)ctx.drawImage(img,x,y,1,1,index++,0,1,1);
-    const bytes=ctx.getImageData(0,0,4,1).data,colors=[];
-    for(let i=0;i<bytes.length;i+=4){
-      if(bytes[i+3]>245 && Math.min(bytes[i],bytes[i+1],bytes[i+2])>165)colors.push(bytes.slice(i,i+3));
-    }
-    const color=colors.length ? "rgb("+[0,1,2].map(k=>Math.round(colors.reduce((n,c)=>n+c[k],0)/colors.length)).join(",")+")" : null;
-    matteColors.set(img,color);return color;
-  }
+  const WIDTH=700,HEIGHT=790;
   function layout(ctx,plate,img,height) {
     const ids=plate.sides;
     const theme=styles[ids[0]] || neutral, second=styles[ids[1]];
-    const split=second ? (plate.direction ? 420 : 350) : WIDTH;
+    const split=second ? (plate.direction === ids[0] ? 420 : plate.direction === ids[1] ? 280 : 350) : WIDTH;
     const dividerY=height-107;
-    const scale=img ? Math.min((WIDTH-52)/img.naturalWidth,(dividerY-22)/img.naturalHeight) : 0;
-    const iw=img ? img.naturalWidth*scale : 0,ih=img ? img.naturalHeight*scale : 0;
-    const gutter=(WIDTH-iw)/2,above=dividerY-ih;
-    const matte=img && second ? paperAtEdge(img) : null;
-    ctx.fillStyle=theme.paper;ctx.fillRect(0,0,WIDTH,height);
-    if(matte) {
-      const field=ctx.createLinearGradient(0,0,WIDTH,0);
-      field.addColorStop(0,theme.paper);field.addColorStop(gutter/WIDTH,matte);
-      field.addColorStop(1-gutter/WIDTH,matte);field.addColorStop(1,second.paper);
-      ctx.fillStyle=field;ctx.fillRect(0,0,WIDTH,dividerY);
-    } else if(second) {
-      ctx.fillStyle=second.paper;path(ctx,[[split+40,0],[WIDTH,0],[WIDTH,dividerY],[split-40,dividerY]],true);ctx.fill();
-    }
-    ctx.save();ctx.globalAlpha=.17;
-    if(matte) {
-      // Keep the signs in the margin so they never cut across a face or end abruptly at a square edge.
-      const beside=gutter>=110;
-      const room=beside ? gutter-16 : above-18;
-      const big=Math.max(0,Math.min(166,room)),small=plate.direction ? big*.76 : big;
-      if(big>=38) {
-        const left=beside ? gutter/2 : WIDTH*.22,right=WIDTH-left;
-        const mid=beside ? dividerY*.48 : above/2;
-        emblem(ctx,ids[0],left-big/2,mid-big/2,big,theme.ink);
-        emblem(ctx,ids[1],right-small/2,mid-small/2,small,second.ink);
-      }
-    } else if(ids.length) {
-      const balanced=second && !plate.direction;
-      emblem(ctx,ids[0],12,balanced?94:49,balanced?158:184,theme.ink);
-      if(second)emblem(ctx,ids[1],balanced?WIDTH-170:WIDTH-177,balanced?94:117,balanced?158:161,second.ink);
+    ctx.fillStyle=paper;ctx.fillRect(0,0,WIDTH,height);
+    if (img) {
+      // Keep the complete square illustration visible in the result and both PNG formats.
+      const scale=Math.min(WIDTH/img.naturalWidth,dividerY/img.naturalHeight);
+      const w=img.naturalWidth*scale,h=img.naturalHeight*scale;
+      ctx.drawImage(img,(WIDTH-w)/2,(dividerY-h)/2,w,h);
     } else {
-      ctx.strokeStyle=neutral.ink;ctx.lineWidth=4;
-      for(let n=0;n<3;n++){ctx.beginPath();ctx.moveTo(0,270+n*19);ctx.bezierCurveTo(145,340,465,120,WIDTH,170+n*19);ctx.stroke();}
-    }
-    ctx.restore();
-    if(img) {
-      // The solo bust originals have a square shoulder boundary. Show their full print frame.
-      if(!second){
-        ctx.fillStyle="rgba(255,252,239,.45)";ctx.fillRect(gutter,above,iw,ih);
-        ctx.lineWidth=2;ctx.strokeStyle="rgba(38,48,55,.35)";ctx.strokeRect(gutter,above,iw,ih);
-      }
-      ctx.drawImage(img,gutter,above,iw,ih);
-    } else {
-      const size=Math.min(520,dividerY-54);
+      ctx.fillStyle=theme.paper;ctx.fillRect(0,0,WIDTH,dividerY);
+      const size=Math.min(425,dividerY-54);
       jersey(ctx,(WIDTH-size)/2,(dividerY-size)/2,size,plate.key!=="unanswered");
     }
     ctx.fillStyle=paper;ctx.fillRect(0,dividerY,WIDTH,height-dividerY);ctx.strokeStyle=outline;ctx.lineWidth=3;
     ctx.beginPath();ctx.moveTo(0,dividerY);ctx.lineTo(WIDTH,dividerY);ctx.stroke();
     function label(id,start,end) {
       const info=styles[id], w=end-start;
-      const diameter = ids.length===2 && plate.direction ? (start===0 ? 80 : 58) : 70;
+      const diameter = ids.length===2 && plate.direction ? (id===plate.direction ? 80 : 58) : 70;
       const cx=start+w/2-59, cy=dividerY+54;
       ctx.fillStyle=info.paper;ctx.beginPath();ctx.arc(cx,cy,diameter/2,0,Math.PI*2);ctx.fill();
       emblem(ctx,id,cx-diameter/2,cy-diameter/2,diameter,info.ink);
@@ -180,7 +128,7 @@
   }
   function draw(ctx,plate,img,x,y,w,h) {
     ctx.save();
-    ctx.fillStyle=styles[plate.sides[0]]?.paper||neutral.paper;ctx.fillRect(x,y,w,h);
+    ctx.fillStyle=paper;ctx.fillRect(x,y,w,h);
     const scale=Math.min(w/WIDTH,h/HEIGHT),height=h/scale;
     ctx.translate(x+(w-WIDTH*scale)/2,y);ctx.scale(scale,scale);
     layout(ctx,plate,img,height);ctx.restore();

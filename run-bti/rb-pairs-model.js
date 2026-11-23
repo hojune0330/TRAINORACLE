@@ -13,11 +13,19 @@
           "조금 더 멀리 가는 게 좋아?",
           "여유가 있으면 한 바퀴 더 돌고 싶어?",
           "오래 달리는 날이 기다려져?",
+        ], readings: [
+          "조금 더 멀리 가는 게 좋아.",
+          "여유가 있으면 한 바퀴 더 돌고 싶어.",
+          "오래 달리는 날이 기다려져.",
         ] },
         { id: "speed", label: "속도파", questions: [
           "짧은 구간에서 속도를 내 보는 게 좋아?",
           "발이 빨라지는 순간이 재밌어?",
           "잠깐 빠르게 달리는 날이 기다려져?",
+        ], readings: [
+          "짧은 구간에서 속도를 내 보는 게 좋아.",
+          "발이 빨라지는 순간이 재밌어.",
+          "잠깐 빠르게 달리는 날이 기다려져.",
         ] },
       ],
       prompts: [
@@ -33,11 +41,19 @@
           "지금 페이스를 숫자로 보면 편해?",
           "한 구간이 끝나면 걸린 시간을 보는 게 좋아?",
           "뛰면서 중간 기록을 듣는 게 좋아?",
+        ], readings: [
+          "지금 페이스를 숫자로 보면 편해.",
+          "한 구간이 끝나면 걸린 시간을 보는 게 좋아.",
+          "뛰면서 중간 기록을 듣는 게 좋아.",
         ] },
         { id: "senses", label: "감각파", questions: [
           "지금 페이스를 숨소리로 가늠하면 편해?",
           "뛰면서 다리가 가벼운지 살피는 게 좋아?",
           "발걸음으로 내 속도를 가늠하면 편해?",
+        ], readings: [
+          "지금 페이스를 숨소리로 가늠하면 편해.",
+          "뛰면서 다리가 가벼운지 살피는 게 좋아.",
+          "발걸음으로 내 속도를 가늠하면 편해.",
         ] },
       ],
       prompts: [
@@ -53,11 +69,19 @@
           "아는 길을 다시 뛰는 게 좋아?",
           "자주 가는 코스라면 반가워?",
           "갈림길에선 낯익은 쪽이 끌려?",
+        ], readings: [
+          "아는 길을 다시 뛰는 게 좋아.",
+          "자주 가는 코스라면 반가워.",
+          "갈림길에선 낯익은 쪽이 끌려.",
         ] },
         { id: "explore", label: "탐험파", questions: [
           "새 골목이 보이면 들어가 보고 싶어?",
           "처음 가는 코스라면 반가워?",
           "늘 뛰던 동네에서도 새 길을 찾고 싶어?",
+        ], readings: [
+          "새 골목이 보이면 들어가 보고 싶어.",
+          "처음 가는 코스라면 반가워.",
+          "늘 뛰던 동네에서도 새 길을 찾고 싶어.",
         ] },
       ],
       prompts: [
@@ -73,11 +97,19 @@
           "나가기 전에 오늘 할 걸 정해 두면 편해?",
           "다음 주 뛸 날을 미리 정해 두고 싶어?",
           "여유 있는 날도 뛸 계획을 짜는 게 좋아?",
+        ], readings: [
+          "나가기 전에 오늘 할 걸 정해 두면 편해.",
+          "다음 주 뛸 날을 미리 정해 두고 싶어.",
+          "여유 있는 날도 뛸 계획을 짜는 게 좋아.",
         ] },
         { id: "improvise", label: "즉흥파", questions: [
           "일단 나가서 뛰며 정하는 게 편해?",
           "다음에 뛸 날은 그날 가서 정하고 싶어?",
           "뛰다가 내키는 대로 바꾸는 게 좋아?",
+        ], readings: [
+          "일단 나가서 뛰며 정하는 게 편해.",
+          "다음에 뛸 날은 그날 가서 정하고 싶어.",
+          "뛰다가 내키는 대로 바꾸는 게 좋아.",
         ] },
       ],
       prompts: [
@@ -90,7 +122,7 @@
 
   const items = axes.flatMap(axis => axis.sides.flatMap(side =>
     side.questions.map((text, index) => ({
-      id: side.id + "-" + (index + 1), axisId: axis.id, sideId: side.id, text,
+      id: side.id + "-" + (index + 1), axisId: axis.id, sideId: side.id, text, reading: side.readings[index],
     }))
   ));
 
@@ -133,28 +165,54 @@
     ]),
   ];
 
-  const names = Object.assign(Object.create(null), {
-    open: "내 러닝 취향", unanswered: "지금까지 고른 답",
-    ...Object.fromEntries(axes.flatMap(axis => axis.sides.map(side => [side.id, side.label]))),
-  });
-
-  // Only a shared side descriptor and a side label may contribute words to a nickname.
-  // Keep a question's specific action in the evidence that quotes that question.
-  const titleWords = {
-    distance: "장거리", speed: "스피드",
-    familiar: "단골길", explore: "새 길", plan: "계획형", improvise: "즉흥형",
+  // An animal's props describe the illustration. Only the liked answers describe a runner's actions.
+  const characters = {
+    "distance": { nickname: "성큼성큼 코끼리", reading: "길게 달리는 날이 좋아.", art: "코끼리 · 물병" },
+    "speed": { nickname: "질주 치타", reading: "뛰다가 속도가 붙을 때가 재밌어.", art: "치타 · 배번호" },
+    "numbers": { nickname: "문어", reading: "내가 어떻게 뛰었는지 숫자로 알면 더 재밌어.", art: "문어 · 데이터 워치" },
+    "senses": { nickname: "손수건 고양이", reading: "뛰면서 내 몸이 어떤지 느껴 보는 게 좋아.", art: "고양이 · 손수건" },
+    "familiar": { nickname: "동네 단골 강아지", reading: "다시 뛰어도 아는 길이 반가워.", art: "강아지 · 코스 키링" },
+    "explore": { nickname: "흰꼬리 여우", reading: "처음 보는 길은 한번 뛰어 보고 싶어.", art: "여우 · 접이식 지도" },
+    "plan": { nickname: "비버", reading: "뛸 계획을 미리 정해 두면 마음이 편해.", art: "비버 · 러닝 다이어리" },
+    "improvise": { nickname: "날개 편 앵무새", reading: "어떻게 뛸지는 그날 정하는 게 편해.", art: "앵무새 · 러닝 캡" },
+    "distance+numbers": { nickname: "황제펭귄", reading: "오래 달리는 게 좋고 내 달리기를 숫자로 보는 재미도 있어.", art: "황제펭귄 · 초시계" },
+    "distance+senses": { nickname: "타월 거북이", reading: "오래 뛰고 싶어. 뛰는 동안 내 몸이 어떤지도 궁금해.", art: "거북이 · 스포츠 타월" },
+    "speed+numbers": { nickname: "송골매", reading: "속도가 붙는 맛도 좋고 내가 어떻게 뛰었는지 숫자로 아는 것도 좋아.", art: "송골매 · 구간 기록표" },
+    "speed+senses": { nickname: "물살 타는 돌고래", reading: "속도를 내는 것도 좋고 달릴 때 몸에서 느껴지는 변화도 재밌어.", art: "돌고래 · 지느러미 밴드" },
+    "distance+familiar": { nickname: "보온병 판다", reading: "길게 뛰는 게 좋아. 코스는 아는 길이면 더 반가워.", art: "판다 · 보온병" },
+    "distance+explore": { nickname: "먼 바다 혹등고래", reading: "길게 달리는 날이 좋아. 처음 보는 길도 궁금해.", art: "혹등고래 · 코스 엽서" },
+    "speed+familiar": { nickname: "돌아오는 제비", reading: "아는 길은 또 뛰어도 좋고 속도가 붙는 순간도 좋아해.", art: "제비 · 릴레이 배턴" },
+    "speed+explore": { nickname: "선글라스 상어", reading: "속도 내는 재미도 있고 새 길을 찾아가는 재미도 있어.", art: "상어 · 스포츠 선글라스" },
+    "distance+plan": { nickname: "배낭 멘 낙타", reading: "오래 달리는 게 좋아. 뛸 계획은 미리 잡아 두면 편해.", art: "쌍봉낙타 · 트레일 배낭" },
+    "distance+improvise": { nickname: "한 모금 캥거루", reading: "오래 뛰는 게 좋아. 어떻게 뛸지는 그날 정하고 싶어.", art: "캥거루 · 접는 물컵" },
+    "speed+plan": { nickname: "운동화 챙긴 토끼", reading: "달릴 땐 속도 내는 재미가 있고 뛸 건 미리 정해 두면 편해.", art: "토끼 · 러닝화 한 짝" },
+    "speed+improvise": { nickname: "후다닥 다람쥐", reading: "속도 내는 걸 좋아해. 오늘 어떻게 뛸지는 그때 가서 정할래.", art: "다람쥐 · 호루라기" },
+    "numbers+familiar": { nickname: "고리꼬리 라쿤", reading: "아는 길에서 뛰는 게 편해. 내가 어떻게 뛰었는지 숫자로 아는 것도 좋아.", art: "라쿤 · 만보기" },
+    "numbers+explore": { nickname: "길 찾는 기린", reading: "안 가 본 길이 궁금해. 내 달리기를 숫자로 보는 재미도 있어.", art: "기린 · 갈림길에서 확인하는 러닝 워치" },
+    "senses+familiar": { nickname: "밴드 찬 코알라", reading: "익숙한 길이 반갑고 달릴 때 내 몸이 어떤지 살피는 게 좋아.", art: "코알라 · 손목 밴드" },
+    "senses+explore": { nickname: "호랑나비", reading: "새 길에 들어서는 재미도 있고 뛰면서 몸의 변화를 느끼는 재미도 있어.", art: "호랑나비 · 압화 수첩" },
+    "numbers+plan": { nickname: "올빼미", reading: "뛸 계획은 미리 잡고 싶어. 내 달리기도 숫자로 보면 감이 와.", art: "올빼미 · 랩 기록 노트" },
+    "numbers+improvise": { nickname: "폴짝 개구리", reading: "어떻게 뛸지는 그날 정할래. 내가 어떻게 뛰었는지는 숫자로 알고 싶어.", art: "개구리 · 방향을 틀며 확인하는 러닝 워치" },
+    "senses+plan": { nickname: "곱슬 양", reading: "뛸 건 미리 정해 두는 게 편해. 달릴 땐 내 몸이 어떤지도 살피고 싶어.", art: "양 · 스트레칭 매트" },
+    "senses+improvise": { nickname: "둥실 해파리", reading: "뛸 건 그날 정하는 게 편해. 달리면서 내 몸이 어떤지 느껴 보는 것도 좋아.", art: "해파리 · 실리콘 링" },
+    "familiar+plan": { nickname: "고슴도치", reading: "코스는 익숙한 데가 좋고 뛸 계획은 미리 정해 두는 게 편해.", art: "고슴도치 · 훈련 달력" },
+    "familiar+improvise": { nickname: "우리 동네 햄스터", reading: "뛰는 곳은 아는 데가 좋아. 거기서 어떻게 뛸지는 그날 정할래.", art: "햄스터 · 강변 쉼터의 한강라면" },
+    "explore+plan": { nickname: "새 코스 찜한 카멜레온", reading: "처음 가는 길이 궁금해. 뛸 계획은 미리 정해 두는 게 좋아.", art: "카멜레온 · 등산 스틱 한 개" },
+    "explore+improvise": { nickname: "훌쩍 떠나는 바다코끼리", reading: "처음 가는 길이 좋아. 어떻게 뛸지도 그날 가서 정하는 게 재밌어.", art: "바다코끼리 · 여행 가방" },
   };
-  for (const [index, axis] of axes.entries()) {
-    for (const next of axes.slice(index + 1)) {
-      for (const a of axis.sides) {
-        for (const b of next.sides) {
-          const key = a.id + "+" + b.id;
-          names[key] = axis.id === "signals"
-            ? titleWords[b.id] + " " + a.label
-            : titleWords[a.id] + " " + b.label;
-        }
-      }
-    }
+  const sideCodes = Object.fromEntries(axes.flatMap(axis => axis.sides.map(side => [side.id, side.label.slice(0, -1)])));
+  const names = Object.assign(Object.create(null), { open: "내 러닝 취향", unanswered: "지금까지 고른 답" });
+  for (const [key, character] of Object.entries(characters)) {
+    names[key] = key.split("+").map(side => sideCodes[side]).join("·") + " | " + character.nickname;
+  }
+
+  // Some archives saved the visible title before character keys were persisted.
+  const previousTitles = { ...Object.fromEntries(axes.flatMap(axis => axis.sides.map(side => [side.id,side.label]))) };
+  const titleWords = { distance:"장거리", speed:"스피드", familiar:"단골길", explore:"새 길", plan:"계획형", improvise:"즉흥형" };
+  for (const key of Object.keys(characters).filter(key => key.includes("+"))) {
+    const [a,b] = key.split("+");
+    previousTitles[key] = a === "numbers" || a === "senses"
+      ? titleWords[b] + " " + previousTitles[a] : titleWords[a] + " " + previousTitles[b];
   }
 
   // Earlier local archives stored the displayed Korean title instead of the key.
@@ -259,7 +317,7 @@
 
   function choiceFor(result, saved) {
     return result.choices.find(choice => choice.key === saved || choice.name === saved ||
-      (typeof saved === "string" && legacyTitles[choice.key] === saved)) || result.choices[0];
+      (typeof saved === "string" && (legacyTitles[choice.key] === saved || previousTitles[choice.key] === saved))) || result.choices[0];
   }
 
   const sideTopics = {
@@ -267,11 +325,10 @@
     familiar: "익숙한 길", explore: "새 길", plan: "계획", improvise: "즉흥",
   };
 
-  // Produce concrete preference statements exclusively from a liked question.
-  // Quoting the question keeps the wording and its required answer inseparable.
+  // Each item keeps its own first-person reading; it is offered only for a positive answer.
   function likedClaim(item, answers) {
     if (answers[item.id] !== 2) return null;
-    return { text: "“" + item.text + "”에 ‘좋아’라고 답했어요.", evidence: [{id:item.id, value:2}] };
+    return { text: item.reading, evidence: [{id:item.id, value:2}] };
   }
 
   function sideReading(side, answers) {
@@ -346,6 +403,6 @@
     return lines;
   }
 
-  globalThis.RBPairsModel = { version, labels, axes, items, extras, names, evaluate, compare,
+  globalThis.RBPairsModel = { version, labels, axes, items, extras, names, characters, evaluate, compare,
     choiceFor, sideReading, resultReason };
 })();

@@ -56,7 +56,7 @@
     ]},
     {id:"travel", title:"여행지", axis:"routes", questions:[
       question("travelRun","여행 가방을 쌀 때 운동화는?",[
-        ["always","여행 가면 꼭 뛰고 싶어서 챙겨","life-travel","여행 가방을 쌀 때"],["sometimes","일정에 여유가 있으면 챙겨"],["rest","여행 중엔 러닝도 쉬고 싶어"],["wish","아직 해 본 적은 없는데 다음 여행엔 챙기고 싶어","life-travel","다음 여행에 해 보고 싶은 일"],
+        ["always","여행 가면 꼭 뛰고 싶어서 챙겨","club-anime-travel","여행 가방을 쌀 때"],["sometimes","일정에 여유가 있으면 챙겨"],["rest","여행 중엔 러닝도 쉬고 싶어"],["wish","아직 해 본 적은 없는데 다음 여행엔 챙기고 싶어","club-anime-travel","다음 여행에 해 보고 싶은 일"],
         ["limited","뛰고는 싶은데 일정상 챙기기 어려워"],["disliked","여행지에서 뛰어 봤는데 내 취향은 아니었어"],
       ]),
       question("travelRoute","여행지에서 뛴다면 어떤 길이 좋아?",[
@@ -68,7 +68,7 @@
     ]},
     {id:"practice", title:"훈련과 배움", fields:["learning","goal","eagerness"], questions:[
       question("training","연습 시간이 생기면 뭘 해 보고 싶어?",[
-        ["drills","러닝 드릴을 익혀 보고 싶어","club-drill-study","배워 보고 싶은 동작"],["strength","달리기에 도움이 되는 근력 운동을 해 보고 싶어"],
+        ["drills","러닝 드릴을 익혀 보고 싶어","club-anime-drill","배워 보고 싶은 동작"],["strength","달리기에 도움이 되는 근력 운동을 해 보고 싶어"],
         ["distance","달리는 거리를 늘려 보고 싶어"],["speed","짧게 속도를 내며 달리고 싶어"],
       ],{multiple:true}),
       question("athlete","선수로 훈련한 경험이 있어?",[
@@ -102,7 +102,7 @@
     ]},
     {id:"body", title:"몸과 데이터", axis:"signals", fields:["strength","challenge","goal"], questions:[
       question("watch","달리는 동안 시계나 앱은 어떻게 쓰고 싶어?",[
-        ["during","뛰면서 숫자를 보고 페이스를 조절하고 싶어"],["after","뛰는 동안엔 두고 끝나고 기록만 보고 싶어","life-record","기록을 보고 싶은 때"],
+        ["during","뛰면서 숫자를 보고 페이스를 조절하고 싶어"],["after","뛰는 동안엔 두고 끝나고 기록만 보고 싶어","club-anime-record","기록을 보고 싶은 때"],
         ["without","기록 없이 뛰고 싶어"],["new","아직 써 본 적이 없어"],
       ]),
       question("soreness","몸이 불편해서 계획을 다시 생각한 적이 있어?",[
@@ -120,9 +120,9 @@
   ]);
   const questions = new Map([...chapters.flatMap(ch => ch.questions), companion].map(q => [q.id,q]));
   const sceneDescriptions = {
-    "club-drill-study":"트랙에 낮은 허들이 놓여 있고 러너가 한쪽 무릎을 들어 첫 허들을 넘고 있어요.",
-    "life-travel":"여행 가방을 펼쳐 놓고 옷 옆에 운동화 한 켤레를 넣고 있어요.",
-    "life-record":"러너가 트랙 옆 벤치에 앉아 수첩을 펼치고 손목시계를 보고 있어요.",
+    "club-anime-drill":"트랙에 낮은 허들이 놓여 있고 러너가 한쪽 무릎을 들어 첫 허들을 넘고 있어요.",
+    "club-anime-travel":"여행 가방을 펼쳐 놓고 옷 옆에 운동화 한 켤레를 넣고 있어요.",
+    "club-anime-record":"러너가 트랙 옆 벤치에 앉아 수첩을 펼치고 손목시계를 보고 있어요.",
   };
   function selected(q, state) {
     const raw = state[q.id];
@@ -293,7 +293,7 @@
     const [source,field,value] = id.split(":");
     if (source === "i") {
       const item = model().items.find(i => i.id === field);
-      return item && !value ? "“" + item.text + "”에 ‘좋아’" : "";
+      return item && !value ? item.reading : "";
     }
     if (source === "e" && safeExtraIds.has(field)) {
       const opt = model().extras.find(q => q.id === field)?.options.find(o => o.id === value);
@@ -540,7 +540,7 @@
         cardImage=canvas.toDataURL("image/png");
         const img=make("img");img.src=cardImage;img.alt=canvas.getAttribute("aria-label");
         preview.replaceChildren(img);
-        download.href=cardImage;download.download="런비티아이-"+title+"-"+(prefs.format==="story"?"스토리":"카드")+".png";
+        download.href=cardImage;download.download="런비티아이-"+title.replace(" | ","-")+"-"+(prefs.format==="story"?"스토리":"카드")+".png";
         download.removeAttribute("aria-disabled");captureBtn.disabled=false;fallback.textContent="";
       } catch {
         if(renderId!==revision || !wrapper.isConnected)return;
@@ -582,7 +582,9 @@
     }),quoteHost,consent);
     actions.append(download,captureBtn);
     const linkArea=make("div","rpx-link-area");
-    linkArea.append(make("h4","","친구에게 보낼 링크"),make("p","rpx-note","링크를 받은 사람은 내 기본 별명과 내가 담은 내용을 볼 수 있어요. 이미 보낸 링크에는 보낼 때 고른 내용이 남아요."),companyConsent,
+    const linkNameHint = title === result.defaultName ? "기본 별명 ‘"+result.defaultName+"’과 내가 담은 내용을 볼 수 있어요." :
+      "내 이미지에는 ‘"+title+"’, 친구 링크에는 기본 별명 ‘"+result.defaultName+"’이 담겨요.";
+    linkArea.append(make("h4","","친구에게 보낼 링크"),make("p","rpx-note",linkNameHint+" 이미 보낸 링크에는 보낼 때 고른 내용이 남아요."),companyConsent,
       button("링크 복사",()=>{
         const url=publicURL(result,prefs.include,prefs.quote,prefs.company);
         const current=++linkRevision;
