@@ -29,7 +29,9 @@ export function ConnectedWeeklyFacts({ entries, today, onOpenDay }: {
           aria-label={label + " " + record.date + " 운동 일지 열기"}>
           <span>{record.date}</span><span>{record.source === "IMPORTED" ? "가져온 기록" : "직접 기록"} · 일지 열기</span>
         </button>
-        : <span>{record.date} · {record.source === "IMPORTED" ? "가져온 기록" : "직접 기록"}</span>}</li>)}</ul>}
+        : <span>{record.date} · {record.source === "IMPORTED" ? "가져온 기록" : "직접 기록"}</span>}
+        {record.importedDistanceExcluded && <p>가져온 거리는 일지에서 볼 수 있어요. 주간 합계에서는 빠졌어요.</p>}
+      </li>)}</ul>}
   </section>
   return <section className="home-weekly" aria-labelledby={titleId}>
     <AppHeading as="h2" variant="section" id={titleId}>이번 주 운동 기록</AppHeading>

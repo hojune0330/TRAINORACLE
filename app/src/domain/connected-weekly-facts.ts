@@ -4,11 +4,11 @@ import { projectStructuredJournalObservations, type StructuredJournalProjectionO
 import { cumulativeDistance } from "./cumulative-distance"
 import { buildFileAnalysisReport, isProjectedFileObservation } from "./import/file-analysis"
 import { parseFileObservation } from "./import/file-observation"
-import { hasImportedField } from "./field-provenance"
+import { hasImportedField, isImportedField } from "./field-provenance"
 import { parseDistanceKm, parseDurationMin } from "./numeric-input"
 
 type KnownClock = "TIMER" | "MOVING" | "ELAPSED"
-export type WeeklyFactRecord = { id: string; date: string; source: "DIRECT" | "IMPORTED" }
+export type WeeklyFactRecord = { id: string; date: string; source: "DIRECT" | "IMPORTED"; importedDistanceExcluded: boolean }
 export type WeeklyFactGroup = {
   id: string; label: string; records: number
   distanceKm: number | null; distanceSamples: number
@@ -68,6 +68,7 @@ export function connectedWeeklyFacts(entries: readonly JournalEntry[], today: st
       sourceContext: "ACCOUNT_CONFIRMED", startDate: from, endDate: to })
     const direct = projected.filter(value => !adoptedIds.has(value.sourceRef.sourceId))
     const distance = cumulativeDistance(direct, { kind: "WEEK_TO_DATE", startDate: from, endDate: to, precision: "LOCAL_DATE" })
+    const directDistanceIds = new Set(distance.sourceRefs.map(ref => ref.sourceId))
     const groups: WeeklyFactGroup[] = []
     if (distance.includedSourceCount > 0) groups.push({ id: "DIRECT", label: "직접 입력한 거리 · 종목 미지정",
       records: distance.includedSourceCount, distanceKm: distance.totalKm, distanceSamples: distance.includedSourceCount, times: [] })
@@ -82,6 +83,8 @@ export function connectedWeeklyFacts(entries: readonly JournalEntry[], today: st
     return { start: from, end: to,
       records: scoped.sort((a,b) => b.date.localeCompare(a.date) || a.id.localeCompare(b.id)).map(entry => ({
         id: entry.id, date: entry.date, source: entry.fileObservation || hasImportedField(entry.fieldProvenance) ? "IMPORTED" : "DIRECT",
+        importedDistanceExcluded: !adoptedIds.has(entry.id) && !directDistanceIds.has(entry.id)
+          && isImportedField("distanceKm", entry.fieldProvenance) && parseDistanceKm(entry.distanceKm) !== null,
       })),
       groups, excludedDistance: Math.max(0, scoped.length - distanceSamples),
       excludedTime: Math.max(0, scoped.length - timeSamples),

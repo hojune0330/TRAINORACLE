@@ -13,7 +13,7 @@ const samples: GarminSample[] = [
   { offsetSeconds: 0, heartRateBpm: 0, cadenceSpm: 170, latitude: 0, longitude: 0, clockSeconds: 0, timerSeconds: 0, movingSeconds: 0, totalDistanceMeters: 0, bikeCadenceRpm: 0, swimCadenceSpm: 0, airTemperatureCelsius: -2.5 },
   { offsetSeconds: 1, heartRateBpm: 120, cadenceSpm: 171, latitude: 0, longitude: 0.001 },
   { offsetSeconds: 7, heartRateBpm: null, latitude: null, longitude: null },
-  { offsetSeconds: 10, heartRateBpm: 125, latitude: 0.001, longitude: 0.002 },
+  { offsetSeconds: 1260, heartRateBpm: 125, latitude: 0.001, longitude: 0.002 },
 ]
 async function example() {
   const hash = await garminSamplesDigest(samples)
@@ -50,7 +50,7 @@ describe("server-stored Garmin details and local route", () => {
     fireEvent.click(screen.getByRole("tab", { name: "그래프" }))
     expect(screen.getByRole("img", { name: /심박수 차트/ })).toHaveAccessibleName(/측정값 3개/)
     fireEvent.click(screen.getByRole("button", { name: "최고 심박 125 bpm 시점 보기" }))
-    expect(screen.getByRole("slider", { name: "센서 표본 선택" })).toHaveAttribute("aria-valuetext", expect.stringContaining("운동 시작 뒤 10초"))
+    expect(screen.getByRole("slider", { name: "센서 표본 선택" })).toHaveAttribute("aria-valuetext", expect.stringContaining("운동 시작 뒤 21분 0초 (원본 1260초)"))
     expect(screen.getByTestId("activity-sensor-path").getAttribute("d")!.match(/M/g)).toHaveLength(2)
     fireEvent.click(screen.getByRole("tab", { name: "개요" }))
     expect(screen.getByTestId("activity-route-path").getAttribute("d")!.match(/M/g)).toHaveLength(2)
