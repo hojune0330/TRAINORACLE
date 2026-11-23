@@ -44,7 +44,7 @@ export function DeviceConnections({ onOpenImport, ownerId = null, onOpenAccount,
 }) {
   const [subview, setSubview] = useState(false)
   const changeSubview = useCallback((active: boolean) => { setSubview(active); onSubviewChange?.(active) }, [onSubviewChange])
-  const garminProps = { onSubviewChange: changeSubview, ownerId, onOpenAccount, onOpenJournalRecord }
+  const garminProps = { onSubviewChange: changeSubview, ownerId, onOpenAccount, onOpenJournalRecord, onOpenImport }
   return <div className="device-connections">
     <section aria-labelledby="connection-auto-title">
       <div hidden={subview}>
@@ -66,7 +66,7 @@ export function DeviceConnections({ onOpenImport, ownerId = null, onOpenAccount,
       </InfoDisclosure>
       <InfoDisclosure title="어떤 데이터를 가져올 수 있나요?">
         <dl>
-          <dt>Garmin 운동</dt><dd>연결한 뒤 전달된 운동의 거리·원본 시간을 보여줘요. 연결 전 기록은 파일로 가져올 수 있어요.</dd>
+          <dt>Garmin 운동</dt><dd>권한을 허용한 뒤 Garmin Connect에 새로 올라오는 운동의 거리·원본 시간을 보여줘요. 이전 기록은 파일로 가져올 수 있어요.</dd>
           <dt>운동 중 심박·경로·구간</dt><dd>해당 운동에서 실제로 받은 세부 자료만 보여줘요. 없는 값은 0으로 채우지 않아요.</dd>
           <dt>수면·하루 심박·HRV</dt><dd>자동 수집 준비 중이에요. 현재 홈의 수면·안정시 심박은 내 일지에 적은 값이에요.</dd>
           <dt>제조사 운동부하·회복 점수</dt><dd>자동 수집 준비 중이에요. 다른 회사의 점수를 합쳐 하나의 점수로 표시하지 않아요.</dd>

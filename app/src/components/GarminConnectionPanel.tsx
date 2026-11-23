@@ -25,6 +25,7 @@ export type GarminConnectionPanelProps = {
   readonly onSubviewChange?: (active: boolean) => void
   readonly ownerId: string | null
   readonly onOpenAccount?: () => void
+  readonly onOpenImport?: () => void
   readonly onOpenJournalRecord?: OpenGarminJournalRecord
   readonly transport?: GarminTransport
   readonly configured?: boolean
@@ -52,7 +53,7 @@ export function GarminConnectionPanel(props: GarminConnectionPanelProps) {
   const generation = useSyncExternalStore(onLocalJournalScopeChange, localJournalScopeGeneration, () => 0)
   return <GarminConnectionSession key={`${props.ownerId ?? "guest"}:${generation}`} {...props} />
 }
-function GarminConnectionSession({ onSubviewChange, ownerId, onOpenAccount, onOpenJournalRecord, inlineSetup = false, onOpenStorageSettings, storageReadiness, transport = requestGarminIntegration,
+function GarminConnectionSession({ onSubviewChange, ownerId, onOpenAccount, onOpenImport, onOpenJournalRecord, inlineSetup = false, onOpenStorageSettings, storageReadiness, transport = requestGarminIntegration,
   configured = garminEndpoint() !== null, featureEnabled = garminIntegrationEnabled() && accountJournalPreviewEnabled(), navigate = url => window.location.assign(url) }: GarminConnectionPanelProps) {
   const [authorizationPaused, setAuthorizationPaused] = useState(false)
   const [updatesAvailable, setUpdatesAvailable] = useState(false)
@@ -72,6 +73,7 @@ function GarminConnectionSession({ onSubviewChange, ownerId, onOpenAccount, onOp
   const [message, setMessage] = useState<string | null>(null), [disconnectReview, setDisconnectReview] = useState(false)
   const [callbackAvailable, setCallbackAvailable] = useState(() => hasGarminCallback())
   const [connectReview, setConnectReview] = useState(false), [saveMode, setSaveMode] = useState<"AUTO" | "REVIEW">("AUTO")
+  const [receiptScopeAcknowledged, setReceiptScopeAcknowledged] = useState(false)
   const [setupDeferred, setSetupDeferred] = useState(false)
   const [view, setView] = useState<"list" | "settings" | "review" | "saved">("list")
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -83,6 +85,7 @@ function GarminConnectionSession({ onSubviewChange, ownerId, onOpenAccount, onOp
   const connectTrigger = useRef<HTMLButtonElement | null>(null)
   const setupHeading = useRef<HTMLHeadingElement | null>(null)
   const openConnectReview = () => {
+    setReceiptScopeAcknowledged(false)
     setConnectReview(true)
     requestAnimationFrame(() => setupHeading.current?.focus())
   }
@@ -194,6 +197,7 @@ function GarminConnectionSession({ onSubviewChange, ownerId, onOpenAccount, onOp
     if (inlineSetup && storageReadiness !== undefined && storageReadiness !== "ready") {
       operation.current?.abort(); operation.current = null; refreshing.current = false
       callbackStarted.current = false
+      setReceiptScopeAcknowledged(false)
       setBusy(false); setLoaded(false); setItems([]); setStatus(null); setError(null)
       return
     }
@@ -203,7 +207,7 @@ function GarminConnectionSession({ onSubviewChange, ownerId, onOpenAccount, onOp
     && (!status || status.connection.state === "ACTIVE" || status.connection.state === "PENDING")), ownerId,
     status?.connection.state === "ACTIVE" && !status.connection.lastSyncAt)
   async function connect() {
-    if (!ownerId || !ready) return
+    if (!ownerId || !canStartConnection || !showConnectReview || !receiptScopeAcknowledged || busy) return
     setCallbackError(null)
     const controller = begin()
     try {
@@ -324,6 +328,7 @@ function GarminConnectionSession({ onSubviewChange, ownerId, onOpenAccount, onOp
   const canStartConnection = ready && !needsStorageSetup && connection?.state !== "ACTIVE" && !callbackAvailable
   const inlineConnectReview = inlineSetup && !setupDeferred && view === "list" && canStartConnection
   const showConnectReview = connectReview || inlineConnectReview
+  const waitingForFirstWorkout = view === "list" && connection?.state === "ACTIVE" && !connection.lastSyncAt && items.length === 0 && cursor === null && !error
   const reconnectRequired = connection?.state === "REVOKED" || status?.experience?.reconnectRequired === true
   return <section className="garmin-panel" aria-labelledby={inlineConnectReview ? "garmin-connect-title" : "garmin-title"} aria-busy={busy || undefined}>
     {!inlineConnectReview && <div ref={heading} tabIndex={-1} className="garmin-panel__heading">
@@ -343,7 +348,7 @@ function GarminConnectionSession({ onSubviewChange, ownerId, onOpenAccount, onOp
             <p>{error ? "상태 확인이 필요해요" : !status ? "연결 확인 중…" : connection?.state === "ACTIVE" ? "연결됨" : connection?.state === "PENDING" ? "연결을 마무리해 주세요" : reconnectRequired ? "다시 연결이 필요해요" : connection?.state === "ERROR" ? "연결 상태 확인이 필요해요" : "연결 안 됨"}</p>
             {connection?.state === "ACTIVE" && <>
               <p>{status?.experience ? status.experience.saveMode === "AUTO" ? "새 운동을 자동으로 일지에 저장해요." : "받은 운동을 확인 후 저장해요." : "저장 방식 확인이 필요해요."}</p>
-              <p className="garmin-panel__receipt">{connection.lastSyncAt ? `마지막 수신 · ${checkedAtLabel(connection.lastSyncAt)}` : "워치 기록이 Garmin Connect에 올라오면 자동으로 받아요."}</p>
+              {connection.lastSyncAt && <p className="garmin-panel__receipt">{`마지막 수신 · ${checkedAtLabel(connection.lastSyncAt)}`}</p>}
               {status?.experience?.lastSavedAt && <p className="garmin-panel__receipt">마지막 일지 저장 · {checkedAtLabel(status.experience.lastSavedAt)}</p>}
             </>}
             </div>
@@ -357,16 +362,15 @@ function GarminConnectionSession({ onSubviewChange, ownerId, onOpenAccount, onOp
           </RecordNotice>}
           {(view === "list" || view === "settings") && callbackAvailable && !callbackError && <RecordNotice kind="pending" title="Garmin 연결을 확인하고 있어요"><p>잠시만 기다려 주세요.</p></RecordNotice>}
           {(view === "list" || view === "settings") && showConnectReview && canStartConnection && <section aria-label="Garmin 연결 및 저장 동의" className="garmin-panel__setup">
-            <h4 ref={setupHeading} id="garmin-connect-title" tabIndex={-1}>{inlineConnectReview ? "Garmin 연결하고 자동으로 기록하기" : "운동을 어떻게 저장할까요?"}</h4>
-            {inlineConnectReview && <p>{reconnectRequired ? "연결이 끊겼어요. 다시 연결하면 새 운동을 받아요." : "한 번 연결하면 매번 파일을 올리지 않아도 돼요."}</p>}
-            <p>Garmin 공식 웹 화면에서 운동 기록이 있는 Garmin 계정으로 로그인하고 데이터 공유를 허용해 주세요. 트레인오라클의 Google 로그인과는 별도예요.</p>
-            <p>워치 기록은 Garmin Connect 앱에서 먼저 동기화해 주세요. 연결 뒤에는 Garmin 서버가 전달한 기록을 받아요.</p>
+            <h4 ref={setupHeading} id="garmin-connect-title" tabIndex={-1}>{reconnectRequired ? "Garmin 다시 연결하기" : "Garmin 연결하기"}</h4>
+            <p id="garmin-receipt-scope">Garmin에서 권한을 허용한 뒤 Garmin Connect에 새로 올라오는 운동을 자동으로 받아요. 이미 올라와 있던 운동은 파일로 가져올 수 있어요.</p>
+            <p>다음 Garmin 화면에서 운동 기록이 있는 계정으로 로그인하고 데이터 공유를 허용해 주세요.</p>
             <p>Garmin에서 허용한 운동과 세부 수치를 계정에 보관해요. AI 코칭 이용 동의는 포함하지 않아요.</p>
-            <p>연결한 뒤 전달되는 운동부터 받아요. 연결 전 기록은 파일로 가져올 수 있어요.</p>
             <label><input type="radio" name="garmin-save" checked={saveMode === "AUTO"} onChange={() => setSaveMode("AUTO")} disabled={busy} />새 운동을 일지에 자동 저장 · 권장</label>
             <label><input type="radio" name="garmin-save" checked={saveMode === "REVIEW"} onChange={() => setSaveMode("REVIEW")} disabled={busy} />받은 운동을 확인 후 저장</label>
             <p>중복 가능성이나 수정 충돌이 있는 기록은 확인 후 저장해요. 저장 방식은 나중에 바꿀 수 있어요.</p>
-            <div className="garmin-panel__actions"><RecordAction disabled={busy} onClick={() => void connect()}>동의하고 Garmin 연결</RecordAction><RecordAction priority="secondary" disabled={busy} onClick={() => { if (inlineConnectReview) setSetupDeferred(true); else closeConnectReview() }}>{inlineConnectReview ? "나중에 연결" : "취소"}</RecordAction></div>
+            <label><input type="checkbox" aria-describedby="garmin-receipt-scope" checked={receiptScopeAcknowledged} disabled={busy} onChange={event => setReceiptScopeAcknowledged(event.target.checked)} />자동으로 가져오는 운동 범위를 확인했어요</label>
+            <div className="garmin-panel__actions"><RecordAction disabled={busy || !receiptScopeAcknowledged} onClick={() => void connect()}>동의하고 Garmin 연결</RecordAction><RecordAction priority="secondary" disabled={busy} onClick={() => { if (inlineConnectReview) setSetupDeferred(true); else closeConnectReview() }}>{inlineConnectReview ? "나중에 연결" : "취소"}</RecordAction></div>
             <details><summary>받을 수 있는 기록</summary><p>운동의 거리·원본 시간과 제공된 심박·구간·경로를 보여줘요. 시간 기준이나 세부 값이 없으면 확인되지 않은 상태로 표시해요.</p><p>수면·하루 심박·HRV·제조사 운동부하 자동 수집은 아직 준비 중이에요.</p></details>
           </section>}
           {view === "settings" && <div className="garmin-panel__settings">
@@ -402,12 +406,11 @@ function GarminConnectionSession({ onSubviewChange, ownerId, onOpenAccount, onOp
           {loaded && !needsStorageSetup && (view === "list" || view === "review" || view === "saved") && <section aria-label="Garmin 받은 기록">
             {view === "list" ? <h4 className="garmin-panel__inbox-title">받은 운동</h4> : <RecordAction priority="secondary" disabled={busy} onClick={() => void load()}>상태 새로고침</RecordAction>}
             {!selectedId && view !== "list" && <p>{view === "saved" ? "일지에 저장된 운동이에요." : "시작 시각과 수치를 확인해 주세요. 같은 날짜의 운동도 서로 다른 운동일 수 있어요."}</p>}
-            {visibleItems.length === 0 && <RecordNotice kind={view === "list" && items.some(item => item.state === "PENDING") ? "pending" : "empty"} title={view === "list" ? items.some(item => item.state === "PENDING") ? "받은 운동의 일지 저장을 기다리고 있어요" : "아직 받은 운동이 없어요" : view === "saved" ? "이 목록에 저장된 운동이 없어요" : "이 목록에 확인할 기록이 없어요"}><p>{view === "list" && items.some(item => item.state === "PENDING") ? "저장이 확인되면 이곳에서 일지를 열 수 있어요." : "연결한 뒤 전달된 운동을 받아요. 이전 운동은 파일로 가져올 수 있어요."}</p>
-              {view === "list" && connection?.state === "ACTIVE" && items.length === 0 && <>
-                <a className="garmin-panel__provider-link" href="https://connect.garmin.com/modern/activities" target="_blank" rel="noopener noreferrer">Garmin Connect에서 확인<span className="sr-only"> · 새 탭</span></a>
-                <p className="garmin-panel__receipt">운동이 있는 Garmin 계정인지 확인해 주세요. 앱이 열려 있으면 받은 기록을 자동으로 확인해요.</p>
-              </>}
-            </RecordNotice>}
+            {waitingForFirstWorkout ? <RecordNotice kind="pending" title="첫 운동을 기다리고 있어요">
+              <p>다음 운동을 마치면 워치를 Garmin Connect 앱과 동기화해 주세요. 새 운동을 받으면 여기에 표시돼요.</p>
+              <a className="garmin-panel__provider-link" href="https://connect.garmin.com/modern/activities" target="_blank" rel="noopener noreferrer">Garmin Connect에서 확인<span className="sr-only"> · 새 탭</span></a>
+              {onOpenImport && <RecordAction priority="secondary" disabled={busy} onClick={onOpenImport}>이전 운동 파일 가져오기</RecordAction>}
+            </RecordNotice> : visibleItems.length === 0 && <RecordNotice kind={view === "list" && items.some(item => item.state === "PENDING") ? "pending" : "empty"} title={view === "list" ? items.some(item => item.state === "PENDING") ? "받은 운동의 일지 저장을 기다리고 있어요" : "지금 표시할 운동이 없어요" : view === "saved" ? "이 목록에 저장된 운동이 없어요" : "이 목록에 확인할 기록이 없어요"}>{view === "list" && items.some(item => item.state === "PENDING") && <p>저장이 확인되면 이곳에서 일지를 열 수 있어요.</p>}</RecordNotice>}
             {visibleItems.map(item => {
               const observation = item.observation, key = `${item.inboxId}:${item.revision}`, receipt = receipts[item.inboxId] ?? (item.state === "CONFIRMED" && item.documentId && item.journalEntryId && (item.journalDate || item.clock) ? { schemaVersion: "GARMIN_INTEGRATION_V1" as const, kind: "already_confirmed" as const, documentId: item.documentId, journalEntryId: item.journalEntryId, revision: item.revision, date: item.journalDate ?? item.clock!.localDate } : undefined), retry = pending[item.inboxId]
               const pendingRequest = ownerId ? pendingGarminOperation(ownerId, item.inboxId) : null
