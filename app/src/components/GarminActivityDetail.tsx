@@ -14,6 +14,9 @@ import "./imported-activity-detail.css"
 const views = ["개요", "구간", "그래프"] as const
 const meaning = { TIMER: "타이머 시간", MOVING: "이동 시간", ELAPSED: "경과 시간", UNKNOWN: "시간 종류 미확인" }
 const sport = { RUNNING: "달리기", WALKING: "걷기", CYCLING: "자전거", OTHER: "기타 운동", UNKNOWN: "운동 종류 미확인" }
+function sampleElapsedTime(seconds: number) {
+  return seconds >= 60 && Number.isSafeInteger(seconds) ? `${activityDuration(seconds)} (원본 ${seconds}초)` : `${seconds}초`
+}
 type Props = { readonly ownerId: string; readonly transport?: GarminTransport } & ({ readonly item: GarminItem; readonly documentId?: never } | { readonly documentId: string; readonly item?: never })
 
 export function GarminActivityDetail(props: Props) {
@@ -64,7 +67,7 @@ function ProviderDetailSession({ ownerId, item: initialItem, documentId, transpo
         {samples === null && !error ? <p>센서 자료를 확인하고 있어요.</p> : samples !== null ? <ImportedActivitySensorChart samples={chartSamples} range={null} onClearRange={() => {}}
           markers={item?.source?.lapStartOffsetsSeconds.flatMap((offset, index) => { const instant = Date.parse(observation.startedAt) + offset * 1000; return Number.isFinite(instant) && Math.abs(instant) <= 8640000000000000 ? [{ timestamp: new Date(instant).toISOString(), label: `원본 구간 ${index + 1} 시작 · 운동 시작 뒤 ${offset}초` }] : [] })}
           timeDescription="시각은 원본 운동 시작에 제공된 표본의 경과 초를 더해 UTC로 표시해요. 원본 경과 초와 값은 표에 유지해요. 빈 값을 이어 붙이거나 걸음 수를 환산하지 않아요."
-          sampleClock={sample => `운동 시작 뒤 ${samples[sample.sourceIndex]!.offsetSeconds}초 · ${sample.timestamp ? importedSourceClock(sample.timestamp) : "시각 범위 확인 불가"}`} /> : null}
+          sampleClock={sample => `운동 시작 뒤 ${sampleElapsedTime(samples[sample.sourceIndex]!.offsetSeconds)} · ${sample.timestamp ? importedSourceClock(sample.timestamp) : "시각 범위 확인 불가"}`} /> : null}
   </> : null
   return <section className="imported-activity-detail garmin-detail record-ui" aria-labelledby={titleId} aria-busy={busy || undefined}>
     <h3 id={titleId}>운동 상세</h3>

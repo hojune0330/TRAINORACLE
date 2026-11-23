@@ -27,6 +27,16 @@ it("removes prior account facts and actions when scoped records are cleared", ()
   view.rerender(<ConnectedWeeklyFacts entries={[]} today="2026-11-11" onOpenDay={vi.fn()} />)
   expect(screen.queryByRole("heading", { name: "이번 주 운동 기록" })).toBeNull()
 })
+it("explains an imported distance excluded from the total on its own journal row", () => {
+  const imported: PostSessionEntry = { ...record, id: "synthetic-imported", date: "2026-11-10", distanceKm: "7",
+    fieldProvenance: { distanceKm: { provenance: "DERIVED", derivedFrom: ["import:provider-activity"], derivationRuleId: "import:GARMIN:provider-v1" } } }
+  render(<ConnectedWeeklyFacts entries={[record, imported]} today={record.date} onOpenDay={vi.fn()} />)
+  expect(screen.getByText(/5 km \(1개\)/)).toBeVisible()
+  fireEvent.click(screen.getByText("비교에 사용한 기록과 제외 내역"))
+  const notice = screen.getByText(/가져온 거리는 일지에서 볼 수 있어요/)
+  expect(notice).toBeVisible()
+  expect(within(notice.closest("li")!).getByRole("button")).toHaveAccessibleName("이번 주 2026-11-10 운동 일지 열기")
+})
 it("does not claim that an empty previous period means no exercise happened", () => {
   render(<ConnectedWeeklyFacts entries={[record]} today="2026-11-11" />)
   const previous = screen.getByRole("region", { name: "지난주 근거 기록", hidden: true })
