@@ -67,7 +67,9 @@ function ConnectedDataSession({ entries, today, onOpenImport, onOpenDay }: Props
           : status.connection.lastSyncAt ? "받은 운동과 일지 저장 상태 보기" : "워치 기록이 Garmin Connect에 올라오면 자동으로 받아요."
         : enabled && !status ? "연결 정보를 불러오고 있어요." : undefined} />}
     {latest && onOpenDay && <CategoryCard variant="row" category="journal" title="최근 운동 일지" description={latest.date + " · 운동 수치와 메모 보기"} onClick={() => onOpenDay(latest.date, latest.id)} />}
-    <ConnectedWeeklyFacts entries={entries} today={today} onOpenDay={onOpenDay} />
+    <ConnectedWeeklyFacts entries={entries} today={today} onOpenDay={onOpenDay}
+      garminConnection={enabled && !failed && connected && status?.capability.enabled && status.connection.epoch
+        ? [status.connection.epoch, status.connection.lastSyncAt, status.experience?.lastSavedAt].join(":") : null} />
     {health && (health.sleepH > 0 || health.fieldProvenance?.sleepH?.provenance === "EXPLICIT" || health.restingHr) && <section aria-label="오늘의 몸 상태">
       <AppHeading as="h2" variant="section">{health.date === today ? "오늘" : "어제"}의 몸 상태</AppHeading>
       <p className="home-hub__metric-source">내 일지에 적은 값이에요.</p>

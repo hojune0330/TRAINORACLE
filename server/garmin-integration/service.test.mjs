@@ -49,6 +49,11 @@ before(async()=>{
   await db.exec(await readFile(new URL('../../supabase/migrations/20261105033619_garmin_permission_retry.sql',import.meta.url),'utf8'));
   await db.exec(await readFile(new URL('./schema-revision-recheck-candidate.sql',import.meta.url),'utf8'));
   await db.exec(await readFile(new URL('./schema-distinct-activity-candidate.sql',import.meta.url),'utf8'));
+  await db.exec(await readFile(new URL('../../supabase/migrations/20261123090000_garmin_weekly_distance.sql',import.meta.url),'utf8'));
+  for (const role of ['anon','authenticated','service_role']) {
+    const {rows}=await db.query("select has_function_privilege($1,'public.garmin_weekly_distance_snapshot(uuid,uuid,uuid,date,text)','EXECUTE') as direct",[role]);
+    assert.equal(rows[0].direct,false);
+  }
   assert.equal((await db.query('select count(*)::int as count from public.garmin_integration_keys')).rows[0].count,0);
   assert.equal((await db.query('select count(*)::int as count from public.garmin_integration_controls')).rows[0].count,0);
   await approveSyntheticOracleStorage(db);
@@ -364,9 +369,36 @@ test('issued Starter wire profile fixes default OAuth scopes, verifies ACTIVITY_
     const secondStamp=String(Date.now());const secondSave=await fetch(url+path,{method:'POST',headers:{'content-type':'application/json','x-trainoracle-relay-timestamp':secondStamp,'x-trainoracle-relay-signature':sign(relayHttpKey,`${secondStamp}\n${path}\n{}`)},body:'{}'});
     assert.equal((await secondSave.json()).saved,1,'Starter monitoring span distinguishes morning and evening without inventing TIMER');
     assert.equal((await admin('select count(*) n from public.account_journal_documents')).rows[0].n,2);
+    const weeklyInput={action:'weeklyDistance',today:'2026-11-04'};
+    const weekly=await call(weeklyInput,{url});
+    assert.equal(weekly.status,200,JSON.stringify(weekly));
+    assert.deepEqual(weekly.data.weeklyDistance.current.groups,[{sport:'RUNNING',distanceMeters:20000,includedCount:2}]);
+    assert.equal(weekly.data.weeklyDistance.current.includedEntryIds.includes(storedItem.journalEntryId),true);
+    assert.deepEqual(weekly.data.weeklyDistance.previous.groups,[]);
+    assert.equal((await call({action:'weeklyDistance',today:'2026-11-03'},{url})).data.weeklyDistance.current.groups.length,0,'Korean local date crosses midnight');
+    assert.deepEqual((await call({action:'weeklyDistance',today:'2026-11-11'},{url})).data.weeklyDistance.previous.groups,weekly.data.weeklyDistance.current.groups);
+    assert.notEqual((await call(weeklyInput,{url,revision:999})).status,200);
+    assert.notEqual((await call(weeklyInput,{url,token:otherToken})).status,200);
+    assert.equal((await call({action:'weeklyDistance',today:'2026-02-30'},{url})).status,422);
+    const originalRead={action:'weeklySnapshot',today:weeklyInput.today,configHash:starter.configHash};
+    const reader=await repository.authenticate(token,1);
+    const {snapshot:beforeEdit}=await repository.call(reader,originalRead);
+    await admin('update public.account_journal_documents set revision=revision+1 where document_id=$1',[storedItem.documentId]);
+    await assert.rejects(repository.call(reader,{...originalRead,expectedSnapshot:beforeEdit}),error=>error.code==='SOURCE_CHANGED');
+    const edited=await call(weeklyInput,{url});
+    assert.equal(edited.data.weeklyDistance.current.excludedCount,1);
+    assert.equal(edited.data.weeklyDistance.current.groups[0].distanceMeters,10000);
+    await admin('update public.account_journal_documents set revision=revision-1 where document_id=$1',[storedItem.documentId]);
+    await admin('update public.account_journal_identity set active=false where document_id=$1',[storedItem.documentId]);
+    assert.equal((await call(weeklyInput,{url})).data.weeklyDistance.current.includedEntryIds.includes(storedItem.journalEntryId),false);
+    await admin('update public.account_journal_identity set active=true where document_id=$1',[storedItem.documentId]);
     assert.deepEqual((await admin('select encrypted_payload,document_id from public.account_journal_documents where document_id=$1',[storedItem.documentId])).rows[0],row);
     const changed=structuredClone(wire);changed.activityDetails[0].summary.distanceInMeters=11000;assert.equal((await postPush(changed)).status,200);assert.equal((await signedProcess()).data.reviewRequired,1);assert.equal((await call({action:'inbox'},{url})).data.items.find(x=>x.inboxId===item.inboxId).state,'CONFLICT');
+    const afterConflict=(await call(weeklyInput,{url})).data.weeklyDistance.current;
+    assert.equal(afterConflict.excludedCount,1);
+    assert.equal(afterConflict.groups[0].distanceMeters,10000);
     const permissions={userPermissionsChange:[{userId:subject,summaryId:'permission-change',permissions:[],changeTimeInSeconds:Date.now()/1000|0}]};assert.equal((await postPush(permissions)).status,200);assert.equal((await call({action:'status'},{url})).data.connection.state,'ERROR');assert.equal((await call({action:'inbox'},{url})).status,409);
+    assert.equal((await call(weeklyInput,{url})).status,409);
     assert.equal((await postPush({deregistrations:[{userId:subject}]})).status,200);assert.equal((await call({action:'status'},{url})).data.connection.state,'REVOKED');
   }finally{await close(server);}
 });

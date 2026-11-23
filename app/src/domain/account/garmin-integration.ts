@@ -8,6 +8,7 @@ import { ACCOUNT_NETWORK_DEADLINE_MS } from "./account-network-deadline"
 import { accountJournalPreviewEnabled } from "./account-journal-api"
 import { prepareDeviceActivity, type PreparedDeviceActivity } from "../import/prepared-device-activity"
 import { garminSummarySchema } from "./garmin-summary"
+import { garminWeeklyDistanceSchema, matchesGarminWeeks } from "./garmin-weekly-distance"
 
 export const GARMIN_VERSION = "GARMIN_INTEGRATION_V1" as const
 const version = z.literal(GARMIN_VERSION)
@@ -17,6 +18,7 @@ const state = z.string().regex(/^[A-Za-z0-9_-]{43}$/u)
 export const GARMIN_SAVE_CONSENT_VERSION = "GARMIN_AUTO_SAVE_2026_11_05" as const
 const experienceSchema = z.object({ saveMode: z.enum(["AUTO", "REVIEW"]), preferenceRevision: z.number().int().nonnegative(), lastSavedAt: timestamp.nullable(), reviewRequiredCount: z.number().int().nonnegative(), reconnectRequired: z.boolean() }).strict()
 const preferencesSchema = z.object({ schemaVersion: version, experience: experienceSchema }).strict()
+const weeklyDistanceResponse = z.object({ schemaVersion: version, weeklyDistance: garminWeeklyDistanceSchema }).strict()
 const connectionSchema = z.object({ state: z.enum(["DISCONNECTED", "PENDING", "ACTIVE", "REVOKED", "ERROR"]), epoch: z.uuid().nullable(), lastSyncAt: timestamp.nullable() }).strict()
 export const garminStatusSchema = z.object({ schemaVersion: version,
   capability: z.object({ enabled: z.boolean(), reason: z.enum(["READY", "PROVIDER_CONFIGURATION_PENDING", "OPERATIONS_PENDING"]) }).strict(),
@@ -58,6 +60,7 @@ const detailSchema = z.object({ schemaVersion: version, inboxId: z.uuid(), revis
 export type GarminSample = z.infer<typeof garminSampleSchema>
 const mutation = { inboxId: z.uuid(), expectedRevision: revision, operationId: z.uuid() }
 export const garminRequestSchema = z.discriminatedUnion("action", [
+  z.object({ action: z.literal("weeklyDistance"), today: z.iso.date() }).strict(),
   z.object({ action: z.literal("status"), experience: z.literal(true).optional() }).strict(),
   z.object({ action: z.literal("connect"), saveMode: z.enum(["AUTO", "REVIEW"]).optional(), consentVersion: z.literal(GARMIN_SAVE_CONSENT_VERSION).optional() }).strict(),
   z.object({ action: z.literal("preferences"), saveMode: z.enum(["AUTO", "REVIEW"]), consentVersion: z.literal(GARMIN_SAVE_CONSENT_VERSION), epoch: z.uuid(), expectedPreferenceRevision: z.number().int().nonnegative() }).strict(),
@@ -72,7 +75,7 @@ export type GarminStatus = z.infer<typeof garminStatusSchema>
 export type GarminItem = z.infer<typeof garminItemSchema>
 export type GarminRequest = z.infer<typeof garminRequestSchema>
 export type GarminConfirmation = z.infer<typeof confirmedSchema>
-export type GarminResponse = z.infer<typeof preferencesSchema> | GarminStatus | z.infer<typeof inboxSchema> | z.infer<typeof connectSchema> | z.infer<typeof connectionResponseSchema> | GarminConfirmation | z.infer<typeof dismissedSchema> | z.infer<typeof detailSchema> | { schemaVersion: typeof GARMIN_VERSION; item: GarminItem }
+export type GarminResponse = z.infer<typeof weeklyDistanceResponse> | z.infer<typeof preferencesSchema> | GarminStatus | z.infer<typeof inboxSchema> | z.infer<typeof connectSchema> | z.infer<typeof connectionResponseSchema> | GarminConfirmation | z.infer<typeof dismissedSchema> | z.infer<typeof detailSchema> | { schemaVersion: typeof GARMIN_VERSION; item: GarminItem }
 const serverError = z.enum(["AUTH_REQUIRED", "ACCESS_DENIED", "SOURCE_CHANGED", "CONNECTION_CHANGED", "OPERATION_CONFLICT", "CONSENT_CHANGED", "REVIEW_REQUIRED", "PROVIDER_CONFIGURATION_PENDING", "OPERATIONS_PENDING", "INVALID_INPUT", "PROVIDER_UNAVAILABLE", "PROVIDER_RESPONSE_INVALID", "PROVIDER_SCOPE_MISMATCH", "OAUTH_RESTART_REQUIRED", "JOURNAL_CONTRACT_UNAVAILABLE", "ENCRYPTED_DATA_UNAVAILABLE", "STORAGE_CONSENT_REQUIRED", "REVOKE_PENDING", "PROVIDER_PERMISSION_REQUIRED", "PROVIDER_ACCOUNT_ALREADY_BOUND", "ALREADY_CONNECTED", "BUSY", "DETAIL_UNAVAILABLE"])
 export type GarminError = z.infer<typeof serverError> | "UNAVAILABLE" | "INVALID_RESPONSE" | "STALE_RESPONSE" | "LOCAL_STATE_UNAVAILABLE" | "CALLBACK_SESSION_LOST" | "CALLBACK_INVALID"
 export type GarminResult = { ok: true; data: GarminResponse } | { ok: false; code: GarminError }
@@ -107,11 +110,12 @@ export function safeGarminAuthorizationUrl(value: string, expectedState: string,
   } catch { return null }
 }
 export function parseGarminResponse(request: GarminRequest, value: unknown): GarminResult {
-  const schema = request.action === "preferences" ? preferencesSchema : request.action === "status" ? garminStatusSchema : request.action === "inbox" ? inboxSchema
+  const schema = request.action === "weeklyDistance" ? weeklyDistanceResponse : request.action === "preferences" ? preferencesSchema : request.action === "status" ? garminStatusSchema : request.action === "inbox" ? inboxSchema
     : request.action === "connect" ? connectSchema : request.action === "confirm" ? confirmedSchema
       : request.action === "dismiss" ? dismissedSchema : request.action === "detail" ? detailSchema : request.action === "read" ? z.object({ schemaVersion: version, item: garminItemSchema }).strict() : connectionResponseSchema
   const parsed = schema.safeParse(value)
   if (!parsed.success) return { ok: false, code: "INVALID_RESPONSE" }
+  if (request.action === "weeklyDistance" && "weeklyDistance" in parsed.data && !matchesGarminWeeks(parsed.data.weeklyDistance, request.today)) return { ok: false, code: "INVALID_RESPONSE" }
   if (request.action === "dismiss" && "inboxId" in parsed.data && (request.inboxId !== parsed.data.inboxId || request.expectedRevision !== parsed.data.revision)) return { ok: false, code: "INVALID_RESPONSE" }
   if (request.action === "read" && "item" in parsed.data && parsed.data.item.documentId !== request.documentId) return { ok: false, code: "INVALID_RESPONSE" }
   if (request.action === "detail" && "samples" in parsed.data && (parsed.data.inboxId !== request.inboxId || parsed.data.revision !== request.expectedRevision || parsed.data.partIndex !== request.partIndex)) return { ok: false, code: "INVALID_RESPONSE" }

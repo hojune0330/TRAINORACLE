@@ -97,6 +97,7 @@ Every success includes `schemaVersion: "GARMIN_INTEGRATION_V1"`.
 | `refresh` | none | connection |
 | `inbox` | optional cursor UUID | items (20 maximum), nextCursor |
 | `read` | documentId UUID | item linked to this owner's journal |
+| `weeklyDistance` | today (YYYY-MM-DD) | this week and the same days last week, with verified Garmin distance by sport, included journal entry IDs and excluded record counts |
 | `detail` | inboxId, expectedRevision, partIndex | inboxId, revision, partIndex, sha256, sampleCount, samples |
 | `confirm` | inboxId, expectedRevision, operationId UUID | kind `saved`/`already_confirmed`, documentId, journalEntryId, revision, date |
 | `dismiss` | inboxId, expectedRevision, operationId UUID | kind `dismissed`, inboxId, revision |
@@ -111,6 +112,15 @@ this property remain readable. Observation is `PREPARED_DEVICE_ACTIVITY_V1`, wit
 GARMIN/PROVIDER_API lineage and `analysisEligible:false`; deleted items have null
 observation. `ACTIVE` means token/subject binding succeeded, not that a workout
 arrived. Only a committed event updates `lastSyncAt`.
+
+Weekly distance requires the current consent revision and active connection. It joins the
+saved receipt to the owner's active journal revision and compares the encrypted source's
+local date and distance to the saved entry. Recorded zero is valid. The subtotal excludes
+manual, multi-sport parent/child, ambiguous, edited or conflicting records. It covers at
+most 128 linked journals across both periods. A changed snapshot or oversized result
+fails the read. An empty group array means no verified distance in that period.
+Apply `20261123090000_garmin_weekly_distance.sql` before deploying the Garmin
+Edge function. This read uses existing keys and tables.
 
 The browser callback must clear code/state from its URL before telemetry or
 navigation, use its existing authenticated account, and call `complete`; the

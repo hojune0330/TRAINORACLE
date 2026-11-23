@@ -10,6 +10,7 @@ import {createGarminStarterProvider} from './garmin-starter.mjs';
 import {createGarminPushRuntime} from './push.mjs';
 import {createGarminAutosave,SAVE_CONSENT_VERSION} from './autosave.mjs';
 import {createGarminMaintenance} from './maintenance.mjs';
+import {readGarminWeeklyDistance} from './weekly-distance.mjs';
 
 const context=(ownerId,connectionId,epoch,purpose,record='')=>({ownerId,connectionId,epoch,purpose,record});
 const credentialsContext=(ownerId,connectionId,epoch)=>context(ownerId,connectionId,epoch,'credentials');
@@ -19,7 +20,7 @@ function dateFor(observation){const p=new Intl.DateTimeFormat('en-CA',{timeZone:
 const positive=v=>Number.isSafeInteger(v)&&v>0;
 function validateInput(input){
   if(!input||typeof input.action!=='string')fail(422,'INVALID_INPUT');
-  const shapes={status:['action','experience'],preferences:['action','saveMode','consentVersion','epoch','expectedPreferenceRevision'],connect:['action','saveMode','consentVersion'],complete:['action','code','state'],inbox:['action','cursor','experience'],read:['action','documentId','experience'],detail:['action','inboxId','expectedRevision','partIndex'],confirm:['action','inboxId','expectedRevision','operationId'],dismiss:['action','inboxId','expectedRevision','operationId'],disconnect:['action'],refresh:['action']};
+  const shapes={status:['action','experience'],preferences:['action','saveMode','consentVersion','epoch','expectedPreferenceRevision'],connect:['action','saveMode','consentVersion'],complete:['action','code','state'],inbox:['action','cursor','experience'],read:['action','documentId','experience'],detail:['action','inboxId','expectedRevision','partIndex'],confirm:['action','inboxId','expectedRevision','operationId'],dismiss:['action','inboxId','expectedRevision','operationId'],disconnect:['action'],refresh:['action'],weeklyDistance:['action','today']};
   const allowed=shapes[input.action];if(!allowed||!exact(input,allowed,['inbox','status','connect'].includes(input.action)?['action']:input.action==='read'?['action','documentId']:allowed))fail(422,'INVALID_INPUT');
   for(const id of ['inboxId','documentId','operationId','cursor'])if(input[id]!==undefined&&!UUID.test(input[id]))fail(422,'INVALID_INPUT');
   if(input.expectedRevision!==undefined&&!positive(input.expectedRevision))fail(422,'INVALID_INPUT');
@@ -122,6 +123,10 @@ export function createGarminRuntime({repository,vault,provider,identityKey,relay
         const pending=await call({action:'revocationStatus'});const status=await call({action:'status'});return respond(200,{connection:connection(status.connection),remoteRevocationPending:pending.pending});
       }
       ensureProvider();
+      if(input.action==='weeklyDistance') {
+        const weeklyDistance=await readGarminWeeklyDistance(input.today,auth.ownerId,call,decode,sourceContext,journalKeyring);
+        return respond(200,{weeklyDistance});
+      }
       if(input.action==='preferences'){await repository.autosave(auth,{...input,configHash});return respond(200,{experience:await repository.autosave(auth,{action:'status',configHash})});}
       if(input.action==='connect') {
         const state=nonce(),verifier=nonce(),connectionId=randomUUID(),epoch=randomUUID();
