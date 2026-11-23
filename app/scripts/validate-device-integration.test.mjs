@@ -21,6 +21,7 @@ const callbackFunction = read("supabase/functions/coros-oauth-callback/index.ts"
 const statusFunction = read("supabase/functions/device-integration-status/index.ts")
 const supportPage = read("app/public/support.html")
 const noticePage = read("app/public/legal/device-integrations.html")
+const privacyPage = read("app/public/legal/privacy.html")
 
 function validActivity(overrides = {}) {
   return {
@@ -156,18 +157,21 @@ test("callback retains its held state and public status describes release availa
 test("public pages are truthful, cross-linked, and do not claim live provider access", () => {
   const garminRow = supportPage.match(/<tr><td>Garmin<\/td>[\s\S]*?<\/tr>/u)?.[0] ?? ""
   const corosRow = supportPage.match(/<tr><td>COROS<\/td>[\s\S]*?<\/tr>/u)?.[0] ?? ""
-  assert.match(supportPage, /Garmin 개발자 프로그램 승인은 확인했으며, 실제 앱 연결 설정은 준비 중입니다/u)
-  assert.match(supportPage, /프로그램 승인과 사용자 운동기록 수신은 별도 단계입니다/u)
-  assert.match(garminRow, /개발자 프로그램 승인 확인 · 앱 자격증명·실제 수신 설정 필요/u)
+  assert.match(supportPage, /‘받은 운동’에서 도착 여부를 확인/u)
+  assert.match(garminRow, /Activity API 수신 경로 구성/u)
+  assert.match(garminRow, /보관 동의 및 Garmin 권한 승인 필요/u)
   assert.doesNotMatch(garminRow, /제공자 검토 대기|신청 완료 · 제공자 검토/u)
   assert.match(corosRow, /Partner API 발급 대기 · MCP는 사용자 OAuth 연결 구현 중/u)
-  assert.match(supportPage, /COROS Partner API는 자격증명 발급 대기/u)
-  assert.match(supportPage, /현재 공개 앱에서는 두 계정의 자동 연결을 제공하지 않습니다/u)
   assert.doesNotMatch(supportPage, /공식 연동 신청은 완료됐고 제공자 검토를 기다리고 있습니다|제공자 검토 대기 중인 공식 자동 연동/u)
   assert.doesNotMatch(supportPage, /신청 준비/u)
   assert.match(supportPage, /legal\/device-integrations\.html/u)
   assert.match(supportPage, /hojune0330@gmail\.com/u)
-  assert.match(noticePage, /계정 온라인 보관과 기기 계정 자동 연결은 활성화하지 않았습니다/u)
+  for (const page of [noticePage, privacyPage]) {
+    assert.match(page, /Cloudflare/u)
+    assert.match(page, /Supabase Edge Functions에 전달/u)
+    assert.doesNotMatch(page, /싱가포르 서버에 전달|Render 서버로 중계|중계 Worker는 생성하지 않았/u)
+  }
+  assert.match(noticePage, /Garmin 수면·하루 심박·심박변이도·훈련부하는 현재 자동 수집 항목에서 제외/u)
   assert.match(noticePage, /\.\.\/support\.html/u)
   assert.match(noticePage, /확인 전 활동은 주간·월간 통계, 오라클 분석, 안전 판정, 훈련 계획의 근거로 사용하지 않습니다/u)
   assert.match(noticePage, /현재 Garmin 데이터의 AI 코칭 사용은 제공하지 않습니다/u)

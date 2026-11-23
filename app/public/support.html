@@ -23,10 +23,10 @@
     <header>
       <h1>도움말과 기기 연동</h1>
       <p class="legal-summary">TrainOracle 사용 중 문제가 생겼거나 Garmin·COROS 연동에 관해 궁금한 내용을 확인할 수 있습니다.</p>
-      <p class="legal-date">최근 확인: 2026년 11월 4일</p>
+      <p class="legal-date">Garmin 안내 갱신일: 2026년 11월 23일</p>
     </header>
 
-    <p class="legal-note"><strong>Garmin 개발자 프로그램 승인은 확인했으며, 실제 앱 연결 설정은 준비 중입니다.</strong> 프로그램 승인과 사용자 운동기록 수신은 별도 단계입니다. COROS Partner API는 자격증명 발급 대기이며, 별도 사업 승인 없이 이용할 수 있는 공식 MCP 연결 경로도 준비하고 있습니다. 현재 공개 앱에서는 두 계정의 자동 연결을 제공하지 않습니다.</p>
+    <p class="legal-note"><strong>Garmin에서 새 운동을 받으려면 먼저 내 계정을 연결하세요.</strong> 앱의 운동 기록 가져오기에서 Garmin을 선택하세요. 온라인 보관 동의와 Garmin 권한 승인을 마친 뒤 새 운동을 Garmin Connect에 동기화하면, 앱의 ‘받은 운동’에서 도착 여부를 확인할 수 있습니다. 보관 설정을 이용할 수 없거나 이전 운동을 보고 싶다면 개별 운동 파일을 가져오세요.</p>
 
     <h2>지금 사용할 수 있는 기록 가져오기</h2>
     <p>Garmin Connect나 다른 워치 서비스에서 내보낸 TCX·GPX·FIT 파일을 가져오기 화면에서 직접 선택할 수 있습니다. 저장 전에 요약·랩·기록된 센서 값을 검토하고 일지에 보관합니다. 가져온 값은 AI 코칭이나 훈련 계획에 자동으로 쓰이지 않습니다. 지원하지 않는 파일 항목은 안내하며 원본 파일을 따로 보관해 주세요.</p>
@@ -35,15 +35,14 @@
     <table>
       <thead><tr><th>서비스</th><th>준비 범위</th><th>현재 상태</th></tr></thead>
       <tbody>
-        <tr><td>Garmin</td><td>활동 기록 받기 준비 · 훈련 보내기는 별도 준비</td><td>개발자 프로그램 승인 확인 · 앱 자격증명·실제 수신 설정 필요</td></tr>
+        <tr><td>Garmin</td><td>새 운동과 운동 상세 수신</td><td>Activity API 수신 경로 구성 · 보관 동의 및 Garmin 권한 승인 필요</td></tr>
         <tr><td>COROS</td><td>활동 기록 가져오기, 사용자가 고른 훈련 보내기</td><td>Partner API 발급 대기 · MCP는 사용자 OAuth 연결 구현 중</td></tr>
       </tbody>
     </table>
     <p>연결 화면에는 실제로 제공되는 항목과 사용 목적을 안내하고, 이용자가 자신의 계정 접근을 선택하도록 합니다. 연결 해제·삭제와 계정별 접근 제한을 함께 제공합니다. COROS의 <a href="https://support.coros.com/hc/en-us/articles/53181619102996-Build-on-COROS-MCP">공식 MCP 경로</a>는 별도 사업 승인 없이 사용자별 OAuth로 기록 조회와 훈련 전송을 구현할 수 있습니다. 자동 푸시 알림은 Partner API와 구분되며, 현재 TrainOracle의 공개 연결은 아직 준비 중입니다.</p>
 
     <h2>연결 해제와 데이터 삭제</h2>
-    <p>자동 연동이 공개되면 TrainOracle 계정 화면과 해당 기기 서비스의 연결 관리 화면 양쪽에서 권한을 해제할 수 있게 합니다. 연결을 해제하면 새 기록 수신을 즉시 멈추고, 보관 중인 연결 정보와 확인 전 활동을 정해진 절차에 따라 삭제합니다.</p>
-    <p>현재는 자동 연동이 열려 있지 않아 TrainOracle에 저장된 Garmin·COROS 연결 토큰이나 자동 수신 기록이 없습니다.</p>
+    <p>Garmin 설정에서 연결 해제를 선택하면 새 운동 수신이 중단됩니다. 외부 권한 취소가 확인되지 않았다고 표시되면 Garmin Connect의 연결된 앱에서도 권한을 해제할 수 있습니다. 이미 일지에 저장한 운동의 보관·삭제는 <a href="./legal/device-integrations.html">기기 연동 개인정보 안내</a>에서 확인하세요.</p>
 
     <h2>문의</h2>
     <p>문제 상황, 사용한 브라우저와 기기, 발생 시각을 적어 <a href="mailto:hojune0330@gmail.com">hojune0330@gmail.com</a>으로 보내 주세요. 비밀번호, 이메일 인증번호, 소셜 로그인 코드, 워치 서비스의 접근 토큰은 보내지 마세요.</p>
