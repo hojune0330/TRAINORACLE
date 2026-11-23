@@ -5,7 +5,7 @@ import { MenuAction } from "../components/MenuAction"
 import { InfoDisclosure } from "../components/InfoDisclosure"
 import { GarminConnectionPanel, type GarminConnectionPanelProps, type OpenGarminJournalRecord, type StorageConnectionReadiness } from "../components/GarminConnectionPanel"
 import { RecordAction } from "../components/RecordUI"
-import { accountJournalPreviewEnabled } from "../domain/account/account-journal-api"
+import { accountJournalConfigured } from "../domain/account/account-journal-api"
 import { garminEndpoint, garminIntegrationEnabled } from "../domain/account/garmin-integration"
 import { useActiveContentScroll } from "../hooks/useActiveContentScroll"
 import { StorageConsentPanel } from "./account/StorageConsentPanel"
@@ -51,7 +51,7 @@ export function DeviceConnections({ onOpenImport, ownerId = null, onOpenAccount,
         <AppHeading as="h2" variant="section" id="connection-auto-title">{inlineSetup ? "내 워치와 운동 기록" : "워치에서 자동으로 가져오기"}</AppHeading>
         {!inlineSetup && <p>한 번 연결하면 새 운동을 여기에서 확인할 수 있어요.</p>}
       </div>
-      {ownerId && storageReadiness === undefined && garminEndpoint() && garminIntegrationEnabled() && accountJournalPreviewEnabled()
+      {ownerId && storageReadiness === undefined && garminEndpoint() && garminIntegrationEnabled() && accountJournalConfigured()
         ? <WatchConnectionWithConsent key={ownerId} {...garminProps} ownerId={ownerId} />
         : <GarminConnectionPanel {...garminProps} inlineSetup={inlineSetup} onOpenStorageSettings={onOpenStorageSettings} storageReadiness={storageReadiness} />}
       <div hidden={subview}>

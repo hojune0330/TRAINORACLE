@@ -1,9 +1,10 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { registerAppServiceWorker } from "./pwa-update"
 
-const safety = vi.hoisted(() => ({ blocked: false, authBlocked: false }))
+const safety = vi.hoisted(() => ({ blocked: false, authBlocked: false, garminBlocked: false }))
 vi.mock("./screen-recovery", () => ({ isReloadBlocked: () => safety.blocked }))
 vi.mock("./account/auth-session-quarantine", () => ({ isAuthSessionQuarantined: () => safety.authBlocked }))
+vi.mock("./account/garmin-integration", () => ({ isGarminCallbackReloadBlocked: () => safety.garminBlocked }))
 
 let swEvents: Record<string, () => void>
 let windowEvents: Record<string, () => void>
@@ -15,6 +16,7 @@ beforeEach(() => {
   vi.useFakeTimers()
   safety.blocked = false
   safety.authBlocked = false
+  safety.garminBlocked = false
   swEvents = {}; windowEvents = {}
   worker = { postMessage: vi.fn() }
   registration = { waiting: worker, update: vi.fn().mockResolvedValue(undefined), addEventListener: vi.fn() }
@@ -67,6 +69,30 @@ it("contains update rejection and prevents duplicate concurrent checks", async (
   windowEvents.focus!()
   expect(registration.update).toHaveBeenCalledTimes(2)
   await vi.advanceTimersByTimeAsync(0)
+})
+
+it("protects a captured Garmin return at activation and at controller change", async () => {
+  const reload = vi.fn()
+  const savedConsent = document.createElement("div")
+  savedConsent.hidden = true
+  savedConsent.innerHTML = '<input type="checkbox" checked>'
+  document.body.append(savedConsent)
+  try {
+    safety.garminBlocked = true
+    registerAppServiceWorker("/", reload)
+    await Promise.resolve()
+    expect(worker.postMessage).not.toHaveBeenCalled()
+    safety.garminBlocked = false
+    await vi.advanceTimersByTimeAsync(5000)
+    expect(worker.postMessage).toHaveBeenCalledOnce()
+    safety.garminBlocked = true
+    swEvents.controllerchange!()
+    await vi.advanceTimersByTimeAsync(5000)
+    expect(reload).not.toHaveBeenCalled()
+    safety.garminBlocked = false
+    await vi.advanceTimersByTimeAsync(5000)
+    expect(reload).toHaveBeenCalledOnce()
+  } finally { savedConsent.remove() }
 })
 
 it("also defers replacement while an unregistered input screen is open", async () => {

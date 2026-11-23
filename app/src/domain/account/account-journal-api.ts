@@ -18,9 +18,11 @@ import type { FileObservationV1 } from "../import/file-observation"
 import type { ConfirmComparisonRelationRequest, ReleaseComparisonRelationRequest } from "../import/comparison-relation"
 export type { ConfirmComparisonRelationRequest, ReleaseComparisonRelationRequest } from "../import/comparison-relation"
 
-export function accountJournalPreviewEnabled(env: Readonly<Record<string, unknown>> = import.meta.env) {
+export function accountJournalConfigured(env: Readonly<Record<string, unknown>> = import.meta.env) {
   return env.VITE_FEATURE_ACCOUNT_JOURNAL === "true" && env.VITE_KILL_ACCOUNT_JOURNAL !== "true"
-    && !isAccountStoragePaused(activeLocalAccount())
+}
+export function accountJournalPreviewEnabled(env: Readonly<Record<string, unknown>> = import.meta.env) {
+  return accountJournalConfigured(env) && !isAccountStoragePaused(activeLocalAccount())
 }
 
 const revision = z.number().int().positive().max(Number.MAX_SAFE_INTEGER - 1)
