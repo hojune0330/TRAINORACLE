@@ -6,9 +6,11 @@ import { buildFileAnalysisReport, isProjectedFileObservation } from "./import/fi
 import { parseFileObservation } from "./import/file-observation"
 import { hasImportedField, isImportedField } from "./field-provenance"
 import { parseDistanceKm, parseDurationMin } from "./numeric-input"
+import type { GarminWeeklyDistance } from "./account/garmin-weekly-distance"
+import { currentConfirmedAccountJournalRevision } from "./account/account-journal-projection"
 
 type KnownClock = "TIMER" | "MOVING" | "ELAPSED"
-export type WeeklyFactRecord = { id: string; date: string; source: "DIRECT" | "IMPORTED"; importedDistanceExcluded: boolean }
+export type WeeklyFactRecord = { id: string; date: string; source: "DIRECT" | "IMPORTED" | "GARMIN"; importedDistanceExcluded: boolean }
 export type WeeklyFactGroup = {
   id: string; label: string; records: number
   distanceKm: number | null; distanceSamples: number
@@ -17,9 +19,23 @@ export type WeeklyFactGroup = {
 export type WeeklyFactPeriod = {
   start: string; end: string; records: WeeklyFactRecord[]; groups: WeeklyFactGroup[]
   excludedDistance: number; excludedTime: number; duplicateCopies: number; conflictingIds: number
+  garminExcludedCount?: number
 }
 export type ConnectedWeeklyFactsModel = { current: WeeklyFactPeriod; previous: WeeklyFactPeriod }
 const sportLabel = { RUNNING: "달리기", WALKING: "걷기", CYCLING: "자전거", OTHER: "그 밖의 운동", UNKNOWN: "종목 미확인" } as const
+
+export function withGarminWeeklyDistance(period: WeeklyFactPeriod, verified?: GarminWeeklyDistance["current"]): WeeklyFactPeriod {
+  if (!verified) return period
+  const included = new Set(verified.includedEntryIds)
+  const records = period.records.map(record => included.has(record.id)
+    ? { ...record, source: "GARMIN" as const, importedDistanceExcluded: false } : record)
+  const adoptedCount = period.records.filter(record => included.has(record.id) && record.source === "IMPORTED").length
+  return { ...period, records, garminExcludedCount: verified.excludedCount, excludedDistance: Math.max(0, period.excludedDistance - adoptedCount),
+    groups: [...period.groups, ...verified.groups.map(row => ({
+      id: "GARMIN_" + row.sport, label: "Garmin · " + sportLabel[row.sport], records: row.includedCount,
+      distanceKm: row.distanceMeters / 1000, distanceSamples: row.includedCount, times: [],
+    }))] }
+}
 
 /** Compare facts from saved journals only. No memo, plan, new provider authority or load formula. */
 export function connectedWeeklyFacts(entries: readonly JournalEntry[], today: string,
@@ -53,7 +69,9 @@ export function connectedWeeklyFacts(entries: readonly JournalEntry[], today: st
     const file = parseFileObservation(first.fileObservation)
     if (!["COMPLETED", "PARTIAL", "LIGHT_ACTIVITY"].includes(first.activityOutcome ?? "")
       && parseDistanceKm(first.distanceKm) === null && parseDurationMin(first.durationMin) === null
-      && !(Number.isFinite(first.rpe) && first.rpe > 0) && !file) continue
+      && !(Number.isFinite(first.rpe) && first.rpe > 0) && !file
+      && !(first.id.startsWith("garmin-") && isImportedField("distanceKm", first.fieldProvenance)
+        && currentConfirmedAccountJournalRevision(first.id) !== null)) continue
     accepted.push(first); duplicates.push(...ordered.slice(1))
   }
   const inWindow = (entry: Pick<JournalEntry, "date">, from: string, to: string) => entry.date >= from && entry.date <= to
