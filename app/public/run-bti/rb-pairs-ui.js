@@ -9,6 +9,9 @@
   }
   const extraById = new Map(model.extras.map(item => [item.id, item]));
   const itemById = new Map(model.items.map(item => [item.id, item]));
+  // The concrete moment each preference can show below its general description.
+  const sceneBySide = { distance:"distance-2", speed:"speed-1", numbers:"numbers-2", senses:"senses-1",
+    familiar:"familiar-3", explore:"explore-1", plan:"plan-2", improvise:"improvise-3" };
   // Spread the three observations of each preference across different pages.
   const ordered = [0, 1, 2].flatMap(index => model.axes.flatMap(axis =>
     axis.sides.map(side => itemById.get(side.id + "-" + (index + 1)))));
@@ -252,6 +255,15 @@
     function score(side) {
       return side.mean === null ? '응답 없음' : (Math.round(side.mean * 100) / 100) + '/2점';
     }
+    function ownAnswerLine(choice, answers) {
+      // Nickname evidence already comes in strength order; an open result can still have an individual like.
+      const first = itemById.get(choice.evidence[0]) || model.items.find(item => answers[item.id] === 2);
+      if (!first) return "";
+      const scene = itemById.get(sceneBySide[first.sideId]);
+      const claim = (scene && model.likedClaim(scene, answers)) || model.likedClaim(first, answers);
+      return '<p class="fp-own-answer" data-fp-evidence="' + escape(claim.evidence[0].id) + '=2">' +
+        '<small>내가 고른 답</small><span>' + escape(claim.text) + '</span></p>';
+    }
     function nameProof(result, choice, answers) {
       if (!choice.evidence.length) return "";
       const sides = choice.key.split("+");
@@ -315,7 +327,7 @@
       const head = '<section class="fp-result-top"><div class="fp-result-copy"><p class="fp-eyebrow">내 러닝 성향</p>' +
         '<h1>' + escape(canonical.name) + '</h1><p class="fp-reading">' +
         escape(model.characters[canonical.key]?.reading || model.resultReason(result,answers,canonical.key)) + '</p>' +
-        nameProof(result, canonical, answers) +
+        ownAnswerLine(canonical, answers) + nameProof(result, canonical, answers) +
         '</div><figure class="fp-runner" data-result-art></figure></section>';
       const nameChoice = result.choices.length > 1 ? '<section class="fp-section"><label class="fp-select-label">내 카드에 쓸 별명 ' +
         '<select data-fp-change="name">' + result.choices.map(choice => '<option value="' + escape(choice.key) + '"' +

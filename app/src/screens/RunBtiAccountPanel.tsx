@@ -27,10 +27,10 @@ const firstQuestions: Record<SpecificGoal, string> = {
   technique: "달릴 때 어떤 동작을 더 편하게 하고 싶어요?",
 }
 
-function CoachFirstQuestion({goal}: {goal: Data["goal"]}) {
+function CoachQuestionPreview({goal}: {goal: Data["goal"]}) {
   if (!goal || goal === "unknown" || goal === "other") return null
   return <details className="run-bti-account__coach">
-    <summary>코치의 첫 질문 보기</summary>
+    <summary>코치의 첫 질문 미리보기</summary>
     <p>{firstQuestions[goal]}</p>
   </details>
 }
@@ -143,7 +143,7 @@ export default function RunBtiAccountPanel({token, onClose, onLogin}: {token: st
         <p>{saved ? "저장하면 아래에 보이는 지난 결과를 이번에 고른 항목으로 바꿔요." : "저장하면 이 계정의 러닝 프로필에서 다시 볼 수 있어요."}</p>
         <button disabled={busy || !write.current} onClick={() => void write.current?.(incoming)}>내 프로필에 저장</button></section>}
         {saved && catalog ? <section><h2>저장한 결과</h2><Summary data={saved.data} catalog={catalog} />
-          {!incoming && <CoachFirstQuestion key={saved.data.goal} goal={saved.data.goal} />}
+          {!incoming && <CoachQuestionPreview key={saved.data.goal} goal={saved.data.goal} />}
           {confirmDelete ? <><p>프로필에 담은 이 결과를 지울까요?</p><button disabled={busy} onClick={() => void write.current?.(null)}>지우기</button>
             <button onClick={() => setConfirmDelete(false)}>취소</button></> : <button onClick={() => setConfirmDelete(true)}>프로필에서 지우기</button>}</section>
         : <p>아직 프로필에 담은 결과가 없어요.</p>}</>}

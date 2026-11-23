@@ -31,6 +31,68 @@ function setup(t, { answers = {}, state = {} , shared = null } = {}) {
   return { w,host,extras,click,share, copiedURL:() => new URL(copied) };
 }
 
+test("the first result shows one of this runner's own likes before the nickname explanation", async t => {
+  const dom = new JSDOM('<header id="mast"></header><main id="main"></main><footer id="foot"></footer><div id="toast"></div>',
+    {url:"https://example.test/run-bti/",runScripts:"outside-only"});
+  t.after(() => dom.window.close());
+  const w = dom.window, doc = w.document;
+  w.scrollTo = () => {};
+  w.RBScene = {assetURL: path => path, audio:{enabled:() => false, effect:() => {}}};
+  w.RBPairArt = {select() {}, mount() {}};
+  w.eval(sources[0]);
+  w.eval(await readFile(new URL("rb-pairs-ui.js", files), "utf8"));
+  w.RBPairsUI.start();
+  const model = w.RBPairsModel;
+  function open(answers) {
+    w.localStorage.setItem("runbti." + model.version + ".saved.example", JSON.stringify({
+      id:"example", at:"2026-11-23T00:00:00.000Z", version:model.version, answers,
+    }));
+    doc.querySelector('[data-fp="archive"]').click();
+    doc.querySelector('[data-fp="open"]').click();
+  }
+  function check(itemId) {
+    const lines = doc.querySelectorAll(".fp-result-copy > .fp-reading + .fp-own-answer");
+    assert.equal(lines.length, itemId ? 1 : 0);
+    if (!itemId) return;
+    assert.equal(lines[0].querySelector("span").textContent, model.items.find(item => item.id === itemId).reading);
+    assert.equal(lines[0].querySelector("small").textContent, "내가 고른 답");
+    assert.equal(lines[0].dataset.fpEvidence, itemId + "=2");
+  }
+  const answers = {"numbers-1":0, "numbers-2":2, "numbers-3":2, "senses-1":0, "senses-2":0, "senses-3":0};
+  open(answers);
+  check("numbers-2");
+  assert.equal(doc.querySelector("h1").textContent, model.names.numbers);
+  assert.equal(doc.querySelector(".fp-own-answer + details").open, false);
+  open({...answers, "numbers-1":2, "numbers-2":0});
+  check("numbers-1");
+  assert.equal(doc.querySelector("h1").textContent, model.names.numbers);
+
+  const elephant = {"distance-1":2, "distance-2":2, "distance-3":2, "speed-1":0, "speed-2":0, "speed-3":0};
+  open(elephant);
+  check("distance-2");
+  const commonReading = doc.querySelector(".fp-reading").textContent;
+  open({...elephant, "distance-2":0});
+  check("distance-1");
+  assert.equal(doc.querySelector("h1").textContent, model.names.distance);
+  assert.equal(doc.querySelector(".fp-reading").textContent, commonReading);
+
+  const tied = Object.fromEntries(model.items.map(item => [item.id,
+    ["distance","numbers","explore"].includes(item.sideId) ? 2 : 0]));
+  open(tied);
+  check("distance-2");
+  const names = doc.querySelector('[data-fp-change="name"]');
+  names.value = "numbers+explore";
+  names.dispatchEvent(new w.Event("change", {bubbles:true}));
+  check("numbers-2");
+
+  open({"numbers-1":1, "numbers-2":2});
+  check("numbers-2");
+  for (const ratings of [{}, {"numbers-1":"unknown"}, {"numbers-1":0, "numbers-2":1}]) {
+    open(ratings);
+    check(null);
+  }
+});
+
 test("same riverside runners only diverge after the relevant chapter answer", t => {
   const answers = {
     goal:"speed", learning:"solo", distanceLevel:"10k", strength:"endurance",
@@ -303,7 +365,7 @@ if (process.env.RUN_BTI_BROWSER === "1") test("Chrome: withdrawing either a stor
   let browser;
   try {
     browser = await chromium.launch({channel:process.env.RUN_BTI_BROWSER_CHANNEL || "chrome"});
-    const page = await browser.newPage({viewport:{width:390,height:844}});
+    const page = await browser.newPage({viewport:{width:360,height:800}});
     await page.context().grantPermissions(["clipboard-read","clipboard-write"]);
     await page.goto("http://127.0.0.1:"+server.address().port+"/");
     const cover = page.locator(".fp-cover img");
@@ -320,6 +382,12 @@ if (process.env.RUN_BTI_BROWSER === "1") test("Chrome: withdrawing either a stor
       },ratings);
       await page.locator('[data-fp="next"]').click();
     }
+    const ownAnswer = page.locator(".fp-reading + .fp-own-answer");
+    assert.equal(await ownAnswer.getAttribute("data-fp-evidence"), "explore-1=2");
+    assert.ok(await ownAnswer.isVisible());
+    const bounds = await ownAnswer.boundingBox();
+    assert.ok(bounds.y >= 0 && bounds.y + bounds.height <= 800, "own answer is in the initial viewport");
+    const privateSentence = await ownAnswer.locator("span").innerText();
     const shell=page.locator(".rpx-card-shell"), preview=shell.locator(".rpx-preview img");
     const dl = shell.locator("a[download]");
     const assertSavedFile = async expected => {
@@ -332,6 +400,8 @@ if (process.env.RUN_BTI_BROWSER === "1") test("Chrome: withdrawing either a stor
     await shell.locator("summary").click();
     await preview.waitFor();
     const baseline = await dl.getAttribute("href");
+    assert.ok(!(await preview.getAttribute("alt")).includes(privateSentence));
+    assert.equal(await shell.getByLabel("카드에 넣을 한 줄").inputValue(), "_");
     await theme.locator("summary").first().click();
     await indoor.click();
     await shell.getByLabel("카드에 넣을 한 줄").selectOption("s:summer:indoor");

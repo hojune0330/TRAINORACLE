@@ -63,8 +63,51 @@ test("every animal title uses the two source codes in order or the one supported
   assert.equal(model.names.senses,"감각 | 손수건 고양이");
   assert.equal(model.names["speed+numbers"],"속도·숫자 | 송골매");
   assert.equal(model.names["senses+explore"],"감각·탐험 | 호랑나비");
-  assert.equal(model.characters.distance.reading, "길게 달리는 날이 좋아.");
   assert.equal(model.items.find(i => i.id === "numbers-3").reading,"뛰면서 중간 기록을 듣는 게 좋아.");
+});
+
+// These details belong to one question. Its siblings may support the same
+// preference even when the runner expressly dislikes this particular example.
+const itemDetails = {
+  distance: [/더\s*멀리/, /한\s*바퀴|여유가 있으면/, /(?:오래|길게)\s*(?:달리|달릴|달려|뛰|뛸)|기다려/],
+  speed: [/짧은\s*구간/, /속도가?\s*붙|발이\s*빨라|빨라지는\s*순간/, /잠깐|빠르게 달리는 날|기다려/],
+  numbers: [/지금\s*페이스/, /구간\s*시간|구간이 끝|걸린 시간/, /중간 기록|기록을 듣/],
+  senses: [/숨소리/, /다리가\s*가벼/, /발걸음/],
+  familiar: [/같은 길로 다시 돌아/, /자주 가는 코스/, /갈림길/],
+  explore: [/골목/, /처음 가는 코스라면 반가/, /늘 뛰던 동네/],
+  plan: [/나가기 전/, /다음 주/, /여유 있는 날/],
+  improvise: [/일단 나가|뛰며 정/, /다음에 뛸 날/, /내키는 대로/],
+};
+
+test("all 32 headline readings keep their meaning when each supporting item is disliked", () => {
+  const byId = Object.fromEntries(model.axes.flatMap(axis =>
+    axis.sides.map(side => [side.id, axis.sides.find(other => other !== side).id])));
+  let cases = 0;
+  for (const [key, character] of Object.entries(model.characters)) {
+    const sides = key.split("+");
+    const ratings = {};
+    for (const side of sides) {
+      ratings[side] = 2;
+      ratings[byId[side]] = 0;
+    }
+    for (const side of sides) {
+      for (const [index, forbidden] of itemDetails[side].entries()) {
+        const answers = fillSides(ratings);
+        const id = side + "-" + (index + 1);
+        answers[id] = 0;
+        const result = model.evaluate(answers);
+        const label = key + " with " + id + " disliked";
+        assert.equal(result.defaultKey, key, label);
+        assert.ok(!result.evidence.includes(id), label);
+        assert.doesNotMatch(character.reading, forbidden, label);
+        assert.ok(!character.reading.includes(model.items.find(item => item.id === id).reading), label);
+        if (side === "distance") assert.match(character.reading, /멀리 가/, label);
+        if (side === "speed") assert.match(character.reading, /속도(?:를)? 내/, label);
+        cases++;
+      }
+    }
+  }
+  assert.equal(cases, 168);
 });
 
 test("a unique first side stays in every candidate at a tied second-place cutoff", () => {

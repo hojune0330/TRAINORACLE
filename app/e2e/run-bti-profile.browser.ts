@@ -46,7 +46,7 @@ async function signInForFixture(page: import("@playwright/test").Page) {
   })
 }
 
-test("a runner goes from More to the quiz and opens a coach question only after saving their chosen goal", async ({page, context}) => {
+test("a runner goes from More to the quiz and previews a coach question only after saving their chosen goal", async ({page, context}) => {
   const account = await fixture(context)
   await page.goto("/?app=1")
   await page.getByRole("button", {name: "더보기", exact: true}).click()
@@ -70,7 +70,7 @@ test("a runner goes from More to the quiz and opens a coach question only after 
   await signInForFixture(profile)
   await expect(profile.getByRole("heading", {name: "이번에 담을 항목"})).toBeVisible()
   const save = profile.getByRole("button", {name: "내 프로필에 저장"})
-  const coach = profile.getByText("코치의 첫 질문 보기")
+  const coach = profile.getByText("코치의 첫 질문 미리보기", {exact: true})
   await expect(coach).toHaveCount(0)
   await save.click()
   await expect(profile.getByText("변경을 확인하지 못했어요.", {exact: false})).toBeVisible()
@@ -94,7 +94,7 @@ for (const goal of [undefined, "unknown", "other"] as const) {
     await page.getByRole("button", {name: "로그인", exact: true}).waitFor()
     await signInForFixture(page)
     await expect(page.getByRole("heading", {name: "저장한 결과"})).toBeVisible()
-    await expect(page.getByText("코치의 첫 질문 보기")).toHaveCount(0)
+    await expect(page.getByText("코치의 첫 질문 미리보기", {exact: true})).toHaveCount(0)
   })
 }
 
@@ -104,5 +104,5 @@ test("an ineligible account cannot read a saved result or open a goal question",
   await page.getByRole("button", {name: "로그인", exact: true}).waitFor()
   await signInForFixture(page)
   await expect(page.getByText(/만 19세 이상/)).toBeVisible()
-  await expect(page.getByText("코치의 첫 질문 보기")).toHaveCount(0)
+  await expect(page.getByText("코치의 첫 질문 미리보기", {exact: true})).toHaveCount(0)
 })
