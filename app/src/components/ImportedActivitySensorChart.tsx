@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useMemo, useRef, useState } from "react"
 import type { FileObservationV1 } from "../domain/import/file-observation"
 import { ACTIVITY_DETAIL_METRICS, type ActivityDetailMetric, type ActivityDetailSample } from "../domain/import/file-activity-detail"
 import { AccessibleTrendTable } from "../screens/trends/AccessibleTrendTable"
@@ -15,7 +15,8 @@ function projectChart(samples: readonly ActivityDetailSample[], metric: Activity
   let current: PlotPoint[] = []
   let previous: ActivityDetailSample | null = null
   let firstTime = Infinity, lastTime = -Infinity, minimum = Infinity, maximum = -Infinity, count = 0
-  for (const sample of samples) {
+  let maximumIndex = -1
+  for (const [index, sample] of samples.entries()) {
     const value = sample.metrics[metric]
     const time = sample.timestamp === null ? NaN : Date.parse(sample.timestamp)
     if (value === null || value === undefined || !Number.isFinite(time)) {
@@ -28,7 +29,12 @@ function projectChart(samples: readonly ActivityDetailSample[], metric: Activity
     }
     current.push({ sample, value, time }); previous = sample
     firstTime = Math.min(firstTime, time); lastTime = Math.max(lastTime, time)
-    minimum = Math.min(minimum, value); maximum = Math.max(maximum, value); count++
+    minimum = Math.min(minimum, value)
+    if (value > maximum) {
+      maximum = value
+      maximumIndex = index
+    }
+    count++
   }
   if (current.length) segments.push(current)
   const x = (time: number) => firstTime === lastTime ? 500 : 10 + (time - firstTime) / (lastTime - firstTime) * 980
@@ -48,7 +54,7 @@ function projectChart(samples: readonly ActivityDetailSample[], metric: Activity
     plotted += points.length
     return points.map((point, index) => `${index ? "L" : "M"}${x(point.time).toFixed(3)},${y(point.value).toFixed(3)}`).join(" ") + (points.length === 1 ? " l0.01,0" : "")
   }).join(" ")
-  return { path, x, y, firstTime, lastTime, minimum, maximum, count, plotted, segments: segments.length }
+  return { path, x, y, firstTime, lastTime, minimum, maximum, maximumIndex, count, plotted, segments: segments.length }
 }
 
 export function ImportedActivitySensorChart(props: {
@@ -67,6 +73,7 @@ export function ImportedActivitySensorChart(props: {
   const context = `${metric}:${rangeKey}`
   const [selection, setSelection] = useState({ context: "", index: 0 })
   const [tablePage, setTablePage] = useState({ context: "", start: 0 })
+  const sampleSlider = useRef<HTMLInputElement>(null)
   const samples = useMemo(() => range ? allSamples.filter(sample => sample.timestamp !== null
     && Date.parse(sample.timestamp) >= Date.parse(range.startTime) && Date.parse(sample.timestamp) <= Date.parse(range.endTime)) : allSamples, [allSamples, range])
   const graph = useMemo(() => metric ? projectChart(samples, metric) : null, [samples, metric])
@@ -106,6 +113,11 @@ export function ImportedActivitySensorChart(props: {
       </div>
       <div className="imported-activity-detail__clock-range"><time dateTime={new Date(graph.firstTime).toISOString()}>{importedSourceClock(new Date(graph.firstTime).toISOString())}</time>
         <time dateTime={new Date(graph.lastTime).toISOString()}>{importedSourceClock(new Date(graph.lastTime).toISOString())}</time></div>
+      {metric === "heartRateBpm" && <RecordAction priority="secondary" onClick={() => {
+        choose(graph.maximumIndex)
+        setTablePage({ context, start: Math.floor(graph.maximumIndex / PAGE) * PAGE })
+        sampleSlider.current?.focus()
+      }}>최고 심박 {graph.maximum} bpm 시점 보기</RecordAction>}
       <p>{props.timeDescription ?? "차트의 시각은 UTC로 맞췄어요. 선택한 표본과 표에는 파일의 원래 시각을 표시해요."}</p>
       {!!props.markers?.length && <p>점선은 원본에 표시된 구간 시작이에요. 종료 시각이나 구간 시간을 새로 계산하지 않아요.</p>}
       {graph.plotted < graph.count && <p>화면에는 표시용 요약 {graph.plotted}점을 그려요. 각 표시 구간의 최저·최고와 단절을 유지하며, 원본 {graph.count}개는 표에서 모두 확인할 수 있어요.</p>}
@@ -113,7 +125,7 @@ export function ImportedActivitySensorChart(props: {
     <p>{samples.length}개 표본 중 값·시각 미확인 {samples.length - graph.count}개. 빈 값과 다른 원본 구간 사이에는 선을 잇지 않아요. 원인이 일시정지인지는 단정하지 않아요.</p>
     {selected && <div className="imported-activity-detail__sample">
       <label>표본 선택 · {selectedIndex + 1} / {samples.length}
-        <input aria-label="센서 표본 선택" type="range" min="0" max={Math.max(0, samples.length - 1)} step="1" value={selectedIndex}
+        <input ref={sampleSlider} aria-label="센서 표본 선택" aria-valuetext={`${sampleClock(selected)} · ${originalQuantity(selectedValue, definition.unit)}`} type="range" min="0" max={Math.max(0, samples.length - 1)} step="1" value={selectedIndex}
           disabled={samples.length < 2} onChange={event => choose(Number(event.target.value))} />
       </label>
       <p aria-live="polite">{sampleClock(selected)} · {originalQuantity(selectedValue, definition.unit)}</p>

@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { GarminActivityDetail } from "./GarminActivityDetail"
 import { ImportedActivityRoute } from "./ImportedActivityRoute"
+import { ImportedActivitySensorChart } from "./ImportedActivitySensorChart"
 import { garminChartSamples, garminSamplesDigest, loadGarminActivitySamples } from "../domain/account/garmin-activity-detail"
 import { GARMIN_VERSION, garminItemSchema, type GarminItem, type GarminSample, type GarminTransport } from "../domain/account/garmin-integration"
 import { syntheticGarminOwner as owner, syntheticGarminItem as item, syntheticGarminReceipt as receipt } from "./GarminConnectionPanel.test-fixtures"
@@ -48,6 +49,8 @@ describe("server-stored Garmin details and local route", () => {
     await waitFor(() => expect(screen.queryByText("운동 자료 확인 중…")).not.toBeInTheDocument())
     fireEvent.click(screen.getByRole("tab", { name: "그래프" }))
     expect(screen.getByRole("img", { name: /심박수 차트/ })).toHaveAccessibleName(/측정값 3개/)
+    fireEvent.click(screen.getByRole("button", { name: "최고 심박 125 bpm 시점 보기" }))
+    expect(screen.getByRole("slider", { name: "센서 표본 선택" })).toHaveAttribute("aria-valuetext", expect.stringContaining("운동 시작 뒤 10초"))
     expect(screen.getByTestId("activity-sensor-path").getAttribute("d")!.match(/M/g)).toHaveLength(2)
     fireEvent.click(screen.getByRole("tab", { name: "개요" }))
     expect(screen.getByTestId("activity-route-path").getAttribute("d")!.match(/M/g)).toHaveLength(2)
@@ -61,6 +64,26 @@ describe("server-stored Garmin details and local route", () => {
     expect(screen.queryByText(/파일에서 가져옴/)).not.toBeInTheDocument()
     expect(call.mock.calls.map(value => value[1].action)).toEqual(["read", "detail"])
     expect(JSON.stringify(samples)).toBe(before)
+  })
+  it("opens the first timed peak within the chart range and its original table page", () => {
+    const [base] = garminChartSamples(item, samples)
+    const rows = Array.from({ length: 28 }, (_, index) => ({
+      ...base!,
+      sourceIndex: index,
+      timestamp: index === 5 ? null : new Date(Date.UTC(2026, 10, 1, 0, 0, index)).toISOString(),
+      metrics: { heartRateBpm: index === 0 || index === 5 ? 180 : index >= 26 ? 150 : 110 },
+    }))
+    const range = { sourceIndex: 1, startTime: rows[1]!.timestamp!, endTime: rows[27]!.timestamp! }
+    const { rerender } = render(<ImportedActivitySensorChart samples={rows} range={range} onClearRange={() => {}} />)
+    fireEvent.click(screen.getByRole("button", { name: "최고 심박 150 bpm 시점 보기" }))
+    const slider = screen.getByRole("slider")
+    expect(slider).toHaveFocus()
+    expect(slider).toHaveAttribute("aria-valuetext", expect.stringContaining("150 bpm"))
+    expect(slider).toHaveValue("24")
+    fireEvent.click(screen.getByText("표로 보기"))
+    expect(within(screen.getByRole("table")).getByText(/표본 27 ·/)).toBeVisible()
+    rerender(<ImportedActivitySensorChart samples={[rows[5]!]} range={null} onClearRange={() => {}} />)
+    expect(screen.queryByRole("button", { name: /최고 심박/ })).toBeNull()
   })
   it("does not display partial, wrong-digest, changed-revision or unordered chunks", async () => {
     const { record, transport } = await example(), controller = new AbortController()
