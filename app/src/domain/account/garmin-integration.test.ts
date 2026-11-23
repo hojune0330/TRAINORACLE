@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { captureGarminCallback, clearGarminOperation, readGarminCallback, garminEndpoint, garminIntegrationEnabled, garminRequestSchema, hasGarminCallback, parseGarminResponse, pendingGarminOperation, prepareGarminOperation, rememberGarminAttempt, requestGarminIntegration, safeGarminAuthorizationUrl, GARMIN_VERSION } from "./garmin-integration"
+import { captureGarminCallback, clearGarminOperation, readGarminCallback, garminEndpoint, garminIntegrationEnabled, garminRequestSchema, hasGarminCallback, isGarminCallbackReloadBlocked, parseGarminResponse, pendingGarminOperation, prepareGarminOperation, rememberGarminAttempt, requestGarminIntegration, safeGarminAuthorizationUrl, GARMIN_VERSION } from "./garmin-integration"
 import { setActiveLocalAccount } from "./local-journal-ownership"
 import { rememberStorageConsentRevision } from "./storage-consent-revision"
 import { ACCOUNT_NETWORK_DEADLINE_MS } from "./account-network-deadline"
@@ -129,6 +129,25 @@ describe("Garmin authenticated browser boundary", () => {
     expect((await requestGarminIntegration(owner, request, new AbortController().signal, () => true, claim)).ok).toBe(true)
     expect((await requestGarminIntegration(owner, request, new AbortController().signal, () => true, claim)).ok).toBe(false)
     expect(fetcher).toHaveBeenCalledTimes(1)
+  })
+  it("keeps the reload hold from URL scrubbing through the server reply", async () => {
+    const state = "c".repeat(43), request = { action: "complete" as const, code: "synthetic-code", state }
+    expect(rememberGarminAttempt(owner, { schemaVersion: GARMIN_VERSION,
+      authorizationUrl: `https://connect.garmin.com/oauth?state=${state}&response_type=code&code_challenge_method=S256`,
+      state, expiresAt:new Date(Date.now()+300000).toISOString() })).toBe(true)
+    window.history.replaceState(null, "", `/?garmin_callback=1&code=synthetic-code&state=${state}`)
+    captureGarminCallback()
+    expect(isGarminCallbackReloadBlocked()).toBe(true)
+    let reply!: (value: Response) => void
+    vi.stubGlobal("fetch", () => new Promise<Response>(resolve => { reply = resolve }))
+    const operation = requestGarminIntegration(owner, request, new AbortController().signal, () => true,
+      () => { const claim = readGarminCallback(owner, request); return claim !== null && typeof claim !== "string" })
+    await vi.waitFor(() => expect(reply).toBeTypeOf("function"))
+    expect(hasGarminCallback()).toBe(false)
+    expect(isGarminCallbackReloadBlocked()).toBe(true)
+    reply(new Response(JSON.stringify({ schemaVersion: GARMIN_VERSION, connection: status.connection })))
+    await operation
+    expect(isGarminCallbackReloadBlocked()).toBe(false)
   })
   it("reuses exact lost-ACK IDs across remount and will not borrow a revised source or later consent", () => {
     const first = prepareGarminOperation(owner, item, "confirm")!

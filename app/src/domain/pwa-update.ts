@@ -1,5 +1,6 @@
 import { isReloadBlocked } from "./screen-recovery"
 import { isAuthSessionQuarantined } from "./account/auth-session-quarantine"
+import { isGarminCallbackReloadBlocked } from "./account/garmin-integration"
 
 /** Automatic updates remain enabled, but never discard a volatile draft. */
 export function registerAppServiceWorker(baseUrl: string, reload = () => window.location.reload()): void {
@@ -21,13 +22,14 @@ export function registerAppServiceWorker(baseUrl: string, reload = () => window.
     // Even a form without a registered draft guard must not be replaced mid-entry.
     const inputInProgress = Array.from(document.querySelectorAll("input:not([type='hidden']):not([type='button']):not([type='submit']), textarea, select, [contenteditable='true']"))
       .some(element => {
+        if (element.closest("[hidden], [inert]")) return false
         if (element === document.activeElement) return true
         if (element instanceof HTMLInputElement) return element.type === "checkbox" || element.type === "radio" ? element.checked : element.value !== ""
         if (element instanceof HTMLTextAreaElement || element instanceof HTMLSelectElement) return element.value !== ""
         return element.textContent?.trim() !== ""
       })
     const busySurface = document.querySelector("[aria-busy='true']") !== null
-    if (document.visibilityState !== "visible" || isReloadBlocked() || isAuthSessionQuarantined() || inputInProgress || busySurface) {
+    if (document.visibilityState !== "visible" || isReloadBlocked() || isAuthSessionQuarantined() || isGarminCallbackReloadBlocked() || inputInProgress || busySurface) {
       retryTimer = setTimeout(resume, 5_000)
       return
     }

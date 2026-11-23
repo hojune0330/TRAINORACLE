@@ -119,6 +119,7 @@ export function parseGarminResponse(request: GarminRequest, value: unknown): Gar
   return { ok: true, data: parsed.data }
 }
 
+let completingCallbacks = 0
 /** IDs only; storage/auth/rights remain server authority. Never send an edited observation. */
 export const requestGarminIntegration: GarminTransport = async (owner, request, signal, isCurrent, beforeSend) => {
   if (!garminRequestSchema.safeParse(request).success) return { ok: false, code: "INVALID_INPUT" }
@@ -146,6 +147,7 @@ export const requestGarminIntegration: GarminTransport = async (owner, request, 
   const removeDeletionListener = onAccountDeletionBoundaryChange(changed => { if (changed === owner) abort() })
   const deadline = setTimeout(abort, ACCOUNT_NETWORK_DEADLINE_MS)
   let unsubscribe = () => undefined as void
+  if (request.action === "complete") completingCallbacks++
   try {
     const client = await within(supabase())
     if (!current() || controller.signal.aborted) return { ok: false, code: "STALE_RESPONSE" }
@@ -172,25 +174,33 @@ export const requestGarminIntegration: GarminTransport = async (owner, request, 
     }
     return parseGarminResponse(request, value)
   } catch { return { ok: false, code: current() ? "UNAVAILABLE" : "STALE_RESPONSE" } }
-  finally { clearTimeout(deadline); signal.removeEventListener("abort", abort); controller.signal.removeEventListener("abort", interrupt); removeScopeListener(); removeDeletionListener(); unsubscribe() }
+  finally {
+    if (request.action === "complete") completingCallbacks--
+    clearTimeout(deadline); signal.removeEventListener("abort", abort); controller.signal.removeEventListener("abort", interrupt); removeScopeListener(); removeDeletionListener(); unsubscribe()
+  }
 }
 
 const attemptKey = "trainoracle.garmin.oauth.v1"
 const attemptSchema = z.object({ owner: z.string().min(1), state, expiresAt: timestamp }).strict()
-type Callback = { code: string; state: string; error: boolean }
+const maxAttemptAgeMs = 660000
+type Callback = { code: string; state: string; error: boolean; holdUntil: number }
 let capturedCallback: Callback | null = null
+/** The worker may update after the volatile return expires or the exchange settles. */
+export function isGarminCallbackReloadBlocked(): boolean {
+  return completingCallbacks > 0 || capturedCallback !== null && Date.now() < capturedCallback.holdUntil
+}
 export function hasGarminCallback(): boolean { return capturedCallback !== null || new URL(window.location.href).searchParams.get("garmin_callback") === "1" }
 /** Capture before the general account OAuth callback. Codes never enter storage or logs. */
 export function captureGarminCallback(): void {
   const url = new URL(window.location.href)
   if (url.searchParams.get("garmin_callback") !== "1") return
-  capturedCallback = { code: url.searchParams.get("code") ?? "", state: url.searchParams.get("state") ?? "",
+  capturedCallback = { code: url.searchParams.get("code") ?? "", state: url.searchParams.get("state") ?? "", holdUntil: Date.now() + maxAttemptAgeMs,
     error: url.searchParams.has("error") || url.searchParams.getAll("code").length !== 1 || url.searchParams.getAll("state").length !== 1 }
   for (const key of ["garmin_callback", "code", "state", "error", "error_description", "error_uri"]) url.searchParams.delete(key)
   window.history.replaceState(window.history.state, "", url.href)
 }
 export function rememberGarminAttempt(owner: string, value: z.infer<typeof connectSchema>): boolean {
-  if (!safeGarminAuthorizationUrl(value.authorizationUrl, value.state) || Date.parse(value.expiresAt) <= Date.now() || Date.parse(value.expiresAt) > Date.now() + 660000) return false
+  if (!safeGarminAuthorizationUrl(value.authorizationUrl, value.state) || Date.parse(value.expiresAt) <= Date.now() || Date.parse(value.expiresAt) > Date.now() + maxAttemptAgeMs) return false
   try { const raw = JSON.stringify({ owner, state: value.state, expiresAt: value.expiresAt }); sessionStorage.setItem(attemptKey, raw); return sessionStorage.getItem(attemptKey) === raw } catch { return false }
 }
 type GarminCompletion = Extract<GarminRequest, { action: "complete" }>
