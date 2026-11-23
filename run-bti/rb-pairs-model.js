@@ -167,24 +167,24 @@
 
   // An animal's props describe the illustration. Only the liked answers describe a runner's actions.
   const characters = {
-    "distance": { nickname: "성큼성큼 코끼리", reading: "길게 달리는 날이 좋아.", art: "코끼리 · 물병" },
-    "speed": { nickname: "질주 치타", reading: "뛰다가 속도가 붙을 때가 재밌어.", art: "치타 · 배번호" },
+    "distance": { nickname: "성큼성큼 코끼리", reading: "멀리 가는 쪽이 좋아.", art: "코끼리 · 물병" },
+    "speed": { nickname: "질주 치타", reading: "속도를 내는 재미가 좋아.", art: "치타 · 배번호" },
     "numbers": { nickname: "문어", reading: "내가 어떻게 뛰었는지 숫자로 알면 더 재밌어.", art: "문어 · 데이터 워치" },
     "senses": { nickname: "손수건 고양이", reading: "뛰면서 내 몸이 어떤지 느껴 보는 게 좋아.", art: "고양이 · 손수건" },
     "familiar": { nickname: "동네 단골 강아지", reading: "다시 뛰어도 아는 길이 반가워.", art: "강아지 · 코스 키링" },
     "explore": { nickname: "흰꼬리 여우", reading: "처음 보는 길은 한번 뛰어 보고 싶어.", art: "여우 · 접이식 지도" },
     "plan": { nickname: "비버", reading: "뛸 계획을 미리 정해 두면 마음이 편해.", art: "비버 · 러닝 다이어리" },
     "improvise": { nickname: "날개 편 앵무새", reading: "어떻게 뛸지는 그날 정하는 게 편해.", art: "앵무새 · 러닝 캡" },
-    "distance+numbers": { nickname: "황제펭귄", reading: "오래 달리는 게 좋고 내 달리기를 숫자로 보는 재미도 있어.", art: "황제펭귄 · 초시계" },
-    "distance+senses": { nickname: "타월 거북이", reading: "오래 뛰고 싶어. 뛰는 동안 내 몸이 어떤지도 궁금해.", art: "거북이 · 스포츠 타월" },
-    "speed+numbers": { nickname: "송골매", reading: "속도가 붙는 맛도 좋고 내가 어떻게 뛰었는지 숫자로 아는 것도 좋아.", art: "송골매 · 구간 기록표" },
+    "distance+numbers": { nickname: "황제펭귄", reading: "멀리 가는 쪽이 좋아. 내가 어떻게 뛰었는지 숫자로 보는 것도 재밌어.", art: "황제펭귄 · 초시계" },
+    "distance+senses": { nickname: "타월 거북이", reading: "멀리 가는 쪽이 좋고 뛰는 동안 내 몸이 어떤지도 궁금해.", art: "거북이 · 스포츠 타월" },
+    "speed+numbers": { nickname: "송골매", reading: "속도를 내는 재미도 있고 내가 어떻게 뛰었는지 숫자로 보는 재미도 있어.", art: "송골매 · 구간 기록표" },
     "speed+senses": { nickname: "물살 타는 돌고래", reading: "속도를 내는 것도 좋고 달릴 때 몸에서 느껴지는 변화도 재밌어.", art: "돌고래 · 지느러미 밴드" },
-    "distance+familiar": { nickname: "보온병 판다", reading: "길게 뛰는 게 좋아. 코스는 아는 길이면 더 반가워.", art: "판다 · 보온병" },
-    "distance+explore": { nickname: "먼 바다 혹등고래", reading: "길게 달리는 날이 좋아. 처음 보는 길도 궁금해.", art: "혹등고래 · 코스 엽서" },
-    "speed+familiar": { nickname: "돌아오는 제비", reading: "아는 길은 또 뛰어도 좋고 속도가 붙는 순간도 좋아해.", art: "제비 · 릴레이 배턴" },
+    "distance+familiar": { nickname: "보온병 판다", reading: "멀리 가는 쪽이 좋아. 코스는 아는 길이 편해.", art: "판다 · 보온병" },
+    "distance+explore": { nickname: "먼 바다 혹등고래", reading: "멀리 가는 쪽이 좋아. 처음 보는 길도 궁금해.", art: "혹등고래 · 코스 엽서" },
+    "speed+familiar": { nickname: "돌아오는 제비", reading: "아는 길을 달리는 게 편하고 속도를 내는 재미도 좋아해.", art: "제비 · 릴레이 배턴" },
     "speed+explore": { nickname: "선글라스 상어", reading: "속도 내는 재미도 있고 새 길을 찾아가는 재미도 있어.", art: "상어 · 스포츠 선글라스" },
-    "distance+plan": { nickname: "배낭 멘 낙타", reading: "오래 달리는 게 좋아. 뛸 계획은 미리 잡아 두면 편해.", art: "쌍봉낙타 · 트레일 배낭" },
-    "distance+improvise": { nickname: "한 모금 캥거루", reading: "오래 뛰는 게 좋아. 어떻게 뛸지는 그날 정하고 싶어.", art: "캥거루 · 접는 물컵" },
+    "distance+plan": { nickname: "배낭 멘 낙타", reading: "멀리 가는 쪽이 좋고 뛸 계획은 미리 잡아 두면 편해.", art: "쌍봉낙타 · 트레일 배낭" },
+    "distance+improvise": { nickname: "한 모금 캥거루", reading: "멀리 가는 쪽이 좋아. 어떻게 뛸지는 그날 정하고 싶어.", art: "캥거루 · 접는 물컵" },
     "speed+plan": { nickname: "운동화 챙긴 토끼", reading: "달릴 땐 속도 내는 재미가 있고 뛸 건 미리 정해 두면 편해.", art: "토끼 · 러닝화 한 짝" },
     "speed+improvise": { nickname: "후다닥 다람쥐", reading: "속도 내는 걸 좋아해. 오늘 어떻게 뛸지는 그때 가서 정할래.", art: "다람쥐 · 호루라기" },
     "numbers+familiar": { nickname: "고리꼬리 라쿤", reading: "아는 길에서 뛰는 게 편해. 내가 어떻게 뛰었는지 숫자로 아는 것도 좋아.", art: "라쿤 · 만보기" },
@@ -404,5 +404,5 @@
   }
 
   globalThis.RBPairsModel = { version, labels, axes, items, extras, names, characters, evaluate, compare,
-    choiceFor, sideReading, resultReason };
+    choiceFor, likedClaim, sideReading, resultReason };
 })();
