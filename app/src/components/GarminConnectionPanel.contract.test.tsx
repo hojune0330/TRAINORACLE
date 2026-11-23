@@ -146,6 +146,7 @@ describe("Garmin connection and reviewed inbox", () => {
   })
 })
 
+const acknowledgement = () => screen.getByRole("checkbox", { name: "자동으로 가져오는 운동 범위를 확인했어요" })
 const autoExperience = { saveMode: "AUTO" as const, preferenceRevision: 1, lastSavedAt: null, reviewRequiredCount: 0, reconnectRequired: false }
 it("opens saving consent directly from the main connection action without sending a connect request", async () => {
   const transport = vi.fn<GarminTransport>(async () => success({ ...status, connection: { ...status.connection, state: "DISCONNECTED" } }))
@@ -157,7 +158,14 @@ it("opens saving consent directly from the main connection action without sendin
   expect(screen.getByRole("region", { name: "Garmin 연결 및 저장 동의" })).toBeVisible()
   expect(screen.queryByRole("heading", { name: "Garmin 설정" })).toBeNull()
   expect(screen.getByRole("radio", { name: "새 운동을 일지에 자동 저장 · 권장" })).toBeChecked()
-  expect(screen.getByRole("button", { name: "동의하고 Garmin 연결" })).toBeEnabled()
+  const connect = screen.getByRole("button", { name: "동의하고 Garmin 연결" })
+  expect(acknowledgement()).not.toBeChecked()
+  expect(acknowledgement()).toHaveAccessibleDescription(/권한을 허용한 뒤 Garmin Connect에 새로 올라오는 운동.*이미 올라와 있던 운동은 파일로/)
+  expect(connect).toBeDisabled()
+  fireEvent.click(connect)
+  expect(transport.mock.calls.some(call => call[1].action === "connect")).toBe(false)
+  fireEvent.click(acknowledgement())
+  expect(connect).toBeEnabled()
   expect(onSubviewChange).toHaveBeenLastCalledWith(true)
   fireEvent.click(screen.getByRole("button", { name: "취소" }))
   await waitFor(() => expect(screen.getByRole("button", { name: "Garmin 연결 시작" })).toHaveFocus())
@@ -176,6 +184,7 @@ it("requires explicit consent for the selected saving mode and keeps Back within
   fireEvent.click(screen.getByRole("button", { name: "Garmin 연결 시작" }))
   fireEvent.click(screen.getByRole("radio", { name: "받은 운동을 확인 후 저장" }))
   expect(transport.mock.calls.some(call => call[1].action === "connect")).toBe(false)
+  fireEvent.click(acknowledgement())
   fireEvent.click(screen.getByRole("button", { name: "동의하고 Garmin 연결" }))
   await screen.findByText("결과 확인이 필요해요")
   expect(transport.mock.calls.filter(call => call[1].action === "connect")).toHaveLength(1)
@@ -185,6 +194,8 @@ it.each(["REVOKED", "ERROR"] as const)("retains the reconnect action for %s on t
   mount(async () => success({ ...status, experience: { ...autoExperience, reconnectRequired: true }, pendingCount: 0, connection: { ...status.connection, state } }))
   fireEvent.click(await screen.findByRole("button", { name: "Garmin 다시 연결" }))
   expect(screen.getByRole("region", { name: "Garmin 연결 및 저장 동의" })).toBeVisible()
+  expect(acknowledgement()).not.toBeChecked()
+  expect(screen.getByRole("button", { name: "동의하고 Garmin 연결" })).toBeDisabled()
 })
 it.each(["configuration", "feature", "server capability"] as const)("does not offer connection when %s is unavailable", async unavailable => {
   const transport = vi.fn<GarminTransport>(async () => success({ ...status, pendingCount: 0,
@@ -299,6 +310,7 @@ it("shows the first connection consent inline without an extra start click or au
   expect(screen.getByRole("radio", { name: "새 운동을 일지에 자동 저장 · 권장" })).toBeChecked()
   expect(window.history.length).toBe(depth)
   expect(transport.mock.calls.some(call => call[1].action === "connect")).toBe(false)
+  fireEvent.click(acknowledgement())
   fireEvent.click(screen.getByRole("button", { name: "동의하고 Garmin 연결" }))
   await screen.findByText("결과 확인이 필요해요")
   expect(transport.mock.calls.filter(call => call[1].action === "connect")).toHaveLength(1)
@@ -307,10 +319,14 @@ it("shows the first connection consent inline without an extra start click or au
 it("can defer inline setup without connecting and open it again deliberately", async () => {
   const transport = vi.fn<GarminTransport>(async () => success({ ...status, pendingCount: 0, connection: { ...status.connection, state: "DISCONNECTED" } }))
   mount(transport, { inlineSetup: true })
-  fireEvent.click(await screen.findByRole("button", { name: "나중에 연결" }))
+  await screen.findByRole("button", { name: "나중에 연결" })
+  fireEvent.click(acknowledgement())
+  fireEvent.click(screen.getByRole("button", { name: "나중에 연결" }))
   expect(screen.queryByRole("region", { name: "Garmin 연결 및 저장 동의" })).toBeNull()
   fireEvent.click(screen.getByRole("button", { name: "Garmin 연결 시작" }))
   expect(screen.getByRole("region", { name: "Garmin 연결 및 저장 동의" })).toBeVisible()
+  expect(acknowledgement()).not.toBeChecked()
+  expect(screen.getByRole("button", { name: "동의하고 Garmin 연결" })).toBeDisabled()
   expect(transport.mock.calls.some(call => call[1].action === "connect")).toBe(false)
 })
 it("shows connected workouts instead of repeating first-connection consent", async () => {

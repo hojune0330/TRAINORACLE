@@ -15,16 +15,21 @@ const saved: GarminItem = { ...item, state: "CONFIRMED", documentId: receipt.doc
 
 it("shows the first saved workout automatically and opens its exact journal", async () => {
   let rows: GarminItem[] = []
-  const open = vi.fn(async () => "OPENED" as const)
-  const transport: GarminTransport = async (_owner, request) => request.action === "status" ? success({ ...status, experience })
+  const open = vi.fn(async () => "OPENED" as const), openImport = vi.fn()
+  const transport: GarminTransport = async (_owner, request) => request.action === "status" ? success({ ...status, connection: { ...status.connection, lastSyncAt: null }, experience })
     : success({ schemaVersion: GARMIN_VERSION, items: rows, nextCursor: null })
-  render(<GarminConnectionPanel ownerId={owner} configured featureEnabled transport={transport} onOpenJournalRecord={open} />)
-  await screen.findByText("아직 받은 운동이 없어요")
+  render(<GarminConnectionPanel ownerId={owner} configured featureEnabled transport={transport} onOpenJournalRecord={open} onOpenImport={openImport} />)
+  await screen.findByText("첫 운동을 기다리고 있어요")
+  expect(screen.getByText(/워치를 Garmin Connect 앱과 동기화/)).toBeVisible()
+  expect(screen.queryByRole("checkbox", { name: /운동 범위를 확인/ })).toBeNull()
+  fireEvent.click(screen.getByRole("button", { name: "이전 운동 파일 가져오기" }))
+  expect(openImport).toHaveBeenCalledOnce()
   expect(screen.getByRole("link", { name: /Garmin Connect에서 확인/ })).toHaveAttribute("href", "https://connect.garmin.com/modern/activities")
   rows = [saved]
   await act(async () => window.dispatchEvent(new Event("focus")))
   fireEvent.click(await screen.findByRole("button", { name: "저장한 일지 열기" }))
   expect(open).toHaveBeenCalledWith(receipt.date, receipt.journalEntryId, expect.any(Function))
+  expect(screen.queryByText("첫 운동을 기다리고 있어요")).toBeNull()
   expect(screen.queryByRole("button", { name: "새 기록 확인" })).toBeNull()
 })
 
