@@ -1,10 +1,34 @@
-import { useCallback, useState } from "react"
+import { useCallback, useRef, useState } from "react"
 import { FileUp, Watch, Heart, Activity } from "lucide-react"
 import { AppHeading } from "../components/AppHeading"
 import { MenuAction } from "../components/MenuAction"
 import { InfoDisclosure } from "../components/InfoDisclosure"
-import { GarminConnectionPanel, type OpenGarminJournalRecord, type StorageConnectionReadiness } from "../components/GarminConnectionPanel"
+import { GarminConnectionPanel, type GarminConnectionPanelProps, type OpenGarminJournalRecord, type StorageConnectionReadiness } from "../components/GarminConnectionPanel"
+import { RecordAction } from "../components/RecordUI"
+import { accountJournalPreviewEnabled } from "../domain/account/account-journal-api"
+import { garminEndpoint, garminIntegrationEnabled } from "../domain/account/garmin-integration"
+import { useActiveContentScroll } from "../hooks/useActiveContentScroll"
+import { StorageConsentPanel } from "./account/StorageConsentPanel"
 import "./device-connections.css"
+
+function WatchConnectionWithConsent(props: GarminConnectionPanelProps & { ownerId: string }) {
+  const [readiness, setReadiness] = useState<StorageConnectionReadiness>("checking")
+  const [editing, setEditing] = useState(false)
+  const storageRef = useRef<HTMLDivElement>(null)
+  const watchRef = useRef<HTMLDivElement>(null)
+  const activeRef = editing ? storageRef : watchRef
+  useActiveContentScroll(editing ? "storage" : "watch", activeRef, activeRef, true)
+
+  return <>
+    <div ref={watchRef} tabIndex={-1} hidden={editing} className="account-watch-entry">
+      <GarminConnectionPanel {...props} inlineSetup storageReadiness={readiness} onOpenStorageSettings={() => setEditing(true)} />
+    </div>
+    <div ref={storageRef} tabIndex={-1} hidden={!editing} className="account-storage-entry">
+      <StorageConsentPanel userId={props.ownerId} onStatus={setReadiness} onGranted={() => setEditing(false)} />
+      <RecordAction priority="secondary" onClick={() => setEditing(false)}>워치 연결로 돌아가기</RecordAction>
+    </div>
+  </>
+}
 
 /** Connection and receipt come only from the authenticated service, never a build flag. */
 export function DeviceConnections({ onOpenImport, ownerId = null, onOpenAccount, onOpenJournalRecord, onSubviewChange, showFileEntry = true, inlineSetup = false, onOpenStorageSettings, storageReadiness }: {
@@ -20,13 +44,16 @@ export function DeviceConnections({ onOpenImport, ownerId = null, onOpenAccount,
 }) {
   const [subview, setSubview] = useState(false)
   const changeSubview = useCallback((active: boolean) => { setSubview(active); onSubviewChange?.(active) }, [onSubviewChange])
+  const garminProps = { onSubviewChange: changeSubview, ownerId, onOpenAccount, onOpenJournalRecord }
   return <div className="device-connections">
     <section aria-labelledby="connection-auto-title">
       <div hidden={subview}>
         <AppHeading as="h2" variant="section" id="connection-auto-title">{inlineSetup ? "내 워치와 운동 기록" : "워치에서 자동으로 가져오기"}</AppHeading>
         {!inlineSetup && <p>한 번 연결하면 새 운동을 여기에서 확인할 수 있어요.</p>}
       </div>
-      <GarminConnectionPanel onSubviewChange={changeSubview} ownerId={ownerId} onOpenAccount={onOpenAccount} onOpenJournalRecord={onOpenJournalRecord} inlineSetup={inlineSetup} onOpenStorageSettings={onOpenStorageSettings} storageReadiness={storageReadiness} />
+      {ownerId && storageReadiness === undefined && garminEndpoint() && garminIntegrationEnabled() && accountJournalPreviewEnabled()
+        ? <WatchConnectionWithConsent key={ownerId} {...garminProps} ownerId={ownerId} />
+        : <GarminConnectionPanel {...garminProps} inlineSetup={inlineSetup} onOpenStorageSettings={onOpenStorageSettings} storageReadiness={storageReadiness} />}
       <div hidden={subview}>
       <InfoDisclosure title="COROS·애플·삼성은 어떻게 연결하나요?">
       <p>자동 연결은 아직 준비 중이에요. 개별 운동 파일이 있으면 파일 가져오기를 이용해 주세요.</p>
