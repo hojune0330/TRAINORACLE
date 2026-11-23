@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { captureGarminCallback, clearGarminOperation, consumeGarminCallback, garminEndpoint, garminIntegrationEnabled, garminRequestSchema, hasGarminCallback, parseGarminResponse, pendingGarminOperation, prepareGarminOperation, rememberGarminAttempt, requestGarminIntegration, safeGarminAuthorizationUrl, GARMIN_VERSION } from "./garmin-integration"
+import { captureGarminCallback, clearGarminOperation, readGarminCallback, garminEndpoint, garminIntegrationEnabled, garminRequestSchema, hasGarminCallback, parseGarminResponse, pendingGarminOperation, prepareGarminOperation, rememberGarminAttempt, requestGarminIntegration, safeGarminAuthorizationUrl, GARMIN_VERSION } from "./garmin-integration"
 import { setActiveLocalAccount } from "./local-journal-ownership"
 import { rememberStorageConsentRevision } from "./storage-consent-revision"
 import { ACCOUNT_NETWORK_DEADLINE_MS } from "./account-network-deadline"
@@ -17,7 +17,7 @@ beforeEach(() => {
   auth.getUser.mockResolvedValue({ data: { user: { id: owner } }, error: null })
   auth.onAuthStateChange.mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } })
 })
-afterEach(() => { vi.useRealTimers(); vi.unstubAllEnvs(); vi.unstubAllGlobals(); setActiveLocalAccount(null); window.history.replaceState(null, "", "/"); consumeGarminCallback(owner); sessionStorage.clear() })
+afterEach(() => { vi.useRealTimers(); vi.unstubAllEnvs(); vi.unstubAllGlobals(); setActiveLocalAccount(null); window.history.replaceState(null, "", "/"); sessionStorage.clear(); readGarminCallback(owner) })
 describe("Garmin authenticated browser boundary", () => {
   it("defaults off, pins the exact service and explicit authorization origin", () => {
     expect(garminIntegrationEnabled({})).toBe(false)
@@ -103,11 +103,32 @@ describe("Garmin authenticated browser boundary", () => {
     window.history.replaceState(null, "", `/?garmin_callback=1&code=synthetic-code&state=${state}&kept=1`)
     expect(hasGarminCallback()).toBe(true); captureGarminCallback()
     expect(window.location.search).toBe("?kept=1"); expect(sessionStorage.getItem("trainoracle.garmin.oauth.v1")).not.toContain("synthetic-code")
-    expect(consumeGarminCallback(owner)).toEqual({ action: "complete", code: "synthetic-code", state })
-    expect(consumeGarminCallback(owner)).toBeNull()
+    const request = { action: "complete" as const, code: "synthetic-code", state }
+    expect(readGarminCallback(owner)).toEqual(request)
+    expect(readGarminCallback(owner, { ...request, state: "b".repeat(43) })).toBe("OAUTH_RESTART_REQUIRED")
+    expect(readGarminCallback(owner, request)).toEqual(request)
+    expect(readGarminCallback(owner)).toBeNull()
     expect(rememberGarminAttempt(owner, response)).toBe(true)
     window.history.replaceState(null, "", `/?garmin_callback=1&code=synthetic-code&state=${state}`)
-    expect(consumeGarminCallback("another-owner")).toBe("invalid")
+    expect(readGarminCallback("another-owner")).toBe("OAUTH_RESTART_REQUIRED")
+  })
+  it("claims the callback after authentication and rejects a second dispatch", async () => {
+    const request = { action: "complete" as const, code: "synthetic-code", state: "b".repeat(43) }
+    let finishAuth!: () => void
+    auth.getUser.mockImplementationOnce(() => new Promise(resolve => { finishAuth = () => resolve({ data: { user: { id: owner } }, error: null }) }))
+    const fetcher = vi.fn(async () => new Response(JSON.stringify({ schemaVersion: GARMIN_VERSION, connection: status.connection })))
+    vi.stubGlobal("fetch", fetcher)
+    const claim = vi.fn().mockReturnValueOnce(true).mockReturnValue(false)
+    const controller = new AbortController()
+    const preflight = requestGarminIntegration(owner, request, controller.signal, () => true, claim)
+    await vi.waitFor(() => expect(finishAuth).toBeTypeOf("function"))
+    expect(claim).not.toHaveBeenCalled()
+    controller.abort(); finishAuth(); await preflight
+    expect(fetcher).not.toHaveBeenCalled()
+    expect(claim).not.toHaveBeenCalled()
+    expect((await requestGarminIntegration(owner, request, new AbortController().signal, () => true, claim)).ok).toBe(true)
+    expect((await requestGarminIntegration(owner, request, new AbortController().signal, () => true, claim)).ok).toBe(false)
+    expect(fetcher).toHaveBeenCalledTimes(1)
   })
   it("reuses exact lost-ACK IDs across remount and will not borrow a revised source or later consent", () => {
     const first = prepareGarminOperation(owner, item, "confirm")!

@@ -7,10 +7,10 @@ import { RecordAction, RecordChoice, RecordNotice, RecordStateList } from "./Rec
 import { GarminJournalComparison } from "./GarminJournalComparison"
 import { GarminActivityDetail } from "./GarminActivityDetail"
 import { activityDistance, activityDuration, importedSourceClock } from "./ImportedActivityMetrics"
-import { localJournalScopeGeneration, onLocalJournalScopeChange } from "../domain/account/local-journal-ownership"
+import { activeLocalAccount, localJournalScopeGeneration, onLocalJournalScopeChange } from "../domain/account/local-journal-ownership"
 import { currentStorageConsentRevision } from "../domain/account/storage-consent-revision"
 import { accountJournalPreviewEnabled } from "../domain/account/account-journal-api"
-import { clearGarminOperation, consumeGarminCallback, garminEndpoint, garminErrorMessage, garminIntegrationEnabled, hasGarminCallback,
+import { clearGarminOperation, readGarminCallback, garminEndpoint, garminErrorMessage, garminIntegrationEnabled, hasGarminCallback,
   GARMIN_SAVE_CONSENT_VERSION, pendingGarminOperation, prepareGarminOperation, rememberGarminAttempt, requestGarminIntegration, safeGarminAuthorizationUrl,
   type GarminConfirmation, type GarminError, type GarminItem, type GarminRequest, type GarminStatus, type GarminTransport } from "../domain/account/garmin-integration"
 import "./garmin-connection-panel.css"
@@ -61,7 +61,9 @@ function GarminConnectionSession({ onSubviewChange, ownerId, onOpenAccount, onOp
   const refreshing = useRef(false)
   const [status, setStatus] = useState<GarminStatus | null>(null)
   const [items, setItems] = useState<GarminItem[]>([]), [cursor, setCursor] = useState<string | null>(null)
-  const [loaded, setLoaded] = useState(false), [busy, setBusy] = useState(false), [error, setError] = useState<GarminError | null>(null)
+  const [loaded, setLoaded] = useState(false), [busy, setBusy] = useState(false), [requestError, setError] = useState<GarminError | null>(null)
+  const [callbackError, setCallbackError] = useState<GarminError | null>(null)
+  const error = callbackError ?? requestError
   const [reviewed, setReviewed] = useState<Record<string, boolean>>({})
   const [receipts, setReceipts] = useState<Record<string, GarminConfirmation>>({})
   const [openingJournal, setOpeningJournal] = useState<string | null>(null)
@@ -149,6 +151,7 @@ function GarminConnectionSession({ onSubviewChange, ownerId, onOpenAccount, onOp
         }
         if (!("capability" in result.data)) { setError("INVALID_RESPONSE"); return false }
         setLastCheckedAt(new Date().toISOString()); setError(null); setAuthorizationPaused(false)
+        if (result.data.connection.state === "ACTIVE") setCallbackError(null)
         const savedAt = result.data.experience?.lastSavedAt ?? null
         if (savedAt && savedAt !== lastSaved.current) {
           const refreshed = await refreshAccountJournalRecordsInBackground()
@@ -190,16 +193,18 @@ function GarminConnectionSession({ onSubviewChange, ownerId, onOpenAccount, onOp
   useEffect(() => {
     if (inlineSetup && storageReadiness !== undefined && storageReadiness !== "ready") {
       operation.current?.abort(); operation.current = null; refreshing.current = false
+      callbackStarted.current = false
       setBusy(false); setLoaded(false); setItems([]); setStatus(null); setError(null)
       return
     }
-    void load()
-  }, [storageReadiness, inlineSetup]) // keyed account scope and verified storage readiness own this request
-  useVisibleRefresh(() => load(false, true), Boolean(ownerId && configured && featureEnabled && !authorizationPaused && (!inlineSetup || storageReadiness === undefined || storageReadiness === "ready")
+    if (!callbackAvailable) void load()
+  }, [storageReadiness, inlineSetup, callbackAvailable]) // the callback owns the first request on return
+  useVisibleRefresh(() => load(false, true), Boolean(!callbackAvailable && ownerId && configured && featureEnabled && !authorizationPaused && (!inlineSetup || storageReadiness === undefined || storageReadiness === "ready")
     && (!status || status.connection.state === "ACTIVE" || status.connection.state === "PENDING")), ownerId,
     status?.connection.state === "ACTIVE" && !status.connection.lastSyncAt)
   async function connect() {
     if (!ownerId || !ready) return
+    setCallbackError(null)
     const controller = begin()
     try {
       const result = await send({ action: "connect", saveMode, consentVersion: GARMIN_SAVE_CONSENT_VERSION }, controller)
@@ -213,30 +218,37 @@ function GarminConnectionSession({ onSubviewChange, ownerId, onOpenAccount, onOp
     finally { if (current(controller)) setBusy(false) }
   }
   async function complete() {
-    if (!ownerId || !featureEnabled) return
-    const request = consumeGarminCallback(ownerId); setCallbackAvailable(false)
-    if (!request || request === "invalid") { setError("OAUTH_RESTART_REQUIRED"); return }
+    if (!ownerId || activeLocalAccount() !== ownerId || !featureEnabled || (storageReadiness !== undefined && storageReadiness !== "ready")) return
+    const request = readGarminCallback(ownerId)
+    if (!request || typeof request === "string") { setCallbackError(request ?? "OAUTH_RESTART_REQUIRED"); setCallbackAvailable(false); return }
+    setCallbackError(null)
     const controller = begin()
     try {
-      const result = await send(request, controller)
+      // Keep the one-time response in memory through account restoration and React remounts.
+      // Claim this exact response only after transport rechecks identity, just before fetch.
+      const result = await transport(ownerId, request, controller.signal, () => current(controller), () => {
+        if (!current(controller)) return false
+        const claimed = readGarminCallback(ownerId, request)
+        return claimed !== null && typeof claimed !== "string"
+      })
       if (!current(controller)) return
-      if (!result.ok) { setError(result.code); return }
-      if (!("connection" in result.data)) { setError("INVALID_RESPONSE"); return }
+      if (!result.ok) { setCallbackError(result.code); return }
+      if (!("connection" in result.data)) { setCallbackError("INVALID_RESPONSE"); return }
       setMessage(result.data.connection.state === "ACTIVE" ? "Garmin 계정이 연결됐어요. 새 운동이 도착하면 선택한 방식으로 일지에 반영해요." : "연결 결과를 다시 확인해 주세요.")
-      await load()
-    } catch { if (current(controller)) setError("UNAVAILABLE") }
-    finally { if (current(controller)) setBusy(false) }
+    } catch { if (current(controller)) setCallbackError("UNAVAILABLE") }
+    finally { if (current(controller)) { setCallbackAvailable(hasGarminCallback()); setBusy(false) } }
   }
   useEffect(() => {
     let cancelled = false
     queueMicrotask(() => {
-      if (!cancelled && ownerId && configured && featureEnabled && callbackAvailable && !callbackStarted.current) {
+      if (!cancelled && ownerId && activeLocalAccount() === ownerId && configured && featureEnabled && callbackAvailable && !callbackStarted.current
+        && (storageReadiness === undefined || storageReadiness === "ready")) {
         callbackStarted.current = true
         void complete()
       }
     })
     return () => { cancelled = true }
-  }, [ownerId, configured, featureEnabled, callbackAvailable])
+  }, [ownerId, configured, featureEnabled, callbackAvailable, storageReadiness])
   async function changeSaveMode(mode: "AUTO" | "REVIEW") {
     if (!status?.experience || !status.connection.epoch || busy) return
     const controller = begin()
@@ -343,7 +355,7 @@ function GarminConnectionSession({ onSubviewChange, ownerId, onOpenAccount, onOp
             {storageReadiness !== "checking" && <><p>{storageReadiness === "required" ? "연결한 운동을 내 계정에 보관하려면 선택 항목을 확인해 주세요. 저장한 뒤 연결을 이어갈 수 있어요." : "보관 설정에서 현재 상태를 확인해 주세요. 확인 전에는 연결을 시작하지 않아요."}</p>
               {onOpenStorageSettings && <RecordAction disabled={busy} onClick={onOpenStorageSettings}>기록 보관 설정 확인</RecordAction>}</>}
           </RecordNotice>}
-          {(view === "list" || view === "settings") && callbackAvailable && <RecordNotice kind="pending" title="Garmin 연결을 확인하고 있어요"><p>잠시만 기다려 주세요.</p></RecordNotice>}
+          {(view === "list" || view === "settings") && callbackAvailable && !callbackError && <RecordNotice kind="pending" title="Garmin 연결을 확인하고 있어요"><p>잠시만 기다려 주세요.</p></RecordNotice>}
           {(view === "list" || view === "settings") && showConnectReview && canStartConnection && <section aria-label="Garmin 연결 및 저장 동의" className="garmin-panel__setup">
             <h4 ref={setupHeading} id="garmin-connect-title" tabIndex={-1}>{inlineConnectReview ? "Garmin 연결하고 자동으로 기록하기" : "운동을 어떻게 저장할까요?"}</h4>
             {inlineConnectReview && <p>{reconnectRequired ? "연결이 끊겼어요. 다시 연결하면 새 운동을 받아요." : "한 번 연결하면 매번 파일을 올리지 않아도 돼요."}</p>}
@@ -385,7 +397,7 @@ function GarminConnectionSession({ onSubviewChange, ownerId, onOpenAccount, onOp
           {error && !needsStorageSetup && <RecordNotice kind="error" title="결과 확인이 필요해요" announce><p>{garminErrorMessage[error]}</p>
             {error === "AUTH_REQUIRED" && onOpenAccount && <RecordAction disabled={busy} onClick={onOpenAccount}>TrainOracle 로그인 확인</RecordAction>}
             {onOpenStorageSettings && ["STORAGE_CONSENT_REQUIRED", "CONSENT_CHANGED", "OPERATIONS_PENDING"].includes(error) && <RecordAction disabled={busy} onClick={onOpenStorageSettings}>기록 보관 설정 확인</RecordAction>}
-            {view === "list" && <RecordAction priority={error === "AUTH_REQUIRED" && onOpenAccount || onOpenStorageSettings && ["STORAGE_CONSENT_REQUIRED", "CONSENT_CHANGED", "OPERATIONS_PENDING"].includes(error) ? "secondary" : "primary"} disabled={busy} onClick={() => void load()}>다시 확인</RecordAction>}</RecordNotice>}
+            {view === "list" && <RecordAction priority={error === "AUTH_REQUIRED" && onOpenAccount || onOpenStorageSettings && ["STORAGE_CONSENT_REQUIRED", "CONSENT_CHANGED", "OPERATIONS_PENDING"].includes(error) ? "secondary" : "primary"} disabled={busy} onClick={() => { if (callbackAvailable) void complete(); else void load() }}>다시 확인</RecordAction>}</RecordNotice>}
           {message && <p className="garmin-panel__message" role="status">{message}</p>}
           {loaded && !needsStorageSetup && (view === "list" || view === "review" || view === "saved") && <section aria-label="Garmin 받은 기록">
             {view === "list" ? <h4 className="garmin-panel__inbox-title">받은 운동</h4> : <RecordAction priority="secondary" disabled={busy} onClick={() => void load()}>상태 새로고침</RecordAction>}
