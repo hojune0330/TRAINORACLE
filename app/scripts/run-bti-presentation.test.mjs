@@ -368,8 +368,8 @@ if (process.env.RUN_BTI_BROWSER === "1") test("Chrome: withdrawing either a stor
     const page = await browser.newPage({viewport:{width:360,height:800}});
     await page.context().grantPermissions(["clipboard-read","clipboard-write"]);
     await page.goto("http://127.0.0.1:"+server.address().port+"/");
-    const cover = page.locator(".fp-cover img");
-    assert.equal(await cover.getAttribute("src"),"art/club-anime-cover.webp");
+    const cover = page.locator(".fp-cover .lap-cover-rookie");
+    assert.equal(await cover.getAttribute("src"),"assets/lap/rookie-tie.webp");
     await cover.evaluate(image => image.decode());
     await page.locator('[data-fp="start"]').click();
     const ratings = {numbers:[2,2,0],senses:[0,0,0],explore:[2,2,2],familiar:[0,0,0]};

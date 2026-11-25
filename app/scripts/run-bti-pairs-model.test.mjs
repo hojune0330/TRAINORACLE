@@ -171,7 +171,7 @@ test("all three low speed ratings remain visible even without a directional nick
   ]);
   assert.match(model.resultReason(result, answers), /거리 쪽은 ‘좋아’ 1개, ‘그저 그래’ 2개/);
   assert.ok(model.resultReason(result, answers).includes(low.text));
-  assert.match(low.text, /속도 쪽 세 문항에 모두 ‘별로 안 끌려’/);
+  assert.match(low.text, /속도 쪽 세 문항에 모두 ‘안 끌려’/);
   assert.doesNotMatch(model.resultReason(result, answers), /한쪽으로 기울지/);
 });
 

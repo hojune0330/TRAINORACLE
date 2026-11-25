@@ -2,7 +2,7 @@
   "use strict";
 
   const version = "pairs-1";
-  const labels = ["별로 안 끌려", "그저 그래", "좋아", "아직 모르겠어"];
+  const labels = ["안 끌려", "그저 그래", "좋아", "모르겠어"];
 
   // Array order is the published tie-breaker, irrespective of presentation order.
   const axes = [
@@ -11,7 +11,7 @@
       sides: [
         { id: "distance", label: "거리파", questions: [
           "조금 더 멀리 가는 게 좋아?",
-          "여유가 있으면 한 바퀴 더 돌고 싶어?",
+          "여유 있으면 한 바퀴 더 돌고 싶어?",
           "오래 달리는 날이 기다려져?",
         ], readings: [
           "조금 더 멀리 가는 게 좋아.",
@@ -19,9 +19,9 @@
           "오래 달리는 날이 기다려져.",
         ] },
         { id: "speed", label: "속도파", questions: [
-          "짧은 구간에서 속도를 내 보는 게 좋아?",
+          "짧은 구간에서 속도 내는 게 좋아?",
           "발이 빨라지는 순간이 재밌어?",
-          "잠깐 빠르게 달리는 날이 기다려져?",
+          "짧게 빨리 뛰는 날이 기다려져?",
         ], readings: [
           "짧은 구간에서 속도를 내 보는 게 좋아.",
           "발이 빨라지는 순간이 재밌어.",
@@ -38,20 +38,20 @@
       id: "signals", label: "숫자와 감각",
       sides: [
         { id: "numbers", label: "숫자파", questions: [
-          "지금 페이스를 숫자로 보면 편해?",
+          "지금 뛰는 빠르기를 숫자로 보면 편해?",
           "한 구간이 끝나면 걸린 시간을 보는 게 좋아?",
           "뛰면서 중간 기록을 듣는 게 좋아?",
         ], readings: [
-          "지금 페이스를 숫자로 보면 편해.",
+          "지금 뛰는 빠르기를 숫자로 보면 편해.",
           "한 구간이 끝나면 걸린 시간을 보는 게 좋아.",
           "뛰면서 중간 기록을 듣는 게 좋아.",
         ] },
         { id: "senses", label: "감각파", questions: [
-          "지금 페이스를 숨소리로 가늠하면 편해?",
-          "뛰면서 다리가 가벼운지 살피는 게 좋아?",
+          "숨소리로 내 속도를 가늠하면 편해?",
+          "뛸 때 다리가 가벼운지 살피는 게 좋아?",
           "발걸음으로 내 속도를 가늠하면 편해?",
         ], readings: [
-          "지금 페이스를 숨소리로 가늠하면 편해.",
+          "숨소리로 내 속도를 가늠하면 편해.",
           "뛰면서 다리가 가벼운지 살피는 게 좋아.",
           "발걸음으로 내 속도를 가늠하면 편해.",
         ] },
@@ -95,7 +95,7 @@
       sides: [
         { id: "plan", label: "계획파", questions: [
           "나가기 전에 오늘 할 걸 정해 두면 편해?",
-          "다음 주 뛸 날을 미리 정해 두고 싶어?",
+          "다음 주 뛸 날은 미리 정하고 싶어?",
           "여유 있는 날도 뛸 계획을 짜는 게 좋아?",
         ], readings: [
           "나가기 전에 오늘 할 걸 정해 두면 편해.",
@@ -103,7 +103,7 @@
           "여유 있는 날도 뛸 계획을 짜는 게 좋아.",
         ] },
         { id: "improvise", label: "즉흥파", questions: [
-          "일단 나가서 뛰며 정하는 게 편해?",
+          "일단 나가서 뛰면서 정하는 게 편해?",
           "다음에 뛸 날은 그날 가서 정하고 싶어?",
           "뛰다가 내키는 대로 바꾸는 게 좋아?",
         ], readings: [
@@ -138,15 +138,15 @@
     extra("learning", "어떻게 배우는 게 좋아?", [
       ["class", "클래스에서"], ["coach", "코치와 따로"], ["solo", "혼자 해 보기"], unknown,
     ]),
-    extra("distanceLevel", "이 중에서 쉬지 않고 뛰어 본 가장 긴 거리는?", [
+    extra("distanceLevel", "쉬지 않고 가장 멀리 뛰어 본 거리는?", [
       ["notYet", "아직 안 뛰어 봤어"], ["under3", "3km 미만"], ["3k", "3km"],
       ["5k", "5km"], ["10k", "10km"], ["21k", "21km 이상"], ["unknown", "잘 모르겠어"],
     ]),
-    extra("strength", "달릴 때 뭐가 제일 자신 있어?", [
+    extra("strength", "뛸 때 뭐가 제일 자신 있어?", [
       ["endurance", "오래 달리기"], ["speed", "속도 내기"], ["steady", "고른 페이스"],
       ["consistency", "꾸준히 나가기"], ["other", "다른 게 있어"], unknown,
     ]),
-    extra("challenge", "어느 구간이 힘들게 느껴져?", [
+    extra("challenge", "뛸 때 언제 힘들어?", [
       ["start", "뛰기 시작할 때"], ["middle", "중간쯤"], ["finish", "끝날 무렵"],
       ["varies", "날마다 달라"], ["none", "딱히 없어"], unknown,
     ]),
@@ -154,13 +154,13 @@
       ["distance", "거리 늘리기"], ["speed", "속도 내기"], ["consistency", "꾸준히 뛰기"],
       ["finish", "대회 완주"], ["technique", "자세 익히기"], ["other", "다른 목표"], unknown,
     ]),
-    extra("motives", "요즘은 어떤 이유로 뛰고 싶어?", [
+    extra("motives", "요즘 왜 뛰고 싶어?", [
       ["health", "건강과 체력"], ["weight", "체중 관리", true], ["refresh", "기분 전환"],
       ["routine", "생활 리듬"], ["record", "기록 단축"], ["competition", "경쟁"],
       ["finish", "완주"], ["company", "함께하는 재미"], ["recognition", "인정받는 기분", true],
       ["enjoyment", "달리기 자체가 좋아"], ["other", "다른 이유"], unknown,
     ], true),
-    extra("eagerness", "요즘 달릴 날이 얼마나 기다려져?", [
+    extra("eagerness", "요즘 뛸 날이 기다려져?", [
       ["eager", "기다려져"], ["neutral", "그저 그래"], ["reluctant", "별로 안 기다려져"], unknown,
     ]),
   ];
@@ -338,7 +338,7 @@
     const topic = sideTopics[side.id] + " 쪽";
     let text = "";
     if (side.count === sideQuestions.length && side.lows === side.count) {
-      text = topic + " 세 문항에 모두 ‘별로 안 끌려’라고 답했어요.";
+      text = topic + " 세 문항에 모두 ‘안 끌려’라고 답했어요.";
     } else if (side.count === sideQuestions.length && !side.likes && !side.lows) {
       text = topic + " 세 문항에 모두 ‘그저 그래’라고 답했어요.";
     } else if (new Set(evidence.map(entry => entry.value)).size > 1) {
@@ -365,9 +365,9 @@
     const both = result.axes.filter(axis => axis.state === "both").map(axis => axis.label);
     if (both.length) return both.join(" · ") + "에서 양쪽 모두 두 문항 이상에 ‘좋아’라고 답했어요.";
     const neither = result.axes.filter(axis => axis.state === "neither").map(axis => axis.label);
-    if (neither.length) return neither.join(" · ") + "에서 양쪽 모두 두 문항 이상에 ‘별로 안 끌려’라고 답했어요.";
+    if (neither.length) return neither.join(" · ") + "에서 양쪽 모두 두 문항 이상에 ‘안 끌려’라고 답했어요.";
     if (!result.anyAnswered) return items.some(item => answers[item.id] === "unknown") ?
-      "‘아직 모르겠어’로 남긴 문항에는 점수를 매기지 않았어요." : "아직 성향 문항에서 고른 답이 없어요.";
+      "‘모르겠어’로 남긴 문항에는 점수를 매기지 않았어요." : "아직 성향 문항에서 고른 답이 없어요.";
     if (result.axes.every(axis => axis.state === "insufficient")) return "두 쪽을 비교하기엔 아직 고른 답이 적어요.";
     const summary = result.axes.flatMap(axis => axis.sides.map(side => sideReading(side, answers).summary)).find(Boolean);
     return summary?.text || "이번 답만으로는 어느 쪽이 더 좋은지 정하기 어려워요.";
