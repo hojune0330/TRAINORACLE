@@ -47,7 +47,7 @@ describe("decoration collection docs (registry → legal notice + asset ledger)"
       if (license.licenseFile === undefined) continue
       expect(readFileSync(join(publicDir, license.licenseFile), "utf8").length).toBeGreaterThan(0)
     }
-    expect(html).toContain("mailto:hojune0330@gmail.com")
+    expect(html).toContain("mailto:io.athlete.time@gmail.com")
     expect(html).toContain("2026년 9월 1일")
   })
 
