@@ -23,7 +23,7 @@ import {
 /** 생성 스크립트(esbuild 번들)가 한 모듈만 import 하면 되도록 레지스트리를 다시 내보낸다. */
 export { DECORATION_COLLECTIONS }
 
-const CONTACT_EMAIL = "hojune0330@gmail.com"
+const CONTACT_EMAIL = "io.athlete.time@gmail.com"
 
 function escapeHtml(text: string): string {
   return text
