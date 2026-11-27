@@ -1,11 +1,11 @@
 {
   "kind": "TRAINORACLE_RELEASE_BUILD_PACKAGE",
-  "sourceSha": "83c58310c93a3f405f24c78cd1da2d8507b0b45b",
-  "previousPagesSha": "9588d1f10d28d56379c16c2a9f3c091ca4b5dbc7",
+  "sourceSha": "17454ede7b2ac3c54450db4e56a07e5f0aef1877",
+  "previousPagesSha": "bab17a99519670476d16c080e10caca78de704eb",
   "deploymentStatus": "NOT_PUBLISHED",
   "previewOnly": false,
   "accountHeld": true,
-  "publicConfigurationSourceSha": "9588d1f10d28d56379c16c2a9f3c091ca4b5dbc7",
+  "publicConfigurationSourceSha": "bab17a99519670476d16c080e10caca78de704eb",
   "oracleV2Enabled": true,
   "files": {
     ".nojekyll": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
@@ -563,11 +563,11 @@
     "illustrations/watch-file-guide-v1.webp": "eef6af2ba908bb17e22c6933063d452707d07d37f829fe1da1f3c2c64dd40127",
     "illustrations/watch-file-v2.webp": "3290b85c84b608c8bd63a965f60427fb26b7290084bc7549fb9ce9d6f6003cdd",
     "index.html": "595dcb2034354ace4412c19e86b51f31c48f721b9909c4e6f6355d40033cbbdb",
-    "legal/device-integrations.html": "406ebcbfa1dc5b0b282cc30c50c954b7022e735591f82c29feafb46bd6dd2c50",
+    "legal/device-integrations.html": "6d20ff4c4b7e1da0c0a43640fa2d608facf7700be0f3415015b66ba5905d3c69",
     "legal/legal.css": "b2f11f0bb92d1b1e0d0d4925c432e4e0069b6bc1b65b249220b3acfc67c6a26b",
-    "legal/open-source.html": "4eb1a29f48f563d80c2c87ff69c1ef68d64b64c3d1026b3a55ab50d0811dd5ed",
-    "legal/privacy.html": "6f71037167df65b16056d35ce24c20f6b05e979853f5848c5f6b51d793d36745",
-    "legal/terms.html": "f50d7f35038dcfafec6ce03676918ca48d0413d9e636be5a07adff336b7548b0",
+    "legal/open-source.html": "b1dd7b2ff1936a69091c6dc4eef7d669d74fea780b5bf7015484e82237ca28ed",
+    "legal/privacy.html": "44dc3b550ec1fd5d71d3af282cc41a824c4f6f0645fc023cb6b1bb881569ed14",
+    "legal/terms.html": "ef71ad2293834efa5dcde76e862085da6fce01b6582e55e57bd9ca4bfd9d4c89",
     "legal/third-party-notices.html": "720ddf566e9b69e8f7aa7fcec536e251924366207a8731ac5441f56df49d9037",
     "licenses/dicebear-open-peeps-LICENSE.txt": "da4841198095b0e172e87959ffe1684059b25d89943c5d9077fea3af8394400a",
     "licenses/fluentui-emoji-MIT.txt": "7df20dcdf9197e9945c14858d41c60f11b52b93e5b69e2b63416b874d598d322",
@@ -1300,9 +1300,9 @@
     "run-bti/rb-story-catalog.js": "19a5e57120ef6a9922ec9a81912a02026d77e36266ccbb1f97010f519cfc3055",
     "run-bti/rb-story-match.js": "c993be1871fcd6a1582cd9aedcd862a9510cc796ab41d5eccead86caf0d38a53",
     "run-bti/studio.html": "7235d6cf85eb3066a54a35405fd644240f9a0f1c062131f4abce59ef82dffd06",
-    "support.html": "d3985ad10cf193ce363d536e217b5eceafde66d84941f06f58d91f9fc3262063",
+    "support.html": "6ee87d0fde8bbd8e5367b15f7f9ec6868826b81305658b75c2b1c88f2ad6145d",
     "sw.js": "b5c0ecc5a132aa2f1dd96c791223cd5189947887f88ae6f6b512d8a2ea18f836"
   },
   "backendVerification": "NOT_CONFIRMED",
-  "builtAt": "2026-11-25T11:05:28.091Z"
+  "builtAt": "2026-11-27T10:24:22.444Z"
 }
