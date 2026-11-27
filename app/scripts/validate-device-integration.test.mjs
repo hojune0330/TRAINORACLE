@@ -165,7 +165,7 @@ test("public pages are truthful, cross-linked, and do not claim live provider ac
   assert.doesNotMatch(supportPage, /공식 연동 신청은 완료됐고 제공자 검토를 기다리고 있습니다|제공자 검토 대기 중인 공식 자동 연동/u)
   assert.doesNotMatch(supportPage, /신청 준비/u)
   assert.match(supportPage, /legal\/device-integrations\.html/u)
-  assert.match(supportPage, /hojune0330@gmail\.com/u)
+  assert.match(supportPage, /io\.athlete\.time@gmail\.com/u)
   for (const page of [noticePage, privacyPage]) {
     assert.match(page, /Cloudflare/u)
     assert.match(page, /Supabase Edge Functions에 전달/u)
